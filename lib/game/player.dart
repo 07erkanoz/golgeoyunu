@@ -10,6 +10,7 @@ import 'golge_game.dart';
 import 'level.dart';
 import 'mechanics.dart';
 import 'palette.dart';
+import 'puzzles.dart';
 
 enum PlayerState { normal, hang, climbUp, vine, dead }
 
@@ -129,6 +130,13 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
         if (!lever.pulled && lever.near(center)) {
           lever.pull();
           _prevUp = true;
+        }
+      }
+      for (final u in game.world.children.whereType<Usable>().toList()) {
+        if (u.canUse(center)) {
+          u.use();
+          _prevUp = true;
+          break;
         }
       }
     }

@@ -7,6 +7,7 @@ import 'package:flame/components.dart';
 import 'creatures.dart';
 import 'entities.dart';
 import 'mechanics.dart';
+import 'puzzles.dart';
 import '../settings.dart';
 import 'golge_game.dart';
 import 'level.dart';
@@ -121,6 +122,8 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
           _light(canvas, b.position.toOffset().translate(0, -6), 60, 0.6);
         case Lever l when !l.pulled:
           _light(canvas, l.position.toOffset().translate(0, -14), 46, 0.5);
+        case Watcher w when w.dazzled > 0:
+          _light(canvas, w.lamp.toOffset(), 40, 0.5);
         case Watcher w:
           _light(canvas, w.lamp.toOffset(), 70, 0.8);
           _cut.shader = ui.Gradient.radial(
@@ -131,6 +134,22 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
           canvas.drawPath(w.beamPath(), _cut);
         case WingsPickup k:
           _light(canvas, k.position.toOffset().translate(0, -10), 110, 0.9);
+        case GiantPerde g:
+          _light(canvas, g.glowCenter, g.glowRadius, 0.75);
+        case SunBeam b:
+          for (final (a, z) in b.segments) {
+            final len = (z - a).distance;
+            for (var d = 0.0; d <= len; d += 36) {
+              _light(
+                canvas,
+                Offset.lerp(a, z, len == 0 ? 0 : d / len)!,
+                46,
+                0.55,
+              );
+            }
+          }
+        case SunLock l when l.open || l.charge > 0:
+          _light(canvas, l.position.toOffset(), 60, 0.6);
         case FireflySwarm f:
           _light(canvas, f.position.toOffset(), 70, 0.7 * f.strength);
         case FireflyLure l:

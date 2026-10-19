@@ -36,7 +36,7 @@ BASE_I = [
     '######wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww####################',
 ]
 old=BASE_I
-W,H=130,20
+W,H=195,20
 y=G(W,H)
 for r,row in enumerate(old):
     for c,ch in enumerate(row):
@@ -59,14 +59,32 @@ y.fill(97,12,107,19,'.'); y.fill(97,18,107,19,'w')
 y.fill(97,10,101,11,'#')
 y.put(102,14,'A'); y.put(105,14,'Y')
 y.put(93,13,'K'); y.put(94,13,'6')
-# 6) Karabasan
-y.fill(108,10,113,19,'#')
-y.fill(114,18,128,19,'w')
-y.fill(116,10,118,11,'#')
-y.put(119,10,'O')
-y.fill(122,8,128,9,'#')
-y.put(109,9,'K'); y.put(110,9,'z'); y.put(126,7,'Z'); y.put(127,7,'E'); y.put(124,7,'B')
-y.put(112,9,'F')
+# 6) Dev perde, ışık ve gölge tahtaları, çürük köprü, su haznesi
+y.fill(108,10,127,19,'#')
+y.put(108,9,'K'); y.put(110,9,'J'); y.put(112,9,'B'); y.put(125,9,'M')
+y.fill(128,18,135,19,'w')                    # ışık tahtasının altı: su
+y.fill(128,10,133,10,'l')                    # ışık tahtası
+y.fill(134,10,135,19,'#'); y.put(134,9,'F'); y.put(135,9,'B')
+y.put(129,9,'7')
+y.fill(136,18,141,19,'w'); y.fill(136,10,141,10,'n')   # gölge tahtası
+y.fill(142,10,147,19,'#'); y.put(143,9,'I'); y.put(142,9,'K'); y.put(145,9,'8')
+y.fill(148,18,150,19,'w'); y.fill(148,10,150,10,'u')   # çürük köprü
+y.fill(151,10,160,19,'#'); y.fill(151,2,160,6,'#')     # Kandilci'nin dar geçidi
+y.put(156,9,'G'); y.put(152,9,'B')
+y.put(159,9,'v'); y.put(157,9,'9')
+# su haznesi: q sol üst, Q sağ alt; dipte dolduran vana, ortada yüzen tahta
+y.put(161,5,'q'); y.put(168,18,'Q'); y.fill(161,19,168,19,'#')
+y.put(163,18,'y'); y.put(166,11,'f')
+y.fill(169,6,172,19,'#'); y.put(171,5,'B'); y.put(172,5,'K')
+O=65
+# 7) Karabasan (O kadar sağa kaydı)
+y.fill(108+O,10,113+O,19,'#')
+y.fill(114+O,18,128+O,19,'w')
+y.fill(116+O,10,118+O,11,'#')
+y.put(119+O,10,'O')
+y.fill(122+O,8,128+O,9,'#')
+y.put(109+O,9,'K'); y.put(110+O,9,'z'); y.put(126+O,7,'Z'); y.put(127+O,7,'E'); y.put(124+O,7,'B')
+y.put(112+O,9,'F')
 # Gerilim: karanlıkta beliren gözler, ışığı yiyen yarasa galerisi.
 y.put(38,16,'e'); y.put(99,16,'e')
 y.put(71,8,'x'); y.put(90,13,'X'); y.put(79,13,'F')

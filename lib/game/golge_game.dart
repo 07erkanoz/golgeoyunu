@@ -19,6 +19,7 @@ import 'narration.dart';
 import 'perde.dart';
 import 'palette.dart';
 import 'player.dart';
+import 'puzzles.dart';
 import '../settings.dart';
 import 'strings.dart';
 import 'terrain.dart';
@@ -345,6 +346,18 @@ class GolgeGame extends FlameGame with KeyboardEvents {
       for (final c in level.watcherCells) Watcher(c),
       for (final c in level.wingsCells) WingsPickup(c),
       for (final c in level.glimpseCells) KarabasanGlimpse(c),
+      for (final c in level.perdeCells) GiantPerde(c),
+      for (final (c, r, n) in level.glowRuns)
+        PhasePlank(Vector2(c * kTile, r * kTile.toDouble()), n, shade: false),
+      for (final (c, r, n) in level.shadeRuns)
+        PhasePlank(Vector2(c * kTile, r * kTile.toDouble()), n, shade: true),
+      for (final (c, r, n) in level.rottenRuns) RottenPlank(c, r, n),
+      ..._basins(),
+      for (final c in level.drainValves) Valve(c, fill: false),
+      for (final c in level.fillValves) Valve(c, fill: true),
+      for (final (c, slash) in level.mirrorCells) Mirror(c, slash: slash),
+      for (final c in level.lockCells) SunLock(c),
+      for (final c in level.beamCells) SunBeam(c),
       if (level.chaseStart != null && level.chaseEnd != null)
         Karabasan(level.chaseStart!, level.chaseEnd!),
       for (var i = 0; i < level.memoryCells.length; i++)
@@ -364,6 +377,52 @@ class GolgeGame extends FlameGame with KeyboardEvents {
       player = null;
     }
     _snapCamera = true;
+  }
+
+  /// Su hazneleri ve içlerindeki yüzen tahtalar: başlangıç su seviyesi
+  /// tahtanın satırıdır (tahta yoksa hazne boş başlar).
+  Iterable<Component> _basins() sync* {
+    for (final area in level.basins) {
+      final floats = [
+        for (final f in level.floatCells)
+          if (area.contains(Offset(f.x + 1, f.y + 1))) f,
+      ];
+      final start = floats.isEmpty ? area.bottom - 6 : floats.first.y + kTile;
+      final basin = WaterBasin(area, start: start);
+      yield basin;
+      for (final f in floats) {
+        yield FloatPlank(f, basin);
+      }
+    }
+  }
+
+  /// Bir noktaya ışık değiyor mu: açık kavanoz (çömelmemiş, saklanmamış),
+  /// ateşböceği, Kandilci feneri ve konisi, güneş huzmesi.
+  bool litAt(Vector2 at) {
+    final p = player;
+    if (p != null && p.isMounted && !p.isDead && !p.crouching && !p.hidden) {
+      final (pos, r) = p.light;
+      if ((pos - at).length < r * 0.7) return true;
+    }
+    for (final c in world.children) {
+      switch (c) {
+        case FireflyLure l when l.glowing:
+          if ((l.position - at).length < 110) return true;
+        case Guard g when !g.falling:
+          final lantern = g.lanternWorld;
+          final d = at - lantern;
+          if (d.length < 70) return true;
+          final ahead = d.x * g.facing;
+          if (ahead > 0 &&
+              ahead < g.coneRange &&
+              d.y.abs() < ahead * 0.5 + 34) {
+            return true;
+          }
+        case SunBeam b:
+          if (b.lights(Offset(at.x, at.y))) return true;
+      }
+    }
+    return false;
   }
 
   /// Asansör kefeleri soldan sağa eşleşir: her A, sıradaki Y ile.

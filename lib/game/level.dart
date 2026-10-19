@@ -21,6 +21,10 @@ const double kTile = 32;
 ///   `W` Hezarfen'in kanatları.
 /// - Bölgeler: `x` sol üst ve `X` sağ alt köşeleriyle karanlık bölge (ışığı
 ///   yer, ateşböcekleri birer birer söner).
+/// - Bulmacalar: `l` ışık tahtası, `n` gölge tahtası, `u` çürük tahta,
+///   `q`/`Q` su haznesinin köşeleri, `f` yüzen tahta (başlangıç su seviyesi),
+///   `v` boşaltan ve `y` dolduran vana, `j` güneş huzmesi (aşağı iner),
+///   `m` ayna `/`, `h` ayna `\`, `t` ışık kilidi, `J` dev perde (sol alt).
 class Level {
   Level(this.def) {
     _parse();
@@ -51,6 +55,20 @@ class Level {
   double? chaseEnd;
   final leverCells = <Vector2>[];
   final glimpseCells = <Vector2>[];
+
+  /// Yatay tahta dizileri: (sütun, satır, uzunluk).
+  final glowRuns = <(int, int, int)>[];
+  final shadeRuns = <(int, int, int)>[];
+  final rottenRuns = <(int, int, int)>[];
+  final basins = <Rect>[];
+  final _basinStarts = <Vector2>[];
+  final floatCells = <Vector2>[];
+  final drainValves = <Vector2>[];
+  final fillValves = <Vector2>[];
+  final beamCells = <Vector2>[];
+  final mirrorCells = <(Vector2, bool)>[];
+  final lockCells = <Vector2>[];
+  final perdeCells = <Vector2>[];
 
   /// Karanlık bölgeler (dünya koordinatında dikdörtgenler).
   final darkZones = <Rect>[];
@@ -115,6 +133,50 @@ class Level {
             leverCells.add(cell);
           case 'e':
             glimpseCells.add(cell);
+          case 'l' || 'n' || 'u':
+            // Bir dizinin ilk hücresinde tüm diziyi kaydet.
+            final line = def.map[r].padRight(width, '.');
+            if (c > 0 && line[c - 1] == ch) {
+              if (ch == 'u') continue;
+            } else {
+              var len = 1;
+              while (c + len < width && line[c + len] == ch) {
+                len++;
+              }
+              (ch == 'l'
+                      ? glowRuns
+                      : ch == 'n'
+                      ? shadeRuns
+                      : rottenRuns)
+                  .add((c, r, len));
+              // Çürük tahta Kandilci'nin yürüyebileceği hücredir: kalır.
+              if (ch == 'u') continue;
+            }
+          case 'q':
+            _basinStarts.add(cell);
+          case 'Q':
+            if (_basinStarts.isNotEmpty) {
+              final a = _basinStarts.removeAt(0);
+              basins.add(
+                Rect.fromLTRB(a.x, a.y, cell.x + kTile, cell.y + kTile),
+              );
+            }
+          case 'f':
+            floatCells.add(cell);
+          case 'v':
+            drainValves.add(cell);
+          case 'y':
+            fillValves.add(cell);
+          case 'j':
+            beamCells.add(cell);
+          case 'm':
+            mirrorCells.add((cell, true));
+          case 'h':
+            mirrorCells.add((cell, false));
+          case 't':
+            lockCells.add(cell);
+          case 'J':
+            perdeCells.add(cell);
           case 'x':
             _darkStarts.add(cell);
           case 'X':
@@ -152,6 +214,12 @@ class Level {
   }
 
   bool solid(int c, int r) => cell(c, r) == '#';
+
+  /// Bir hücreyi boşaltır (çöken tahta).
+  void clearCell(int c, int r) {
+    if (c < 0 || c >= width || r < 0 || r >= height) return;
+    _cells[r][c] = '.';
+  }
 
   /// Nokta bir karanlık bölgenin içinde mi?
   bool inDarkZone(Vector2 p) =>

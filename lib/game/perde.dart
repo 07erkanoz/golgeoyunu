@@ -349,6 +349,32 @@ class PerdePainter {
     }
   }
 
+  static final _noHole = Paint()..color = const Color(0x00000000);
+
+  /// Sâye tasviri (ayak noktası orijinde, boyu ~84).
+  static void drawSaye(
+    Canvas canvas,
+    Paint ink,
+    Paint hole,
+    double time, {
+    double jar = 1,
+  }) {
+    _c = canvas;
+    _saye(ink, hole, time, jar: jar);
+  }
+
+  /// Hayali Usta tasviri (ayak noktası orijinde).
+  static void drawMaster(Canvas canvas, Paint ink) {
+    _c = canvas;
+    _master(ink, _noHole);
+  }
+
+  /// Kandilci tasviri (ayak noktası orijinde).
+  static void drawLamplighter(Canvas canvas, Paint ink) {
+    _c = canvas;
+    _lamplighter(ink, _noHole);
+  }
+
   /// Tasvirlerin çizildiği tuval (her sahnenin başında atanır).
   static late Canvas _c;
 

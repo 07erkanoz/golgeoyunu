@@ -51,15 +51,45 @@ class Guard extends PositionComponent with HasGameReference<GolgeGame> {
     _t = 0;
   }
 
+  bool get _calmPatrol =>
+      state == GuardState.patrol || state == GuardState.pause;
+
   bool get _calm =>
       state == GuardState.patrol ||
       state == GuardState.pause ||
       state == GuardState.investigate;
 
+  /// Çöken tahtayla düşüyor: feneri suda söner, bir daha görünmez.
+  bool falling = false;
+  double _vy = 0;
+
+  void fall() {
+    if (falling) return;
+    falling = true;
+    _vy = -60;
+    suspicion = 0;
+  }
+
+  void _updateFall(double dt) {
+    _vy = math.min(_vy + 1100 * dt, 700);
+    position.y += _vy * dt;
+    final feet = position.y + gh;
+    final ch = level.cellAt(center.x, feet);
+    if (ch == 'w' || feet > level.pixelHeight + 60) {
+      GameAudio.instance.play('splash');
+      GameAudio.instance.play('fizzle', volume: 0.8);
+      removeFromParent();
+    }
+  }
+
   @override
   void update(double dt) {
     super.update(dt);
     _t += dt;
+    if (falling) {
+      _updateFall(dt);
+      return;
+    }
     final p = game.player;
     if (p == null) return;
     // Ateşböceği ışığı her şeyden önce gelir: kovalarken bile dikkati dağılır.
@@ -207,7 +237,9 @@ class Guard extends PositionComponent with HasGameReference<GolgeGame> {
       if (level.solid(c, r)) return false;
     }
     final below = level.cell(c, ((position.y + gh + 1) / kTile).floor());
-    if (below != '#' && below != '=') return false;
+    // Çürük tahtaya devriyede basmaz; bir şeyin peşine düşünce basar.
+    final rotten = below == 'u' && !_calmPatrol;
+    if (below != '#' && below != '=' && !rotten) return false;
     position.x += facing * dist;
     return true;
   }

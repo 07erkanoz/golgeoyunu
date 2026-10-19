@@ -243,6 +243,15 @@ class Watcher extends PositionComponent with HasGameReference<GolgeGame> {
 
   bool get alarmed => suspicion >= 1;
 
+  /// Güneş huzmesi gözüne girince bir süre kör kalır.
+  double dazzled = 0;
+
+  void dazzle() {
+    if (dazzled <= 0) GameAudio.instance.play('suspect', volume: 0.5);
+    dazzled = 5;
+    suspicion = 0;
+  }
+
   @override
   void onMount() {
     super.onMount();
@@ -269,7 +278,8 @@ class Watcher extends PositionComponent with HasGameReference<GolgeGame> {
       _angle = 0.6 + 0.55 * math.sin(_t * 0.7);
     }
 
-    if (p == null || p.isDead || game.cinematic) {
+    if (dazzled > 0) dazzled -= dt;
+    if (p == null || p.isDead || game.cinematic || dazzled > 0) {
       suspicion = math.max(0, suspicion - dt);
       return;
     }
@@ -332,7 +342,9 @@ class Watcher extends PositionComponent with HasGameReference<GolgeGame> {
           Color.lerp(kCold, const Color(0xFFF2FFFC), suspicion)!.withValues(
             alpha:
                 (0.26 + 0.3 * suspicion) *
-                (suspicion > 0.6 ? 0.8 + 0.2 * math.sin(_t * 29) : 1),
+                (suspicion > 0.6 ? 0.8 + 0.2 * math.sin(_t * 29) : 1) *
+                // Gözü kamaşınca projektörünü kapatıp yüzünü siper eder.
+                (dazzled > 0 ? 0.12 : 1),
           ),
           kCold.withValues(alpha: 0),
         ]),
