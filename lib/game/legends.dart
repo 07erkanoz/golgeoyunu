@@ -21,9 +21,10 @@ import 'strings.dart';
 /// daha açılmaz (Perseus'un kalkanı gibi).
 class MedusaHead extends PositionComponent with HasGameReference<GolgeGame> {
   MedusaHead(Vector2 cell)
-    : super(position: cell + Vector2.all(kTile / 2), priority: 6);
+    : _t = (cell.x / kTile * 1.37) % period,
+      super(position: cell + Vector2.all(kTile / 2), priority: 6);
 
-  static const double range = 13 * kTile;
+  static const double range = 16 * kTile;
   static const double halfHeight = 2.4 * kTile;
   static const double closed = 3.6;
   static const double opening = 0.9;
@@ -35,7 +36,7 @@ class MedusaHead extends PositionComponent with HasGameReference<GolgeGame> {
   static const double sealDistance = 4.5 * kTile;
 
   int facing = 1;
-  double _t = 0;
+  double _t;
   bool sealed = false;
   final _lastPos = Vector2.zero();
 
@@ -92,22 +93,25 @@ class MedusaHead extends PositionComponent with HasGameReference<GolgeGame> {
     if (before == 0 && eyes > 0) {
       GameAudio.instance.play('grind', volume: 0.7);
     }
+    // Perseus'un kalkanı: gözler açılırken yakındaki cilalı kalkanda kendini
+    // görür ve taşa döner.
+    if (eyes > 0) {
+      for (final m in game.world.children.whereType<ShieldCrate>()) {
+        final d = m.toRect().center.dx - position.x;
+        if (d * facing > -2 * kTile &&
+            d.abs() < sealDistance &&
+            (m.toRect().center.dy - position.y).abs() < halfHeight) {
+          sealed = true;
+          GameAudio.instance.play('grind');
+          GameAudio.instance.play('memory', volume: 0.5);
+          game.narration.whisper(S.of('medusaSealed'));
+          return;
+        }
+      }
+    }
     if (!gazing) {
       _lastPos.setZero();
       return;
-    }
-    // Perseus'un kalkanı: yakına gelen cilalı kalkanda kendini görür.
-    for (final m in game.world.children.whereType<ShieldCrate>()) {
-      final d = m.toRect().center.dx - position.x;
-      if (d * facing > -kTile &&
-          d.abs() < sealDistance &&
-          (m.toRect().center.dy - position.y).abs() < halfHeight) {
-        sealed = true;
-        GameAudio.instance.play('grind');
-        GameAudio.instance.play('memory', volume: 0.5);
-        game.narration.whisper(S.of('medusaSealed'));
-        return;
-      }
     }
     final p = game.player;
     if (p != null && !p.isDead && !p.hidden && inGaze(p.center)) {

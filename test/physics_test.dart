@@ -4,6 +4,7 @@ import 'package:flame/components.dart';
 import 'package:flame_test/flame_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:golge/game/creatures.dart';
+import 'package:golge/game/legends.dart';
 import 'package:golge/game/levels.dart';
 import 'package:golge/game/entities.dart';
 import 'package:golge/game/golge_game.dart';
@@ -380,7 +381,7 @@ void main() {
     testWithGame<GolgeGame>('Karabasan duranı yakalar', GolgeGame.new, (
       game,
     ) async {
-      final p = await place(game, 0, 176, 9);
+      final p = await place(game, 0, 271, 9);
       run(game, 0.2);
       expect(game.world.children.whereType<Karabasan>().first.awake, isTrue);
       run(game, 6);
@@ -391,10 +392,10 @@ void main() {
       'Karabasan bitiş çizgisinde dağılır',
       GolgeGame.new,
       (game) async {
-        final p = await place(game, 0, 176, 9);
+        final p = await place(game, 0, 271, 9);
         run(game, 0.2);
         p.position.setFrom(
-          Level.standOn(Vector2(192 * kTile, 7 * kTile), Player.w, Player.h),
+          Level.standOn(Vector2(287 * kTile, 7 * kTile), Player.w, Player.h),
         );
         run(game, 2.5);
         expect(game.world.children.whereType<Karabasan>(), isEmpty);
@@ -925,5 +926,39 @@ void main() {
       // Ya düşer ya da bir ipe tutunup kalır: karşıya süzülemez.
       expect(p.isDead || p.position.x < 59 * kTile, isTrue);
     });
+  });
+
+  group('Medusa Salonu', () {
+    testWithGame<GolgeGame>(
+      'kalkanı iterek öndeki başı taşlaştır, arkadaki bakınca dur',
+      GolgeGame.new,
+      (game) async {
+        final p = await place(game, 0, 201, 13);
+        for (final g in game.world.children.whereType<Guard>().toList()) {
+          g.removeFromParent();
+        }
+        final heads = game.world.children.whereType<MedusaHead>().toList()
+          ..sort((a, b) => a.position.x.compareTo(b.position.x));
+        final back = heads.first;
+        final front = heads.last;
+        for (var i = 0; i < 60 * 60 && !front.sealed && !p.isDead; i++) {
+          // Arkadaki baş açılırken ve onun bakışındayken kıpırdama; kalkan
+          // başın dibine gelince bekle.
+          final danger = back.eyes > 0 && back.inGaze(p.center);
+          final shield = game.world.children.whereType<ShieldCrate>().first;
+          final close = front.position.x - shield.toRect().right < kTile * 2;
+          keys(game).right = !danger && !close;
+          game.update(1 / 60);
+        }
+        keys(game).right = false;
+        expect(p.isDead, isFalse);
+        expect(front.sealed, isTrue);
+        // Artık başın altından geçilir.
+        keys(game).right = true;
+        run(game, 3);
+        expect(p.isDead, isFalse);
+        expect(p.position.x, greaterThan(224 * kTile));
+      },
+    );
   });
 }

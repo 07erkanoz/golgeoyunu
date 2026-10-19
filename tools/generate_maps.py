@@ -36,7 +36,7 @@ BASE_I = [
     '######wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww####################',
 ]
 old=BASE_I
-W,H=195,20
+W,H=290,20
 y=G(W,H)
 for r,row in enumerate(old):
     for c,ch in enumerate(row):
@@ -76,7 +76,23 @@ y.put(159,9,'v'); y.put(157,9,'9')
 y.put(161,5,'q'); y.put(168,18,'Q'); y.fill(161,19,168,19,'#')
 y.put(163,18,'y'); y.put(166,11,'f')
 y.fill(169,6,172,19,'#'); y.put(171,5,'B'); y.put(172,5,'K')
-O=65
+# 7) Medusa Salonu: iki baş, bir Kandilci, Perseus'un kalkanı
+y.fill(173,14,222,19,'#'); y.put(174,13,'K'); y.put(176,13,'p'); y.put(175,13,'(')
+y.put(178,13,'B'); y.put(184,13,'G'); y.put(180,13,'I'); y.put(187,13,'F')
+y.fill(190,10,190,11,'#'); y.put(191,11,'U')          # sağa bakan baş
+y.fill(194,11,198,11,'#'); y.put(196,10,'M')           # taş Kandilci'yle çıkılan raf
+y.put(203,13,'@'); y.put(201,13,')')                   # Perseus'un kalkanı
+y.fill(222,2,223,10,'#'); y.put(222,11,'U')           # sola bakan baş
+y.fill(223,14,223,19,'#')
+# 8) Sal Kanalı: yukarıdaki iskelede Kandilciler, sudan yükselen sütunlar
+y.fill(224,14,227,19,'#'); y.put(225,13,'K'); y.put(226,13,'p'); y.put(227,13,'[')
+y.fill(228,14,262,19,'w'); y.put(228,13,'_')
+y.fill(232,10,258,10,'='); y.put(236,9,'G'); y.put(250,9,'G')
+for c in (238,246,254): y.put(c,13,'I')
+y.put(246,12,'M'); y.put(231,9,'B')
+y.fill(263,14,267,19,'#'); y.put(264,13,'B')
+y.fill(266,12,267,13,'#')                              # kovalamacaya basamak
+O=160
 # 7) Karabasan (O kadar sağa kaydı)
 y.fill(108+O,10,113+O,19,'#')
 y.fill(114+O,18,128+O,19,'w')

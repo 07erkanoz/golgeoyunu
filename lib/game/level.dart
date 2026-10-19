@@ -13,7 +13,8 @@ const double kTile = 32;
 /// - Zemin: `#` kaya, `=` tahta, `|` tırmanılan zincir/sarmaşık, `^` diken,
 ///   `w` su, `~` ve `I` saklanılan gölge, `r` rüzgâr akımı, `D` damla.
 /// - Oyuncu ve yol: `P` başlangıç, `E` çıkış, `K` kontrol noktası, `B` Hüdhüd
-///   konakları, `1`-`9` fısıltılar, `M` hatıralar.
+///   konakları, `1`-`9` ve `(` `)` `[` `]` `{` `}` (10-15) fısıltılar,
+///   `M` hatıralar.
 /// - Canlılar: `G` Kandilci, `g` Gözcü, `b` yarasalar, `k` karga, `z`/`Z`
 ///   Karabasan kovalamacasının başı/sonu, `e` karanlıkta beliren gözler.
 /// - Düzenekler: `C` sandık, `L` kol, `H` kapı, `A`/`Y` terazi kefeleri,
@@ -271,6 +272,8 @@ class Level {
               }
               gates.add((c, r, end));
             }
+          case '(' || ')' || '[' || ']' || '{' || '}':
+            triggers.add((9 + '()[]{}'.indexOf(ch), cell));
           default:
             final n = int.tryParse(ch);
             if (n == null) continue;

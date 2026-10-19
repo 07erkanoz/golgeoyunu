@@ -11,6 +11,10 @@ void main() {
       for (final (i, _) in lv.triggers) {
         expect(i, lessThan(def.whispers.length), reason: def.title);
       }
+      expect(lv.placeCells.length, def.areas.length, reason: def.title);
+      expect(def.areasEn.length, def.areas.length, reason: def.title);
+      expect(def.whispersEn.length, def.whispers.length, reason: def.title);
+      expect(def.memoriesEn.length, def.memories.length, reason: def.title);
       // Oyuncu boş bir hücrede, katı zeminin üstünde başlamalı.
       final c = (lv.playerStart.x / kTile).floor();
       final r = (lv.playerStart.y / kTile).floor();
