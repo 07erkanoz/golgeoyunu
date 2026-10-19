@@ -77,12 +77,25 @@ Ayarlar → **Dokunmatik** ile iki düzen arasında seçim yapılır:
 
 Telefonda kamera biraz daha yakındır ve grafik varsayılan olarak Düşük'tür.
 
-## Windows'ta oynamak
+## İndir ve oyna
 
-[Releases](https://github.com/07erkanoz/golgeoyunu/releases) sayfasından en son
-`GolgeOyunu-windows.zip` dosyasını indir, bir klasöre çıkar ve `golge.exe`'yi
-çalıştır. `main` dalına yapılan her gönderimde GitHub Actions yeni bir Windows
-sürümü derleyip buraya ekler.
+[Releases](https://github.com/07erkanoz/golgeoyunu/releases) sayfasındaki en son
+derlemede üç dosya bulunur. `main` dalına yapılan her gönderimde GitHub Actions
+üçünü birden derleyip yayımlar.
+
+| Platform | Dosya | Kurulum |
+|---|---|---|
+| Windows | `GolgeOyunu-windows.zip` | Bir klasöre çıkar, `golge.exe`'yi çalıştır |
+| Android | `GolgeOyunu-android.apk` | Telefona indir, aç; "bilinmeyen kaynaklar" izni istenirse ver |
+| Linux (Arch) | `GolgeOyunu-linux-x64.tar.gz` | Aşağıya bak |
+
+Arch Linux:
+
+```bash
+sudo pacman -S --needed gtk3 gstreamer gst-plugins-base gst-plugins-good gst-libav
+tar -xzf GolgeOyunu-linux-x64.tar.gz
+./GolgeOyunu/golge
+```
 
 ## Çalıştırma
 
