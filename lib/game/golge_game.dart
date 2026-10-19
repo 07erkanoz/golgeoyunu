@@ -20,6 +20,7 @@ import 'perde.dart';
 import 'palette.dart';
 import 'player.dart';
 import 'legends.dart';
+import 'nemrut.dart';
 import 'puzzles.dart';
 import '../settings.dart';
 import 'strings.dart';
@@ -110,6 +111,9 @@ class GolgeGame extends FlameGame with KeyboardEvents {
 
   double _darkT = 0;
   bool _darkWarned = false;
+
+  /// Deprem (0-1): Nemrut'ta ara ara yer sarsılır.
+  double quake = 0;
 
   /// Tipinin şiddeti (0-1): fırtınalı bölümlerde ara ara bastırır.
   double blizzard = 0;
@@ -360,6 +364,13 @@ class GolgeGame extends FlameGame with KeyboardEvents {
       for (final c in level.glimpseCells) KarabasanGlimpse(c),
       for (final c in level.icicleCells) FallingIcicle(c),
       for (final c in level.medusaCells) MedusaHead(c),
+      for (var i = 0; i < level.starCells.length; i++)
+        StarStone(level.starCells[i], i),
+      for (final c in level.reliefCells) HoroscopeRelief(c),
+      for (final c in level.boulderCells) LooseBoulder(c),
+      for (final (c, kind) in level.statueCells) Colossus(c, kind: kind),
+      for (final c in level.giantCells) StoneGiant(c),
+      if (level.def.quakes) QuakeClock(),
       for (final z in level.rainZones) RainZone(z),
       for (final c in level.shieldCells) ShieldCrate(c),
       for (final c in level.raftCells) Raft(c),
@@ -404,6 +415,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     threat = 0;
     hideAmount = 0;
     blizzard = 0;
+    quake = 0;
     _stormT = 0;
     jarStrength = 1;
     _darkT = 0;

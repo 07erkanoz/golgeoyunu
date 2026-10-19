@@ -31,6 +31,9 @@ const double kTile = 32;
 ///   ilerleyiş sırasıyla eşleşir (ilk `a` ilk `d` ile).
 /// - İp: dikey `S` dizisi (üst hücre bağlantı noktası, uzunluğu dizi kadar).
 /// - Yer adı: `p` (bölümün `areas` listesinden, ilerleyiş sırasıyla).
+/// - Nemrut: `*` yıldız taşı (soldan sağa sırayla), `+` Aslan Horoskobu
+///   kabartması, `%` gevşek kaya, `?` oturan taş tanrı, `;` düşmüş dev baş,
+///   `:` kartal, `,` aslan heykeli, backtick taş dev Nemrud.
 /// - Sağanak: `<` sol üst ve `>` sağ alt köşe (kanatlar ıslanır, süzülünmez).
 /// - Bölgeler: `x` sol üst ve `X` sağ alt köşeleriyle karanlık bölge (ışığı
 ///   yer, ateşböcekleri birer birer söner).
@@ -83,6 +86,11 @@ class Level {
   final lockCells = <Vector2>[];
   final perdeCells = <Vector2>[];
 
+  final starCells = <Vector2>[];
+  final reliefCells = <Vector2>[];
+  final boulderCells = <Vector2>[];
+  final statueCells = <(Vector2, int)>[];
+  final giantCells = <Vector2>[];
   final medusaCells = <Vector2>[];
   final shieldCells = <Vector2>[];
   final raftCells = <Vector2>[];
@@ -222,6 +230,22 @@ class Level {
             perdeCells.add(cell);
           case 'p':
             placeCells.add(cell);
+          case '*':
+            starCells.add(cell);
+          case '+':
+            reliefCells.add(cell);
+          case '%':
+            boulderCells.add(cell);
+          case '?':
+            statueCells.add((cell, 0));
+          case ';':
+            statueCells.add((cell, 2));
+          case ':':
+            statueCells.add((cell, 3));
+          case ',':
+            statueCells.add((cell, 4));
+          case '`':
+            giantCells.add(cell);
           case 'U':
             medusaCells.add(cell);
           case '@':
@@ -301,6 +325,7 @@ class Level {
     }
     placeCells.sort((a, b) => progressOf(a).compareTo(progressOf(b)));
     animalCells.sort((a, b) => progressOf(a).compareTo(progressOf(b)));
+    starCells.sort((a, b) => progressOf(a).compareTo(progressOf(b)));
     pedestalCells.sort((a, b) => progressOf(a).compareTo(progressOf(b)));
   }
 

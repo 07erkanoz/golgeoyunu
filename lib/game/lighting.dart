@@ -8,6 +8,7 @@ import 'creatures.dart';
 import 'entities.dart';
 import 'legends.dart';
 import 'mechanics.dart';
+import 'nemrut.dart';
 import 'puzzles.dart';
 import '../settings.dart';
 import 'golge_game.dart';
@@ -150,6 +151,10 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
           _light(canvas, m.position.toOffset(), 50, 0.6 * m.eyes);
         case SimurgFeather f when !f.taken:
           _light(canvas, f.position.toOffset(), 50, 0.6);
+        case StoneGiant g when !g.fallen:
+          _light(canvas, g.ear.toOffset(), 40, 0.5);
+        case StarStone s when s.correct:
+          _light(canvas, s.position.toOffset().translate(0, -24), 50, 0.6);
         case GiantPerde g:
           _light(canvas, g.glowCenter, g.glowRadius, 0.75);
         case SunBeam b:

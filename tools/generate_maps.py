@@ -410,7 +410,58 @@ n.put(270,7,'7'); n.put(276,7,'K'); n.put(284,7,'B'); n.put(290,7,'E')
 n.fill(252,7,256,7,'-')
 lvl6=n.rows()
 
-MAPS = [('kMapYerebatan', lvl1), ('kMapKule', lvl2), ('kMapGokyolu', lvl3), ('kMapKaf', lvl4), ('kMapAgri', lvl5), ('kMapGemi', lvl6)]
+# ------------------------------------------------------------ VII · NEMRUT
+W,H=330,26
+F=20
+m=G(W,H)
+# 1) Dağın yolu
+m.fill(0,22,14,25,'#'); m.put(2,21,'P'); m.put(3,21,'p'); m.put(4,21,'1'); m.put(6,21,'B')
+m.fill(15,21,19,25,'#'); m.fill(20,F,39,25,'#'); m.put(10,21,'F')
+m.fill(24,11,32,12,'#'); m.put(26,13,'%'); m.put(30,13,'%')   # sarkan kaya, gevşek taşlar
+m.put(22,F-1,'K'); m.put(34,F-1,'2')
+# 2) Batı Terası: dört taş tanrı, omuzlarında yıldız taşları
+m.fill(40,F,91,25,'#'); m.put(41,F-1,'p'); m.put(42,F-1,'K'); m.put(45,F-1,'+'); m.put(51,F-1,'3')
+for i,x in enumerate((53,62,71,80)):
+    m.put(x,F-10,'?')                       # heykelin çizimi (zemine oturur)
+    m.fill(x,F-4,x+5,F-1,'#')               # taht
+    m.fill(x-1,F-2,x-1,F-1,'#')             # ayak taburesi
+    m.fill(x+6,F-3,x+6,F-1,'#')             # diz
+    m.put(x+5,F-6,'#')                      # kol
+    m.fill(x+1,F-8,x+4,F-8,'#')             # omuzlar
+    m.put(x+2,F-9,'*')                      # yıldız taşı
+m.put(47,F-1,'G'); m.put(66,F-9,'M')
+m.fill(91,2,91,F-7,'#'); m.fill(91,F-6,91,F-1,'H')
+# 3) Deprem yarığı: çöken kayalar, tepeden düşen gevşek taşlar
+m.fill(92,F,95,25,'#'); m.put(93,F-1,'K'); m.put(94,F-1,'B'); m.put(95,F-1,'p')
+m.fill(100,8,128,9,'#')
+for c in (102,107,112,117,122,126):
+    m.put(c,10,'%')
+m.put(98,F,'O'); m.put(103,F-1,'O'); m.put(108,F,'O'); m.put(113,F-1,'O'); m.put(118,F,'O'); m.put(123,F-1,'O')
+m.fill(127,F,140,25,'#'); m.put(128,F-1,'K'); m.put(130,F-1,'4'); m.put(133,F-1,'B')
+# 4) Kartalın gözü: kartalın tepesinde Gözcü, düşmüş başların ardı saklanma yeri
+m.fill(141,F,199,25,'#'); m.put(142,F-1,'p')
+m.fill(176,F-5,178,F-1,'#'); m.put(175,F-1,':'); m.put(177,F-6,'g')
+for x in (148,156,164,186):
+    m.put(x,F-1,';'); m.put(x+1,F-1,'I')
+m.put(152,F-1,'G'); m.put(160,F-1,'F'); m.put(170,F-1,'5'); m.put(190,F-1,'M')
+m.put(195,F-1,'K'); m.put(197,F-1,'B')
+# 5) Tümülüs: çakıl yamacında tırmanış
+m.fill(200,F,206,25,'#'); m.put(201,F-1,'p'); m.put(203,F-1,'6')
+m.fill(207,F-2,209,25,'#'); m.fill(210,F-4,212,25,'#'); m.put(214,F-6,'O'); m.put(218,F-7,'O')
+m.fill(222,F-8,230,25,'#'); m.put(224,F-9,'K'); m.put(226,F-9,'B')
+m.fill(225,F-18,235,F-17,'#'); m.put(229,F-16,'%'); m.put(233,F-16,'%')
+m.fill(231,F-10,233,25,'#'); m.fill(234,F-12,236,25,'#')
+m.put(240,F-13,'O'); m.put(245,F-14,'O')
+m.fill(249,F-14,262,25,'#'); m.put(250,F-15,'K'); m.put(253,F-15,'7'); m.put(258,F-15,'M')
+# 6) Doğuya geçit: tipili sırt, Kandilci kampı
+m.fill(263,F-12,329,25,'#'); m.put(264,F-13,'p')
+m.put(272,F-13,'G'); m.fill(276,F-13,277,F-13,'~'); m.put(282,F-13,'I'); m.put(290,F-13,'G')
+m.fill(294,F-13,295,F-13,'~'); m.put(300,F-13,','); m.put(303,F-13,'F'); m.put(310,F-13,'G')
+m.fill(314,F-13,315,F-13,'~'); m.put(320,F-13,'K'); m.put(322,F-13,'B'); m.put(326,F-13,'E')
+m.put(306,F-13,'8')
+lvl7=m.rows()
+
+MAPS = [('kMapYerebatan', lvl1), ('kMapKule', lvl2), ('kMapGokyolu', lvl3), ('kMapKaf', lvl4), ('kMapAgri', lvl5), ('kMapGemi', lvl6), ('kMapNemrut', lvl7)]
 
 out = ['// Bu dosya tools/generate_maps.py ile üretilir; elle düzenleme.',
        '// Gösterim: lib/game/level.dart başındaki açıklamaya bakın.', '']

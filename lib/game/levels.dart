@@ -49,6 +49,7 @@ class LevelDef {
     this.variant = 0,
     this.headwind = 0,
     this.storm = false,
+    this.quakes = false,
     this.titleEn = '',
     this.subtitleEn = '',
     this.whispersEn = const [],
@@ -96,6 +97,9 @@ class LevelDef {
   /// Ara ara tipi bastırır: ekran beyaza boğulur; Kandilciler az görür,
   /// hiç duymaz.
   final bool storm;
+
+  /// Ara ara deprem olur: yer sarsılır, gevşek kayalar düşer.
+  final bool quakes;
 
   /// Aynı temanın farklı görünümü (ör. kar: 0 Ağrı, 1 Palandöken, 2 çığ;
   /// Nemrut: 0 taş tanrılar, 1 gün doğumu).
@@ -593,5 +597,65 @@ const levels = <LevelDef>[
       'Memory · "You do not need a lamp to keep a light," he said one night. "A heart is enough."',
     ],
     map: kMapGemi,
+  ),
+  LevelDef(
+    title: 'VII · NEMRUT',
+    subtitle: 'Tanrılarla yan yana oturmak isteyen bir kralın dağı.',
+    theme: LevelTheme.nemrut,
+    wings: true,
+    headwind: 80,
+    storm: true,
+    quakes: true,
+    titleEn: 'VII · NEMRUT',
+    subtitleEn: 'The mountain of a king who wished to sit beside the gods.',
+    place: 'Nemrut Dağı · Kommagene, Kasım 1660',
+    placeEn: 'Mount Nemrut · Commagene, November 1660',
+    areas: [
+      'Bilinmeyen Dağ',
+      'Batı Terası',
+      'Deprem Yarığı',
+      'Kartalın Gözü',
+      'Tümülüs',
+      'Doğuya Geçit',
+    ],
+    areasEn: [
+      'The Unknown Mountain',
+      'The West Terrace',
+      'The Earthquake Rift',
+      'The Eagle\'s Eye',
+      'The Tumulus',
+      'The Pass to the East',
+    ],
+    whispers: [
+      'Bu dağı bugün kimse bilmiyor. Bir kartallar biliyor, bir de kar.',
+      'Kral Antiochos tanrılarla yan yana oturmak için dağın tepesine taş tanrılar dikti.',
+      'Tahtların ardına vasiyetini kazıttı: iki yüz otuz yedi satır. Taşa yazılan söz unutulmaz sandı.',
+      'Depremler tanrıların başlarını yere indirdi. Dağ kibri hiç sevmez.',
+      'Başlar hâlâ güneşin doğduğu yere bakar. Gözlerinin önünde saklanabilirsin.',
+      'Halk bu dağa Nemrut der: göğe ok atıp Tanrı\'yla savaşmaya kalkan kralın adıyla.',
+      'Tümülüsün altında bir kral uyur. Taşlarını oynatma; uyanmasın.',
+      'Kandilciler ışığı doğu terasına taşıyor. Güneş doğunca yakacaklar.',
+    ],
+    whispersEn: [
+      'No one knows this mountain today. Only the eagles know it, and the snow.',
+      'King Antiochos raised stone gods on the summit so he could sit beside them.',
+      'Behind the thrones he had his testament carved: two hundred and thirty-seven lines. He thought words cut in stone are never forgotten.',
+      'Earthquakes brought the gods\' heads down to the ground. The mountain has never liked pride.',
+      'The heads still face the rising sun. You can hide right before their eyes.',
+      'The people call this mountain Nemrut, after the king who shot arrows at the sky to make war on God.',
+      'Beneath the tumulus a king is sleeping. Do not shift its stones; let him not wake.',
+      'The Lamplighters are carrying the light to the eastern terrace. They will kindle it when the sun rises.',
+    ],
+    memories: [
+      'Hatıra · Ustam taş tasvirleri sevmezdi. "Gölge kımıldar," derdi, "taş kımıldamaz; o yüzden ölüdür."',
+      'Hatıra · Bir gece bana yıldızları gösterdi: "Her biri bir kandil. Kimse onları toplayamaz."',
+      'Hatıra · Nemrud\'un hikâyesini anlatırken hep gülerdi: "Koca kralı bir sivrisinek yendi. Küçük olan büyüğü hep şaşırtır."',
+    ],
+    memoriesEn: [
+      'Memory · My master did not like stone figures. "A shadow moves," he said. "Stone does not; that is why it is dead."',
+      'Memory · One night he showed me the stars: "Each one is a lamp. No one can gather them."',
+      'Memory · Whenever he told the tale of Nemrud, he laughed: "The great king was beaten by a gnat. The small always surprise the great."',
+    ],
+    map: kMapNemrut,
   ),
 ];

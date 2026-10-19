@@ -10,6 +10,7 @@ import 'package:golge/game/entities.dart';
 import 'package:golge/game/golge_game.dart';
 import 'package:golge/game/level.dart';
 import 'package:golge/game/mechanics.dart';
+import 'package:golge/game/nemrut.dart';
 import 'package:golge/game/perde.dart';
 import 'package:golge/game/player.dart';
 import 'package:golge/game/puzzles.dart';
@@ -1245,43 +1246,160 @@ void main() {
       },
     );
 
-    testWithGame<GolgeGame>(
-      'ambar kuyusunda tufandan önce tepeye çık',
-      GolgeGame.new,
-      (game) async {
-        final p = await place(game, 5, 193, 25);
-        keys(game).right = true;
-        run(game, 0.6);
-        final basin = game.world.children.whereType<WaterBasin>().first;
-        expect(basin.flooding, isTrue);
-        // Tahtalara zikzak tırman.
-        for (final r in [24, 22, 20, 18, 16, 14, 12, 10]) {
-          final left = ((24 - r) ~/ 2).isEven;
-          final x = left ? 205.6 : 206.4;
-          for (var i = 0; i < 60 * 3; i++) {
-            final dx = x * kTile - p.center.x;
-            keys(game)
-              ..right = dx > 6
-              ..left = dx < -6
-              ..jump =
+    testWithGame<
+      GolgeGame
+    >('ambar kuyusunda tufandan önce tepeye çık', GolgeGame.new, (game) async {
+      final p = await place(game, 5, 193, 25);
+      keys(game).right = true;
+      run(game, 0.6);
+      final basin = game.world.children.whereType<WaterBasin>().first;
+      expect(basin.flooding, isTrue);
+      // Tahtalara zikzak tırman.
+      for (final r in [24, 22, 20, 18, 16, 14, 12, 10]) {
+        final left = ((24 - r) ~/ 2).isEven;
+        final x = left ? 205.6 : 206.4;
+        for (var i = 0; i < 60 * 3; i++) {
+          final dx = x * kTile - p.center.x;
+          keys(game)
+            ..right = dx > 6
+            ..left = dx < -6
+            ..jump =
                 (p.onGround &&
                     (p.position.y + Player.h) > r * kTile + 2 &&
                     dx.abs() < 3.6 * kTile) ||
                 (!p.onGround && p.velocity.y < 0);
+          game.update(1 / 60);
+          if (p.onGround && (p.position.y + Player.h - r * kTile).abs() < 2) {
+            break;
+          }
+        }
+        // ignore: avoid_print
+        if (const bool.fromEnvironment('GEMI'))
+          print(
+            'r$r x=${(p.center.x / kTile).toStringAsFixed(2)} feet=${((p.position.y + Player.h) / kTile).toStringAsFixed(2)} su=${(basin.surface / kTile).toStringAsFixed(2)}',
+          );
+        expect(p.isDead, isFalse, reason: 'satır $r');
+      }
+      keys(game)
+        ..left = false
+        ..right = false
+        ..jump = false;
+      expect(basin.surface, greaterThan(p.position.y + Player.h));
+    });
+  });
+
+  group('Nemrut', () {
+    testWithGame<GolgeGame>(
+      'tanrıların omuzlarındaki yıldız taşları horoskoba dizilince kapı açılır',
+      GolgeGame.new,
+      (game) async {
+        expect(levels[6].title, 'VII · NEMRUT');
+        final p = await place(game, 6, 50, 19);
+        for (final g in game.world.children.whereType<Guard>().toList()) {
+          g.removeFromParent();
+        }
+        final stones = game.world.children.whereType<StarStone>().toList()
+          ..sort((a, b) => a.index.compareTo(b.index));
+        expect(stones.length, 4);
+        final gate = nearest<Gate>(game, 91 * kTile);
+        // İlk tanrıya gerçekten tırman: diz, taht, kol, omuz.
+        void climbTo(double x, int row) {
+          for (var i = 0; i < 60 * 3; i++) {
+            final dx = x * kTile - p.center.x;
+            final feetRow = (p.position.y + Player.h) / kTile;
+            keys(game)
+              ..right = dx > 4
+              ..left = dx < -4
+              ..jump =
+                  (p.onGround && feetRow > row + 0.1) ||
+                  (!p.onGround && p.velocity.y < 0);
             game.update(1 / 60);
-            if (p.onGround && (p.position.y + Player.h - r * kTile).abs() < 2) {
+            if (p.onGround && (feetRow - row).abs() < 0.05 && dx.abs() < 8) {
               break;
             }
           }
-          // ignore: avoid_print
-          if (const bool.fromEnvironment('GEMI')) print('r$r x=${(p.center.x / kTile).toStringAsFixed(2)} feet=${((p.position.y + Player.h) / kTile).toStringAsFixed(2)} su=${(basin.surface / kTile).toStringAsFixed(2)}');
-          expect(p.isDead, isFalse, reason: 'satır $r');
+          keys(game)
+            ..right = false
+            ..left = false
+            ..jump = false;
         }
-        keys(game)
-          ..left = false
-          ..right = false
-          ..jump = false;
-        expect(basin.surface, greaterThan(p.position.y + Player.h));
+
+        climbTo(52.5, 18); // tabure
+        climbTo(55.0, 16); // taht
+        climbTo(58.5, 14); // kol
+        climbTo(56.5, 12); // omuzlar
+        climbTo(55.6, 12); // taşın yanı
+        // ignore: avoid_print
+        if (const bool.fromEnvironment('NEMRUT'))
+          print(
+            'p=${p.center / kTile} feet=${(p.position.y + Player.h) / kTile}',
+          );
+        expect(p.isDead, isFalse);
+        expect((p.position.y + Player.h) / kTile, closeTo(12, 0.05));
+        // Taşı horoskobun istediği işarete çevir.
+        Future<void> setStone(StarStone st) async {
+          for (var n = 0; n < 12 && st.sign != horoscope[st.index]; n++) {
+            keys(game).up = true;
+            game.update(1 / 60);
+            keys(game).up = false;
+            run(game, 0.1);
+          }
+        }
+
+        await setStone(stones[0]);
+        expect(stones[0].correct, isTrue);
+        // Ötekileri (aynı tırmanış) doğrudan omuzlarına konarak çevir.
+        for (final st in stones.skip(1)) {
+          p.position.setFrom(st.position - Vector2(Player.w / 2, Player.h));
+          run(game, 0.2);
+          await setStone(st);
+        }
+        run(game, 3);
+        expect(gate.solid, isFalse);
+      },
+    );
+
+    testWithGame<GolgeGame>(
+      'taş devin kulağına üç ateşböceği: yıkılır',
+      GolgeGame.new,
+      (game) async {
+        GolgeGame.debugLevels = [
+          const LevelDef(
+            title: 'DEV',
+            subtitle: '',
+            theme: LevelTheme.nemrut,
+            map: [
+              '########################################',
+              '#......................................#',
+              '#......................................#',
+              '#......................................#',
+              '#......................................#',
+              '#......................................#',
+              '#......................................#',
+              '#......................................#',
+              '#......................................#',
+              '#...........`..........................#',
+              '#P.....................................#',
+              '########################################',
+            ],
+          ),
+        ];
+        game.debugLoadLevel(0);
+        await game.ready();
+        game.cinematic = false;
+        run(game, 0.2);
+        final giant = game.world.children.whereType<StoneGiant>().first;
+        for (var i = 0; i < 3; i++) {
+          game.fireflies = 3;
+          run(game, 2.6);
+          final ear = giant.ear;
+          game.releaseFirefly(ear + Vector2(-60, 10), 1);
+          run(game, 0.6);
+        }
+        GolgeGame.debugLevels = null;
+        expect(giant.hits, 3);
+        expect(giant.fallen, isTrue);
+        expect(game.world.children.whereType<GiantBridge>(), isNotEmpty);
       },
     );
   });

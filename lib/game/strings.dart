@@ -53,6 +53,8 @@ class S {
     'medusaSealed': 'Kendi bakışına yakalandı. Perseus\'un kalkanı gibi.',
     'feather': 'Simurg\'un tüyü',
     'feathersAll': 'Tüyler tamam. Sunak seni bekliyor.',
+    'horoscope': 'Gök, aslanın sırtındaki gibi dizildi. Taşlar yol veriyor.',
+    'giantFell': 'Bir sivrisinek bir kralı yıktı; bir ateşböceği de bir devi.',
     'chase': 'Arkanda bir şey nefes alıyor. KOŞ.',
     'wings': 'Hezarfen\'in kanatları. Rüzgâra güvenen düşmez.',
     'memoriesFound': 'Toplanan hatıralar',
@@ -107,6 +109,9 @@ class S {
     'medusaSealed': 'Caught in her own gaze. Like Perseus\'s shield.',
     'feather': 'A feather of the Simurgh',
     'feathersAll': 'The feathers are whole. The altar is waiting.',
+    'horoscope':
+        'The sky is arranged as on the lion\'s back. The stones give way.',
+    'giantFell': 'A gnat brought down a king; a firefly, a giant.',
     'chase': 'Something breathes behind you. RUN.',
     'wings': 'Hezarfen\'s wings. Whoever trusts the wind does not fall.',
     'memoriesFound': 'Memories found',
