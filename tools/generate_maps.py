@@ -461,7 +461,40 @@ m.fill(314,F-13,315,F-13,'~'); m.put(320,F-13,'K'); m.put(322,F-13,'B'); m.put(3
 m.put(306,F-13,'8')
 lvl7=m.rows()
 
-MAPS = [('kMapYerebatan', lvl1), ('kMapKule', lvl2), ('kMapGokyolu', lvl3), ('kMapKaf', lvl4), ('kMapAgri', lvl5), ('kMapGemi', lvl6), ('kMapNemrut', lvl7)]
+# ------------------------------------------------------------ VIII · GÜN DOĞUMU
+W,H=212,26
+F=20
+d=G(W,H)
+d.fill(0,F,211,25,'#')
+# 1) Tören yolu: şafakta Kandilciler, dikili taşlar, düşmüş başlar
+d.put(2,F-1,'P'); d.put(3,F-1,'p'); d.put(4,F-1,'1'); d.put(6,F-1,'B'); d.put(8,F-1,'F')
+d.put(14,F-1,';'); d.put(15,F-1,'I'); d.put(20,F-1,'G'); d.put(25,F-1,'I')
+d.put(30,F-1,';'); d.put(31,F-1,'I'); d.put(36,F-1,'G'); d.put(41,F-1,'I')
+d.put(28,F-9,'N'); d.put(34,F-1,'2'); d.put(44,F-1,'K'); d.put(46,F-1,'B')
+# 2) Terasın kapısı: kol bir tanrının omzunda
+d.put(51,F-1,'p'); d.put(52,F-1,'3')
+x=55
+d.put(x,F-10,'?'); d.fill(x,F-4,x+5,F-1,'#'); d.fill(x-1,F-2,x-1,F-1,'#'); d.fill(x+6,F-3,x+6,F-1,'#')
+d.put(x+5,F-6,'#'); d.fill(x+1,F-8,x+4,F-8,'#'); d.put(x+2,F-9,'L'); d.put(x+3,F-9,'M')
+d.fill(66,2,66,F-7,'#'); d.fill(66,F-6,66,F-1,'H')
+# 3) Doğu Terası: taş dev Nemrud. Kulak hizasında raflar, ateşböcekleri
+d.put(68,F-1,'K'); d.put(69,F-1,'p'); d.put(71,F-1,'4'); d.put(73,F-1,'B')
+d.fill(76,F-5,79,F-5,'#'); d.fill(76,F-4,76,F-1,'|')     # sol raf ve sarmaşık
+d.fill(100,F-5,103,F-5,'#'); d.fill(103,F-4,103,F-1,'|')  # sağ raf ve sarmaşık
+d.put(74,F-1,'5')
+d.put(78,F-6,'F'); d.put(101,F-6,'F'); d.put(112,F-1,'F')
+d.put(82,F-1,'`')
+d.fill(125,2,125,F-7,'#'); d.fill(125,F-6,125,F-1,'H')
+# 4) Güneşin doğduğu yer: ayin, Kandilciler, ışık
+d.put(127,F-1,'K'); d.put(128,F-1,'p'); d.put(130,F-1,'B')
+d.fill(134,F-2,137,F-1,'#'); d.fill(140,F-4,143,F-1,'#'); d.fill(146,F-6,212-1,F-1,'#')
+d.put(150,F-7,'G'); d.fill(154,F-7,155,F-7,'~'); d.put(160,F-7,';'); d.put(161,F-7,'I')
+d.put(166,F-7,'G'); d.fill(170,F-7,171,F-7,'~'); d.put(176,F-7,'G'); d.put(172,F-15,'N')
+d.put(180,F-7,'6'); d.put(184,F-7,'M'); d.put(190,F-7,'K'); d.put(195,F-7,'B'); d.put(205,F-7,'E')
+d.put(188,F-7,'?')
+lvl8=d.rows()
+
+MAPS = [('kMapYerebatan', lvl1), ('kMapKule', lvl2), ('kMapGokyolu', lvl3), ('kMapKaf', lvl4), ('kMapAgri', lvl5), ('kMapGemi', lvl6), ('kMapNemrut', lvl7), ('kMapGunDogumu', lvl8)]
 
 out = ['// Bu dosya tools/generate_maps.py ile üretilir; elle düzenleme.',
        '// Gösterim: lib/game/level.dart başındaki açıklamaya bakın.', '']

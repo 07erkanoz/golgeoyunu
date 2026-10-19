@@ -1388,4 +1388,37 @@ void main() {
       },
     );
   });
+
+  group('Gün Doğumu', () {
+    testWithGame<GolgeGame>(
+      'raftan devin yoluna ateşböceği bırak: üçüncüsünde yıkılır',
+      GolgeGame.new,
+      (game) async {
+        expect(levels[7].title, 'VIII · GÜN DOĞUMU');
+        final p = await place(game, 7, 77, 14);
+        for (final g in game.world.children.whereType<Guard>().toList()) {
+          g.removeFromParent();
+        }
+        final giant = game.world.children.whereType<StoneGiant>().first;
+        final gate = nearest<Gate>(game, 125 * kTile);
+        for (var i = 0; i < 60 * 90 && !giant.fallen && !p.isDead; i++) {
+          final lures = game.world.children.whereType<FireflyLure>();
+          if (lures.isEmpty && game.fireflies < 3) game.fireflies = 3;
+          if (lures.isEmpty && p.onGround) {
+            p.facing = 1;
+            game.controls.queueLure();
+          }
+          game.update(1 / 60);
+        }
+        expect(
+          p.isDead,
+          isFalse,
+          reason: '${p.deathCause} ${p.center / kTile}',
+        );
+        expect(giant.fallen, isTrue);
+        run(game, 4);
+        expect(gate.solid, isFalse);
+      },
+    );
+  });
 }
