@@ -31,6 +31,7 @@ const double kTile = 32;
 ///   ilerleyiş sırasıyla eşleşir (ilk `a` ilk `d` ile).
 /// - İp: dikey `S` dizisi (üst hücre bağlantı noktası, uzunluğu dizi kadar).
 /// - Yer adı: `p` (bölümün `areas` listesinden, ilerleyiş sırasıyla).
+/// - Sağanak: `<` sol üst ve `>` sağ alt köşe (kanatlar ıslanır, süzülünmez).
 /// - Bölgeler: `x` sol üst ve `X` sağ alt köşeleriyle karanlık bölge (ışığı
 ///   yer, ateşböcekleri birer birer söner).
 /// - Bulmacalar: `l` ışık tahtası, `n` gölge tahtası, `u` çürük tahta,
@@ -105,6 +106,12 @@ class Level {
 
   /// Yer adı işaretleri, ilerleyiş sırasıyla.
   final placeCells = <Vector2>[];
+
+  /// Sağanak bölgeleri: içinde kanatlar ıslanır.
+  final rainZones = <Rect>[];
+  final _rainStarts = <Vector2>[];
+
+  bool inRain(Vector2 p) => rainZones.any((z) => z.contains(Offset(p.x, p.y)));
 
   /// Karanlık bölgeler (dünya koordinatında dikdörtgenler).
   final darkZones = <Rect>[];
@@ -253,6 +260,15 @@ class Level {
                 end++;
               }
               ropes.add((c, r, end - r + 1));
+            }
+          case '<':
+            _rainStarts.add(cell);
+          case '>':
+            if (_rainStarts.isNotEmpty) {
+              final a = _rainStarts.removeAt(0);
+              rainZones.add(
+                Rect.fromLTRB(a.x, a.y, cell.x + kTile, cell.y + kTile),
+              );
             }
           case 'x':
             _darkStarts.add(cell);

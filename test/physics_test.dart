@@ -1019,4 +1019,52 @@ void main() {
       },
     );
   });
+
+  group('Gökyolu uzantısı', () {
+    testWithGame<GolgeGame>(
+      'sağanakta gölge köprüsü: balonun ışığını kollayıp çömelerek geç',
+      GolgeGame.new,
+      (game) async {
+        final p = await place(game, 2, 203, 9);
+        final balloon = nearest<LanternBalloon>(game, 210 * kTile);
+        keys(game).down = true;
+        var prevX = balloon.position.x;
+        for (
+          var i = 0;
+          i < 60 * 90 && p.position.x < 218 * kTile && !p.isDead;
+          i++
+        ) {
+          final bx = balloon.position.x;
+          final movingRight = bx > prevX;
+          prevX = bx;
+          final px = p.center.x;
+          bool go;
+          if (px < 210 * kTile) {
+            // Sol yarı: balon sağda ve sağa giderken.
+            go = bx > 212.5 * kTile && (movingRight || px > 206 * kTile);
+          } else if (px < 212 * kTile) {
+            // Taş ayak: balon solda kalınca çık.
+            go = bx < 208.5 * kTile && !movingRight;
+          } else {
+            go = true;
+          }
+          keys(game).right = go;
+          game.update(1 / 60);
+        }
+        expect(p.isDead, isFalse);
+        expect(p.position.x, greaterThanOrEqualTo(218 * kTile));
+      },
+    );
+
+    testWithGame<GolgeGame>('sağanakta kanat açılmaz', GolgeGame.new, (
+      game,
+    ) async {
+      final p = await place(game, 2, 203, 9);
+      run(game, 0.2);
+      expect(p.hasWings, isFalse);
+      final q = await place(game, 2, 199, 9);
+      run(game, 0.2);
+      expect(q.hasWings, isTrue);
+    });
+  });
 }

@@ -68,7 +68,9 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
   /// Kanatlarla süzülüyor.
   bool gliding = false;
 
-  bool get hasWings => game.level.def.wings || game.wingsCollected;
+  bool get hasWings =>
+      (game.level.def.wings || game.wingsCollected) &&
+      !game.level.inRain(center);
 
   /// Uzaktan zor görülür (parmak ucu ya da çömelme).
   bool get covering => sneaking || crouching;

@@ -360,6 +360,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
       for (final c in level.glimpseCells) KarabasanGlimpse(c),
       for (final c in level.icicleCells) FallingIcicle(c),
       for (final c in level.medusaCells) MedusaHead(c),
+      for (final z in level.rainZones) RainZone(z),
       for (final c in level.shieldCells) ShieldCrate(c),
       for (final c in level.raftCells) Raft(c),
       for (var i = 0; i < level.ventCells.length; i++)

@@ -215,6 +215,41 @@ s.put(60,17,'e')
 for c,r in [(10,13),(44,9),(60,4),(90,3),(106,9),(134,7)]:
     s.put(c,r,'p')
 s.fill(95,9,100,9,'l')                       # bulutların arasında ışık köprüsü
+# --- Gökyolu uzar
+s2=G(336,H)
+for r,row in enumerate(s.g):
+    s2.g[r][:150]=row
+s=s2
+s.put(145,8,'.',force=True)                  # eski çıkış
+# A) Balon geçidi: adacıklar, üstte süzülen fener balonları
+for a,b in [(152,156),(162,165),(172,175),(182,186),(194,199)]:
+    s.fill(a,10,b,11,'#'); s.fill(a+1,12,b-1,12,'#')
+s.put(153,9,'p'); s.put(154,9,'5'); s.put(155,9,'K'); s.put(163,9,'~'); s.put(164,9,'~')
+s.put(173,9,'B'); s.put(184,9,'~'); s.put(185,9,'~'); s.put(196,9,'M')
+s.put(166,3,'N'); s.put(186,2,'N')
+s.fill(178,14,179,20,'r'); s.fill(176,4,178,4,'='); s.put(177,3,'F')  # yan ada: ateşböceği
+# B) Gölgeden köprü: balonun ışığı değince kaybolur; süzülerek aşılamaz
+s.fill(200,10,203,11,'#'); s.put(201,9,'K'); s.put(202,9,'6'); s.put(200,9,'p')
+s.fill(204,10,209,10,'n'); s.fill(210,10,211,11,'#'); s.put(210,9,'~'); s.put(211,9,'~')
+s.fill(212,10,217,10,'n'); s.put(210,4,'N')
+s.put(203,0,'<'); s.put(218,12,'>')               # sağanak: kanatlar ıslanır
+s.fill(218,10,223,11,'#'); s.put(219,9,'B')
+# C) Fırtına adaları: çöken ve kayan kayalar, rüzgâr, Gözcü
+s.put(226,10,'O'); s.put(230,9,'O'); s.put(234,8,'R')
+s.fill(242,7,244,16,'#'); s.put(243,6,'g')
+s.fill(247,4,248,15,'r'); s.put(245,3,'p')
+s.fill(251,6,256,7,'#'); s.put(252,5,'K'); s.put(253,5,'7'); s.put(255,5,'B')
+s.put(260,7,'O'); s.put(265,8,'V'); s.put(270,7,'O')
+s.fill(262,2,266,2,'='); s.put(264,1,'M')    # rüzgârla çıkılan gizli bulut
+s.fill(258,3,259,14,'r')
+s.fill(274,8,280,9,'#'); s.put(275,7,'K'); s.put(277,7,'B')
+# D) Güneşin kapısı: Kandilcilerin gök kampı
+s.fill(281,8,334,10,'#'); s.fill(283,11,332,11,'#')
+s.put(283,7,'p'); s.put(284,7,'8'); s.put(287,7,'F')
+s.put(292,7,'G'); s.fill(296,7,297,7,'~'); s.put(302,7,'I'); s.put(308,7,'G')
+s.fill(312,7,313,7,'~'); s.put(300,2,'N'); s.put(320,7,'G'); s.fill(316,7,317,7,'~')
+s.put(325,7,'B'); s.put(328,7,'K'); s.put(331,7,'E'); s.put(329,7,'B')
+W=336
 lvl3=s.rows()
 
 # ------------------------------------------------------------ IV · KAF

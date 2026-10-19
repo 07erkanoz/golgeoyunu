@@ -685,3 +685,33 @@ class FeatherAltar extends PositionComponent with HasGameReference<GolgeGame> {
     );
   }
 }
+
+// ================================================================ Sağanak
+
+/// Sağanak bölgesi: yağmur çizgileri; içindeyken kanatlar ıslanır.
+class RainZone extends Component with HasGameReference<GolgeGame> {
+  RainZone(this.area) : super(priority: 25);
+
+  final Rect area;
+  double _t = 0;
+
+  @override
+  void update(double dt) => _t += dt;
+
+  @override
+  void render(Canvas canvas) {
+    final view = game.camera.visibleWorldRect;
+    final r = area.intersect(view);
+    if (r.width <= 0 || r.height <= 0) return;
+    final rain = Paint()
+      ..color = const Color(0xFFB8C8E0).withValues(alpha: 0.35)
+      ..strokeWidth = 1.2;
+    final count = (area.width * area.height / 2600).clamp(20, 220).toInt();
+    for (var i = 0; i < count; i++) {
+      final x = area.left + (i * 97.0 % area.width);
+      final y = area.top + ((i * 211.0 + _t * 520) % area.height);
+      if (!r.contains(Offset(x, y))) continue;
+      canvas.drawLine(Offset(x, y), Offset(x - 4, y + 14), rain);
+    }
+  }
+}
