@@ -1236,7 +1236,7 @@ class WindBell extends PositionComponent
     _ring = 1;
     _rearm = 2.5;
     GameAudio.instance.play('bell');
-    game.makeNoise(position.clone(), 460, source: this);
+    game.makeNoise(position.clone(), 780, source: this);
   }
 
   @override

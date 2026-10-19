@@ -149,6 +149,42 @@ k.fill(14,2,16,11,'r')
 k.fill(19,4,23,4,'='); k.put(21,3,'E')
 for c,r in [(4,90),(10,66),(12,50),(9,38),(8,26),(8,9)]:
     k.put(c,r,'p')
+# Kule uzar: altta Yanan Mahzen, tepede Çan Katı ve külah.
+TOP, BOT = 34, 40
+k2 = G(W, TOP + H + BOT)
+for r, row in enumerate(k.g):
+    k2.g[r + TOP] = list(row)
+k = k2
+k.put(3, TOP + 91, '.', force=True)          # eski başlangıç
+k.put(21, TOP + 3, '.', force=True)          # eski çıkış
+k.fill(0, 0, 1, k.H - 1, '#'); k.fill(28, 0, 29, k.H - 1, '#')
+B = TOP + H                                   # alt kısmın ilk satırı (130)
+# --- Yanan Mahzen
+k.fill(2, B + 38, 27, B + 39, '#')
+k.put(4, B + 37, 'P'); k.put(5, B + 37, 'p'); k.put(6, B + 37, '6'); k.put(7, B + 37, 'B')
+k.put(8, B + 37, 'K'); k.put(11, B + 37, 'C'); k.put(12, B + 37, '7')
+k.fill(10, B + 33, 25, B + 34, '#')          # alçak tavan
+for c in (14, 17, 20):
+    k.put(c, B + 37, '!')
+k.fill(26, B + 20, 26, B + 37, '|')
+k.fill(14, B + 20, 25, B + 21, '#')
+k.put(24, B + 19, 'K'); k.put(22, B + 19, '~'); k.put(23, B + 19, '~'); k.put(18, B + 19, 'G')
+k.put(15, B + 19, '!'); k.put(20, B + 19, 'M'); k.put(25, B + 19, 'B')
+k.fill(4, B + 17, 12, B + 17, '=')
+k.fill(3, TOP + 92, 3, B + 16, '|')          # eski zeminden yukarı sarmaşık
+k.fill(8, TOP + 96, 27, TOP + 97, '#')       # Haliç'in dibi
+k.put(5, B + 16, 'B')
+# --- Çan Katı ve külah
+k.fill(14, 22, 16, TOP + 1, 'r')
+k.fill(2, 26, 9, 27, '#'); k.fill(3, 23, 5, 23, '#'); k.put(4, 24, 'c')
+k.put(3, 25, 'K'); k.put(5, 25, 'M'); k.put(6, 25, '8'); k.put(7, 25, 'k'); k.put(8, 25, 'p')
+k.fill(20, 26, 21, 27, '#'); k.fill(22, 26, 24, 26, 'u'); k.fill(25, 26, 27, 27, '#')
+k.put(26, 25, 'G')
+k.fill(27, 11, 27, 25, '|')
+k.fill(20, 9, 26, 10, '#'); k.put(21, 8, 'B'); k.put(24, 8, 'p')
+k.put(17, 7, 'O')
+k.fill(11, 4, 16, 4, '#'); k.fill(12, 5, 15, 5, '#'); k.put(14, 3, 'E'); k.put(12, 3, 'B')
+H = k.H
 lvl2=k.rows()
 
 # ------------------------------------------------------------ III · GÖKYOLU

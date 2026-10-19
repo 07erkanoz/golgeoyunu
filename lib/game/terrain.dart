@@ -701,6 +701,14 @@ class WaterComponent extends Component with HasGameReference<GolgeGame> {
       for (var r = 0; r < level.height; r++) {
         if (level.cell(c, r) != 'w') continue;
         _surface[c] = r * kTile;
+        // Suyun dibi: altında kaya ya da boşluk başlıyorsa orada biter.
+        var b = r;
+        while (b + 1 < level.height && level.cell(c, b + 1) == 'w') {
+          b++;
+        }
+        _floor[c] = b + 1 >= level.height
+            ? level.pixelHeight + 400
+            : (b + 1) * kTile.toDouble();
         break;
       }
       for (var r = 0; r < level.height; r++) {
@@ -711,6 +719,7 @@ class WaterComponent extends Component with HasGameReference<GolgeGame> {
 
   final Level level;
   final _surface = <int, double>{};
+  final _floor = <int, double>{};
   final _columns = <double>[];
   final _bodies = <double, Paint>{};
   double _t = 0;
@@ -728,8 +737,8 @@ class WaterComponent extends Component with HasGameReference<GolgeGame> {
       for (var c = cMin; c <= cMax; c++)
         if (_surface[c] case final top?) MapEntry(c, top),
     ];
-    final bottom = level.pixelHeight + 400;
     for (final MapEntry(key: c, value: top) in visible) {
+      final bottom = _floor[c] ?? level.pixelHeight + 400;
       final rect = Rect.fromLTRB(
         c * kTile - 0.5,
         top,
