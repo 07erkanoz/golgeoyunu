@@ -502,6 +502,17 @@ class StoneGiant extends PositionComponent with HasGameReference<GolgeGame> {
           game.world.add(
             GiantBridge(Vector2(position.x - kTile, position.y - kTile * 1.2)),
           );
+          // Devin düşüşü ilerideki (çıkışa doğru) kapıyı kırar.
+          Gate? best;
+          var bestD = double.infinity;
+          for (final g in game.world.children.whereType<Gate>()) {
+            final dd = (g.position - position).length;
+            if (g.position.x > position.x && dd < bestD && !g.opening) {
+              bestD = dd;
+              best = g;
+            }
+          }
+          best?.opening = true;
         }
       }
     }
