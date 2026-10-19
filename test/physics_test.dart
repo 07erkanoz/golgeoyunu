@@ -456,6 +456,55 @@ void main() {
     );
   });
 
+  group('Kule asansörü', () {
+    testWithGame<GolgeGame>(
+      'sandığı it, düşünce yükselen kefeye atla, yukarı çık',
+      GolgeGame.new,
+      (game) async {
+        final p = await place(game, 1, 17, 37);
+        run(game, 0.2);
+        final crate = nearest<Crate>(game, 15 * kTile);
+        // Sandığı sola, tahtanın ucundan kefeye it.
+        keys(game).left = true;
+        for (var i = 0; i < 400 && crate.position.x > 12 * kTile - 20; i++) {
+          game.update(1 / 60);
+        }
+        expect(
+          crate.position.x,
+          lessThan(12 * kTile),
+          reason: 'sandık düşmedi',
+        );
+        // Tahtanın ucuna gel ve yükselen kefeye zıpla.
+        for (var i = 0; i < 120 && p.position.x > 12 * kTile + 1; i++) {
+          game.update(1 / 60);
+        }
+        keys(game).jump = true;
+        var onPan = false;
+        for (var i = 0; i < 120 && !onPan; i++) {
+          game.update(1 / 60);
+          onPan = p.riding is LiftPan;
+        }
+        expect(onPan, isTrue, reason: 'kefeye inemedi');
+        keys(game)
+          ..left = false
+          ..jump = false;
+        run(game, 4);
+        expect(
+          p.position.y + Player.h,
+          closeTo(37 * kTile, 3),
+          reason: 'kefe yukarı çıkmadı',
+        );
+        // Kefeden soldaki tahtaya geç.
+        keys(game)
+          ..left = true
+          ..jump = true;
+        run(game, 1.0);
+        expect(p.isDead, isFalse);
+        expect(p.position.y + Player.h, closeTo(35 * kTile, 1));
+      },
+    );
+  });
+
   group('Gökyolu', () {
     testWithGame<GolgeGame>(
       'Gözcü\'nün ışığında kalan yakalanır',

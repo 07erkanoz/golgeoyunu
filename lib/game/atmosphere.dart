@@ -552,6 +552,22 @@ class ScreenEffects extends Component with HasGameReference<GolgeGame> {
     }
     canvas.drawRect(Rect.fromLTWH(0, 0, w, h), _vignette!);
 
+    // Parlaklık: hafif sıcak bir aydınlatma ya da karartma.
+    final b = Settings.brightness;
+    if (b > 1.001) {
+      canvas.drawRect(
+        Rect.fromLTWH(0, 0, w, h),
+        Paint()
+          ..color = const Color(0xFFFFE2C2).withValues(alpha: (b - 1) * 0.22)
+          ..blendMode = BlendMode.screen,
+      );
+    } else if (b < 0.999) {
+      canvas.drawRect(
+        Rect.fromLTWH(0, 0, w, h),
+        Paint()..color = kInk.withValues(alpha: (1 - b) * 0.9),
+      );
+    }
+
     if (Settings.lowGraphics) {
       if (fade > 0) {
         canvas.drawRect(

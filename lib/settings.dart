@@ -18,7 +18,10 @@ class Settings {
   static bool lowGraphics = false;
 
   /// Dokunmatik kontrol: düğmeler ya da hareket (sürükle / dokun).
-  static bool touchGestures = false;
+  static bool touchGestures = true;
+
+  /// Parlaklık (0.8 – 1.3): atmosferi bozmayacak dar bir aralık.
+  static double brightness = 1.0;
 
   /// Dokunmatik düğmelerin görünürlüğü (0.1 – 1).
   static double touchOpacity = 0.7;
@@ -36,6 +39,7 @@ class Settings {
       lowGraphics = p.getBool('low_graphics') ?? lowGraphics;
       touchGestures = p.getBool('touch_gestures') ?? touchGestures;
       touchOpacity = p.getDouble('touch_opacity') ?? touchOpacity;
+      brightness = (p.getDouble('brightness') ?? brightness).clamp(0.8, 1.3);
       S.lang = p.getString('lang') == 'en' ? Lang.en : Lang.tr;
       SaveGame.current = SaveData.decode(p.getString('save'));
     } catch (_) {
@@ -53,6 +57,7 @@ class Settings {
     await p.setBool('low_graphics', lowGraphics);
     await p.setBool('touch_gestures', touchGestures);
     await p.setDouble('touch_opacity', touchOpacity);
+    await p.setDouble('brightness', brightness);
     await p.setString('lang', S.en ? 'en' : 'tr');
   }
 }

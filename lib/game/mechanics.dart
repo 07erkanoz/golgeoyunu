@@ -199,7 +199,19 @@ class LiftPan extends Deck {
   @override
   void render(Canvas canvas) {
     final wood = Paint()..color = const Color(0xFF241510);
+    // Kenarlı bir sepet: terazinin kefesi olduğu ilk bakışta anlaşılsın.
     canvas.drawRect(Rect.fromLTWH(0, 0, size.x, 7), wood);
+    canvas.drawRect(Rect.fromLTWH(0, -6, 4, 8), wood);
+    canvas.drawRect(Rect.fromLTWH(size.x - 4, -6, 4, 8), wood);
+    canvas.drawPath(
+      Path()
+        ..moveTo(4, 7)
+        ..lineTo(size.x - 4, 7)
+        ..lineTo(size.x - 10, 13)
+        ..lineTo(10, 13)
+        ..close(),
+      wood,
+    );
     canvas.drawLine(
       const Offset(0, 0.8),
       Offset(size.x, 0.8),
@@ -212,8 +224,8 @@ class LiftPan extends Deck {
       ..color = kInk
       ..strokeWidth = 1.3;
     final top = -(position.y - base.y) - BalanceLift.ropeTop;
-    canvas.drawLine(const Offset(3, 0), Offset(size.x / 2, top), rope);
-    canvas.drawLine(Offset(size.x - 3, 0), Offset(size.x / 2, top), rope);
+    canvas.drawLine(const Offset(2, -6), Offset(size.x / 2, top), rope);
+    canvas.drawLine(Offset(size.x - 2, -6), Offset(size.x / 2, top), rope);
   }
 }
 
@@ -254,13 +266,25 @@ class BalanceLift extends Component with HasGameReference<GolgeGame> {
     final pb = Offset(b.base.x + b.size.x / 2, b.base.y - ropeTop);
     final ink = Paint()..color = kInk;
     canvas.drawLine(pa, pb, ink..strokeWidth = 1.6);
-    for (final p in [pa, pb]) {
-      canvas.drawCircle(p, 6, ink);
+    // Makaralar kefeler hareket ettikçe döner: ağırlığın etkisi görünür.
+    final spoke = Paint()
+      ..color = const Color(0xFFD08A5A).withValues(alpha: 0.55)
+      ..strokeWidth = 1.2;
+    for (final (p, dir) in [(pa, 1.0), (pb, -1.0)]) {
+      canvas.drawCircle(p, 9, ink);
+      canvas.save();
+      canvas.translate(p.dx, p.dy);
+      canvas.rotate(dir * _offset / 9);
+      for (var k = 0; k < 4; k++) {
+        canvas.rotate(math.pi / 4);
+        canvas.drawLine(const Offset(-7, 0), const Offset(7, 0), spoke);
+      }
+      canvas.restore();
       canvas.drawCircle(
         p,
-        6,
+        9,
         Paint()
-          ..color = const Color(0xFFD08A5A).withValues(alpha: 0.35)
+          ..color = const Color(0xFFD08A5A).withValues(alpha: 0.4)
           ..style = PaintingStyle.stroke
           ..strokeWidth = 1,
       );

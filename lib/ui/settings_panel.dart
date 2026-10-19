@@ -183,6 +183,17 @@ class _SettingsPanelState extends State<SettingsPanel> {
                       ),
                     ),
                 ],
+                _label(S.of('brightness'), Settings.brightness),
+                Slider(
+                  value: Settings.brightness,
+                  min: 0.8,
+                  max: 1.3,
+                  onChanged: (v) {
+                    Settings.brightness = v;
+                    Settings.save();
+                    setState(() {});
+                  },
+                ),
                 Row(
                   children: [
                     Text(

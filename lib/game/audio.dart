@@ -76,6 +76,14 @@ class GameAudio {
 
   Future<void> init() async {
     try {
+      // Android'de her oynatıcı varsayılan olarak ses odağını kendine alır;
+      // oyunun kendi sesleri (müzik, ortam, efektler) birbirinin odağını
+      // çalınca müzik duraklayıp baştan başlıyordu. Hepsi odak istemeden
+      // birlikte çalar.
+      await AudioPlayer.global.setAudioContext(
+        AudioContextConfig(focus: AudioContextConfigFocus.mixWithOthers)
+            .build(),
+      );
       await FlameAudio.audioCache.loadAll([
         for (final e in _effects) '$e.wav',
         'amb_cistern.wav',

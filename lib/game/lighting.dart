@@ -17,7 +17,11 @@ import 'levels.dart';
 class LightingLayer extends Component with HasGameReference<GolgeGame> {
   LightingLayer() : super(priority: 40);
 
-  static double darknessFor(LevelTheme theme) => switch (theme) {
+  /// Temanın karanlığı, parlaklık ayarına göre biraz açılır ya da koyulaşır.
+  static double darknessFor(LevelTheme theme) =>
+      (_baseDarkness(theme) * (2 - Settings.brightness)).clamp(0.05, 0.9);
+
+  static double _baseDarkness(LevelTheme theme) => switch (theme) {
     LevelTheme.cistern => 0.48,
     LevelTheme.cave => 0.45,
     LevelTheme.cliffs => 0.32,
