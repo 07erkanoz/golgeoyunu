@@ -158,7 +158,7 @@ class Guard extends PositionComponent with HasGameReference<GolgeGame> {
         !distracted &&
         (!p.hidden || justSaw) &&
         p.toRect().deflate(2).overlaps(toRect().deflate(4))) {
-      p.die();
+      p.die(cause: DeathCause.light);
       suspicion = 0;
       _setState(GuardState.pause);
     }

@@ -13,6 +13,21 @@ import 'palette.dart';
 
 enum PlayerState { normal, hang, climbUp, vine, dead }
 
+/// Ölümün nasıl anlatılacağı.
+enum DeathCause {
+  /// Diken, düşüş.
+  hazard,
+
+  /// Suya düşüş.
+  water,
+
+  /// Kandilci ya da Gözcü yakaladı: fener ışığı taşar, kavanoz kırılır.
+  light,
+
+  /// Karabasan ya da karanlık bölge: karanlık yutar.
+  dark,
+}
+
 class Player extends PositionComponent with HasGameReference<GolgeGame> {
   Player(Vector2 start)
     : super(position: start, size: Vector2(w, h), priority: 20);
@@ -166,7 +181,8 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
 
   /// Oyuncunun taşıdığı ışık: konumu ve yarıçapı (aydınlatma katmanı için).
   (Vector2, double) get light {
-    final radius = crouching ? 55.0 : (sneaking ? 120.0 : 200.0);
+    final radius =
+        (crouching ? 55.0 : (sneaking ? 120.0 : 200.0)) * game.jarStrength;
     if (jarStyle) {
       return (position + Vector2(w / 2 + facing * 5, 17), radius);
     }
@@ -560,10 +576,22 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     if (position.y > level.pixelHeight + 80) die(fell: true);
   }
 
-  void die({bool fell = false}) {
+  /// Son ölümün nedeni: yakalanma ışıkla, Karabasan karanlıkla anlatılır.
+  DeathCause deathCause = DeathCause.hazard;
+
+  void die({bool fell = false, DeathCause cause = DeathCause.hazard}) {
     if (isDead) return;
+    deathCause = cause;
     final water = level.cellAt(center.x, position.y + h + 4) == 'w';
-    GameAudio.instance.play(water ? 'splash' : 'death');
+    if (water) deathCause = DeathCause.water;
+    // Işıkla yakalanmada cam sesi, fener ışığı taşınca gelir.
+    if (deathCause != DeathCause.light) {
+      GameAudio.instance.play(switch (deathCause) {
+        DeathCause.water => 'splash',
+        DeathCause.dark => 'breath',
+        _ => 'death',
+      });
+    }
     _fell = fell;
     crouching = false;
     velocity.x = 0;
@@ -578,7 +606,8 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       velocity.y = math.min(velocity.y + gravity * dt, maxFall);
       _moveY(velocity.y * dt);
     }
-    if (!_deathReported && _stateTime > (_fell ? 0.1 : 0.6)) {
+    final report = _fell ? 0.1 : (deathCause == DeathCause.light ? 0.12 : 0.6);
+    if (!_deathReported && _stateTime > report) {
       _deathReported = true;
       game.onPlayerDied();
     }

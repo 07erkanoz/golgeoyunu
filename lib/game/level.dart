@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:ui' show Offset, Rect;
 
 import 'package:flame/components.dart';
 
@@ -7,6 +8,19 @@ import 'levels.dart';
 const double kTile = 32;
 
 /// Bir bölüm haritasının çözümlenmiş hâli: hücre sorguları ve özel noktalar.
+///
+/// Harita gösterimi (haritalar tools/generate_maps.py ile üretilir):
+/// - Zemin: `#` kaya, `=` tahta, `|` tırmanılan zincir/sarmaşık, `^` diken,
+///   `w` su, `~` ve `I` saklanılan gölge, `r` rüzgâr akımı, `D` damla.
+/// - Oyuncu ve yol: `P` başlangıç, `E` çıkış, `K` kontrol noktası, `B` Hüdhüd
+///   konakları, `1`-`9` fısıltılar, `M` hatıralar.
+/// - Canlılar: `G` Kandilci, `g` Gözcü, `b` yarasalar, `k` karga, `z`/`Z`
+///   Karabasan kovalamacasının başı/sonu, `e` karanlıkta beliren gözler.
+/// - Düzenekler: `C` sandık, `L` kol, `H` kapı, `A`/`Y` terazi kefeleri,
+///   `R`/`V` yatay/dikey kayan kaya, `O` çöken kaya, `F` ateşböcekleri,
+///   `W` Hezarfen'in kanatları.
+/// - Bölgeler: `x` sol üst ve `X` sağ alt köşeleriyle karanlık bölge (ışığı
+///   yer, ateşböcekleri birer birer söner).
 class Level {
   Level(this.def) {
     _parse();
@@ -36,6 +50,11 @@ class Level {
   double? chaseStart;
   double? chaseEnd;
   final leverCells = <Vector2>[];
+  final glimpseCells = <Vector2>[];
+
+  /// Karanlık bölgeler (dünya koordinatında dikdörtgenler).
+  final darkZones = <Rect>[];
+  final _darkStarts = <Vector2>[];
 
   /// Dikey `H` dizileri: her biri bir kapı (sütun, üst satır, alt satır).
   final gates = <(int, int, int)>[];
@@ -94,6 +113,17 @@ class Level {
             chaseEnd = cell.x;
           case 'L':
             leverCells.add(cell);
+          case 'e':
+            glimpseCells.add(cell);
+          case 'x':
+            _darkStarts.add(cell);
+          case 'X':
+            if (_darkStarts.isNotEmpty) {
+              final a = _darkStarts.removeAt(0);
+              darkZones.add(
+                Rect.fromLTRB(a.x, a.y, cell.x + kTile, cell.y + kTile),
+              );
+            }
           case 'H':
             if (r == 0 || def.map[r - 1].padRight(width, '.')[c] != 'H') {
               var end = r;
@@ -122,6 +152,10 @@ class Level {
   }
 
   bool solid(int c, int r) => cell(c, r) == '#';
+
+  /// Nokta bir karanlık bölgenin içinde mi?
+  bool inDarkZone(Vector2 p) =>
+      darkZones.any((z) => z.contains(Offset(p.x, p.y)));
 
   /// Bölümde ne kadar ilerlendiği: yatay bölümlerde x, dikey (tırmanma)
   /// bölümlerinde yükseklik.

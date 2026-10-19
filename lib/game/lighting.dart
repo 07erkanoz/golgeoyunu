@@ -49,6 +49,24 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
     canvas.drawCircle(c, radius, _cut);
   }
 
+  /// Karanlık bölgeler örtünün altında daha da kararır; kenarları yumuşak.
+  void _darkZones(Canvas canvas, Rect view) {
+    for (final z in game.level.darkZones) {
+      if (!z.overlaps(view)) continue;
+      const edge = 96.0;
+      final paint = Paint()
+        ..color = const Color(0xFF040201).withValues(alpha: 0.5);
+      canvas.drawRect(z.deflate(edge / 2), paint);
+      // Kenarlarda yumuşak geçiş: iç içe birkaç saydam kuşak.
+      for (var i = 1; i <= 4; i++) {
+        canvas.drawRect(
+          z.deflate(edge / 2 - i * edge / 8),
+          Paint()..color = const Color(0xFF040201).withValues(alpha: 0.1),
+        );
+      }
+    }
+  }
+
   @override
   void render(Canvas canvas) {
     final rect = game.camera.visibleWorldRect.inflate(80);
@@ -64,6 +82,7 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
         ..color = const Color(0xFF040201)
             .withValues(alpha: darknessFor(game.level.def.theme)),
     );
+    _darkZones(canvas, rect);
 
     final p = game.player;
     if (p != null && p.isMounted && !p.isDead) {
@@ -135,6 +154,14 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
     if (p == null || !p.isMounted || p.isDead) {
       canvas.drawRect(rect, Paint()..color = dark);
       return;
+    }
+    for (final z in game.level.darkZones) {
+      if (z.overlaps(rect)) {
+        canvas.drawRect(
+          z,
+          Paint()..color = const Color(0xFF040201).withValues(alpha: 0.45),
+        );
+      }
     }
     final (pos, radius) = p.light;
     final c = pos.toOffset();

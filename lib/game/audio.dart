@@ -39,6 +39,10 @@ class GameAudio {
     'throw',
     'glide',
     'creak',
+    'shatter',
+    'breath',
+    'fizzle',
+    'chain',
   ];
 
   bool _ready = false;
@@ -71,9 +75,16 @@ class GameAudio {
   String? _wantedAmbient;
   AudioPlayer? _ney;
   bool _neyWanted = false;
-  AudioPlayer? _dread;
-  bool _dreadStarting = false;
-  double _dreadLevel = 0;
+
+  /// Seviyesi sürekli değişen döngüler: Karabasan'ın gümbürtüsü, saklanırken
+  /// kalp atışı, Kandilcilerin mırıltısı.
+  final _dread = _LoopChannel('karabasan.wav');
+  final _heart = _LoopChannel('heartbeat.wav');
+  final _murmur = _LoopChannel('murmur.wav');
+  late final _loops = [_dread, _heart, _murmur];
+
+  /// Saklanırken ortam sesi boğuklaşır (0 = normal, 1 = tamamen kısık).
+  double _duck = 0;
   final _lastPlayed = <String, int>{};
 
   Future<void> init() async {
@@ -92,6 +103,8 @@ class GameAudio {
         'amb_wind.wav',
         'amb_sky.wav',
         'karabasan.wav',
+        'heartbeat.wav',
+        'murmur.wav',
         'perde_ney.wav',
         'menu_theme.mp3',
       ]);
@@ -212,62 +225,109 @@ class GameAudio {
     _ambientName = name;
     try {
       await _ambient?.stop();
-      _ambient = await FlameAudio.loop(
-        '$name.wav',
-        volume: Settings.ambience * 0.8,
-      );
+      _ambient = await FlameAudio.loop('$name.wav', volume: _ambientVolume);
     } catch (_) {}
   }
 
   /// Karabasan'ın gümbürtüsü: 0 = yok, 1 = ensende.
-  void dread(double level) {
+  void dread(double level) => _set(_dread, level);
+
+  /// Saklanırken duyulan kalp atışı: tehlike yaklaştıkça yükselir.
+  void heartbeat(double level) => _set(_heart, level * 0.9);
+
+  /// En yakın Kandilci'nin mırıltısı.
+  void murmur(double level) => _set(_murmur, level * 0.6);
+
+  /// Saklanırken ortam sesini kısar.
+  void duck(double amount) {
+    amount = amount.clamp(0.0, 1.0);
+    if ((amount - _duck).abs() < 0.04) return;
+    _duck = amount;
+    _ambient?.setVolume(_ambientVolume);
+  }
+
+  double get _ambientVolume => Settings.ambience * 0.8 * (1 - 0.65 * _duck);
+
+  void _set(_LoopChannel ch, double level) {
     if (!_ready) return;
-    level = level.clamp(0.0, 1.0);
-    if ((level - _dreadLevel).abs() < 0.03) return;
-    _dreadLevel = level;
-    if (level <= 0) {
-      _dread?.stop();
-      _dread = null;
-      return;
-    }
-    final vol = (level * Settings.effects).clamp(0.0, 1.0);
-    if (_dread == null) {
-      if (_dreadStarting) return;
-      _dreadStarting = true;
-      FlameAudio.loop('karabasan.wav', volume: vol)
-          .then((p) {
-            _dread = p;
-            _dreadStarting = false;
-            // Başlarken tehdit geçmişse hemen sustur.
-            if (_dreadLevel <= 0) {
-              p.stop();
-              _dread = null;
-            }
-          })
-          .catchError((_) {
-            _dreadStarting = false;
-          });
-    } else {
-      _dread!.setVolume(vol);
-    }
+    ch.set(level.clamp(0.0, 1.0));
   }
 
   void applyVolumes() {
     _music?.setVolume(Settings.music);
     _ney?.setVolume(Settings.music);
-    _ambient?.setVolume(Settings.ambience * 0.8);
-    _dread?.setVolume((_dreadLevel * Settings.effects).clamp(0.0, 1.0));
+    _ambient?.setVolume(_ambientVolume);
+    for (final l in _loops) {
+      l.refresh();
+    }
   }
 
   void pauseAll() {
     _ney?.pause();
     _ambient?.pause();
-    _dread?.pause();
+    for (final l in _loops) {
+      l.player?.pause();
+    }
   }
 
   void resumeAll() {
     _ney?.resume();
     _ambient?.resume();
-    _dread?.resume();
+    for (final l in _loops) {
+      l.player?.resume();
+    }
   }
+
+  /// Sahne değişince bütün gerilim döngüleri susar.
+  void silenceLoops() {
+    for (final l in _loops) {
+      _set(l, 0);
+    }
+    duck(0);
+  }
+}
+
+/// Seviyesi değişen bir döngü: 0'a inince durur, yükselince yeniden başlar.
+class _LoopChannel {
+  _LoopChannel(this.file);
+
+  final String file;
+  AudioPlayer? player;
+  bool _starting = false;
+  double _level = 0;
+
+  double get _volume => (_level * Settings.effects).clamp(0.0, 1.0);
+
+  void set(double level) {
+    if ((level - _level).abs() < 0.03 && (level > 0 || _level == 0)) return;
+    _level = level;
+    if (level <= 0) {
+      player?.stop();
+      player = null;
+      return;
+    }
+    if (player == null) {
+      if (_starting) return;
+      _starting = true;
+      FlameAudio.loop(file, volume: _volume)
+          .then((p) {
+            player = p;
+            _starting = false;
+            // Başlarken seviye düştüyse hemen sustur.
+            if (_level <= 0) {
+              p.stop();
+              player = null;
+            } else {
+              p.setVolume(_volume);
+            }
+          })
+          .catchError((_) {
+            _starting = false;
+          });
+    } else {
+      player!.setVolume(_volume);
+    }
+  }
+
+  void refresh() => player?.setVolume(_volume);
 }

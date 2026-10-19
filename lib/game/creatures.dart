@@ -9,6 +9,7 @@ import 'entities.dart';
 import 'golge_game.dart';
 import 'level.dart';
 import 'palette.dart';
+import 'player.dart';
 import 'strings.dart';
 
 // =============================================================== Yarasalar
@@ -280,7 +281,7 @@ class Watcher extends PositionComponent with HasGameReference<GolgeGame> {
         ? math.min(1, suspicion + dt * 1.6)
         : math.max(0, suspicion - dt * 0.6);
     if (suspicion >= 1) {
-      p.die();
+      p.die(cause: DeathCause.light);
       suspicion = 0;
     }
   }
@@ -443,7 +444,9 @@ class Karabasan extends PositionComponent with HasGameReference<GolgeGame> {
     final gap = p.center.x - position.x;
     game.shake(((260 - gap) / 260).clamp(0.0, 1.0) * 5);
     GameAudio.instance.dread(((520 - gap) / 420).clamp(0.15, 1.0));
-    if (gap < 46 && (p.center.y - position.y).abs() < 90) p.die();
+    if (gap < 46 && (p.center.y - position.y).abs() < 90) {
+      p.die(cause: DeathCause.dark);
+    }
   }
 
   @override
@@ -494,5 +497,82 @@ class Karabasan extends PositionComponent with HasGameReference<GolgeGame> {
       Rect.fromCenter(center: const Offset(10, -16), width: 8, height: 3.5),
       eye,
     );
+  }
+}
+
+// ====================================================== Karanlıktaki gözler
+
+/// Karabasan saldırmadan önce yalnızca sezilir: Sâye yaklaşınca karanlıkta
+/// iki soluk göz açılır, bir kez yavaşça kırpılır, ağır bir nefes duyulur ve
+/// gözler kapanır. Bir kez olur.
+class KarabasanGlimpse extends PositionComponent
+    with HasGameReference<GolgeGame> {
+  KarabasanGlimpse(Vector2 cell)
+    : super(position: cell + Vector2(kTile / 2, kTile / 2), priority: 45);
+
+  static const double triggerDistance = 330;
+  static const double duration = 3.4;
+
+  double _t = -1;
+
+  bool get seen => _t >= 0;
+
+  @override
+  void update(double dt) {
+    super.update(dt);
+    final p = game.player;
+    if (_t < 0) {
+      if (p == null || p.isDead || game.cinematic) return;
+      final d = p.center - position;
+      if (d.x.abs() < triggerDistance && d.y.abs() < 220) {
+        _t = 0;
+        GameAudio.instance.play('breath', volume: 0.8);
+      }
+      return;
+    }
+    _t += dt;
+    if (_t > duration) removeFromParent();
+  }
+
+  @override
+  void render(Canvas canvas) {
+    if (_t < 0) return;
+    // Açılır, bakar, bir kez kırpar, kapanır.
+    final open = _t < 0.7
+        ? _t / 0.7
+        : (_t > duration - 0.9 ? (duration - _t) / 0.9 : 1.0);
+    final blink = (_t > 1.7 && _t < 1.95) ? 0.1 : 1.0;
+    final a = open.clamp(0.0, 1.0);
+    final h = 3.6 * a * blink;
+    if (h <= 0.05) return;
+    // Gözlerin ardında zar zor seçilen, nefes alan bir karartı.
+    canvas.drawOval(
+      Rect.fromCenter(
+        center: const Offset(0, 6),
+        width: 150 + math.sin(_t * 2) * 8,
+        height: 90,
+      ),
+      Paint()
+        ..shader = ui.Gradient.radial(const Offset(0, 6), 80, [
+          const Color(0xFF000000).withValues(alpha: 0.55 * a),
+          const Color(0xFF000000).withValues(alpha: 0),
+        ]),
+    );
+    final eye = Paint()
+      ..color = const Color(0xFFE8DCC8).withValues(alpha: 0.85 * a);
+    final drift = math.sin(_t * 1.3) * 2;
+    for (final (x, w) in [(-11.0, 9.0), (11.0, 8.0)]) {
+      glowDot(
+        canvas,
+        Offset(x + drift, 0),
+        14,
+        const Color(0xFFE8DCC8),
+        0.12 * a,
+      );
+      canvas.drawOval(
+        Rect.fromCenter(center: Offset(x + drift, 0), width: w, height: h),
+        eye,
+      );
+    }
   }
 }

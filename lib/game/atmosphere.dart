@@ -457,9 +457,26 @@ class ScreenEffects extends Component with HasGameReference<GolgeGame> {
     _onFaded = null;
   }
 
+  double _wait = 0;
+  VoidCallback? _afterWait;
+
+  /// [seconds] sonra [then] çağrılır (karartı beklerken).
+  void after(double seconds, VoidCallback then) {
+    _wait = seconds;
+    _afterWait = then;
+  }
+
   @override
   void update(double dt) {
     _t += dt;
+    if (_afterWait != null) {
+      _wait -= dt;
+      if (_wait <= 0) {
+        final cb = _afterWait;
+        _afterWait = null;
+        cb?.call();
+      }
+    }
     if (fade != _fadeTarget) {
       final step = _fadeSpeed * dt;
       fade = (fade - _fadeTarget).abs() <= step
@@ -551,6 +568,33 @@ class ScreenEffects extends Component with HasGameReference<GolgeGame> {
         );
     }
     canvas.drawRect(Rect.fromLTWH(0, 0, w, h), _vignette!);
+
+    // Gerilim: şüphe arttıkça kenarlar kararır; saklanırken renkler solar.
+    final threat = game.threat;
+    if (threat > 0.02) {
+      canvas.drawRect(
+        Rect.fromLTWH(0, 0, w, h),
+        Paint()
+          ..shader = ui.Gradient.radial(
+            Offset(w / 2, h / 2),
+            math.max(w, h) * 0.62,
+            [
+              const Color(0x000A0605),
+              const Color(0xFF0A0605).withValues(alpha: 0.75 * threat),
+            ],
+            const [0.45, 1.0],
+          ),
+      );
+    }
+    final hide = game.hideAmount;
+    if (hide > 0.02 && !Settings.lowGraphics) {
+      canvas.drawRect(
+        Rect.fromLTWH(0, 0, w, h),
+        Paint()
+          ..color = const Color(0xFF808080).withValues(alpha: 0.55 * hide)
+          ..blendMode = BlendMode.saturation,
+      );
+    }
 
     // Parlaklık: hafif sıcak bir aydınlatma ya da karartma.
     final b = Settings.brightness;

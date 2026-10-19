@@ -89,6 +89,27 @@ class GolgeGame extends FlameGame with KeyboardEvents {
   static const startFireflies = 2;
   int fireflies = startFireflies;
 
+  // ------------------------------------------------------------- gerilim
+
+  /// Ekrana yansıyan tehlike (0-1): Kandilci şüphesi, Gözcü, Karabasan.
+  double threat = 0;
+
+  /// Saklanma (0-1): sesler boğuklaşır, renkler solar.
+  double hideAmount = 0;
+
+  /// Kavanozun ışık gücü: karanlık bölgede ateşböcekleri azaldıkça söner.
+  double jarStrength = 1;
+
+  /// Karanlık bölgede bir ateşböceğinin sönme süresi.
+  static const darkDrain = 6.5;
+
+  /// Ateşböceği kalmayınca karanlığın yutma süresi.
+  static const darkSwallow = 4.5;
+
+  double _darkT = 0;
+  bool _darkWarned = false;
+  double _chainT = 25;
+
   final _memories = <String>{};
   final _whispersShown = <String>{};
 
@@ -300,6 +321,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     level = Level(levels[index]);
     if (!respawn || _respawn == null) {
       _respawn = Level.standOn(level.playerStart, Player.w, Player.h);
+      _darkWarned = false;
     }
 
     world.addAll([
@@ -322,6 +344,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
       for (final c in level.crowCells) Crow(c),
       for (final c in level.watcherCells) Watcher(c),
       for (final c in level.wingsCells) WingsPickup(c),
+      for (final c in level.glimpseCells) KarabasanGlimpse(c),
       if (level.chaseStart != null && level.chaseEnd != null)
         Karabasan(level.chaseStart!, level.chaseEnd!),
       for (var i = 0; i < level.memoryCells.length; i++)
@@ -329,7 +352,11 @@ class GolgeGame extends FlameGame with KeyboardEvents {
           MemoryShard(level.memoryCells[i], i),
     ]);
     GameAudio.instance.ambientFor(level.def.theme);
-    GameAudio.instance.dread(0);
+    GameAudio.instance.silenceLoops();
+    threat = 0;
+    hideAmount = 0;
+    jarStrength = 1;
+    _darkT = 0;
     if (withPlayer) {
       player = Player(_respawn!.clone());
       world.add(player!);
@@ -370,16 +397,39 @@ class GolgeGame extends FlameGame with KeyboardEvents {
   void onPlayerDied() {
     if (_transitioning) return;
     _transitioning = true;
-    effects.fadeTo(
-      1,
-      0.8,
-      color: kInk,
-      onDone: () {
-        _buildLevel(levelIndex, respawn: true);
-        effects.fadeTo(0, 0.7);
-        _transitioning = false;
-      },
-    );
+    GameAudio.instance.silenceLoops();
+    void respawn() {
+      _buildLevel(levelIndex, respawn: true);
+      effects.fadeTo(0, 0.7);
+      _transitioning = false;
+    }
+
+    switch (player?.deathCause) {
+      case DeathCause.light:
+        // Fenerin soğuk ışığı ekranı kaplar, kavanoz kırılır, karanlık.
+        effects.fadeTo(
+          0.94,
+          0.22,
+          color: const Color(0xFFE4FFF8),
+          onDone: () {
+            GameAudio.instance.play('shatter');
+            effects.setFade(1, kInk);
+            effects.after(0.9, respawn);
+          },
+        );
+      case DeathCause.dark:
+        // Karanlık ağır ağır yutar.
+        effects.fadeTo(
+          1,
+          1.3,
+          color: kInk,
+          onDone: () {
+            effects.after(0.4, respawn);
+          },
+        );
+      default:
+        effects.fadeTo(1, 0.8, color: kInk, onDone: respawn);
+    }
   }
 
   void onExitReached() {
@@ -534,8 +584,88 @@ class GolgeGame extends FlameGame with KeyboardEvents {
 
     final p = player;
     if (p == null || !p.isMounted) return;
-    if (!cinematic && !p.isDead) _checkStoryPoints(p);
+    if (!cinematic && !p.isDead) {
+      _checkStoryPoints(p);
+      _updateTension(p, dt);
+    } else {
+      threat = math.max(0, threat - dt * 2);
+      hideAmount = math.max(0, hideAmount - dt * 2);
+    }
     _updateCamera(p, dt);
+  }
+
+  void _updateTension(Player p, double dt) {
+    var raw = 0.0;
+    var nearest = 0.0;
+    var murmur = 0.0;
+    for (final c in world.children) {
+      switch (c) {
+        case Guard g:
+          final d = (g.center - p.center).length;
+          final near = ((440 - d) / 340).clamp(0.0, 1.0);
+          final hunting =
+              g.state == GuardState.alert || g.state == GuardState.chase;
+          raw = math.max(raw, hunting ? 1.0 : g.suspicion);
+          nearest = math.max(nearest, near);
+          if (!hunting && !g.distracted) murmur = math.max(murmur, near);
+        case Watcher w:
+          raw = math.max(raw, w.suspicion);
+        case Karabasan k:
+          if (k.awake) raw = math.max(raw, 0.7);
+      }
+    }
+    final k = 1 - math.exp(-dt * 3);
+    threat += (raw - threat) * k;
+    hideAmount += ((p.hidden ? 1.0 : 0.0) - hideAmount) * k;
+
+    final audio = GameAudio.instance;
+    // Saklanırken kalp atışı: Kandilci ne kadar yakınsa o kadar güçlü.
+    final heart = p.hidden
+        ? math.max(nearest, threat) * 0.9 + 0.1
+        : math.max(0.0, threat - 0.45) * 1.6;
+    audio.heartbeat(heart.clamp(0.0, 1.0));
+    audio.murmur(murmur * (1 - hideAmount * 0.4));
+    audio.duck(hideAmount);
+
+    // Uzaktan zincir sesleri: sarnıçta ve mağarada ara sıra.
+    _chainT -= dt;
+    if (_chainT <= 0) {
+      _chainT = 22 + _rnd.nextDouble() * 30;
+      final theme = level.def.theme;
+      if (theme == LevelTheme.cistern || theme == LevelTheme.cave) {
+        audio.play('chain', volume: 0.18 + _rnd.nextDouble() * 0.15);
+      }
+    }
+
+    _updateDarkZone(p, dt);
+  }
+
+  /// Karanlık bölge: ışığı yer. Ateşböcekleri birer birer söner; hiç
+  /// kalmayınca karanlık Sâye'yi yutar.
+  void _updateDarkZone(Player p, double dt) {
+    final dark = level.inDarkZone(p.center);
+    final target = dark ? 0.3 + 0.7 * (fireflies / maxFireflies) : 1.0;
+    jarStrength += (target - jarStrength) * (1 - math.exp(-dt * 2));
+    if (!dark) {
+      _darkT = 0;
+      return;
+    }
+    if (!_darkWarned) {
+      _darkWarned = true;
+      narration.whisper(S.of('darkZone'));
+    }
+    _darkT += dt;
+    if (fireflies > 0) {
+      if (_darkT >= darkDrain) {
+        _darkT = 0;
+        fireflies--;
+        GameAudio.instance.play('fizzle');
+        narration.pulseFireflies();
+      }
+    } else if (_darkT >= darkSwallow) {
+      _darkT = 0;
+      p.die(cause: DeathCause.dark);
+    }
   }
 
   void _updateCamera(Player p, double dt) {
@@ -545,7 +675,8 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     final zoom =
         view.y /
         (kTile * math.min(tilesTall, level.height.toDouble())) *
-        _closeUp;
+        _closeUp *
+        (1 + 0.05 * threat);
     camera.viewfinder.zoom = zoom;
 
     // Gidilen yöne doğru ileriyi gösterir; hızlandıkça daha çok.

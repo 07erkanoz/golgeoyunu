@@ -1,4 +1,4 @@
-import re, json, sys
+import sys
 class G:
     def __init__(s,W,H,fill='.'):
         s.W,s.H=W,H; s.g=[[fill]*W for _ in range(H)]
@@ -12,9 +12,30 @@ class G:
     def rows(s): return [''.join(r) for r in s.g]
 
 # ------------------------------------------------------------ I · YEREBATAN
-src=open('/home/erkanoz/projeler/platformgame/lib/game/levels.dart').read()
-a=src.index("title: 'I · YEREBATAN'"); m=src.index("map: [",a); e=src.index("],",m)
-old=re.findall(r"'([^']*)'",src[m:e])
+# Sarnıcın ilk yarısı (elle çizilmiş, ilk 67 sütun).
+BASE_I = [
+    '###################################################################',
+    '###################################################################',
+    '#..................................................................',
+    '#..................................................................',
+    '#..................................................................',
+    '#..................................................................',
+    '#..................KB...F....3....BM...............................',
+    '#.................######..#####..#####..#######....................',
+    '#................|.................................................',
+    '#................|....................................MLB..........',
+    '#................|...................................####.......B..',
+    '#................|..........................................H..####',
+    '#................|.............................#............H..####',
+    '#.P.1..F.B.I......2..I....I....I.G..I....I.....#.CK4B.....F.H..####',
+    '######========..=============================..####################',
+    '######.........................................####################',
+    '######.........................................####################',
+    '######.........................D....D..........####################',
+    '######wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww####################',
+    '######wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww####################',
+]
+old=BASE_I
 W,H=130,20
 y=G(W,H)
 for r,row in enumerate(old):
@@ -46,6 +67,9 @@ y.put(119,10,'O')
 y.fill(122,8,128,9,'#')
 y.put(109,9,'K'); y.put(110,9,'z'); y.put(126,7,'Z'); y.put(127,7,'E'); y.put(124,7,'B')
 y.put(112,9,'F')
+# Gerilim: karanlıkta beliren gözler, ışığı yiyen yarasa galerisi.
+y.put(38,16,'e'); y.put(99,16,'e')
+y.put(71,8,'x'); y.put(90,13,'X'); y.put(79,13,'F')
 lvl1=y.rows()
 
 # ------------------------------------------------------------ II · KULE
@@ -112,6 +136,15 @@ s.fill(131,9,149,11,'#'); s.fill(133,12,147,12,'#')
 s.put(132,8,'K'); s.put(135,8,'B'); s.put(140,8,'1'); s.put(145,8,'E'); s.put(143,8,'B')
 lvl3=s.rows()
 
-json.dump({'I':lvl1,'II':lvl2,'III':lvl3},open(sys.argv[1],'w'))
-for n,m in (('I',lvl1),('II',lvl2),('III',lvl3)):
-    print(n, len(m), set(len(r) for r in m))
+MAPS = [('kMapYerebatan', lvl1), ('kMapKule', lvl2), ('kMapGokyolu', lvl3)]
+
+out = ['// Bu dosya tools/generate_maps.py ile üretilir; elle düzenleme.',
+       '// Gösterim: lib/game/level.dart başındaki açıklamaya bakın.', '']
+for name, rows in MAPS:
+    widths = set(len(r) for r in rows)
+    assert len(widths) == 1, (name, widths)
+    out.append(f'const {name} = <String>[')
+    out += [f"  '{r}'," for r in rows]
+    out += ['];', '']
+    print(name, len(rows), 'x', widths.pop())
+open('lib/game/maps.dart', 'w').write('\n'.join(out))

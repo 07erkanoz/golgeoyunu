@@ -312,3 +312,90 @@ def ney_taksim():
 
 
 save('perde_ney', loop(ney_taksim(), 2), 0.6)
+
+
+# ------------------------------------------------------------- gerilim
+def thump(f0, sec, tau):
+    return decay(sine(lambda t: f0 * (1 + 0.6 * math.exp(-t / 0.02)), sec), tau)
+
+
+def heartbeat_loop():
+    total = 8.0
+    out = [0.0] * n(total)
+    t = 0.0
+    while t < total - 0.5:
+        place(out, lowpass(thump(52, 0.3, 0.07), 220), t, 1.0)
+        place(out, lowpass(thump(46, 0.3, 0.06), 200), t + 0.26, 0.7)
+        t += 1.0
+    return out
+
+
+def murmur_loop():
+    # Anlaşılmayan bir dua: hece hece değişen ünlüler, aralarda nefes.
+    total = 12.0
+    out = [0.0] * n(total)
+    t = 0.3
+    vowels = [(700, 1200), (400, 2000), (300, 900), (550, 1700), (350, 2300)]
+    r = random.Random(7)
+    while t < total - 1.2:
+        phrase = r.randint(4, 9)
+        base = 98 * (0.92 + 0.16 * r.random())
+        for _ in range(phrase):
+            d = 0.12 + 0.12 * r.random()
+            f1, f2 = r.choice(vowels)
+            src = saw(lambda q, b=base: b * (1 + 0.03 * math.sin(q * 9)), d)
+            v = mix((bandpass(src, f1 * 0.7, f1 * 1.3), 1.0), (bandpass(src, f2 * 0.8, f2 * 1.2), 0.5))
+            place(out, env(v, 0.03, 0.05), t, 1.0)
+            t += d * 0.9
+        t += 0.5 + r.random() * 1.0
+    wet = echo(out, 0.23, 0.45, 0.6)[:len(out)]
+    return lowpass(wet, 1800)
+
+
+def shatter():
+    out = [0.0] * n(1.4)
+    r = random.Random(11)
+    for i in range(16):
+        f = 2400 + r.random() * 5200
+        at = r.random() * 0.25 * (i / 16) ** 0.5
+        place(out, decay(sine(f, 0.8), 0.06 + r.random() * 0.2), at, 0.25 + r.random() * 0.3)
+    place(out, decay(highpass(noise(0.4), 2500), 0.05), 0, 1.5)
+    return echo(out, 0.11, 0.3, 0.3)
+
+
+def breath():
+    # Karanlıkta ağır, derin bir nefes: içe çekiş ve uzun bir veriş.
+    inn = env(bandpass(noise(1.1), 200, 900), 0.6, 0.4)
+    out_ = env(bandpass(noise(1.6), 120, 600), 0.2, 1.1)
+    rumble = env(lowpass(brown(2.8), 120), 0.5, 1.0)
+    total = [0.0] * n(3.0)
+    place(total, inn, 0.0, 0.8)
+    place(total, out_, 1.2, 1.0)
+    place(total, rumble, 0.0, 6.0)
+    return total
+
+
+def fizzle():
+    return env(mix((decay(sine(lambda t: 1800 - 1400 * min(1, t / 0.35), 0.5), 0.18), 0.5),
+                   (decay(bandpass(noise(0.5), 1500, 5000), 0.12), 0.6)), 0.005, 0.2)
+
+
+def chain():
+    out = [0.0] * n(2.2)
+    r = random.Random(5)
+    t = 0.0
+    for _ in range(7):
+        f = 1300 + r.random() * 900
+        clink = mix((decay(sine(f, 0.4), 0.09), 0.6), (decay(sine(f * 2.76, 0.3), 0.05), 0.3),
+                    (decay(bandpass(noise(0.05), 2000, 6000), 0.01), 0.5))
+        place(out, clink, t, 0.6 + r.random() * 0.4)
+        t += 0.08 + r.random() * 0.22
+    return lowpass(echo(out, 0.27, 0.5, 0.55), 3500)
+
+
+save('heartbeat', heartbeat_loop(), 0.8)
+save('murmur', loop(murmur_loop(), 1), 0.55)
+save('shatter', shatter(), 0.7)
+save('breath', breath(), 0.6)
+save('fizzle', fizzle(), 0.4)
+save('chain', chain(), 0.45)

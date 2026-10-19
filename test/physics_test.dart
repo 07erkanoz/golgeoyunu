@@ -577,4 +577,57 @@ void main() {
       },
     );
   });
+
+  group('gerilim', () {
+    testWithGame<GolgeGame>(
+      'karanlık bölge ateşböceklerini söndürür, sonra yutar',
+      GolgeGame.new,
+      (game) async {
+        final p = await place(game, 0, 74, 13);
+        for (final g in game.world.children.whereType<Guard>().toList()) {
+          g.removeFromParent();
+        }
+        for (final b in game.world.children.whereType<BatRoost>().toList()) {
+          b.removeFromParent();
+        }
+        game.fireflies = 1;
+        run(game, GolgeGame.darkDrain + 0.2);
+        expect(game.fireflies, 0);
+        expect(p.isDead, isFalse);
+        run(game, GolgeGame.darkSwallow + 0.3);
+        expect(p.isDead, isTrue);
+        expect(p.deathCause, DeathCause.dark);
+        run(game, 4);
+        expect(game.player!.isDead, isFalse);
+      },
+    );
+
+    testWithGame<GolgeGame>(
+      'Kandilci yakalayınca ışıkla ölür ve yeniden doğulur',
+      GolgeGame.new,
+      (game) async {
+        await place(game, 0, 3, 13);
+        final g = guardOf(game);
+        final p = game.player!;
+        p.position.setFrom(g.position + Vector2(4, 22));
+        run(game, 0.5);
+        expect(p.isDead, isTrue);
+        expect(p.deathCause, DeathCause.light);
+        run(game, 3);
+        expect(game.player!.isDead, isFalse);
+      },
+    );
+
+    testWithGame<GolgeGame>('karanlıktaki gözler bir kez açılır', GolgeGame.new, (
+      game,
+    ) async {
+      await place(game, 0, 30, 13);
+      final eyes = nearest<KarabasanGlimpse>(game, 38 * kTile);
+      expect(eyes.seen, isFalse);
+      run(game, 0.2);
+      expect(eyes.seen, isTrue);
+      run(game, KarabasanGlimpse.duration + 0.5);
+      expect(eyes.isMounted, isFalse);
+    });
+  });
 }
