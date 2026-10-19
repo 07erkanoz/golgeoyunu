@@ -5,8 +5,10 @@ import 'dart:ui' as ui;
 import 'package:flame/components.dart';
 
 import 'entities.dart';
+import 'audio.dart';
 import 'golge_game.dart';
 import 'level.dart';
+import 'mechanics.dart';
 import 'palette.dart';
 
 enum PlayerState { normal, hang, climbUp, vine, dead }
@@ -39,6 +41,14 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
 
   /// Bir sandığı itiyor.
   bool pushing = false;
+
+  /// Üstünde durduğu hareketli zemin (kaya, asansör kefesi).
+  Deck? riding;
+
+  /// Kanatlarla süzülüyor.
+  bool gliding = false;
+
+  bool get hasWings => game.level.def.wings || game.wingsCollected;
 
   /// Uzaktan zor görülür (parmak ucu ya da çömelme).
   bool get covering => sneaking || crouching;
@@ -108,6 +118,14 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       }
     }
 
+    final deck = riding;
+    if (state == PlayerState.normal &&
+        deck != null &&
+        deck.isMounted &&
+        deck.active) {
+      position.add(deck.delta);
+    }
+
     switch (state) {
       case PlayerState.normal:
         _updateNormal(dt, dir, up, down, jump);
@@ -119,6 +137,13 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
         _updateVine(dt, dir, up, down, jumpPressed);
       case PlayerState.dead:
         _updateDead(dt);
+    }
+
+    if (state != PlayerState.normal) riding = null;
+    switch (riding) {
+      case CrumbleRock rock:
+        rock.stoodOn = true;
+      default:
     }
 
     if (lurePressed && state != PlayerState.climbUp) {
@@ -182,6 +207,7 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       } else {
         velocity.y = -jumpVelocity;
         _jumpCut = false;
+        GameAudio.instance.play('jump', volume: sneaking ? 0.3 : 0.6);
       }
       onGround = false;
     }
@@ -191,7 +217,22 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     }
     if (velocity.y >= 0) _jumpCut = true;
 
-    velocity.y = math.min(velocity.y + gravity * dt, maxFall);
+    // Kanatlar: havada zıplamayı basılı tutunca süzülür.
+    final wasGliding = gliding;
+    gliding = hasWings && !onGround && jump && velocity.y > -40;
+    if (gliding && !wasGliding) GameAudio.instance.play('glide', volume: 0.7);
+    if (gliding) {
+      velocity.y = math.min(velocity.y + gravity * 0.3 * dt, 75);
+      velocity.x = _approach(velocity.x, dir * 205.0, 500 * dt);
+    } else {
+      velocity.y = math.min(velocity.y + gravity * dt, maxFall);
+    }
+    // Rüzgâr akımı yukarı iter; açık kanatları çok daha güçlü.
+    if (level.cellAt(center.x, center.y) == 'r') {
+      velocity.y = gliding
+          ? math.max(velocity.y - 2600 * dt, -260)
+          : velocity.y - 1100 * dt;
+    }
     pushing = false;
     _moveX(velocity.x * dt, dir);
     _moveY(velocity.y * dt, allowOneWay: _dropThrough <= 0);
@@ -201,12 +242,25 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     if (onGround && !wasOnGround) {
       if (impact > 420) _landDip = 0.16;
       if (impact > 420 && !quiet) _noise(220);
+      if (impact > 250) {
+        GameAudio.instance.play(
+          'land',
+          volume: quiet ? 0.25 : (impact / 900).clamp(0.3, 1.0),
+        );
+      }
     }
-    if (onGround && !quiet && velocity.x.abs() > 105) {
+    // Adımlar: koşarken duyulur ve ses çıkarır; parmak ucunda kısık ve
+    // sessizdir.
+    if (onGround && velocity.x.abs() > 40) {
       _stepTimer -= dt;
       if (_stepTimer <= 0) {
-        _stepTimer = 0.3;
-        _noise(_onWalkway ? 210 : 140);
+        final loud = !quiet && velocity.x.abs() > 105;
+        _stepTimer = loud ? 0.3 : 0.42;
+        GameAudio.instance.play(
+          _onWalkway ? 'step_wood' : 'step',
+          volume: loud ? 0.7 : 0.18,
+        );
+        if (loud) _noise(_onWalkway ? 210 : 140);
       }
     } else {
       _stepTimer = 0;
@@ -277,6 +331,7 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     final prevBottom = position.y + h;
     position.y += dy;
     onGround = false;
+    riding = null;
     final c0 = ((position.x + 1) / kTile).floor();
     final c1 = ((position.x + w - 1) / kTile).floor();
     if (dy > 0) {
@@ -290,6 +345,24 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
           velocity.y = 0;
           onGround = true;
           return;
+        }
+      }
+      // Hareketli kayalar ve asansör kefeleri: yalnızca üstten basılır.
+      if (allowOneWay) {
+        for (final d in game.world.children.whereType<Deck>()) {
+          if (!d.active) continue;
+          final rect = d.toRect();
+          if (position.x + w - 2 <= rect.left || position.x + 2 >= rect.right) {
+            continue;
+          }
+          final prevTop = rect.top - d.delta.y;
+          if (prevBottom <= prevTop + 1 && position.y + h >= rect.top) {
+            position.y = rect.top - h;
+            velocity.y = 0;
+            onGround = true;
+            riding = d;
+            return;
+          }
         }
       }
       // Sandığın üstüne basar.
@@ -489,6 +562,8 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
 
   void die({bool fell = false}) {
     if (isDead) return;
+    final water = level.cellAt(center.x, position.y + h + 4) == 'w';
+    GameAudio.instance.play(water ? 'splash' : 'death');
     _fell = fell;
     crouching = false;
     velocity.x = 0;
@@ -948,6 +1023,8 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       _fill,
     );
 
+    if (hasWings) _drawWings(canvas, Offset(cx - 1 + lean * 6, hipY - 10));
+
     leg(foot1);
 
     // Baş ve örgü bere.
@@ -1074,5 +1151,43 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
         ..style = PaintingStyle.stroke
         ..strokeWidth = 0.9,
     );
+  }
+
+  /// Hezarfen'in kanatları: süzülürken açılır, yoksa sırtta katlıdır.
+  void _drawWings(Canvas canvas, Offset shoulder) {
+    final cloth = Paint()
+      ..color = const Color(0xFFE2D2B6).withValues(alpha: 0.88);
+    final frame = Paint()
+      ..color = kInk
+      ..strokeWidth = 1
+      ..style = PaintingStyle.stroke;
+    if (gliding) {
+      final flap = math.sin(_anim * 6) * 1.5;
+      for (final s in [-1.0, 1.0]) {
+        final wing = Path()
+          ..moveTo(shoulder.dx, shoulder.dy)
+          ..quadraticBezierTo(
+            shoulder.dx + s * 12,
+            shoulder.dy - 14 + flap,
+            shoulder.dx + s * 26,
+            shoulder.dy - 8 + flap,
+          )
+          ..lineTo(shoulder.dx + s * 22, shoulder.dy - 3)
+          ..lineTo(shoulder.dx + s * 17, shoulder.dy - 1)
+          ..lineTo(shoulder.dx + s * 10, shoulder.dy + 2)
+          ..close();
+        canvas.drawPath(wing, cloth);
+        canvas.drawPath(wing, frame);
+      }
+    } else {
+      final folded = Path()
+        ..moveTo(shoulder.dx - 1, shoulder.dy - 2)
+        ..lineTo(shoulder.dx - 7, shoulder.dy - 6)
+        ..lineTo(shoulder.dx - 6, shoulder.dy + 9)
+        ..lineTo(shoulder.dx - 1, shoulder.dy + 6)
+        ..close();
+      canvas.drawPath(folded, cloth);
+      canvas.drawPath(folded, frame);
+    }
   }
 }

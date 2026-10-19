@@ -25,6 +25,16 @@ class Level {
   final checkpointCells = <Vector2>[];
   final crateCells = <Vector2>[];
   final fireflyCells = <Vector2>[];
+  final movingCells = <(Vector2, bool)>[];
+  final crumbleCells = <Vector2>[];
+  final liftA = <Vector2>[];
+  final liftB = <Vector2>[];
+  final batCells = <Vector2>[];
+  final crowCells = <Vector2>[];
+  final watcherCells = <Vector2>[];
+  final wingsCells = <Vector2>[];
+  double? chaseStart;
+  double? chaseEnd;
   final leverCells = <Vector2>[];
 
   /// Dikey `H` dizileri: her biri bir kapı (sütun, üst satır, alt satır).
@@ -60,6 +70,28 @@ class Level {
             crateCells.add(cell);
           case 'F':
             fireflyCells.add(cell);
+          case 'R':
+            movingCells.add((cell, false));
+          case 'V':
+            movingCells.add((cell, true));
+          case 'O':
+            crumbleCells.add(cell);
+          case 'A':
+            liftA.add(cell);
+          case 'Y':
+            liftB.add(cell);
+          case 'b':
+            batCells.add(cell);
+          case 'k':
+            crowCells.add(cell);
+          case 'g':
+            watcherCells.add(cell);
+          case 'W':
+            wingsCells.add(cell);
+          case 'z':
+            chaseStart = cell.x;
+          case 'Z':
+            chaseEnd = cell.x;
           case 'L':
             leverCells.add(cell);
           case 'H':

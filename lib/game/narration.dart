@@ -5,6 +5,7 @@ import 'package:flutter/painting.dart';
 
 import 'golge_game.dart';
 import 'palette.dart';
+import 'strings.dart';
 
 /// Hikâye katmanı: siyah ekranda akan sinematik satırlar, bölüm başlıkları,
 /// oyun içi fısıltılar ve hatıra sayacı.
@@ -171,7 +172,7 @@ class Narration extends Component with HasGameReference<GolgeGame> {
       );
       _text(
         canvas,
-        'boşluk / dokun',
+        S.of('skipHint'),
         Offset(w - 90, h - 30),
         unit * 0.022,
         0.25,
@@ -217,7 +218,9 @@ class Narration extends Component with HasGameReference<GolgeGame> {
       );
     }
 
-    // Kavanozdaki ateşböcekleri: sol üstte üç küçük ışık.
+    if (game.menuMode.value) return;
+
+    // Kavanozdaki ateşböcekleri: sol üstte küçük ışıklar.
     final hudAlpha = 0.35 + 0.65 * (1 - (_fireflyT / 2.5).clamp(0.0, 1.0));
     for (var i = 0; i < GolgeGame.maxFireflies; i++) {
       final lit = i < game.fireflies;
@@ -245,7 +248,7 @@ class Narration extends Component with HasGameReference<GolgeGame> {
       final a = _envelope(_counterT, 0.4, 3.0, 1.1);
       _text(
         canvas,
-        'hatıra  ${game.memoryCount} / ${game.memoryTotal}',
+        '${S.of('memoryCounter')}  ${game.memoryCount} / ${game.memoryTotal}',
         Offset(w - 100, 40),
         unit * 0.03,
         a,

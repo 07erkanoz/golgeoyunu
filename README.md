@@ -5,21 +5,31 @@
 ## Hikâye
 
 İstanbul, 1660. Şehir üç gündür yanıyor. Kandilciler Loncası küllerin arasından
-şehrin bütün ışığını topluyor ve perdeye ışık tutan Hayali Usta'yı da kaçırıyor.
-Elinde ateşböceği kavanozu taşıyan küçük bir çocuk, ak bir kuşun peşinden
-ustasını aramaya çıkıyor. Yolda bulduğu hatıra parçaları geçmişi yavaş yavaş
-açığa çıkarıyor.
+şehrin bütün ışığını topluyor ve gölge oyunu ustası Hayali Usta'yı kaçırıyor.
+Elinde ateşböceği kavanozu taşıyan küçük çırağı, ak kuşun peşinden ustasını
+aramaya çıkıyor. Ayrıntılı kurgu: [docs/KURGU.md](docs/KURGU.md).
 
-| Bölüm | Mekân | Öne çıkan mekanik |
+| Bölüm | Mekân | Öne çıkanlar |
 |---|---|---|
-| I · Yerebatan | Yerebatan Sarnıcı | Sütun ardında saklanma, Kandilci'den kaçma, iskelede atlama |
-| II · Kayalıklar | Dikey uçurum (Galata Kulesi olacak) | Kenara tutunma, sarmaşık tırmanma |
-| III · Gökyolu | Bulutlar (Boğaz üstü olacak) | Bulutlar arası atlama |
+| I · Yerebatan | Yerebatan Sarnıcı | Kandilci iskelesi, kemer üstü yol, sandık-kol-kapı, yarasa galerisi, karşı ağırlıklı asansör, Karabasan kovalamacası |
+| II · Kule | Haliç kayalıklarından Galata Kulesi'ne | Hareketli ve kopan kayalar, kargalar, çatı Kandilcisi, asansör, Gözcü, Hezarfen'in kanatları |
+| III · Gökyolu | Bulutlar | Kanatlarla süzülme, rüzgâr akımları, hareketli adalar, Gözcü |
 
-Görsel dil "Kızıl kül": kömür siluetler ve pas tonlu dünya. Sıcak ışık güvenli
-demek, Kandilcilerin camgöbeği ışığı tehlike.
+Oyun Türkçe ve İngilizce (*Shadow Play*) oynanabilir; dil ana menüden ya da
+ayarlardan seçilir.
 
-Karakter geçicidir; ileride profesyonel çizimle değiştirilecek.
+## Menü, ayarlar, kayıt
+
+- **Ana menü:** Kaldığın yerden devam et, Yeni oyun, Ayarlar, Çıkış.
+  Arkada oyunun dünyası akar.
+- **Ayarlar (Esc ya da sağ üstteki dişli):** Müzik, ortam ve efekt sesi,
+  dil, masaüstünde tam ekran (F11).
+- **Kayıt:** Her bölüm başında ve kontrol noktasında otomatik kaydedilir.
+
+## Ses
+
+Ortam sesleri ve efektler `tools/synth_sounds.py` ile sentezlenmiştir (dış
+kaynak yok). Menü müziği: *Turkish Maqam Soundscape*, vjgalaxy (Pixabay).
 
 ## Kontroller
 
@@ -34,6 +44,8 @@ Karakter geçicidir; ileride profesyonel çizimle değiştirilecek.
 | → (sandığa dayanınca) | Sandığı it |
 | Enter / Boşluk | Ara sahnedeki metni geç |
 | R | Son kontrol noktasından yeniden başla |
+| Esc | Ayarlar / duraklat |
+| F11 | Tam ekran (masaüstü) |
 
 ## Ak kuş
 

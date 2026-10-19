@@ -3,10 +3,14 @@ import 'dart:math' as math;
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flame/game.dart';
+import 'package:flutter/foundation.dart' show ValueNotifier;
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart' show KeyEventResult;
 
 import 'atmosphere.dart';
+import 'audio.dart';
+import 'creatures.dart';
+import 'mechanics.dart';
 import 'entities.dart';
 import 'level.dart';
 import 'lighting.dart';
@@ -14,6 +18,8 @@ import 'levels.dart';
 import 'narration.dart';
 import 'palette.dart';
 import 'player.dart';
+import '../settings.dart';
+import 'strings.dart';
 import 'terrain.dart';
 
 class Buttons {
@@ -66,6 +72,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
   bool _prevJump = false;
   double _closeUp = 1;
   double _lookAhead = 0;
+  final _rnd = math.Random();
   int _devStop = 0;
 
   /// Kavanozdaki ateşböcekleri: salınınca azalır, zamanla yenilenir.
@@ -89,14 +96,133 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     effects = ScreenEffects();
     narration = Narration();
     camera.viewport.addAll([effects, narration]);
+    _enterMenu();
+  }
+
+  // ---------------------------------------------------------------- ana menü
+
+  static const menuOverlay = 'menu';
+
+  /// Ana menü açık mı: arkada oyunun dünyası oynar, oyuncu yoktur.
+  final menuMode = ValueNotifier<bool>(true);
+  double _menuT = 0;
+
+  void _showOverlay(String name) {
+    if (overlays.registeredOverlays.contains(name)) overlays.add(name);
+  }
+
+  void _enterMenu() {
+    menuMode.value = true;
+    cinematic = true;
+    _transitioning = false;
+    _menuT = 0;
+    narration.playCinematic(const [], () {});
+    final saved = SaveGame.current;
+    _buildLevel(saved?.level ?? 0, withPlayer: false);
+    effects.setFade(1, kInk);
+    effects.fadeTo(0, 1.6);
+    GameAudio.instance.menuMusic(true);
+    overlays.remove(settingsOverlay);
+    _showOverlay(menuOverlay);
+  }
+
+  void _leaveMenu() {
+    menuMode.value = false;
+    overlays.remove(menuOverlay);
+    GameAudio.instance.menuMusic(false);
+  }
+
+  /// Baştan başlar; varsa kayıt silinir.
+  void startNewGame() {
+    SaveGame.clear();
+    _memories.clear();
+    _whispersShown.clear();
+    fireflies = startFireflies;
+    wingsCollected = false;
+    _respawn = null;
+    _leaveMenu();
     _buildLevel(0);
+    _saveProgress();
     _startPrologue();
+  }
+
+  /// Kaldığın yerden: son kontrol noktasında, toplananlarla birlikte.
+  void continueGame() {
+    final save = SaveGame.current;
+    if (save == null) {
+      startNewGame();
+      return;
+    }
+    _memories
+      ..clear()
+      ..addAll(save.memories);
+    _whispersShown
+      ..clear()
+      ..addAll(save.whispers);
+    fireflies = save.fireflies;
+    wingsCollected = save.wings;
+    _respawn = Vector2(save.x, save.y);
+    _leaveMenu();
+    _buildLevel(save.level.clamp(0, levels.length - 1), respawn: true);
+    cinematic = false;
+    effects.setFade(1, kInk);
+    effects.fadeTo(0, 1.4);
+    _showLevelTitle();
+  }
+
+  /// Oyundan ana menüye: önce ilerlemeyi kaydeder.
+  void backToMenu() {
+    _saveProgress();
+    if (paused) resumeEngine();
+    GameAudio.instance.resumeAll();
+    _enterMenu();
+  }
+
+  void _saveProgress() {
+    final r = _respawn;
+    if (menuMode.value || r == null) return;
+    SaveGame.write(
+      SaveData(
+        level: levelIndex,
+        x: r.x,
+        y: r.y,
+        memories: _memories.toList(),
+        whispers: _whispersShown.toList(),
+        fireflies: fireflies,
+        wings: wingsCollected,
+      ),
+    );
+  }
+
+  void _updateMenuCamera(double dt) {
+    _menuT += dt;
+    final view = camera.viewport.size;
+    if (view.x == 0 || view.y == 0) return;
+    final zoom = view.y / (kTile * math.min(20.0, level.height.toDouble()));
+    camera.viewfinder.zoom = zoom;
+    final halfW = view.x / zoom / 2;
+    final halfH = view.y / zoom / 2;
+    // Bölümün içinde ağır ağır gidip gelen bir bakış.
+    final k = 0.5 - 0.5 * math.cos(_menuT * 0.035);
+    final spanX = math.max(0.0, level.pixelWidth - halfW * 2);
+    final spanY = math.max(0.0, level.pixelHeight - halfH * 2);
+    final target = level.vertical
+        ? Vector2(level.pixelWidth / 2, level.pixelHeight - halfH - spanY * k)
+        : Vector2(halfW + spanX * k, level.pixelHeight - halfH - spanY * 0.15);
+    if (_snapCamera) {
+      camera.viewfinder.position = target;
+      _snapCamera = false;
+    } else {
+      final pos = camera.viewfinder.position;
+      camera.viewfinder.position =
+          pos + (target - pos) * (1 - math.exp(-dt * 2));
+    }
   }
 
   void _startPrologue() {
     cinematic = true;
     effects.setFade(1, kInk);
-    narration.playCinematic(prologue, () {
+    narration.playCinematic(prologueText, () {
       cinematic = false;
       effects.fadeTo(0, 1.8);
       _showLevelTitle();
@@ -105,16 +231,49 @@ class GolgeGame extends FlameGame with KeyboardEvents {
 
   /// Testler ve geliştirme kısayolu için: hikâyeyi atlayıp bölümü yükler.
   void debugLoadLevel(int index) {
+    menuMode.value = false;
+    overlays.remove(menuOverlay);
     _buildLevel(index);
     cinematic = false;
     effects.setFade(0, kInk);
     narration.playCinematic(const [], () {});
   }
 
-  void _showLevelTitle() =>
-      narration.showTitle(level.def.title, level.def.subtitle);
+  // ---------------------------------------------------------------- ayarlar
 
-  void _buildLevel(int index, {bool respawn = false}) {
+  static const settingsOverlay = 'settings';
+
+  /// Masaüstünde tam ekranı açıp kapatır (main.dart bağlar).
+  void Function()? onToggleFullscreen;
+
+  void toggleSettings() {
+    if (overlays.isActive(settingsOverlay)) {
+      overlays.remove(settingsOverlay);
+      if (!menuMode.value) {
+        resumeEngine();
+        GameAudio.instance.resumeAll();
+      }
+    } else {
+      // Basılı kalan tuşlar menü kapanınca oyuncuyu yürütmesin.
+      controls.keyboard
+        ..left = false
+        ..right = false
+        ..up = false
+        ..down = false
+        ..jump = false
+        ..sneak = false;
+      _showOverlay(settingsOverlay);
+      if (!menuMode.value) {
+        pauseEngine();
+        GameAudio.instance.pauseAll();
+      }
+    }
+  }
+
+  void _showLevelTitle() =>
+      narration.showTitle(level.def.titleText, level.def.subtitleText);
+
+  void _buildLevel(int index, {bool respawn = false, bool withPlayer = true}) {
     world.removeAll(world.children.toList());
     levelIndex = index;
     level = Level(levels[index]);
@@ -134,13 +293,41 @@ class GolgeGame extends FlameGame with KeyboardEvents {
       for (final (col, top, bottom) in level.gates) Gate(col, top, bottom),
       ?_guideBird(),
       for (final f in level.fireflyCells) FireflySwarm(f),
+      for (final (c, vertical) in level.movingCells)
+        MovingRock(c, vertical: vertical),
+      for (final c in level.crumbleCells) CrumbleRock(c),
+      ..._lifts(),
+      for (final c in level.batCells) BatRoost(c),
+      for (final c in level.crowCells) Crow(c),
+      for (final c in level.watcherCells) Watcher(c),
+      for (final c in level.wingsCells) WingsPickup(c),
+      if (level.chaseStart != null && level.chaseEnd != null)
+        Karabasan(level.chaseStart!, level.chaseEnd!),
       for (var i = 0; i < level.memoryCells.length; i++)
         if (!_memories.contains('$index:$i'))
           MemoryShard(level.memoryCells[i], i),
     ]);
-    player = Player(_respawn!.clone());
-    world.add(player!);
+    GameAudio.instance.ambientFor(level.def.theme);
+    GameAudio.instance.dread(0);
+    if (withPlayer) {
+      player = Player(_respawn!.clone());
+      world.add(player!);
+    } else {
+      player = null;
+    }
     _snapCamera = true;
+  }
+
+  /// Asansör kefeleri soldan sağa eşleşir: her A, sıradaki Y ile.
+  Iterable<Component> _lifts() sync* {
+    final count = math.min(level.liftA.length, level.liftB.length);
+    for (var i = 0; i < count; i++) {
+      final a = LiftPan(level.liftA[i]);
+      final b = LiftPan(level.liftB[i]);
+      yield a;
+      yield b;
+      yield BalanceLift(a, b);
+    }
   }
 
   Bird? _guideBird() {
@@ -212,29 +399,56 @@ class GolgeGame extends FlameGame with KeyboardEvents {
   }
 
   /// Oyuncunun çıkardığı ses: yakındaki Kandilciler duyar ve o yöne bakar.
-  void makeNoise(Vector2 at, double radius) {
+  void makeNoise(Vector2 at, double radius, {Component? source}) {
     world.add(NoiseRing(at, radius));
-    for (final g in world.children.whereType<Guard>()) {
-      g.hear(at, radius);
+    for (final c in world.children.toList()) {
+      if (c == source) continue;
+      switch (c) {
+        case Guard g:
+          g.hear(at, radius);
+        case BatRoost b:
+          b.hear(at, radius);
+        case Crow k:
+          k.hear(at, radius);
+      }
     }
   }
+
+  /// Hezarfen'in kanatları: bu bölümden sonra süzülmek mümkün.
+  bool wingsCollected = false;
+
+  void collectWings() {
+    wingsCollected = true;
+    GameAudio.instance.play('memory');
+    narration.whisper(S.of('wings'));
+  }
+
+  double _shake = 0;
+
+  /// Kamerayı sarsar (Karabasan, çöken kayalar).
+  void shake(double amount) => _shake = math.max(_shake, amount);
 
   /// Oyuncu kavanozdan bir ateşböceği salar; Kandilciler ışığa yönelir.
   void releaseFirefly(Vector2 from, int direction) {
     if (fireflies <= 0) return;
     fireflies--;
+    GameAudio.instance.play('throw');
+    GameAudio.instance.play('firefly', volume: 0.6);
     world.add(FireflyLure(from, direction));
     narration.pulseFireflies();
   }
 
   void gainFirefly() {
     fireflies = math.min(maxFireflies, fireflies + 1);
+    GameAudio.instance.play('pickup');
     narration.pulseFireflies();
   }
 
   void collectMemory(int index) {
     if (!_memories.add('$levelIndex:$index')) return;
-    final lines = level.def.memories;
+    _saveProgress();
+    GameAudio.instance.play('memory');
+    final lines = level.def.memoryTexts;
     if (index < lines.length) narration.whisper(lines[index]);
     narration.pulseCounter();
   }
@@ -250,13 +464,17 @@ class GolgeGame extends FlameGame with KeyboardEvents {
       final key = '$levelIndex:$i';
       if (_whispersShown.contains(key) || !near(cell, 48, 80)) continue;
       _whispersShown.add(key);
-      if (i < level.def.whispers.length) {
-        narration.whisper(level.def.whispers[i]);
+      if (i < level.def.whisperTexts.length) {
+        narration.whisper(level.def.whisperTexts[i]);
       }
     }
     for (final cell in level.checkpointCells) {
       if (near(cell, 40, 60)) {
-        _respawn = Level.standOn(cell, Player.w, Player.h);
+        final spot = Level.standOn(cell, Player.w, Player.h);
+        if (_respawn != spot) {
+          _respawn = spot;
+          _saveProgress();
+        }
       }
     }
   }
@@ -266,6 +484,10 @@ class GolgeGame extends FlameGame with KeyboardEvents {
   @override
   void update(double dt) {
     super.update(dt);
+    if (menuMode.value) {
+      _updateMenuCamera(dt);
+      return;
+    }
     final jump = controls.jump;
     if (narration.inCinematic && jump && !_prevJump) narration.skip();
     _prevJump = jump;
@@ -298,6 +520,15 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         ? level.pixelHeight / 2
         : target.y.clamp(halfH, level.pixelHeight - halfH);
 
+    if (_shake > 0.05) {
+      target.add(
+        Vector2(
+          (_rnd.nextDouble() - 0.5) * _shake * 2,
+          (_rnd.nextDouble() - 0.5) * _shake * 2,
+        ),
+      );
+      _shake *= math.pow(0.02, dt).toDouble();
+    }
     final pos = camera.viewfinder.position;
     if (_snapCamera) {
       camera.viewfinder.position = target;
@@ -327,7 +558,24 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         LogicalKeyboardKey.shiftRight,
         LogicalKeyboardKey.keyQ,
       ]);
+    if (menuMode.value) {
+      if (event is KeyDownEvent &&
+          event.logicalKey == LogicalKeyboardKey.escape &&
+          overlays.isActive(settingsOverlay)) {
+        toggleSettings();
+      }
+      return KeyEventResult.ignored;
+    }
     if (event is KeyDownEvent) {
+      if (event.logicalKey == LogicalKeyboardKey.escape) {
+        toggleSettings();
+        return KeyEventResult.handled;
+      }
+      if (event.logicalKey == LogicalKeyboardKey.f11) {
+        onToggleFullscreen?.call();
+        return KeyEventResult.handled;
+      }
+      if (paused) return KeyEventResult.handled;
       if (event.logicalKey == LogicalKeyboardKey.keyF ||
           event.logicalKey == LogicalKeyboardKey.keyX) {
         controls.queueLure();

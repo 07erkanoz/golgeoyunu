@@ -1,9 +1,11 @@
 import 'package:flame/components.dart';
 import 'package:flame_test/flame_test.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:golge/game/creatures.dart';
 import 'package:golge/game/entities.dart';
 import 'package:golge/game/golge_game.dart';
 import 'package:golge/game/level.dart';
+import 'package:golge/game/mechanics.dart';
 import 'package:golge/game/player.dart';
 
 /// Sabit adımlı simülasyon: oyuncuyu bir hücreye koyar, girişi uygular.
@@ -27,6 +29,15 @@ void run(GolgeGame game, double seconds) {
 Buttons keys(GolgeGame g) => g.controls.keyboard;
 
 Guard guardOf(GolgeGame g) => g.world.children.whereType<Guard>().first;
+
+/// Verilen x konumuna en yakın bileşen.
+T nearest<T extends PositionComponent>(GolgeGame g, double x) {
+  final all = g.world.children.whereType<T>().toList()
+    ..sort(
+      (a, b) => (a.position.x - x).abs().compareTo((b.position.x - x).abs()),
+    );
+  return all.first;
+}
 
 void main() {
   group('hareket', () {
@@ -247,7 +258,7 @@ void main() {
       GolgeGame.new,
       (game) async {
         await place(game, 0, 3, 13);
-        final crate = game.world.children.whereType<Crate>().first;
+        final crate = nearest<Crate>(game, 49 * kTile);
         final y0 = crate.position.y;
         game.update(0.6);
         run(game, 0.5);
@@ -258,7 +269,7 @@ void main() {
 
     testWithGame<GolgeGame>('sandık itilir', GolgeGame.new, (game) async {
       await place(game, 0, 48, 13);
-      final crate = game.world.children.whereType<Crate>().first;
+      final crate = nearest<Crate>(game, 49 * kTile);
       final x0 = crate.position.x;
       keys(game).right = true;
       run(game, 1.5);
@@ -270,7 +281,7 @@ void main() {
       GolgeGame.new,
       (game) async {
         final p = await place(game, 0, 48, 13);
-        final crate = game.world.children.whereType<Crate>().first;
+        final crate = nearest<Crate>(game, 49 * kTile);
         crate.position.x = 52 * kTile + 1;
         run(game, 0.1);
         p.position.setValues(crate.position.x + 6, crate.position.y - Player.h);
@@ -305,39 +316,160 @@ void main() {
         keys(game).up = true;
         run(game, 0.05);
         keys(game).up = false;
-        expect(game.world.children.whereType<Lever>().first.pulled, isTrue);
+        expect(nearest<Lever>(game, 55 * kTile).pulled, isTrue);
         run(game, 2.5);
-        expect(game.world.children.whereType<Gate>().first.solid, isFalse);
+        expect(nearest<Gate>(game, 60 * kTile).solid, isFalse);
       },
     );
   });
 
-  group('kayalıklar', () {
+  group('Yerebatan: yeni bölümler', () {
     testWithGame<GolgeGame>(
-      'kayadan koşarak sarmaşığa atlar ve tırmanır',
+      'galeride koşan yarasaları uyandırır, Kandilci duyar',
       GolgeGame.new,
       (game) async {
-        // Kaya çıkıntısının sağ ucundan (satır 38) sola koşup kenarda zıplar.
-        final p = await place(game, 1, 17, 37);
-        run(game, 0.2);
+        await place(game, 0, 68, 13);
+        keys(game).right = true;
+        run(game, 1.0);
+        expect(nearest<BatRoost>(game, 72 * kTile).flown, isTrue);
+        expect(
+          nearest<Guard>(game, 82 * kTile).state,
+          isNot(GuardState.patrol),
+        );
+      },
+    );
+
+    testWithGame<GolgeGame>('parmak ucunda yarasalar uyanmaz', GolgeGame.new, (
+      game,
+    ) async {
+      await place(game, 0, 68, 13);
+      keys(game)
+        ..sneak = true
+        ..right = true;
+      run(game, 1.5);
+      expect(nearest<BatRoost>(game, 72 * kTile).flown, isFalse);
+    });
+
+    testWithGame<GolgeGame>(
+      'raftaki sandık düşünce kefe iner, öteki oyuncuyu taşır',
+      GolgeGame.new,
+      (game) async {
+        final p = await place(game, 0, 99, 9);
+        final crate = nearest<Crate>(game, 98 * kTile);
+        crate.position.x = 102 * kTile + 1;
+        run(game, 0.6);
+        final pans = game.world.children.whereType<LiftPan>().toList()
+          ..sort((a, b) => a.position.x.compareTo(b.position.x));
+        expect(pans.first.position.y, greaterThan(pans.first.base.y));
+        p.position.setValues(
+          pans.last.position.x + 8,
+          pans.last.position.y - Player.h - 1,
+        );
+        run(game, 4);
         expect(p.onGround, isTrue);
-        keys(game).left = true;
-        for (var i = 0; i < 120 && p.position.x > 14 * kTile + 2; i++) {
-          game.update(1 / 60);
-        }
+        expect(p.position.y + Player.h, closeTo(10 * kTile, 3));
+      },
+    );
+
+    testWithGame<GolgeGame>('Karabasan duranı yakalar', GolgeGame.new, (
+      game,
+    ) async {
+      final p = await place(game, 0, 111, 9);
+      run(game, 0.2);
+      expect(game.world.children.whereType<Karabasan>().first.awake, isTrue);
+      run(game, 6);
+      expect(p.isDead, isTrue);
+    });
+
+    testWithGame<GolgeGame>(
+      'Karabasan bitiş çizgisinde dağılır',
+      GolgeGame.new,
+      (game) async {
+        final p = await place(game, 0, 111, 9);
+        run(game, 0.2);
+        p.position.setFrom(
+          Level.standOn(Vector2(127 * kTile, 7 * kTile), Player.w, Player.h),
+        );
+        run(game, 2.5);
+        expect(game.world.children.whereType<Karabasan>(), isEmpty);
+      },
+    );
+  });
+
+  group('Kule', () {
+    testWithGame<GolgeGame>('dikey kaya oyuncuyu taşır', GolgeGame.new, (
+      game,
+    ) async {
+      final p = await place(game, 1, 3, 91);
+      final rock = nearest<MovingRock>(game, 9 * kTile);
+      p.position.setValues(
+        rock.position.x + 10,
+        rock.position.y - Player.h - 1,
+      );
+      run(game, 2.6);
+      expect(p.onGround, isTrue);
+      expect(p.riding, same(rock));
+      expect(p.position.y + Player.h, lessThan(91 * kTile));
+    });
+
+    testWithGame<GolgeGame>('basılan kaya kopar ve düşer', GolgeGame.new, (
+      game,
+    ) async {
+      final p = await place(game, 1, 13, 87);
+      final rock = nearest<CrumbleRock>(game, 17 * kTile);
+      p.position.setValues(
+        rock.position.x + 10,
+        rock.position.y - Player.h - 1,
+      );
+      run(game, 1.4);
+      expect(rock.position.y, greaterThan(86 * kTile + 20));
+    });
+
+    testWithGame<GolgeGame>(
+      'karga koşan oyuncuyu görünce havalanır',
+      GolgeGame.new,
+      (game) async {
+        await place(game, 1, 20, 83);
+        final crow = nearest<Crow>(game, 23 * kTile);
+        final y0 = crow.position.y;
+        keys(game).right = true;
+        run(game, 0.8);
+        expect(crow.position.y, lessThan(y0 - 10));
+      },
+    );
+
+    testWithGame<GolgeGame>(
+      'kanatlarla rüzgâra atlayan yükselir',
+      GolgeGame.new,
+      (game) async {
+        final p = await place(game, 1, 11, 10);
+        run(game, 0.3);
+        expect(game.wingsCollected, isTrue, reason: 'kanatlar alınmalı');
+        p.position.setValues(15 * kTile, 9 * kTile);
+        p.velocity.setZero();
         keys(game).jump = true;
-        var onVine = false;
-        for (var i = 0; i < 90 && !onVine; i++) {
+        final y0 = p.position.y;
+        run(game, 1.0);
+        expect(p.gliding, isTrue);
+        expect(p.position.y, lessThan(y0 - kTile));
+      },
+    );
+  });
+
+  group('Gökyolu', () {
+    testWithGame<GolgeGame>(
+      'Gözcü\'nün ışığında kalan yakalanır',
+      GolgeGame.new,
+      (game) async {
+        final p = await place(game, 2, 67, 11);
+        final w = game.world.children.whereType<Watcher>().first;
+        var died = false;
+        for (var i = 0; i < 60 * 14 && !died; i++) {
           game.update(1 / 60);
-          onVine = p.state == PlayerState.vine;
+          died = p.isDead;
         }
-        expect(onVine, isTrue, reason: 'sarmaşığı yakalayamadı');
-        keys(game)
-          ..left = false
-          ..jump = false
-          ..up = true;
-        run(game, 5);
-        expect(p.position.y + Player.h / 2, lessThan(26 * kTile));
+        expect(w.facing, 1);
+        expect(died, isTrue, reason: 'ışık süpürürken eninde sonunda görmeli');
       },
     );
   });

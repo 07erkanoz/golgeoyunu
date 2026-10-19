@@ -1,0 +1,185 @@
+import 'package:flame_audio/flame_audio.dart';
+
+import '../settings.dart';
+import 'levels.dart';
+
+/// Oyunun sesleri: ortam döngüleri, Karabasan'ın gümbürtüsü ve efektler.
+/// Sesler `tools/synth_sounds.py` ile sentezlenir.
+///
+/// `init` çağrılana kadar sessizdir; testler böylece ses aygıtına dokunmaz.
+class GameAudio {
+  GameAudio._();
+
+  static final instance = GameAudio._();
+
+  static const _effects = [
+    'step',
+    'step_wood',
+    'jump',
+    'land',
+    'firefly',
+    'pickup',
+    'memory',
+    'suspect',
+    'alert',
+    'bats',
+    'crow',
+    'lever',
+    'gate',
+    'crumble',
+    'death',
+    'splash',
+    'throw',
+    'glide',
+    'creak',
+  ];
+
+  bool _ready = false;
+  AudioPlayer? _music;
+  bool _musicWanted = false;
+  bool _musicStarting = false;
+  AudioPlayer? _ambient;
+  String? _ambientName;
+  String? _wantedAmbient;
+  AudioPlayer? _dread;
+  bool _dreadStarting = false;
+  double _dreadLevel = 0;
+  final _lastPlayed = <String, int>{};
+
+  Future<void> init() async {
+    try {
+      await FlameAudio.audioCache.loadAll([
+        for (final e in _effects) '$e.wav',
+        'amb_cistern.wav',
+        'amb_wind.wav',
+        'amb_sky.wav',
+        'karabasan.wav',
+        'menu_theme.mp3',
+      ]);
+      _ready = true;
+      if (_musicWanted) {
+        menuMusic(true);
+      } else {
+        final wanted = _wantedAmbient;
+        if (wanted != null) await _startAmbient(wanted);
+      }
+    } catch (_) {
+      _ready = false;
+    }
+  }
+
+  /// Bir efekt çalar; aynı efekt [minGapMs] içinde tekrar çalınmaz.
+  void play(String name, {double volume = 1, int minGapMs = 60}) {
+    if (!_ready || Settings.effects <= 0) return;
+    final now = DateTime.now().millisecondsSinceEpoch;
+    if (now - (_lastPlayed[name] ?? 0) < minGapMs) return;
+    _lastPlayed[name] = now;
+    FlameAudio.play(
+      '$name.wav',
+      volume: (volume * Settings.effects).clamp(0.0, 1.0),
+    ).catchError((_) => AudioPlayer());
+  }
+
+  /// Bölümün temasına uygun ortam döngüsü.
+  void ambientFor(LevelTheme theme) {
+    final name = switch (theme) {
+      LevelTheme.cistern || LevelTheme.cave => 'amb_cistern',
+      LevelTheme.cliffs => 'amb_wind',
+      LevelTheme.sky => 'amb_sky',
+    };
+    _wantedAmbient = name;
+    if (_ready && !_musicWanted) _startAmbient(name);
+  }
+
+  /// Ana menü müziği; açılınca ortam sesi susar, kapanınca geri gelir.
+  void menuMusic(bool on) {
+    _musicWanted = on;
+    if (!_ready) return;
+    if (on) {
+      _ambient?.stop();
+      _ambient = null;
+      _ambientName = null;
+      dread(0);
+      if (_music != null || _musicStarting) return;
+      _musicStarting = true;
+      FlameAudio.loop('menu_theme.mp3', volume: Settings.music)
+          .then((p) {
+            _music = p;
+            _musicStarting = false;
+            if (!_musicWanted) {
+              p.stop();
+              _music = null;
+            }
+          })
+          .catchError((_) {
+            _musicStarting = false;
+          });
+    } else {
+      _music?.stop();
+      _music = null;
+      final wanted = _wantedAmbient;
+      if (wanted != null) _startAmbient(wanted);
+    }
+  }
+
+  Future<void> _startAmbient(String name) async {
+    if (_ambientName == name && _ambient != null) return;
+    _ambientName = name;
+    try {
+      await _ambient?.stop();
+      _ambient = await FlameAudio.loop(
+        '$name.wav',
+        volume: Settings.ambience * 0.8,
+      );
+    } catch (_) {}
+  }
+
+  /// Karabasan'ın gümbürtüsü: 0 = yok, 1 = ensende.
+  void dread(double level) {
+    if (!_ready) return;
+    level = level.clamp(0.0, 1.0);
+    if ((level - _dreadLevel).abs() < 0.03) return;
+    _dreadLevel = level;
+    if (level <= 0) {
+      _dread?.stop();
+      _dread = null;
+      return;
+    }
+    final vol = (level * Settings.effects).clamp(0.0, 1.0);
+    if (_dread == null) {
+      if (_dreadStarting) return;
+      _dreadStarting = true;
+      FlameAudio.loop('karabasan.wav', volume: vol)
+          .then((p) {
+            _dread = p;
+            _dreadStarting = false;
+            // Başlarken tehdit geçmişse hemen sustur.
+            if (_dreadLevel <= 0) {
+              p.stop();
+              _dread = null;
+            }
+          })
+          .catchError((_) {
+            _dreadStarting = false;
+          });
+    } else {
+      _dread!.setVolume(vol);
+    }
+  }
+
+  void applyVolumes() {
+    _music?.setVolume(Settings.music);
+    _ambient?.setVolume(Settings.ambience * 0.8);
+    _dread?.setVolume((_dreadLevel * Settings.effects).clamp(0.0, 1.0));
+  }
+
+  void pauseAll() {
+    _ambient?.pause();
+    _dread?.pause();
+  }
+
+  void resumeAll() {
+    _ambient?.resume();
+    _dread?.resume();
+  }
+}

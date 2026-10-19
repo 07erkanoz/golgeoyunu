@@ -4,7 +4,9 @@ import 'dart:ui' as ui;
 
 import 'package:flame/components.dart';
 
+import 'creatures.dart';
 import 'entities.dart';
+import 'mechanics.dart';
 import 'golge_game.dart';
 import 'level.dart';
 import 'levels.dart';
@@ -86,6 +88,16 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
           _light(canvas, b.position.toOffset().translate(0, -6), 60, 0.6);
         case Lever l when !l.pulled:
           _light(canvas, l.position.toOffset().translate(0, -14), 46, 0.5);
+        case Watcher w:
+          _light(canvas, w.lamp.toOffset(), 70, 0.8);
+          _cut.shader = ui.Gradient.radial(
+            w.lamp.toOffset(),
+            Watcher.beamLength,
+            [const Color(0xC0000000), const Color(0x00000000)],
+          );
+          canvas.drawPath(w.beamPath(), _cut);
+        case WingsPickup k:
+          _light(canvas, k.position.toOffset().translate(0, -10), 110, 0.9);
         case FireflySwarm f:
           _light(canvas, f.position.toOffset(), 70, 0.7 * f.strength);
         case FireflyLure l:

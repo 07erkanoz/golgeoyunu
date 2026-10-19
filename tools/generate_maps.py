@@ -1,0 +1,117 @@
+import re, json, sys
+class G:
+    def __init__(s,W,H,fill='.'):
+        s.W,s.H=W,H; s.g=[[fill]*W for _ in range(H)]
+    def fill(s,c0,r0,c1,r1,ch):
+        for r in range(r0,r1+1):
+            for c in range(c0,c1+1): s.g[r][c]=ch
+    def put(s,c,r,ch,force=False):
+        if not force and s.g[r][c] not in '.':
+            raise SystemExit(f'cakisma {c},{r}: {s.g[r][c]} -> {ch}')
+        s.g[r][c]=ch
+    def rows(s): return [''.join(r) for r in s.g]
+
+# ------------------------------------------------------------ I · YEREBATAN
+src=open('/home/erkanoz/projeler/platformgame/lib/game/levels.dart').read()
+a=src.index("title: 'I · YEREBATAN'"); m=src.index("map: [",a); e=src.index("],",m)
+old=re.findall(r"'([^']*)'",src[m:e])
+W,H=130,20
+y=G(W,H)
+for r,row in enumerate(old):
+    for c,ch in enumerate(row):
+        if c<67: y.g[r][c]=ch
+y.put(65,10,'.',force=True)                 # eski çıkış kalktı
+y.fill(0,0,W-1,1,'#'); y.fill(W-1,0,W-1,H-1,'#')
+# 4) yarasa galerisi
+y.fill(67,14,96,19,'#')
+y.fill(68,2,92,7,'#')                        # alçak tavan
+y.fill(70,12,70,13,'#'); y.fill(91,12,91,13,'#')
+for c in (76,81,86): y.put(c,13,'I')
+for c in (72,79,86): y.put(c,8,'b')
+y.put(82,13,'G'); y.put(69,13,'F'); y.put(88,13,'M'); y.put(68,13,'5'); y.put(91,11,'B')
+# 5) asansör
+y.fill(95,12,96,13,'#')                      # basamak
+y.fill(97,10,101,11,'#')                     # raf
+y.put(98,9,'C'); y.put(99,8,'B') if False else None
+y.put(100,9,'B')
+y.fill(97,12,107,19,'.'); y.fill(97,18,107,19,'w')
+y.fill(97,10,101,11,'#')
+y.put(102,14,'A'); y.put(105,14,'Y')
+y.put(93,13,'K'); y.put(94,13,'6')
+# 6) Karabasan
+y.fill(108,10,113,19,'#')
+y.fill(114,18,128,19,'w')
+y.fill(116,10,118,11,'#')
+y.put(119,10,'O')
+y.fill(122,8,128,9,'#')
+y.put(109,9,'K'); y.put(110,9,'z'); y.put(126,7,'Z'); y.put(127,7,'E'); y.put(124,7,'B')
+y.put(112,9,'F')
+lvl1=y.rows()
+
+# ------------------------------------------------------------ II · KULE
+W,H=30,96
+k=G(W,H)
+k.fill(0,0,1,H-1,'#'); k.fill(28,0,29,H-1,'#')
+k.fill(2,92,7,95,'#'); k.fill(8,94,27,95,'w')
+k.put(3,91,'P'); k.put(5,91,'1'); k.put(7,91,'F'); k.put(6,91,'B')
+k.put(9,92,'V')
+k.fill(12,88,15,89,'#'); k.put(13,87,'B')
+k.put(17,86,'O')
+k.fill(20,84,24,85,'#'); k.put(23,83,'k'); k.put(24,83,'M')
+k.fill(26,74,26,83,'|')
+k.fill(21,74,24,75,'#'); k.put(22,73,'K'); k.put(21,73,'2'); k.put(23,73,'B')
+k.put(18,72,'O')
+k.put(15,70,'O')
+k.fill(8,68,13,69,'#'); k.put(9,67,'k'); k.put(11,67,'F')
+k.put(3,66,'R')
+k.fill(2,55,2,65,'|')
+k.fill(4,55,9,56,'#'); k.put(6,54,'3'); k.put(8,54,'M'); k.put(5,54,'B')
+k.fill(11,53,16,53,'='); k.put(12,52,'K')
+k.fill(18,51,26,51,'='); k.put(23,50,'G'); k.fill(20,50,21,50,'~'); k.put(16,50,'B') if False else None
+k.put(18,50,'B')
+k.fill(27,40,27,50,'|')
+k.fill(13,40,25,40,'='); k.put(21,39,'k'); k.put(24,39,'F'); k.put(17,39,'k')
+k.fill(12,38,17,38,'='); k.put(15,37,'C'); k.put(14,37,'B')
+k.put(10,41,'A'); k.put(6,41,'Y')
+k.fill(2,46,11,47,'#'); k.fill(12,39,12,45,'|')
+k.fill(2,35,5,35,'='); k.put(3,34,'K')
+k.put(6,33,'V')
+k.fill(9,27,14,27,'='); k.put(13,26,'F'); k.put(11,26,'B')
+k.fill(22,24,25,25,'#'); k.put(24,23,'g')
+k.fill(16,25,19,25,'='); k.put(17,24,'M')
+k.fill(12,23,15,23,'=')
+k.fill(13,13,13,22,'|')
+k.fill(4,11,12,12,'#'); k.put(11,10,'W'); k.put(9,10,'4'); k.put(10,10,'K'); k.put(7,10,'B')
+k.fill(14,2,16,11,'r')
+k.fill(19,4,23,4,'='); k.put(21,3,'E')
+lvl2=k.rows()
+
+# ------------------------------------------------------------ III · GÖKYOLU
+W,H=150,22
+s=G(W,H)
+s.fill(0,15,7,17,'#'); s.fill(1,18,6,18,'#'); s.fill(2,19,5,19,'#')
+s.put(2,14,'P'); s.put(4,14,'3'); s.put(5,14,'B')
+s.fill(13,16,16,16,'='); s.put(14,15,'K'); s.put(15,15,'B'); s.put(16,15,'4')
+s.fill(18,3,19,15,'r')
+s.fill(22,6,26,6,'='); s.put(24,5,'M'); s.put(25,5,'B')
+s.put(29,9,'R')
+s.put(38,10,'O')
+s.fill(42,11,56,12,'#'); s.fill(44,13,54,13,'#'); s.fill(47,14,51,14,'#')
+s.put(43,10,'K'); s.put(44,10,'2'); s.put(45,10,'F'); s.fill(47,10,48,10,'~'); s.put(50,10,'G'); s.fill(53,10,54,10,'~')
+s.put(46,10,'B')
+s.fill(59,12,60,12,'='); s.fill(61,6,63,8,'#'); s.put(63,5,'g')
+s.fill(66,12,69,12,'='); s.put(67,11,'B')
+s.fill(72,10,75,10,'=')
+s.put(79,14,'V')
+s.fill(84,4,85,16,'r')
+s.fill(88,5,93,5,'='); s.put(89,4,'K'); s.put(90,4,'M'); s.put(91,4,'B')
+s.fill(104,12,112,13,'#'); s.fill(106,14,110,14,'#')
+s.put(105,11,'K'); s.put(106,11,'k'); s.put(108,11,'F'); s.put(110,11,'k'); s.put(107,11,'B')
+s.put(116,12,'O'); s.put(121,11,'O'); s.put(126,10,'O')
+s.fill(131,9,149,11,'#'); s.fill(133,12,147,12,'#')
+s.put(132,8,'K'); s.put(135,8,'B'); s.put(140,8,'1'); s.put(145,8,'E'); s.put(143,8,'B')
+lvl3=s.rows()
+
+json.dump({'I':lvl1,'II':lvl2,'III':lvl3},open(sys.argv[1],'w'))
+for n,m in (('I',lvl1),('II',lvl2),('III',lvl3)):
+    print(n, len(m), set(len(r) for r in m))

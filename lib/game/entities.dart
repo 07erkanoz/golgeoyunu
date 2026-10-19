@@ -4,8 +4,10 @@ import 'dart:ui' as ui;
 
 import 'package:flame/components.dart';
 
+import 'audio.dart';
 import 'golge_game.dart';
 import 'level.dart';
+import 'mechanics.dart';
 import 'palette.dart';
 import 'player.dart';
 
@@ -66,13 +68,19 @@ class Guard extends PositionComponent with HasGameReference<GolgeGame> {
     if (sees) _lastSeenX = p.center.x;
 
     // Şüphe: görünür kaldıkça dolar, gözden kaybolunca yavaşça söner.
+    if (sees && suspicion == 0 && _calm) {
+      GameAudio.instance.play('suspect', volume: 0.7, minGapMs: 1500);
+    }
     if (sees) {
       final near = (p.center.x - center.x).abs() < 110;
       suspicion = math.min(1, suspicion + dt * (near ? 2.4 : 1.15));
     } else {
       suspicion = math.max(0, suspicion - dt * 0.55);
     }
-    if (_calm && suspicion >= 1) _setState(GuardState.alert);
+    if (_calm && suspicion >= 1) {
+      _setState(GuardState.alert);
+      GameAudio.instance.play('alert', minGapMs: 1200);
+    }
 
     // Şüphelenen Kandilci durur ve oyuncunun olduğu yere bakar.
     final staring = _calm && sees;
@@ -160,7 +168,7 @@ class Guard extends PositionComponent with HasGameReference<GolgeGame> {
   void hear(Vector2 from, double radius) {
     if (!_calm) return;
     final d = from - center;
-    if (d.x.abs() > radius || d.y.abs() > 110) return;
+    if (d.x.abs() > radius || d.y.abs() > 220) return;
     _lure = null;
     _investigateX = from.x;
     suspicion = math.max(suspicion, 0.35);
@@ -860,6 +868,10 @@ class Crate extends PositionComponent with HasGameReference<GolgeGame> {
 
   static const double side = 30;
   double _vy = 0;
+  Deck? _riding;
+
+  /// Üstünde durduğu hareketli zemin (asansör ağırlığı için).
+  Deck? get riding => _riding;
 
   Level get level => game.level;
 
@@ -888,6 +900,9 @@ class Crate extends PositionComponent with HasGameReference<GolgeGame> {
     super.update(dt);
     // Uzun bir kare (ör. yükleme) sandığı zeminin içinden geçirmesin.
     dt = math.min(dt, 1 / 30);
+    final deck = _riding;
+    if (deck != null && deck.isMounted && deck.active) position.add(deck.delta);
+    _riding = null;
     final prevBottom = position.y + side;
     _vy = math.min(_vy + 1900 * dt, 900);
     position.y += _vy * dt;
@@ -900,6 +915,21 @@ class Crate extends PositionComponent with HasGameReference<GolgeGame> {
       if (ch == '#' || (ch == '=' && prevBottom <= r * kTile + 0.5)) {
         position.y = r * kTile - side;
         _vy = 0;
+        return;
+      }
+    }
+    for (final d in game.world.children.whereType<Deck>()) {
+      if (!d.active) continue;
+      final rect = d.toRect();
+      if (position.x + side - 2 <= rect.left || position.x + 2 >= rect.right) {
+        continue;
+      }
+      if (prevBottom <= rect.top - d.delta.y + 1 &&
+          position.y + side >= rect.top) {
+        position.y = rect.top - side;
+        _vy = 0;
+        _riding = d;
+        if (d is CrumbleRock) d.stoodOn = true;
         return;
       }
     }
@@ -1013,6 +1043,8 @@ class Lever extends PositionComponent with HasGameReference<GolgeGame> {
   void pull() {
     if (pulled) return;
     pulled = true;
+    GameAudio.instance.play('lever');
+    GameAudio.instance.play('gate', volume: 0.7);
     for (final g in game.world.children.whereType<Gate>()) {
       g.opening = true;
     }
