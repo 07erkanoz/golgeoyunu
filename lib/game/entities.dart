@@ -965,7 +965,12 @@ class Crate extends PositionComponent with HasGameReference<GolgeGame> {
   double push(double dx) {
     if (_vy.abs() > 1) return 0;
     final target = toRect().shift(Offset(dx, 0)).deflate(0.5);
-    if (_blockedAt(target)) return 0;
+    if (_blockedAt(target)) {
+      // Küçük bir basamağı (çukura oturmuş sandığın kenarı) aşar.
+      final up = target.shift(const Offset(0, -3));
+      if (_blockedAt(up)) return 0;
+      position.y -= 3;
+    }
     position.x += dx;
     return dx;
   }
@@ -989,6 +994,19 @@ class Crate extends PositionComponent with HasGameReference<GolgeGame> {
       final ch = level.cell(c, r);
       if (ch == '#' || (ch == '=' && prevBottom <= r * kTile + 0.5)) {
         position.y = r * kTile - side;
+        _vy = 0;
+        return;
+      }
+    }
+    // Başka bir sandığın üstüne oturur (çukuru dolduran sandık köprü olur).
+    for (final c in game.world.children.whereType<Crate>()) {
+      if (c == this) continue;
+      final rect = c.toRect();
+      if (position.x + side - 4 <= rect.left || position.x + 4 >= rect.right) {
+        continue;
+      }
+      if (prevBottom <= rect.top + 1 && position.y + side >= rect.top) {
+        position.y = rect.top - side;
         _vy = 0;
         return;
       }

@@ -253,7 +253,7 @@ class WaterBasin extends Component with HasGameReference<GolgeGame> {
   /// Tufan başladı mı (bir daha durmaz).
   bool flooding = false;
 
-  void startFlood({double rate = 20}) {
+  void startFlood({double rate = 30}) {
     if (flooding) return;
     flooding = true;
     speed = rate;
@@ -1085,20 +1085,35 @@ class Pedestal extends PositionComponent with HasGameReference<GolgeGame> {
       if ((cx - position.x).abs() < 14 && (feet - position.y).abs() < 4) {
         matched = true;
         GameAudio.instance.play('memory', volume: 0.6);
-        Gate? best;
-        var bestD = double.infinity;
-        for (final g in game.world.children.whereType<Gate>()) {
-          final d = (g.position - position).length;
-          if (d < bestD && g.solid && !g.opening) {
-            bestD = d;
-            best = g;
-          }
-        }
-        if (best != null) {
-          best.opening = true;
-          GameAudio.instance.play('gate', volume: 0.6);
-        }
+        _openIfAllMatched();
       }
+    }
+  }
+
+  /// Bu gölgeye en yakın kapı, o kapıya bağlı bütün gölgeler eşini bulunca
+  /// açılır.
+  Gate? get _gate {
+    Gate? best;
+    var bestD = double.infinity;
+    for (final g in game.world.children.whereType<Gate>()) {
+      final d = (g.position - position).length;
+      if (d < bestD) {
+        bestD = d;
+        best = g;
+      }
+    }
+    return best;
+  }
+
+  void _openIfAllMatched() {
+    final gate = _gate;
+    if (gate == null || gate.opening) return;
+    final group = game.world.children.whereType<Pedestal>().where(
+      (p) => p._gate == gate,
+    );
+    if (group.every((p) => p.matched)) {
+      gate.opening = true;
+      GameAudio.instance.play('gate', volume: 0.6);
     }
   }
 

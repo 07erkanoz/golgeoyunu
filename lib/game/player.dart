@@ -346,7 +346,9 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     if (dx == 0) return;
     position.x += dx;
     final r0 = ((position.y + 1) / kTile).floor();
-    final r1 = ((position.y + h - 1) / kTile).floor();
+    // Ayak hizasındaki birkaç piksellik basamak engel sayılmaz (çukura
+    // oturmuş sandığın üstünden zemine çıkarken).
+    final r1 = ((position.y + h - 4) / kTile).floor();
     final c = dx > 0
         ? ((position.x + w - 0.001) / kTile).floor()
         : (position.x / kTile).floor();

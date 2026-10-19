@@ -363,7 +363,54 @@ a.fill(176+AO,8,180+AO,25,'#'); a.put(177+AO,7,'5')
 a.fill(183+AO,7,189+AO,25,'#'); a.put(184+AO,6,'M'); a.put(185+AO,6,'B'); a.put(187+AO,6,'E')
 lvl5=a.rows()
 
-MAPS = [('kMapYerebatan', lvl1), ('kMapKule', lvl2), ('kMapGokyolu', lvl3), ('kMapKaf', lvl4), ('kMapAgri', lvl5)]
+# ------------------------------------------------------------ VI · NUH'UN GEMİSİ
+W,H=300,30
+n=G(W,H)
+n.fill(0,0,191,18,'#')                       # alt ambarın tavanı (gövde)
+n.fill(0,26,299,29,'#')                      # omurga
+# 1) Giriş ve birinci ambar: aslan, eşinin gölgesine
+n.put(2,25,'P'); n.put(3,25,'p'); n.put(4,25,'1'); n.put(6,25,'B'); n.put(8,25,'K')
+n.put(18,25,'a')                             # aslan (1. hayvan)
+n.put(30,25,'G'); n.put(26,25,'I'); n.put(38,25,'I'); n.put(14,25,'F')
+n.put(52,25,'d')                             # aslanın eşi (1. gölge)
+n.fill(58,19,58,25,'H')
+# 2) İkinci ambar: fil ve zürafa; araya düşen çukuru düz sandık doldurur
+n.put(60,25,'K'); n.put(61,25,'p'); n.put(62,25,'2'); n.put(64,25,'B')
+n.put(70,25,'a'); n.put(74,25,'a')          # fil, zürafa
+n.fill(80,23,83,23,'#'); n.put(81,22,'C')    # rafta düz sandık
+n.put(84,26,'.',force=True)                  # sandığın oturacağı tek karelik çukur
+n.put(96,25,'d'); n.put(102,25,'d')          # filin ve zürafanın gölgeleri
+n.fill(108,19,108,25,'H')
+n.put(90,25,'M'); n.put(99,25,'3')
+# 3) Kandillerin ambarı: Kandilciler, karanlık, gözler
+n.put(110,25,'K'); n.put(111,25,'p'); n.put(113,25,'B')
+n.put(114,20,'x'); n.put(150,25,'X')
+n.put(122,25,'G'); n.put(140,25,'G'); n.fill(130,25,131,25,'~'); n.put(134,25,'I'); n.put(146,25,'~')
+n.put(118,25,'F'); n.put(136,25,'F'); n.put(128,22,'e'); n.put(144,25,'4')
+n.fill(152,24,156,25,'#'); n.fill(157,22,161,25,'#')   # yük yığınları
+n.fill(165,26,175,29,'w'); n.fill(165,22,175,22,'=')   # sızan su, üstünde kiriş
+n.put(170,21,'M')
+n.put(178,25,'K'); n.put(180,25,'B'); n.put(185,25,'5')
+# 4) Ambar kuyusu: tufan geri döner, yukarı kaç
+n.fill(192,0,229,2,'#')
+n.put(193,3,'q'); n.put(229,25,'Q')
+n.put(195,25,'o'); n.put(197,25,'p')
+for i,r in enumerate(range(24,9,-2)):
+    a = 199 if i % 2 == 0 else 205
+    n.fill(a,r,a+7,r,'=')
+n.fill(218,3,218,11,'S')                     # sallanılan ip
+n.fill(224,8,229,8,'=')
+n.fill(230,9,299,25,'#')                     # üst güverte (buzula gömülü)
+n.fill(230,8,236,8,'-')
+# 5) Üst güverte: buz, Kandilci, sönmüş ışığın yeri
+n.put(232,7,'K'); n.put(233,7,'p'); n.put(234,7,'6'); n.put(238,7,'B')
+n.put(248,7,'G'); n.fill(244,7,245,7,'~'); n.put(258,7,'I'); n.put(262,7,'G')
+n.fill(266,6,268,7,'#'); n.put(267,5,'M')    # sönmüş ışığın kaidesi
+n.put(270,7,'7'); n.put(276,7,'K'); n.put(284,7,'B'); n.put(290,7,'E')
+n.fill(252,7,256,7,'-')
+lvl6=n.rows()
+
+MAPS = [('kMapYerebatan', lvl1), ('kMapKule', lvl2), ('kMapGokyolu', lvl3), ('kMapKaf', lvl4), ('kMapAgri', lvl5), ('kMapGemi', lvl6)]
 
 out = ['// Bu dosya tools/generate_maps.py ile üretilir; elle düzenleme.',
        '// Gösterim: lib/game/level.dart başındaki açıklamaya bakın.', '']

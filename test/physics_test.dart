@@ -1072,36 +1072,43 @@ void main() {
   });
 
   group('Kaf uzantısı', () {
-    testWithGame<GolgeGame>('üç tüy toplanınca sunak tüy kapısını açar', GolgeGame.new, (
-      game,
-    ) async {
-      final p = await place(game, 3, 186, 17);
-      final feathers = game.world.children.whereType<SimurgFeather>().toList();
-      expect(feathers.length, 3);
-      final gate = nearest<Gate>(game, 194 * kTile);
-      // Tüyleri tek tek al (sınavlar ayrı testlerde); sonra sunağa dön.
-      final safe = p.position.clone();
-      for (final f in feathers) {
-        p.position.setFrom(f.position - Vector2(Player.w / 2, Player.h / 2));
-        game.update(1 / 60);
-        p.position.setFrom(safe);
-        p.velocity.setZero();
-        run(game, 0.2);
-      }
-      expect(feathers.every((f) => f.taken), isTrue);
-      run(game, 3);
-      expect(gate.solid, isFalse);
-    });
+    testWithGame<GolgeGame>(
+      'üç tüy toplanınca sunak tüy kapısını açar',
+      GolgeGame.new,
+      (game) async {
+        final p = await place(game, 3, 186, 17);
+        final feathers = game.world.children
+            .whereType<SimurgFeather>()
+            .toList();
+        expect(feathers.length, 3);
+        final gate = nearest<Gate>(game, 194 * kTile);
+        // Tüyleri tek tek al (sınavlar ayrı testlerde); sonra sunağa dön.
+        final safe = p.position.clone();
+        for (final f in feathers) {
+          p.position.setFrom(f.position - Vector2(Player.w / 2, Player.h / 2));
+          game.update(1 / 60);
+          p.position.setFrom(safe);
+          p.velocity.setZero();
+          run(game, 0.2);
+        }
+        expect(feathers.every((f) => f.taken), isTrue);
+        run(game, 3);
+        expect(gate.solid, isFalse);
+      },
+    );
 
-    testWithGame<GolgeGame>('kayan kayalarla yüksek buluta çıkılır', GolgeGame.new, (
-      game,
-    ) async {
+    testWithGame<
+      GolgeGame
+    >('kayan kayalarla yüksek buluta çıkılır', GolgeGame.new, (game) async {
       final p = await place(game, 3, 164, 17);
-      final rocks = game.world.children
-          .whereType<MovingRock>()
-          .where((r) => r.position.x > 160 * kTile && r.position.x < 180 * kTile)
-          .toList()
-        ..sort((a, b) => a.position.x.compareTo(b.position.x));
+      final rocks =
+          game.world.children
+              .whereType<MovingRock>()
+              .where(
+                (r) => r.position.x > 160 * kTile && r.position.x < 180 * kTile,
+              )
+              .toList()
+            ..sort((a, b) => a.position.x.compareTo(b.position.x));
       expect(rocks.length, 3);
       // Hedef zemin şu ankinden alçak ya da en çok yarım kare yüksekken atla.
       void hopTo(double targetX, double Function() targetTop) {
@@ -1116,7 +1123,10 @@ void main() {
         for (var i = 0; i < 90 && p.position.x < targetX; i++) {
           game.update(1 / 60);
           // ignore: avoid_print
-          if (const bool.fromEnvironment('KAYA') && i % 6 == 0) print('  j$i x=${(p.position.x / kTile).toStringAsFixed(2)} feet=${((p.position.y + Player.h) / kTile).toStringAsFixed(2)} ground=${p.onGround}');
+          if (const bool.fromEnvironment('KAYA') && i % 6 == 0)
+            print(
+              '  j$i x=${(p.position.x / kTile).toStringAsFixed(2)} feet=${((p.position.y + Player.h) / kTile).toStringAsFixed(2)} ground=${p.onGround}',
+            );
         }
         keys(game)
           ..right = false
@@ -1129,7 +1139,10 @@ void main() {
       for (final r in rocks) {
         hopTo(r.position.x + 12, () => r.position.y);
         // ignore: avoid_print
-        if (const bool.fromEnvironment('KAYA')) print('rock ${(r.position.x / kTile).toStringAsFixed(1)},${(r.position.y / kTile).toStringAsFixed(2)} p=${(p.position.x / kTile).toStringAsFixed(2)},${((p.position.y + Player.h) / kTile).toStringAsFixed(2)} riding=${p.riding.runtimeType} dead=${p.isDead}');
+        if (const bool.fromEnvironment('KAYA'))
+          print(
+            'rock ${(r.position.x / kTile).toStringAsFixed(1)},${(r.position.y / kTile).toStringAsFixed(2)} p=${(p.position.x / kTile).toStringAsFixed(2)},${((p.position.y + Player.h) / kTile).toStringAsFixed(2)} riding=${p.riding.runtimeType} dead=${p.isDead}',
+          );
         expect(p.isDead, isFalse);
       }
       hopTo(176.3 * kTile, () => 7 * kTile.toDouble());
@@ -1140,35 +1153,136 @@ void main() {
   });
 
   group('Aziz Hakob Manastırı', () {
-    testWithGame<GolgeGame>('revakta koşan sarkıtlardan kurtulur', GolgeGame.new, (
-      game,
-    ) async {
-      final p = await place(game, 4, 205, 16);
-      for (final g in game.world.children.whereType<Guard>().toList()) {
-        g.removeFromParent();
-      }
-      keys(game).right = true;
-      for (var i = 0; i < 60 * 4 && p.position.x < 232 * kTile; i++) {
-        game.update(1 / 60);
-      }
-      run(game, 1);
-      expect(p.isDead, isFalse);
-    });
+    testWithGame<GolgeGame>(
+      'revakta koşan sarkıtlardan kurtulur',
+      GolgeGame.new,
+      (game) async {
+        final p = await place(game, 4, 205, 16);
+        for (final g in game.world.children.whereType<Guard>().toList()) {
+          g.removeFromParent();
+        }
+        keys(game).right = true;
+        for (var i = 0; i < 60 * 4 && p.position.x < 232 * kTile; i++) {
+          game.update(1 / 60);
+        }
+        run(game, 1);
+        expect(p.isDead, isFalse);
+      },
+    );
 
-    testWithGame<GolgeGame>('parmak ucunda yürüyeni sarkıt bulur', GolgeGame.new, (
-      game,
-    ) async {
-      final p = await place(game, 4, 205, 16);
-      for (final g in game.world.children.whereType<Guard>().toList()) {
-        g.removeFromParent();
-      }
-      keys(game)
-        ..right = true
-        ..sneak = true;
-      for (var i = 0; i < 60 * 12 && !p.isDead; i++) {
-        game.update(1 / 60);
-      }
-      expect(p.isDead, isTrue);
-    });
+    testWithGame<GolgeGame>(
+      'parmak ucunda yürüyeni sarkıt bulur',
+      GolgeGame.new,
+      (game) async {
+        final p = await place(game, 4, 205, 16);
+        for (final g in game.world.children.whereType<Guard>().toList()) {
+          g.removeFromParent();
+        }
+        keys(game)
+          ..right = true
+          ..sneak = true;
+        for (var i = 0; i < 60 * 12 && !p.isDead; i++) {
+          game.update(1 / 60);
+        }
+        expect(p.isDead, isTrue);
+      },
+    );
+  });
+
+  group('Nuh\'un Gemisi', () {
+    testWithGame<GolgeGame>(
+      'önce raftaki sandık çukura, sonra zürafa ve fil eşlerine: kapı açılır',
+      GolgeGame.new,
+      (game) async {
+        expect(levels[5].map, isNotEmpty);
+        final p = await place(game, 5, 79, 25);
+        for (final g in game.world.children.whereType<Guard>().toList()) {
+          g.removeFromParent();
+        }
+        final gate = nearest<Gate>(game, 108 * kTile);
+        // Rafa çık, sandığı çukura it.
+        p.position.setFrom(
+          Level.standOn(Vector2(80 * kTile, 22 * kTile), Player.w, Player.h),
+        );
+        keys(game).right = true;
+        run(game, 2.5);
+        keys(game).right = false;
+        final plain = game.world.children.whereType<Crate>().firstWhere(
+          (c) => c is! AnimalCrate,
+        );
+        expect(plain.position.x, closeTo(84 * kTile, 6));
+        expect(plain.position.y, greaterThan(25 * kTile));
+        // Zürafayı (öndeki) ve sonra fili eşlerine it.
+        final animals = game.world.children.whereType<AnimalCrate>().toList();
+        final giraffe = animals.firstWhere((a) => a.kind == AnimalKind.giraffe);
+        final elephant = animals.firstWhere(
+          (a) => a.kind == AnimalKind.elephant,
+        );
+        Future<void> pushTo(Crate c, double targetCenter) async {
+          p.position.setFrom(
+            Level.standOn(
+              Vector2(c.position.x - kTile, 25 * kTile),
+              Player.w,
+              Player.h,
+            ),
+          );
+          run(game, 0.2);
+          for (var i = 0; i < 60 * 20; i++) {
+            final cx = c.position.x + Crate.side / 2;
+            if (cx >= targetCenter - 3) break;
+            keys(game).right = true;
+            game.update(1 / 60);
+          }
+          keys(game).right = false;
+          run(game, 0.3);
+        }
+
+        await pushTo(giraffe, 102.5 * kTile);
+        await pushTo(elephant, 96.5 * kTile);
+        expect(p.isDead, isFalse);
+        run(game, 4);
+        expect(gate.solid, isFalse);
+      },
+    );
+
+    testWithGame<GolgeGame>(
+      'ambar kuyusunda tufandan önce tepeye çık',
+      GolgeGame.new,
+      (game) async {
+        final p = await place(game, 5, 193, 25);
+        keys(game).right = true;
+        run(game, 0.6);
+        final basin = game.world.children.whereType<WaterBasin>().first;
+        expect(basin.flooding, isTrue);
+        // Tahtalara zikzak tırman.
+        for (final r in [24, 22, 20, 18, 16, 14, 12, 10]) {
+          final left = ((24 - r) ~/ 2).isEven;
+          final x = left ? 205.6 : 206.4;
+          for (var i = 0; i < 60 * 3; i++) {
+            final dx = x * kTile - p.center.x;
+            keys(game)
+              ..right = dx > 6
+              ..left = dx < -6
+              ..jump =
+                (p.onGround &&
+                    (p.position.y + Player.h) > r * kTile + 2 &&
+                    dx.abs() < 3.6 * kTile) ||
+                (!p.onGround && p.velocity.y < 0);
+            game.update(1 / 60);
+            if (p.onGround && (p.position.y + Player.h - r * kTile).abs() < 2) {
+              break;
+            }
+          }
+          // ignore: avoid_print
+          if (const bool.fromEnvironment('GEMI')) print('r$r x=${(p.center.x / kTile).toStringAsFixed(2)} feet=${((p.position.y + Player.h) / kTile).toStringAsFixed(2)} su=${(basin.surface / kTile).toStringAsFixed(2)}');
+          expect(p.isDead, isFalse, reason: 'satır $r');
+        }
+        keys(game)
+          ..left = false
+          ..right = false
+          ..jump = false;
+        expect(basin.surface, greaterThan(p.position.y + Player.h));
+      },
+    );
   });
 }
