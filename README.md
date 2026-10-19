@@ -25,20 +25,28 @@ Karakter geçicidir; ileride profesyonel çizimle değiştirilecek.
 
 | Tuş | İşlev |
 |---|---|
-| ← → / A D | Koş |
+| ← → / A D | Yürü, koş (ağırlıklı, ataletli hareket) |
 | Boşluk / Z | Zıpla (basılı tutunca daha yükseğe) |
-| ↑ / W | Kenardan yukarı çık, sarmaşığa tutun ve tırman |
-| ↓ / S | Çömel ve sessizce yürü, kenardan bırak; zıplamayla birlikte platformdan aşağı in |
-| Shift / Q (basılı) | Kavanozu ört: ışığın kısılır, yavaşlarsın, Kandilci seni ancak yakından görür |
-| F / X | Ateşböceği sal: Kandilci ışığa yönelir (kavanozda 3 tane, 10 saniyede bir yenilenir) |
+| ↑ / W | Kenardan yukarı çık, zincire/sarmaşığa tırman, **kolu çek** |
+| ↓ / S | Çömel ve kavanozu ört; kenardan bırak; zıplamayla birlikte platformdan aşağı in |
+| Shift / Q (basılı) | **Parmak ucunda yürü**: sessiz ve yavaş, uzaktan zor görülürsün |
+| F / X | **Ateşböceği sal**: Kandilci ışığa yönelir (3 hak, 10 saniyede bir yenilenir) |
+| → (sandığa dayanınca) | Sandığı it |
 | Enter / Boşluk | Ara sahnedeki metni geç |
 | R | Son kontrol noktasından yeniden başla |
 
-Mobilde ekranda dokunmatik düğmeler çıkar.
+## Kandilci'yi geçmenin yolları
 
-**Gizlenme:** Sütunların ardında ya da otların içinde dururken, çömelerek ya da
-kavanozunu örterek ilerlerken Kandilci seni göremez ve yanından geçip gider.
-Ama seni kovalarken saklanmaya çalışırsan yakalar.
+- **Saklan:** Sütunun ardında dur ya da çömel. Kandilci önünden geçip gider.
+- **Sessiz ol:** Tahta iskelede koşmak gıcırdar, Kandilci sesi duyup döner.
+  Parmak ucunda yürü.
+- **Oyala:** Ateşböceği sal; Kandilci ışığa yönelirken arkasından geç.
+- **Başka yoldan git:** Zincire tırman, kemerlerin üstündeki kirişlerden geç.
+
+Kandilci seni görünce hemen saldırmaz: başında "?" belirir ve şüphelenir.
+Hemen gözden kaybolursan şüphesi söner; bakmaya devam ederse "!" ile kovalar.
+
+Mobilde ekranda dokunmatik düğmeler çıkar.
 
 ## Windows'ta oynamak
 

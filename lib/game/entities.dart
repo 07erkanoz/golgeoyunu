@@ -13,8 +13,11 @@ import 'player.dart';
 
 enum GuardState { patrol, pause, alert, chase, investigate }
 
-/// Elinde fenerle devriye gezen Kandilci. Işık konisine giren ve saklanmayan
-/// oyuncuyu görür, kovalar. Salınan ateşböceklerinin ışığına yönelir.
+/// Elinde fenerle devriye gezen Kandilci.
+///
+/// Oyuncuyu ışık konisinde görünce hemen saldırmaz: önce şüphelenir ("?"),
+/// durup bakar. Şüphe dolarsa "!" ile kovalar. Ses ve ateşböceği ışığı onu
+/// o yöne çeker.
 class Guard extends PositionComponent with HasGameReference<GolgeGame> {
   Guard(Vector2 cell)
     : super(
@@ -25,16 +28,18 @@ class Guard extends PositionComponent with HasGameReference<GolgeGame> {
 
   static const double gw = 24;
   static const double gh = 50;
-  static const double patrolSpeed = 50;
-  static const double chaseSpeed = 145;
+  static const double patrolSpeed = 45;
+  static const double chaseSpeed = 130;
   static const double viewDistance = 240;
 
   GuardState state = GuardState.patrol;
   int facing = -1;
+  double suspicion = 0;
   double _t = 0;
   double _anim = 0;
   double _lost = 0;
   double _lastSeenX = 0;
+  double? _investigateX;
   FireflyLure? _lure;
 
   Level get level => game.level;
@@ -43,6 +48,11 @@ class Guard extends PositionComponent with HasGameReference<GolgeGame> {
     state = s;
     _t = 0;
   }
+
+  bool get _calm =>
+      state == GuardState.patrol ||
+      state == GuardState.pause ||
+      state == GuardState.investigate;
 
   @override
   void update(double dt) {
@@ -53,52 +63,68 @@ class Guard extends PositionComponent with HasGameReference<GolgeGame> {
     final sees = !game.cinematic && _canSee(p);
     if (sees) _lastSeenX = p.center.x;
 
+    // Şüphe: görünür kaldıkça dolar, gözden kaybolunca yavaşça söner.
+    if (sees) {
+      final near = (p.center.x - center.x).abs() < 110;
+      suspicion = math.min(1, suspicion + dt * (near ? 2.4 : 1.15));
+    } else {
+      suspicion = math.max(0, suspicion - dt * 0.55);
+    }
+    if (_calm && suspicion >= 1) _setState(GuardState.alert);
+
+    // Şüphelenen Kandilci durur ve oyuncunun olduğu yere bakar.
+    final staring = _calm && sees;
+    if (staring) facing = _lastSeenX >= center.x ? 1 : -1;
+
     switch (state) {
       case GuardState.patrol:
-        _anim += dt;
-        if (!_walk(patrolSpeed * dt)) _setState(GuardState.pause);
-        if (sees) {
-          _setState(GuardState.alert);
-        } else {
+        if (!staring) {
+          _anim += dt;
+          if (!_walk(patrolSpeed * dt)) _setState(GuardState.pause);
           _noticeLure();
         }
       case GuardState.pause:
-        if (_t > 1.4) {
+        if (!staring && _t > 1.4) {
           facing = -facing;
           _setState(GuardState.patrol);
         }
-        if (sees) {
-          _setState(GuardState.alert);
-        } else {
-          _noticeLure();
-        }
+        if (!staring) _noticeLure();
       case GuardState.investigate:
+        if (staring) break;
         final lure = _lure;
-        if (sees) {
-          _setState(GuardState.alert);
-          break;
-        }
-        if (lure != null && lure.isMounted) {
-          final dx = lure.position.x - center.x;
+        final targetX = (lure != null && lure.isMounted)
+            ? lure.position.x
+            : _investigateX;
+        if (targetX != null) {
+          final dx = targetX - center.x;
           if (dx.abs() > 3) facing = dx > 0 ? 1 : -1;
-          if (dx.abs() > 12) {
+          if (dx.abs() > 12 &&
+              _walk(math.min(patrolSpeed * 1.4 * dt, dx.abs()))) {
             _anim += dt * 1.3;
-            _walk(math.min(patrolSpeed * 1.4 * dt, dx.abs()));
+            _t = 0;
+          } else if (lure == null || !lure.isMounted) {
+            // Sesin geldiği yere vardı: bir süre bakınır.
+            _investigateX = null;
+            _t = 0;
+          } else {
+            _t = 0;
           }
-          _t = 0;
         } else if (_t > 2.2) {
-          // Işık söndü; bir süre bakındıktan sonra devriyeye döner.
           _lure = null;
           _setState(GuardState.pause);
+        } else {
+          // Etrafa bakınır.
+          if ((_t * 1.2).floor().isOdd != (facing > 0)) facing = -facing;
         }
       case GuardState.alert:
         facing = _lastSeenX >= center.x ? 1 : -1;
-        if (_t > 0.45) {
+        if (_t > 0.4) {
           _lost = 0;
           _setState(GuardState.chase);
         }
       case GuardState.chase:
         if (p.isDead) {
+          suspicion = 0;
           _setState(GuardState.pause);
           break;
         }
@@ -110,7 +136,11 @@ class Guard extends PositionComponent with HasGameReference<GolgeGame> {
           _walk(math.min(chaseSpeed * dt, dx.abs()));
         }
         _lost = sees ? 0 : _lost + dt;
-        if (_lost > 1.6) _setState(GuardState.pause);
+        if (_lost > 1.6) {
+          suspicion = 0.5;
+          _investigateX = _lastSeenX;
+          _setState(GuardState.investigate);
+        }
     }
 
     // Saklanan oyuncunun önünden geçip gider; yalnızca onu az önce görmüşse
@@ -118,10 +148,22 @@ class Guard extends PositionComponent with HasGameReference<GolgeGame> {
     final justSaw = state == GuardState.chase && _lost < 0.4;
     if (!p.isDead &&
         (!p.hidden || justSaw) &&
-        p.toRect().deflate(3).overlaps(toRect().deflate(4))) {
+        p.toRect().deflate(2).overlaps(toRect().deflate(4))) {
       p.die();
+      suspicion = 0;
       _setState(GuardState.pause);
     }
+  }
+
+  /// Oyuncunun çıkardığı sesler: yakındaysa Kandilci o yöne gider.
+  void hear(Vector2 from, double radius) {
+    if (!_calm) return;
+    final d = from - center;
+    if (d.x.abs() > radius || d.y.abs() > 110) return;
+    _lure = null;
+    _investigateX = from.x;
+    suspicion = math.max(suspicion, 0.35);
+    _setState(GuardState.investigate);
   }
 
   void _noticeLure() {
@@ -132,6 +174,7 @@ class Guard extends PositionComponent with HasGameReference<GolgeGame> {
         continue;
       }
       _lure = lure;
+      _investigateX = null;
       _setState(GuardState.investigate);
       return;
     }
@@ -166,8 +209,14 @@ class Guard extends PositionComponent with HasGameReference<GolgeGame> {
     final dx = target.x - eye.x;
     final dy = target.y - eye.y;
     var range = state == GuardState.chase ? viewDistance * 1.4 : viewDistance;
-    // Kavanozu örtülü çocuk karanlıkta zor seçilir.
-    if (p.covering && state != GuardState.chase) range *= 0.5;
+    // Çömelip kavanozunu örten ya da parmak ucunda yürüyen çocuk zor seçilir.
+    if (state != GuardState.chase) {
+      if (p.crouching) {
+        range *= 0.5;
+      } else if (p.sneaking) {
+        range *= 0.7;
+      }
+    }
     if (dx * facing < -8) return false;
     if (dx.abs() > range) return false;
     if (dy.abs() > dx.abs() * 0.5 + 34) return false;
@@ -264,6 +313,34 @@ class Guard extends PositionComponent with HasGameReference<GolgeGame> {
     );
     canvas.restore();
 
+    // Şüphe "?" ile görünür: dolmaya başladıkça belirginleşir.
+    final doubt = state == GuardState.investigate
+        ? 1.0
+        : (alert ? 0.0 : suspicion);
+    if (doubt > 0.02) {
+      final q = Paint()
+        ..color = kWarmLight.withValues(alpha: 0.35 + 0.65 * doubt)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.2
+        ..strokeCap = StrokeCap.round;
+      canvas.drawArc(
+        const Rect.fromLTWH(gw / 2 - 4, -27, 8, 8),
+        math.pi,
+        math.pi * 1.4,
+        false,
+        q,
+      );
+      canvas.drawLine(
+        const Offset(gw / 2 + 1, -19.5),
+        const Offset(gw / 2, -15),
+        q,
+      );
+      canvas.drawCircle(
+        const Offset(gw / 2, -10),
+        1.6,
+        Paint()..color = kWarmLight.withValues(alpha: 0.35 + 0.65 * doubt),
+      );
+    }
     if (alert) {
       final a = Paint()..color = kCold;
       canvas.drawRect(const Rect.fromLTWH(gw / 2 - 1.5, -24, 3, 11), a);
@@ -581,6 +658,248 @@ class FireflyLure extends PositionComponent with HasGameReference<GolgeGame> {
       Offset.zero,
       2.2,
       Paint()..color = const Color(0xFFFFF6D8).withValues(alpha: a),
+    );
+  }
+}
+
+// ================================================================== Sandık
+
+/// İtilebilir ahşap sandık: üstüne çıkılır, yüksek yerlere basamak olur.
+class Crate extends PositionComponent with HasGameReference<GolgeGame> {
+  Crate(Vector2 cell)
+    : super(
+        position: Vector2(cell.x + 1, cell.y + kTile - side),
+        size: Vector2.all(side),
+        priority: 17,
+      );
+
+  static const double side = 30;
+  double _vy = 0;
+
+  Level get level => game.level;
+
+  bool _blockedAt(Rect r) {
+    if (level.rectSolid(r.left, r.top, r.right, r.bottom)) return true;
+    for (final g in game.world.children.whereType<Gate>()) {
+      if (g.solid && g.toRect().overlaps(r)) return true;
+    }
+    for (final c in game.world.children.whereType<Crate>()) {
+      if (c != this && c.toRect().overlaps(r)) return true;
+    }
+    return false;
+  }
+
+  /// İtilmeye çalışılır; gerçekte ne kadar kaydığını döndürür.
+  double push(double dx) {
+    if (_vy.abs() > 1) return 0;
+    final target = toRect().shift(Offset(dx, 0)).deflate(0.5);
+    if (_blockedAt(target)) return 0;
+    position.x += dx;
+    return dx;
+  }
+
+  @override
+  void update(double dt) {
+    super.update(dt);
+    // Uzun bir kare (ör. yükleme) sandığı zeminin içinden geçirmesin.
+    dt = math.min(dt, 1 / 30);
+    final prevBottom = position.y + side;
+    _vy = math.min(_vy + 1900 * dt, 900);
+    position.y += _vy * dt;
+    final bottom = position.y + side;
+    final r = ((bottom - 0.001) / kTile).floor();
+    final c0 = ((position.x + 1) / kTile).floor();
+    final c1 = ((position.x + side - 1) / kTile).floor();
+    for (var c = c0; c <= c1; c++) {
+      final ch = level.cell(c, r);
+      if (ch == '#' || (ch == '=' && prevBottom <= r * kTile + 0.5)) {
+        position.y = r * kTile - side;
+        _vy = 0;
+        return;
+      }
+    }
+    if (position.y > level.pixelHeight + 200) removeFromParent();
+  }
+
+  @override
+  void render(Canvas canvas) {
+    final box = Rect.fromLTWH(0, 0, side, side);
+    canvas.drawRect(box, Paint()..color = const Color(0xFF2E1A10));
+    // Üst ve ön kenara vuran sıcak ışık: karanlıkta da seçilsin.
+    final rim = Paint()
+      ..color = const Color(0xFFD08A5A).withValues(alpha: 0.55)
+      ..strokeWidth = 1.6;
+    canvas.drawLine(const Offset(0, 0.8), const Offset(side, 0.8), rim);
+    canvas.drawLine(const Offset(0.8, 0), const Offset(0.8, side), rim);
+    final plank = Paint()
+      ..color = const Color(0xFF9A5A30).withValues(alpha: 0.6)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.2;
+    canvas.drawRect(box.deflate(1.5), plank);
+    canvas.drawLine(
+      const Offset(2, 2),
+      const Offset(side - 2, side - 2),
+      plank,
+    );
+    canvas.drawLine(
+      const Offset(2, side / 2),
+      const Offset(side - 2, side / 2),
+      plank,
+    );
+  }
+}
+
+// ==================================================================== Kapı
+
+/// Demir parmaklıklı kapı: kol çekilince yukarı kalkar.
+class Gate extends PositionComponent with HasGameReference<GolgeGame> {
+  Gate(int col, int top, int bottom)
+    : _height = (bottom - top + 1) * kTile,
+      super(
+        position: Vector2(col * kTile + 8, top * kTile.toDouble()),
+        size: Vector2(16, (bottom - top + 1) * kTile),
+        priority: 16,
+      );
+
+  final double _height;
+  bool opening = false;
+  double _lift = 0;
+
+  bool get solid => _lift < _height * 0.75;
+
+  @override
+  Rect toRect() =>
+      Rect.fromLTWH(position.x, position.y - _lift, size.x, size.y);
+
+  @override
+  void update(double dt) {
+    super.update(dt);
+    if (opening && _lift < _height) _lift = math.min(_height, _lift + dt * 70);
+  }
+
+  @override
+  void render(Canvas canvas) {
+    canvas.save();
+    canvas.translate(0, -_lift);
+    final bar = Paint()..color = const Color(0xFF0E0806);
+    for (var x = 0.0; x <= 14; x += 4.6) {
+      canvas.drawRect(Rect.fromLTWH(x, 0, 2.6, _height), bar);
+    }
+    for (var y = 6.0; y < _height; y += 24) {
+      canvas.drawRect(Rect.fromLTWH(-1, y, 18, 3), bar);
+    }
+    canvas.drawLine(
+      const Offset(0.5, 0),
+      Offset(0.5, _height),
+      Paint()
+        ..color = const Color(0xFF8A4A2A).withValues(alpha: 0.35)
+        ..strokeWidth = 1,
+    );
+    for (var x = 1.3; x <= 15; x += 4.6) {
+      canvas.drawPath(
+        Path()
+          ..moveTo(x - 1.6, _height)
+          ..lineTo(x + 1.3, _height + 5)
+          ..lineTo(x + 4, _height),
+        bar,
+      );
+    }
+    canvas.restore();
+  }
+}
+
+// ===================================================================== Kol
+
+/// Duvardaki kol: oyuncu yanındayken ↑ ile çekilir, bölümdeki kapıları açar.
+class Lever extends PositionComponent with HasGameReference<GolgeGame> {
+  Lever(Vector2 cell)
+    : super(
+        position: Vector2(cell.x + kTile / 2, cell.y + kTile),
+        priority: 18,
+      );
+
+  bool pulled = false;
+  double _swing = 0;
+  double _t = 0;
+
+  bool near(Vector2 p) =>
+      (p - position).x.abs() < 22 && (p - position).y.abs() < 40;
+
+  void pull() {
+    if (pulled) return;
+    pulled = true;
+    for (final g in game.world.children.whereType<Gate>()) {
+      g.opening = true;
+    }
+  }
+
+  @override
+  void update(double dt) {
+    super.update(dt);
+    _t += dt;
+    if (pulled) _swing = math.min(1, _swing + dt * 4);
+  }
+
+  @override
+  void render(Canvas canvas) {
+    final ink = Paint()..color = kInk;
+    canvas.drawRect(const Rect.fromLTWH(-7, -5, 14, 5), ink);
+    canvas.save();
+    canvas.translate(0, -3);
+    canvas.rotate(-0.7 + _swing * 1.4);
+    canvas.drawRect(const Rect.fromLTWH(-1.5, -17, 3, 17), ink);
+    canvas.drawCircle(const Offset(0, -17), 3, ink);
+    canvas.drawCircle(
+      const Offset(-0.8, -17.8),
+      1.6,
+      Paint()..color = const Color(0xFFD08A5A).withValues(alpha: 0.7),
+    );
+    canvas.restore();
+    final p = game.player;
+    if (!pulled && p != null && near(p.center)) {
+      final a = 0.55 + 0.45 * math.sin(_t * 5);
+      final arrow = Paint()
+        ..color = kWarmLight.withValues(alpha: a)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2
+        ..strokeCap = StrokeCap.round;
+      canvas.drawLine(const Offset(0, -26), const Offset(0, -38), arrow);
+      canvas.drawLine(const Offset(-4, -33), const Offset(0, -38), arrow);
+      canvas.drawLine(const Offset(4, -33), const Offset(0, -38), arrow);
+    }
+  }
+}
+
+// ============================================================ Ses halkası
+
+/// Oyuncunun çıkardığı sesin görsel ipucu: ayakların altında açılan halka.
+class NoiseRing extends PositionComponent {
+  NoiseRing(Vector2 at, this.radius)
+    : super(position: at.clone(), priority: 21);
+
+  final double radius;
+  double _t = 0;
+
+  @override
+  void update(double dt) {
+    super.update(dt);
+    _t += dt;
+    if (_t > 0.5) removeFromParent();
+  }
+
+  @override
+  void render(Canvas canvas) {
+    final k = _t / 0.5;
+    canvas.drawOval(
+      Rect.fromCenter(
+        center: Offset.zero,
+        width: radius * 0.5 * k,
+        height: radius * 0.12 * k,
+      ),
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.2
+        ..color = kText.withValues(alpha: 0.35 * (1 - k)),
     );
   }
 }

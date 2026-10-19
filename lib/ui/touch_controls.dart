@@ -35,7 +35,7 @@ class TouchControls extends StatelessWidget {
                 _Pad(
                   icon: Icons.visibility_off,
                   size: 54,
-                  onChanged: (v) => t.cover = v,
+                  onChanged: (v) => t.sneak = v,
                 ),
               ],
             ),

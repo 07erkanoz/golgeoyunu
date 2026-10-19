@@ -84,6 +84,8 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
           _light(canvas, m.position.toOffset(), 80, 0.8);
         case Bird b:
           _light(canvas, b.position.toOffset().translate(0, -6), 60, 0.6);
+        case Lever l when !l.pulled:
+          _light(canvas, l.position.toOffset().translate(0, -14), 46, 0.5);
         case FireflyLure l:
           _light(
             canvas,

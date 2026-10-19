@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 
 import 'package:flame/components.dart';
 
+import 'entities.dart';
 import 'golge_game.dart';
 import 'level.dart';
 import 'palette.dart';
@@ -14,15 +15,16 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
   Player(Vector2 start)
     : super(position: start, size: Vector2(w, h), priority: 20);
 
-  static const double w = 18;
-  static const double h = 40;
-  static const double runSpeed = 185;
-  static const double sneakSpeed = 70;
-  static const double coverSpeed = 115;
-  static const double jumpVelocity = 600;
+  static const double w = 14;
+  static const double h = 28;
+  static const double runSpeed = 160;
+  static const double sneakSpeed = 58;
+  static const double crouchSpeed = 42;
+  static const double pushSpeed = 55;
+  static const double jumpVelocity = 580;
   static const double gravity = 1900;
   static const double maxFall = 900;
-  static const double climbSpeed = 115;
+  static const double climbSpeed = 95;
 
   final velocity = Vector2.zero();
   PlayerState state = PlayerState.normal;
@@ -32,8 +34,14 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
   bool inShadow = false;
   bool hidden = false;
 
-  /// Kavanozu örtmüş: ışığı kısık, daha yavaş, uzaktan zor görülür.
-  bool covering = false;
+  /// Parmak uçlarında yürüyor: yavaş ve sessiz, ışığı kısık.
+  bool sneaking = false;
+
+  /// Bir sandığı itiyor.
+  bool pushing = false;
+
+  /// Uzaktan zor görülür (parmak ucu ya da çömelme).
+  bool get covering => sneaking || crouching;
 
   double _coyote = 0;
   double _jumpBuffer = 0;
@@ -43,6 +51,8 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
   double _anim = 0;
   double _runPhase = 0;
   double _gait = 0;
+  double _stepTimer = 0;
+  double _landDip = 0;
   bool _jumpCut = true;
   bool _prevJump = false;
   bool _prevUp = false;
@@ -68,6 +78,7 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     dt = math.min(dt, 1 / 30);
     _anim += dt;
     _stateTime += dt;
+    _landDip = math.max(0, _landDip - dt);
 
     final c = game.controls;
     final active = !game.cinematic && !isDead;
@@ -77,7 +88,7 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     final down = active && c.down;
     final jump = active && c.jump;
     final lurePressed = c.takeLure() && active;
-    covering = active && c.cover;
+    sneaking = active && c.sneak && state == PlayerState.normal;
     final dir = (right ? 1 : 0) - (left ? 1 : 0);
     final jumpPressed = jump && !_prevJump;
     final upPressed = up && !_prevUp;
@@ -86,6 +97,16 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     _jumpBuffer = jumpPressed ? 0.12 : _jumpBuffer - dt;
     _grabCooldown -= dt;
     _dropThrough -= dt;
+
+    // Kol çekmek ↑ ile: zincire/sarmaşığa tutunmadan önce bakılır.
+    if (upPressed && state == PlayerState.normal && onGround) {
+      for (final lever in game.world.children.whereType<Lever>()) {
+        if (!lever.pulled && lever.near(center)) {
+          lever.pull();
+          _prevUp = true;
+        }
+      }
+    }
 
     switch (state) {
       case PlayerState.normal:
@@ -103,12 +124,11 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     if (lurePressed && state != PlayerState.climbUp) {
       game.releaseFirefly(light.$1, facing);
     }
-    covering = covering || crouching;
     if (!isDead) _checkHazards();
     inShadow = level.rectHits(
-      position.x + 3,
-      position.y + 8,
-      position.x + w - 3,
+      position.x + 2,
+      position.y + 6,
+      position.x + w - 2,
       position.y + h - 1,
       (ch) => ch == '~' || ch == 'I',
     );
@@ -116,30 +136,41 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
         inShadow &&
         state == PlayerState.normal &&
         onGround &&
-        (crouching || covering || velocity.x.abs() < 25);
+        (crouching || sneaking || velocity.x.abs() < 20);
   }
 
   /// Oyuncunun taşıdığı ışık: konumu ve yarıçapı (aydınlatma katmanı için).
   (Vector2, double) get light {
+    final radius = crouching ? 55.0 : (sneaking ? 120.0 : 200.0);
     if (jarStyle) {
-      final jar = position + Vector2(w / 2 + facing * 7, 24);
-      return (jar, covering ? 60 : 210);
+      return (position + Vector2(w / 2 + facing * 5, 17), radius);
     }
-    return (position + Vector2(w / 2 + facing * 4, 8), covering ? 40 : 120);
+    return (position + Vector2(w / 2 + facing * 3, 6), radius * 0.6);
   }
 
   // ---------------------------------------------------------------- hareket
 
   void _updateNormal(double dt, int dir, bool up, bool down, bool jump) {
+    final wasOnGround = onGround;
+    final impact = velocity.y;
     crouching = onGround && down;
-    final target =
-        dir * (crouching ? sneakSpeed : (covering ? coverSpeed : runSpeed));
-    final accel = onGround ? (dir == 0 ? 2200.0 : 1500.0) : 1000.0;
+    if (crouching) sneaking = false;
+    final maxSpeed = crouching
+        ? crouchSpeed
+        : (pushing ? pushSpeed : (sneaking ? sneakSpeed : runSpeed));
+    final target = dir * maxSpeed;
+    // Ağırlıklı hareket: yavaş hızlanır, ters yöne dönüşte daha sert frenler.
+    final reversing =
+        dir != 0 && velocity.x.sign == -dir && velocity.x.abs() > 10;
+    final accel = onGround
+        ? (dir == 0 ? 1300.0 : (reversing ? 1700.0 : 900.0))
+        : 650.0;
     velocity.x = _approach(velocity.x, target, accel * dt);
     if (dir != 0) facing = dir;
     _runPhase += velocity.x.abs() * dt * 0.075;
     // Adım döngüsü kat edilen yola bağlı: ayaklar yerde kaymaz.
-    if (onGround) _gait += velocity.x.abs() * dt / 34;
+    final speedFactor = (velocity.x.abs() / runSpeed).clamp(0.0, 1.0);
+    if (onGround) _gait += velocity.x.abs() * dt / (14 + 12 * speedFactor);
 
     _coyote = onGround ? 0.1 : _coyote - dt;
     if (_jumpBuffer > 0 && _coyote > 0) {
@@ -161,8 +192,25 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     if (velocity.y >= 0) _jumpCut = true;
 
     velocity.y = math.min(velocity.y + gravity * dt, maxFall);
-    _moveX(velocity.x * dt);
+    pushing = false;
+    _moveX(velocity.x * dt, dir);
     _moveY(velocity.y * dt, allowOneWay: _dropThrough <= 0);
+
+    // Sesler: koşarken adımlar, sert inişler. Tahta iskele daha çok gıcırdar.
+    final quiet = sneaking || crouching;
+    if (onGround && !wasOnGround) {
+      if (impact > 420) _landDip = 0.16;
+      if (impact > 420 && !quiet) _noise(220);
+    }
+    if (onGround && !quiet && velocity.x.abs() > 105) {
+      _stepTimer -= dt;
+      if (_stepTimer <= 0) {
+        _stepTimer = 0.3;
+        _noise(_onWalkway ? 210 : 140);
+      }
+    } else {
+      _stepTimer = 0;
+    }
 
     if (_grabCooldown <= 0 &&
         _vineAt(center.x, center.y) &&
@@ -179,7 +227,22 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     }
   }
 
-  void _moveX(double dx) {
+  bool get _onWalkway => level.cellAt(center.x, position.y + h + 2) == '=';
+
+  void _noise(double radius) {
+    final feet = Vector2(center.x, position.y + h);
+    game.makeNoise(feet, radius);
+  }
+
+  /// Hareketli katı nesneler: sandıklar ve kapalı kapılar.
+  Iterable<PositionComponent> get _movingSolids sync* {
+    for (final c in game.world.children) {
+      if (c is Crate) yield c;
+      if (c is Gate && c.solid) yield c;
+    }
+  }
+
+  void _moveX(double dx, int dir) {
     if (dx == 0) return;
     position.x += dx;
     final r0 = ((position.y + 1) / kTile).floor();
@@ -190,6 +253,21 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     for (var r = r0; r <= r1; r++) {
       if (!level.solid(c, r)) continue;
       position.x = dx > 0 ? c * kTile - w : (c + 1) * kTile;
+      velocity.x = 0;
+      return;
+    }
+    final me = Rect.fromLTWH(position.x, position.y + 1, w, h - 2);
+    for (final o in _movingSolids) {
+      final r = o.toRect();
+      if (!r.overlaps(me)) continue;
+      if (o is Crate && onGround && dir == dx.sign.toInt()) {
+        final overlap = dx > 0 ? me.right - r.left : me.left - r.right;
+        if (o.push(overlap) != 0) {
+          pushing = true;
+          continue;
+        }
+      }
+      position.x = dx > 0 ? r.left - w : r.right;
       velocity.x = 0;
       return;
     }
@@ -209,6 +287,19 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
         if (ch == '#' ||
             (allowOneWay && ch == '=' && prevBottom <= top + 0.5)) {
           position.y = top - h;
+          velocity.y = 0;
+          onGround = true;
+          return;
+        }
+      }
+      // Sandığın üstüne basar.
+      for (final o in _movingSolids) {
+        final rect = o.toRect();
+        if (position.x + w - 1 <= rect.left || position.x + 1 >= rect.right) {
+          continue;
+        }
+        if (prevBottom <= rect.top + 0.5 && position.y + h >= rect.top) {
+          position.y = rect.top - h;
           velocity.y = 0;
           onGround = true;
           return;
@@ -269,7 +360,7 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       onGround = false;
       position.setValues(
         d > 0 ? c * kTile - w : (c + 1) * kTile,
-        r * kTile + 4,
+        r * kTile + 3,
       );
       return;
     }
@@ -439,21 +530,31 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
   /// ateşböceği kavanozlu çocuk.
   static bool jarStyle = true;
 
+  // Çizimler 18x40'lık bir gövde için yapıldı; küçük çocuğa ölçeklenir.
+  static const double _artW = 18;
+  static const double _artH = 40;
+  static const double _artScale = h / _artH;
+
   @override
-  void render(Canvas canvas) =>
-      jarStyle ? _renderJar(canvas) : _renderEyes(canvas);
+  void render(Canvas canvas) {
+    canvas.save();
+    canvas.translate((w - _artW * _artScale) / 2, 0);
+    canvas.scale(_artScale);
+    jarStyle ? _renderJar(canvas) : _renderEyes(canvas);
+    canvas.restore();
+  }
 
   void _renderEyes(Canvas canvas) {
     canvas.save();
-    const cx = w / 2;
+    const cx = _artW / 2;
     if (facing < 0) {
-      canvas.translate(w, 0);
+      canvas.translate(_artW, 0);
       canvas.scale(-1, 1);
     }
     if (isDead && !_fell) {
-      canvas.translate(cx, h);
+      canvas.translate(cx, _artH);
       canvas.rotate(math.min(_stateTime * 5, 1) * math.pi / 2);
-      canvas.translate(-cx, -h);
+      canvas.translate(-cx, -_artH);
     }
 
     var headY = 8.0 + math.sin(_anim * 3) * 0.5;
@@ -607,30 +708,36 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
 
   void _renderJar(Canvas canvas) {
     canvas.save();
-    const cx = w / 2;
+    const cx = _artW / 2;
     if (facing < 0) {
-      canvas.translate(w, 0);
+      canvas.translate(_artW, 0);
       canvas.scale(-1, 1);
     }
     if (isDead && !_fell) {
-      canvas.translate(cx, h);
+      canvas.translate(cx, _artH);
       canvas.rotate(math.min(_stateTime * 5, 1) * math.pi / 2);
-      canvas.translate(-cx, -h);
+      canvas.translate(-cx, -_artH);
     }
 
     const thigh = 7.0;
     const shin = 7.0;
-    final shielded = hidden || covering;
+    final shielded = hidden || crouching;
     final walking = state == PlayerState.normal && onGround;
-    final amount = walking ? math.min(1.0, velocity.x.abs() / 120) : 0.0;
+    final amount = walking ? math.min(1.0, velocity.x.abs() / 70) : 0.0;
+    final run = walking ? (velocity.x.abs() / runSpeed).clamp(0.0, 1.0) : 0.0;
     final cycle = (_gait % 1.0) * 2 * math.pi;
+    final dip = _landDip / 0.16;
 
-    // Kalça yüksekliği: adımın ortasında hafif yükselip alçalır.
+    // Kalça yüksekliği: adımın ortasında hafif yükselip alçalır; sert inişte
+    // dizler bükülür.
     var hipY =
         27.0 -
-        math.cos(cycle * 2) * 0.9 * amount +
-        (amount == 0 ? math.sin(_anim * 2.2) * 0.3 : 0);
-    var lean = amount * 0.1;
+        math.cos(cycle * 2) * (0.6 + 0.8 * run) * amount +
+        (amount == 0 ? math.sin(_anim * 2.2) * 0.3 : 0) +
+        dip * 3.5;
+    // Koşarken öne eğilir.
+    var lean = run * 0.2;
+    var lift = 2.4 + 2.2 * run;
     Offset foot1;
     Offset foot2;
     double arm2;
@@ -640,16 +747,16 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     Offset stepFoot(double phase) {
       // Yarım döngü yerde geriye kayar (gövde ilerler), yarım döngü havada öne.
       final p = (phase % (2 * math.pi)) / (2 * math.pi);
-      final stride = 6.5 * amount;
+      final stride = (5 + 4 * run) * amount;
       if (p < 0.5) {
         final t = p / 0.5;
-        return Offset(cx + stride - 2 * stride * t, h - 0.5);
+        return Offset(cx + stride - 2 * stride * t, _artH - 0.5);
       }
       final t = (p - 0.5) / 0.5;
       final eased = 0.5 - math.cos(t * math.pi) / 2;
       return Offset(
         cx - stride + 2 * stride * eased,
-        h - 0.5 - math.sin(t * math.pi) * 3.2 * amount,
+        _artH - 0.5 - math.sin(t * math.pi) * lift * amount,
       );
     }
 
@@ -658,25 +765,25 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       case PlayerState.climbUp:
         final sway = math.sin(_anim * 2.5) * 1.2;
         hipY = 27;
-        foot1 = Offset(cx + 1.5 + sway, h + 0.5);
-        foot2 = Offset(cx - 1.5 + sway, h);
+        foot1 = Offset(cx + 1.5 + sway, _artH + 0.5);
+        foot2 = Offset(cx - 1.5 + sway, _artH);
         arm2 = math.pi - 0.35;
         jarAtHip = true;
       case PlayerState.vine:
         final p = math.sin(_runPhase * 2);
-        foot1 = Offset(cx + 3, h - 3 + p * 3);
-        foot2 = Offset(cx + 2, h - 3 - p * 3);
+        foot1 = Offset(cx + 3, _artH - 3 + p * 3);
+        foot2 = Offset(cx + 2, _artH - 3 - p * 3);
         arm2 = math.pi - 0.3 - p * 0.3;
         jarAtHip = true;
       case PlayerState.dead:
-        foot1 = Offset(cx + 2, h);
-        foot2 = Offset(cx - 2, h);
+        foot1 = Offset(cx + 2, _artH);
+        foot2 = Offset(cx - 2, _artH);
         arm2 = -0.3;
       case PlayerState.normal:
         if (!onGround) {
           final rising = velocity.y < 0;
-          foot1 = Offset(cx + (rising ? 5 : 3), h - (rising ? 5 : 2));
-          foot2 = Offset(cx - (rising ? 3 : 4), h - (rising ? 1 : 0));
+          foot1 = Offset(cx + (rising ? 5 : 3), _artH - (rising ? 5 : 2));
+          foot2 = Offset(cx - (rising ? 3 : 4), _artH - (rising ? 1 : 0));
           arm2 = rising ? -0.9 : -1.2;
           lean = 0.06;
         } else if (crouching) {
@@ -685,15 +792,31 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
           foot2 = stepFoot(cycle + math.pi).translate(-1.5, 0);
           arm2 = 0.4;
           lean = 0.35;
+        } else if (pushing) {
+          // Sandığı iterken: gövde öne yaslanır, kollar ileri uzanır.
+          lean = 0.45;
+          hipY += 1.5;
+          foot1 = stepFoot(cycle).translate(-2, 0);
+          foot2 = stepFoot(cycle + math.pi).translate(-3, 0);
+          arm2 = 1.45;
+          jarAtHip = true;
+        } else if (sneaking) {
+          // Parmak uçlarında: hafif çömelik, dizler yüksek kalkar, kol dengede.
+          lean = 0.22;
+          hipY += 1.5;
+          lift = 5;
+          foot1 = stepFoot(cycle);
+          foot2 = stepFoot(cycle + math.pi);
+          arm2 = 1.1 + math.sin(cycle) * 0.15;
         } else if (amount < 0.05) {
-          foot1 = Offset(cx + 2, h - 0.5);
-          foot2 = Offset(cx - 2, h - 0.5);
+          foot1 = Offset(cx + 2, _artH - 0.5);
+          foot2 = Offset(cx - 2, _artH - 0.5);
           arm2 = 0.05;
         } else {
           foot1 = stepFoot(cycle);
           foot2 = stepFoot(cycle + math.pi);
-          // Arka kol öndeki bacağın tersine sallanır.
-          arm2 = -math.sin(cycle) * 0.55 * amount;
+          // Arka kol öndeki bacağın tersine sallanır; koşuda daha geniş.
+          arm2 = -math.sin(cycle) * (0.45 + 0.6 * run) * amount;
         }
     }
 
@@ -705,7 +828,9 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     // Kavanozu tutan kol öne uzanır; yürürken hafifçe sallanır.
     final jarArm = shielded
         ? 1.9
-        : (jarAtHip ? math.pi - 0.15 : 0.55 + math.sin(cycle) * 0.1 * amount);
+        : (jarAtHip
+              ? (pushing ? 1.4 : math.pi - 0.15)
+              : (sneaking ? 1.5 : 0.55 + math.sin(cycle) * 0.1 * amount));
     Offset limbEnd(Offset from, double angle, double len) =>
         from + Offset(math.sin(angle) * len, math.cos(angle) * len);
     jarHand = limbEnd(shoulder, jarArm, 9.5);

@@ -22,7 +22,7 @@ class Buttons {
   bool up = false;
   bool down = false;
   bool jump = false;
-  bool cover = false;
+  bool sneak = false;
 }
 
 /// Klavye ve dokunmatik girişin birleşimi.
@@ -35,7 +35,7 @@ class Controls {
   bool get up => keyboard.up || touch.up;
   bool get down => keyboard.down || touch.down;
   bool get jump => keyboard.jump || touch.jump;
-  bool get cover => keyboard.cover || touch.cover;
+  bool get sneak => keyboard.sneak || touch.sneak;
 
   /// Ateşböceği salma tek seferlik bir eylem: tuşa basıldığı an kuyruğa girer,
   /// oyuncu bir sonraki karede tüketir.
@@ -65,6 +65,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
   bool _snapCamera = true;
   bool _prevJump = false;
   double _closeUp = 1;
+  double _lookAhead = 0;
   int _devStop = 0;
 
   /// Kavanozdaki ateşböcekleri: salınınca azalır, zamanla yenilenir.
@@ -128,6 +129,9 @@ class GolgeGame extends FlameGame with KeyboardEvents {
       WaterComponent(level),
       ExitPortal(level.exitCell),
       for (final g in level.guardCells) Guard(g),
+      for (final c in level.crateCells) Crate(c),
+      for (final l in level.leverCells) Lever(l),
+      for (final (col, top, bottom) in level.gates) Gate(col, top, bottom),
       for (final b in level.birdCells)
         Bird(b, level.exitCell + Vector2(kTile / 2, -kTile)),
       for (var i = 0; i < level.memoryCells.length; i++)
@@ -191,6 +195,14 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         );
       },
     );
+  }
+
+  /// Oyuncunun çıkardığı ses: yakındaki Kandilciler duyar ve o yöne bakar.
+  void makeNoise(Vector2 at, double radius) {
+    world.add(NoiseRing(at, radius));
+    for (final g in world.children.whereType<Guard>()) {
+      g.hear(at, radius);
+    }
   }
 
   /// Oyuncu kavanozdan bir ateşböceği salar; Kandilciler ışığa yönelir.
@@ -258,11 +270,16 @@ class GolgeGame extends FlameGame with KeyboardEvents {
   void _updateCamera(Player p, double dt) {
     final view = camera.viewport.size;
     if (view.x == 0 || view.y == 0) return;
+    // Limbo gibi uzak bir kamera: ekranda yaklaşık 20 kare yükseklik.
     final zoom =
-        view.y / (kTile * math.min(15.5, level.height.toDouble())) * _closeUp;
+        view.y / (kTile * math.min(20.0, level.height.toDouble())) * _closeUp;
     camera.viewfinder.zoom = zoom;
 
-    final target = p.center + Vector2(p.facing * 40, -24);
+    // Gidilen yöne doğru ileriyi gösterir; hızlandıkça daha çok.
+    _lookAhead +=
+        ((p.facing * 60 + p.velocity.x * 0.35) - _lookAhead) *
+        (1 - math.exp(-dt * 1.5));
+    final target = p.center + Vector2(_lookAhead, -20);
     final halfW = view.x / zoom / 2;
     final halfH = view.y / zoom / 2;
     target.x = level.pixelWidth <= halfW * 2
@@ -277,7 +294,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
       camera.viewfinder.position = target;
       _snapCamera = false;
     } else {
-      final k = 1 - math.exp(-dt * 5);
+      final k = 1 - math.exp(-dt * 3.2);
       camera.viewfinder.position = pos + (target - pos) * k;
     }
   }
@@ -296,7 +313,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
       ..up = any([LogicalKeyboardKey.arrowUp, LogicalKeyboardKey.keyW])
       ..down = any([LogicalKeyboardKey.arrowDown, LogicalKeyboardKey.keyS])
       ..jump = any([LogicalKeyboardKey.space, LogicalKeyboardKey.keyZ])
-      ..cover = any([
+      ..sneak = any([
         LogicalKeyboardKey.shiftLeft,
         LogicalKeyboardKey.shiftRight,
         LogicalKeyboardKey.keyQ,

@@ -23,6 +23,11 @@ class Level {
   final birdCells = <Vector2>[];
   final memoryCells = <Vector2>[];
   final checkpointCells = <Vector2>[];
+  final crateCells = <Vector2>[];
+  final leverCells = <Vector2>[];
+
+  /// Dikey `H` dizileri: her biri bir kapı (sütun, üst satır, alt satır).
+  final gates = <(int, int, int)>[];
   final triggers = <(int, Vector2)>[];
 
   double get pixelWidth => width * kTile;
@@ -50,6 +55,19 @@ class Level {
             memoryCells.add(cell);
           case 'K':
             checkpointCells.add(cell);
+          case 'C':
+            crateCells.add(cell);
+          case 'L':
+            leverCells.add(cell);
+          case 'H':
+            if (r == 0 || def.map[r - 1].padRight(width, '.')[c] != 'H') {
+              var end = r;
+              while (end + 1 < height &&
+                  def.map[end + 1].padRight(width, '.')[c] == 'H') {
+                end++;
+              }
+              gates.add((c, r, end));
+            }
           default:
             final n = int.tryParse(ch);
             if (n == null) continue;
