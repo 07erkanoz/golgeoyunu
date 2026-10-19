@@ -911,9 +911,9 @@ void main() {
       'tufanın eşiğinde iple yukarı rafa',
       GolgeGame.new,
       (game) async {
-        final p = await place(game, 4, 147, 14);
+        final p = await place(game, 4, 271, 14);
         run(game, 0.3);
-        swingAcross(game, p, jumpFrom: 149.6, release: 0.8, goal: 159);
+        swingAcross(game, p, jumpFrom: 273.6, release: 0.8, goal: 283);
         expect(p.isDead, isFalse);
         expect(p.position.y, lessThan(12 * kTile));
       },
@@ -1136,6 +1136,39 @@ void main() {
       run(game, 0.5);
       expect(p.isDead, isFalse);
       expect(p.position.y + Player.h, lessThanOrEqualTo(7 * kTile + 2));
+    });
+  });
+
+  group('Aziz Hakob Manastırı', () {
+    testWithGame<GolgeGame>('revakta koşan sarkıtlardan kurtulur', GolgeGame.new, (
+      game,
+    ) async {
+      final p = await place(game, 4, 205, 16);
+      for (final g in game.world.children.whereType<Guard>().toList()) {
+        g.removeFromParent();
+      }
+      keys(game).right = true;
+      for (var i = 0; i < 60 * 4 && p.position.x < 232 * kTile; i++) {
+        game.update(1 / 60);
+      }
+      run(game, 1);
+      expect(p.isDead, isFalse);
+    });
+
+    testWithGame<GolgeGame>('parmak ucunda yürüyeni sarkıt bulur', GolgeGame.new, (
+      game,
+    ) async {
+      final p = await place(game, 4, 205, 16);
+      for (final g in game.world.children.whereType<Guard>().toList()) {
+        g.removeFromParent();
+      }
+      keys(game)
+        ..right = true
+        ..sneak = true;
+      for (var i = 0; i < 60 * 12 && !p.isDead; i++) {
+        game.update(1 / 60);
+      }
+      expect(p.isDead, isTrue);
     });
   });
 }

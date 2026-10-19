@@ -1149,9 +1149,12 @@ class FallingIcicle extends PositionComponent with HasGameReference<GolgeGame> {
       return;
     }
     if (_shake < 0) {
+      // Yaklaşan ayak sesiyle çatırdar: altına varmadan düşmeye başlar.
+      final dx = position.x - (p?.center.x ?? 0);
+      final ahead = p == null ? 0.0 : dx * p.velocity.x.sign;
       if (p != null &&
           !p.isDead &&
-          (p.center.x - position.x).abs() < 26 &&
+          ((ahead > 0 && ahead < 40) || dx.abs() < 10) &&
           p.center.y > position.y &&
           p.center.y - position.y < 9 * kTile) {
         _shake = 0;
@@ -1160,7 +1163,7 @@ class FallingIcicle extends PositionComponent with HasGameReference<GolgeGame> {
       return;
     }
     _shake += dt;
-    if (_shake < 0.45) return;
+    if (_shake < 0.3) return;
     _vy = math.min(_vy + 1900 * dt, 900);
     position.y += _vy * dt;
     if (p != null &&
