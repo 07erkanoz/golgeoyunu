@@ -743,6 +743,17 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     double arm2;
     var jarAtHip = false;
     var jarHand = const Offset(0, 0);
+    // Ellerin sabitlendiği yerler (kenar, zincir); boşsa kol açısından bulunur.
+    Offset? backHand;
+    Offset? frontHand;
+    var onRope = false;
+
+    // Dünya koordinatını bu çizimin (ölçekli, yöne çevrilmiş) uzayına çevirir.
+    Offset toArt(double wx, double wy) {
+      var ax = (wx - position.x - (w - _artW * _artScale) / 2) / _artScale;
+      if (facing < 0) ax = _artW - ax;
+      return Offset(ax, (wy - position.y) / _artScale);
+    }
 
     Offset stepFoot(double phase) {
       // Yarım döngü yerde geriye kayar (gövde ilerler), yarım döngü havada öne.
@@ -763,18 +774,43 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     switch (state) {
       case PlayerState.hang:
       case PlayerState.climbUp:
-        final sway = math.sin(_anim * 2.5) * 1.2;
-        hipY = 27;
-        foot1 = Offset(cx + 1.5 + sway, _artH + 0.5);
-        foot2 = Offset(cx - 1.5 + sway, _artH);
-        arm2 = math.pi - 0.35;
+        // Eller kenarı kavrar: kenarın gerçek yerine sabitlenir.
+        final edgeX = _hangDir > 0 ? _hangCol * kTile : (_hangCol + 1) * kTile;
+        final edge = toArt(edgeX.toDouble(), _hangRow * kTile.toDouble());
+        frontHand = edge.translate(1.8, 0.6);
+        backHand = edge.translate(-0.6, 1.2);
+        arm2 = math.pi;
         jarAtHip = true;
+        final t = state == PlayerState.climbUp
+            ? (_stateTime / 0.32).clamp(0.0, 1.0)
+            : 0.0;
+        if (t == 0) {
+          // Asılı: gövde kenarın altında sallanır.
+          final sway = math.sin(_anim * 2.5) * 1.2;
+          hipY = 22;
+          foot1 = Offset(cx + 1.5 + sway, 35.5);
+          foot2 = Offset(cx - 1.5 + sway, 35);
+        } else if (t < 0.6) {
+          // Kollarla çekinir, dizler yukarı toplanır.
+          hipY = 22;
+          foot1 = Offset(cx + 3, 22 + 9 - t * 4);
+          foot2 = Offset(cx - 2, 22 + 11 - t * 3);
+          lean = 0.15;
+        } else {
+          // Dizini kenara atar ve doğrulur.
+          final k = (t - 0.6) / 0.4;
+          hipY = 22 + 5 * k;
+          foot1 = Offset(cx + 3, 29 + 10.5 * k);
+          foot2 = Offset(cx - 3, 31 + 8.5 * k);
+          lean = 0.3 * (1 - k);
+        }
       case PlayerState.vine:
         final p = math.sin(_runPhase * 2);
-        foot1 = Offset(cx + 3, _artH - 3 + p * 3);
-        foot2 = Offset(cx + 2, _artH - 3 - p * 3);
+        foot1 = Offset(cx + 1.5, _artH - 3 + p * 3);
+        foot2 = Offset(cx - 0.5, _artH - 3 - p * 3);
         arm2 = math.pi - 0.3 - p * 0.3;
         jarAtHip = true;
+        onRope = true;
       case PlayerState.dead:
         foot1 = Offset(cx + 2, _artH);
         foot2 = Offset(cx - 2, _artH);
@@ -834,6 +870,12 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     Offset limbEnd(Offset from, double angle, double len) =>
         from + Offset(math.sin(angle) * len, math.cos(angle) * len);
     jarHand = limbEnd(shoulder, jarArm, 9.5);
+    if (onRope) {
+      // El ele, ipe tutunarak tırmanır.
+      final p = math.sin(_runPhase * 2);
+      frontHand = Offset(cx + 0.8, shoulder.dy - 7 + p * 3);
+      backHand = Offset(cx - 0.6, shoulder.dy - 3 - p * 3);
+    }
     final swing = math.sin(_anim * 3 + cycle) * 0.12 * (0.3 + amount);
     final jar = jarAtHip
         ? hip.translate(5, -1)
@@ -884,7 +926,9 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
 
     // Arka kol ve arka bacak.
     _limb.strokeWidth = 3.2;
-    canvas.drawLine(shoulder, limbEnd(shoulder, arm2, 9.5), _limb);
+    final back = backHand ?? limbEnd(shoulder, arm2, 9.5);
+    canvas.drawLine(shoulder, back, _limb);
+    canvas.drawCircle(back, 1.9, _fill);
     leg(foot2);
 
     // Kalın paltolu gövde, hafif öne eğik.
@@ -950,7 +994,9 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
 
     // Kavanozu tutan ön kol ve ip.
     _limb.strokeWidth = 3.2;
-    canvas.drawLine(shoulder, jarHand, _limb);
+    final front = frontHand ?? jarHand;
+    canvas.drawLine(shoulder, front, _limb);
+    canvas.drawCircle(front, 1.9, _fill);
     if (!jarAtHip && !shielded) {
       canvas.drawLine(
         jarHand,

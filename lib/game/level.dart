@@ -24,6 +24,7 @@ class Level {
   final memoryCells = <Vector2>[];
   final checkpointCells = <Vector2>[];
   final crateCells = <Vector2>[];
+  final fireflyCells = <Vector2>[];
   final leverCells = <Vector2>[];
 
   /// Dikey `H` dizileri: her biri bir kapı (sütun, üst satır, alt satır).
@@ -57,6 +58,8 @@ class Level {
             checkpointCells.add(cell);
           case 'C':
             crateCells.add(cell);
+          case 'F':
+            fireflyCells.add(cell);
           case 'L':
             leverCells.add(cell);
           case 'H':
@@ -87,6 +90,11 @@ class Level {
   }
 
   bool solid(int c, int r) => cell(c, r) == '#';
+
+  /// Bölümde ne kadar ilerlendiği: yatay bölümlerde x, dikey (tırmanma)
+  /// bölümlerinde yükseklik.
+  bool get vertical => height > width;
+  double progressOf(Vector2 p) => vertical ? pixelHeight - p.y : p.x;
 
   String cellAt(double x, double y) =>
       cell((x / kTile).floor(), (y / kTile).floor());

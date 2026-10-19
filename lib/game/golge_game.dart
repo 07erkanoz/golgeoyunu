@@ -69,9 +69,9 @@ class GolgeGame extends FlameGame with KeyboardEvents {
   int _devStop = 0;
 
   /// Kavanozdaki ateşböcekleri: salınınca azalır, zamanla yenilenir.
-  static const maxFireflies = 3;
-  int fireflies = maxFireflies;
-  double _fireflyRegen = 0;
+  static const maxFireflies = 5;
+  static const startFireflies = 2;
+  int fireflies = startFireflies;
 
   final _memories = <String>{};
   final _whispersShown = <String>{};
@@ -132,8 +132,8 @@ class GolgeGame extends FlameGame with KeyboardEvents {
       for (final c in level.crateCells) Crate(c),
       for (final l in level.leverCells) Lever(l),
       for (final (col, top, bottom) in level.gates) Gate(col, top, bottom),
-      for (final b in level.birdCells)
-        Bird(b, level.exitCell + Vector2(kTile / 2, -kTile)),
+      ?_guideBird(),
+      for (final f in level.fireflyCells) FireflySwarm(f),
       for (var i = 0; i < level.memoryCells.length; i++)
         if (!_memories.contains('$index:$i'))
           MemoryShard(level.memoryCells[i], i),
@@ -141,6 +141,20 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     player = Player(_respawn!.clone());
     world.add(player!);
     _snapCamera = true;
+  }
+
+  Bird? _guideBird() {
+    if (level.birdCells.isEmpty) return null;
+    final stops = [
+      for (final b in level.birdCells)
+        Vector2(b.x + kTile / 2, b.y + kTile - 1),
+    ]..sort((a, b) => level.progressOf(a).compareTo(level.progressOf(b)));
+    final start = Bird.startFor(stops, _respawn!, level.progressOf);
+    return Bird(
+      stops,
+      level.exitCell + Vector2(kTile / 2, kTile - 4),
+      start: start,
+    );
   }
 
   // --------------------------------------------------------------- olaylar
@@ -209,8 +223,12 @@ class GolgeGame extends FlameGame with KeyboardEvents {
   void releaseFirefly(Vector2 from, int direction) {
     if (fireflies <= 0) return;
     fireflies--;
-    _fireflyRegen = 0;
     world.add(FireflyLure(from, direction));
+    narration.pulseFireflies();
+  }
+
+  void gainFirefly() {
+    fireflies = math.min(maxFireflies, fireflies + 1);
     narration.pulseFireflies();
   }
 
@@ -251,15 +269,6 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     final jump = controls.jump;
     if (narration.inCinematic && jump && !_prevJump) narration.skip();
     _prevJump = jump;
-
-    if (fireflies < maxFireflies) {
-      _fireflyRegen += dt;
-      if (_fireflyRegen > 10) {
-        _fireflyRegen = 0;
-        fireflies++;
-        narration.pulseFireflies();
-      }
-    }
 
     final p = player;
     if (p == null || !p.isMounted) return;

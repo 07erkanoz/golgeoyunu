@@ -30,17 +30,22 @@ Karakter geçicidir; ileride profesyonel çizimle değiştirilecek.
 | ↑ / W | Kenardan yukarı çık, zincire/sarmaşığa tırman, **kolu çek** |
 | ↓ / S | Çömel ve kavanozu ört; kenardan bırak; zıplamayla birlikte platformdan aşağı in |
 | Shift / Q (basılı) | **Parmak ucunda yürü**: sessiz ve yavaş, uzaktan zor görülürsün |
-| F / X | **Ateşböceği sal**: Kandilci ışığa yönelir (3 hak, 10 saniyede bir yenilenir) |
+| F / X | **Ateşböceği sal**: Kandilci ışığa dalar; o sırada ona değsen bile seni yakalamaz. Kavanoz en çok 5 alır; yeni ateşböceklerini yoldaki sürülerden toplarsın |
 | → (sandığa dayanınca) | Sandığı it |
 | Enter / Boşluk | Ara sahnedeki metni geç |
 | R | Son kontrol noktasından yeniden başla |
+
+## Ak kuş
+
+Ak kuş bölümdeki önemli yerlere (zincir, sandık, kol…) sırayla uçup seni
+bekler. Yolunu kaybedersen ona bak.
 
 ## Kandilci'yi geçmenin yolları
 
 - **Saklan:** Sütunun ardında dur ya da çömel. Kandilci önünden geçip gider.
 - **Sessiz ol:** Tahta iskelede koşmak gıcırdar, Kandilci sesi duyup döner.
   Parmak ucunda yürü.
-- **Oyala:** Ateşböceği sal; Kandilci ışığa yönelirken arkasından geç.
+- **Oyala:** Ateşböceği sal; Kandilci ışığa dalınca yanından geç.
 - **Başka yoldan git:** Zincire tırman, kemerlerin üstündeki kirişlerden geç.
 
 Kandilci seni görünce hemen saldırmaz: başında "?" belirir ve şüphelenir.

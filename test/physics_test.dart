@@ -194,16 +194,67 @@ void main() {
     );
   });
 
+  group('ateşböceği ve rehber', () {
+    testWithGame<GolgeGame>(
+      'ateşböceğine dalan Kandilci değince bile yakalamaz',
+      GolgeGame.new,
+      (game) async {
+        final p = await place(game, 0, 3, 13);
+        run(game, 0.2);
+        final guard = guardOf(game);
+        game.releaseFirefly(guard.center + Vector2(-60, -10), -1);
+        run(game, 0.3);
+        expect(guard.distracted, isTrue);
+        p.position.setValues(
+          guard.position.x + 4,
+          guard.position.y + Guard.gh - Player.h,
+        );
+        run(game, 0.5);
+        expect(p.isDead, isFalse);
+      },
+    );
+
+    testWithGame<GolgeGame>(
+      'ateşböceği sürüsünden kavanoza ateşböceği alınır',
+      GolgeGame.new,
+      (game) async {
+        final p = await place(game, 0, 5, 13);
+        final before = game.fireflies;
+        keys(game).right = true;
+        run(game, 0.6);
+        expect(p.isDead, isFalse);
+        expect(game.fireflies, before + 1);
+      },
+    );
+
+    testWithGame<GolgeGame>(
+      'güvercin yaklaşınca bir sonraki konağa uçar',
+      GolgeGame.new,
+      (game) async {
+        await place(game, 0, 3, 13);
+        final bird = game.world.children.whereType<Bird>().first;
+        final x0 = bird.position.x;
+        keys(game).right = true;
+        run(game, 2.5);
+        expect(bird.position.x, greaterThan(x0 + 4 * kTile));
+      },
+    );
+  });
+
   group('bulmaca', () {
-    testWithGame<GolgeGame>('uzun bir karede sandık zeminden düşmez', GolgeGame.new, (game) async {
-      await place(game, 0, 3, 13);
-      final crate = game.world.children.whereType<Crate>().first;
-      final y0 = crate.position.y;
-      game.update(0.6);
-      run(game, 0.5);
-      expect(crate.isMounted, isTrue);
-      expect(crate.position.y, closeTo(y0, 0.5));
-    });
+    testWithGame<GolgeGame>(
+      'uzun bir karede sandık zeminden düşmez',
+      GolgeGame.new,
+      (game) async {
+        await place(game, 0, 3, 13);
+        final crate = game.world.children.whereType<Crate>().first;
+        final y0 = crate.position.y;
+        game.update(0.6);
+        run(game, 0.5);
+        expect(crate.isMounted, isTrue);
+        expect(crate.position.y, closeTo(y0, 0.5));
+      },
+    );
 
     testWithGame<GolgeGame>('sandık itilir', GolgeGame.new, (game) async {
       await place(game, 0, 48, 13);
