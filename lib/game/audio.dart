@@ -43,6 +43,11 @@ class GameAudio {
     'breath',
     'fizzle',
     'chain',
+    'gust',
+    'bell',
+    'grind',
+    'fire',
+    'thunder',
   ];
 
   bool _ready = false;

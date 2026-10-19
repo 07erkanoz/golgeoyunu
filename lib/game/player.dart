@@ -10,9 +10,10 @@ import 'golge_game.dart';
 import 'level.dart';
 import 'mechanics.dart';
 import 'palette.dart';
+import 'legends.dart';
 import 'puzzles.dart';
 
-enum PlayerState { normal, hang, climbUp, vine, dead }
+enum PlayerState { normal, hang, climbUp, vine, swing, dead }
 
 /// Ölümün nasıl anlatılacağı.
 enum DeathCause {
@@ -27,6 +28,9 @@ enum DeathCause {
 
   /// Karabasan ya da karanlık bölge: karanlık yutar.
   dark,
+
+  /// Medusa'nın bakışı: taşa döner.
+  stone,
 }
 
 class Player extends PositionComponent with HasGameReference<GolgeGame> {
@@ -158,6 +162,8 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
         _updateClimbUp();
       case PlayerState.vine:
         _updateVine(dt, dir, up, down, jumpPressed);
+      case PlayerState.swing:
+        _updateSwing(dt, dir, up, down, jumpPressed);
       case PlayerState.dead:
         _updateDead(dt);
     }
@@ -207,13 +213,16 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     final maxSpeed = crouching
         ? crouchSpeed
         : (pushing ? pushSpeed : (sneaking ? sneakSpeed : runSpeed));
-    final target = dir * maxSpeed;
+    // Salın üstünde yürümez; sal onu sırıkla taşır.
+    final target = riding is Raft ? 0.0 : dir * maxSpeed;
     // Ağırlıklı hareket: yavaş hızlanır, ters yöne dönüşte daha sert frenler.
     final reversing =
         dir != 0 && velocity.x.sign == -dir && velocity.x.abs() > 10;
-    final accel = onGround
+    var accel = onGround
         ? (dir == 0 ? 1300.0 : (reversing ? 1700.0 : 900.0))
         : 650.0;
+    // Buzda ayak tutmaz: hem hızlanmak hem durmak zordur.
+    if (onGround && _onIce) accel *= 0.18;
     velocity.x = _approach(velocity.x, target, accel * dt);
     if (dir != 0) facing = dir;
     _runPhase += velocity.x.abs() * dt * 0.075;
@@ -248,7 +257,11 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     if (gliding && !wasGliding) GameAudio.instance.play('glide', volume: 0.7);
     if (gliding) {
       velocity.y = math.min(velocity.y + gravity * 0.3 * dt, 75);
-      velocity.x = _approach(velocity.x, dir * 205.0, 500 * dt);
+      velocity.x = _approach(
+        velocity.x,
+        dir * 205.0 - level.def.headwind * (1 + 0.8 * game.blizzard),
+        500 * dt,
+      );
     } else {
       velocity.y = math.min(velocity.y + gravity * dt, maxFall);
     }
@@ -290,6 +303,7 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     }
     _lastHalfStep = halfStep;
 
+    if (!onGround && _grabCooldown <= 0 && _tryRope()) return;
     if (_grabCooldown <= 0 &&
         _vineAt(center.x, center.y) &&
         (up || (!onGround && velocity.y > -150))) {
@@ -306,6 +320,12 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
   }
 
   bool get _onWalkway => level.cellAt(center.x, position.y + h + 2) == '=';
+
+  bool get _onIce {
+    final r = ((position.y + h + 2) / kTile).floor();
+    return level.isIce(((position.x + 2) / kTile).floor(), r) ||
+        level.isIce(((position.x + w - 2) / kTile).floor(), r);
+  }
 
   void _noise(double radius) {
     final feet = Vector2(center.x, position.y + h);
@@ -563,6 +583,113 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     if (onGround && vy > 0) _setState(PlayerState.normal);
   }
 
+  // ---------------------------------------------------------------- ip
+
+  /// Tutunulan ip ve sarkaç durumu: açı (dikeyden), açısal hız, ipteki yer.
+  SwingRope? rope;
+  double ropeAngle = 0;
+  double _ropeOmega = 0;
+  double _ropeD = 0;
+
+  /// İpteki açısal hız (sağa salınım artı).
+  double get ropeOmega => _ropeOmega;
+
+  /// Ellerin dünyadaki yeri (ipe tutunurken).
+  Vector2 get hand => Vector2(center.x, position.y + 6);
+
+  bool _tryRope() {
+    for (final r in game.world.children.whereType<SwingRope>()) {
+      if (r.holder != null) continue;
+      final d = hand - r.anchor;
+      final len = d.length;
+      if (len < 30 || len > r.length + 6 || d.y < 0) continue;
+      // İpin o anki çizgisine uzaklık.
+      final dir = Vector2(math.sin(r.angle), math.cos(r.angle));
+      final along = d.dot(dir);
+      final perp = (d - dir * along).length;
+      if (perp > 16) continue;
+      rope = r;
+      r.holder = this;
+      ropeAngle = math.atan2(d.x, d.y);
+      _ropeD = len.clamp(36.0, r.length);
+      final tangent = Vector2(math.cos(ropeAngle), -math.sin(ropeAngle));
+      _ropeOmega = velocity.dot(tangent) / _ropeD;
+      velocity.setZero();
+      gliding = false;
+      _setState(PlayerState.swing);
+      GameAudio.instance.play('creak', volume: 0.5);
+      return true;
+    }
+    return false;
+  }
+
+  void _updateSwing(double dt, int dir, bool up, bool down, bool jumpPressed) {
+    final r = rope;
+    if (r == null || !r.isMounted) {
+      _setState(PlayerState.normal);
+      return;
+    }
+    // Sarkaç: yerçekimi, salınıma güç katan girdi, hafif sönüm.
+    final g = gravity * 0.55;
+    var alpha = -(g / _ropeD) * math.sin(ropeAngle);
+    alpha += dir * 2.6;
+    _ropeOmega += alpha * dt;
+    _ropeOmega *= 1 - 0.18 * dt;
+    if (up) {
+      _ropeD = math.max(36, _ropeD - 80 * dt);
+    } else if (down) {
+      _ropeD = math.min(r.length, _ropeD + 80 * dt);
+    } else if (_ropeD < r.length * 0.65) {
+      // Yukarıdan yakalayan ipte biraz aşağı kayar: salınım uzar.
+      _ropeD = math.min(r.length * 0.65, _ropeD + 110 * dt);
+    }
+    final prevAngle = ropeAngle;
+    ropeAngle = (ropeAngle + _ropeOmega * dt).clamp(-1.4, 1.4);
+    if (ropeAngle.abs() >= 1.4) _ropeOmega *= -0.2;
+    _placeOnRope(r);
+    // Kayaya çarparsa geri sekip durur.
+    if (_hitsSolid()) {
+      ropeAngle = prevAngle;
+      _ropeOmega *= -0.3;
+      _placeOnRope(r);
+    }
+    if (_ropeOmega.abs() > 0.2) facing = _ropeOmega > 0 ? 1 : -1;
+    if (dir != 0) facing = dir;
+    _runPhase += _ropeOmega.abs() * dt;
+    if (jumpPressed) {
+      // Bırakış: ipin hızıyla savrulur, biraz da yukarı.
+      final tangent = Vector2(math.cos(ropeAngle), -math.sin(ropeAngle));
+      velocity
+        ..setFrom(tangent * (_ropeOmega * _ropeD * 1.08))
+        ..y -= 260;
+      r.release(ropeAngle, _ropeOmega);
+      rope = null;
+      _grabCooldown = 0.35;
+      _jumpCut = false;
+      GameAudio.instance.play('jump', volume: 0.5);
+      _setState(PlayerState.normal);
+    }
+  }
+
+  void _placeOnRope(SwingRope r) {
+    final h0 =
+        r.anchor + Vector2(math.sin(ropeAngle), math.cos(ropeAngle)) * _ropeD;
+    position.setValues(h0.x - w / 2, h0.y - 6);
+  }
+
+  bool _hitsSolid() {
+    final c0 = ((position.x + 1) / kTile).floor();
+    final c1 = ((position.x + w - 1) / kTile).floor();
+    final r0 = ((position.y + 1) / kTile).floor();
+    final r1 = ((position.y + h - 1) / kTile).floor();
+    for (var c = c0; c <= c1; c++) {
+      for (var r = r0; r <= r1; r++) {
+        if (level.solid(c, r)) return true;
+      }
+    }
+    return false;
+  }
+
   // --------------------------------------------------------------- ölüm
 
   void _checkHazards() {
@@ -597,6 +724,7 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       GameAudio.instance.play(switch (deathCause) {
         DeathCause.water => 'splash',
         DeathCause.dark => 'breath',
+        DeathCause.stone => 'grind',
         _ => 'death',
       });
     }
@@ -686,7 +814,7 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
         hand2 = const Offset(cx + 2, -4);
         leg1 = sway + 0.1;
         leg2 = sway - 0.15;
-      case PlayerState.vine:
+      case PlayerState.vine || PlayerState.swing:
         final p = math.sin(_runPhase * 2);
         hand1 = Offset(cx + 2, -1 + p * 4);
         hand2 = Offset(cx - 1, 3 - p * 4);
@@ -822,6 +950,13 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       canvas.translate(_artW, 0);
       canvas.scale(-1, 1);
     }
+    if (state == PlayerState.swing) {
+      // Gövde ipin doğrultusunda: eller dönme noktası.
+      const pivot = Offset(cx, 2);
+      canvas.translate(pivot.dx, pivot.dy);
+      canvas.rotate(-ropeAngle * facing);
+      canvas.translate(-pivot.dx, -pivot.dy);
+    }
     if (isDead && !_fell) {
       canvas.translate(cx, _artH);
       canvas.rotate(math.min(_stateTime * 5, 1) * math.pi / 2);
@@ -913,6 +1048,14 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
           foot2 = Offset(cx - 3, 31 + 8.5 * k);
           lean = 0.3 * (1 - k);
         }
+      case PlayerState.swing:
+        // İpte: eller başın üstünde, bacaklar salınımla savrulur.
+        final kick = (_ropeOmega * 0.25).clamp(-0.6, 0.6);
+        foot1 = Offset(cx + 2 + kick * 6, _artH - 2);
+        foot2 = Offset(cx - 1 + kick * 4, _artH - 1);
+        arm2 = math.pi - 0.15;
+        jarAtHip = true;
+        onRope = true;
       case PlayerState.vine:
         final p = math.sin(_runPhase * 2);
         foot1 = Offset(cx + 1.5, _artH - 3 + p * 3);
@@ -980,8 +1123,8 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
         from + Offset(math.sin(angle) * len, math.cos(angle) * len);
     jarHand = limbEnd(shoulder, jarArm, 9.5);
     if (onRope) {
-      // El ele, ipe tutunarak tırmanır.
-      final p = math.sin(_runPhase * 2);
+      // El ele, ipe tutunarak tırmanır; sallanırken eller kıpırdamaz.
+      final p = state == PlayerState.swing ? 0.0 : math.sin(_runPhase * 2);
       frontHand = Offset(cx + 0.8, shoulder.dy - 7 + p * 3);
       backHand = Offset(cx - 0.6, shoulder.dy - 3 - p * 3);
     }

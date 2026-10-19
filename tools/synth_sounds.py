@@ -465,3 +465,59 @@ def amb_konya():
 save('amb_snow', loop(amb_snow(), 2), 0.5)
 save('amb_ark', loop(amb_ark(), 2), 0.5)
 save('amb_konya', loop(amb_konya(), 2), 0.5)
+
+
+# ------------------------------------------------------------- dağ sesleri
+def gust():
+    n_ = noise(3.0)
+    out = []
+    for i, x in enumerate(bandpass(n_, 300, 2500)):
+        t = i / SR
+        out.append(x * math.sin(math.pi * min(1, t / 3.0)) ** 1.5)
+    return out
+
+
+def bell():
+    # Bronz çan: uyumsuz kısmi sesler, uzun sönüm.
+    f = 392
+    parts = [(0.5, 0.6, 3.0), (1.0, 1.0, 2.2), (1.19, 0.5, 1.6), (1.5, 0.4, 1.2),
+             (2.0, 0.35, 1.0), (2.74, 0.2, 0.6), (3.76, 0.12, 0.4)]
+    tracks = [(decay(sine(f * k, 3.5), tau), g) for k, g, tau in parts]
+    strike = decay(bandpass(noise(0.05), 1500, 5000), 0.01)
+    return echo(mix(*tracks, (strike, 0.6)), 0.23, 0.35, 0.35)
+
+
+save('gust', gust(), 0.6)
+save('bell', bell(), 0.6)
+
+
+# ------------------------------------------------------------- efsaneler
+def grind():
+    base = bandpass(noise(1.4), 80, 700)
+    r = random.Random(4)
+    out = []
+    for i, x in enumerate(base):
+        t = i / SR
+        out.append(x * (0.6 + 0.4 * math.sin(t * 37 + math.sin(t * 7) * 3)))
+    return env(mix((out, 1.0), (lowpass(brown(1.4), 120), 2.0)), 0.1, 0.5)
+
+
+def fire():
+    roar = env(bandpass(noise(1.3), 150, 1800), 0.05, 0.6)
+    crackle = [0.0] * n(1.3)
+    r = random.Random(8)
+    for _ in range(25):
+        place(crackle, decay(highpass(noise(0.03), 2000), 0.006), r.random() * 1.2, 0.5)
+    return mix((roar, 1.0), (crackle, 0.6))
+
+
+def thunder():
+    crack = decay(highpass(noise(0.3), 800), 0.05)
+    rumble = env(lowpass(brown(4.0), 160), 0.05, 3.0)
+    out = mix((crack, 0.6), (rumble, 6.0))
+    return echo(out, 0.4, 0.3, 0.3)
+
+
+save('grind', grind(), 0.6)
+save('fire', fire(), 0.55)
+save('thunder', thunder(), 0.7)

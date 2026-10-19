@@ -197,6 +197,8 @@ class Guard extends PositionComponent with HasGameReference<GolgeGame> {
   /// Oyuncunun çıkardığı sesler: yakındaysa Kandilci o yöne gider.
   void hear(Vector2 from, double radius) {
     if (!_calm) return;
+    // Tipide kar bütün sesleri yutar.
+    if (game.blizzard > 0.5) return;
     final d = from - center;
     if (d.x.abs() > radius || d.y.abs() > 220) return;
     _lure = null;
@@ -267,6 +269,8 @@ class Guard extends PositionComponent with HasGameReference<GolgeGame> {
         range *= 0.7;
       }
     }
+    // Tipide fener ışığı karda boğulur.
+    range *= 1 - 0.55 * game.blizzard;
     if (dx * facing < -8) return false;
     if (dx.abs() > range) return false;
     if (dy.abs() > dx.abs() * 0.5 + 34) return false;
@@ -1116,9 +1120,17 @@ class Lever extends PositionComponent with HasGameReference<GolgeGame> {
     pulled = true;
     GameAudio.instance.play('lever');
     GameAudio.instance.play('gate', volume: 0.7);
+    // En yakın kapı açılır (bir bölümde birden çok kol ve kapı olabilir).
+    Gate? best;
+    var bestD = double.infinity;
     for (final g in game.world.children.whereType<Gate>()) {
-      g.opening = true;
+      final d = (g.position - position).length;
+      if (d < bestD && !g.opening) {
+        bestD = d;
+        best = g;
+      }
     }
+    best?.opening = true;
   }
 
   @override

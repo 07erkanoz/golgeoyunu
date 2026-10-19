@@ -247,7 +247,20 @@ class WaterBasin extends Component with HasGameReference<GolgeGame> {
   double _delay = 0;
   double _t = 0;
 
-  static const double speed = 30;
+  /// Suyun yükselip alçalma hızı; tufanda daha yavaş ama durmaz.
+  double speed = 30;
+
+  /// Tufan başladı mı (bir daha durmaz).
+  bool flooding = false;
+
+  void startFlood({double rate = 20}) {
+    if (flooding) return;
+    flooding = true;
+    speed = rate;
+    setTarget(high, delay: 1.2);
+    GameAudio.instance.play('breath', volume: 0.5);
+    game.shake(4);
+  }
 
   double get low => area.bottom - 6;
   double get high => area.top + kTile;
@@ -526,7 +539,9 @@ class SunLock extends PositionComponent with HasGameReference<GolgeGame> {
   @override
   void render(Canvas canvas) {
     final glow = open ? 1.0 : charge;
-    if (glow > 0) glowDot(canvas, Offset.zero, 30, kWarmLight, 0.45 * glow);
+    if (glow > 0) {
+      glowDot(canvas, Offset.zero, 30, kWarmLight, 0.45 * glow);
+    }
     canvas.drawCircle(Offset.zero, 11, Paint()..color = kInk);
     final ray = Paint()
       ..color = Color.lerp(
@@ -860,5 +875,490 @@ class GiantPerde extends PositionComponent with HasGameReference<GolgeGame> {
       );
     }
     canvas.restore();
+  }
+}
+
+// ==================================================================== İp
+
+/// Tavana ya da bir kayaya bağlı ip: havada değince tutunulur, sallanılır,
+/// zıplayınca bırakılır. Boşken rüzgârda hafifçe salınır.
+class SwingRope extends Component with HasGameReference<GolgeGame> {
+  SwingRope(int col, int row, int tiles)
+    : anchor = Vector2((col + 0.5) * kTile, row * kTile.toDouble()),
+      length = tiles * kTile.toDouble(),
+      _t = col * 0.37,
+      super(priority: 19);
+
+  final Vector2 anchor;
+  final double length;
+  Player? holder;
+  double angle = 0;
+  double _omega = 0;
+  double _t;
+
+  void release(double a, double omega) {
+    holder = null;
+    angle = a;
+    _omega = omega;
+  }
+
+  @override
+  void update(double dt) {
+    _t += dt;
+    final p = holder;
+    if (p != null) {
+      if (p.state != PlayerState.swing || p.rope != this) {
+        holder = null;
+      } else {
+        angle = p.ropeAngle;
+        return;
+      }
+    }
+    // Boş ip: kendi sarkaç salınımı, yavaşça durulur; rüzgâr hafif iter.
+    _omega +=
+        (-(1100 / length) * math.sin(angle) + math.sin(_t * 0.7) * 0.15) * dt;
+    _omega *= 1 - 0.6 * dt;
+    angle += _omega * dt;
+  }
+
+  @override
+  void render(Canvas canvas) {
+    final p = holder;
+    final end = p != null
+        ? p.hand
+        : anchor + Vector2(math.sin(angle), math.cos(angle)) * length;
+    final rope = Paint()
+      ..color = const Color(0xFF2A1C14)
+      ..strokeWidth = 2.2
+      ..strokeCap = StrokeCap.round;
+    // Hafif sarkık: ortası biraz bükük çizilir.
+    final mid =
+        (anchor + end) / 2 +
+        Vector2(math.cos(angle), -math.sin(angle)) * (p == null ? 3 : 1.5);
+    canvas.drawPath(
+      Path()
+        ..moveTo(anchor.x, anchor.y)
+        ..quadraticBezierTo(mid.x, mid.y, end.x, end.y),
+      rope..style = PaintingStyle.stroke,
+    );
+    // Bağlantı halkası ve uçtaki düğüm.
+    canvas.drawCircle(anchor.toOffset(), 3.5, Paint()..color = kInk);
+    if (p == null) {
+      canvas.drawCircle(
+        end.toOffset(),
+        3,
+        Paint()..color = const Color(0xFF2A1C14),
+      );
+    }
+  }
+}
+
+// ================================================================ Gemi
+
+/// Gemideki oyma hayvanların türleri: her birinin bir eşi vardır.
+enum AnimalKind { lion, elephant, giraffe, deer }
+
+/// Oyma bir hayvan: itilebilen sandık. Eşinin gölgesinin önüne gelince
+/// ikisi birleşir.
+class AnimalCrate extends Crate {
+  AnimalCrate(super.cell, this.kind);
+
+  final AnimalKind kind;
+
+  @override
+  void render(Canvas canvas) {
+    const s = Crate.side;
+    final wood = Paint()..color = const Color(0xFF3A2414);
+    canvas.drawRect(const Rect.fromLTWH(0, s - 6, s, 6), wood);
+    canvas.save();
+    canvas.translate(s / 2, s - 6);
+    _animal(canvas, kind, wood, 0.42);
+    canvas.restore();
+    canvas.drawLine(
+      const Offset(0, s - 5.5),
+      const Offset(s, s - 5.5),
+      Paint()
+        ..color = const Color(0xFFD08A5A).withValues(alpha: 0.5)
+        ..strokeWidth = 1.2,
+    );
+  }
+}
+
+/// Hayvanın gölge tasviri (ayakları orijinde, boyu ~60*scale).
+void _animal(Canvas canvas, AnimalKind kind, Paint p, double scale) {
+  canvas.save();
+  canvas.scale(scale);
+  switch (kind) {
+    case AnimalKind.lion:
+      canvas.drawOval(const Rect.fromLTWH(-26, -34, 52, 22), p);
+      canvas.drawCircle(const Offset(26, -32), 13, p);
+      for (final x in [-20.0, -8.0, 10.0, 18.0]) {
+        canvas.drawRect(Rect.fromLTWH(x, -16, 5, 16), p);
+      }
+      canvas.drawPath(
+        Path()
+          ..moveTo(-26, -28)
+          ..quadraticBezierTo(-42, -34, -44, -18)
+          ..lineTo(-40, -18)
+          ..quadraticBezierTo(-38, -28, -26, -24)
+          ..close(),
+        p,
+      );
+    case AnimalKind.elephant:
+      canvas.drawOval(const Rect.fromLTWH(-30, -46, 60, 36), p);
+      canvas.drawCircle(const Offset(30, -38), 13, p);
+      canvas.drawRect(const Rect.fromLTWH(38, -34, 6, 30), p);
+      for (final x in [-24.0, -10.0, 8.0, 20.0]) {
+        canvas.drawRect(Rect.fromLTWH(x, -14, 8, 14), p);
+      }
+    case AnimalKind.giraffe:
+      canvas.drawOval(const Rect.fromLTWH(-20, -46, 40, 22), p);
+      canvas.drawPath(
+        Path()
+          ..moveTo(12, -42)
+          ..lineTo(26, -92)
+          ..lineTo(33, -90)
+          ..lineTo(21, -38)
+          ..close(),
+        p,
+      );
+      canvas.drawOval(const Rect.fromLTWH(24, -100, 16, 8), p);
+      for (final x in [-15.0, -6.0, 7.0, 14.0]) {
+        canvas.drawRect(Rect.fromLTWH(x, -28, 4, 28), p);
+      }
+    case AnimalKind.deer:
+      canvas.drawOval(const Rect.fromLTWH(-20, -36, 40, 18), p);
+      canvas.drawPath(
+        Path()
+          ..moveTo(14, -32)
+          ..lineTo(22, -52)
+          ..lineTo(28, -50)
+          ..lineTo(20, -30)
+          ..close(),
+        p,
+      );
+      canvas.drawCircle(const Offset(26, -52), 6, p);
+      final antler = Paint()
+        ..color = p.color
+        ..strokeWidth = 2
+        ..style = PaintingStyle.stroke;
+      canvas.drawPath(
+        Path()
+          ..moveTo(26, -56)
+          ..lineTo(22, -70)
+          ..moveTo(23, -64)
+          ..lineTo(16, -68)
+          ..moveTo(28, -56)
+          ..lineTo(34, -68),
+        antler,
+      );
+      for (final x in [-15.0, -6.0, 7.0, 14.0]) {
+        canvas.drawRect(Rect.fromLTWH(x, -20, 3, 20), p);
+      }
+  }
+  canvas.restore();
+}
+
+/// Duvarda eşini bekleyen bir hayvan gölgesi. Aynı türden oyma hayvan
+/// önüne itilince gölgeler birleşir, en yakın kapı açılır.
+class Pedestal extends PositionComponent with HasGameReference<GolgeGame> {
+  Pedestal(Vector2 cell, this.kind)
+    : super(position: Vector2(cell.x + kTile / 2, cell.y + kTile), priority: 4);
+
+  final AnimalKind kind;
+  bool matched = false;
+  double _glow = 0;
+  double _t = 0;
+
+  @override
+  void update(double dt) {
+    super.update(dt);
+    _t += dt;
+    if (matched) {
+      _glow = math.min(1, _glow + dt);
+      return;
+    }
+    for (final a in game.world.children.whereType<AnimalCrate>()) {
+      if (a.kind != kind) continue;
+      final cx = a.position.x + Crate.side / 2;
+      final feet = a.position.y + Crate.side;
+      if ((cx - position.x).abs() < 14 && (feet - position.y).abs() < 4) {
+        matched = true;
+        GameAudio.instance.play('memory', volume: 0.6);
+        Gate? best;
+        var bestD = double.infinity;
+        for (final g in game.world.children.whereType<Gate>()) {
+          final d = (g.position - position).length;
+          if (d < bestD && g.solid && !g.opening) {
+            bestD = d;
+            best = g;
+          }
+        }
+        if (best != null) {
+          best.opening = true;
+          GameAudio.instance.play('gate', volume: 0.6);
+        }
+      }
+    }
+  }
+
+  @override
+  void render(Canvas canvas) {
+    // Duvara düşen eş gölge; eşleşince ışıkla çevrelenir.
+    final shade = Paint()
+      ..color = const Color(0xFF0A0604)
+          .withValues(alpha: 0.55 + 0.1 * math.sin(_t));
+    canvas.save();
+    canvas.translate(0, -kTile * 0.4);
+    canvas.scale(-1, 1);
+    _animal(canvas, kind, shade, 1.1);
+    canvas.restore();
+    if (_glow > 0) {
+      glowDot(canvas, Offset(0, -kTile), 70, kWarmLight, 0.4 * _glow);
+    }
+    // Kaide çizgisi.
+    canvas.drawLine(
+      const Offset(-14, -1),
+      const Offset(14, -1),
+      Paint()
+        ..color = const Color(0xFFD08A5A).withValues(alpha: 0.4 + 0.4 * _glow)
+        ..strokeWidth = 2,
+    );
+  }
+}
+
+// ================================================================= Dağ
+
+/// Saçaktan sarkan buz sarkıtı: altından geçilince titrer, sonra düşer.
+class FallingIcicle extends PositionComponent with HasGameReference<GolgeGame> {
+  FallingIcicle(Vector2 cell)
+    : super(position: Vector2(cell.x + kTile / 2, cell.y), priority: 21);
+
+  double _shake = -1;
+  double _vy = 0;
+  bool _fallen = false;
+  double _gone = 0;
+
+  @override
+  void update(double dt) {
+    super.update(dt);
+    final p = game.player;
+    if (_fallen) {
+      _gone += dt;
+      if (_gone > 0.6) removeFromParent();
+      return;
+    }
+    if (_shake < 0) {
+      if (p != null &&
+          !p.isDead &&
+          (p.center.x - position.x).abs() < 26 &&
+          p.center.y > position.y &&
+          p.center.y - position.y < 9 * kTile) {
+        _shake = 0;
+        GameAudio.instance.play('creak', volume: 0.4);
+      }
+      return;
+    }
+    _shake += dt;
+    if (_shake < 0.45) return;
+    _vy = math.min(_vy + 1900 * dt, 900);
+    position.y += _vy * dt;
+    if (p != null &&
+        !p.isDead &&
+        p.toRect().contains(Offset(position.x, position.y + 18))) {
+      p.die();
+    }
+    if (game.level.cellAt(position.x, position.y + 22) == '#' ||
+        position.y > game.level.pixelHeight) {
+      _fallen = true;
+      GameAudio.instance.play('shatter', volume: 0.35);
+    }
+  }
+
+  @override
+  void render(Canvas canvas) {
+    final jitter = _shake >= 0 && _shake < 0.45
+        ? math.sin(_shake * 80) * 1.5
+        : 0.0;
+    final a = _fallen ? (1 - _gone / 0.6).clamp(0.0, 1.0) : 1.0;
+    final ice = Paint()
+      ..color = const Color(0xFFB8CCE4).withValues(alpha: 0.9 * a);
+    if (_fallen) {
+      // Kırık parçalar.
+      for (var i = 0; i < 5; i++) {
+        canvas.drawCircle(
+          Offset(-8 + i * 4.0 + jitter, 20 - _gone * 10 * (i % 2 + 1)),
+          1.6,
+          ice,
+        );
+      }
+      return;
+    }
+    canvas.drawPath(
+      Path()
+        ..moveTo(-5 + jitter, 0)
+        ..lineTo(5 + jitter, 0)
+        ..lineTo(jitter, 24)
+        ..close(),
+      ice,
+    );
+    canvas.drawLine(
+      Offset(-1 + jitter, 2),
+      Offset(jitter, 18),
+      Paint()
+        ..color = const Color(0xFFF2F8FF).withValues(alpha: 0.7 * a)
+        ..strokeWidth = 1,
+    );
+  }
+}
+
+/// Yıkık manastırın çanı: rüzgârda hafifçe sallanır. Yanından hızlı
+/// geçilirse çalar ve Kandilciler sese gelir.
+class WindBell extends PositionComponent
+    with HasGameReference<GolgeGame>, Usable {
+  WindBell(Vector2 cell)
+    : super(position: Vector2(cell.x + kTile / 2, cell.y), priority: 18);
+
+  double _t = 0;
+  double _ring = 0;
+  double _rearm = 0;
+
+  @override
+  bool canUse(Vector2 p) =>
+      (p - position).x.abs() < 30 && (p - position).y.abs() < 4 * kTile;
+
+  /// Bilerek çalmak: Kandilcileri sese çekmek için.
+  @override
+  void use() => _ringNow();
+
+  void _ringNow() {
+    if (_rearm > 0) return;
+    _ring = 1;
+    _rearm = 2.5;
+    GameAudio.instance.play('bell');
+    game.makeNoise(position.clone(), 460, source: this);
+  }
+
+  @override
+  void update(double dt) {
+    super.update(dt);
+    _t += dt;
+    _ring = math.max(0, _ring - dt * 0.6);
+    _rearm -= dt;
+    final p = game.player;
+    if (p == null || p.isDead || _rearm > 0) return;
+    final d = p.center - position;
+    final fast = p.velocity.x.abs() > 75 || !p.onGround;
+    if (d.x.abs() < 44 && d.y > 0 && d.y < 4 * kTile && fast) _ringNow();
+  }
+
+  @override
+  void render(Canvas canvas) {
+    final swing = math.sin(_t * 1.3) * 0.08 + math.sin(_t * 14) * 0.35 * _ring;
+    canvas.drawLine(
+      Offset.zero,
+      const Offset(0, 6),
+      Paint()
+        ..color = kInk
+        ..strokeWidth = 1.5,
+    );
+    canvas.save();
+    canvas.translate(0, 6);
+    canvas.rotate(swing);
+    final bronze = Paint()..color = const Color(0xFF2A1E14);
+    canvas.drawPath(
+      Path()
+        ..moveTo(-4, 0)
+        ..quadraticBezierTo(-5, 10, -11, 18)
+        ..lineTo(11, 18)
+        ..quadraticBezierTo(5, 10, 4, 0)
+        ..close(),
+      bronze,
+    );
+    canvas.drawLine(
+      const Offset(-10, 17),
+      const Offset(10, 17),
+      Paint()
+        ..color = const Color(0xFFC8A060).withValues(alpha: 0.4 + 0.5 * _ring)
+        ..strokeWidth = 1.4,
+    );
+    canvas.drawCircle(const Offset(0, 19), 2.2, bronze);
+    canvas.restore();
+    if (_ring > 0.05) {
+      // Çanın sesi: genişleyen ince halkalar.
+      final ringPaint = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1
+        ..color = const Color(0xFFE8D0A0).withValues(alpha: 0.4 * _ring);
+      canvas.drawCircle(const Offset(0, 14), 20 + (1 - _ring) * 60, ringPaint);
+    }
+  }
+}
+
+/// Aziz Hakob Manastırı'nın kalıntısı: sivri külahlı kilisenin yıkık
+/// gövdesi, kemerli pencereler. Arazinin arkasında, süs.
+class MonasteryRuin extends PositionComponent with HasGameReference<GolgeGame> {
+  MonasteryRuin(Vector2 cell)
+    : super(position: Vector2(cell.x, cell.y + kTile), priority: -1);
+
+  @override
+  void render(Canvas canvas) {
+    final stone = Paint()..color = const Color(0xFF1A2230);
+    final snow = Paint()..color = const Color(0xFF8A9AB4);
+    // Gövde (yer yer yıkık üst kenar).
+    final body = Path()
+      ..moveTo(0, 0)
+      ..lineTo(0, -150)
+      ..lineTo(40, -150)
+      ..lineTo(52, -128)
+      ..lineTo(70, -150)
+      ..lineTo(200, -150)
+      ..lineTo(200, -96)
+      ..lineTo(232, -70)
+      ..lineTo(240, 0)
+      ..close();
+    canvas.drawPath(body, stone);
+    // Kasnak ve yarısı yıkılmış külah.
+    canvas.drawRect(const Rect.fromLTWH(78, -210, 64, 60), stone);
+    canvas.drawPath(
+      Path()
+        ..moveTo(74, -210)
+        ..lineTo(110, -262)
+        ..lineTo(126, -240)
+        ..lineTo(134, -246)
+        ..lineTo(146, -210)
+        ..close(),
+      stone,
+    );
+    // Kemerli pencereler: içleri karanlık mavi.
+    final window = Paint()..color = const Color(0xFF0A0E16);
+    for (final x in [24.0, 96.0, 160.0]) {
+      canvas.drawRRect(
+        RRect.fromRectAndCorners(
+          Rect.fromLTWH(x, -118, 18, 40),
+          topLeft: const Radius.circular(9),
+          topRight: const Radius.circular(9),
+        ),
+        window,
+      );
+    }
+    canvas.drawRRect(
+      RRect.fromRectAndCorners(
+        const Rect.fromLTWH(100, -196, 12, 28),
+        topLeft: const Radius.circular(6),
+        topRight: const Radius.circular(6),
+      ),
+      window,
+    );
+    // Haç taşı.
+    final cross = Paint()
+      ..color = const Color(0xFF3A465C)
+      ..strokeWidth = 3;
+    canvas.drawLine(const Offset(110, -272), const Offset(110, -290), cross);
+    canvas.drawLine(const Offset(103, -283), const Offset(117, -283), cross);
+    // Karla örtülü kenarlar.
+    canvas.drawRect(const Rect.fromLTWH(0, -153, 40, 4), snow);
+    canvas.drawRect(const Rect.fromLTWH(70, -153, 130, 4), snow);
+    canvas.drawRect(const Rect.fromLTWH(76, -213, 68, 4), snow);
   }
 }

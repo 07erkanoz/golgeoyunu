@@ -6,6 +6,7 @@ import 'package:flame/components.dart';
 
 import 'creatures.dart';
 import 'entities.dart';
+import 'legends.dart';
 import 'mechanics.dart';
 import 'puzzles.dart';
 import '../settings.dart';
@@ -86,8 +87,9 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
     canvas.drawRect(
       rect,
       Paint()
-        ..color = const Color(0xFF040201)
-            .withValues(alpha: darknessFor(game.level.def.theme)),
+        ..color = const Color(0xFF040201).withValues(
+          alpha: darknessFor(game.level.def.theme) * (1 - game.lightning),
+        ),
     );
     _darkZones(canvas, rect);
 
@@ -140,6 +142,14 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
           canvas.drawPath(w.beamPath(), _cut);
         case WingsPickup k:
           _light(canvas, k.position.toOffset().translate(0, -10), 110, 0.9);
+        case FireVent v when v.burning:
+          _light(canvas, v.position.toOffset().translate(0, -40), 120, 0.9);
+        case LanternBalloon b:
+          _light(canvas, b.position.toOffset(), 60, 0.8);
+        case MedusaHead m when m.eyes > 0.2:
+          _light(canvas, m.position.toOffset(), 50, 0.6 * m.eyes);
+        case SimurgFeather f when !f.taken:
+          _light(canvas, f.position.toOffset(), 50, 0.6);
         case GiantPerde g:
           _light(canvas, g.glowCenter, g.glowRadius, 0.75);
         case SunBeam b:

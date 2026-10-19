@@ -47,6 +47,8 @@ class LevelDef {
     this.memories = const [],
     this.wings = false,
     this.variant = 0,
+    this.headwind = 0,
+    this.storm = false,
     this.titleEn = '',
     this.subtitleEn = '',
     this.whispersEn = const [],
@@ -86,6 +88,14 @@ class LevelDef {
 
   /// Bölüm kanatlarla başlar (süzülme açık).
   final bool wings;
+
+  /// Tipi: süzülürken yüze esen rüzgâr (px/sn). Uzun uçurumlar ancak
+  /// iple sallanarak geçilir.
+  final double headwind;
+
+  /// Ara ara tipi bastırır: ekran beyaza boğulur; Kandilciler az görür,
+  /// hiç duymaz.
+  final bool storm;
 
   /// Aynı temanın farklı görünümü (ör. kar: 0 Ağrı, 1 Palandöken, 2 çığ;
   /// Nemrut: 0 taş tanrılar, 1 gün doğumu).
@@ -406,5 +416,56 @@ const levels = <LevelDef>[
       'Memory · "Whoever looks in a mirror thinks he sees himself," he said. "But a mirror shows the light."',
     ],
     map: kMapKaf,
+  ),
+  LevelDef(
+    title: 'V · AĞRI',
+    subtitle: 'Tufandan beri karla örtülü bir sır.',
+    theme: LevelTheme.snow,
+    wings: true,
+    headwind: 140,
+    storm: true,
+    titleEn: 'V · ARARAT',
+    subtitleEn: 'A secret wrapped in snow since the Flood.',
+    place: 'Ağrı Dağı · Doğubayazıt, Ekim 1660',
+    placeEn: 'Mount Ararat · Doğubayazıt, October 1660',
+    areas: [
+      'Dağın Eteği',
+      'İplerin Geçidi',
+      'Terk Edilmiş Ağıl',
+      'Buz Mağarası',
+      'Tufanın Eşiği',
+    ],
+    areasEn: [
+      'The Foot of the Mountain',
+      'The Pass of Ropes',
+      'The Abandoned Fold',
+      'The Ice Cave',
+      'The Threshold of the Flood',
+    ],
+    whispers: [
+      'Bir keşiş zirveye çıkmak istemiş. Her sabah yeniden dağın eteğinde uyanmış.',
+      'Rüzgâr kanatlarını geri iter. Burada ip, kanattan sadıktır.',
+      'Çobanlar sürülerini bırakıp gitmiş. Kandilciler gelince kuzular bile susar.',
+      'Bir gece keşişe bir melek görünmüş, eline gemiden bir tahta vermiş: "Daha yukarı çıkma," demiş.',
+      'Yukarıda, buzun içinde, tahtadan bir gövde uyuyor.',
+    ],
+    whispersEn: [
+      'A monk once set out for the summit. Every morning he woke again at the mountain\'s foot.',
+      'The wind pushes your wings back. Here a rope is more faithful than wings.',
+      'The shepherds left their flocks behind. When the Lamplighters come, even the lambs fall silent.',
+      'One night an angel came to the monk and put a plank of the Ark in his hand: "Climb no higher," it said.',
+      'Up above, inside the ice, a body made of wood is sleeping.',
+    ],
+    memories: [
+      'Hatıra · Kışın ustam perdeye kar yağdırırdı: kandilin önüne un serperdi. Karı ilk orada gördüm.',
+      'Hatıra · "Dağlar da yolcudur," derdi. "Yalnızca çok yavaş yürürler."',
+      'Hatıra · Bir gece Nuh\'un gemisini oynattık. Hayvanları ikişer ikişer perdeye çıkardı; ben gölgelerini saydım.',
+    ],
+    memoriesEn: [
+      'Memory · In winter my master made it snow on the screen: he sifted flour before the lamp. That was where I first saw snow.',
+      'Memory · "Mountains are travelers too," he said. "They just walk very slowly."',
+      'Memory · One night we played Noah\'s Ark. He brought the animals onto the screen two by two; I counted their shadows.',
+    ],
+    map: kMapAgri,
   ),
 ];

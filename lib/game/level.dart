@@ -19,6 +19,16 @@ const double kTile = 32;
 /// - Düzenekler: `C` sandık, `L` kol, `H` kapı, `A`/`Y` terazi kefeleri,
 ///   `R`/`V` yatay/dikey kayan kaya, `O` çöken kaya, `F` ateşböcekleri,
 ///   `W` Hezarfen'in kanatları.
+/// - Efsaneler: `U` Medusa başı, `_` sal (suyun üstünde, 3 kare), `!`
+///   alevli baca, `N` fener balonu, `T` Simurg tüyü, `s` tüy sunağı,
+///   `@` Perseus'un kalkanı (itilebilir).
+/// - Dağ: `i` düşen buz sarkıtı, `c` rüzgârda çalan çan, `&` manastır
+///   kalıntısı (sol alt köşe, süs).
+/// - Buz: `-` (katı kaya gibi, üstü kaygan).
+/// - Tufan: `o` (Sâye gelince en yakın hazne durmadan yükselmeye başlar).
+/// - Gemi hayvanları: `a` oyma hayvan sandığı, `d` eşinin gölgesi (kaide);
+///   ilerleyiş sırasıyla eşleşir (ilk `a` ilk `d` ile).
+/// - İp: dikey `S` dizisi (üst hücre bağlantı noktası, uzunluğu dizi kadar).
 /// - Yer adı: `p` (bölümün `areas` listesinden, ilerleyiş sırasıyla).
 /// - Bölgeler: `x` sol üst ve `X` sağ alt köşeleriyle karanlık bölge (ışığı
 ///   yer, ateşböcekleri birer birer söner).
@@ -70,6 +80,27 @@ class Level {
   final mirrorCells = <(Vector2, bool)>[];
   final lockCells = <Vector2>[];
   final perdeCells = <Vector2>[];
+
+  final medusaCells = <Vector2>[];
+  final shieldCells = <Vector2>[];
+  final raftCells = <Vector2>[];
+  final ventCells = <Vector2>[];
+  final balloonCells = <Vector2>[];
+  final featherCells = <Vector2>[];
+  final altarCells = <Vector2>[];
+  final icicleCells = <Vector2>[];
+  final bellCells = <Vector2>[];
+  final ruinCells = <Vector2>[];
+  final _ice = <int>{};
+  final floodCells = <Vector2>[];
+  final animalCells = <Vector2>[];
+  final pedestalCells = <Vector2>[];
+
+  /// Hücre buz mu (kaygan zemin)?
+  bool isIce(int c, int r) => _ice.contains(r * 100000 + c);
+
+  /// Sallanılan ipler: (sütun, üst satır, uzunluk).
+  final ropes = <(int, int, int)>[];
 
   /// Yer adı işaretleri, ilerleyiş sırasıyla.
   final placeCells = <Vector2>[];
@@ -183,6 +214,45 @@ class Level {
             perdeCells.add(cell);
           case 'p':
             placeCells.add(cell);
+          case 'U':
+            medusaCells.add(cell);
+          case '@':
+            shieldCells.add(cell);
+          case '_':
+            raftCells.add(cell);
+          case '!':
+            ventCells.add(cell);
+          case 'N':
+            balloonCells.add(cell);
+          case 'T':
+            featherCells.add(cell);
+          case 's':
+            altarCells.add(cell);
+          case 'i':
+            icicleCells.add(cell);
+          case 'c':
+            bellCells.add(cell);
+          case '&':
+            ruinCells.add(cell);
+          case '-':
+            _ice.add(r * 100000 + c);
+            row[c] = '#';
+            continue;
+          case 'o':
+            floodCells.add(cell);
+          case 'a':
+            animalCells.add(cell);
+          case 'd':
+            pedestalCells.add(cell);
+          case 'S':
+            if (r == 0 || def.map[r - 1].padRight(width, '.')[c] != 'S') {
+              var end = r;
+              while (end + 1 < height &&
+                  def.map[end + 1].padRight(width, '.')[c] == 'S') {
+                end++;
+              }
+              ropes.add((c, r, end - r + 1));
+            }
           case 'x':
             _darkStarts.add(cell);
           case 'X':
@@ -211,6 +281,8 @@ class Level {
       _cells.add(row);
     }
     placeCells.sort((a, b) => progressOf(a).compareTo(progressOf(b)));
+    animalCells.sort((a, b) => progressOf(a).compareTo(progressOf(b)));
+    pedestalCells.sort((a, b) => progressOf(a).compareTo(progressOf(b)));
   }
 
   /// Harita dışı: yanlar katı duvar, üst ve alt boşluk.

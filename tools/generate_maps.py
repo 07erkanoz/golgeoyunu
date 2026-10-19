@@ -202,7 +202,44 @@ for c,r in [(8,16),(32,8),(66,8),(98,7),(126,16)]:
     f.put(c,r,'p')
 lvl4=f.rows()
 
-MAPS = [('kMapYerebatan', lvl1), ('kMapKule', lvl2), ('kMapGokyolu', lvl3), ('kMapKaf', lvl4)]
+# ------------------------------------------------------------ V · AĞRI
+W,H=190,26
+a=G(W,H)
+# 1) Dağın eteği: buzlu dere, ilk ip
+a.fill(0,20,12,25,'#'); a.put(2,19,'P'); a.put(4,19,'1'); a.put(6,19,'B'); a.put(8,19,'p')
+a.fill(13,21,22,25,'#'); a.fill(13,20,22,20,'-')
+a.fill(24,10,40,11,'#')                      # kaya saçağı
+a.fill(25,12,25,17,'S')
+a.fill(31,17,35,25,'#')
+# 2) İplerin geçidi
+a.put(31,16,'p'); a.put(32,16,'K'); a.put(33,16,'2'); a.put(34,16,'B'); a.put(35,16,'F')
+a.fill(36,6,58,7,'#')                        # taş kemer
+a.fill(37,8,37,17,'S'); a.fill(44,8,44,17,'S'); a.fill(51,8,51,17,'S')
+a.fill(59,17,100,25,'#')
+# 3) Terk edilmiş ağıl
+a.put(60,16,'K'); a.put(62,16,'3'); a.put(64,16,'B'); a.put(66,16,'p')
+a.fill(68,15,69,16,'#'); a.fill(70,16,71,16,'~'); a.put(75,16,'G'); a.put(78,16,'M')
+a.fill(80,14,81,16,'#'); a.fill(82,16,83,16,'~'); a.put(90,16,'G'); a.put(86,16,'F')
+a.fill(96,17,98,25,'.',); a.fill(96,17,98,17,'u'); a.put(97,24,'^') if False else None
+a.fill(99,17,135,25,'#')
+# 4) Buz mağarası
+a.fill(100,0,135,12,'#')
+a.put(102,16,'p'); a.put(101,16,'K'); a.put(105,16,'4')
+a.put(104,13,'x'); a.put(132,16,'X')
+a.fill(110,17,118,17,'-')
+a.put(107,16,'F'); a.put(121,16,'F'); a.put(129,16,'F'); a.put(116,14,'e'); a.put(127,16,'M')
+a.fill(122,17,124,17,'^')
+# 5) Tufanın eşiği: iplerle yukarı
+a.fill(136,17,142,25,'#'); a.put(137,16,'K'); a.put(139,16,'B'); a.put(140,16,'p')
+a.fill(146,15,150,25,'#')
+a.fill(151,5,158,5,'#'); a.fill(153,6,153,14,'S')
+a.fill(159,12,165,25,'#'); a.put(160,11,'K')
+a.put(168,10,'O'); a.put(172,9,'O')
+a.fill(176,8,180,25,'#'); a.put(177,7,'5')
+a.fill(183,7,189,25,'#'); a.put(184,6,'M'); a.put(185,6,'B'); a.put(187,6,'E')
+lvl5=a.rows()
+
+MAPS = [('kMapYerebatan', lvl1), ('kMapKule', lvl2), ('kMapGokyolu', lvl3), ('kMapKaf', lvl4), ('kMapAgri', lvl5)]
 
 out = ['// Bu dosya tools/generate_maps.py ile üretilir; elle düzenleme.',
        '// Gösterim: lib/game/level.dart başındaki açıklamaya bakın.', '']

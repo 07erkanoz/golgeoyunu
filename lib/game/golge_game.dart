@@ -19,6 +19,7 @@ import 'narration.dart';
 import 'perde.dart';
 import 'palette.dart';
 import 'player.dart';
+import 'legends.dart';
 import 'puzzles.dart';
 import '../settings.dart';
 import 'strings.dart';
@@ -109,6 +110,11 @@ class GolgeGame extends FlameGame with KeyboardEvents {
 
   double _darkT = 0;
   bool _darkWarned = false;
+
+  /// Tipinin şiddeti (0-1): fırtınalı bölümlerde ara ara bastırır.
+  double blizzard = 0;
+  double _stormT = 0;
+  bool _stormWarned = false;
   double _chainT = 25;
 
   final _memories = <String>{};
@@ -319,10 +325,13 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     level.def.placeText,
   );
 
+  /// Testler için: gerçek bölümlerin yerine küçük deneme haritaları.
+  static List<LevelDef>? debugLevels;
+
   void _buildLevel(int index, {bool respawn = false, bool withPlayer = true}) {
     world.removeAll(world.children.toList());
     levelIndex = index;
-    level = Level(levels[index]);
+    level = Level((debugLevels ?? levels)[index]);
     if (!respawn || _respawn == null) {
       _respawn = Level.standOn(level.playerStart, Player.w, Player.h);
       _darkWarned = false;
@@ -349,6 +358,17 @@ class GolgeGame extends FlameGame with KeyboardEvents {
       for (final c in level.watcherCells) Watcher(c),
       for (final c in level.wingsCells) WingsPickup(c),
       for (final c in level.glimpseCells) KarabasanGlimpse(c),
+      for (final c in level.icicleCells) FallingIcicle(c),
+      for (final c in level.medusaCells) MedusaHead(c),
+      for (final c in level.shieldCells) ShieldCrate(c),
+      for (final c in level.raftCells) Raft(c),
+      for (var i = 0; i < level.ventCells.length; i++)
+        FireVent(level.ventCells[i], phase: i * 1.1),
+      for (final c in level.balloonCells) LanternBalloon(c),
+      for (final c in level.featherCells) SimurgFeather(c),
+      for (final c in level.altarCells) FeatherAltar(c),
+      for (final c in level.bellCells) WindBell(c),
+      for (final c in level.ruinCells) MonasteryRuin(c),
       for (final c in level.perdeCells) GiantPerde(c),
       for (final (c, r, n) in level.glowRuns)
         PhasePlank(Vector2(c * kTile, r * kTile.toDouble()), n, shade: false),
@@ -361,6 +381,17 @@ class GolgeGame extends FlameGame with KeyboardEvents {
       for (final (c, slash) in level.mirrorCells) Mirror(c, slash: slash),
       for (final c in level.lockCells) SunLock(c),
       for (final c in level.beamCells) SunBeam(c),
+      for (final (c, r, n) in level.ropes) SwingRope(c, r, n),
+      for (var i = 0; i < level.animalCells.length; i++)
+        AnimalCrate(
+          level.animalCells[i],
+          AnimalKind.values[i % AnimalKind.values.length],
+        ),
+      for (var i = 0; i < level.pedestalCells.length; i++)
+        Pedestal(
+          level.pedestalCells[i],
+          AnimalKind.values[i % AnimalKind.values.length],
+        ),
       if (level.chaseStart != null && level.chaseEnd != null)
         Karabasan(level.chaseStart!, level.chaseEnd!),
       for (var i = 0; i < level.memoryCells.length; i++)
@@ -371,6 +402,8 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     GameAudio.instance.silenceLoops();
     threat = 0;
     hideAmount = 0;
+    blizzard = 0;
+    _stormT = 0;
     jarStrength = 1;
     _darkT = 0;
     if (withPlayer) {
@@ -423,6 +456,10 @@ class GolgeGame extends FlameGame with KeyboardEvents {
           }
         case SunBeam b:
           if (b.lights(Offset(at.x, at.y))) return true;
+        case LanternBalloon b:
+          if (b.inBeam(at)) return true;
+        case FireVent v when v.burning:
+          if ((v.position - at).length < 90) return true;
       }
     }
     return false;
@@ -477,6 +514,17 @@ class GolgeGame extends FlameGame with KeyboardEvents {
             GameAudio.instance.play('shatter');
             effects.setFade(1, kInk);
             effects.after(0.9, respawn);
+          },
+        );
+      case DeathCause.stone:
+        // Taşa döner: renk çekilir, griye kesilir, sonra karanlık.
+        effects.fadeTo(
+          0.85,
+          0.6,
+          color: const Color(0xFF6A6460),
+          onDone: () {
+            effects.setFade(1, kInk);
+            effects.after(0.6, respawn);
           },
         );
       case DeathCause.dark:
@@ -612,6 +660,19 @@ class GolgeGame extends FlameGame with KeyboardEvents {
       return d.x.abs() < rx && d.y.abs() < ry;
     }
 
+    for (final cell in level.floodCells) {
+      if (!near(cell, 48, 200)) continue;
+      WaterBasin? best;
+      var bestD = double.infinity;
+      for (final b in world.children.whereType<WaterBasin>()) {
+        final d = (b.area.center.dx - cell.x).abs();
+        if (d < bestD) {
+          bestD = d;
+          best = b;
+        }
+      }
+      best?.startFlood();
+    }
     final areas = level.def.areaTexts;
     for (var i = 0; i < level.placeCells.length && i < areas.length; i++) {
       final key = '$levelIndex:p$i';
@@ -681,6 +742,8 @@ class GolgeGame extends FlameGame with KeyboardEvents {
           if (!hunting && !g.distracted) murmur = math.max(murmur, near);
         case Watcher w:
           raw = math.max(raw, w.suspicion);
+        case LanternBalloon b:
+          raw = math.max(raw, b.suspicion);
         case Karabasan k:
           if (k.awake) raw = math.max(raw, 0.7);
       }
@@ -709,6 +772,57 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     }
 
     _updateDarkZone(p, dt);
+    _updateStorm(dt);
+  }
+
+  /// Şimşek: ekranı bir anlığına beyaza boğar, her şey görünür.
+  double lightning = 0;
+  double _boltT = 6;
+  double _thunderIn = -1;
+
+  /// Tipi döngüsü: ~15 saniyede bir, birkaç saniye bastırıp diner. Gökte
+  /// ise fırtına şimşekle gelir.
+  void _updateStorm(double dt) {
+    lightning = math.max(0, lightning - dt * 3);
+    if (_thunderIn > 0) {
+      _thunderIn -= dt;
+      if (_thunderIn <= 0) GameAudio.instance.play('thunder', volume: 0.8);
+    }
+    if (!level.def.storm) {
+      blizzard = 0;
+      return;
+    }
+    if (!level.def.theme.snowy) {
+      blizzard = 0;
+      _boltT -= dt;
+      if (_boltT <= 0) {
+        _boltT = 8 + _rnd.nextDouble() * 7;
+        lightning = 1;
+        _thunderIn = 0.3 + _rnd.nextDouble() * 0.8;
+      }
+      return;
+    }
+    _stormT += dt;
+    const period = 15.0;
+    final k = (_stormT % period) / period;
+    // 0.6-0.66 artar, 0.66-0.86 sürer, 0.86-0.92 diner.
+    final target = k < 0.6
+        ? 0.0
+        : k < 0.66
+        ? (k - 0.6) / 0.06
+        : k < 0.86
+        ? 1.0
+        : k < 0.92
+        ? 1 - (k - 0.86) / 0.06
+        : 0.0;
+    if (blizzard < 0.05 && target > 0.05) {
+      GameAudio.instance.play('gust', volume: 0.8, minGapMs: 4000);
+      if (!_stormWarned) {
+        _stormWarned = true;
+        narration.whisper(S.of('blizzard'));
+      }
+    }
+    blizzard = target;
   }
 
   /// Karanlık bölge: ışığı yer. Ateşböcekleri birer birer söner; hiç

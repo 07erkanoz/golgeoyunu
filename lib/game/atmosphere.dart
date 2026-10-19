@@ -631,6 +631,41 @@ class ScreenEffects extends Component with HasGameReference<GolgeGame> {
       _embers(canvas, w, h, cam.x, theme);
     }
 
+    // Şimşek: çift çakan beyaz bir an.
+    final bolt = game.lightning;
+    if (bolt > 0.01) {
+      final flicker = bolt > 0.6 ? 1.0 : (bolt > 0.4 ? 0.3 : 0.8);
+      canvas.drawRect(
+        Rect.fromLTWH(0, 0, w, h),
+        Paint()
+          ..color = const Color(0xFFEAF0FF)
+              .withValues(alpha: 0.55 * bolt * flicker),
+      );
+    }
+
+    // Tipi: ekran beyaza boğulur, kar yatay savrulur.
+    final storm = game.blizzard;
+    if (storm > 0.01) {
+      canvas.drawRect(
+        Rect.fromLTWH(0, 0, w, h),
+        Paint()
+          ..color = const Color(0xFFDCE6F2)
+              .withValues(alpha: 0.6 * storm * (0.9 + 0.1 * math.sin(_t * 9))),
+      );
+      final streak = Paint()
+        ..color = const Color(0xFFF4F8FC).withValues(alpha: 0.5 * storm)
+        ..strokeWidth = 1.4;
+      for (var i = 0; i < (Settings.lowGraphics ? 30 : 80); i++) {
+        final y = (i * 97.0 + _t * 40) % h;
+        final x = w - ((i * 211.0 + _t * (700 + i % 5 * 90)) % (w + 120));
+        canvas.drawLine(
+          Offset(x, y),
+          Offset(x + 26 + i % 4 * 8, y + 3),
+          streak,
+        );
+      }
+    }
+
     // Gerilim: şüphe arttıkça kenarlar kararır; saklanırken renkler solar.
     final threat = game.threat;
     if (threat > 0.02) {

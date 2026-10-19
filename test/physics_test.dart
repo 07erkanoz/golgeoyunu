@@ -835,4 +835,95 @@ void main() {
       },
     );
   });
+
+  group('Ağrı: ipler', () {
+    /// İpe atlar, salınım yönünde güç verir, [release] açısında bırakır;
+    /// [goal] sütununun ötesinde yere basınca durur.
+    void swingAcross(
+      GolgeGame game,
+      Player p, {
+      required double jumpFrom,
+      required double release,
+      required double goal,
+    }) {
+      for (var i = 0; i < 60 * 25; i++) {
+        final inSwing = p.state == PlayerState.swing;
+        if (!inSwing &&
+            p.onGround &&
+            p.position.x > jumpFrom * kTile &&
+            p.position.x < (jumpFrom + 2) * kTile) {
+          keys(game).jump = true;
+        }
+        if (inSwing) {
+          keys(game)
+            ..right = p.ropeOmega >= 0
+            ..left = p.ropeOmega < 0
+            ..jump = p.ropeAngle > release && p.ropeOmega > 0;
+        } else {
+          keys(game)
+            ..right = true
+            ..left = false;
+        }
+        game.update(1 / 60);
+        if (const bool.fromEnvironment('IPIZ') && i % 10 == 0) {
+          // ignore: avoid_print
+          print(
+            '$i x=${(p.position.x / kTile).toStringAsFixed(2)} y=${(p.position.y / kTile).toStringAsFixed(2)} ${p.state} a=${p.ropeAngle.toStringAsFixed(2)} j=${keys(game).jump}',
+          );
+        }
+        if (p.isDead || (p.onGround && p.position.x > goal * kTile)) break;
+      }
+      keys(game)
+        ..right = false
+        ..jump = false;
+    }
+
+    testWithGame<GolgeGame>(
+      'buzlu dereden ilk ipe, karşı kayaya',
+      GolgeGame.new,
+      (game) async {
+        final p = await place(game, 4, 19, 19);
+        run(game, 0.3);
+        swingAcross(game, p, jumpFrom: 21.6, release: 0.75, goal: 31);
+        expect(p.isDead, isFalse);
+        expect(p.position.x, greaterThan(31 * kTile));
+      },
+    );
+
+    testWithGame<GolgeGame>('üç iple uçurumun karşısına', GolgeGame.new, (
+      game,
+    ) async {
+      final p = await place(game, 4, 33, 16);
+      run(game, 0.3);
+      swingAcross(game, p, jumpFrom: 34.6, release: 0.8, goal: 59);
+      expect(p.isDead, isFalse);
+      expect(p.position.x, greaterThan(59 * kTile));
+    });
+
+    testWithGame<GolgeGame>(
+      'tufanın eşiğinde iple yukarı rafa',
+      GolgeGame.new,
+      (game) async {
+        final p = await place(game, 4, 147, 14);
+        run(game, 0.3);
+        swingAcross(game, p, jumpFrom: 149.6, release: 0.8, goal: 159);
+        expect(p.isDead, isFalse);
+        expect(p.position.y, lessThan(12 * kTile));
+      },
+    );
+
+    testWithGame<GolgeGame>('tipide kanatla uçurum geçilmez', GolgeGame.new, (
+      game,
+    ) async {
+      final p = await place(game, 4, 33, 16);
+      run(game, 0.3);
+      keys(game).right = true;
+      for (var i = 0; i < 60 * 6 && !p.isDead; i++) {
+        keys(game).jump = true;
+        game.update(1 / 60);
+      }
+      // Ya düşer ya da bir ipe tutunup kalır: karşıya süzülemez.
+      expect(p.isDead || p.position.x < 59 * kTile, isTrue);
+    });
+  });
 }

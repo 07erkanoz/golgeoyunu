@@ -131,6 +131,8 @@ Picture _buildTerrain(Level lv, int c0, int c1, int r0, int r1) {
       final y = r * kTile;
       final rnd = _rng(c, r);
       switch (lv.cell(c, r)) {
+        case '#' when lv.isIce(c, r):
+          _iceBlock(canvas, lv, c, r, x, y, rnd);
         case '#':
           canvas.drawRect(
             Rect.fromLTWH(x - 0.5, y - 0.5, kTile + 1, kTile + 1),
@@ -372,6 +374,45 @@ void _topDressing(
         ..moveTo(bx, y + 1)
         ..quadraticBezierTo(bx + lean * 0.2, y - h * 0.6, bx + lean, y - h),
       line,
+    );
+  }
+}
+
+/// Donmuş su: yarı saydam, mavimsi, içinde çatlaklar; üstü parlar.
+void _iceBlock(
+  Canvas canvas,
+  Level lv,
+  int c,
+  int r,
+  double x,
+  double y,
+  math.Random rnd,
+) {
+  final rect = Rect.fromLTWH(x - 0.5, y - 0.5, kTile + 1, kTile + 1);
+  canvas.drawRect(
+    rect,
+    Paint()
+      ..shader = ui.Gradient.linear(rect.topLeft, rect.bottomLeft, [
+        const Color(0xFF6E86A8),
+        const Color(0xFF1C2638),
+      ]),
+  );
+  final crack = Paint()
+    ..color = const Color(0xFFC8D8EC).withValues(alpha: 0.35)
+    ..strokeWidth = 1;
+  final sx = x + rnd.nextDouble() * kTile;
+  canvas.drawLine(
+    Offset(sx, y + 4),
+    Offset(sx + (rnd.nextDouble() - 0.5) * 16, y + kTile - 4),
+    crack,
+  );
+  if (r > 0 && !lv.solid(c, r - 1)) {
+    canvas.drawLine(
+      Offset(x, y + 1),
+      Offset(x + kTile, y + 1),
+      Paint()
+        ..color = const Color(0xFFEAF2FF).withValues(alpha: 0.8)
+        ..strokeWidth = 1.6,
     );
   }
 }
