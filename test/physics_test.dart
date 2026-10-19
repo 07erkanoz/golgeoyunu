@@ -1098,59 +1098,52 @@ void main() {
       },
     );
 
-    testWithGame<
-      GolgeGame
-    >('kayan kayalarla yüksek buluta çıkılır', GolgeGame.new, (game) async {
-      final p = await place(game, 3, 164, 17);
-      final rocks =
-          game.world.children
-              .whereType<MovingRock>()
-              .where(
-                (r) => r.position.x > 160 * kTile && r.position.x < 180 * kTile,
-              )
-              .toList()
-            ..sort((a, b) => a.position.x.compareTo(b.position.x));
-      expect(rocks.length, 3);
-      // Hedef zemin şu ankinden alçak ya da en çok yarım kare yüksekken atla.
-      void hopTo(double targetX, double Function() targetTop) {
-        for (var i = 0; i < 60 * 15; i++) {
-          final feet = p.position.y + Player.h;
-          if (p.onGround && targetTop() > feet - 70) break;
-          game.update(1 / 60);
+    testWithGame<GolgeGame>(
+      'kayan kayalarla yüksek buluta çıkılır',
+      GolgeGame.new,
+      (game) async {
+        final p = await place(game, 3, 164, 17);
+        final rocks =
+            game.world.children
+                .whereType<MovingRock>()
+                .where(
+                  (r) =>
+                      r.position.x > 160 * kTile && r.position.x < 180 * kTile,
+                )
+                .toList()
+              ..sort((a, b) => a.position.x.compareTo(b.position.x));
+        expect(rocks.length, 3);
+        // Hedef zemin şu ankinden alçak ya da en çok yarım kare yüksekken atla.
+        void hopTo(double targetX, double Function() targetTop) {
+          for (var i = 0; i < 60 * 15; i++) {
+            final feet = p.position.y + Player.h;
+            if (p.onGround && targetTop() > feet - 70) break;
+            game.update(1 / 60);
+          }
+          keys(game)
+            ..right = true
+            ..jump = true;
+          for (var i = 0; i < 90 && p.position.x < targetX; i++) {
+            game.update(1 / 60);
+          }
+          keys(game)
+            ..right = false
+            ..jump = false;
+          for (var i = 0; i < 60 && !p.onGround; i++) {
+            game.update(1 / 60);
+          }
         }
-        keys(game)
-          ..right = true
-          ..jump = true;
-        for (var i = 0; i < 90 && p.position.x < targetX; i++) {
-          game.update(1 / 60);
-          // ignore: avoid_print
-          if (const bool.fromEnvironment('KAYA') && i % 6 == 0)
-            print(
-              '  j$i x=${(p.position.x / kTile).toStringAsFixed(2)} feet=${((p.position.y + Player.h) / kTile).toStringAsFixed(2)} ground=${p.onGround}',
-            );
-        }
-        keys(game)
-          ..right = false
-          ..jump = false;
-        for (var i = 0; i < 60 && !p.onGround; i++) {
-          game.update(1 / 60);
-        }
-      }
 
-      for (final r in rocks) {
-        hopTo(r.position.x + 12, () => r.position.y);
-        // ignore: avoid_print
-        if (const bool.fromEnvironment('KAYA'))
-          print(
-            'rock ${(r.position.x / kTile).toStringAsFixed(1)},${(r.position.y / kTile).toStringAsFixed(2)} p=${(p.position.x / kTile).toStringAsFixed(2)},${((p.position.y + Player.h) / kTile).toStringAsFixed(2)} riding=${p.riding.runtimeType} dead=${p.isDead}',
-          );
+        for (final r in rocks) {
+          hopTo(r.position.x + 12, () => r.position.y);
+          expect(p.isDead, isFalse);
+        }
+        hopTo(176.3 * kTile, () => 7 * kTile.toDouble());
+        run(game, 0.5);
         expect(p.isDead, isFalse);
-      }
-      hopTo(176.3 * kTile, () => 7 * kTile.toDouble());
-      run(game, 0.5);
-      expect(p.isDead, isFalse);
-      expect(p.position.y + Player.h, lessThanOrEqualTo(7 * kTile + 2));
-    });
+        expect(p.position.y + Player.h, lessThanOrEqualTo(7 * kTile + 2));
+      },
+    );
   });
 
   group('Aziz Hakob Manastırı', () {
@@ -1246,46 +1239,43 @@ void main() {
       },
     );
 
-    testWithGame<
-      GolgeGame
-    >('ambar kuyusunda tufandan önce tepeye çık', GolgeGame.new, (game) async {
-      final p = await place(game, 5, 193, 25);
-      keys(game).right = true;
-      run(game, 0.6);
-      final basin = game.world.children.whereType<WaterBasin>().first;
-      expect(basin.flooding, isTrue);
-      // Tahtalara zikzak tırman.
-      for (final r in [24, 22, 20, 18, 16, 14, 12, 10]) {
-        final left = ((24 - r) ~/ 2).isEven;
-        final x = left ? 205.6 : 206.4;
-        for (var i = 0; i < 60 * 3; i++) {
-          final dx = x * kTile - p.center.x;
-          keys(game)
-            ..right = dx > 6
-            ..left = dx < -6
-            ..jump =
-                (p.onGround &&
-                    (p.position.y + Player.h) > r * kTile + 2 &&
-                    dx.abs() < 3.6 * kTile) ||
-                (!p.onGround && p.velocity.y < 0);
-          game.update(1 / 60);
-          if (p.onGround && (p.position.y + Player.h - r * kTile).abs() < 2) {
-            break;
+    testWithGame<GolgeGame>(
+      'ambar kuyusunda tufandan önce tepeye çık',
+      GolgeGame.new,
+      (game) async {
+        final p = await place(game, 5, 193, 25);
+        keys(game).right = true;
+        run(game, 0.6);
+        final basin = game.world.children.whereType<WaterBasin>().first;
+        expect(basin.flooding, isTrue);
+        // Tahtalara zikzak tırman.
+        for (final r in [24, 22, 20, 18, 16, 14, 12, 10]) {
+          final left = ((24 - r) ~/ 2).isEven;
+          final x = left ? 205.6 : 206.4;
+          for (var i = 0; i < 60 * 3; i++) {
+            final dx = x * kTile - p.center.x;
+            keys(game)
+              ..right = dx > 6
+              ..left = dx < -6
+              ..jump =
+                  (p.onGround &&
+                      (p.position.y + Player.h) > r * kTile + 2 &&
+                      dx.abs() < 3.6 * kTile) ||
+                  (!p.onGround && p.velocity.y < 0);
+            game.update(1 / 60);
+            if (p.onGround && (p.position.y + Player.h - r * kTile).abs() < 2) {
+              break;
+            }
           }
+          expect(p.isDead, isFalse, reason: 'satır $r');
         }
-        // ignore: avoid_print
-        if (const bool.fromEnvironment('GEMI'))
-          print(
-            'r$r x=${(p.center.x / kTile).toStringAsFixed(2)} feet=${((p.position.y + Player.h) / kTile).toStringAsFixed(2)} su=${(basin.surface / kTile).toStringAsFixed(2)}',
-          );
-        expect(p.isDead, isFalse, reason: 'satır $r');
-      }
-      keys(game)
-        ..left = false
-        ..right = false
-        ..jump = false;
-      expect(basin.surface, greaterThan(p.position.y + Player.h));
-    });
+        keys(game)
+          ..left = false
+          ..right = false
+          ..jump = false;
+        expect(basin.surface, greaterThan(p.position.y + Player.h));
+      },
+    );
   });
 
   group('Nemrut', () {
@@ -1329,11 +1319,6 @@ void main() {
         climbTo(58.5, 14); // kol
         climbTo(56.5, 12); // omuzlar
         climbTo(55.6, 12); // taşın yanı
-        // ignore: avoid_print
-        if (const bool.fromEnvironment('NEMRUT'))
-          print(
-            'p=${p.center / kTile} feet=${(p.position.y + Player.h) / kTile}',
-          );
         expect(p.isDead, isFalse);
         expect((p.position.y + Player.h) / kTile, closeTo(12, 0.05));
         // Taşı horoskobun istediği işarete çevir.
