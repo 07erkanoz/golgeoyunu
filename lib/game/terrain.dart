@@ -4,40 +4,117 @@ import 'dart:ui' as ui;
 
 import 'package:flame/components.dart';
 
+import 'golge_game.dart';
 import 'level.dart';
 import 'levels.dart';
 import 'palette.dart';
 
-/// Arazinin tamamı tek seferde bir Picture'a çizilir; her karede sadece
-/// o resim basılır.
-class TerrainComponent extends Component {
-  TerrainComponent(Level level)
-    : _picture = _buildTerrain(level),
-      super(priority: 0);
+/// Arazinin bir dilimi: önceden çizilmiş resim ve kapladığı alan.
+class _Chunk {
+  _Chunk(this.bounds, this.picture);
 
-  final Picture _picture;
-
-  @override
-  void render(Canvas canvas) => canvas.drawPicture(_picture);
+  final Rect bounds;
+  final Picture picture;
 }
 
-/// Oyuncunun önünde çizilen uzun otlar: gizlenme alanlarını görsel olarak da
-/// örter.
-class ForegroundComponent extends Component {
-  ForegroundComponent(Level level)
-    : _picture = _buildForeground(level),
-      super(priority: 30);
+/// Bölümü 16 karelik dilimlere böler (yatay bölümlerde sütun, dikeylerde
+/// satır dilimleri). Her karede yalnızca ekranda görünen dilimler çizilir:
+/// uzun bölümlerde dahili ekran kartları için büyük fark.
+List<_Chunk> _chunked(
+  Level lv,
+  Picture Function(Level, int c0, int c1, int r0, int r1) build,
+) {
+  const size = 16;
+  const pad = kTile * 6; // süslemeler (kök, kemer) dilim dışına taşar
+  final out = <_Chunk>[];
+  if (lv.vertical) {
+    for (var r0 = 0; r0 < lv.height; r0 += size) {
+      final r1 = math.min(r0 + size - 1, lv.height - 1);
+      out.add(
+        _Chunk(
+          Rect.fromLTRB(
+            -pad,
+            r0 * kTile - pad,
+            lv.pixelWidth + pad,
+            (r1 + 1) * kTile + pad,
+          ),
+          build(lv, 0, lv.width - 1, r0, r1),
+        ),
+      );
+    }
+  } else {
+    for (var c0 = 0; c0 < lv.width; c0 += size) {
+      final c1 = math.min(c0 + size - 1, lv.width - 1);
+      out.add(
+        _Chunk(
+          Rect.fromLTRB(
+            c0 * kTile - pad,
+            -pad,
+            (c1 + 1) * kTile + pad,
+            lv.pixelHeight + pad,
+          ),
+          build(lv, c0, c1, 0, lv.height - 1),
+        ),
+      );
+    }
+  }
+  return out;
+}
 
-  final Picture _picture;
+void _drawVisible(Canvas canvas, List<_Chunk> chunks, Rect view) {
+  for (final c in chunks) {
+    if (c.bounds.overlaps(view)) canvas.drawPicture(c.picture);
+  }
+}
+
+/// Arazi dilim dilim önceden çizilir; her karede yalnızca görünenler basılır.
+class TerrainComponent extends Component with HasGameReference<GolgeGame> {
+  TerrainComponent(this._level)
+    : _chunks = _chunked(_level, _buildTerrain),
+      super(priority: 0);
+
+  final Level _level;
+  final List<_Chunk> _chunks;
+  static final _ink = Paint()..color = kInk;
 
   @override
-  void render(Canvas canvas) => canvas.drawPicture(_picture);
+  void render(Canvas canvas) {
+    final lv = _level;
+    final theme = lv.def.theme;
+    // Haritanın dışı: yanlar (ve kapalı mekânlarda tavanın üstü) dolu kaya.
+    if (theme != LevelTheme.sky) {
+      const m = 3000.0;
+      canvas.drawRect(Rect.fromLTRB(-m, -m, 0, lv.pixelHeight + m), _ink);
+      canvas.drawRect(
+        Rect.fromLTRB(lv.pixelWidth, -m, lv.pixelWidth + m, lv.pixelHeight + m),
+        _ink,
+      );
+      if (theme == LevelTheme.cistern || theme == LevelTheme.cave) {
+        canvas.drawRect(Rect.fromLTRB(-m, -m, lv.pixelWidth + m, 0.5), _ink);
+      }
+    }
+    _drawVisible(canvas, _chunks, game.camera.visibleWorldRect);
+  }
+}
+
+/// Oyuncunun önünde çizilenler (uzun otlar, ön sütunlar): gizlenme yerlerini
+/// görsel olarak da örter.
+class ForegroundComponent extends Component with HasGameReference<GolgeGame> {
+  ForegroundComponent(Level level)
+    : _chunks = _chunked(level, _buildForeground),
+      super(priority: 30);
+
+  final List<_Chunk> _chunks;
+
+  @override
+  void render(Canvas canvas) =>
+      _drawVisible(canvas, _chunks, game.camera.visibleWorldRect);
 }
 
 math.Random _rng(int c, int r, [int salt = 0]) =>
     math.Random(c * 7919 + r * 104729 + salt * 31337 + 17);
 
-Picture _buildTerrain(Level lv) {
+Picture _buildTerrain(Level lv, int c0, int c1, int r0, int r1) {
   final rec = PictureRecorder();
   final canvas = Canvas(rec);
   final ink = Paint()..color = kInk;
@@ -48,21 +125,8 @@ Picture _buildTerrain(Level lv) {
   final cloud = Paint()..color = kCloud;
   final theme = lv.def.theme;
 
-  // Haritanın dışı: yanlar (ve kapalı mekânlarda tavanın üstü) dolu kaya.
-  if (theme != LevelTheme.sky) {
-    const m = 3000.0;
-    canvas.drawRect(Rect.fromLTRB(-m, -m, 0, lv.pixelHeight + m), ink);
-    canvas.drawRect(
-      Rect.fromLTRB(lv.pixelWidth, -m, lv.pixelWidth + m, lv.pixelHeight + m),
-      ink,
-    );
-    if (theme == LevelTheme.cistern || theme == LevelTheme.cave) {
-      canvas.drawRect(Rect.fromLTRB(-m, -m, lv.pixelWidth + m, 0.5), ink);
-    }
-  }
-
-  for (var r = 0; r < lv.height; r++) {
-    for (var c = 0; c < lv.width; c++) {
+  for (var r = r0; r <= r1; r++) {
+    for (var c = c0; c <= c1; c++) {
       final x = c * kTile;
       final y = r * kTile;
       final rnd = _rng(c, r);
@@ -223,7 +287,7 @@ Picture _buildTerrain(Level lv) {
       }
     }
   }
-  if (theme == LevelTheme.cistern) _cisternVaults(canvas, lv);
+  if (theme == LevelTheme.cistern) _cisternVaults(canvas, lv, c0, c1);
   return rec.endRecording();
 }
 
@@ -232,12 +296,13 @@ const _rim = Color(0xFF8A4A2A);
 
 /// Tavan kemerleri ve oyuncunun arkasında kalan sütunlar. Kemerler her beş
 /// karede bir sütuna oturur; harita `I` sütunlarını da aynı hizaya koyar.
-void _cisternVaults(Canvas canvas, Level lv) {
+void _cisternVaults(Canvas canvas, Level lv, int c0, int c1) {
   final ceiling = _ceilingBottom(lv, 1);
   final water = _floorTop(lv, 1, ceiling ~/ kTile);
   final ink = Paint()..color = kInk;
   const span = kTile * 5;
   for (var x = kTile * 1.5; x < lv.pixelWidth; x += span) {
+    if (x < c0 * kTile || x >= (c1 + 1) * kTile) continue;
     canvas.drawPath(
       Path()
         ..moveTo(x, ceiling - 1)
@@ -415,15 +480,15 @@ void _medusa(Canvas canvas, Offset c, double rotation) {
   canvas.restore();
 }
 
-Picture _buildForeground(Level lv) {
+Picture _buildForeground(Level lv, int c0, int c1, int r0, int r1) {
   final rec = PictureRecorder();
   final canvas = Canvas(rec);
   final blade = Paint()
     ..color = kInk
     ..style = PaintingStyle.stroke
     ..strokeCap = StrokeCap.round;
-  for (var r = 0; r < lv.height; r++) {
-    for (var c = 0; c < lv.width; c++) {
+  for (var r = r0; r <= r1; r++) {
+    for (var c = c0; c <= c1; c++) {
       if (lv.cell(c, r) == 'I') {
         final top = _ceilingBottom(lv, c);
         _column(
@@ -464,7 +529,7 @@ Picture _buildForeground(Level lv) {
 }
 
 /// Sarnıcın suyu: oyuncunun önünde çizilir, düşen her şeyi yutar.
-class WaterComponent extends Component {
+class WaterComponent extends Component with HasGameReference<GolgeGame> {
   WaterComponent(this.level) : super(priority: 26) {
     for (var c = 0; c < level.width; c++) {
       for (var r = 0; r < level.height; r++) {
@@ -481,6 +546,7 @@ class WaterComponent extends Component {
   final Level level;
   final _surface = <int, double>{};
   final _columns = <double>[];
+  final _bodies = <double, Paint>{};
   double _t = 0;
 
   @override
@@ -489,23 +555,33 @@ class WaterComponent extends Component {
   @override
   void render(Canvas canvas) {
     if (_surface.isEmpty) return;
+    final view = game.camera.visibleWorldRect;
+    final cMin = math.max(0, (view.left / kTile).floor() - 1);
+    final cMax = math.min(level.width - 1, (view.right / kTile).ceil() + 1);
+    final visible = [
+      for (var c = cMin; c <= cMax; c++)
+        if (_surface[c] case final top?) MapEntry(c, top),
+    ];
     final bottom = level.pixelHeight + 400;
-    final body = Paint();
-    for (final MapEntry(key: c, value: top) in _surface.entries) {
+    for (final MapEntry(key: c, value: top) in visible) {
       final rect = Rect.fromLTRB(
         c * kTile - 0.5,
         top,
         (c + 1) * kTile + 0.5,
         bottom,
       );
-      body.shader = ui.Gradient.linear(Offset(0, top), Offset(0, top + 90), [
-        const Color(0xF0381A10),
-        const Color(0xFF0A0504),
-      ]);
+      final body = _bodies.putIfAbsent(
+        top,
+        () => Paint()
+          ..shader = ui.Gradient.linear(Offset(0, top), Offset(0, top + 90), [
+            const Color(0xF0381A10),
+            const Color(0xFF0A0504),
+          ]),
+      );
       canvas.drawRect(rect, body);
     }
     final glint = Paint()..strokeWidth = 1.3;
-    for (final MapEntry(key: c, value: top) in _surface.entries) {
+    for (final MapEntry(key: c, value: top) in visible) {
       final x = c * kTile;
       for (var i = 0; i < 3; i++) {
         final phase = _t * (0.8 + i * 0.3) + c * 1.7 + i * 2.1;
@@ -522,6 +598,7 @@ class WaterComponent extends Component {
     final reflection = Paint()
       ..color = const Color(0xFF050302).withValues(alpha: 0.55);
     for (final cx in _columns) {
+      if (cx < view.left - kTile || cx > view.right + kTile) continue;
       final top = _surface[(cx / kTile).floor()];
       if (top == null) continue;
       for (var y = top + 2; y < top + 60; y += 4) {

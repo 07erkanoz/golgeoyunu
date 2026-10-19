@@ -527,13 +527,7 @@ class Bird extends PositionComponent with HasGameReference<GolgeGame> {
     final white = Paint()..color = kLight.withValues(alpha: a);
     canvas.save();
     canvas.scale(scaleArt);
-    canvas.drawCircle(
-      const Offset(0, -7),
-      14,
-      Paint()
-        ..color = kLight.withValues(alpha: 0.22 * a)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8),
-    );
+    glowDot(canvas, const Offset(0, -7), 22, kLight, 0.3 * a);
     if (_look < 0) canvas.scale(-1, 1);
     final bob = _flying ? 0.0 : math.sin(_t * 2) * 0.6;
     canvas.translate(0, bob);
@@ -632,13 +626,7 @@ class FireflySwarm extends PositionComponent with HasGameReference<GolgeGame> {
           ? Offset(math.sin(ph) * 6, -_gone * 40 - i * 3)
           : Offset(math.sin(ph) * 9, math.cos(ph * 1.3) * 7);
       final blink = 0.5 + 0.5 * math.sin(_t * 6 + i * 2.3);
-      canvas.drawCircle(
-        o,
-        3.5,
-        Paint()
-          ..color = const Color(0xFFFFC46B).withValues(alpha: 0.35 * blink * a)
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.5),
-      );
+      glowDot(canvas, o, 5.5, const Color(0xFFFFC46B), 0.45 * blink * a);
       canvas.drawCircle(
         o,
         1,

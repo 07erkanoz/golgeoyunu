@@ -35,6 +35,11 @@ class GameAudio {
   ];
 
   bool _ready = false;
+
+  /// Her efekt için önceden hazırlanmış oynatıcılar: çalarken yeni oynatıcı
+  /// oluşturulmaz (Windows'ta bu, ses anında takılmaya yol açar).
+  final _pools = <String, AudioPool>{};
+  static const _frequent = {'step', 'step_wood', 'land', 'jump', 'creak'};
   AudioPlayer? _music;
   bool _musicWanted = false;
   bool _musicStarting = false;
@@ -56,6 +61,14 @@ class GameAudio {
         'karabasan.wav',
         'menu_theme.mp3',
       ]);
+      await Future.wait([
+        for (final e in _effects)
+          FlameAudio.createPool(
+            '$e.wav',
+            minPlayers: _frequent.contains(e) ? 3 : 1,
+            maxPlayers: _frequent.contains(e) ? 4 : 2,
+          ).then((pool) => _pools[e] = pool),
+      ]);
       _ready = true;
       if (_musicWanted) {
         menuMusic(true);
@@ -74,10 +87,11 @@ class GameAudio {
     final now = DateTime.now().millisecondsSinceEpoch;
     if (now - (_lastPlayed[name] ?? 0) < minGapMs) return;
     _lastPlayed[name] = now;
-    FlameAudio.play(
-      '$name.wav',
-      volume: (volume * Settings.effects).clamp(0.0, 1.0),
-    ).catchError((_) => AudioPlayer());
+    final pool = _pools[name];
+    if (pool == null) return;
+    pool
+        .start(volume: (volume * Settings.effects).clamp(0.0, 1.0))
+        .catchError((_) => () async {});
   }
 
   /// Bölümün temasına uygun ortam döngüsü.

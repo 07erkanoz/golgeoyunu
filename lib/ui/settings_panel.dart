@@ -115,6 +115,35 @@ class _SettingsPanelState extends State<SettingsPanel> {
               Row(
                 children: [
                   Text(
+                    S.of('graphics'),
+                    style: const TextStyle(color: _text, fontSize: 14),
+                  ),
+                  const Spacer(),
+                  SegmentedButton<bool>(
+                    segments: [
+                      ButtonSegment(value: false, label: Text(S.of('gfxHigh'))),
+                      ButtonSegment(value: true, label: Text(S.of('gfxLow'))),
+                    ],
+                    selected: {Settings.lowGraphics},
+                    showSelectedIcon: false,
+                    style: SegmentedButton.styleFrom(
+                      foregroundColor: _text,
+                      selectedForegroundColor: const Color(0xFF140C09),
+                      selectedBackgroundColor: _accent,
+                      side: const BorderSide(color: Color(0x55EBDDCB)),
+                    ),
+                    onSelectionChanged: (v) {
+                      Settings.lowGraphics = v.first;
+                      Settings.save();
+                      setState(() {});
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Text(
                     S.of('language'),
                     style: const TextStyle(color: _text, fontSize: 14),
                   ),

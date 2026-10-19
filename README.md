@@ -23,7 +23,9 @@ ayarlardan seçilir.
 - **Ana menü:** Kaldığın yerden devam et, Yeni oyun, Ayarlar, Çıkış.
   Arkada oyunun dünyası akar.
 - **Ayarlar (Esc ya da sağ üstteki dişli):** Müzik, ortam ve efekt sesi,
-  dil, masaüstünde tam ekran (F11).
+  dil, grafik kalitesi, masaüstünde tam ekran (F11).
+- **Grafik: Düşük** seçeneği dahili ekran kartları (Intel vb.) için: sis, film
+  greni, titreme ve ağır ışık katmanı kapanır.
 - **Kayıt:** Her bölüm başında ve kontrol noktasında otomatik kaydedilir.
 
 ## Ses

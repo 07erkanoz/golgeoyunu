@@ -124,7 +124,40 @@ class Narration extends Component with HasGameReference<GolgeGame> {
     Color color = kText,
   }) {
     if (alpha <= 0) return;
-    final tp = TextPainter(
+    // Dizilmiş yazılar önbellekte: saydamlık 20 basamağa yuvarlanır, böylece
+    // solma sırasında bile her karede yeniden dizilmez.
+    final a = (alpha * 20).round() / 20;
+    if (a <= 0) return;
+    final key =
+        '$s|$fontSize|$italic|$spacing|$maxWidth|${color.toARGB32()}|$a';
+    var tp = _cache[key];
+    if (tp == null) {
+      if (_cache.length > 120) _cache.clear();
+      tp = _cache[key] = _layout(
+        s,
+        fontSize,
+        a,
+        italic,
+        spacing,
+        maxWidth,
+        color,
+      );
+    }
+    tp.paint(canvas, center - Offset(tp.width / 2, tp.height / 2));
+  }
+
+  final _cache = <String, TextPainter>{};
+
+  TextPainter _layout(
+    String s,
+    double fontSize,
+    double alpha,
+    bool italic,
+    double spacing,
+    double maxWidth,
+    Color color,
+  ) {
+    return TextPainter(
       text: TextSpan(
         text: s,
         style: TextStyle(
@@ -135,14 +168,16 @@ class Narration extends Component with HasGameReference<GolgeGame> {
           letterSpacing: spacing,
           height: 1.4,
           shadows: [
-            Shadow(color: kInk.withValues(alpha: alpha * 0.9), blurRadius: 12),
+            Shadow(
+              color: kInk.withValues(alpha: alpha * 0.85),
+              offset: const Offset(1.2, 1.5),
+            ),
           ],
         ),
       ),
       textAlign: TextAlign.center,
       textDirection: TextDirection.ltr,
     )..layout(maxWidth: maxWidth);
-    tp.paint(canvas, center - Offset(tp.width / 2, tp.height / 2));
   }
 
   @override
@@ -226,13 +261,7 @@ class Narration extends Component with HasGameReference<GolgeGame> {
       final lit = i < game.fireflies;
       final c = Offset(34 + i * 18, 36);
       if (lit) {
-        canvas.drawCircle(
-          c,
-          9,
-          Paint()
-            ..color = const Color(0xFFFFC46B).withValues(alpha: 0.35 * hudAlpha)
-            ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
-        );
+        glowDot(canvas, c, 12, const Color(0xFFFFC46B), 0.4 * hudAlpha);
       }
       canvas.drawCircle(
         c,

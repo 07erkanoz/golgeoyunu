@@ -240,7 +240,6 @@ class Watcher extends PositionComponent with HasGameReference<GolgeGame> {
   Vector2 get lamp =>
       Vector2(position.x + size.x / 2 + facing * 10, position.y + 14);
 
-
   bool get alarmed => suspicion >= 1;
 
   @override

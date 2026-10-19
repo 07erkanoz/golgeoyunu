@@ -8,6 +8,7 @@ import 'package:flame/components.dart';
 import 'golge_game.dart';
 import 'levels.dart';
 import 'palette.dart';
+import '../settings.dart';
 
 /// Dünyanın arkasında, ekran koordinatlarında çizilen gökyüzü ve paralaks
 /// siluet katmanları.
@@ -36,7 +37,9 @@ class Backdrop extends Component with HasGameReference<GolgeGame> {
           Color(0xFF2A140D),
           Color(0xFF3A1A10),
         ]);
-        _lightShafts(canvas, w, h, offset: cam.x * 0.2);
+        if (!Settings.lowGraphics) {
+          _lightShafts(canvas, w, h, offset: cam.x * 0.2);
+        }
         _colonnade(
           canvas,
           w,
@@ -485,26 +488,28 @@ class ScreenEffects extends Component with HasGameReference<GolgeGame> {
       LevelTheme.cliffs => (const Color(0xFFB09080), 0.06),
       LevelTheme.sky => (const Color(0xFFF0C8A0), 0.09),
     };
-    final fog = Paint()
-      ..color = fogColor.withValues(alpha: fogAlpha)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 40);
-    for (var i = 0; i < 6; i++) {
-      final span = w + 700;
-      final x =
-          ((i * 373 + _t * (8 + i * 3) - cam.x * (0.5 + i * 0.12)) % span +
-                  span) %
-              span -
-          350;
-      final y = h * (0.25 + (i % 3) * 0.25) + math.sin(_t * 0.2 + i) * 20;
-      canvas.drawOval(
-        Rect.fromCenter(center: Offset(x, y), width: 520, height: 150),
-        fog,
-      );
+    if (!Settings.lowGraphics) {
+      for (var i = 0; i < 5; i++) {
+        final span = w + 700;
+        final x =
+            ((i * 373 + _t * (8 + i * 3) - cam.x * (0.5 + i * 0.12)) % span +
+                    span) %
+                span -
+            350;
+        final y = h * (0.25 + (i % 3) * 0.25) + math.sin(_t * 0.2 + i) * 20;
+        // Yassı, yumuşak kenarlı sis bulutu: degrade daireyi dikeyde ezer.
+        canvas.save();
+        canvas.translate(x, y);
+        canvas.scale(1, 0.3);
+        glowDot(canvas, Offset.zero, 280, fogColor, fogAlpha * 1.6);
+        canvas.restore();
+      }
     }
 
     // Yükselen közler ve (açık havada) düşen kül.
     final ember = Paint();
-    for (var i = 0; i < 36; i++) {
+    final emberCount = Settings.lowGraphics ? 14 : 36;
+    for (var i = 0; i < emberCount; i++) {
       final speed = 18 + (i * 37 % 23);
       final k = ((_t * speed / h + i * 0.618) % 1.0);
       final x =
@@ -517,7 +522,7 @@ class ScreenEffects extends Component with HasGameReference<GolgeGame> {
     if (theme != LevelTheme.cave) {
       final ash = Paint()
         ..color = const Color(0xFFCFC2B6).withValues(alpha: 0.35);
-      for (var i = 0; i < 28; i++) {
+      for (var i = 0; i < (Settings.lowGraphics ? 10 : 28); i++) {
         final k = ((_t * (10 + i % 7) / h + i * 0.381) % 1.0);
         final x =
             ((i * 157.0 + math.sin(_t * 0.5 + i * 1.7) * 40 - cam.x * 0.5) % w +
@@ -546,6 +551,16 @@ class ScreenEffects extends Component with HasGameReference<GolgeGame> {
         );
     }
     canvas.drawRect(Rect.fromLTWH(0, 0, w, h), _vignette!);
+
+    if (Settings.lowGraphics) {
+      if (fade > 0) {
+        canvas.drawRect(
+          Rect.fromLTWH(0, 0, w, h),
+          Paint()..color = fadeColor.withValues(alpha: fade.clamp(0.0, 1.0)),
+        );
+      }
+      return;
+    }
 
     // Film greni.
     for (var i = 0; i < _grain.length; i += 2) {

@@ -597,9 +597,6 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     ..style = PaintingStyle.stroke
     ..strokeCap = StrokeCap.round;
   static final _fill = Paint()..color = kInk;
-  static final _glow = Paint()
-    ..color = kLight.withValues(alpha: 0.55)
-    ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3);
 
   /// Geliştirici modunda V ile değişir: gözleri parlayan çocuk ya da
   /// ateşböceği kavanozlu çocuk.
@@ -733,8 +730,8 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       final e1 = head + const Offset(3.5, -0.5);
       final e2 = head + const Offset(6.6, 0);
       if (!hidden && !blink) {
-        canvas.drawCircle(e1, 3, _glow);
-        canvas.drawCircle(e2, 2.6, _glow);
+        glowDot(canvas, e1, 5, kLight, 0.6);
+        glowDot(canvas, e2, 4.5, kLight, 0.6);
       }
       final eye = Paint()..color = kLight.withValues(alpha: alpha);
       if (blink) {
@@ -1110,13 +1107,7 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       Paint()..color = Color.lerp(kInk, _jarLight, 0.15 + 0.75 * light)!,
     );
     if (light > 0.2) {
-      canvas.drawCircle(
-        c,
-        5,
-        Paint()
-          ..color = _jarLight.withValues(alpha: 0.5 * light)
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3),
-      );
+      glowDot(canvas, c, 8, _jarLight, 0.55 * light);
       // Uçuşan ateşböcekleri.
       final fly = Paint()
         ..color = const Color(0xFFFFF6D8).withValues(alpha: light);

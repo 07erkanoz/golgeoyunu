@@ -7,6 +7,7 @@ import 'package:flame/components.dart';
 import 'creatures.dart';
 import 'entities.dart';
 import 'mechanics.dart';
+import '../settings.dart';
 import 'golge_game.dart';
 import 'level.dart';
 import 'levels.dart';
@@ -25,8 +26,12 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
 
   final _cut = Paint()..blendMode = BlendMode.dstOut;
 
+  Rect _view = Rect.zero;
+
   void _light(Canvas canvas, Offset c, double radius, [double strength = 1]) {
     if (radius <= 0 || strength <= 0) return;
+    // Ekran dışındaki ışıklar hiç çizilmez.
+    if (!_view.overlaps(Rect.fromCircle(center: c, radius: radius))) return;
     _cut.shader = ui.Gradient.radial(
       c,
       radius,
@@ -43,6 +48,11 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
   @override
   void render(Canvas canvas) {
     final rect = game.camera.visibleWorldRect.inflate(80);
+    _view = rect;
+    if (Settings.lowGraphics) {
+      _renderCheap(canvas, rect);
+      return;
+    }
     canvas.saveLayer(rect, Paint());
     canvas.drawRect(
       rect,
@@ -110,5 +120,34 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
       }
     }
     canvas.restore();
+  }
+
+  /// Düşük grafik: ara katman olmadan tek geçişte karanlık. Işık yalnızca
+  /// oyuncunun çevresinden gelir.
+  void _renderCheap(Canvas canvas, Rect rect) {
+    final dark = const Color(0xFF040201)
+        .withValues(alpha: darknessFor(game.level.def.theme));
+    final p = game.player;
+    if (p == null || !p.isMounted || p.isDead) {
+      canvas.drawRect(rect, Paint()..color = dark);
+      return;
+    }
+    final (pos, radius) = p.light;
+    final c = pos.toOffset();
+    final r = radius * 1.4;
+    canvas.drawRect(
+      rect,
+      Paint()
+        ..shader = ui.Gradient.radial(
+          c,
+          r,
+          [
+            dark.withValues(alpha: 0),
+            dark.withValues(alpha: dark.a * 0.5),
+            dark,
+          ],
+          const [0, 0.45, 1],
+        ),
+    );
   }
 }

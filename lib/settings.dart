@@ -13,6 +13,10 @@ class Settings {
   static double effects = 0.8;
   static bool fullscreen = false;
 
+  /// Düşük grafik: sis, film greni, titreme ve ağır ışık katmanı kapalı;
+  /// dahili ekran kartları için.
+  static bool lowGraphics = false;
+
   static SharedPreferences? _prefs;
 
   static Future<void> load() async {
@@ -22,6 +26,7 @@ class Settings {
       music = p.getDouble('music') ?? music;
       effects = p.getDouble('effects') ?? effects;
       fullscreen = p.getBool('fullscreen') ?? fullscreen;
+      lowGraphics = p.getBool('low_graphics') ?? lowGraphics;
       S.lang = p.getString('lang') == 'en' ? Lang.en : Lang.tr;
       SaveGame.current = SaveData.decode(p.getString('save'));
     } catch (_) {
@@ -36,6 +41,7 @@ class Settings {
     await p.setDouble('music', music);
     await p.setDouble('effects', effects);
     await p.setBool('fullscreen', fullscreen);
+    await p.setBool('low_graphics', lowGraphics);
     await p.setString('lang', S.en ? 'en' : 'tr');
   }
 }
