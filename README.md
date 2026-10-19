@@ -86,7 +86,7 @@ derlemede üç dosya bulunur. `main` dalına yapılan her gönderimde GitHub Act
 | Platform | Dosya | Kurulum |
 |---|---|---|
 | Windows | `GolgeOyunu-windows.zip` | Bir klasöre çıkar, `golge.exe`'yi çalıştır |
-| Android | `GolgeOyunu-android.apk` | Telefona indir, aç; "bilinmeyen kaynaklar" izni istenirse ver |
+| Android (arm64) | `GolgeOyunu-android-arm64.apk` | Telefona indir, aç; "bilinmeyen kaynaklar" izni istenirse ver |
 | Linux (Arch) | `GolgeOyunu-linux-x64.tar.gz` | Aşağıya bak |
 
 Arch Linux:

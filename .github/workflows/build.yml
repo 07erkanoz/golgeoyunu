@@ -48,14 +48,16 @@ jobs:
           cache: true
       - name: Paketleri indir
         run: flutter pub get
-      - name: Android için derle (APK)
-        run: flutter build apk --release
+      # Test sürecinde yalnızca arm64 (bugünkü telefonların neredeyse hepsi);
+      # mağaza için ileride tam paket (AAB) hazırlanacak.
+      - name: Android için derle (APK, arm64)
+        run: flutter build apk --release --target-platform android-arm64
       - name: Yeniden adlandır
-        run: cp build/app/outputs/flutter-apk/app-release.apk GolgeOyunu-android.apk
+        run: cp build/app/outputs/flutter-apk/app-release.apk GolgeOyunu-android-arm64.apk
       - uses: actions/upload-artifact@v4
         with:
           name: android
-          path: GolgeOyunu-android.apk
+          path: GolgeOyunu-android-arm64.apk
 
   linux:
     runs-on: ubuntu-latest
@@ -105,14 +107,14 @@ jobs:
           prerelease: true
           files: |
             GolgeOyunu-windows.zip
-            GolgeOyunu-android.apk
+            GolgeOyunu-android-arm64.apk
             GolgeOyunu-linux-x64.tar.gz
           body: |
             Otomatik derleme (commit ${{ github.sha }}).
 
             **Windows:** `GolgeOyunu-windows.zip` dosyasını bir klasöre çıkar, `golge.exe`'yi çalıştır.
 
-            **Android:** `GolgeOyunu-android.apk` dosyasını telefona indir ve aç. "Bilinmeyen kaynaklardan yükleme" izni istenirse ver.
+            **Android:** `GolgeOyunu-android-arm64.apk` dosyasını telefona indir ve aç. "Bilinmeyen kaynaklardan yükleme" izni istenirse ver.
 
             **Linux (Arch):**
             ```
