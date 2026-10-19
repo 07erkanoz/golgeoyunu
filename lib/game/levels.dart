@@ -1,29 +1,41 @@
 // Bölüm haritaları ve hikâye metinleri.
 //
-// Harita lejantı:
-//   #  kaya (katı)            =  tek yönlü platform (raf / bulut / iskele)
-//   |  sarmaşık (tırmanılır)  ^  diken (öldürür)
-//   ~  uzun ot (gizlenme)     I  sütun (arkasında gizlenilir)
-//   w  derin su (öldürür)     D  Medusa başı (süs)
-//   C  itilebilir sandık      L  kol (↑ ile çekilir, kapıları açar)
-//   H  demir kapı (kol açana kadar geçilmez)
-//   F  ateşböceği sürüsü (kavanoza +1 ateşböceği)
-//   B  ak kuşun konakları: kuş bunları sırayla dolaşıp yol gösterir
-//   R  yatay gidip gelen kaya   V  dikey gidip gelen kaya   (2 kare geniş)
-//   O  üstüne basınca kopan kaya (2 kare geniş)
-//   A  asansörün sol kefesi     Y  sağ kefesi (ağır olan iner)
-//   r  rüzgâr akımı (yukarı iter)  W  Hezarfen'in kanatları
-//   b  yarasa yuvası (tavanda)  k  karga   g  Gözcü (projektörlü bekçi)
-//   z  Karabasan'ın uyandığı sütun   Z  dağıldığı sütun
-//   P  oyuncu başlangıcı
-//   G  fenerci (düşman)       E  çıkış (ışık kapısı)
-//   M  hatıra parçası (sırayla `memories`)
-//   K  kontrol noktası        1-9 fısıltı tetikleyicisi (`whispers[n-1]`)
+// Harita gösterimi: lib/game/level.dart başındaki açıklamaya bakın.
 
 import 'maps.dart';
 import 'strings.dart';
 
-enum LevelTheme { cistern, cave, cliffs, sky }
+/// Bölümün mekânı: gökyüzü, arazi süsleri, ışık, sis ve sesler buna göre.
+enum LevelTheme {
+  cistern,
+  cave,
+  cliffs,
+  sky,
+
+  /// Kaf Dağı: zümrüt kayalar, Simurg'un tüyleri.
+  kaf,
+
+  /// Ağrı ve Palandöken: kar, tipi, buz.
+  snow,
+
+  /// Nuh'un Gemisi: taşlaşmış ahşap gövdenin içi.
+  ark,
+
+  /// Nemrut: kışın taş tanrılar ve düşmüş dev başlar.
+  nemrut,
+
+  /// Kapadokya: peri bacaları.
+  peri,
+
+  /// Konya: karlı gece, dergâh.
+  konya;
+
+  /// Kapalı mekân: tavanın üstü kaya, uzaktan zincir sesleri.
+  bool get indoor => this == cistern || this == cave || this == ark;
+
+  /// Kar yağar, kayaların üstü karla örtülü.
+  bool get snowy => this == snow || this == nemrut || this == konya;
+}
 
 class LevelDef {
   const LevelDef({
@@ -34,11 +46,29 @@ class LevelDef {
     this.whispers = const [],
     this.memories = const [],
     this.wings = false,
+    this.variant = 0,
     this.titleEn = '',
     this.subtitleEn = '',
     this.whispersEn = const [],
     this.memoriesEn = const [],
+    this.place = '',
+    this.placeEn = '',
+    this.areas = const [],
+    this.areasEn = const [],
   });
+
+  /// Başlığın altında: yer ve zaman (ör. "Yerebatan Sarnıcı · İstanbul,
+  /// Temmuz 1660").
+  final String place;
+  final String placeEn;
+
+  /// Bölümün içindeki yerlerin adları: haritadaki `p` işaretleri ilerleyiş
+  /// sırasıyla bunları gösterir.
+  final List<String> areas;
+  final List<String> areasEn;
+
+  String get placeText => S.en && placeEn.isNotEmpty ? placeEn : place;
+  List<String> get areaTexts => S.en && areasEn.isNotEmpty ? areasEn : areas;
 
   final String titleEn;
   final String subtitleEn;
@@ -56,6 +86,10 @@ class LevelDef {
 
   /// Bölüm kanatlarla başlar (süzülme açık).
   final bool wings;
+
+  /// Aynı temanın farklı görünümü (ör. kar: 0 Ağrı, 1 Palandöken, 2 çığ;
+  /// Nemrut: 0 taş tanrılar, 1 gün doğumu).
+  final int variant;
 
   final String title;
   final String subtitle;
@@ -119,6 +153,14 @@ const interludes = <List<String>>[
     'Kandilciler topladıkları ışığı göğe astı; güneşi onlar kırdı.',
     'Ustanın kandili orada, Sâye. Ve sen her adımda ona biraz daha benziyorsun.',
   ],
+  [],
+  [
+    'Kaf\'ın tepesinde bir ayna vardı. Kuşlar Simurg\'u aradı; aynada kendilerini gördüler.',
+    'Sâye de baktı. Aynada bir çocuk yoktu. Bir gölge vardı.',
+    'Sâye. Eski dilde gölge demektir.',
+    'Ustanın kandili Kaf\'ta değildi. Kandilciler onu doğuya, tufandan beri sönmeyen ışığın yattığı dağa götürmüştü.',
+    'İKİNCİ PERDE · DAĞ',
+  ],
 ];
 
 const interludesEn = <List<String>>[
@@ -134,6 +176,14 @@ const interludesEn = <List<String>>[
     'The Hoopoe led the birds there, to the Simurgh. Most gave up on the way.',
     'The Lamplighters hung their stolen light in the sky; it was they who broke the sun.',
     'Your master\'s lamp is there, Saye. And with every step, you look more like it.',
+  ],
+  [],
+  [
+    'At the summit of Qaf there was a mirror. The birds sought the Simurgh; in the mirror they saw themselves.',
+    'Saye looked too. There was no child in the mirror. There was a shadow.',
+    'Saye. In the old tongue, it means shadow.',
+    'The master\'s lamp was not on Qaf. The Lamplighters had carried it east, to the mountain where a light has slept since the Flood.',
+    'THE SECOND VEIL · THE MOUNTAIN',
   ],
 ];
 
@@ -183,6 +233,32 @@ const levels = <LevelDef>[
       'Memory · One night he would not let me behind the screen. "A shadow must not see what is behind it," he said.',
       'Memory · When I took my first step before the screen, he laughed: "Your shadow walks ahead of you."',
     ],
+    place: 'Yerebatan Sarnıcı · İstanbul, Temmuz 1660',
+    placeEn: 'The Basilica Cistern · Istanbul, July 1660',
+    areas: [
+      'Sütunlar Ormanı',
+      'Medusa\'nın Başları',
+      'Paslı Kapı',
+      'Yarasa Galerisi',
+      'Terazi',
+      'Yırtık Perde',
+      'Işıkla Gölgenin Köprüsü',
+      'Dar Geçit',
+      'Su Haznesi',
+      'Karanlık Kanallar',
+    ],
+    areasEn: [
+      'The Forest of Columns',
+      'The Heads of Medusa',
+      'The Rusted Gate',
+      'The Bat Gallery',
+      'The Scales',
+      'The Torn Veil',
+      'The Bridge of Light and Shadow',
+      'The Narrow Passage',
+      'The Water Basin',
+      'The Dark Channels',
+    ],
     map: kMapYerebatan,
   ),
   LevelDef(
@@ -196,12 +272,14 @@ const levels = <LevelDef>[
       'Basınca kopan taşlar var. Hiçbir yer seni uzun süre taşımaz.',
       'Damlarda bir Kandilci dolaşıyor. Kargalar onun gözleridir.',
       'Kanatlar burada bekliyordu. Rüzgâra teslim ol.',
+      'Hezarfen\'in merceği ışığı toplar. Bir aynayla onu dilediğin göze çevir.',
     ],
     whispersEn: [
       'The waters of the Horn remember everything, even those who fall.',
       'Some stones break beneath you. Nothing holds you for long.',
       'A Lamplighter walks the rooftops. The crows are his eyes.',
       'The wings were waiting here. Surrender to the wind.',
+      'Hezarfen\'s lens gathers the light. With a mirror, turn it on any eye you choose.',
     ],
     memories: [
       'Hatıra · "Haliç bir aynadır," derdi ustam. "Şehir kendine orada bakar."',
@@ -212,6 +290,24 @@ const levels = <LevelDef>[
       'Memory · "The Horn is a mirror," he said. "The city looks at itself there."',
       'Memory · He pointed at the top of the tower: "One day you will see the whole screen from there."',
       'Memory · The Watchers\' light is cold, for they do not love the light; they count it.',
+    ],
+    place: 'Galata Kulesi · İstanbul, Temmuz 1660',
+    placeEn: 'Galata Tower · Istanbul, July 1660',
+    areas: [
+      'Haliç Kıyısı',
+      'Kargaların Yuvası',
+      'Kandilci Rafı',
+      'Terazi Asansörü',
+      'Gözcü Katı',
+      'Hezarfen\'in Atölyesi',
+    ],
+    areasEn: [
+      'The Golden Horn Shore',
+      'The Crows\' Nest',
+      'The Lamplighter\'s Ledge',
+      'The Balance Lift',
+      'The Watcher\'s Floor',
+      'Hezarfen\'s Workshop',
     ],
     map: kMapKule,
   ),
@@ -242,6 +338,73 @@ const levels = <LevelDef>[
       'Memory · He had stitched a hoopoe into the corner of the screen. "You owe the one who shows the way," he said.',
       'Memory · "One day we will bring the sun back to the screen," he said. That day I saw my shadow tremble for the first time.',
     ],
+    place: 'Gökyolu · İstanbul\'un üstünde, Ağustos 1660',
+    placeEn: 'The Sky Road · Above Istanbul, August 1660',
+    areas: [
+      'Bulutların Eşiği',
+      'Kandilcilerin Bulut Kampı',
+      'Gözcü Kayası',
+      'Rüzgâr Yolu',
+      'Kargaların Adası',
+      'Kırık Güneşin Altında',
+    ],
+    areasEn: [
+      'The Threshold of Clouds',
+      'The Lamplighters\' Cloud Camp',
+      'The Watcher\'s Rock',
+      'The Wind Road',
+      'The Isle of Crows',
+      'Beneath the Broken Sun',
+    ],
     map: kMapGokyolu,
+  ),
+  LevelDef(
+    title: 'IV · KAF',
+    subtitle: 'Dünyanın kıyısında zümrüt bir dağ.',
+    theme: LevelTheme.kaf,
+    wings: true,
+    titleEn: 'IV · QAF',
+    subtitleEn: 'An emerald mountain at the edge of the world.',
+    place: 'Kaf Dağı · Dünyanın kıyısı, Eylül 1660',
+    placeEn: 'Mount Qaf · The edge of the world, September 1660',
+    areas: [
+      'Zümrüt Köprü',
+      'Kandilcilerin Gök Karakolu',
+      'Gölge Köprüsü',
+      'Rüzgârın Sırtı',
+      'Simurg\'un Ayna Salonu',
+    ],
+    areasEn: [
+      'The Emerald Bridge',
+      'The Lamplighters\' Sky Post',
+      'The Shadow Bridge',
+      'The Back of the Wind',
+      'The Simurgh\'s Hall of Mirrors',
+    ],
+    whispers: [
+      'Burası Kaf. Kuşlar bin yıl uçtu, otuzu vardı.',
+      'Kandilciler göğe de nöbetçi dikmiş. Işığı kimseyle bölüşmezler.',
+      'Gölgeden köprü ışığa dayanmaz. Ay ışığı da aynaya düşer.',
+      'Rüzgâr da bir yolcudur. Ona yaslanan düşmez.',
+      'Üç ayna, bir ışık. Aradığın, onun yolunun sonunda.',
+    ],
+    whispersEn: [
+      'This is Qaf. The birds flew a thousand years, and thirty arrived.',
+      'The Lamplighters set watchmen even in the sky. They share their light with no one.',
+      'A bridge of shadow cannot bear the light. Moonlight, too, falls into mirrors.',
+      'The wind is a traveler too. Whoever leans on it does not fall.',
+      'Three mirrors, one light. What you seek waits at the end of its road.',
+    ],
+    memories: [
+      'Hatıra · "Simurg diye bir kuş yoktur," derdi ustam. "Otuz kuş vardır. Ama bunu ancak varan bilir."',
+      'Hatıra · Kandili yakarken hep aynı duayı mırıldanırdı. Sözlerini hiç anlamadım; ışığı anladım.',
+      'Hatıra · "Aynaya bakan kendini gördüğünü sanır," derdi. "Oysa ayna ışığı gösterir."',
+    ],
+    memoriesEn: [
+      'Memory · "There is no bird called the Simurgh," my master said. "There are thirty birds. But only those who arrive know it."',
+      'Memory · He murmured the same prayer each time he lit the lamp. I never understood the words; I understood the light.',
+      'Memory · "Whoever looks in a mirror thinks he sees himself," he said. "But a mirror shows the light."',
+    ],
+    map: kMapKaf,
   ),
 ];

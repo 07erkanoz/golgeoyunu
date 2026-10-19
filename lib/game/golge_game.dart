@@ -313,8 +313,11 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     }
   }
 
-  void _showLevelTitle() =>
-      narration.showTitle(level.def.titleText, level.def.subtitleText);
+  void _showLevelTitle() => narration.showTitle(
+    level.def.titleText,
+    level.def.subtitleText,
+    level.def.placeText,
+  );
 
   void _buildLevel(int index, {bool respawn = false, bool withPlayer = true}) {
     world.removeAll(world.children.toList());
@@ -520,7 +523,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
               interlude,
               enter,
               instantBlack: true,
-              scene: next == 1 ? PerdeScene.galata : PerdeScene.kaf,
+              scene: interludeScene(next),
             );
           }
           return;
@@ -609,6 +612,15 @@ class GolgeGame extends FlameGame with KeyboardEvents {
       return d.x.abs() < rx && d.y.abs() < ry;
     }
 
+    final areas = level.def.areaTexts;
+    for (var i = 0; i < level.placeCells.length && i < areas.length; i++) {
+      final key = '$levelIndex:p$i';
+      if (_whispersShown.contains(key) || !near(level.placeCells[i], 64, 120)) {
+        continue;
+      }
+      _whispersShown.add(key);
+      narration.showArea(areas[i]);
+    }
     for (final (i, cell) in level.triggers) {
       final key = '$levelIndex:$i';
       if (_whispersShown.contains(key) || !near(cell, 48, 80)) continue;
@@ -691,7 +703,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     if (_chainT <= 0) {
       _chainT = 22 + _rnd.nextDouble() * 30;
       final theme = level.def.theme;
-      if (theme == LevelTheme.cistern || theme == LevelTheme.cave) {
+      if (theme.indoor) {
         audio.play('chain', volume: 0.18 + _rnd.nextDouble() * 0.15);
       }
     }
@@ -835,9 +847,11 @@ class GolgeGame extends FlameGame with KeyboardEvents {
             PerdeScene.values[_debugScene++ % PerdeScene.values.length];
         final lines = switch (scene) {
           PerdeScene.prologue => prologueText,
-          PerdeScene.galata => interludeText(1),
-          PerdeScene.kaf => interludeText(2),
           PerdeScene.epilogue => epilogueText,
+          _ => interludeText(
+            [for (var i = 0; i < 20; i++) i]
+                .firstWhere((i) => interludeScene(i) == scene, orElse: () => 1),
+          ),
         };
         cinematic = true;
         narration.playCinematic(lines, () => cinematic = false, scene: scene);

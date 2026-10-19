@@ -82,14 +82,14 @@ class TerrainComponent extends Component with HasGameReference<GolgeGame> {
     final lv = _level;
     final theme = lv.def.theme;
     // Haritanın dışı: yanlar (ve kapalı mekânlarda tavanın üstü) dolu kaya.
-    if (theme != LevelTheme.sky) {
+    if (theme != LevelTheme.sky && theme != LevelTheme.kaf) {
       const m = 3000.0;
       canvas.drawRect(Rect.fromLTRB(-m, -m, 0, lv.pixelHeight + m), _ink);
       canvas.drawRect(
         Rect.fromLTRB(lv.pixelWidth, -m, lv.pixelWidth + m, lv.pixelHeight + m),
         _ink,
       );
-      if (theme == LevelTheme.cistern || theme == LevelTheme.cave) {
+      if (theme.indoor) {
         canvas.drawRect(Rect.fromLTRB(-m, -m, lv.pixelWidth + m, 0.5), _ink);
       }
     }
@@ -137,35 +137,16 @@ Picture _buildTerrain(Level lv, int c0, int c1, int r0, int r1) {
             ink,
           );
           if (r > 0 && !lv.solid(c, r - 1) && theme != LevelTheme.cistern) {
-            for (var i = 0; i < 3; i++) {
-              canvas.drawCircle(
-                Offset(x + rnd.nextDouble() * kTile, y + 2),
-                2 + rnd.nextDouble() * 3,
-                ink,
-              );
-            }
-            line.strokeWidth = 1.4;
-            for (var i = 0; i < 7; i++) {
-              final bx = x + rnd.nextDouble() * kTile;
-              final h = 3 + rnd.nextDouble() * 8;
-              final lean = (rnd.nextDouble() - 0.5) * 7;
-              canvas.drawPath(
-                Path()
-                  ..moveTo(bx, y + 1)
-                  ..quadraticBezierTo(
-                    bx + lean * 0.2,
-                    y - h * 0.6,
-                    bx + lean,
-                    y - h,
-                  ),
-                line,
-              );
-            }
+            _topDressing(canvas, theme, x, y, rnd, ink, line);
           }
           if (r + 1 < lv.height &&
               !lv.solid(c, r + 1) &&
               theme != LevelTheme.cistern) {
-            if (theme == LevelTheme.cave) {
+            if (theme.snowy) {
+              _icicles(canvas, x, y, rnd);
+            } else if (theme == LevelTheme.ark || theme == LevelTheme.peri) {
+              // Ahşap ve tüf: altından bir şey sarkmaz.
+            } else if (theme == LevelTheme.cave) {
               for (var i = 0; i < 2; i++) {
                 if (rnd.nextDouble() < 0.4) continue;
                 final sx = x + rnd.nextDouble() * (kTile - 8);
@@ -216,6 +197,17 @@ Picture _buildTerrain(Level lv, int c0, int c1, int r0, int r1) {
         case '=':
           if (theme == LevelTheme.cistern) {
             _walkway(canvas, lv, c, r, rnd);
+          } else if (theme == LevelTheme.ark) {
+            _beam(canvas, x, y, rnd);
+          } else if (theme.snowy) {
+            canvas.drawRect(Rect.fromLTWH(x - 0.5, y, kTile + 1, 7), ink);
+            canvas.drawRRect(
+              RRect.fromRectAndRadius(
+                Rect.fromLTWH(x - 1, y - 3, kTile + 2, 5),
+                const Radius.circular(2.5),
+              ),
+              Paint()..color = _snowCap,
+            );
           } else if (theme == LevelTheme.sky) {
             for (var i = 0; i < 4; i++) {
               canvas.drawCircle(
@@ -289,6 +281,139 @@ Picture _buildTerrain(Level lv, int c0, int c1, int r0, int r1) {
   }
   if (theme == LevelTheme.cistern) _cisternVaults(canvas, lv, c0, c1);
   return rec.endRecording();
+}
+
+const _snowCap = Color(0xFFC8D2E2);
+
+/// Kayanın üst yüzü: çimen, kar, zümrüt kristal, tüf ya da tahta.
+void _topDressing(
+  Canvas canvas,
+  LevelTheme theme,
+  double x,
+  double y,
+  math.Random rnd,
+  Paint ink,
+  Paint line,
+) {
+  if (theme.snowy) {
+    // Kar örtüsü: yuvarlak kenarlı, yer yer kabaran yığıntılar.
+    final snow = Paint()..color = _snowCap;
+    canvas.drawRect(Rect.fromLTWH(x - 0.5, y - 1, kTile + 1, 4), snow);
+    for (var i = 0; i < 3; i++) {
+      canvas.drawOval(
+        Rect.fromCenter(
+          center: Offset(x + rnd.nextDouble() * kTile, y),
+          width: 8 + rnd.nextDouble() * 12,
+          height: 4 + rnd.nextDouble() * 3,
+        ),
+        snow,
+      );
+    }
+    return;
+  }
+  if (theme == LevelTheme.ark) {
+    // Taşlaşmış ahşap: tahta birleşim çizgileri.
+    final seam = Paint()
+      ..color = const Color(0xFF2A190E)
+      ..strokeWidth = 1;
+    canvas.drawLine(Offset(x, y + 1), Offset(x + kTile, y + 1), seam);
+    if (rnd.nextDouble() < 0.5) {
+      canvas.drawCircle(Offset(x + rnd.nextDouble() * kTile, y + 4), 1.2, seam);
+    }
+    return;
+  }
+  if (theme == LevelTheme.peri) {
+    // Yumuşak tüf: aşınmış, dalgalı üst kenar.
+    final tuff = Paint()..color = const Color(0xFF3A2620);
+    for (var i = 0; i < 2; i++) {
+      canvas.drawOval(
+        Rect.fromCenter(
+          center: Offset(x + rnd.nextDouble() * kTile, y + 1),
+          width: 14 + rnd.nextDouble() * 10,
+          height: 5,
+        ),
+        tuff,
+      );
+    }
+    return;
+  }
+  if (theme == LevelTheme.kaf) {
+    // Zümrüt kristaller.
+    final crystal = Paint()..color = const Color(0xFF2E8A6E);
+    for (var i = 0; i < 2; i++) {
+      if (rnd.nextDouble() < 0.4) continue;
+      final cx = x + rnd.nextDouble() * kTile;
+      final ht = 5 + rnd.nextDouble() * 9;
+      canvas.drawPath(
+        Path()
+          ..moveTo(cx - 3, y + 1)
+          ..lineTo(cx, y - ht)
+          ..lineTo(cx + 3, y + 1)
+          ..close(),
+        crystal,
+      );
+    }
+  }
+  // Çimen.
+  for (var i = 0; i < 3; i++) {
+    canvas.drawCircle(
+      Offset(x + rnd.nextDouble() * kTile, y + 2),
+      2 + rnd.nextDouble() * 3,
+      ink,
+    );
+  }
+  line.strokeWidth = 1.4;
+  for (var i = 0; i < 7; i++) {
+    final bx = x + rnd.nextDouble() * kTile;
+    final h = 3 + rnd.nextDouble() * 8;
+    final lean = (rnd.nextDouble() - 0.5) * 7;
+    canvas.drawPath(
+      Path()
+        ..moveTo(bx, y + 1)
+        ..quadraticBezierTo(bx + lean * 0.2, y - h * 0.6, bx + lean, y - h),
+      line,
+    );
+  }
+}
+
+/// Saçaktan sarkan buz sarkıtları.
+void _icicles(Canvas canvas, double x, double y, math.Random rnd) {
+  final ice = Paint()..color = const Color(0xFF8FA4C0).withValues(alpha: 0.8);
+  for (var i = 0; i < 3; i++) {
+    if (rnd.nextDouble() < 0.35) continue;
+    final sx = x + rnd.nextDouble() * (kTile - 6);
+    final len = 6 + rnd.nextDouble() * 14;
+    canvas.drawPath(
+      Path()
+        ..moveTo(sx, y + kTile - 1)
+        ..lineTo(sx + 4, y + kTile - 1)
+        ..lineTo(sx + 2, y + kTile + len)
+        ..close(),
+      ice,
+    );
+  }
+}
+
+/// Gemi içi: kalın ahşap kiriş ve çivileri.
+void _beam(Canvas canvas, double x, double y, math.Random rnd) {
+  canvas.drawRect(
+    Rect.fromLTWH(x - 0.5, y, kTile + 1, 9),
+    Paint()..color = const Color(0xFF1A0F09),
+  );
+  canvas.drawLine(
+    Offset(x, y + 1),
+    Offset(x + kTile, y + 1),
+    Paint()
+      ..color = const Color(0xFF6A4428).withValues(alpha: 0.5)
+      ..strokeWidth = 1,
+  );
+  if (rnd.nextDouble() < 0.5) {
+    canvas.drawCircle(
+      Offset(x + 6 + rnd.nextDouble() * 20, y + 5),
+      1.3,
+      Paint()..color = const Color(0xFF3A2414),
+    );
+  }
 }
 
 const _stone = Color(0xFF150C09);

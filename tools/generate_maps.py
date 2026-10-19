@@ -88,6 +88,9 @@ y.put(112+O,9,'F')
 # Gerilim: karanlıkta beliren gözler, ışığı yiyen yarasa galerisi.
 y.put(38,16,'e'); y.put(99,16,'e')
 y.put(71,8,'x'); y.put(90,13,'X'); y.put(79,13,'F')
+# Yer adları
+for c,r in [(14,12),(32,12),(50,12),(72,10),(101,8),(113,8),(127,9),(153,9),(160,8),(176,8)]:
+    y.put(c,r,'p')
 lvl1=y.rows()
 
 # ------------------------------------------------------------ II · KULE
@@ -121,11 +124,15 @@ k.put(6,33,'V')
 k.fill(9,27,14,27,'='); k.put(13,26,'F'); k.put(11,26,'B')
 k.fill(22,24,25,25,'#'); k.put(24,23,'g')
 k.fill(16,25,19,25,'='); k.put(17,24,'M')
-k.fill(12,23,15,23,'=')
+k.fill(12,23,21,23,'=')
+# Hezarfen'in merceği: ışık aynayla Gözcü'nün gözüne çevrilir.
+k.put(20,13,'j'); k.put(20,22,'m'); k.put(17,22,'5')
 k.fill(13,13,13,22,'|')
 k.fill(4,11,12,12,'#'); k.put(11,10,'W'); k.put(9,10,'4'); k.put(10,10,'K'); k.put(7,10,'B')
 k.fill(14,2,16,11,'r')
 k.fill(19,4,23,4,'='); k.put(21,3,'E')
+for c,r in [(4,90),(10,66),(12,50),(9,38),(8,26),(8,9)]:
+    k.put(c,r,'p')
 lvl2=k.rows()
 
 # ------------------------------------------------------------ III · GÖKYOLU
@@ -152,9 +159,50 @@ s.put(105,11,'K'); s.put(106,11,'k'); s.put(108,11,'F'); s.put(110,11,'k'); s.pu
 s.put(116,12,'O'); s.put(121,11,'O'); s.put(126,10,'O')
 s.fill(131,9,149,11,'#'); s.fill(133,12,147,12,'#')
 s.put(132,8,'K'); s.put(135,8,'B'); s.put(140,8,'1'); s.put(145,8,'E'); s.put(143,8,'B')
+s.put(60,17,'e')
+for c,r in [(10,13),(44,9),(60,4),(90,3),(106,9),(134,7)]:
+    s.put(c,r,'p')
+s.fill(95,9,100,9,'l')                       # bulutların arasında ışık köprüsü
 lvl3=s.rows()
 
-MAPS = [('kMapYerebatan', lvl1), ('kMapKule', lvl2), ('kMapGokyolu', lvl3)]
+# ------------------------------------------------------------ IV · KAF
+W,H=172,24
+f=G(W,H)
+# 1) varış ve zümrüt köprü
+f.fill(0,18,10,23,'#'); f.put(2,17,'P'); f.put(4,17,'1'); f.put(5,17,'B'); f.put(7,17,'F')
+f.fill(11,18,16,18,'l')
+f.fill(17,18,24,23,'#'); f.put(17,17,'K'); f.put(22,17,'M'); f.put(19,17,'B')
+f.fill(23,6,24,16,'r')                       # rüzgâr: yamaca çıkarır
+f.fill(25,10,28,23,'#')
+# 2) Kandilcilerin gök karakolu
+f.fill(29,10,58,12,'#'); f.put(29,9,'K'); f.put(30,9,'2'); f.put(31,9,'B')
+f.fill(33,9,34,9,'~'); f.put(37,9,'G'); f.put(40,9,'I'); f.fill(44,9,45,9,'~'); f.put(51,9,'G')
+f.put(48,9,'F')
+f.fill(59,10,61,10,'u')
+# 3) Gözcü'nün gölge köprüsü; ay ışığı aynayla gözüne çevrilir
+f.fill(62,10,70,12,'#'); f.put(63,9,'K'); f.put(64,9,'3'); f.put(66,9,'B')
+f.fill(71,10,84,10,'n')
+f.put(75,2,'j'); f.put(75,8,'m'); f.put(72,8,'#')     # kristal: sola kaçan ışığı tutar
+f.fill(85,10,93,23,'#'); f.put(89,9,'g')
+# 4) çöken kayalar, rüzgâr
+f.put(96,11,'O'); f.put(100,10,'O'); f.put(104,9,'R')
+f.fill(110,4,111,14,'r')
+f.fill(114,6,121,7,'#'); f.put(115,5,'K'); f.put(116,5,'4'); f.put(117,5,'B'); f.put(119,5,'M')
+# 5) Simurg'un ayna salonu
+f.fill(122,0,171,2,'#')
+f.fill(122,18,171,23,'#'); f.put(124,17,'K'); f.put(127,17,'B'); f.put(132,17,'5')
+f.fill(136,13,149,13,'#'); f.fill(151,13,152,13,'#'); f.fill(134,11,134,12,'#')
+f.put(140,4,'j'); f.put(140,12,'m'); f.put(150,12,'m'); f.put(150,17,'m')
+f.put(152,17,'C'); f.put(153,18,'.',force=True)
+f.put(146,17,'G'); f.put(138,12,'M'); f.put(143,17,'F')
+f.put(158,17,'t')
+f.fill(161,3,161,11,'#'); f.fill(161,12,161,17,'H')
+f.put(165,17,'B'); f.put(167,17,'E')
+for c,r in [(8,16),(32,8),(66,8),(98,7),(126,16)]:
+    f.put(c,r,'p')
+lvl4=f.rows()
+
+MAPS = [('kMapYerebatan', lvl1), ('kMapKule', lvl2), ('kMapGokyolu', lvl3), ('kMapKaf', lvl4)]
 
 out = ['// Bu dosya tools/generate_maps.py ile üretilir; elle düzenleme.',
        '// Gösterim: lib/game/level.dart başındaki açıklamaya bakın.', '']

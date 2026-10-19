@@ -30,6 +30,17 @@ class Narration extends Component with HasGameReference<GolgeGame> {
 
   String? _title;
   String _subtitle = '';
+  String _place = '';
+
+  /// Bölümün içinde yeni bir yere girince üstte beliren ad.
+  String? _area;
+  double _areaT = 0;
+
+  void showArea(String name) {
+    _area = name;
+    _areaT = 0;
+  }
+
   double _titleT = 0;
 
   final _whispers = <String>[];
@@ -75,9 +86,10 @@ class Narration extends Component with HasGameReference<GolgeGame> {
         : fadeOutStart + _lineOut + 0.001;
   }
 
-  void showTitle(String title, String subtitle) {
+  void showTitle(String title, String subtitle, [String place = '']) {
     _title = title;
     _subtitle = subtitle;
+    _place = place;
     _titleT = 0;
   }
 
@@ -112,6 +124,10 @@ class Narration extends Component with HasGameReference<GolgeGame> {
     if (_title != null) {
       _titleT += dt;
       if (_titleT > 6) _title = null;
+    }
+    if (_area != null) {
+      _areaT += dt;
+      if (_areaT > 5) _area = null;
     }
     if (_whisper == null) {
       if (_whispers.isNotEmpty && !inCinematic) {
@@ -297,6 +313,30 @@ class Narration extends Component with HasGameReference<GolgeGame> {
         unit * 0.032,
         a * 0.8,
         italic: true,
+      );
+      if (_place.isNotEmpty) {
+        _text(
+          canvas,
+          _place.toUpperCase(),
+          Offset(w / 2, h * 0.53),
+          unit * 0.02,
+          a * 0.55,
+          spacing: 4,
+        );
+      }
+    }
+
+    // Yer adı: üstte, ince ve geniş aralıklı; başlık varken gösterilmez.
+    if (_area != null && _title == null) {
+      final a = _envelope(_areaT, 1.0, 2.6, 1.4);
+      _text(
+        canvas,
+        '—  ${_area!}  —',
+        Offset(w / 2, h * 0.1),
+        unit * 0.026,
+        a * 0.8,
+        italic: true,
+        spacing: 2,
       );
     }
 

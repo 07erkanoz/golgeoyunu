@@ -6,7 +6,23 @@ import 'package:flutter/painting.dart';
 import 'palette.dart';
 
 /// Perde sahneleri: prologda, bölüm aralarında ve finalde oynanan gölge oyunu.
-enum PerdeScene { prologue, galata, kaf, epilogue }
+enum PerdeScene {
+  prologue,
+  galata,
+  kaf,
+
+  /// Kaf'ın sırrı: aynadaki gölge, kandil doğuya taşınır.
+  mirror,
+  epilogue,
+}
+
+/// Bölümden önce oynanan perde sahnesi (yoksa düz geçiş).
+PerdeScene? interludeScene(int level) => switch (level) {
+  1 => PerdeScene.galata,
+  2 => PerdeScene.kaf,
+  4 => PerdeScene.mirror,
+  _ => null,
+};
 
 /// Arkadan kandille aydınlanan bez perde ve üstündeki çubuklu tasvirler.
 ///
@@ -107,6 +123,8 @@ class PerdePainter {
         _galata(canvas, time, progress);
       case PerdeScene.kaf:
         _kaf(canvas, time, progress);
+      case PerdeScene.mirror:
+        _mirror(canvas, time, progress);
       case PerdeScene.epilogue:
         _epilogue(canvas, time, progress);
     }
@@ -946,6 +964,89 @@ class PerdePainter {
     _puppet(canvas, const Offset(330, 312), time, 3.3, sa, (ink, hole) {
       _saye(ink, hole, time);
     }, scale: 0.85);
+  }
+
+  static void _mirror(Canvas canvas, double time, double u) {
+    _c = canvas;
+    // Zirve ve dev ayna: ışıktan bir oval, çevresi oymalı çerçeve.
+    canvas.drawPath(
+      Path()
+        ..moveTo(0, 400)
+        ..lineTo(0, 360)
+        ..lineTo(240, 330)
+        ..lineTo(390, 300)
+        ..lineTo(540, 330)
+        ..lineTo(780, 360)
+        ..lineTo(780, 400)
+        ..close(),
+      _inkPaint(1),
+    );
+    final away = _span(u, 2.9, 3.3);
+    const mc = Offset(390, 170);
+    final mirrorA = 1 - away * 0.85;
+    canvas.drawOval(
+      Rect.fromCenter(center: mc, width: 170, height: 230),
+      Paint()..color = _ink.withValues(alpha: 0.92 * mirrorA),
+    );
+    canvas.drawOval(
+      Rect.fromCenter(center: mc, width: 140, height: 200),
+      Paint()
+        ..shader = ui.Gradient.radial(mc, 110, [
+          const Color(0xFFFFF3D6).withValues(alpha: 0.95 * mirrorA),
+          const Color(0xFFE8B070).withValues(alpha: 0.6 * mirrorA),
+        ]),
+    );
+    // Otuz kuş: aynanın önüne konarlar.
+    final land = _span(u, 0, 0.9);
+    for (var i = 0; i < 30; i++) {
+      final row = i ~/ 10;
+      final tx = 120.0 + (i % 10) * 58 + row * 14;
+      final ty = 352.0 - row * 9;
+      final sx = -60.0 + i * 3;
+      final sy = 60.0 + (i % 7) * 12;
+      final p = Offset.lerp(Offset(sx, sy), Offset(tx, ty), land)!;
+      if (land < 1) {
+        _bird(canvas, p, time, 1 - away, i * 0.7);
+      } else {
+        canvas.drawOval(
+          Rect.fromCenter(center: p.translate(0, -5), width: 14, height: 9),
+          _inkPaint(1 - away),
+        );
+      }
+    }
+    // Sâye ve aynadaki gölgesi: yansımada kavanozun ışığı yok.
+    final sa = _shown(u, 0.9, 3.1, 0.3);
+    _puppet(canvas, const Offset(300, 330), time, 0.6, sa, (ink, hole) {
+      _saye(ink, hole, time);
+    });
+    if (sa > 0) {
+      canvas.save();
+      canvas.translate(mc.dx + 30, mc.dy + 80);
+      canvas.scale(-1.1, 1.1);
+      // Gölge bir an başını çevirir.
+      final turn = u > 1.9 && u < 2.6 ? 1.0 : 0.0;
+      if (turn > 0) canvas.scale(-1, 1);
+      _saye(
+        _inkPaint(sa * 0.9),
+        Paint()..color = const Color(0x00000000),
+        time,
+        jar: 0,
+      );
+      canvas.restore();
+    }
+    // Kandilciler kandili doğuya taşır.
+    final carry = _span(u, 3.0, 4.0);
+    final ca = _shown(u, 2.95, 4.05, 0.25);
+    for (var i = 0; i < 3; i++) {
+      final x = 80 + i * 70 + carry * 520;
+      _puppet(canvas, Offset(x, 352), time, i * 1.3, ca, (ink, hole) {
+        _lamplighter(ink, hole, lanternLift: i == 1 ? 30 : 0);
+      }, scale: 0.5);
+    }
+    if (ca > 0) {
+      final lx = 80 + 70 + carry * 520 + 44;
+      canvas.drawCircle(Offset(lx, 245), 6, _holePaint(ca));
+    }
   }
 
   static void _epilogue(Canvas canvas, double time, double u) {

@@ -27,6 +27,12 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
     LevelTheme.cave => 0.45,
     LevelTheme.cliffs => 0.32,
     LevelTheme.sky => 0.18,
+    LevelTheme.kaf => 0.3,
+    LevelTheme.snow => 0.3,
+    LevelTheme.ark => 0.5,
+    LevelTheme.nemrut => 0.24,
+    LevelTheme.peri => 0.26,
+    LevelTheme.konya => 0.38,
   };
 
   final _cut = Paint()..blendMode = BlendMode.dstOut;

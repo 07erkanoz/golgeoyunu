@@ -19,6 +19,7 @@ const double kTile = 32;
 /// - Düzenekler: `C` sandık, `L` kol, `H` kapı, `A`/`Y` terazi kefeleri,
 ///   `R`/`V` yatay/dikey kayan kaya, `O` çöken kaya, `F` ateşböcekleri,
 ///   `W` Hezarfen'in kanatları.
+/// - Yer adı: `p` (bölümün `areas` listesinden, ilerleyiş sırasıyla).
 /// - Bölgeler: `x` sol üst ve `X` sağ alt köşeleriyle karanlık bölge (ışığı
 ///   yer, ateşböcekleri birer birer söner).
 /// - Bulmacalar: `l` ışık tahtası, `n` gölge tahtası, `u` çürük tahta,
@@ -69,6 +70,9 @@ class Level {
   final mirrorCells = <(Vector2, bool)>[];
   final lockCells = <Vector2>[];
   final perdeCells = <Vector2>[];
+
+  /// Yer adı işaretleri, ilerleyiş sırasıyla.
+  final placeCells = <Vector2>[];
 
   /// Karanlık bölgeler (dünya koordinatında dikdörtgenler).
   final darkZones = <Rect>[];
@@ -177,6 +181,8 @@ class Level {
             lockCells.add(cell);
           case 'J':
             perdeCells.add(cell);
+          case 'p':
+            placeCells.add(cell);
           case 'x':
             _darkStarts.add(cell);
           case 'X':
@@ -204,6 +210,7 @@ class Level {
       }
       _cells.add(row);
     }
+    placeCells.sort((a, b) => progressOf(a).compareTo(progressOf(b)));
   }
 
   /// Harita dışı: yanlar katı duvar, üst ve alt boşluk.

@@ -17,6 +17,8 @@ void main() {
       'kaf_kuslar': (PerdeScene.kaf, 1.5),
       'kaf_kirik_gunes': (PerdeScene.kaf, 3.5),
       'final_parca': (PerdeScene.epilogue, 2.6),
+      'ayna_golge': (PerdeScene.mirror, 1.6),
+      'ayna_kandil': (PerdeScene.mirror, 3.5),
     };
     for (final e in shots.entries) {
       final rec = ui.PictureRecorder();

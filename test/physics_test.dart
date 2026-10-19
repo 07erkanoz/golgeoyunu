@@ -4,6 +4,7 @@ import 'package:flame/components.dart';
 import 'package:flame_test/flame_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:golge/game/creatures.dart';
+import 'package:golge/game/levels.dart';
 import 'package:golge/game/entities.dart';
 import 'package:golge/game/golge_game.dart';
 import 'package:golge/game/level.dart';
@@ -768,6 +769,69 @@ void main() {
         expect(perde.lagT, greaterThanOrEqualTo(0));
         run(game, GiantPerde.lagLength + 0.2);
         expect(perde.lagT, greaterThanOrEqualTo(GiantPerde.lagLength));
+      },
+    );
+  });
+
+  group('ayna ve huzme', () {
+    void press(GolgeGame game) {
+      keys(game).up = true;
+      run(game, 0.1);
+      keys(game).up = false;
+      run(game, 0.1);
+    }
+
+    testWithGame<GolgeGame>(
+      'Kule: aynayı çeviren Gözcü\'nün gözünü kamaştırır',
+      GolgeGame.new,
+      (game) async {
+        await place(game, 1, 20, 22);
+        run(game, 0.3);
+        final w = game.world.children.whereType<Watcher>().first;
+        expect(w.dazzled, lessThanOrEqualTo(0));
+        press(game);
+        run(game, 0.3);
+        expect(w.dazzled, greaterThan(0));
+      },
+    );
+
+    testWithGame<GolgeGame>(
+      'Kaf: üç ayna ve sandıkla ışık kilidi kapıyı açar',
+      GolgeGame.new,
+      (game) async {
+        expect(levels[3].title, 'IV · KAF');
+        var p = await place(game, 3, 140, 12);
+        for (final g in game.world.children.whereType<Guard>().toList()) {
+          g.removeFromParent();
+        }
+        run(game, 0.3);
+        press(game);
+        p.position.setFrom(
+          Level.standOn(Vector2(149 * kTile, 12 * kTile), Player.w, Player.h),
+        );
+        run(game, 0.3);
+        press(game);
+        p.position.setFrom(
+          Level.standOn(Vector2(149 * kTile, 17 * kTile), Player.w, Player.h),
+        );
+        run(game, 0.4);
+        press(game);
+        final lock = game.world.children.whereType<SunLock>().first;
+        run(game, 1.5);
+        expect(lock.open, isFalse, reason: 'sandık huzmeyi kesiyor olmalı');
+        // Sandığı çukura it.
+        p = game.player!;
+        p.position.setFrom(
+          Level.standOn(Vector2(150.6 * kTile, 17 * kTile), Player.w, Player.h),
+        );
+        keys(game).right = true;
+        run(game, 1.5);
+        keys(game).right = false;
+        run(game, 2);
+        expect(p.isDead, isFalse);
+        expect(lock.open, isTrue);
+        run(game, 3);
+        expect(game.world.children.whereType<Gate>().first.solid, isFalse);
       },
     );
   });

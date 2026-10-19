@@ -399,3 +399,69 @@ save('shatter', shatter(), 0.7)
 save('breath', breath(), 0.6)
 save('fizzle', fizzle(), 0.4)
 save('chain', chain(), 0.45)
+
+
+# ------------------------------------------------------- doğu ortamları
+def amb_snow():
+    L = 24
+    base = bandpass(noise(L + 2), 250, 1400)
+    r = random.Random(21)
+    gusts = [0.0] * len(base)
+    for i in range(len(base)):
+        t = i / SR
+        gusts[i] = 0.45 + 0.35 * math.sin(2 * math.pi * t / 7.3) + 0.2 * math.sin(2 * math.pi * t / 3.1 + 1)
+    wind = [x * g for x, g in zip(base, gusts)]
+    out = mix((wind, 1.0), (lowpass(brown(L + 2), 200), 3.0))
+    # Ara sıra ince bir ıslık.
+    t = 2.0
+    while t < L - 3:
+        f0 = 700 + r.random() * 500
+        whistle = env(sine(lambda q, f=f0: f * (1 + 0.15 * math.sin(q * 1.3)), 2.5, vib=0.01, vib_rate=4), 1.0, 1.2)
+        place(out, whistle, t, 0.05)
+        t += 4 + r.random() * 5
+    return out
+
+
+def amb_ark():
+    L = 24
+    out = mix((lowpass(brown(L + 2), 160), 4.0))
+    r = random.Random(33)
+    t = 0.5
+    while t < L - 1:
+        lap = env(lowpass(noise(0.6), 500), 0.15, 0.4)
+        place(out, lap, t, 0.35)
+        t += 0.9 + r.random() * 1.6
+    t = 3.0
+    while t < L - 1:
+        f0 = 180 + r.random() * 120
+        creak = env(sine(lambda q, f=f0: f + 60 * q, 0.6, vib=0.05, vib_rate=30), 0.1, 0.3)
+        place(out, creak, t, 0.12)
+        t += 4 + r.random() * 5
+    t = 1.0
+    while t < L - 1:
+        place(out, drip(), t, 0.2)
+        t += 1.5 + r.random() * 3
+    return out
+
+
+def amb_konya():
+    # Uzaktan bir semâhane: kudümün ağır vuruşları ve ney'in uzun sesi.
+    L = 24
+    out = mix((sine(146.8, L + 2, vib=0.003, vib_rate=0.2), 0.08),
+              (lowpass(brown(L + 2), 180), 2.0))
+    t = 0.4
+    beat = 0
+    while t < L - 1:
+        strong = beat % 4 == 0
+        place(out, lowpass(thump(70 if strong else 95, 0.4, 0.09), 400), t, 0.5 if strong else 0.3)
+        t += 0.75
+        beat += 1
+    ney = env(sine(lambda q: 293.66 * (1 + 0.004 * math.sin(q * 5)), 7.0), 2.0, 2.5)
+    breath_ = env(bandpass(noise(7.0), 600, 2400), 2.0, 2.5)
+    place(out, mix((ney, 0.25), (breath_, 0.05)), 6.0, 1.0)
+    return lowpass(echo(out, 0.31, 0.4, 0.4), 2500)
+
+
+save('amb_snow', loop(amb_snow(), 2), 0.5)
+save('amb_ark', loop(amb_ark(), 2), 0.5)
+save('amb_konya', loop(amb_konya(), 2), 0.5)

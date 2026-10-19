@@ -102,6 +102,9 @@ class GameAudio {
         'amb_cistern.wav',
         'amb_wind.wav',
         'amb_sky.wav',
+        'amb_snow.wav',
+        'amb_ark.wav',
+        'amb_konya.wav',
         'karabasan.wav',
         'heartbeat.wav',
         'murmur.wav',
@@ -155,8 +158,11 @@ class GameAudio {
   void ambientFor(LevelTheme theme) {
     final name = switch (theme) {
       LevelTheme.cistern || LevelTheme.cave => 'amb_cistern',
-      LevelTheme.cliffs => 'amb_wind',
-      LevelTheme.sky => 'amb_sky',
+      LevelTheme.ark => 'amb_ark',
+      LevelTheme.cliffs || LevelTheme.peri => 'amb_wind',
+      LevelTheme.sky || LevelTheme.kaf => 'amb_sky',
+      LevelTheme.snow || LevelTheme.nemrut => 'amb_snow',
+      LevelTheme.konya => 'amb_konya',
     };
     _wantedAmbient = name;
     if (_ready && !_musicWanted && !_neyWanted) _startAmbient(name);

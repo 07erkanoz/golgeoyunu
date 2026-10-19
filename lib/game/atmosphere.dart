@@ -10,6 +10,8 @@ import 'levels.dart';
 import 'palette.dart';
 import '../settings.dart';
 
+part 'backdrops_east.dart';
+
 /// Dünyanın arkasında, ekran koordinatlarında çizilen gökyüzü ve paralaks
 /// siluet katmanları.
 class Backdrop extends Component with HasGameReference<GolgeGame> {
@@ -156,6 +158,18 @@ class Backdrop extends Component with HasGameReference<GolgeGame> {
           seed: 6,
           color: lerpColor(0xFF26140F, 0xFF6A2E1C, height),
         );
+      case LevelTheme.kaf:
+        _kaf(canvas, w, h, cam, height);
+      case LevelTheme.snow:
+        _snowPeaks(canvas, w, h, cam, height, lv.def.variant);
+      case LevelTheme.ark:
+        _arkHull(canvas, w, h, cam);
+      case LevelTheme.nemrut:
+        _nemrut(canvas, w, h, cam, lv.def.variant);
+      case LevelTheme.peri:
+        _fairyChimneys(canvas, w, h, cam);
+      case LevelTheme.konya:
+        _konya(canvas, w, h, cam);
       case LevelTheme.sky:
         // Gökyolu: dumanlı mor tepe, kızıl ufuk, kırık güneş.
         _gradient(canvas, rect, const [
@@ -490,40 +504,15 @@ class ScreenEffects extends Component with HasGameReference<GolgeGame> {
     }
   }
 
-  @override
-  void render(Canvas canvas) {
-    final size = game.camera.viewport.size;
-    final w = size.x;
-    final h = size.y;
-    final cam = game.camera.viewfinder.position;
-    final theme = game.level.def.theme;
-
-    // Sürüklenen sis: mağarada köz, kayalıkta kül, gökte toz rengi.
-    final (fogColor, fogAlpha) = switch (theme) {
-      LevelTheme.cistern => (const Color(0xFFD08A5A), 0.05),
-      LevelTheme.cave => (kEmber, 0.05),
-      LevelTheme.cliffs => (const Color(0xFFB09080), 0.06),
-      LevelTheme.sky => (const Color(0xFFF0C8A0), 0.09),
-    };
-    if (!Settings.lowGraphics) {
-      for (var i = 0; i < 5; i++) {
-        final span = w + 700;
-        final x =
-            ((i * 373 + _t * (8 + i * 3) - cam.x * (0.5 + i * 0.12)) % span +
-                    span) %
-                span -
-            350;
-        final y = h * (0.25 + (i % 3) * 0.25) + math.sin(_t * 0.2 + i) * 20;
-        // Yassı, yumuşak kenarlı sis bulutu: degrade daireyi dikeyde ezer.
-        canvas.save();
-        canvas.translate(x, y);
-        canvas.scale(1, 0.3);
-        glowDot(canvas, Offset.zero, 280, fogColor, fogAlpha * 1.6);
-        canvas.restore();
-      }
-    }
-
-    // Yükselen közler ve (açık havada) düşen kül.
+  /// Yükselen közler ve (açık havada) düşen kül; Kaf'ta zümrüt kıvılcımlar.
+  void _embers(
+    Canvas canvas,
+    double w,
+    double h,
+    double camX,
+    LevelTheme theme,
+  ) {
+    final cam = Vector2(camX, 0);
     final ember = Paint();
     final emberCount = Settings.lowGraphics ? 14 : 36;
     for (var i = 0; i < emberCount; i++) {
@@ -533,10 +522,11 @@ class ScreenEffects extends Component with HasGameReference<GolgeGame> {
           ((i * 211.0 + math.sin(_t * 0.7 + i) * 30 - cam.x * 0.3) % w + w) % w;
       final y = h * (1 - k);
       final flicker = 0.5 + 0.5 * math.sin(_t * 9 + i * 2.3);
-      ember.color = kEmber.withValues(alpha: (1 - k) * (0.35 + 0.5 * flicker));
+      ember.color = (theme == LevelTheme.kaf ? const Color(0xFF9FF0C8) : kEmber)
+          .withValues(alpha: (1 - k) * (0.35 + 0.5 * flicker));
       canvas.drawCircle(Offset(x, y), 1.1 + (i % 3) * 0.5, ember);
     }
-    if (theme != LevelTheme.cave) {
+    if (!theme.indoor) {
       final ash = Paint()
         ..color = const Color(0xFFCFC2B6).withValues(alpha: 0.35);
       for (var i = 0; i < (Settings.lowGraphics ? 10 : 28); i++) {
@@ -568,6 +558,78 @@ class ScreenEffects extends Component with HasGameReference<GolgeGame> {
         );
     }
     canvas.drawRect(Rect.fromLTWH(0, 0, w, h), _vignette!);
+  }
+
+  /// Kar: yakındakiler büyük ve hızlı, uzaktakiler küçük; rüzgârla savrulur.
+  void _snow(Canvas canvas, double w, double h, double camX) {
+    final flake = Paint();
+    final count = Settings.lowGraphics ? 40 : 110;
+    final gust = math.sin(_t * 0.4) * 0.5 + 0.5;
+    for (var i = 0; i < count; i++) {
+      final depth = 0.3 + (i % 5) * 0.18;
+      final speed = 30 + depth * 60;
+      final k = ((_t * speed / h + i * 0.618) % 1.0);
+      final drift = _t * (20 + gust * 60) * depth;
+      final x =
+          ((i * 173.0 +
+                          drift +
+                          math.sin(_t * 0.9 + i) * 18 -
+                          camX * depth * 0.6) %
+                      (w + 40) +
+                  w +
+                  40) %
+              (w + 40) -
+          20;
+      flake.color = const Color(0xFFF2F6FA)
+          .withValues(alpha: 0.25 + 0.5 * depth);
+      canvas.drawCircle(Offset(x, h * k), 0.8 + depth * 1.8, flake);
+    }
+  }
+
+  @override
+  void render(Canvas canvas) {
+    final size = game.camera.viewport.size;
+    final w = size.x;
+    final h = size.y;
+    final cam = game.camera.viewfinder.position;
+    final theme = game.level.def.theme;
+
+    // Sürüklenen sis: mağarada köz, kayalıkta kül, gökte toz rengi.
+    final (fogColor, fogAlpha) = switch (theme) {
+      LevelTheme.cistern => (const Color(0xFFD08A5A), 0.05),
+      LevelTheme.cave => (kEmber, 0.05),
+      LevelTheme.cliffs => (const Color(0xFFB09080), 0.06),
+      LevelTheme.sky => (const Color(0xFFF0C8A0), 0.09),
+      LevelTheme.kaf => (const Color(0xFF8FE0C0), 0.07),
+      LevelTheme.snow => (const Color(0xFFD8E4F0), 0.09),
+      LevelTheme.ark => (const Color(0xFFD09A6A), 0.05),
+      LevelTheme.nemrut => (const Color(0xFFF0C4A0), 0.07),
+      LevelTheme.peri => (const Color(0xFFF0C8A0), 0.07),
+      LevelTheme.konya => (const Color(0xFFC8D8F0), 0.07),
+    };
+    if (!Settings.lowGraphics) {
+      for (var i = 0; i < 5; i++) {
+        final span = w + 700;
+        final x =
+            ((i * 373 + _t * (8 + i * 3) - cam.x * (0.5 + i * 0.12)) % span +
+                    span) %
+                span -
+            350;
+        final y = h * (0.25 + (i % 3) * 0.25) + math.sin(_t * 0.2 + i) * 20;
+        // Yassı, yumuşak kenarlı sis bulutu: degrade daireyi dikeyde ezer.
+        canvas.save();
+        canvas.translate(x, y);
+        canvas.scale(1, 0.3);
+        glowDot(canvas, Offset.zero, 280, fogColor, fogAlpha * 1.6);
+        canvas.restore();
+      }
+    }
+
+    if (theme.snowy) {
+      _snow(canvas, w, h, cam.x);
+    } else {
+      _embers(canvas, w, h, cam.x, theme);
+    }
 
     // Gerilim: şüphe arttıkça kenarlar kararır; saklanırken renkler solar.
     final threat = game.threat;
