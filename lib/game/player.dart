@@ -61,7 +61,7 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
   double _anim = 0;
   double _runPhase = 0;
   double _gait = 0;
-  double _stepTimer = 0;
+  int _lastHalfStep = 0;
   double _landDip = 0;
   bool _jumpCut = true;
   bool _prevJump = false;
@@ -195,7 +195,8 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     _runPhase += velocity.x.abs() * dt * 0.075;
     // Adım döngüsü kat edilen yola bağlı: ayaklar yerde kaymaz.
     final speedFactor = (velocity.x.abs() / runSpeed).clamp(0.0, 1.0);
-    if (onGround) _gait += velocity.x.abs() * dt / (14 + 12 * speedFactor);
+    // Koşarken adım daha uzun (biraz kayarak), ritim doğal kalır.
+    if (onGround) _gait += velocity.x.abs() * dt / (16 + 26 * speedFactor);
 
     _coyote = onGround ? 0.1 : _coyote - dt;
     if (_jumpBuffer > 0 && _coyote > 0) {
@@ -249,22 +250,21 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
         );
       }
     }
-    // Adımlar: koşarken duyulur ve ses çıkarır; parmak ucunda kısık ve
-    // sessizdir.
-    if (onGround && velocity.x.abs() > 40) {
-      _stepTimer -= dt;
-      if (_stepTimer <= 0) {
-        final loud = !quiet && velocity.x.abs() > 105;
-        _stepTimer = loud ? 0.3 : 0.42;
-        GameAudio.instance.play(
-          _onWalkway ? 'step_wood' : 'step',
-          volume: loud ? 0.7 : 0.18,
-        );
-        if (loud) _noise(_onWalkway ? 210 : 140);
-      }
-    } else {
-      _stepTimer = 0;
+    // Adımlar: ayak yere bastığı anda (yürüyüş döngüsünün her yarısında)
+    // tek bir ses. Koşarken yüksek ve çevreye duyulur; parmak ucunda kısık
+    // ve sessizdir.
+    final halfStep = (_gait * 2).floor();
+    if (onGround && halfStep != _lastHalfStep && velocity.x.abs() > 30) {
+      final loud = !quiet && velocity.x.abs() > 105;
+      final speedVol = (velocity.x.abs() / runSpeed).clamp(0.25, 1.0);
+      GameAudio.instance.play(
+        _onWalkway ? 'step_wood' : 'step',
+        volume: quiet ? 0.12 : 0.55 * speedVol,
+        minGapMs: 90,
+      );
+      if (loud && halfStep.isEven) _noise(_onWalkway ? 210 : 140);
     }
+    _lastHalfStep = halfStep;
 
     if (_grabCooldown <= 0 &&
         _vineAt(center.x, center.y) &&

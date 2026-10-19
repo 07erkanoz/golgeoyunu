@@ -41,6 +41,10 @@ class _MainMenuState extends State<MainMenu>
 
   @override
   Widget build(BuildContext context) {
+    // Alçak ekranlarda (telefon) yazılar ve boşluklar küçülür.
+    final k = (MediaQuery.sizeOf(context).height / 640).clamp(0.6, 1.0);
+    // Seçenekler parmakla dokunulabilecek kadar büyük kalır.
+    final itemK = k < 0.85 ? 0.85 : k;
     final save = SaveGame.current;
     final savedLevel = save == null
         ? null
@@ -66,19 +70,19 @@ class _MainMenuState extends State<MainMenu>
           ),
           SafeArea(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(64, 40, 32, 28),
+              padding: EdgeInsets.fromLTRB(64 * k, 40 * k, 32, 20 * k),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Spacer(flex: 3),
                   Text(
                     S.of('gameTitle'),
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: _text,
-                      fontSize: 52,
+                      fontSize: 52 * k,
                       fontWeight: FontWeight.w200,
-                      letterSpacing: 14,
-                      shadows: [
+                      letterSpacing: 14 * k,
+                      shadows: const [
                         Shadow(color: Color(0xAAE0A15F), blurRadius: 24),
                       ],
                     ),
@@ -93,16 +97,18 @@ class _MainMenuState extends State<MainMenu>
                       letterSpacing: 2,
                     ),
                   ),
-                  const SizedBox(height: 44),
+                  SizedBox(height: 44 * k),
                   if (save != null)
                     _item(
                       S.of('continue'),
+                      scale: itemK,
                       hint: savedLevel,
                       primary: true,
                       onTap: widget.game.continueGame,
                     ),
                   _item(
                     _confirmNew ? S.of('confirmNew') : S.of('newGame'),
+                    scale: itemK,
                     primary: save == null,
                     warn: _confirmNew,
                     onTap: () {
@@ -113,9 +119,13 @@ class _MainMenuState extends State<MainMenu>
                       widget.game.startNewGame();
                     },
                   ),
-                  _item(S.of('settings'), onTap: widget.game.toggleSettings),
+                  _item(
+                    S.of('settings'),
+                    scale: itemK,
+                    onTap: widget.game.toggleSettings,
+                  ),
                   if (widget.onQuit != null)
-                    _item(S.of('quit'), onTap: widget.onQuit!),
+                    _item(S.of('quit'), scale: itemK, onTap: widget.onQuit!),
                   const Spacer(flex: 4),
                   Row(
                     children: [
@@ -125,14 +135,6 @@ class _MainMenuState extends State<MainMenu>
                         style: TextStyle(color: _text.withValues(alpha: 0.35)),
                       ),
                       _langButton('EN', Lang.en),
-                      const Spacer(),
-                      Text(
-                        S.of('musicCredit'),
-                        style: TextStyle(
-                          color: _text.withValues(alpha: 0.35),
-                          fontSize: 11,
-                        ),
-                      ),
                     ],
                   ),
                 ],
@@ -165,11 +167,13 @@ class _MainMenuState extends State<MainMenu>
   Widget _item(
     String label, {
     required VoidCallback onTap,
+    double scale = 1,
     String? hint,
     bool primary = false,
     bool warn = false,
   }) {
     return _MenuItem(
+      scale: scale,
       label: label,
       hint: hint,
       onTap: onTap,
@@ -186,8 +190,10 @@ class _MenuItem extends StatefulWidget {
     this.hint,
     this.primary = false,
     this.warn = false,
+    this.scale = 1,
   });
 
+  final double scale;
   final String label;
   final String? hint;
   final VoidCallback onTap;
@@ -214,7 +220,11 @@ class _MenuItemState extends State<_MenuItem> {
         onTap: widget.onTap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
-          padding: EdgeInsets.only(left: _hover ? 14 : 0, top: 9, bottom: 9),
+          padding: EdgeInsets.only(
+            left: _hover ? 14 : 0,
+            top: 9 * widget.scale,
+            bottom: 9 * widget.scale,
+          ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -236,7 +246,7 @@ class _MenuItemState extends State<_MenuItem> {
                   color: widget.warn
                       ? const Color(0xFFE08A6A)
                       : (lit ? text : text.withValues(alpha: 0.7)),
-                  fontSize: 21,
+                  fontSize: 21 * widget.scale,
                   fontWeight: FontWeight.w300,
                   letterSpacing: 1.5,
                 ),

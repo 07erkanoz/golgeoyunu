@@ -16,6 +16,14 @@ bool get _isMobile =>
     (defaultTargetPlatform == TargetPlatform.android ||
         defaultTargetPlatform == TargetPlatform.iOS);
 
+/// Dokunmatik kontroller: telefonda ve tablette (mobil tarayıcı dahil).
+/// `--dart-define=TOUCH=true` masaüstünde de dokunmatik düğmeleri gösterir
+/// (mobil görünümü önizlemek için).
+bool get _isTouch =>
+    const bool.fromEnvironment('TOUCH') ||
+    defaultTargetPlatform == TargetPlatform.android ||
+    defaultTargetPlatform == TargetPlatform.iOS;
+
 bool get _isDesktop =>
     !kIsWeb &&
     (defaultTargetPlatform == TargetPlatform.windows ||
@@ -24,7 +32,7 @@ bool get _isDesktop =>
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Settings.load();
+  await Settings.load(lowGraphicsByDefault: _isTouch);
   if (_isMobile) {
     await Flame.device.fullScreen();
     await Flame.device.setLandscape();
@@ -101,6 +109,8 @@ class _GolgeAppState extends State<GolgeApp> {
                       canFullscreen: _isDesktop,
                       onFullscreen: _setFullscreen,
                       onLanguage: _refreshMenus,
+                      canTouch: _isTouch,
+                      onTouchChanged: () => setState(() {}),
                     ),
               },
               initialActiveOverlays: const [GolgeGame.menuOverlay],
@@ -111,7 +121,13 @@ class _GolgeAppState extends State<GolgeApp> {
                 if (inMenu) return const SizedBox.shrink();
                 return Stack(
                   children: [
-                    if (_isMobile) TouchControls(controls: _game.controls),
+                    if (_isTouch)
+                      ValueListenableBuilder<bool>(
+                        valueListenable: _game.settingsOpen,
+                        builder: (context, open, _) => open
+                            ? const SizedBox.shrink()
+                            : TouchControls(controls: _game.controls),
+                      ),
                     Positioned(
                       top: 8,
                       right: 8,

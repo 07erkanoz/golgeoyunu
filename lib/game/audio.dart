@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flame_audio/flame_audio.dart';
 
 import '../settings.dart';
@@ -13,8 +15,13 @@ class GameAudio {
   static final instance = GameAudio._();
 
   static const _effects = [
-    'step',
-    'step_wood',
+    'step_1',
+    'step_2',
+    'step_3',
+    'step_4',
+    'step_wood_1',
+    'step_wood_2',
+    'step_wood_3',
     'jump',
     'land',
     'firefly',
@@ -39,7 +46,23 @@ class GameAudio {
   /// Her efekt için önceden hazırlanmış oynatıcılar: çalarken yeni oynatıcı
   /// oluşturulmaz (Windows'ta bu, ses anında takılmaya yol açar).
   final _pools = <String, AudioPool>{};
-  static const _frequent = {'step', 'step_wood', 'land', 'jump', 'creak'};
+  static const _frequent = {
+    'step_1',
+    'step_2',
+    'step_3',
+    'step_4',
+    'step_wood_1',
+    'step_wood_2',
+    'step_wood_3',
+    'land',
+    'jump',
+    'creak',
+  };
+
+  /// Tekdüze olmasın diye birden çok varyasyonu olan sesler.
+  static const _variants = {'step': 4, 'step_wood': 3};
+  final _rnd = math.Random();
+  final _lastVariant = <String, int>{};
   AudioPlayer? _music;
   bool _musicWanted = false;
   bool _musicStarting = false;
@@ -84,6 +107,14 @@ class GameAudio {
   /// Bir efekt çalar; aynı efekt [minGapMs] içinde tekrar çalınmaz.
   void play(String name, {double volume = 1, int minGapMs = 60}) {
     if (!_ready || Settings.effects <= 0) return;
+    final count = _variants[name];
+    if (count != null) {
+      // Aynı varyasyon art arda gelmesin.
+      var v = _rnd.nextInt(count);
+      if (v == _lastVariant[name]) v = (v + 1) % count;
+      _lastVariant[name] = v;
+      name = '${name}_${v + 1}';
+    }
     final now = DateTime.now().millisecondsSinceEpoch;
     if (now - (_lastPlayed[name] ?? 0) < minGapMs) return;
     _lastPlayed[name] = now;

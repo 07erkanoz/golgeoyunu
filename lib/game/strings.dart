@@ -27,6 +27,15 @@ class S {
     'graphics': 'Grafik',
     'gfxHigh': 'Yüksek',
     'gfxLow': 'Düşük',
+    'touchControls': 'Dokunmatik',
+    'touchButtons': 'Düğmeler',
+    'touchGestures': 'Hareket',
+    'touchOpacity': 'Düğme görünürlüğü',
+    'touchHelpGestures':
+        'Sol yarı: sürükle → yürü, yukarı → tırman/kol, aşağı → çömel\n'
+        'Sağ yarı: dokun → zıpla (basılı tut: süzül) · iki parmak → ateşböceği',
+    'hintMove': 'sürükle: yürü',
+    'hintJump': 'dokun: zıpla',
     'retry': 'Yeniden dene',
     'resume': 'Devam',
     'close': 'Kapat',
@@ -41,6 +50,11 @@ class S {
         'Hezarfen\'in kanatları! Havadayken zıplamayı basılı tut: süzülürsün.',
     'memoriesFound': 'Toplanan hatıralar',
     'musicCredit': 'Menü müziği: vjgalaxy · Pixabay',
+    'credits': 'Emeği geçenler',
+    'musicLicense':
+        'Menü müziği: "Turkish Maqam Soundscape", vjgalaxy (Pixabay). '
+        'Pixabay İçerik Lisansı ile kullanılmaktadır.\n'
+        'Oyun içi sesler ve efektler bu oyun için sentezlenmiştir.',
   };
 
   static const _en = {
@@ -60,6 +74,15 @@ class S {
     'graphics': 'Graphics',
     'gfxHigh': 'High',
     'gfxLow': 'Low',
+    'touchControls': 'Touch',
+    'touchButtons': 'Buttons',
+    'touchGestures': 'Gestures',
+    'touchOpacity': 'Button visibility',
+    'touchHelpGestures':
+        'Left half: drag → walk, up → climb/lever, down → crouch\n'
+        'Right half: tap → jump (hold: glide) · two fingers → firefly',
+    'hintMove': 'drag: walk',
+    'hintJump': 'tap: jump',
     'retry': 'Retry',
     'resume': 'Resume',
     'close': 'Close',
@@ -73,5 +96,10 @@ class S {
     'wings': 'Hezarfen\'s wings! Hold jump in the air to glide.',
     'memoriesFound': 'Memories found',
     'musicCredit': 'Menu music: vjgalaxy · Pixabay',
+    'credits': 'Credits',
+    'musicLicense':
+        'Menu music: "Turkish Maqam Soundscape" by vjgalaxy (Pixabay), '
+        'used under the Pixabay Content License.\n'
+        'In-game ambience and sound effects were synthesized for this game.',
   };
 }

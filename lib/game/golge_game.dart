@@ -71,6 +71,10 @@ class GolgeGame extends FlameGame with KeyboardEvents {
   bool _snapCamera = true;
   bool _prevJump = false;
   double _closeUp = 1;
+
+  /// Ekranda görünen kare yüksekliği: masaüstünde Limbo gibi uzak, telefon
+  /// gibi alçak ekranlarda çocuk seçilebilsin diye daha yakın.
+  double get tilesTall => camera.viewport.size.y < 520 ? 13 : 20;
   double _lookAhead = 0;
   final _rnd = math.Random();
   int _devStop = 0;
@@ -123,6 +127,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     effects.fadeTo(0, 1.6);
     GameAudio.instance.menuMusic(true);
     overlays.remove(settingsOverlay);
+    settingsOpen.value = false;
     _showOverlay(menuOverlay);
   }
 
@@ -198,7 +203,8 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     _menuT += dt;
     final view = camera.viewport.size;
     if (view.x == 0 || view.y == 0) return;
-    final zoom = view.y / (kTile * math.min(20.0, level.height.toDouble()));
+    final zoom =
+        view.y / (kTile * math.min(tilesTall, level.height.toDouble()));
     camera.viewfinder.zoom = zoom;
     final halfW = view.x / zoom / 2;
     final halfH = view.y / zoom / 2;
@@ -243,12 +249,16 @@ class GolgeGame extends FlameGame with KeyboardEvents {
 
   static const settingsOverlay = 'settings';
 
+  /// Ayarlar açık mı (dokunmatik düğmeler bu sırada gizlenir).
+  final settingsOpen = ValueNotifier<bool>(false);
+
   /// Masaüstünde tam ekranı açıp kapatır (main.dart bağlar).
   void Function()? onToggleFullscreen;
 
   void toggleSettings() {
     if (overlays.isActive(settingsOverlay)) {
       overlays.remove(settingsOverlay);
+      settingsOpen.value = false;
       if (!menuMode.value) {
         resumeEngine();
         GameAudio.instance.resumeAll();
@@ -263,6 +273,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         ..jump = false
         ..sneak = false;
       _showOverlay(settingsOverlay);
+      settingsOpen.value = true;
       if (!menuMode.value) {
         pauseEngine();
         GameAudio.instance.pauseAll();
@@ -503,7 +514,9 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     if (view.x == 0 || view.y == 0) return;
     // Limbo gibi uzak bir kamera: ekranda yaklaşık 20 kare yükseklik.
     final zoom =
-        view.y / (kTile * math.min(20.0, level.height.toDouble())) * _closeUp;
+        view.y /
+        (kTile * math.min(tilesTall, level.height.toDouble())) *
+        _closeUp;
     camera.viewfinder.zoom = zoom;
 
     // Gidilen yöne doğru ileriyi gösterir; hızlandıkça daha çok.

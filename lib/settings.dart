@@ -17,9 +17,16 @@ class Settings {
   /// dahili ekran kartları için.
   static bool lowGraphics = false;
 
+  /// Dokunmatik kontrol: düğmeler ya da hareket (sürükle / dokun).
+  static bool touchGestures = false;
+
+  /// Dokunmatik düğmelerin görünürlüğü (0.1 – 1).
+  static double touchOpacity = 0.7;
+
   static SharedPreferences? _prefs;
 
-  static Future<void> load() async {
+  static Future<void> load({bool lowGraphicsByDefault = false}) async {
+    lowGraphics = lowGraphicsByDefault;
     try {
       final p = _prefs = await SharedPreferences.getInstance();
       ambience = p.getDouble('ambience') ?? ambience;
@@ -27,6 +34,8 @@ class Settings {
       effects = p.getDouble('effects') ?? effects;
       fullscreen = p.getBool('fullscreen') ?? fullscreen;
       lowGraphics = p.getBool('low_graphics') ?? lowGraphics;
+      touchGestures = p.getBool('touch_gestures') ?? touchGestures;
+      touchOpacity = p.getDouble('touch_opacity') ?? touchOpacity;
       S.lang = p.getString('lang') == 'en' ? Lang.en : Lang.tr;
       SaveGame.current = SaveData.decode(p.getString('save'));
     } catch (_) {
@@ -42,6 +51,8 @@ class Settings {
     await p.setDouble('effects', effects);
     await p.setBool('fullscreen', fullscreen);
     await p.setBool('low_graphics', lowGraphics);
+    await p.setBool('touch_gestures', touchGestures);
+    await p.setDouble('touch_opacity', touchOpacity);
     await p.setString('lang', S.en ? 'en' : 'tr');
   }
 }

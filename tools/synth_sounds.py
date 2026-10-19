@@ -173,16 +173,44 @@ rumble = [x * (0.6 + 0.4 * math.sin(2 * math.pi * i / SR / 1.6)) for i, x in enu
 save('karabasan', loop(rumble, 1), 0.85)
 
 # ------------------------------------------------------------------ efektler
-save('step', env(lowpass(noise(0.07), 900), 0.002, 0.06), 0.5)
-save('step_wood', mix(
-    (env(lowpass(noise(0.09), 600), 0.002, 0.08), 1.0),
-    (decay(sine(lambda t: 310 + 40 * math.sin(t * 90), 0.14, vib=0.02, vib_rate=30), 0.05), 0.35),
-), 0.55)
-save('jump', env(bandpass(noise(0.16), 400, 2500), 0.03, 0.12), 0.35)
+# Adımlar: sürtünme değil, yumuşak tabanlı küçük bir ayağın "pat" sesi.
+# Bir tık (geçiş anı), alçak bir topuk vuruşu ve kısa bir gövde tınısı.
+def footstep(pitch, bright, body):
+    click = decay(lowpass(noise(0.012), bright), 0.002)
+    heel = decay(sine(lambda t: pitch * (1.0 - 0.35 * min(1, t / 0.03)), 0.09), 0.022)
+    tone = decay(bandpass(noise(0.06), 250, 700), 0.012)
+    out = mix((click, 0.55), (heel, 1.0), (tone, body))
+    return env(out, 0.0005, 0.03)
+
+
+for i, (pitch, bright, body) in enumerate(((128, 2600, 0.35), (112, 2200, 0.3), (142, 3000, 0.4), (120, 2400, 0.32))):
+    save(f'step_{i + 1}', footstep(pitch, bright, body), 0.45)
+
+
+# Tahta iskele: oyuk, tok bir vuruş.
+def woodstep(pitch):
+    knock = mix(
+        (decay(sine(pitch, 0.14), 0.04), 1.0),
+        (decay(sine(pitch * 2.37, 0.14), 0.02), 0.35),
+        (decay(lowpass(noise(0.01), 3000), 0.002), 0.5),
+    )
+    return env(knock, 0.0005, 0.06)
+
+
+for i, pitch in enumerate((190, 172, 208)):
+    save(f'step_wood_{i + 1}', woodstep(pitch), 0.45)
+
+# Zıplama: hafif bir nefes ve kumaş hışırtısı.
+save('jump', mix(
+    (env(bandpass(noise(0.11), 250, 900), 0.015, 0.08), 0.8),
+    (decay(sine(lambda t: 180 + 120 * t, 0.08), 0.03), 0.25),
+), 0.3)
+# İniş: alçak bir gümleme ve küçük bir toz.
 save('land', mix(
-    (decay(sine(lambda t: 90 - 40 * t, 0.18), 0.05), 1.0),
-    (env(lowpass(noise(0.1), 700), 0.001, 0.09), 0.6),
-), 0.6)
+    (decay(sine(lambda t: 85 * (1 - 0.4 * min(1, t / 0.06)), 0.2), 0.045), 1.0),
+    (decay(lowpass(noise(0.015), 2000), 0.004), 0.45),
+    (env(lowpass(noise(0.12), 500), 0.005, 0.1), 0.25),
+), 0.55)
 chime = mix(*[(decay(sine(f, 1.0, vib=0.003, vib_rate=6), d), g)
               for f, d, g in ((1318, 0.35, 0.5), (1760, 0.25, 0.35), (2637, 0.18, 0.2))])
 save('firefly', echo(chime, 0.12, 0.3, 0.3), 0.45)
