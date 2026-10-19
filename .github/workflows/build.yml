@@ -91,14 +91,17 @@ jobs:
     needs: [windows, android, linux]
     runs-on: ubuntu-latest
     steps:
+      - name: Sürüm adı (tarih-saat, her zaman benzersiz)
+        id: tag
+        run: echo "name=build-$(TZ=Europe/Istanbul date +%Y%m%d-%H%M)" >> "$GITHUB_OUTPUT"
       - uses: actions/download-artifact@v4
         with:
           merge-multiple: true
       - name: İndirme sayfasına yayımla
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: build-${{ github.run_number }}
-          name: Gölge Oyunu · derleme ${{ github.run_number }}
+          tag_name: ${{ steps.tag.outputs.name }}
+          name: Gölge Oyunu · ${{ steps.tag.outputs.name }}
           prerelease: true
           files: |
             GolgeOyunu-windows.zip
