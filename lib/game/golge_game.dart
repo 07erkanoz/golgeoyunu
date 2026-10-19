@@ -9,6 +9,7 @@ import 'package:flutter/widgets.dart' show KeyEventResult;
 import 'atmosphere.dart';
 import 'entities.dart';
 import 'level.dart';
+import 'lighting.dart';
 import 'levels.dart';
 import 'narration.dart';
 import 'palette.dart';
@@ -21,6 +22,7 @@ class Buttons {
   bool up = false;
   bool down = false;
   bool jump = false;
+  bool cover = false;
 }
 
 /// Klavye ve dokunmatik girişin birleşimi.
@@ -33,6 +35,17 @@ class Controls {
   bool get up => keyboard.up || touch.up;
   bool get down => keyboard.down || touch.down;
   bool get jump => keyboard.jump || touch.jump;
+  bool get cover => keyboard.cover || touch.cover;
+
+  /// Ateşböceği salma tek seferlik bir eylem: tuşa basıldığı an kuyruğa girer,
+  /// oyuncu bir sonraki karede tüketir.
+  bool _lureQueued = false;
+  void queueLure() => _lureQueued = true;
+  bool takeLure() {
+    final queued = _lureQueued;
+    _lureQueued = false;
+    return queued;
+  }
 }
 
 class GolgeGame extends FlameGame with KeyboardEvents {
@@ -53,6 +66,11 @@ class GolgeGame extends FlameGame with KeyboardEvents {
   bool _prevJump = false;
   double _closeUp = 1;
   int _devStop = 0;
+
+  /// Kavanozdaki ateşböcekleri: salınınca azalır, zamanla yenilenir.
+  static const maxFireflies = 3;
+  int fireflies = maxFireflies;
+  double _fireflyRegen = 0;
 
   final _memories = <String>{};
   final _whispersShown = <String>{};
@@ -92,7 +110,8 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     narration.playCinematic(const [], () {});
   }
 
-  void _showLevelTitle() => narration.showTitle(level.def.title, level.def.subtitle);
+  void _showLevelTitle() =>
+      narration.showTitle(level.def.title, level.def.subtitle);
 
   void _buildLevel(int index, {bool respawn = false}) {
     world.removeAll(world.children.toList());
@@ -104,6 +123,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
 
     world.addAll([
       TerrainComponent(level),
+      LightingLayer(),
       ForegroundComponent(level),
       WaterComponent(level),
       ExitPortal(level.exitCell),
@@ -111,7 +131,8 @@ class GolgeGame extends FlameGame with KeyboardEvents {
       for (final b in level.birdCells)
         Bird(b, level.exitCell + Vector2(kTile / 2, -kTile)),
       for (var i = 0; i < level.memoryCells.length; i++)
-        if (!_memories.contains('$index:$i')) MemoryShard(level.memoryCells[i], i),
+        if (!_memories.contains('$index:$i'))
+          MemoryShard(level.memoryCells[i], i),
     ]);
     player = Player(_respawn!.clone());
     world.add(player!);
@@ -123,40 +144,62 @@ class GolgeGame extends FlameGame with KeyboardEvents {
   void onPlayerDied() {
     if (_transitioning) return;
     _transitioning = true;
-    effects.fadeTo(1, 0.8, color: kInk, onDone: () {
-      _buildLevel(levelIndex, respawn: true);
-      effects.fadeTo(0, 0.7);
-      _transitioning = false;
-    });
+    effects.fadeTo(
+      1,
+      0.8,
+      color: kInk,
+      onDone: () {
+        _buildLevel(levelIndex, respawn: true);
+        effects.fadeTo(0, 0.7);
+        _transitioning = false;
+      },
+    );
   }
 
   void onExitReached() {
     if (_transitioning) return;
     _transitioning = true;
     cinematic = true;
-    effects.fadeTo(1, 1.4, color: kLight, onDone: () {
-      final next = levelIndex + 1;
-      if (next < levels.length) {
-        _buildLevel(next);
-        cinematic = false;
-        _transitioning = false;
-        effects.fadeTo(0, 1.8);
-        _showLevelTitle();
-        return;
-      }
-      narration.playCinematic([
-        ...epilogue.take(epilogue.length - 1),
-        'Toplanan hatıralar: $memoryCount / $memoryTotal',
-        epilogue.last,
-      ], () {
-        _memories.clear();
-        _whispersShown.clear();
-        effects.setFade(1, kInk);
-        _buildLevel(0);
-        _transitioning = false;
-        _startPrologue();
-      });
-    });
+    effects.fadeTo(
+      1,
+      1.4,
+      color: kLight,
+      onDone: () {
+        final next = levelIndex + 1;
+        if (next < levels.length) {
+          _buildLevel(next);
+          cinematic = false;
+          _transitioning = false;
+          effects.fadeTo(0, 1.8);
+          _showLevelTitle();
+          return;
+        }
+        narration.playCinematic(
+          [
+            ...epilogue.take(epilogue.length - 1),
+            'Toplanan hatıralar: $memoryCount / $memoryTotal',
+            epilogue.last,
+          ],
+          () {
+            _memories.clear();
+            _whispersShown.clear();
+            effects.setFade(1, kInk);
+            _buildLevel(0);
+            _transitioning = false;
+            _startPrologue();
+          },
+        );
+      },
+    );
+  }
+
+  /// Oyuncu kavanozdan bir ateşböceği salar; Kandilciler ışığa yönelir.
+  void releaseFirefly(Vector2 from, int direction) {
+    if (fireflies <= 0) return;
+    fireflies--;
+    _fireflyRegen = 0;
+    world.add(FireflyLure(from, direction));
+    narration.pulseFireflies();
   }
 
   void collectMemory(int index) {
@@ -177,10 +220,14 @@ class GolgeGame extends FlameGame with KeyboardEvents {
       final key = '$levelIndex:$i';
       if (_whispersShown.contains(key) || !near(cell, 48, 80)) continue;
       _whispersShown.add(key);
-      if (i < level.def.whispers.length) narration.whisper(level.def.whispers[i]);
+      if (i < level.def.whispers.length) {
+        narration.whisper(level.def.whispers[i]);
+      }
     }
     for (final cell in level.checkpointCells) {
-      if (near(cell, 40, 60)) _respawn = Level.standOn(cell, Player.w, Player.h);
+      if (near(cell, 40, 60)) {
+        _respawn = Level.standOn(cell, Player.w, Player.h);
+      }
     }
   }
 
@@ -193,6 +240,15 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     if (narration.inCinematic && jump && !_prevJump) narration.skip();
     _prevJump = jump;
 
+    if (fireflies < maxFireflies) {
+      _fireflyRegen += dt;
+      if (_fireflyRegen > 10) {
+        _fireflyRegen = 0;
+        fireflies++;
+        narration.pulseFireflies();
+      }
+    }
+
     final p = player;
     if (p == null || !p.isMounted) return;
     if (!cinematic && !p.isDead) _checkStoryPoints(p);
@@ -202,7 +258,8 @@ class GolgeGame extends FlameGame with KeyboardEvents {
   void _updateCamera(Player p, double dt) {
     final view = camera.viewport.size;
     if (view.x == 0 || view.y == 0) return;
-    final zoom = view.y / (kTile * 11.5) * _closeUp;
+    final zoom =
+        view.y / (kTile * math.min(15.5, level.height.toDouble())) * _closeUp;
     camera.viewfinder.zoom = zoom;
 
     final target = p.center + Vector2(p.facing * 40, -24);
@@ -228,37 +285,59 @@ class GolgeGame extends FlameGame with KeyboardEvents {
   // ---------------------------------------------------------------- klavye
 
   @override
-  KeyEventResult onKeyEvent(KeyEvent event, Set<LogicalKeyboardKey> keysPressed) {
+  KeyEventResult onKeyEvent(
+    KeyEvent event,
+    Set<LogicalKeyboardKey> keysPressed,
+  ) {
     bool any(List<LogicalKeyboardKey> ks) => ks.any(keysPressed.contains);
     controls.keyboard
       ..left = any([LogicalKeyboardKey.arrowLeft, LogicalKeyboardKey.keyA])
       ..right = any([LogicalKeyboardKey.arrowRight, LogicalKeyboardKey.keyD])
       ..up = any([LogicalKeyboardKey.arrowUp, LogicalKeyboardKey.keyW])
       ..down = any([LogicalKeyboardKey.arrowDown, LogicalKeyboardKey.keyS])
-      ..jump = any([LogicalKeyboardKey.space, LogicalKeyboardKey.keyZ]);
+      ..jump = any([LogicalKeyboardKey.space, LogicalKeyboardKey.keyZ])
+      ..cover = any([
+        LogicalKeyboardKey.shiftLeft,
+        LogicalKeyboardKey.shiftRight,
+        LogicalKeyboardKey.keyQ,
+      ]);
     if (event is KeyDownEvent) {
-      if (event.logicalKey == LogicalKeyboardKey.enter && narration.inCinematic) {
+      if (event.logicalKey == LogicalKeyboardKey.keyF ||
+          event.logicalKey == LogicalKeyboardKey.keyX) {
+        controls.queueLure();
+      }
+      if (event.logicalKey == LogicalKeyboardKey.enter &&
+          narration.inCinematic) {
         narration.skip();
       }
-      if (event.logicalKey == LogicalKeyboardKey.keyR && !cinematic) player?.die();
+      if (event.logicalKey == LogicalKeyboardKey.keyR && !cinematic) {
+        player?.die();
+      }
       // Geliştirici kısayolu: --dart-define=DEV=true ile N bir sonraki bölüm.
-      if (const bool.fromEnvironment('DEV') && event.logicalKey == LogicalKeyboardKey.keyN) {
+      if (const bool.fromEnvironment('DEV') &&
+          event.logicalKey == LogicalKeyboardKey.keyN) {
         debugLoadLevel((levelIndex + 1) % levels.length);
         _showLevelTitle();
       }
       // Geliştirici kısayolu: C yakın plan (ekran görüntüsü için).
-      if (const bool.fromEnvironment('DEV') && event.logicalKey == LogicalKeyboardKey.keyC) {
+      if (const bool.fromEnvironment('DEV') &&
+          event.logicalKey == LogicalKeyboardKey.keyC) {
         _closeUp = _closeUp == 1 ? 3 : 1;
       }
       // Geliştirici kısayolu: V karakter stilini değiştirir.
-      if (const bool.fromEnvironment('DEV') && event.logicalKey == LogicalKeyboardKey.keyV) {
+      if (const bool.fromEnvironment('DEV') &&
+          event.logicalKey == LogicalKeyboardKey.keyV) {
         Player.jarStyle = !Player.jarStyle;
       }
       // Geliştirici kısayolu: T sıradaki hikâye noktasına ışınlar.
-      if (const bool.fromEnvironment('DEV') && event.logicalKey == LogicalKeyboardKey.keyT) {
-        final stops = level.triggers.map((t) => t.$2).toList()..sort((a, b) => a.x.compareTo(b.x));
+      if (const bool.fromEnvironment('DEV') &&
+          event.logicalKey == LogicalKeyboardKey.keyT) {
+        final stops = level.triggers.map((t) => t.$2).toList()
+          ..sort((a, b) => a.x.compareTo(b.x));
         if (stops.isNotEmpty && player != null) {
-          player!.position.setFrom(Level.standOn(stops[_devStop++ % stops.length], Player.w, Player.h));
+          player!.position.setFrom(
+            Level.standOn(stops[_devStop++ % stops.length], Player.w, Player.h),
+          );
           _snapCamera = true;
         }
       }

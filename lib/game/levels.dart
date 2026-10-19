@@ -56,7 +56,7 @@ const levels = <LevelDef>[
     theme: LevelTheme.cistern,
     whispers: [
       'Ustam derdi ki: "Bu sarnıçta sular İstanbul\'un bütün sırlarını saklar."',
-      'Kandilci ışığını yola tutar. Sütunların ardında dur, kıpırdama.',
+      'Kandilci ışığını yola tutar. Sütunun ardında kavanozunu ört (Shift)… ya da uzağa bir ateşböceği sal (F).',
       'Medusa\'nın başları ters konmuş. Bakışı kimseyi taşa çeviremesin diye.',
     ],
     memories: [

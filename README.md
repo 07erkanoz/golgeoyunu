@@ -29,13 +29,16 @@ Karakter geçicidir; ileride profesyonel çizimle değiştirilecek.
 | Boşluk / Z | Zıpla (basılı tutunca daha yükseğe) |
 | ↑ / W | Kenardan yukarı çık, sarmaşığa tutun ve tırman |
 | ↓ / S | Çömel ve sessizce yürü, kenardan bırak; zıplamayla birlikte platformdan aşağı in |
+| Shift / Q (basılı) | Kavanozu ört: ışığın kısılır, yavaşlarsın, Kandilci seni ancak yakından görür |
+| F / X | Ateşböceği sal: Kandilci ışığa yönelir (kavanozda 3 tane, 10 saniyede bir yenilenir) |
 | Enter / Boşluk | Ara sahnedeki metni geç |
 | R | Son kontrol noktasından yeniden başla |
 
 Mobilde ekranda dokunmatik düğmeler çıkar.
 
-**Gizlenme:** Sütunların ardında ya da otların içinde dururken veya çömelerek
-yürürken kavanozunu örtersin ve Kandilci seni göremez. Koşarsan yakından fark eder.
+**Gizlenme:** Sütunların ardında ya da otların içinde dururken, çömelerek ya da
+kavanozunu örterek ilerlerken Kandilci seni göremez ve yanından geçip gider.
+Ama seni kovalarken saklanmaya çalışırsan yakalar.
 
 ## Windows'ta oynamak
 

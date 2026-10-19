@@ -30,10 +30,15 @@ class Narration extends Component with HasGameReference<GolgeGame> {
   double _whisperT = 0;
 
   double _counterT = 99;
+  double _fireflyT = 99;
 
   bool get inCinematic => _lines.isNotEmpty;
 
-  void playCinematic(List<String> lines, VoidCallback onDone, {bool instantBlack = false}) {
+  void playCinematic(
+    List<String> lines,
+    VoidCallback onDone, {
+    bool instantBlack = false,
+  }) {
     _lines = lines;
     _lineIndex = 0;
     _lineT = 0;
@@ -47,7 +52,9 @@ class Narration extends Component with HasGameReference<GolgeGame> {
   void skip() {
     if (!inCinematic) return;
     final fadeOutStart = _lineIn + _lineHold;
-    _lineT = _lineT < fadeOutStart ? fadeOutStart : fadeOutStart + _lineOut + 0.001;
+    _lineT = _lineT < fadeOutStart
+        ? fadeOutStart
+        : fadeOutStart + _lineOut + 0.001;
   }
 
   void showTitle(String title, String subtitle) {
@@ -59,6 +66,8 @@ class Narration extends Component with HasGameReference<GolgeGame> {
   void whisper(String text) => _whispers.add(text);
 
   void pulseCounter() => _counterT = 0;
+
+  void pulseFireflies() => _fireflyT = 0;
 
   double _whisperDuration(String s) => 3.0 + s.length * 0.045;
 
@@ -93,6 +102,7 @@ class Narration extends Component with HasGameReference<GolgeGame> {
       if (_whisperT > _whisperDuration(_whisper!)) _whisper = null;
     }
     _counterT += dt;
+    _fireflyT += dt;
   }
 
   double _envelope(double t, double fadeIn, double hold, double fadeOut) {
@@ -123,7 +133,9 @@ class Narration extends Component with HasGameReference<GolgeGame> {
           fontWeight: FontWeight.w300,
           letterSpacing: spacing,
           height: 1.4,
-          shadows: [Shadow(color: kInk.withValues(alpha: alpha * 0.9), blurRadius: 12)],
+          shadows: [
+            Shadow(color: kInk.withValues(alpha: alpha * 0.9), blurRadius: 12),
+          ],
         ),
       ),
       textAlign: TextAlign.center,
@@ -140,7 +152,10 @@ class Narration extends Component with HasGameReference<GolgeGame> {
     final unit = math.min(h, w * 0.6);
 
     if (inCinematic) {
-      canvas.drawRect(Rect.fromLTWH(0, 0, w, h), Paint()..color = kInk.withValues(alpha: _backdrop));
+      canvas.drawRect(
+        Rect.fromLTWH(0, 0, w, h),
+        Paint()..color = kInk.withValues(alpha: _backdrop),
+      );
       final line = _lines[_lineIndex];
       final a = _envelope(_lineT, _lineIn, _lineHold, _lineOut);
       final isEnd = line == line.toUpperCase();
@@ -154,19 +169,76 @@ class Narration extends Component with HasGameReference<GolgeGame> {
         spacing: isEnd ? 10 : 0.5,
         maxWidth: w * 0.8,
       );
-      _text(canvas, 'boşluk / dokun', Offset(w - 90, h - 30), unit * 0.022, 0.25);
+      _text(
+        canvas,
+        'boşluk / dokun',
+        Offset(w - 90, h - 30),
+        unit * 0.022,
+        0.25,
+      );
       return;
     }
 
     if (_title != null) {
       final a = _envelope(_titleT, 1.2, 3.0, 1.8);
-      _text(canvas, _title!, Offset(w / 2, h * 0.36), unit * 0.07, a, spacing: 12);
-      _text(canvas, _subtitle, Offset(w / 2, h * 0.46), unit * 0.032, a * 0.8, italic: true);
+      _text(
+        canvas,
+        _title!,
+        Offset(w / 2, h * 0.36),
+        unit * 0.07,
+        a,
+        spacing: 12,
+      );
+      _text(
+        canvas,
+        _subtitle,
+        Offset(w / 2, h * 0.46),
+        unit * 0.032,
+        a * 0.8,
+        italic: true,
+      );
     }
 
     if (_whisper != null) {
-      final a = _envelope(_whisperT, 0.8, _whisperDuration(_whisper!) - 1.6, 0.8);
-      _text(canvas, _whisper!, Offset(w / 2, h * 0.84), unit * 0.032, a, italic: true, maxWidth: w * 0.75);
+      final a = _envelope(
+        _whisperT,
+        0.8,
+        _whisperDuration(_whisper!) - 1.6,
+        0.8,
+      );
+      _text(
+        canvas,
+        _whisper!,
+        Offset(w / 2, h * 0.84),
+        unit * 0.032,
+        a,
+        italic: true,
+        maxWidth: w * 0.75,
+      );
+    }
+
+    // Kavanozdaki ateşböcekleri: sol üstte üç küçük ışık.
+    final hudAlpha = 0.35 + 0.65 * (1 - (_fireflyT / 2.5).clamp(0.0, 1.0));
+    for (var i = 0; i < GolgeGame.maxFireflies; i++) {
+      final lit = i < game.fireflies;
+      final c = Offset(34 + i * 18, 36);
+      if (lit) {
+        canvas.drawCircle(
+          c,
+          9,
+          Paint()
+            ..color = const Color(0xFFFFC46B).withValues(alpha: 0.35 * hudAlpha)
+            ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
+        );
+      }
+      canvas.drawCircle(
+        c,
+        lit ? 3.2 : 2.4,
+        Paint()
+          ..color = (lit ? const Color(0xFFFFE8B8) : kText).withValues(
+            alpha: lit ? hudAlpha : 0.18,
+          ),
+      );
     }
 
     if (_counterT < 4.5 && game.memoryCount > 0) {

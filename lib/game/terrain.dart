@@ -12,8 +12,8 @@ import 'palette.dart';
 /// o resim basılır.
 class TerrainComponent extends Component {
   TerrainComponent(Level level)
-      : _picture = _buildTerrain(level),
-        super(priority: 0);
+    : _picture = _buildTerrain(level),
+      super(priority: 0);
 
   final Picture _picture;
 
@@ -25,8 +25,8 @@ class TerrainComponent extends Component {
 /// örter.
 class ForegroundComponent extends Component {
   ForegroundComponent(Level level)
-      : _picture = _buildForeground(level),
-        super(priority: 30);
+    : _picture = _buildForeground(level),
+      super(priority: 30);
 
   final Picture _picture;
 
@@ -48,6 +48,19 @@ Picture _buildTerrain(Level lv) {
   final cloud = Paint()..color = kCloud;
   final theme = lv.def.theme;
 
+  // Haritanın dışı: yanlar (ve kapalı mekânlarda tavanın üstü) dolu kaya.
+  if (theme != LevelTheme.sky) {
+    const m = 3000.0;
+    canvas.drawRect(Rect.fromLTRB(-m, -m, 0, lv.pixelHeight + m), ink);
+    canvas.drawRect(
+      Rect.fromLTRB(lv.pixelWidth, -m, lv.pixelWidth + m, lv.pixelHeight + m),
+      ink,
+    );
+    if (theme == LevelTheme.cistern || theme == LevelTheme.cave) {
+      canvas.drawRect(Rect.fromLTRB(-m, -m, lv.pixelWidth + m, 0.5), ink);
+    }
+  }
+
   for (var r = 0; r < lv.height; r++) {
     for (var c = 0; c < lv.width; c++) {
       final x = c * kTile;
@@ -55,7 +68,10 @@ Picture _buildTerrain(Level lv) {
       final rnd = _rng(c, r);
       switch (lv.cell(c, r)) {
         case '#':
-          canvas.drawRect(Rect.fromLTWH(x - 0.5, y - 0.5, kTile + 1, kTile + 1), ink);
+          canvas.drawRect(
+            Rect.fromLTWH(x - 0.5, y - 0.5, kTile + 1, kTile + 1),
+            ink,
+          );
           if (r > 0 && !lv.solid(c, r - 1) && theme != LevelTheme.cistern) {
             for (var i = 0; i < 3; i++) {
               canvas.drawCircle(
@@ -72,12 +88,19 @@ Picture _buildTerrain(Level lv) {
               canvas.drawPath(
                 Path()
                   ..moveTo(bx, y + 1)
-                  ..quadraticBezierTo(bx + lean * 0.2, y - h * 0.6, bx + lean, y - h),
+                  ..quadraticBezierTo(
+                    bx + lean * 0.2,
+                    y - h * 0.6,
+                    bx + lean,
+                    y - h,
+                  ),
                 line,
               );
             }
           }
-          if (r + 1 < lv.height && !lv.solid(c, r + 1) && theme != LevelTheme.cistern) {
+          if (r + 1 < lv.height &&
+              !lv.solid(c, r + 1) &&
+              theme != LevelTheme.cistern) {
             if (theme == LevelTheme.cave) {
               for (var i = 0; i < 2; i++) {
                 if (rnd.nextDouble() < 0.4) continue;
@@ -102,8 +125,14 @@ Picture _buildTerrain(Level lv) {
                 canvas.drawPath(
                   Path()
                     ..moveTo(sx, y + kTile - 1)
-                    ..cubicTo(sx + sway, y + kTile + len * 0.3, sx - sway,
-                        y + kTile + len * 0.7, sx + sway * 0.5, y + kTile + len),
+                    ..cubicTo(
+                      sx + sway,
+                      y + kTile + len * 0.3,
+                      sx - sway,
+                      y + kTile + len * 0.7,
+                      sx + sway * 0.5,
+                      y + kTile + len,
+                    ),
                   line,
                 );
               }
@@ -126,7 +155,10 @@ Picture _buildTerrain(Level lv) {
           } else if (theme == LevelTheme.sky) {
             for (var i = 0; i < 4; i++) {
               canvas.drawCircle(
-                Offset(x + 4 + i * 8 + rnd.nextDouble() * 4, y + 8 + rnd.nextDouble() * 3),
+                Offset(
+                  x + 4 + i * 8 + rnd.nextDouble() * 4,
+                  y + 8 + rnd.nextDouble() * 3,
+                ),
                 7 + rnd.nextDouble() * 5,
                 cloud,
               );
@@ -136,11 +168,19 @@ Picture _buildTerrain(Level lv) {
             canvas.drawRect(Rect.fromLTWH(x - 0.5, y, kTile + 1, 7), ink);
             for (var i = 0; i < 2; i++) {
               final sx = x + rnd.nextDouble() * kTile;
-              canvas.drawCircle(Offset(sx, y + 7), 2 + rnd.nextDouble() * 2, ink);
+              canvas.drawCircle(
+                Offset(sx, y + 7),
+                2 + rnd.nextDouble() * 2,
+                ink,
+              );
             }
             line.strokeWidth = 1.1;
             final hx = x + rnd.nextDouble() * kTile;
-            canvas.drawLine(Offset(hx, y + 6), Offset(hx + 2, y + 12 + rnd.nextDouble() * 10), line);
+            canvas.drawLine(
+              Offset(hx, y + 6),
+              Offset(hx + 2, y + 12 + rnd.nextDouble() * 10),
+              line,
+            );
           }
         case '^':
           for (var i = 0; i < 4; i++) {
@@ -156,7 +196,11 @@ Picture _buildTerrain(Level lv) {
             );
           }
         case 'D':
-          _medusa(canvas, Offset(x + kTile / 2, y + kTile / 2 + 4), c.isOdd ? math.pi / 2 : math.pi);
+          _medusa(
+            canvas,
+            Offset(x + kTile / 2, y + kTile / 2 + 4),
+            c.isOdd ? math.pi / 2 : math.pi,
+          );
         case '|':
           line.strokeWidth = 2.2;
           final vine = Path();
@@ -228,7 +272,13 @@ double _floorTop(Level lv, int c, int fromRow) {
   return lv.pixelHeight;
 }
 
-void _column(Canvas canvas, double cx, double top, double bottom, {bool back = false}) {
+void _column(
+  Canvas canvas,
+  double cx,
+  double top,
+  double bottom, {
+  bool back = false,
+}) {
   final body = Paint()..color = back ? const Color(0xFF1C100B) : _stone;
   const hw = 11.0;
   canvas.drawRect(
@@ -236,12 +286,12 @@ void _column(Canvas canvas, double cx, double top, double bottom, {bool back = f
     back
         ? body
         : (Paint()
-          ..shader = ui.Gradient.linear(
-            Offset(cx - hw, 0),
-            Offset(cx + hw, 0),
-            const [Color(0xFF3A2216), Color(0xFF1E110B), Color(0xFF0C0605)],
-            const [0, 0.45, 1],
-          )),
+            ..shader = ui.Gradient.linear(
+              Offset(cx - hw, 0),
+              Offset(cx + hw, 0),
+              const [Color(0xFF3A2216), Color(0xFF1E110B), Color(0xFF0C0605)],
+              const [0, 0.45, 1],
+            )),
   );
   canvas.drawPath(
     Path()
@@ -252,11 +302,18 @@ void _column(Canvas canvas, double cx, double top, double bottom, {bool back = f
       ..close(),
     body,
   );
-  canvas.drawRect(Rect.fromLTRB(cx - hw - 4, bottom - 8, cx + hw + 4, bottom), body);
+  canvas.drawRect(
+    Rect.fromLTRB(cx - hw - 4, bottom - 8, cx + hw + 4, bottom),
+    body,
+  );
   final rim = Paint()
     ..color = _rim.withValues(alpha: back ? 0.25 : 0.55)
     ..strokeWidth = 2;
-  canvas.drawLine(Offset(cx - hw + 1, top + 12), Offset(cx - hw + 1, bottom - 8), rim);
+  canvas.drawLine(
+    Offset(cx - hw + 1, top + 12),
+    Offset(cx - hw + 1, bottom - 8),
+    rim,
+  );
   // Yerebatan sütunlarındaki "tavus gözü" oymaları.
   if (!back) {
     final eye = Paint()
@@ -264,7 +321,10 @@ void _column(Canvas canvas, double cx, double top, double bottom, {bool back = f
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.2;
     for (var y = top + 40; y < bottom - 30; y += 34) {
-      canvas.drawOval(Rect.fromCenter(center: Offset(cx, y), width: 9, height: 14), eye);
+      canvas.drawOval(
+        Rect.fromCenter(center: Offset(cx, y), width: 9, height: 14),
+        eye,
+      );
     }
   }
 }
@@ -313,7 +373,12 @@ void _medusa(Canvas canvas, Offset c, double rotation) {
     canvas.drawPath(
       Path()
         ..moveTo(p0.dx, p0.dy)
-        ..quadraticBezierTo((p0 + p1).dx / 2 + bend.dx, (p0 + p1).dy / 2 + bend.dy, p1.dx, p1.dy),
+        ..quadraticBezierTo(
+          (p0 + p1).dx / 2 + bend.dx,
+          (p0 + p1).dy / 2 + bend.dy,
+          p1.dx,
+          p1.dy,
+        ),
       Paint()
         ..color = const Color(0xFF2A1911)
         ..style = PaintingStyle.stroke
@@ -322,12 +387,30 @@ void _medusa(Canvas canvas, Offset c, double rotation) {
     );
   }
   canvas.drawOval(const Rect.fromLTRB(-16, -19, 16, 19), stone);
-  canvas.drawArc(const Rect.fromLTRB(-9, -8, -2, -2), math.pi, math.pi, false, carve);
-  canvas.drawArc(const Rect.fromLTRB(2, -8, 9, -2), math.pi, math.pi, false, carve);
+  canvas.drawArc(
+    const Rect.fromLTRB(-9, -8, -2, -2),
+    math.pi,
+    math.pi,
+    false,
+    carve,
+  );
+  canvas.drawArc(
+    const Rect.fromLTRB(2, -8, 9, -2),
+    math.pi,
+    math.pi,
+    false,
+    carve,
+  );
   canvas.drawCircle(const Offset(-5.5, -4), 1.2, carve);
   canvas.drawCircle(const Offset(5.5, -4), 1.2, carve);
   canvas.drawLine(const Offset(0, -3), const Offset(-1.5, 5), carve);
-  canvas.drawArc(const Rect.fromLTRB(-6, 6, 6, 12), 0.2, math.pi - 0.4, false, carve);
+  canvas.drawArc(
+    const Rect.fromLTRB(-6, 6, 6, 12),
+    0.2,
+    math.pi - 0.4,
+    false,
+    carve,
+  );
   canvas.drawOval(const Rect.fromLTRB(-16, -19, 16, 19), carve);
   canvas.restore();
 }
@@ -343,7 +426,12 @@ Picture _buildForeground(Level lv) {
     for (var c = 0; c < lv.width; c++) {
       if (lv.cell(c, r) == 'I') {
         final top = _ceilingBottom(lv, c);
-        _column(canvas, c * kTile + kTile / 2, top + 40, _floorTop(lv, c, r + 1));
+        _column(
+          canvas,
+          c * kTile + kTile / 2,
+          top + 40,
+          _floorTop(lv, c, r + 1),
+        );
         continue;
       }
       if (lv.cell(c, r) != '~') continue;
@@ -357,11 +445,19 @@ Picture _buildForeground(Level lv) {
         canvas.drawPath(
           Path()
             ..moveTo(bx, ground + 2)
-            ..quadraticBezierTo(bx + lean * 0.15, ground - h * 0.55, bx + lean, ground - h),
+            ..quadraticBezierTo(
+              bx + lean * 0.15,
+              ground - h * 0.55,
+              bx + lean,
+              ground - h,
+            ),
           blade,
         );
       }
-      canvas.drawRect(Rect.fromLTWH(c * kTile - 4, ground - 14, kTile + 8, 16), Paint()..color = kInk);
+      canvas.drawRect(
+        Rect.fromLTWH(c * kTile - 4, ground - 14, kTile + 8, 16),
+        Paint()..color = kInk,
+      );
     }
   }
   return rec.endRecording();
@@ -396,12 +492,16 @@ class WaterComponent extends Component {
     final bottom = level.pixelHeight + 400;
     final body = Paint();
     for (final MapEntry(key: c, value: top) in _surface.entries) {
-      final rect = Rect.fromLTRB(c * kTile - 0.5, top, (c + 1) * kTile + 0.5, bottom);
-      body.shader = ui.Gradient.linear(
-        Offset(0, top),
-        Offset(0, top + 90),
-        [const Color(0xF0381A10), const Color(0xFF0A0504)],
+      final rect = Rect.fromLTRB(
+        c * kTile - 0.5,
+        top,
+        (c + 1) * kTile + 0.5,
+        bottom,
       );
+      body.shader = ui.Gradient.linear(Offset(0, top), Offset(0, top + 90), [
+        const Color(0xF0381A10),
+        const Color(0xFF0A0504),
+      ]);
       canvas.drawRect(rect, body);
     }
     final glint = Paint()..strokeWidth = 1.3;
@@ -412,12 +512,15 @@ class WaterComponent extends Component {
         final y = top + 3 + i * 9 + math.sin(phase) * 1.5;
         final len = 6 + 6 * (0.5 + 0.5 * math.sin(phase * 1.3));
         final gx = x + ((c * 13 + i * 11) % 24) + math.sin(_t * 0.5 + c) * 3;
-        glint.color = const Color(0xFFE8915A).withValues(alpha: (0.35 - i * 0.1) * (0.6 + 0.4 * math.sin(phase * 2)));
+        glint.color = const Color(0xFFE8915A).withValues(
+          alpha: (0.35 - i * 0.1) * (0.6 + 0.4 * math.sin(phase * 2)),
+        );
         canvas.drawLine(Offset(gx, y), Offset(gx + len, y), glint);
       }
     }
     // Sütunların su üstündeki dalgalı yansımaları.
-    final reflection = Paint()..color = const Color(0xFF050302).withValues(alpha: 0.55);
+    final reflection = Paint()
+      ..color = const Color(0xFF050302).withValues(alpha: 0.55);
     for (final cx in _columns) {
       final top = _surface[(cx / kTile).floor()];
       if (top == null) continue;

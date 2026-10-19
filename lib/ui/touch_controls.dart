@@ -24,13 +24,44 @@ class TouchControls extends StatelessWidget {
             Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                _Pad(icon: Icons.keyboard_arrow_up, size: 54, onChanged: (v) => t.up = v),
+                _Pad(
+                  icon: Icons.auto_awesome,
+                  size: 54,
+                  onChanged: (v) {
+                    if (v) controls.queueLure();
+                  },
+                ),
                 const SizedBox(height: 10),
-                _Pad(icon: Icons.keyboard_arrow_down, size: 54, onChanged: (v) => t.down = v),
+                _Pad(
+                  icon: Icons.visibility_off,
+                  size: 54,
+                  onChanged: (v) => t.cover = v,
+                ),
+              ],
+            ),
+            const SizedBox(width: 12),
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _Pad(
+                  icon: Icons.keyboard_arrow_up,
+                  size: 54,
+                  onChanged: (v) => t.up = v,
+                ),
+                const SizedBox(height: 10),
+                _Pad(
+                  icon: Icons.keyboard_arrow_down,
+                  size: 54,
+                  onChanged: (v) => t.down = v,
+                ),
               ],
             ),
             const SizedBox(width: 16),
-            _Pad(icon: Icons.circle_outlined, size: 84, onChanged: (v) => t.jump = v),
+            _Pad(
+              icon: Icons.circle_outlined,
+              size: 84,
+              onChanged: (v) => t.jump = v,
+            ),
           ],
         ),
       ),
@@ -70,9 +101,16 @@ class _PadState extends State<_Pad> {
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           color: Colors.white.withValues(alpha: _down ? 0.18 : 0.06),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.25), width: 1.5),
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.25),
+            width: 1.5,
+          ),
         ),
-        child: Icon(widget.icon, color: Colors.white.withValues(alpha: 0.5), size: widget.size * 0.5),
+        child: Icon(
+          widget.icon,
+          color: Colors.white.withValues(alpha: 0.5),
+          size: widget.size * 0.5,
+        ),
       ),
     );
   }
