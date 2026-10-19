@@ -69,6 +69,8 @@ class GameAudio {
   AudioPlayer? _ambient;
   String? _ambientName;
   String? _wantedAmbient;
+  AudioPlayer? _ney;
+  bool _neyWanted = false;
   AudioPlayer? _dread;
   bool _dreadStarting = false;
   double _dreadLevel = 0;
@@ -90,6 +92,7 @@ class GameAudio {
         'amb_wind.wav',
         'amb_sky.wav',
         'karabasan.wav',
+        'perde_ney.wav',
         'menu_theme.mp3',
       ]);
       await Future.wait([
@@ -101,7 +104,9 @@ class GameAudio {
           ).then((pool) => _pools[e] = pool),
       ]);
       _ready = true;
-      if (_musicWanted) {
+      if (_neyWanted) {
+        perde(true);
+      } else if (_musicWanted) {
         menuMusic(true);
       } else {
         final wanted = _wantedAmbient;
@@ -141,7 +146,7 @@ class GameAudio {
       LevelTheme.sky => 'amb_sky',
     };
     _wantedAmbient = name;
-    if (_ready && !_musicWanted) _startAmbient(name);
+    if (_ready && !_musicWanted && !_neyWanted) _startAmbient(name);
   }
 
   /// Ana menü müziği; açılınca ortam sesi susar, kapanınca geri gelir.
@@ -172,6 +177,33 @@ class GameAudio {
       _music = null;
       final wanted = _wantedAmbient;
       if (wanted != null) _startAmbient(wanted);
+    }
+  }
+
+  /// Perde sahnelerinin neyi: çalarken ortam sesi susar.
+  void perde(bool on) {
+    _neyWanted = on;
+    if (!_ready) return;
+    if (on) {
+      if (_ney != null) return;
+      _ambient?.stop();
+      _ambient = null;
+      _ambientName = null;
+      dread(0);
+      FlameAudio.loop('perde_ney.wav', volume: Settings.music)
+          .then((p) {
+            if (!_neyWanted || _ney != null) {
+              p.stop();
+              return;
+            }
+            _ney = p;
+          })
+          .catchError((_) {});
+    } else {
+      _ney?.stop();
+      _ney = null;
+      final wanted = _wantedAmbient;
+      if (wanted != null && !_musicWanted) _startAmbient(wanted);
     }
   }
 
@@ -222,16 +254,19 @@ class GameAudio {
 
   void applyVolumes() {
     _music?.setVolume(Settings.music);
+    _ney?.setVolume(Settings.music);
     _ambient?.setVolume(Settings.ambience * 0.8);
     _dread?.setVolume((_dreadLevel * Settings.effects).clamp(0.0, 1.0));
   }
 
   void pauseAll() {
+    _ney?.pause();
     _ambient?.pause();
     _dread?.pause();
   }
 
   void resumeAll() {
+    _ney?.resume();
     _ambient?.resume();
     _dread?.resume();
   }

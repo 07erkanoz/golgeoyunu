@@ -69,71 +69,110 @@ class LevelDef {
 }
 
 const prologue = [
-  'GÖLGE OYUNU',
   'İstanbul, 1660. Şehir üç gündür yanıyordu.',
-  'Kandilciler Loncası küllerin arasından şehrin bütün ışığını topladı…',
-  '…ve perdeye ışık tutan Hayali Usta\'yı da götürdüler.',
-  'Perde boş kaldı. Ama gölgelerden biri ustasını aramaya çıktı.',
+  'Kandilciler Loncası küllerin arasında dolaştı; her kandili, her mumu, her gözdeki ışığı topladı.',
+  'Son olarak Hayali Usta\'nın perdesine geldiler. Kandili söndürdüler, ustayı götürdüler.',
+  'Perde karardı. Ama bir gölge, ışık sönmeden önce perdeden düştü.',
+  'GÖLGE OYUNU',
 ];
 
 const prologueEn = [
-  'SHADOW PLAY',
   'Istanbul, 1660. The city had been burning for three days.',
-  'The Lamplighters\' Guild gathered every light from the ashes…',
-  '…and took Master Hayali, who held the light behind the shadow screen.',
-  'The screen fell empty. But one of the shadows set out to find its master.',
+  'The Lamplighters\' Guild walked among the ashes, gathering every lamp, every candle, every light in every eye.',
+  'Last, they came to Master Hayali\'s screen. They snuffed his lamp and took him away.',
+  'The screen went dark. But one shadow fell from it before the light died.',
+  'SHADOW PLAY',
 ];
 
 List<String> get prologueText => S.en ? prologueEn : prologue;
 
+const epilogue = [
+  'Hüdhüd ışığın içinde kayboldu.',
+  'Kırık güneşin ilk parçası, Sâye\'nin avuçlarında titriyordu.',
+  'Uzakta, Kaf\'ın ardında, bir kandil cızırdadı.',
+  'DEVAM EDECEK',
+];
+
 const epilogueEn = [
-  'The white bird vanished into the light.',
-  'The first shard of the broken sun trembled in the little shadow\'s hands.',
-  'Somewhere, the master was still waiting.',
+  'The Hoopoe vanished into the light.',
+  'The first shard of the broken sun trembled in Saye\'s hands.',
+  'Far away, beyond Qaf, a lamp sputtered.',
   'TO BE CONTINUED',
 ];
 
 List<String> get epilogueText => S.en ? epilogueEn : epilogue;
 
-const epilogue = [
-  'Ak kuş ışığın içinde kayboldu.',
-  'Kırık güneşin ilk parçası, küçük gölgenin elinde titriyordu.',
-  'Ustası hâlâ bir yerlerde bekliyordu.',
-  'DEVAM EDECEK',
+/// Bölüm aralarında perdede oynanan gölge oyunu sahneleri: her bölümden
+/// önce (indeks = bölüm). Satırlar sırayla, perdedeki tasvirlerle birlikte.
+const interludes = <List<String>>[
+  [],
+  [
+    'Sarnıçtan çıktığında şehir hâlâ yanıyordu.',
+    'Galata\'nın tepesinde bir zamanlar bir adam kanat takmış, göğe atlamıştı.',
+    'Onu alkışladılar. Sonra korktular. Sonra sürdüler.',
+    'Uçanlar sürgün edilir, Sâye. Yine de uç.',
+  ],
+  [
+    'Bulutların ardında, Kaf Dağı\'na giden bir yol vardır.',
+    'Hüdhüd kuşları oraya, Simurg\'a götürdü. Çoğu yolda vazgeçti.',
+    'Kandilciler topladıkları ışığı göğe astı; güneşi onlar kırdı.',
+    'Ustanın kandili orada, Sâye. Ve sen her adımda ona biraz daha benziyorsun.',
+  ],
 ];
+
+const interludesEn = <List<String>>[
+  [],
+  [
+    'When he left the cistern, the city was still burning.',
+    'Once, atop Galata, a man strapped on wings and leapt into the sky.',
+    'They cheered him. Then they feared him. Then they sent him away.',
+    'Those who fly are exiled, Saye. Fly anyway.',
+  ],
+  [
+    'Beyond the clouds there is a road to Mount Qaf.',
+    'The Hoopoe led the birds there, to the Simurgh. Most gave up on the way.',
+    'The Lamplighters hung their stolen light in the sky; it was they who broke the sun.',
+    'Your master\'s lamp is there, Saye. And with every step, you look more like it.',
+  ],
+];
+
+List<String> interludeText(int level) {
+  final all = S.en ? interludesEn : interludes;
+  return level < all.length ? all[level] : const [];
+}
 
 const levels = <LevelDef>[
   LevelDef(
     title: 'I · YEREBATAN',
-    subtitle: 'Şehrin altında, suyun hafızasında.',
-    titleEn: 'I · BASILICA CISTERN',
-    subtitleEn: 'Beneath the city, in the memory of water.',
-    whispersEn: [
-      'My master used to say: "The waters of this cistern keep all of Istanbul\'s secrets."',
-      'The planks creak. Hold Shift to tiptoe… or climb the chain and cross above the arches.',
-      'Medusa\'s heads were set upside down, so her gaze could turn no one to stone.',
-      'The gate\'s lever is stuck up high. Push the crate, climb it, pull the lever with ↑.',
-      'Bats are sleeping on the ceiling. Run, and they wake… and everyone hears.',
-      'The pulleys creak. The heavy side sinks, the light side rises.',
-    ],
-    memoriesEn: [
-      'Memory · My master\'s hands never trembled while he held the light to the screen.',
-      'Memory · Every night, before the curtain fell, Karagöz had the last word.',
-      'Memory · My master always hummed the same folk song while setting up the screen.',
-    ],
+    subtitle: 'Suyun altında bir şehir uyur.',
     theme: LevelTheme.cistern,
+    titleEn: 'I · THE CISTERN',
+    subtitleEn: 'Beneath the water, a city sleeps.',
     whispers: [
-      'Ustam derdi ki: "Bu sarnıçta sular İstanbul\'un bütün sırlarını saklar."',
-      'Tahtalar gıcırdar. Shift ile parmak uçlarında yürü… ya da zincire tırman, kemerlerin üstünden geç.',
-      'Medusa\'nın başları ters konmuş. Bakışı kimseyi taşa çeviremesin diye.',
-      'Kapının kolu yukarıda kalmış. Sandığı it, üstüne çık, kolu ↑ ile çek.',
-      'Tavanda yarasalar uyuyor. Koşarsan uyanırlar… ve herkes duyar.',
-      'Makaralar gıcırdıyor. Ağır olan iner, hafif olan yükselir.',
+      'Sâye… Bu ustanın sesi mi, suyun mu?',
+      'Fener neye değerse onu alır. Karanlıkta kal.',
+      'Taşa dönmesin diye başını çevirmişler. Bakmadan görmeyi öğren.',
+      'Kapılar zorla değil, sabırla açılır.',
+      'Tavanda uyuyanları uyandırma. Her ses bir ihbardır.',
+      'Biri iner ki öbürü yükselsin. Âlemin terazisi böyle kurulmuş.',
+    ],
+    whispersEn: [
+      'Saye… Is that the master\'s voice, or the water\'s?',
+      'Whatever the lantern touches, it takes. Keep to the dark.',
+      'They turned her head so no one would become stone. Learn to see without looking.',
+      'Doors open to patience, not to force.',
+      'Do not wake those who sleep above. Every sound is a confession.',
+      'One must sink so the other may rise. So the scales of the world were set.',
     ],
     memories: [
-      'Hatıra · Ustamın elleri perdeye ışık tutarken hiç titremezdi.',
-      'Hatıra · Her gece perde kapanmadan önce son sözü Karagöz söylerdi.',
-      'Hatıra · Ustam perdeyi kurarken hep aynı türküyü mırıldanırdı.',
+      'Hatıra · Perdeye ışık tutarken elleri hiç titremezdi. "Gölge, ışığın sözüdür Sâye," derdi.',
+      'Hatıra · Gösteri bitince kandili hiç üflemezdi. "Gölgeler korkar," derdi.',
+      'Hatıra · Bir gece perdenin arkasına geçmeme izin vermedi. "Gölge arkayı görmemeli," dedi.',
+    ],
+    memoriesEn: [
+      'Memory · His hands never trembled as he held the light to the screen. "A shadow is the light\'s word, Saye," he said.',
+      'Memory · When the show ended, he never blew out the lamp. "The shadows would be afraid," he said.',
+      'Memory · One night he would not let me behind the screen. "A shadow must not see what is behind it," he said.',
     ],
     map: [
       '##################################################################################################################################',
@@ -160,32 +199,31 @@ const levels = <LevelDef>[
   ),
   LevelDef(
     title: 'II · KULE',
-    subtitle: 'Haliç\'in kayalıklarından Galata\'ya, oradan göğe.',
-    titleEn: 'II · THE TOWER',
-    subtitleEn:
-        'From the cliffs of the Golden Horn to Galata, and on to the sky.',
-    whispersEn: [
-      'The rocks are wet. Some break when you step on them; don\'t linger.',
-      'Crows see everything. Run past them and the whole city will hear.',
-      'The city is burning up there. A Lamplighter walks the rooftops.',
-      'Hezarfen flew from here. Take the wings, leap into the wind, hold jump.',
-    ],
-    memoriesEn: [
-      'Memory · The waters of the Golden Horn were my master\'s favourite mirror.',
-      'Memory · "One day we\'ll see the whole city from the tower," he said.',
-      'Memory · The Watchers\' light is cold; my master\'s lantern was always warm.',
-    ],
+    subtitle: 'Yükseldikçe ışık soğur.',
     theme: LevelTheme.cliffs,
+    titleEn: 'II · THE TOWER',
+    subtitleEn: 'The higher you climb, the colder the light.',
     whispers: [
-      'Kayalar ıslak. Bazıları basınca kopuyor; üstlerinde uzun durma.',
-      'Kargalar her şeyi görür. Yanlarından koşarsan bütün şehir duyar.',
-      'Yukarıda şehir yanıyor. Çatıların üstünde bir Kandilci dolaşıyor.',
-      'Hezarfen buradan uçmuş. Kanatları al, rüzgâra atla, zıplamayı basılı tut.',
+      'Haliç\'in suları her şeyi hatırlar; düşenleri de.',
+      'Basınca kopan taşlar var. Hiçbir yer seni uzun süre taşımaz.',
+      'Damlarda bir Kandilci dolaşıyor. Kargalar onun gözleridir.',
+      'Kanatlar burada bekliyordu. Rüzgâra teslim ol.',
+    ],
+    whispersEn: [
+      'The waters of the Horn remember everything, even those who fall.',
+      'Some stones break beneath you. Nothing holds you for long.',
+      'A Lamplighter walks the rooftops. The crows are his eyes.',
+      'The wings were waiting here. Surrender to the wind.',
     ],
     memories: [
-      'Hatıra · Haliç\'in suları ustamın en sevdiği aynaydı.',
-      'Hatıra · "Bir gün kuleden bütün şehri göreceğiz," demişti.',
-      'Hatıra · Gözcülerin ışığı soğuktur; ustamın feneri ise hep sıcaktı.',
+      'Hatıra · "Haliç bir aynadır," derdi ustam. "Şehir kendine orada bakar."',
+      'Hatıra · Kulenin tepesini gösterip "Bir gün oradan bütün perdeyi göreceksin," demişti.',
+      'Hatıra · Gözcülerin ışığı soğuktur; çünkü onlar ışığı sevmez, sayar.',
+    ],
+    memoriesEn: [
+      'Memory · "The Horn is a mirror," he said. "The city looks at itself there."',
+      'Memory · He pointed at the top of the tower: "One day you will see the whole screen from there."',
+      'Memory · The Watchers\' light is cold, for they do not love the light; they count it.',
     ],
     map: [
       '##..........................##',
@@ -288,30 +326,30 @@ const levels = <LevelDef>[
   ),
   LevelDef(
     title: 'III · GÖKYOLU',
-    subtitle: 'Bulutlar, üstünde yürünecek kadar ağır.',
-    titleEn: 'III · SKY ROAD',
-    subtitleEn: 'Clouds heavy enough to walk on.',
-    whispersEn: [
-      'Shards of the broken sun… they must be somewhere here.',
-      'Lamplighters here too. So it was they who closed the sky.',
-      'The sky is not as empty as I thought.',
-      'The wind will carry you. Don\'t let go of jump.',
-    ],
-    memoriesEn: [
-      'Memory · The white bird looked like the one my master stitched in the corner of his screen.',
-      'Memory · "One day we\'ll bring the sun back to the screen," he said. How?',
-    ],
+    subtitle: 'Kaf\'a giden yol buluttandır.',
     theme: LevelTheme.sky,
     wings: true,
+    titleEn: 'III · THE SKY ROAD',
+    subtitleEn: 'The road to Qaf is made of cloud.',
     whispers: [
-      'Kırık güneşin parçaları… burada bir yerde olmalı.',
-      'Burada da kandilciler var. Demek gökyüzünü onlar kapattı.',
-      'Gökyüzü sandığım kadar boş değilmiş.',
-      'Rüzgâr seni taşır. Zıplamayı bırakma.',
+      'Kırık güneşin bir parçası… Sıcaklığı tanıdık.',
+      'Burada da Kandilciler var. Gök bile onların.',
+      'Gök sandığın kadar boş değil.',
+      'Rüzgâr seni taşır; yeter ki bırakma.',
+    ],
+    whispersEn: [
+      'A shard of the broken sun… Its warmth is familiar.',
+      'Lamplighters here too. Even the sky is theirs.',
+      'The sky is not as empty as you thought.',
+      'The wind will carry you, so long as you do not let go.',
     ],
     memories: [
-      'Hatıra · Ak kuş, ustamın perdesinin köşesine işlediği kuşa benziyordu.',
-      'Hatıra · "Bir gün güneşi perdeye geri getireceğiz," demişti. Nasıl?',
+      'Hatıra · Perdenin köşesine bir hüdhüd işlemişti. "Yol gösterene borçlusun," derdi.',
+      'Hatıra · "Bir gün güneşi perdeye geri getireceğiz," demişti. O gün gölgemin ilk kez titrediğini gördüm.',
+    ],
+    memoriesEn: [
+      'Memory · He had stitched a hoopoe into the corner of the screen. "You owe the one who shows the way," he said.',
+      'Memory · "One day we will bring the sun back to the screen," he said. That day I saw my shadow tremble for the first time.',
     ],
     map: [
       '......................................................................................................................................................',

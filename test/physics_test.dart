@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flame/components.dart';
 import 'package:flame_test/flame_test.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -6,6 +8,7 @@ import 'package:golge/game/entities.dart';
 import 'package:golge/game/golge_game.dart';
 import 'package:golge/game/level.dart';
 import 'package:golge/game/mechanics.dart';
+import 'package:golge/game/perde.dart';
 import 'package:golge/game/player.dart';
 
 /// Sabit adımlı simülasyon: oyuncuyu bir hücreye koyar, girişi uygular.
@@ -539,4 +542,39 @@ void main() {
       expect(p.light.$2, lessThan(open));
     },
   );
+
+  group('perde', () {
+    test('her sahne baştan sona çizilebilir', () {
+      for (final scene in PerdeScene.values) {
+        for (var u = 0.0; u <= 5.0; u += 0.1) {
+          final rec = PictureRecorder();
+          PerdePainter.paint(
+            Canvas(rec),
+            const Size(1280, 720),
+            scene,
+            u * 5,
+            u,
+            u < 0.3 ? 0.5 : 1,
+          );
+          rec.endRecording().dispose();
+        }
+      }
+    });
+
+    testWithGame<GolgeGame>(
+      'bölüm sonunda perde oynar, sonra yeni bölüm başlar',
+      GolgeGame.new,
+      (game) async {
+        await place(game, 0, 3, 13);
+        game.onExitReached();
+        run(game, 2);
+        expect(game.narration.inCinematic, isTrue);
+        expect(game.levelIndex, 0);
+        run(game, 24);
+        expect(game.narration.inCinematic, isFalse);
+        expect(game.levelIndex, 1);
+        expect(game.cinematic, isFalse);
+      },
+    );
+  });
 }

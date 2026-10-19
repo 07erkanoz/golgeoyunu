@@ -3,8 +3,10 @@ import 'dart:math' as math;
 import 'package:flame/components.dart';
 import 'package:flutter/painting.dart';
 
+import 'audio.dart';
 import 'golge_game.dart';
 import 'palette.dart';
+import 'perde.dart';
 import 'strings.dart';
 
 /// Hikâye katmanı: siyah ekranda akan sinematik satırlar, bölüm başlıkları,
@@ -21,6 +23,10 @@ class Narration extends Component with HasGameReference<GolgeGame> {
   double _lineT = 0;
   double _backdrop = 0;
   VoidCallback? _onCinematicDone;
+
+  /// Satırların altında oynayan perde sahnesi (yoksa siyah ekran).
+  PerdeScene? _scene;
+  double _sceneT = 0;
 
   String? _title;
   String _subtitle = '';
@@ -39,14 +45,25 @@ class Narration extends Component with HasGameReference<GolgeGame> {
     List<String> lines,
     VoidCallback onDone, {
     bool instantBlack = false,
+    PerdeScene? scene,
   }) {
     _lines = lines;
+    _scene = lines.isEmpty ? null : scene;
+    _sceneT = 0;
+    GameAudio.instance.perde(_scene != null);
     _lineIndex = 0;
     _lineT = 0;
     _backdrop = instantBlack ? 1 : 0;
     _onCinematicDone = onDone;
     _whisper = null;
     _title = null;
+  }
+
+  /// Sahnenin tamamını atlar (Esc).
+  void skipAll() {
+    if (!inCinematic) return;
+    _lineIndex = _lines.length - 1;
+    _lineT = _lineIn + _lineHold;
   }
 
   /// Satırı kapatmaya başla; zaten kapanıyorsa hemen sonrakine geç.
@@ -77,12 +94,15 @@ class Narration extends Component with HasGameReference<GolgeGame> {
     if (inCinematic) {
       _backdrop = math.min(1, _backdrop + dt / 1.5);
       _lineT += dt;
+      _sceneT += dt;
       if (_lineT > _lineIn + _lineHold + _lineOut) {
         _lineT = 0;
         _lineIndex++;
         if (_lineIndex >= _lines.length) {
           _lines = const [];
           _backdrop = 0;
+          if (_scene != null) GameAudio.instance.perde(false);
+          _scene = null;
           final cb = _onCinematicDone;
           _onCinematicDone = null;
           cb?.call();
@@ -122,6 +142,7 @@ class Narration extends Component with HasGameReference<GolgeGame> {
     double spacing = 0,
     double maxWidth = 900,
     Color color = kText,
+    bool shadow = true,
   }) {
     if (alpha <= 0) return;
     // Dizilmiş yazılar önbellekte: saydamlık 20 basamağa yuvarlanır, böylece
@@ -129,7 +150,7 @@ class Narration extends Component with HasGameReference<GolgeGame> {
     final a = (alpha * 20).round() / 20;
     if (a <= 0) return;
     final key =
-        '$s|$fontSize|$italic|$spacing|$maxWidth|${color.toARGB32()}|$a';
+        '$s|$fontSize|$italic|$spacing|$maxWidth|${color.toARGB32()}|$a|$shadow';
     var tp = _cache[key];
     if (tp == null) {
       if (_cache.length > 120) _cache.clear();
@@ -141,6 +162,7 @@ class Narration extends Component with HasGameReference<GolgeGame> {
         spacing,
         maxWidth,
         color,
+        shadow,
       );
     }
     tp.paint(canvas, center - Offset(tp.width / 2, tp.height / 2));
@@ -156,6 +178,7 @@ class Narration extends Component with HasGameReference<GolgeGame> {
     double spacing,
     double maxWidth,
     Color color,
+    bool shadow,
   ) {
     return TextPainter(
       text: TextSpan(
@@ -168,10 +191,11 @@ class Narration extends Component with HasGameReference<GolgeGame> {
           letterSpacing: spacing,
           height: 1.4,
           shadows: [
-            Shadow(
-              color: kInk.withValues(alpha: alpha * 0.85),
-              offset: const Offset(1.2, 1.5),
-            ),
+            if (shadow)
+              Shadow(
+                color: kInk.withValues(alpha: alpha * 0.85),
+                offset: const Offset(1.2, 1.5),
+              ),
           ],
         ),
       ),
@@ -195,20 +219,61 @@ class Narration extends Component with HasGameReference<GolgeGame> {
       final line = _lines[_lineIndex];
       final a = _envelope(_lineT, _lineIn, _lineHold, _lineOut);
       final isEnd = line == line.toUpperCase();
-      _text(
-        canvas,
-        line,
-        Offset(w / 2, h / 2),
-        unit * (isEnd ? 0.05 : 0.036),
-        a,
-        italic: !isEnd,
-        spacing: isEnd ? 10 : 0.5,
-        maxWidth: w * 0.8,
-      );
+      final scene = _scene;
+      if (scene != null) {
+        // Perde: satırlar altında, son satır (başlık) perdenin üstüne düşen
+        // bir gölge yazı olarak.
+        final progress =
+            _lineIndex + (_lineT / (_lineIn + _lineHold + _lineOut));
+        PerdePainter.paint(
+          canvas,
+          Size(w, h),
+          scene,
+          _sceneT,
+          progress,
+          _backdrop,
+        );
+        final r = PerdePainter.screenRect(Size(w, h));
+        if (isEnd) {
+          _text(
+            canvas,
+            line,
+            r.center.translate(0, -r.height * 0.18),
+            r.height * 0.1,
+            a,
+            spacing: 10,
+            maxWidth: r.width,
+            color: const Color(0xFF1A0B05),
+            shadow: false,
+          );
+        } else {
+          _text(
+            canvas,
+            line,
+            Offset(w / 2, (r.bottom + h) / 2 + r.height * 0.02),
+            unit * 0.034,
+            a,
+            italic: true,
+            spacing: 0.5,
+            maxWidth: w * 0.8,
+          );
+        }
+      } else {
+        _text(
+          canvas,
+          line,
+          Offset(w / 2, h / 2),
+          unit * (isEnd ? 0.05 : 0.036),
+          a,
+          italic: !isEnd,
+          spacing: isEnd ? 10 : 0.5,
+          maxWidth: w * 0.8,
+        );
+      }
       _text(
         canvas,
         S.of('skipHint'),
-        Offset(w - 90, h - 30),
+        Offset(w - 130, h - 30),
         unit * 0.022,
         0.25,
       );

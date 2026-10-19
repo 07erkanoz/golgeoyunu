@@ -260,6 +260,20 @@ class Guard extends PositionComponent with HasGameReference<GolgeGame> {
     final sway = math.sin(_anim * 3 + 1) * 1.2;
     final lantern = Offset(gw / 2 + 19 + sway, 14);
 
+    // Fener konuşur: şüphe arttıkça ışık beyazlaşır ve sertleşir; görünce
+    // titreşerek parlar. ("?" ve "!" işaretleri yok.)
+    final doubt = state == GuardState.investigate ? 0.6 : suspicion;
+    final flicker = alert
+        ? 0.88 + 0.12 * math.sin(_t * 31) * math.sin(_t * 7)
+        : 1.0;
+    final beam = Color.lerp(
+      kCold,
+      const Color(0xFFF2FFFC),
+      alert ? 0.8 : doubt * 0.6,
+    )!;
+    final beamAlpha =
+        (alert ? 0.42 : (distracted ? 0.07 : 0.14 + doubt * 0.16)) * flicker;
+
     // Işık konisi.
     final range = state == GuardState.chase ? viewDistance * 1.4 : viewDistance;
     final cone = Path()
@@ -272,17 +286,18 @@ class Guard extends PositionComponent with HasGameReference<GolgeGame> {
       cone,
       Paint()
         ..shader = ui.Gradient.linear(lantern, lantern + Offset(range, 0), [
-          kCold.withValues(alpha: alert ? 0.30 : (distracted ? 0.08 : 0.17)),
-          kCold.withValues(alpha: 0),
+          beam.withValues(alpha: beamAlpha),
+          beam.withValues(alpha: 0),
         ]),
     );
+    final halo = 30 + doubt * 14 + (alert ? 22 : 0);
     canvas.drawCircle(
       lantern,
-      34,
+      halo,
       Paint()
-        ..shader = ui.Gradient.radial(lantern, 34, [
-          kCold.withValues(alpha: 0.55),
-          kCold.withValues(alpha: 0),
+        ..shader = ui.Gradient.radial(lantern, halo, [
+          beam.withValues(alpha: 0.55 * flicker),
+          beam.withValues(alpha: 0),
         ]),
     );
 
@@ -341,8 +356,8 @@ class Guard extends PositionComponent with HasGameReference<GolgeGame> {
       _ink,
     );
     final eye = Paint()
-      ..color = kCold.withValues(
-        alpha: alert ? 1.0 : (distracted ? 0.35 : 0.7),
+      ..color = beam.withValues(
+        alpha: alert ? flicker : (distracted ? 0.35 : 0.6 + doubt * 0.4),
       );
     canvas.drawOval(
       Rect.fromCenter(center: const Offset(15.4, 9.6), width: 2.6, height: 1.2),
@@ -384,7 +399,7 @@ class Guard extends PositionComponent with HasGameReference<GolgeGame> {
         Rect.fromCenter(center: lantern, width: 7, height: 9),
         const Radius.circular(2),
       ),
-      Paint()..color = kCold.withValues(alpha: 0.95),
+      Paint()..color = beam.withValues(alpha: 0.95 * flicker),
     );
     canvas.drawLine(
       lantern.translate(0, -4.5),
@@ -392,46 +407,13 @@ class Guard extends PositionComponent with HasGameReference<GolgeGame> {
       _stroke..strokeWidth = 0.8,
     );
     canvas.restore();
-
-    // Şüphe "?" ile görünür: dolmaya başladıkça belirginleşir.
-    final doubt = state == GuardState.investigate
-        ? 1.0
-        : (alert ? 0.0 : suspicion);
-    if (doubt > 0.02) {
-      final q = Paint()
-        ..color = kWarmLight.withValues(alpha: 0.35 + 0.65 * doubt)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2.2
-        ..strokeCap = StrokeCap.round;
-      canvas.drawArc(
-        const Rect.fromLTWH(gw / 2 - 4, -19, 8, 8),
-        math.pi,
-        math.pi * 1.4,
-        false,
-        q,
-      );
-      canvas.drawLine(
-        const Offset(gw / 2 + 1, -11.5),
-        const Offset(gw / 2, -7),
-        q,
-      );
-      canvas.drawCircle(
-        const Offset(gw / 2, -3),
-        1.6,
-        Paint()..color = kWarmLight.withValues(alpha: 0.35 + 0.65 * doubt),
-      );
-    }
-    if (alert) {
-      final a = Paint()..color = kCold;
-      canvas.drawRect(const Rect.fromLTWH(gw / 2 - 1.5, -19, 3, 11), a);
-      canvas.drawCircle(const Offset(gw / 2, -4), 1.8, a);
-    }
   }
 }
 
-// ================================================================= Ak kuş
+// ================================================================= Hüdhüd
 
-/// Çocuğa yol gösteren ak kuş. Bölümdeki konaklarını sırayla dolaşır: bir
+/// Sâye'ye yol gösteren Hüdhüd (Attar'ın Mantıku't-Tayr'ındaki rehber kuş):
+/// soluk tüyler, yelpaze tepelik, ince uzun gaga. Bölümdeki konaklarını sırayla dolaşır: bir
 /// konakta oturup çocuğu bekler, yaklaşınca dönüp ona bakar ve bir sonraki
 /// önemli yere (zincir, sandık, kol…) sakince uçar. Son konaktan sonra ışık
 /// kapısına girip kaybolur.
@@ -440,7 +422,7 @@ class Bird extends PositionComponent with HasGameReference<GolgeGame> {
     : _index = start,
       super(position: stops[start].clone(), priority: 18);
 
-  static const double scaleArt = 0.62;
+  static const double scaleArt = 0.7;
   static const double speed = 95;
 
   /// Konakların "ayak" noktaları, ilerleme sırasına göre.
@@ -524,65 +506,134 @@ class Bird extends PositionComponent with HasGameReference<GolgeGame> {
   @override
   void render(Canvas canvas) {
     final a = _alpha.clamp(0.0, 1.0);
-    final white = Paint()..color = kLight.withValues(alpha: a);
+    final pale = Paint()..color = _pale.withValues(alpha: a);
+    final band = Paint()..color = _band.withValues(alpha: a);
     canvas.save();
     canvas.scale(scaleArt);
-    glowDot(canvas, const Offset(0, -7), 22, kLight, 0.3 * a);
+    glowDot(canvas, const Offset(0, -8), 24, kLight, 0.26 * a);
     if (_look < 0) canvas.scale(-1, 1);
     final bob = _flying ? 0.0 : math.sin(_t * 2) * 0.6;
     canvas.translate(0, bob);
+
+    // Kuyruk: uzun, ucunda koyu bir bant.
+    canvas.drawPath(
+      Path()
+        ..moveTo(-5, -8)
+        ..lineTo(-14, -6)
+        ..lineTo(-13, -3)
+        ..lineTo(-5, -5)
+        ..close(),
+      pale,
+    );
+    canvas.drawPath(
+      Path()
+        ..moveTo(-11.5, -6.4)
+        ..lineTo(-14, -6)
+        ..lineTo(-13, -3)
+        ..lineTo(-11, -3.6)
+        ..close(),
+      band,
+    );
+    // Gövde.
     canvas.drawOval(
-      Rect.fromCenter(center: const Offset(0, -6), width: 13, height: 8),
-      white,
+      Rect.fromCenter(center: const Offset(0, -6.5), width: 13, height: 8),
+      pale,
     );
-    // Başını hafifçe eğip kaldırır.
+
+    // Baş: hafifçe eğilir; tepelik konakta yelpaze gibi açılıp kapanır.
     final nod = _flying ? 0.0 : math.max(0.0, math.sin(_t * 1.3)) * 1.4;
-    canvas.drawCircle(Offset(5.5, -10 + nod), 3.3, white);
-    canvas.drawPath(
-      Path()
-        ..moveTo(8.5, -10.5 + nod)
-        ..lineTo(12, -9.5 + nod)
-        ..lineTo(8.5, -8.6 + nod)
-        ..close(),
-      white,
-    );
-    canvas.drawPath(
-      Path()
-        ..moveTo(-5, -7)
-        ..lineTo(-11, -9)
-        ..lineTo(-10, -4)
-        ..close(),
-      white,
-    );
-    if (_flying) {
-      final flap = math.sin(_t * 14) * 10;
-      for (final sc in [1.0, 0.75]) {
-        canvas.drawPath(
-          Path()
-            ..moveTo(-3, -7)
-            ..quadraticBezierTo(-1, -12 - flap * sc, -7, -16 - flap * sc)
-            ..lineTo(3, -7)
-            ..close(),
-          white,
-        );
-      }
-    } else {
+    final head = Offset(5.5, -10.5 + nod);
+    final open = _flying
+        ? 0.15
+        : (0.35 + 0.65 * math.max(0.0, math.sin(_t * 0.7 + 1))).clamp(0.0, 1.0);
+    for (var i = 0; i < 5; i++) {
+      // Arkaya yatık (kapalı) ile dikilmiş (açık) arasında.
+      final rest = math.pi * (1.05 + i * 0.04);
+      final up = math.pi * (1.15 + i * 0.13);
+      final ang = rest + (up - rest) * open;
+      final len = 5.5 + (i == 2 ? 1.2 : 0) + open * 1.5;
+      final tip = head + Offset(math.cos(ang), math.sin(ang)) * len;
+      final side = Offset(-math.sin(ang), math.cos(ang)) * 0.9;
       canvas.drawPath(
         Path()
-          ..moveTo(-4, -8)
-          ..quadraticBezierTo(0, -10, 3, -6)
-          ..lineTo(-4, -5)
+          ..moveTo(head.dx + side.dx, head.dy + side.dy - 1)
+          ..lineTo(tip.dx, tip.dy)
+          ..lineTo(head.dx - side.dx, head.dy - side.dy - 1)
           ..close(),
-        Paint()..color = const Color(0xFFBDBDB4).withValues(alpha: a),
+        pale,
       );
+      canvas.drawCircle(tip, 0.8, band);
+    }
+    canvas.drawCircle(head, 3.2, pale);
+    // İnce, uzun, hafif kıvrık gaga.
+    canvas.drawPath(
+      Path()
+        ..moveTo(head.dx + 2.6, head.dy - 0.9)
+        ..quadraticBezierTo(
+          head.dx + 7,
+          head.dy - 0.4,
+          head.dx + 10,
+          head.dy + 1.6,
+        )
+        ..quadraticBezierTo(
+          head.dx + 6.5,
+          head.dy + 0.7,
+          head.dx + 2.6,
+          head.dy + 0.8,
+        )
+        ..close(),
+      pale,
+    );
+    canvas.drawCircle(head + const Offset(1.1, -0.6), 0.65, band);
+
+    if (_flying) {
+      // Geniş, yuvarlak kanatlar; üstünde çizgili bantlar.
+      final flap = math.sin(_t * 12) * 9;
+      for (final sc in [1.0, 0.7]) {
+        final wing = Path()
+          ..moveTo(-4, -7)
+          ..quadraticBezierTo(-6, -13 - flap * sc, -2, -18 - flap * sc)
+          ..quadraticBezierTo(4, -15 - flap * sc, 4, -7)
+          ..close();
+        canvas.drawPath(wing, pale);
+        for (var k = 0; k < 3; k++) {
+          final f = 0.45 + k * 0.18;
+          canvas.drawLine(
+            Offset(-4 + 2 * f, -7 - (11 + flap * sc) * f),
+            Offset(4 - 1.5 * f, -7 - (8 + flap * sc) * f),
+            band..strokeWidth = 1,
+          );
+        }
+      }
+    } else {
+      // Kapalı kanat: sırtta zebra çizgileri.
+      canvas.drawPath(
+        Path()
+          ..moveTo(-5, -8)
+          ..quadraticBezierTo(0, -10.5, 3.5, -6.5)
+          ..lineTo(-5, -5)
+          ..close(),
+        Paint()..color = _shade.withValues(alpha: a),
+      );
+      for (final x in [-3.6, -1.6, 0.4]) {
+        canvas.drawLine(
+          Offset(x, -8.6),
+          Offset(x - 0.8, -5.4),
+          band..strokeWidth = 1.1,
+        );
+      }
       final leg = Paint()
-        ..color = kLight.withValues(alpha: a)
-        ..strokeWidth = 1;
-      canvas.drawLine(const Offset(-1, -2), const Offset(-1, 1), leg);
-      canvas.drawLine(const Offset(2, -2), const Offset(2, 1), leg);
+        ..color = _pale.withValues(alpha: a * 0.8)
+        ..strokeWidth = 0.9;
+      canvas.drawLine(const Offset(-1, -2.5), const Offset(-1.5, 1), leg);
+      canvas.drawLine(const Offset(2, -2.5), const Offset(2, 1), leg);
     }
     canvas.restore();
   }
+
+  static const _pale = Color(0xFFF1E6D2);
+  static const _shade = Color(0xFFC9B9A0);
+  static const _band = Color(0xFF3A2A20);
 }
 
 // ======================================================= Ateşböceği sürüsü

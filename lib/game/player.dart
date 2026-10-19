@@ -1003,19 +1003,22 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     canvas.drawCircle(back, 1.9, _fill);
     leg(foot2);
 
-    // Kalın paltolu gövde, hafif öne eğik.
-    _limb.strokeWidth = 10;
+    // İnce gövde; dizlere inen, arkası rüzgârla açılan uzun bir hırka.
+    final wind = _speedFactor + (!onGround ? 0.4 : 0);
+    _limb.strokeWidth = 8;
     canvas.drawLine(
       Offset(head.dx - 0.5, headY + 7),
       hip.translate(0, -1.5),
       _limb,
     );
+    final flare = 1.5 + wind * 2.5 + math.sin(_anim * 4) * 0.4 * (0.3 + wind);
     canvas.drawPath(
       Path()
-        ..moveTo(cx - 5.5, hipY - 6)
-        ..lineTo(cx + 5.5 + lean * 4, hipY - 6)
-        ..lineTo(cx + 6.5, hipY + 2.5)
-        ..lineTo(cx - 6, hipY + 2.5)
+        ..moveTo(cx - 4.2, hipY - 8)
+        ..lineTo(cx + 4.2 + lean * 4, hipY - 8)
+        ..quadraticBezierTo(cx + 5.5, hipY + 1, cx + 4.6, hipY + 6)
+        ..lineTo(cx - 4.5 - flare, hipY + 6.5 - flare * 0.5)
+        ..quadraticBezierTo(cx - 5, hipY, cx - 4.2, hipY - 8)
         ..close(),
       _fill,
     );
@@ -1024,47 +1027,63 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
 
     leg(foot1);
 
-    // Baş ve örgü bere.
-    canvas.drawCircle(head, 7, _fill);
-    canvas.drawCircle(head + const Offset(6.4, 1.6), 1.6, _fill);
-    canvas.drawPath(
-      Path()
-        ..moveTo(head.dx - 7.6, head.dy - 0.5)
-        ..cubicTo(
-          head.dx - 8.5,
-          head.dy - 11,
-          head.dx + 7.5,
-          head.dy - 12,
-          head.dx + 7.6,
-          head.dy - 2,
-        )
-        ..close(),
-      _fill,
-    );
-    final bounce = math.sin(cycle * 2) * 0.8 * amount;
-    canvas.drawCircle(
-      head + Offset(-6.5 - _speedFactor * 1.5, -9 + bounce),
-      2.7,
-      _fill,
-    );
+    // Baş: başı açık, dağınık saçlar rüzgârla arkaya yatar.
+    canvas.drawCircle(head, 6.2, _fill);
+    canvas.drawCircle(head + const Offset(5.6, 1.4), 1.4, _fill);
+    // Saç tek parça: alnın üstünden tepeye, ardından arkaya yatan üç tutam.
+    final b = wind * 2.4;
+    double sw(int i) => math.sin(_anim * 5 + i * 1.4) * (0.25 + wind * 0.5);
+    Offset h(double x, double y) => head + Offset(x, y);
+    final hair = Path()
+      ..moveTo(h(5.8, -1.5).dx, h(5.8, -1.5).dy)
+      ..quadraticBezierTo(
+        h(7.2, -5).dx,
+        h(7.2, -5).dy,
+        h(4, -6.6).dx,
+        h(4, -6.6).dy,
+      )
+      ..quadraticBezierTo(
+        h(0.5, -8.6).dx,
+        h(0.5, -8.6).dy,
+        h(-4, -7.4).dx,
+        h(-4, -7.4).dy,
+      )
+      ..lineTo(h(-9.5 - b, -7 + sw(0)).dx, h(-9.5 - b, -7 + sw(0)).dy)
+      ..lineTo(h(-6.4, -4.6).dx, h(-6.4, -4.6).dy)
+      ..lineTo(h(-10.5 - b, -3 + sw(1)).dx, h(-10.5 - b, -3 + sw(1)).dy)
+      ..lineTo(h(-6.8, -0.8).dx, h(-6.8, -0.8).dy)
+      ..lineTo(h(-9 - b * 0.8, 2 + sw(2)).dx, h(-9 - b * 0.8, 2 + sw(2)).dy)
+      ..lineTo(h(-5.2, 3).dx, h(-5.2, 3).dy)
+      ..lineTo(h(-2, -1).dx, h(-2, -1).dy)
+      ..close();
+    canvas.drawPath(hair, _fill);
 
-    // Atkının arkaya savrulan ucu.
-    final wind = _speedFactor + (!onGround ? 0.4 : 0);
-    final neck = Offset(head.dx - 2, headY + 7.5);
-    canvas.drawPath(
-      Path()
-        ..moveTo(neck.dx, neck.dy - 1.5)
-        ..quadraticBezierTo(
-          neck.dx - 5,
-          neck.dy + 1 - wind * 3,
-          neck.dx - 8 - wind * 3,
-          neck.dy + 4 - wind * 4 + math.sin(_anim * 9) * wind,
-        )
-        ..lineTo(neck.dx - 7 - wind * 3, neck.dy + 6 - wind * 4)
-        ..quadraticBezierTo(neck.dx - 4, neck.dy + 3, neck.dx, neck.dy + 1.5)
-        ..close(),
+    // Uzun atkı: boyuna dolanır, iki ucu ardında dalgalanır.
+    final neck = Offset(head.dx - 1.5, headY + 7);
+    canvas.drawOval(
+      Rect.fromCenter(center: neck.translate(0.5, 0), width: 9, height: 4),
       _fill,
     );
+    for (final tail in const [0.0, 1.0]) {
+      final len = 13.0 - tail * 4 + wind * 5;
+      final top = <Offset>[];
+      final bottom = <Offset>[];
+      const n = 7;
+      for (var i = 0; i <= n; i++) {
+        final k = i / n;
+        // Dururken aşağı sarkar, koşarken ve havada yatayda savrulur.
+        final sweep = (0.25 + wind * 0.75).clamp(0.0, 1.0);
+        final wave =
+            math.sin(_anim * (7 + tail * 2) - k * 5 + tail) * k * (0.6 + wind);
+        final x = neck.dx - 1 - k * len * (0.25 + sweep * 0.75) + tail;
+        final y = neck.dy + 0.5 + k * len * (1 - sweep) * 0.9 + wave + tail;
+        final half = 1.3 * (1 - k * 0.45);
+        top.add(Offset(x, y - half));
+        bottom.add(Offset(x, y + half));
+      }
+      final ribbon = Path()..addPolygon([...top, ...bottom.reversed], true);
+      canvas.drawPath(ribbon, _fill);
+    }
 
     // Kavanozu tutan ön kol ve ip.
     _limb.strokeWidth = 3.2;

@@ -45,10 +45,10 @@ class S {
         'Esc: menü · ← → yürü · Boşluk zıpla · ↑ tırman / kol çek\n'
         '↓ çömel · Shift parmak ucu · F ateşböceği · R yeniden dene',
     'memoryCounter': 'hatıra',
-    'skipHint': 'boşluk / dokun',
-    'chase': 'Arkanda bir şey var. KOŞ.',
-    'wings':
-        'Hezarfen\'in kanatları! Havadayken zıplamayı basılı tut: süzülürsün.',
+    'skipHint': 'boşluk / dokun · esc: atla',
+    'memoriesGathered': 'Toplanan hatıralar',
+    'chase': 'Arkanda bir şey nefes alıyor. KOŞ.',
+    'wings': 'Hezarfen\'in kanatları. Rüzgâra güvenen düşmez.',
     'memoriesFound': 'Toplanan hatıralar',
     'musicCredit': 'Menü müziği: vjgalaxy · Pixabay',
     'credits': 'Emeği geçenler',
@@ -93,9 +93,10 @@ class S {
         'Esc: menu · ← → walk · Space jump · ↑ climb / pull lever\n'
         '↓ crouch · Shift tiptoe · F firefly · R retry',
     'memoryCounter': 'memories',
-    'skipHint': 'space / tap',
-    'chase': 'Something is behind you. RUN.',
-    'wings': 'Hezarfen\'s wings! Hold jump in the air to glide.',
+    'skipHint': 'space / tap · esc: skip',
+    'memoriesGathered': 'Memories gathered',
+    'chase': 'Something breathes behind you. RUN.',
+    'wings': 'Hezarfen\'s wings. Whoever trusts the wind does not fall.',
     'memoriesFound': 'Memories found',
     'musicCredit': 'Menu music: vjgalaxy · Pixabay',
     'credits': 'Credits',

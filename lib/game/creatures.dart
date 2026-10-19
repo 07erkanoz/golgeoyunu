@@ -328,7 +328,11 @@ class Watcher extends PositionComponent with HasGameReference<GolgeGame> {
       beamPath(),
       Paint()
         ..shader = ui.Gradient.linear(o.toOffset(), far, [
-          kCold.withValues(alpha: 0.28 + 0.3 * suspicion),
+          Color.lerp(kCold, const Color(0xFFF2FFFC), suspicion)!.withValues(
+            alpha:
+                (0.26 + 0.3 * suspicion) *
+                (suspicion > 0.6 ? 0.8 + 0.2 * math.sin(_t * 29) : 1),
+          ),
           kCold.withValues(alpha: 0),
         ]),
     );
@@ -370,11 +374,6 @@ class Watcher extends PositionComponent with HasGameReference<GolgeGame> {
       Paint()..color = kCold.withValues(alpha: 0.95),
     );
     canvas.restore();
-    if (suspicion > 0.05) {
-      final a = Paint()..color = kCold.withValues(alpha: 0.4 + 0.6 * suspicion);
-      canvas.drawRect(Rect.fromLTWH(size.x / 2 - 1.5, -22, 3, 10), a);
-      canvas.drawCircle(Offset(size.x / 2, -7), 1.8, a);
-    }
   }
 }
 

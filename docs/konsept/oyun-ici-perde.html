@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Oyun İçi Hayal Perdesi</title>
+<style>
+  html, body { margin: 0; background: #050302; }
+  svg { display: block; width: 1280px; height: 720px; }
+</style>
+</head>
+<body>
+<!-- Konsept: oyunun içinde "hayal perdesi". Yerebatan'da sütunlar arasında
+     gerilmiş, yırtık, arkadan aydınlanan dev bir perde. Çocuğun gölgesi
+     perdeye dev gibi düşer: o da bir gölgedir. Perdenin kenarında Hüdhüd. -->
+<svg viewBox="0 0 1280 720" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0c0605"/>
+      <stop offset="0.6" stop-color="#1f0e08"/>
+      <stop offset="1" stop-color="#2c140a"/>
+    </linearGradient>
+    <radialGradient id="cloth" cx="58%" cy="55%" r="65%">
+      <stop offset="0" stop-color="#ffd59a"/>
+      <stop offset="0.25" stop-color="#e5a05c"/>
+      <stop offset="0.65" stop-color="#9a5326"/>
+      <stop offset="1" stop-color="#3a180a"/>
+    </radialGradient>
+    <radialGradient id="hole" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#fff3d6"/>
+      <stop offset="0.5" stop-color="#ffcf8a" stop-opacity="0.8"/>
+      <stop offset="1" stop-color="#ffb060" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="jar" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#ffd27a" stop-opacity="0.65"/>
+      <stop offset="1" stop-color="#ffd27a" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="beam" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffcf8a" stop-opacity="0.28"/>
+      <stop offset="1" stop-color="#ffcf8a" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="weave">
+      <feTurbulence type="fractalNoise" baseFrequency="0.8 0.05" numOctaves="2" seed="3"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.18 0"/>
+      <feComposite in2="SourceGraphic" operator="in"/>
+    </filter>
+    <filter id="blur6"><feGaussianBlur stdDeviation="6"/></filter>
+    <filter id="blur2"><feGaussianBlur stdDeviation="2.2"/></filter>
+    <!-- Yırtık perde: dalgalı alt kenar ve delikler -->
+    <clipPath id="tear">
+      <path d="M330 150 L930 150 L930 470 Q900 488 880 470 L860 500 Q830 478 800 506 L770 482 Q740 512 700 490
+               L660 520 L630 486 Q600 512 560 488 L520 508 Q480 480 450 500 L420 474 Q380 496 330 476 Z"/>
+    </clipPath>
+  </defs>
+
+  <rect width="1280" height="720" fill="url(#sky)"/>
+
+  <!-- Uzak sütun sırası ve kemerler -->
+  <g fill="#2a140c" opacity="0.8">
+    <path d="M0 120 Q90 40 180 120 Q270 40 360 120 Q450 40 540 120 Q630 40 720 120 Q810 40 900 120 Q990 40 1080 120 Q1170 40 1260 120 L1280 120 L1280 0 L0 0 Z"/>
+    <rect x="170" y="110" width="20" height="520"/><rect x="350" y="110" width="20" height="520"/>
+    <rect x="890" y="110" width="20" height="520"/><rect x="1070" y="110" width="20" height="520"/>
+  </g>
+
+  <!-- Perdenin ardından süzülen ışık huzmeleri -->
+  <path d="M600 520 L540 720 L860 720 L760 520 Z" fill="url(#beam)"/>
+
+  <!-- Dev perde -->
+  <g clip-path="url(#tear)">
+    <rect x="320" y="140" width="620" height="390" fill="url(#cloth)"/>
+    <rect x="320" y="140" width="620" height="390" fill="#000" filter="url(#weave)"/>
+    <!-- Perdeye vuran eski tasvirlerin silik izleri -->
+    <g fill="#2a1208" fill-opacity="0.35" filter="url(#blur2)">
+      <path d="M410 470 L404 300 Q404 270 430 262 L432 236 Q446 222 458 236 L458 262 Q482 272 482 300 L476 470 Z"/>
+      <path d="M840 470 L846 320 Q846 290 862 282 L858 250 L876 270 L880 290 Q896 300 894 330 L900 470 Z"/>
+    </g>
+    <!-- Çocuğun perdeye düşen dev gölgesi: o da bir gölgedir -->
+    <g fill="#1a0a04" fill-opacity="0.78" filter="url(#blur6)">
+      <circle cx="642" cy="252" r="40"/>
+      <path d="M612 288 L606 470 L686 470 L676 288 Z"/>
+      <path d="M676 320 L740 362 L732 374 L672 344 Z"/>
+      <path d="M612 300 Q560 340 580 420 L596 410 Q584 350 622 320 Z"/>
+    </g>
+  </g>
+  <!-- Yırtıklardan sızan ışık -->
+  <ellipse cx="760" cy="300" rx="18" ry="30" fill="url(#hole)"/>
+  <ellipse cx="520" cy="210" rx="10" ry="16" fill="url(#hole)"/>
+  <ellipse cx="700" cy="505" rx="40" ry="10" fill="url(#hole)" opacity="0.7"/>
+
+  <!-- Perdeyi germe ipleri ve üst kalas -->
+  <rect x="300" y="132" width="660" height="12" fill="#0b0503"/>
+  <g stroke="#0b0503" stroke-width="2">
+    <line x1="330" y1="138" x2="180" y2="100"/><line x1="930" y1="138" x2="1080" y2="100"/>
+  </g>
+
+  <!-- Hüdhüd: perdenin kalasında, tepeliği açık -->
+  <g transform="translate(872 112)" fill="#f3e6d2">
+    <ellipse cx="0" cy="0" rx="13" ry="8"/>
+    <circle cx="11" cy="-7" r="5.5"/>
+    <path d="M15 -9 L31 -6 L15 -5 Z"/>                               <!-- ince uzun gaga -->
+    <path d="M6 -10 L2 -26 L9 -14 L10 -29 L14 -14 L19 -25 L16 -10 Z"/> <!-- tepelik -->
+    <path d="M-12 -2 L-26 2 L-12 4 Z"/>
+    <g stroke="#f3e6d2" stroke-width="1.4"><line x1="-2" y1="7" x2="-3" y2="16"/><line x1="4" y1="7" x2="4" y2="16"/></g>
+    <path d="M-6 -4 L6 -4 L4 -1 L-4 -1 Z" fill="#9b8a74"/>
+  </g>
+
+  <!-- Ön plan: su ve iskele -->
+  <rect x="0" y="600" width="1280" height="120" fill="#120806"/>
+  <g stroke="#e19a5a" stroke-opacity="0.18" stroke-width="1.4">
+    <line x1="520" y1="640" x2="560" y2="640"/><line x1="640" y1="652" x2="700" y2="652"/>
+    <line x1="760" y1="636" x2="790" y2="636"/><line x1="600" y1="680" x2="660" y2="680"/>
+  </g>
+  <rect x="0" y="560" width="1280" height="10" fill="#0b0504"/>
+  <g stroke="#0b0504" stroke-width="3">
+    <line x1="140" y1="570" x2="140" y2="720"/><line x1="460" y1="570" x2="460" y2="720"/>
+    <line x1="820" y1="570" x2="820" y2="720"/><line x1="1140" y1="570" x2="1140" y2="720"/>
+  </g>
+
+  <!-- Ön plan sütunları -->
+  <g fill="#090403">
+    <rect x="40" y="0" width="70" height="720"/><rect x="20" y="70" width="110" height="26"/>
+    <rect x="1170" y="0" width="70" height="720"/><rect x="1150" y="70" width="110" height="26"/>
+  </g>
+
+  <!-- Çocuk: iskelede, elinde ateşböceği kavanozu -->
+  <circle cx="616" cy="548" r="40" fill="url(#jar)"/>
+  <g fill="#060302">
+    <circle cx="600" cy="519" r="8"/>
+    <path d="M594 527 L592 554 L608 554 L606 527 Z"/>
+    <path d="M592 554 L589 562 L593 562 L597 554 Z"/><path d="M604 554 L607 562 L611 562 L607 554 Z"/>
+    <path d="M606 532 L615 541 L612 544 L604 536 Z"/>
+    <path d="M594 528 Q578 530 572 538 Q584 534 596 534 Z"/>   <!-- savrulan atkı -->
+  </g>
+  <rect x="611" y="541" width="7" height="9" rx="2" fill="#ffd27a"/>
+
+  <!-- Beyit -->
+  <g font-family="Georgia, 'Times New Roman', serif" text-anchor="middle" fill="#ead8bf">
+    <text x="640" y="40" font-size="22" font-style="italic" opacity="0.85">Gölgeni perdede gören, ışığın nerede olduğunu bilir.</text>
+  </g>
+</svg>
+</body>
+</html>

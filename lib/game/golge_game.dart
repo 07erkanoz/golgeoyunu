@@ -16,6 +16,7 @@ import 'level.dart';
 import 'lighting.dart';
 import 'levels.dart';
 import 'narration.dart';
+import 'perde.dart';
 import 'palette.dart';
 import 'player.dart';
 import '../settings.dart';
@@ -59,6 +60,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
 
   late Level level;
   int levelIndex = 0;
+  int _debugScene = 0;
   Player? player;
   Vector2? _respawn;
 
@@ -71,6 +73,9 @@ class GolgeGame extends FlameGame with KeyboardEvents {
   bool _snapCamera = true;
   bool _prevJump = false;
   double _closeUp = 1;
+
+  /// Önizleme ve ekran görüntüsü için yakın plan (1 = normal).
+  set debugCloseUp(double v) => _closeUp = v;
 
   /// Ekranda görünen kare yüksekliği: masaüstünde Limbo gibi uzak, telefon
   /// gibi alçak ekranlarda çocuk seçilebilsin diye daha yakın.
@@ -228,11 +233,16 @@ class GolgeGame extends FlameGame with KeyboardEvents {
   void _startPrologue() {
     cinematic = true;
     effects.setFade(1, kInk);
-    narration.playCinematic(prologueText, () {
-      cinematic = false;
-      effects.fadeTo(0, 1.8);
-      _showLevelTitle();
-    }, instantBlack: true);
+    narration.playCinematic(
+      prologueText,
+      () {
+        cinematic = false;
+        effects.fadeTo(0, 1.8);
+        _showLevelTitle();
+      },
+      instantBlack: true,
+      scene: PerdeScene.prologue,
+    );
   }
 
   /// Testler ve geliştirme kısayolu için: hikâyeyi atlayıp bölümü yükler.
@@ -383,18 +393,35 @@ class GolgeGame extends FlameGame with KeyboardEvents {
       onDone: () {
         final next = levelIndex + 1;
         if (next < levels.length) {
-          _buildLevel(next);
-          cinematic = false;
-          _transitioning = false;
-          effects.fadeTo(0, 1.8);
-          _showLevelTitle();
+          void enter() {
+            _buildLevel(next);
+            cinematic = false;
+            _transitioning = false;
+            effects.fadeTo(0, 1.8);
+            _showLevelTitle();
+          }
+
+          // Bölüm arasında perdede bir gölge oyunu oynanır.
+          final interlude = interludeText(next);
+          if (interlude.isEmpty) {
+            enter();
+          } else {
+            effects.setFade(1, kInk);
+            narration.playCinematic(
+              interlude,
+              enter,
+              instantBlack: true,
+              scene: next == 1 ? PerdeScene.galata : PerdeScene.kaf,
+            );
+          }
           return;
         }
+        final ending = epilogueText;
         narration.playCinematic(
           [
-            ...epilogue.take(epilogue.length - 1),
-            'Toplanan hatıralar: $memoryCount / $memoryTotal',
-            epilogue.last,
+            ...ending.take(ending.length - 1),
+            '${S.of('memoriesGathered')}: $memoryCount / $memoryTotal',
+            ending.last,
           ],
           () {
             _memories.clear();
@@ -404,6 +431,8 @@ class GolgeGame extends FlameGame with KeyboardEvents {
             _transitioning = false;
             _startPrologue();
           },
+          instantBlack: true,
+          scene: PerdeScene.epilogue,
         );
       },
     );
@@ -580,6 +609,13 @@ class GolgeGame extends FlameGame with KeyboardEvents {
       return KeyEventResult.ignored;
     }
     if (event is KeyDownEvent) {
+      // Sahne sürerken Esc perdeyi atlar (ayarlar dişli simgesinden açılır).
+      if (event.logicalKey == LogicalKeyboardKey.escape &&
+          narration.inCinematic &&
+          !overlays.isActive(settingsOverlay)) {
+        narration.skipAll();
+        return KeyEventResult.handled;
+      }
       if (event.logicalKey == LogicalKeyboardKey.escape) {
         toggleSettings();
         return KeyEventResult.handled;
@@ -597,8 +633,24 @@ class GolgeGame extends FlameGame with KeyboardEvents {
           narration.inCinematic) {
         narration.skip();
       }
+
       if (event.logicalKey == LogicalKeyboardKey.keyR && !cinematic) {
         player?.die();
+      }
+      // Geliştirici kısayolu: P perde sahnelerini sırayla oynatır.
+      if (const bool.fromEnvironment('DEV') &&
+          event.logicalKey == LogicalKeyboardKey.keyP &&
+          !narration.inCinematic) {
+        final scene =
+            PerdeScene.values[_debugScene++ % PerdeScene.values.length];
+        final lines = switch (scene) {
+          PerdeScene.prologue => prologueText,
+          PerdeScene.galata => interludeText(1),
+          PerdeScene.kaf => interludeText(2),
+          PerdeScene.epilogue => epilogueText,
+        };
+        cinematic = true;
+        narration.playCinematic(lines, () => cinematic = false, scene: scene);
       }
       // Geliştirici kısayolu: --dart-define=DEV=true ile N bir sonraki bölüm.
       if (const bool.fromEnvironment('DEV') &&
