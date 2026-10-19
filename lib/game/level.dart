@@ -1,0 +1,111 @@
+import 'dart:math' as math;
+
+import 'package:flame/components.dart';
+
+import 'levels.dart';
+
+const double kTile = 32;
+
+/// Bir bölüm haritasının çözümlenmiş hâli: hücre sorguları ve özel noktalar.
+class Level {
+  Level(this.def) {
+    _parse();
+  }
+
+  final LevelDef def;
+  late final int width;
+  late final int height;
+  late final List<List<String>> _cells;
+
+  Vector2 playerStart = Vector2.zero();
+  Vector2 exitCell = Vector2.zero();
+  final guardCells = <Vector2>[];
+  final birdCells = <Vector2>[];
+  final memoryCells = <Vector2>[];
+  final checkpointCells = <Vector2>[];
+  final triggers = <(int, Vector2)>[];
+
+  double get pixelWidth => width * kTile;
+  double get pixelHeight => height * kTile;
+
+  void _parse() {
+    height = def.map.length;
+    width = def.map.map((r) => r.length).reduce(math.max);
+    _cells = [];
+    for (var r = 0; r < height; r++) {
+      final row = def.map[r].padRight(width, '.').split('');
+      for (var c = 0; c < width; c++) {
+        final ch = row[c];
+        final cell = Vector2(c * kTile, r * kTile);
+        switch (ch) {
+          case 'P':
+            playerStart = cell;
+          case 'E':
+            exitCell = cell;
+          case 'G':
+            guardCells.add(cell);
+          case 'B':
+            birdCells.add(cell);
+          case 'M':
+            memoryCells.add(cell);
+          case 'K':
+            checkpointCells.add(cell);
+          default:
+            final n = int.tryParse(ch);
+            if (n == null) continue;
+            triggers.add((n - 1, cell));
+        }
+        row[c] = '.';
+      }
+      _cells.add(row);
+    }
+  }
+
+  /// Harita dışı: yanlar katı duvar, üst ve alt boşluk.
+  String cell(int c, int r) {
+    if (c < 0 || c >= width) return '#';
+    if (r < 0 || r >= height) return '.';
+    return _cells[r][c];
+  }
+
+  bool solid(int c, int r) => cell(c, r) == '#';
+
+  String cellAt(double x, double y) =>
+      cell((x / kTile).floor(), (y / kTile).floor());
+
+  bool rectHits(
+    double left,
+    double top,
+    double right,
+    double bottom,
+    bool Function(String) test,
+  ) {
+    final c0 = (left / kTile).floor();
+    final c1 = ((right - 0.01) / kTile).floor();
+    final r0 = (top / kTile).floor();
+    final r1 = ((bottom - 0.01) / kTile).floor();
+    for (var r = r0; r <= r1; r++) {
+      for (var c = c0; c <= c1; c++) {
+        if (test(cell(c, r))) return true;
+      }
+    }
+    return false;
+  }
+
+  bool rectSolid(double left, double top, double right, double bottom) =>
+      rectHits(left, top, right, bottom, (ch) => ch == '#');
+
+  bool lineOfSight(Vector2 a, Vector2 b) {
+    final d = b - a;
+    final steps = math.max(1, (d.length / 8).ceil());
+    for (var i = 1; i < steps; i++) {
+      final p = a + d * (i / steps);
+      if (cellAt(p.x, p.y) == '#') return false;
+    }
+    return true;
+  }
+
+  /// Hücreye yerleşen bir karakterin sol-üst konumu (ayakları zeminde).
+  static Vector2 standOn(Vector2 cell, double w, double h) =>
+      Vector2(cell.x + (kTile - w) / 2, cell.y + kTile - h);
+}

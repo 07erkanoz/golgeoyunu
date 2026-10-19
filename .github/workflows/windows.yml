@@ -1,0 +1,52 @@
+name: Windows derlemesi
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.47.7
+          cache: true
+
+      - name: Paketleri indir
+        run: flutter pub get
+
+      - name: Testler
+        run: flutter test
+
+      - name: Windows için derle
+        run: flutter build windows --release
+
+      - name: Zip olarak paketle
+        shell: pwsh
+        run: Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath GolgeOyunu-windows.zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: GolgeOyunu-windows
+          path: GolgeOyunu-windows.zip
+
+      - name: İndirme sayfasına yayımla
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: Gölge Oyunu · derleme ${{ github.run_number }}
+          prerelease: true
+          files: GolgeOyunu-windows.zip
+          body: |
+            Windows için otomatik derleme (commit ${{ github.sha }}).
+
+            Kurulum: zip'i indir, bir klasöre çıkar ve `golge.exe` dosyasını çalıştır.
+            Kontroller: ← → koş, Boşluk zıpla, ↑ tırman, ↓ çömel, R yeniden başla.
