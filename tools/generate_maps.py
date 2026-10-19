@@ -253,7 +253,7 @@ W=336
 lvl3=s.rows()
 
 # ------------------------------------------------------------ IV · KAF
-W,H=172,24
+W,H=247,24
 f=G(W,H)
 # 1) varış ve zümrüt köprü
 f.fill(0,18,10,23,'#'); f.put(2,17,'P'); f.put(4,17,'1'); f.put(5,17,'B'); f.put(7,17,'F')
@@ -275,17 +275,35 @@ f.fill(85,10,93,23,'#'); f.put(89,9,'g')
 f.put(96,11,'O'); f.put(100,10,'O'); f.put(104,9,'R')
 f.fill(110,4,111,14,'r')
 f.fill(114,6,121,7,'#'); f.put(115,5,'K'); f.put(116,5,'4'); f.put(117,5,'B'); f.put(119,5,'M')
+# 5) Simurg'un tüyleri: üç tüy, üç sınav; sunak ayna salonunu açar
+f.fill(122,18,196,23,'#'); f.put(123,17,'K'); f.put(125,17,'p'); f.put(126,17,'6')
+# tüy 1: rüzgârla çıkılan kristal raf, kargalar
+f.fill(128,7,129,17,'r'); f.fill(131,6,135,6,'#'); f.put(133,5,'T'); f.put(134,5,'k'); f.put(132,5,'k')
+# tüy 2: iki Gözcü'nün sırayla süpürdüğü gölge köprüsü
+f.fill(139,18,158,23,'.'); f.fill(139,18,158,18,'n')
+f.put(148,15,'T')
+f.fill(159,10,161,23,'#'); f.put(160,9,'g')
+f.fill(139,10,141,10,'#'); f.put(139,9,'#'); f.put(140,9,'g')
+f.put(138,17,'7')
+# tüy 3: dikey kayan kayalarla yüksek buluta
+f.put(165,16,'V'); f.put(169,14,'V'); f.put(173,12,'V')
+f.fill(176,7,180,7,'='); f.put(178,6,'T'); f.put(177,6,'M')
+f.put(166,17,'B'); f.put(170,17,'8')
+# sunak ve tüy kapısı
+f.put(186,17,'K'); f.put(190,17,'s'); f.put(188,17,'B')
+f.fill(194,3,194,11,'#'); f.fill(194,12,194,17,'H')
+HO=75
 # 5) Simurg'un ayna salonu
-f.fill(122,0,171,2,'#')
-f.fill(122,18,171,23,'#'); f.put(124,17,'K'); f.put(127,17,'B'); f.put(132,17,'5')
-f.fill(136,13,149,13,'#'); f.fill(151,13,152,13,'#'); f.fill(134,11,134,12,'#')
-f.put(140,4,'j'); f.put(140,12,'m'); f.put(150,12,'m'); f.put(150,17,'m')
-f.put(152,17,'C'); f.put(153,18,'.',force=True)
-f.put(146,17,'G'); f.put(138,12,'M'); f.put(143,17,'F')
-f.put(158,17,'t')
-f.fill(161,3,161,11,'#'); f.fill(161,12,161,17,'H')
-f.put(165,17,'B'); f.put(167,17,'E')
-for c,r in [(8,16),(32,8),(66,8),(98,7),(126,16)]:
+f.fill(122+HO,0,171+HO,2,'#')
+f.fill(122+HO,18,171+HO,23,'#'); f.put(124+HO,17,'K'); f.put(127+HO,17,'B'); f.put(132+HO,17,'5')
+f.fill(136+HO,13,149+HO,13,'#'); f.fill(151+HO,13,152+HO,13,'#'); f.fill(134+HO,11,134+HO,12,'#')
+f.put(140+HO,4,'j'); f.put(140+HO,12,'m'); f.put(150+HO,12,'m'); f.put(150+HO,17,'m')
+f.put(152+HO,17,'C'); f.put(153+HO,18,'.',force=True)
+f.put(146+HO,17,'G'); f.put(138+HO,12,'M'); f.put(143+HO,17,'F')
+f.put(158+HO,17,'t')
+f.fill(161+HO,3,161+HO,11,'#'); f.fill(161+HO,12,161+HO,17,'H')
+f.put(165+HO,17,'B'); f.put(167+HO,17,'E')
+for c,r in [(8,16),(32,8),(66,8),(98,7),(126+HO,16)]:
     f.put(c,r,'p')
 lvl4=f.rows()
 

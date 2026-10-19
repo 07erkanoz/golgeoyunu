@@ -433,6 +433,7 @@ const levels = <LevelDef>[
       'Kandilcilerin Gök Karakolu',
       'Gölge Köprüsü',
       'Rüzgârın Sırtı',
+      'Simurg\'un Tüyleri',
       'Simurg\'un Ayna Salonu',
     ],
     areasEn: [
@@ -440,6 +441,7 @@ const levels = <LevelDef>[
       'The Lamplighters\' Sky Post',
       'The Shadow Bridge',
       'The Back of the Wind',
+      'The Feathers of the Simurgh',
       'The Simurgh\'s Hall of Mirrors',
     ],
     whispers: [
@@ -448,6 +450,9 @@ const levels = <LevelDef>[
       'Gölgeden köprü ışığa dayanmaz. Ay ışığı da aynaya düşer.',
       'Rüzgâr da bir yolcudur. Ona yaslanan düşmez.',
       'Üç ayna, bir ışık. Aradığın, onun yolunun sonunda.',
+      'Simurg buraya üç tüy bırakmış. Üçünü bulmayan aynayı göremez.',
+      'Gölgeden köprüyü iki göz bekler. Birinin baktığı yer, öbürünün kör noktası.',
+      'Kayalar da nefes alır; inip kalkarlar. Onlarla birlikte yüksel.',
     ],
     whispersEn: [
       'This is Qaf. The birds flew a thousand years, and thirty arrived.',
@@ -455,16 +460,21 @@ const levels = <LevelDef>[
       'A bridge of shadow cannot bear the light. Moonlight, too, falls into mirrors.',
       'The wind is a traveler too. Whoever leans on it does not fall.',
       'Three mirrors, one light. What you seek waits at the end of its road.',
+      'The Simurgh left three feathers here. Whoever does not find all three will never see the mirror.',
+      'Two eyes guard the bridge of shadow. Where one looks, the other is blind.',
+      'Rocks breathe too; they rise and fall. Rise with them.',
     ],
     memories: [
       'Hatıra · "Simurg diye bir kuş yoktur," derdi ustam. "Otuz kuş vardır. Ama bunu ancak varan bilir."',
       'Hatıra · Kandili yakarken hep aynı duayı mırıldanırdı. Sözlerini hiç anlamadım; ışığı anladım.',
       'Hatıra · "Aynaya bakan kendini gördüğünü sanır," derdi. "Oysa ayna ışığı gösterir."',
+      'Hatıra · Bir gün perdeye otuz kuş çizdi. Sonra hepsini tek bir tasvirde birleştirdi: "İşte Simurg."',
     ],
     memoriesEn: [
       'Memory · "There is no bird called the Simurgh," my master said. "There are thirty birds. But only those who arrive know it."',
       'Memory · He murmured the same prayer each time he lit the lamp. I never understood the words; I understood the light.',
       'Memory · "Whoever looks in a mirror thinks he sees himself," he said. "But a mirror shows the light."',
+      'Memory · One day he drew thirty birds on the screen. Then he joined them all into a single figure: "There. The Simurgh."',
     ],
     map: kMapKaf,
   ),

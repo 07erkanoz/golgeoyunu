@@ -473,12 +473,13 @@ class LanternBalloon extends PositionComponent
     with HasGameReference<GolgeGame> {
   LanternBalloon(Vector2 cell)
     : _home = cell + Vector2(kTile / 2, kTile / 2),
+      _t = (cell.x / kTile * 0.73) % 14,
       super(position: cell + Vector2(kTile / 2, kTile / 2), priority: 23);
 
   static const double span = 5 * kTile;
   static const double beamLength = 7 * kTile;
   final Vector2 _home;
-  double _t = math.Random().nextDouble() * 6;
+  double _t;
   double suspicion = 0;
 
   bool inBeam(Vector2 p) {

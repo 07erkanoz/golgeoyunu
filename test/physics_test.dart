@@ -413,10 +413,13 @@ void main() {
         rock.position.x + 10,
         rock.position.y - Player.h - 1,
       );
-      run(game, 2.6);
+      final y0 = rock.position.y;
+      run(game, 1.4);
       expect(p.onGround, isTrue);
       expect(p.riding, same(rock));
-      expect(p.position.y + Player.h, lessThan(125 * kTile));
+      // Kaya nereye gittiyse oyuncu da onunla gitti.
+      expect((rock.position.y - y0).abs(), greaterThan(10));
+      expect((p.position.y + Player.h - rock.position.y).abs(), lessThan(2));
     });
 
     testWithGame<GolgeGame>('basılan kaya kopar ve düşer', GolgeGame.new, (
@@ -804,19 +807,19 @@ void main() {
       GolgeGame.new,
       (game) async {
         expect(levels[3].title, 'IV · KAF');
-        var p = await place(game, 3, 140, 12);
+        var p = await place(game, 3, 215, 12);
         for (final g in game.world.children.whereType<Guard>().toList()) {
           g.removeFromParent();
         }
         run(game, 0.3);
         press(game);
         p.position.setFrom(
-          Level.standOn(Vector2(149 * kTile, 12 * kTile), Player.w, Player.h),
+          Level.standOn(Vector2(224 * kTile, 12 * kTile), Player.w, Player.h),
         );
         run(game, 0.3);
         press(game);
         p.position.setFrom(
-          Level.standOn(Vector2(149 * kTile, 17 * kTile), Player.w, Player.h),
+          Level.standOn(Vector2(224 * kTile, 17 * kTile), Player.w, Player.h),
         );
         run(game, 0.4);
         press(game);
@@ -826,7 +829,7 @@ void main() {
         // Sandığı çukura it.
         p = game.player!;
         p.position.setFrom(
-          Level.standOn(Vector2(150.6 * kTile, 17 * kTile), Player.w, Player.h),
+          Level.standOn(Vector2(225.6 * kTile, 17 * kTile), Player.w, Player.h),
         );
         keys(game).right = true;
         run(game, 1.5);
@@ -835,7 +838,7 @@ void main() {
         expect(p.isDead, isFalse);
         expect(lock.open, isTrue);
         run(game, 3);
-        expect(game.world.children.whereType<Gate>().first.solid, isFalse);
+        expect(nearest<Gate>(game, lock.position.x).solid, isFalse);
       },
     );
   });
@@ -1065,6 +1068,74 @@ void main() {
       final q = await place(game, 2, 199, 9);
       run(game, 0.2);
       expect(q.hasWings, isTrue);
+    });
+  });
+
+  group('Kaf uzantısı', () {
+    testWithGame<GolgeGame>('üç tüy toplanınca sunak tüy kapısını açar', GolgeGame.new, (
+      game,
+    ) async {
+      final p = await place(game, 3, 186, 17);
+      final feathers = game.world.children.whereType<SimurgFeather>().toList();
+      expect(feathers.length, 3);
+      final gate = nearest<Gate>(game, 194 * kTile);
+      // Tüyleri tek tek al (sınavlar ayrı testlerde); sonra sunağa dön.
+      final safe = p.position.clone();
+      for (final f in feathers) {
+        p.position.setFrom(f.position - Vector2(Player.w / 2, Player.h / 2));
+        game.update(1 / 60);
+        p.position.setFrom(safe);
+        p.velocity.setZero();
+        run(game, 0.2);
+      }
+      expect(feathers.every((f) => f.taken), isTrue);
+      run(game, 3);
+      expect(gate.solid, isFalse);
+    });
+
+    testWithGame<GolgeGame>('kayan kayalarla yüksek buluta çıkılır', GolgeGame.new, (
+      game,
+    ) async {
+      final p = await place(game, 3, 164, 17);
+      final rocks = game.world.children
+          .whereType<MovingRock>()
+          .where((r) => r.position.x > 160 * kTile && r.position.x < 180 * kTile)
+          .toList()
+        ..sort((a, b) => a.position.x.compareTo(b.position.x));
+      expect(rocks.length, 3);
+      // Hedef zemin şu ankinden alçak ya da en çok yarım kare yüksekken atla.
+      void hopTo(double targetX, double Function() targetTop) {
+        for (var i = 0; i < 60 * 15; i++) {
+          final feet = p.position.y + Player.h;
+          if (p.onGround && targetTop() > feet - 70) break;
+          game.update(1 / 60);
+        }
+        keys(game)
+          ..right = true
+          ..jump = true;
+        for (var i = 0; i < 90 && p.position.x < targetX; i++) {
+          game.update(1 / 60);
+          // ignore: avoid_print
+          if (const bool.fromEnvironment('KAYA') && i % 6 == 0) print('  j$i x=${(p.position.x / kTile).toStringAsFixed(2)} feet=${((p.position.y + Player.h) / kTile).toStringAsFixed(2)} ground=${p.onGround}');
+        }
+        keys(game)
+          ..right = false
+          ..jump = false;
+        for (var i = 0; i < 60 && !p.onGround; i++) {
+          game.update(1 / 60);
+        }
+      }
+
+      for (final r in rocks) {
+        hopTo(r.position.x + 12, () => r.position.y);
+        // ignore: avoid_print
+        if (const bool.fromEnvironment('KAYA')) print('rock ${(r.position.x / kTile).toStringAsFixed(1)},${(r.position.y / kTile).toStringAsFixed(2)} p=${(p.position.x / kTile).toStringAsFixed(2)},${((p.position.y + Player.h) / kTile).toStringAsFixed(2)} riding=${p.riding.runtimeType} dead=${p.isDead}');
+        expect(p.isDead, isFalse);
+      }
+      hopTo(176.3 * kTile, () => 7 * kTile.toDouble());
+      run(game, 0.5);
+      expect(p.isDead, isFalse);
+      expect(p.position.y + Player.h, lessThanOrEqualTo(7 * kTile + 2));
     });
   });
 }

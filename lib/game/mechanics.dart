@@ -90,13 +90,15 @@ class MovingRock extends Deck {
   MovingRock(Vector2 cell, {required bool vertical})
     : _origin = Vector2(cell.x, cell.y),
       _axis = vertical ? Vector2(0, -1) : Vector2(1, 0),
+      // Yan yana kayalar aynı anda inip kalkmasın: evre konuma bağlı.
+      _t = (cell.x / kTile * 0.9) % period,
       super(position: Vector2(cell.x, cell.y), size: Vector2(kTile * 2, 14));
 
   static const double range = kTile * 4;
   static const double period = 5.5;
   final Vector2 _origin;
   final Vector2 _axis;
-  double _t = 0;
+  double _t;
 
   @override
   void step(double dt) {
