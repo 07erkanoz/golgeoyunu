@@ -27,12 +27,6 @@ class Settings {
   /// Dokunmatik düğmelerin görünürlüğü (0.1 – 1).
   static double touchOpacity = 0.7;
 
-  /// Yüksek yenileme hızı (90/120 Hz ve üstü ekranlarda): açıkken telefon
-  /// ekranın desteklediği en yüksek hızda çizer.
-  static bool highRefresh = true;
-
-  /// Köşede kare hızı (FPS) göstergesi.
-  static bool showFps = false;
 
   static SharedPreferences? _prefs;
 
@@ -81,8 +75,6 @@ class Settings {
       0.8,
       1.3,
     );
-    highRefresh = _read(() => p.getBool('high_refresh')) ?? highRefresh;
-    showFps = _read(() => p.getBool('show_fps')) ?? showFps;
     // Kayıtlı bir tercih yoksa cihazın dili: Türkçe değilse İngilizce.
     final lang = _read(() => p.getString('lang'));
     S.lang = switch (lang) {
@@ -105,8 +97,6 @@ class Settings {
       await p.setBool('touch_gestures', touchGestures);
       await p.setDouble('touch_opacity', touchOpacity);
       await p.setDouble('brightness', brightness);
-      await p.setBool('high_refresh', highRefresh);
-      await p.setBool('show_fps', showFps);
       await p.setString('lang', S.en ? 'en' : 'tr');
     } catch (_) {
       // Yazılamazsa bir sonraki değişiklikte yeniden denenir.

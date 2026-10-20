@@ -424,8 +424,7 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
           if (position.x + w - 2 <= rect.left || position.x + 2 >= rect.right) {
             continue;
           }
-          final prevTop = rect.top - d.delta.y;
-          if (prevBottom <= prevTop + 1 && position.y + h >= rect.top) {
+          if (d.catches(prevBottom, position.y + h)) {
             position.y = rect.top - h;
             velocity.y = 0;
             onGround = true;

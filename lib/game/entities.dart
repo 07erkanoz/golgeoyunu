@@ -1030,8 +1030,7 @@ class Crate extends PositionComponent with HasGameReference<GolgeGame> {
       if (position.x + side - 2 <= rect.left || position.x + 2 >= rect.right) {
         continue;
       }
-      if (prevBottom <= rect.top - d.delta.y + 1 &&
-          position.y + side >= rect.top) {
+      if (d.catches(prevBottom, position.y + side)) {
         position.y = rect.top - side;
         _vy = 0;
         _riding = d;

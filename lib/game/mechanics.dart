@@ -29,6 +29,16 @@ abstract class Deck extends PositionComponent with HasGameReference<GolgeGame> {
     position.setFrom(p);
   }
 
+  /// Düşen ya da üstünde taşınan bir şeyin altı ([prevBottom] → [bottom])
+  /// bu karede zemine değdi mi? Zeminin hem önceki hem şimdiki üstü hesaba
+  /// katılır: üstünde taşınan, zemin bir karede 1 pikselden fazla inse de
+  /// (takılan kare, hızlı inen kefe) içinden düşmez.
+  bool catches(double prevBottom, double bottom) {
+    final top = y;
+    final prevTop = top - delta.y;
+    return prevBottom <= math.max(prevTop, top) + 1 && bottom >= top;
+  }
+
   @override
   void update(double dt) {
     delta.setZero();
@@ -238,9 +248,11 @@ class LiftPan extends Deck {
 class BalanceLift extends Component with HasGameReference<GolgeGame> {
   // Kefelerden (14) sonra, sandık (17) ve oyuncudan (20) önce güncellenir:
   // böylece kefelerin bu karedeki hareketi binenlere aktarılır.
-  BalanceLift(this.a, this.b) : super(priority: 15);
+  BalanceLift(this.a, this.b, {this.travel = kTile * 4})
+    : super(priority: 15);
 
-  static const double travel = kTile * 4;
+  /// Bir kefenin inip çıkabildiği yol (en çok 4 kare).
+  final double travel;
   static const double speed = 42;
   static const double ropeTop = kTile * 4;
 

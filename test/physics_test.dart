@@ -368,23 +368,73 @@ void main() {
     });
 
     testWithGame<GolgeGame>(
-      'raftaki sandık düşünce kefe iner, öteki oyuncuyu taşır',
+      'raftaki sandığı it: kefeye düşer, kefe iner, öteki kalkar, karşıya geçilir',
       GolgeGame.new,
       (game) async {
-        final p = await place(game, 0, 99, 9);
+        final p = await place(game, 0, 96, 9);
         final crate = nearest<Crate>(game, 98 * kTile);
-        crate.position.x = 102 * kTile + 1;
-        run(game, 0.6);
         final pans = game.world.children.whereType<LiftPan>().toList()
           ..sort((a, b) => a.position.x.compareTo(b.position.x));
-        expect(pans.first.position.y, greaterThan(pans.first.base.y));
-        p.position.setValues(
-          pans.last.position.x + 8,
-          pans.last.position.y - Player.h - 1,
-        );
+        // Sandığı rafın ucundan iter; düşmeye başlayınca durur.
+        keys(game).right = true;
+        for (var i = 0; i < _hz * 6 && crate.position.y < 9.3 * kTile; i++) {
+          game.update(_dt);
+        }
+        keys(game).right = false;
         run(game, 4);
-        expect(p.onGround, isTrue);
-        expect(p.position.y + Player.h, closeTo(10 * kTile, 3));
+        expect(p.isDead, isFalse);
+        expect(crate.riding, same(pans.first), reason: 'sandık kefeye inmedi');
+        // İnen kefe suya gömülmez; öteki raf hizasının bir kare altına kalkar.
+        expect(pans.first.position.y, closeTo(17 * kTile, 1));
+        expect(pans.last.position.y, closeTo(11 * kTile, 1));
+        // Koşarak rafın ucundan kalkan kefeye, oradan karşı rafa.
+        p.position.setFrom(
+          Level.standOn(Vector2(98 * kTile, 9 * kTile), Player.w, Player.h),
+        );
+        p.velocity.setZero();
+        var onPan = false;
+        keys(game).right = true;
+        for (var i = 0; i < _hz * 4; i++) {
+          final x = p.position.x / kTile;
+          keys(game).jump =
+              (p.onGround &&
+                  (x > 101.45 && x < 101.7 || x > 106.0 && x < 106.6)) ||
+              (!p.onGround && p.velocity.y < 0);
+          game.update(_dt);
+          if (p.riding == pans.last) onPan = true;
+          if (p.isDead || p.position.x > 109.5 * kTile) break;
+        }
+        keys(game)
+          ..right = false
+          ..jump = false;
+        run(game, 0.3);
+        expect(onPan, isTrue, reason: 'kalkan kefeye inemedi');
+        expect(p.isDead, isFalse);
+        expect(p.position.x, greaterThan(108 * kTile));
+        expect(p.position.y + Player.h, closeTo(10 * kTile, 2));
+      },
+    );
+
+    testWithGame<GolgeGame>(
+      'kefeye atlayan taşınır; inen kefeden düşülmez',
+      GolgeGame.new,
+      (game) async {
+        final p = await place(game, 0, 100, 9);
+        final pans = game.world.children.whereType<LiftPan>().toList()
+          ..sort((a, b) => a.position.x.compareTo(b.position.x));
+        keys(game).right = true;
+        for (var i = 0; i < _hz * 2; i++) {
+          keys(game).right = p.center.x < 102.8 * kTile;
+          keys(game).jump = i < 4;
+          game.update(_dt);
+        }
+        keys(game)
+          ..right = false
+          ..jump = false;
+        run(game, 5);
+        expect(p.isDead, isFalse);
+        expect(p.riding, same(pans.first));
+        expect(pans.first.position.y, closeTo(17 * kTile, 1));
       },
     );
 

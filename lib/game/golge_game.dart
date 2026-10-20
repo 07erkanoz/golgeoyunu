@@ -15,7 +15,6 @@ import 'entities.dart';
 import 'level.dart';
 import 'lighting.dart';
 import 'shafts.dart';
-import 'fps.dart';
 import 'levels.dart';
 import 'narration.dart';
 import 'perde.dart';
@@ -149,7 +148,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     camera.backdrop = Backdrop();
     effects = ScreenEffects();
     narration = Narration();
-    camera.viewport.addAll([effects, narration, FpsCounter()]);
+    camera.viewport.addAll([effects, narration]);
     _enterMenu();
   }
 
@@ -553,7 +552,19 @@ class GolgeGame extends FlameGame with KeyboardEvents {
       final b = LiftPan(level.liftB[i]);
       yield a;
       yield b;
-      yield BalanceLift(a, b);
+      // İnen kefe suya gömülmesin: suyun bir kare üstünde durur.
+      var travel = 4;
+      for (final pan in [level.liftA[i], level.liftB[i]]) {
+        final c = (pan.x / kTile).floor();
+        final r0 = (pan.y / kTile).floor();
+        for (var r = r0 + 1; r <= r0 + 4 && r < level.height; r++) {
+          if (level.cell(c, r) == 'w' || level.cell(c + 1, r) == 'w') {
+            travel = math.min(travel, r - r0 - 1);
+            break;
+          }
+        }
+      }
+      yield BalanceLift(a, b, travel: travel * kTile);
     }
   }
 

@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../game/audio.dart';
 import '../game/golge_game.dart';
 import '../game/strings.dart';
-import '../display.dart';
 import '../settings.dart';
 import 'info_pages.dart';
 
@@ -212,53 +211,6 @@ class _SettingsPanelState extends State<SettingsPanel> {
                           ),
                         ),
                     ],
-                    if (widget.canTouch)
-                      SwitchListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: Text(
-                          S.of('highRefresh'),
-                          style: const TextStyle(color: _text, fontSize: 14),
-                        ),
-                        value: Settings.highRefresh,
-                        activeThumbColor: _accent,
-                        onChanged: (v) {
-                          Settings.highRefresh = v;
-                          Settings.save();
-                          applyRefreshRate();
-                          setState(() {});
-                        },
-                      ),
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 2),
-                      child: Text(
-                        S
-                            .of('displayHz')
-                            .replaceAll(
-                              '{hz}',
-                              View.of(context).display.refreshRate
-                                  .round()
-                                  .toString(),
-                            ),
-                        style: TextStyle(
-                          color: _text.withValues(alpha: 0.55),
-                          fontSize: 11,
-                        ),
-                      ),
-                    ),
-                    SwitchListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: Text(
-                        S.of('showFps'),
-                        style: const TextStyle(color: _text, fontSize: 14),
-                      ),
-                      value: Settings.showFps,
-                      activeThumbColor: _accent,
-                      onChanged: (v) {
-                        Settings.showFps = v;
-                        Settings.save();
-                        setState(() {});
-                      },
-                    ),
                     _label(S.of('brightness'), Settings.brightness),
                     Slider(
                       value: Settings.brightness,

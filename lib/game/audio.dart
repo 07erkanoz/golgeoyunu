@@ -71,9 +71,12 @@ class GameAudio {
   /// Menü müziği yüklendi mi (efektlerden önce hazır olur).
   bool _musicReady = false;
 
-  /// Her efekt için önceden hazırlanmış oynatıcılar: çalarken yeni oynatıcı
-  /// oluşturulmaz (Windows'ta bu, ses anında takılmaya yol açar).
-  final _pools = <String, AudioPool>{};
+  /// Her efekt için önceden hazırlanmış, sabit sayıda oynatıcı: oyun
+  /// sırasında asla yenisi kurulmaz ya da silinmez (Windows'ta kurulum anında
+  /// takılma, Android'de biriken yerel oynatıcılar çökme yapıyordu). Android'de
+  /// kısa efektler SoundPool'da (lowLatency) çalar: tek bir hafif havuz,
+  /// onlarca MediaPlayer yerine.
+  final _sfx = <String, _Sfx>{};
   static const _frequent = {
     'step_1',
     'step_2',
@@ -143,14 +146,9 @@ class GameAudio {
         'murmur.wav',
         'perde_ney.wav',
       ]);
-      await Future.wait([
-        for (final e in _effects)
-          FlameAudio.createPool(
-            '$e.wav',
-            minPlayers: _frequent.contains(e) ? 3 : 1,
-            maxPlayers: _frequent.contains(e) ? 4 : 2,
-          ).then((pool) => _pools[e] = pool),
-      ]);
+      for (final e in _effects) {
+        _sfx[e] = await _Sfx.create('$e.wav', _frequent.contains(e) ? 3 : 1);
+      }
       _ready = true;
       if (_neyWanted) {
         perde(true);
@@ -179,12 +177,10 @@ class GameAudio {
     final now = DateTime.now().millisecondsSinceEpoch;
     if (now - (_lastPlayed[name] ?? 0) < minGapMs) return;
     _lastPlayed[name] = now;
-    final pool = _pools[name];
-    if (pool == null) return;
+    final sfx = _sfx[name];
+    if (sfx == null) return;
     _log('çal $name');
-    pool
-        .start(volume: (volume * Settings.effects).clamp(0.0, 1.0))
-        .catchError((_) => () async {});
+    sfx.play((volume * Settings.effects).clamp(0.0, 1.0));
   }
 
   /// Bölümün temasına uygun ortam döngüsü.
@@ -356,6 +352,44 @@ class GameAudio {
   }
 }
 
+/// Bir efektin sabit oynatıcıları; sırayla kullanılır (aynı ses üst üste
+/// gelirse en eskisi baştan başlar).
+class _Sfx {
+  _Sfx(this._players);
+
+  final List<AudioPlayer> _players;
+  int _next = 0;
+
+  static Future<_Sfx> create(String file, int count) async {
+    final players = <AudioPlayer>[];
+    for (var i = 0; i < count; i++) {
+      final p = AudioPlayer()..audioCache = FlameAudio.audioCache;
+      try {
+        await p.setPlayerMode(PlayerMode.lowLatency);
+        await p.setReleaseMode(ReleaseMode.stop);
+        await p.setSource(AssetSource(file));
+        players.add(p);
+      } catch (_) {
+        p.dispose().catchError((_) {});
+      }
+    }
+    return _Sfx(players);
+  }
+
+  void play(double volume) {
+    if (_players.isEmpty) return;
+    final p = _players[_next];
+    _next = (_next + 1) % _players.length;
+    () async {
+      try {
+        await p.stop();
+        await p.setVolume(volume);
+        await p.resume();
+      } catch (_) {}
+    }();
+  }
+}
+
 /// Seviyesi değişen bir döngü: 0'a inince durur, yükselince yeniden başlar.
 class _LoopChannel {
   _LoopChannel(this.file);
@@ -365,6 +399,7 @@ class _LoopChannel {
   bool _starting = false;
   bool _paused = false;
   double _level = 0;
+  int _lastVolume = 0;
 
   double get _volume => (_level * Settings.effects).clamp(0.0, 1.0);
 
@@ -404,7 +439,13 @@ class _LoopChannel {
           });
       return;
     }
-    p.setVolume(_volume).catchError((_) {});
+    // Ses düzeyi en çok saniyede ~12 kez gönderilir (120 Hz'de her karede
+    // yerel oynatıcıya çağrı yağmasın).
+    final now = DateTime.now().millisecondsSinceEpoch;
+    if (_paused || now - _lastVolume > 80) {
+      _lastVolume = now;
+      p.setVolume(_volume).catchError((_) {});
+    }
     if (_paused) {
       _paused = false;
       p.resume().catchError((_) {});

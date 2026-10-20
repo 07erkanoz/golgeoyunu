@@ -123,62 +123,71 @@ class _GolgeAppState extends State<GolgeApp> {
       title: 'Gölge Oyunu',
       debugShowCheckedModeBanner: false,
       theme: ThemeData.dark(),
-      home: Scaffold(
-        backgroundColor: Colors.black,
-        body: Stack(
-          children: [
-            GameWidget(
-              game: _game,
-              focusNode: _gameFocus,
-              autofocus: true,
-              overlayBuilderMap: {
-                GolgeGame.menuOverlay: (context, GolgeGame game) => MainMenu(
-                  game: game,
-                  onQuit: _isDesktop ? () => windowManager.close() : null,
-                ),
-                GolgeGame.settingsOverlay: (context, GolgeGame game) =>
-                    SettingsPanel(
-                      game: game,
-                      canFullscreen: _isDesktop,
-                      onFullscreen: _setFullscreen,
-                      onLanguage: _refreshMenus,
-                      canTouch: _isTouch,
-                      onTouchChanged: () => setState(() {}),
-                    ),
-              },
-            ),
-            ValueListenableBuilder<bool>(
-              valueListenable: _game.menuMode,
-              builder: (context, inMenu, _) {
-                if (inMenu) return const SizedBox.shrink();
-                return Stack(
-                  children: [
-                    if (_isTouch)
-                      ValueListenableBuilder<bool>(
-                        valueListenable: _game.settingsOpen,
-                        builder: (context, open, _) => open
-                            ? const SizedBox.shrink()
-                            : TouchControls(controls: _game.controls),
+      // Android'de geri hareketi (ör. kenardan kaydırma) oyunu kapatmasın:
+      // oyunda duraklatma ekranını açar, açıksa kapatır.
+      home: PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, _) {
+          if (didPop || _game.menuMode.value) return;
+          _game.toggleSettings();
+        },
+        child: Scaffold(
+          backgroundColor: Colors.black,
+          body: Stack(
+            children: [
+              GameWidget(
+                game: _game,
+                focusNode: _gameFocus,
+                autofocus: true,
+                overlayBuilderMap: {
+                  GolgeGame.menuOverlay: (context, GolgeGame game) => MainMenu(
+                    game: game,
+                    onQuit: _isDesktop ? () => windowManager.close() : null,
+                  ),
+                  GolgeGame.settingsOverlay: (context, GolgeGame game) =>
+                      SettingsPanel(
+                        game: game,
+                        canFullscreen: _isDesktop,
+                        onFullscreen: _setFullscreen,
+                        onLanguage: _refreshMenus,
+                        canTouch: _isTouch,
+                        onTouchChanged: () => setState(() {}),
                       ),
-                    Positioned(
-                      top: 8,
-                      right: 8,
-                      child: SafeArea(
-                        child: IconButton(
-                          tooltip: 'Esc',
-                          onPressed: _game.toggleSettings,
-                          icon: Icon(
-                            Icons.settings_outlined,
-                            color: Colors.white.withValues(alpha: 0.35),
+                },
+              ),
+              ValueListenableBuilder<bool>(
+                valueListenable: _game.menuMode,
+                builder: (context, inMenu, _) {
+                  if (inMenu) return const SizedBox.shrink();
+                  return Stack(
+                    children: [
+                      if (_isTouch)
+                        ValueListenableBuilder<bool>(
+                          valueListenable: _game.settingsOpen,
+                          builder: (context, open, _) => open
+                              ? const SizedBox.shrink()
+                              : TouchControls(controls: _game.controls),
+                        ),
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: SafeArea(
+                          child: IconButton(
+                            tooltip: 'Esc',
+                            onPressed: _game.toggleSettings,
+                            icon: Icon(
+                              Icons.settings_outlined,
+                              color: Colors.white.withValues(alpha: 0.35),
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
-                );
-              },
-            ),
-          ],
+                    ],
+                  );
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );
