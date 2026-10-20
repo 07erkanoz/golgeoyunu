@@ -125,6 +125,17 @@ class Narration extends Component with HasGameReference<GolgeGame> {
   String? get debugWhisper => _whisper;
   String? get debugHint => _hint;
 
+  /// Fısıltı üstte mi (Sâye ekranın alt yarısındayken)? Fısıltı boyunca
+  /// sabit kalır, zıplamaz.
+  bool _whisperTop = false;
+
+  bool _playerLow() {
+    final p = game.player;
+    if (p == null || !p.isMounted) return false;
+    final g = game.camera.localToGlobal(p.center);
+    return g.y > game.camera.viewport.size.y * 0.5;
+  }
+
   final _hints = <String>[];
   String? _hint;
   double _hintT = 0;
@@ -168,6 +179,7 @@ class Narration extends Component with HasGameReference<GolgeGame> {
       if (_whispers.isNotEmpty && !inCinematic) {
         _whisper = _whispers.removeAt(0);
         _whisperT = 0;
+        _whisperTop = _playerLow();
       }
     } else {
       _whisperT += dt;
@@ -241,7 +253,7 @@ class Narration extends Component with HasGameReference<GolgeGame> {
   ) {
     if (alpha <= 0) return;
     final a = (alpha * 20).round() / 20;
-    final size = math.max(13.0, unit * 0.021);
+    final size = math.max(12.0, unit * 0.018);
     final key = 'istem|$s|$size|$a';
     final tp = _cache[key] ??= _layout(
       s,
@@ -422,8 +434,8 @@ class Narration extends Component with HasGameReference<GolgeGame> {
       _text(
         canvas,
         '—  ${_area!}  —',
-        Offset(w / 2, h * 0.1),
-        unit * 0.026,
+        Offset(w / 2, h * 0.07),
+        unit * 0.022,
         a * 0.8,
         italic: true,
         spacing: 2,
@@ -437,9 +449,11 @@ class Narration extends Component with HasGameReference<GolgeGame> {
         _whisperDuration(_whisper!) - 1.6,
         0.8,
       );
+      // Sâye'nin olmadığı yarıda: o alttaysa yazı üstte, üstteyse altta.
+      final y = _whisperTop ? h * 0.17 : h * 0.86;
       // Okunurluk için yumuşak, koyu bir şerit.
       if (a > 0) {
-        final band = Rect.fromLTWH(0, h * 0.74, w, h * 0.22);
+        final band = Rect.fromLTWH(0, y - h * 0.08, w, h * 0.16);
         canvas.drawRect(
           band,
           Paint()
@@ -458,11 +472,11 @@ class Narration extends Component with HasGameReference<GolgeGame> {
       _text(
         canvas,
         _whisper!,
-        Offset(w / 2, h * 0.85),
-        unit * 0.036,
+        Offset(w / 2, y),
+        unit * 0.028,
         a,
         italic: true,
-        maxWidth: w * 0.72,
+        maxWidth: w * 0.6,
       );
     }
 
@@ -497,7 +511,7 @@ class Narration extends Component with HasGameReference<GolgeGame> {
         canvas,
         '${S.of('memoryCounter')}  ${game.memoryCount} / ${game.memoryTotal}',
         Offset(w - 100, 40),
-        unit * 0.03,
+        unit * 0.024,
         a,
         spacing: 2,
       );
