@@ -69,6 +69,7 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
 
   /// Kanatlarla süzülüyor.
   bool gliding = false;
+  bool _inWind = false;
 
   bool get hasWings =>
       (game.level.def.wings || game.wingsCollected) &&
@@ -278,7 +279,12 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       velocity.y = math.min(velocity.y + gravity * dt, maxFall);
     }
     // Rüzgâr akımı yukarı iter; açık kanatları çok daha güçlü.
-    if (level.cellAt(center.x, center.y) == 'r') {
+    final inWind = level.cellAt(center.x, center.y) == 'r';
+    if (inWind && !_inWind) {
+      GameAudio.instance.play('gust', volume: 0.55, minGapMs: 2500);
+    }
+    _inWind = inWind;
+    if (inWind) {
       velocity.y = gliding
           ? math.max(velocity.y - 2600 * dt, -260)
           : velocity.y - 1100 * dt;

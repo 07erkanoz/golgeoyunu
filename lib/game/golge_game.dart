@@ -24,6 +24,7 @@ import 'hints.dart';
 import 'legends.dart';
 import 'nemrut.dart';
 import 'ski.dart';
+import 'wind.dart';
 import 'winter.dart';
 import 'puzzles.dart';
 import '../settings.dart';
@@ -369,6 +370,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
       TerrainComponent(level),
       LightingLayer(),
       ForegroundComponent(level),
+      WindCurrents(),
       WaterComponent(level),
       ExitPortal(level.exitCell),
       for (final g in level.guardCells) Guard(g),
