@@ -21,6 +21,7 @@ import 'palette.dart';
 import 'player.dart';
 import 'legends.dart';
 import 'nemrut.dart';
+import 'winter.dart';
 import 'puzzles.dart';
 import '../settings.dart';
 import 'strings.dart';
@@ -357,7 +358,9 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         MovingRock(c, vertical: vertical),
       for (final c in level.crumbleCells) CrumbleRock(c),
       ..._lifts(),
-      for (final c in level.batCells) BatRoost(c),
+      for (final c in level.batCells)
+        if (level.def.theme.snowy) Wolf(c) else BatRoost(c),
+      for (final c in level.thinIceCells) ThinIce(c),
       for (final c in level.crowCells) Crow(c),
       for (final c in level.watcherCells) Watcher(c),
       for (final c in level.wingsCells) WingsPickup(c),

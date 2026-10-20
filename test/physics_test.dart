@@ -11,6 +11,7 @@ import 'package:golge/game/golge_game.dart';
 import 'package:golge/game/level.dart';
 import 'package:golge/game/mechanics.dart';
 import 'package:golge/game/nemrut.dart';
+import 'package:golge/game/winter.dart';
 import 'package:golge/game/perde.dart';
 import 'package:golge/game/player.dart';
 import 'package:golge/game/puzzles.dart';
@@ -1421,4 +1422,61 @@ void main() {
       },
     );
   });
+
+  group('Kar Yolu', () {
+    testWithGame<GolgeGame>(
+      'kurt kokuyu izler; ağaca çıkan kurtulur',
+      GolgeGame.new,
+      (game) async {
+        expect(levels[8].title, 'IX · KAR YOLU');
+        final p = await place(game, 8, 73, 19);
+        final wolf = nearest<Wolf>(game, 78 * kTile);
+        keys(game).left = true;
+        for (var i = 0; i < 60 * 5 && !p.isDead; i++) {
+          if (p.center.x <= 72.6 * kTile) {
+            keys(game)
+              ..left = false
+              ..up = true;
+          }
+          game.update(1 / 60);
+        }
+        expect(wolf.hunting, isTrue);
+        expect(p.isDead, isFalse);
+        expect(p.position.y, lessThan(16 * kTile));
+      },
+    );
+
+    testWithGame<GolgeGame>(
+      'kurt ince buzda düşer, hafif olan geçer',
+      GolgeGame.new,
+      (game) async {
+        final p = await place(game, 8, 129, 19);
+        final wolf = nearest<Wolf>(game, 123 * kTile);
+        keys(game).right = true;
+        for (
+          var i = 0;
+          i < 60 * 18 && p.position.x < 191 * kTile && !p.isDead;
+          i++
+        ) {
+          final hole = game.world.children.whereType<ThinIce>().any(
+            (t) =>
+                t.broken &&
+                t.position.x - p.center.x > 0 &&
+                t.position.x - p.center.x < 40,
+          );
+          final block = game.level.solid(
+            ((p.center.x + 26) / kTile).floor(),
+            F - 1,
+          );
+          keys(game).jump = hole || block;
+          game.update(1 / 60);
+        }
+        expect(p.isDead, isFalse);
+        expect(p.position.x, greaterThan(190 * kTile));
+        expect(wolf.isMounted, isFalse, reason: 'kurt buzdan düşmeliydi');
+      },
+    );
+  });
 }
+
+const F = 20;

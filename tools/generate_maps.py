@@ -494,7 +494,47 @@ d.put(180,F-7,'6'); d.put(184,F-7,'M'); d.put(190,F-7,'K'); d.put(195,F-7,'B'); 
 d.put(188,F-7,'?')
 lvl8=d.rows()
 
-MAPS = [('kMapYerebatan', lvl1), ('kMapKule', lvl2), ('kMapGokyolu', lvl3), ('kMapKaf', lvl4), ('kMapAgri', lvl5), ('kMapGemi', lvl6), ('kMapNemrut', lvl7), ('kMapGunDogumu', lvl8)]
+# ------------------------------------------------------------ IX · KAR YOLU
+W,H=320,26
+F=20
+k9=G(W,H)
+# 1) Kervan yolu: palanlarını döken kervanların yolu
+k9.fill(0,F,64,25,'#'); k9.put(2,F-1,'P'); k9.put(3,F-1,'p'); k9.put(4,F-1,'1'); k9.put(6,F-1,'B')
+k9.fill(12,F-2,14,F-1,'#'); k9.fill(20,F-1,22,F-1,'#'); k9.put(26,F-1,'M'); k9.put(30,F-1,'F')
+k9.fill(34,F-3,36,F-1,'#'); k9.put(40,F-1,'2'); k9.fill(44,F-2,46,F-1,'#'); k9.put(52,F-1,'K')
+k9.fill(50,10,58,11,'#'); k9.put(53,12,'i'); k9.put(56,12,'i')
+# 2) Kurtların ormanı: kurtlar kokuyu izler; ağaçlara tırman, ateşböceğiyle kaçır
+k9.fill(65,F,129,25,'#'); k9.put(66,F-1,'p'); k9.put(68,F-1,'3')
+for x,top in [(72,10),(84,9),(96,10),(108,9),(120,10)]:
+    k9.fill(x,top,x,F-1,'|')                   # ağaç gövdesi (tırmanılır)
+    k9.fill(x-2,top-1,x+2,top-1,'=')           # dal
+k9.fill(73,9,83,9,'='); k9.fill(97,9,107,9,'=')          # dallar arası köprü
+k9.put(78,F-1,'b'); k9.put(102,F-1,'b'); k9.put(75,F-1,'F'); k9.put(90,F-1,'F'); k9.put(114,F-1,'F')
+k9.put(90,8,'M'); k9.put(110,F-1,'4'); k9.put(126,F-1,'K'); k9.put(127,F-1,'B')
+# 3) Donmuş göl: ince buz, güvenli buz, kurdu ince buza çek
+k9.put(130,F-1,'p'); k9.put(131,F-1,'5')
+k9.fill(130,F,133,25,'#'); k9.fill(134,F+1,190,25,'w')
+for x in range(134,191):
+    k9.put(x,F,'/' if (x//4) % 3 != 0 else '-')
+k9.fill(150,F-2,151,F-1,'#'); k9.fill(170,F-2,171,F-1,'#')    # buzdan çıkan kayalar
+k9.put(123,F-1,'b'); k9.put(160,F-6,'F'); k9.fill(158,F-5,162,F-5,'=')
+k9.fill(191,F,199,25,'#'); k9.put(192,F-1,'K'); k9.put(194,F-1,'B')
+# 4) Terk edilmiş han: Kandilciler, çan, kapı
+k9.fill(200,F,262,25,'#'); k9.fill(203,F-9,252,F-8,'#')     # hanın çatısı
+k9.fill(203,F-7,203,F-2,'#'); k9.put(201,F-1,'p'); k9.put(205,F-1,'6')
+k9.put(212,F-1,'G'); k9.put(216,F-1,'I'); k9.put(222,F-1,'I'); k9.put(228,F-1,'G')
+k9.put(234,F-1,'~'); k9.put(235,F-1,'~'); k9.put(219,F-7,'c'); k9.fill(218,F-8,220,F-8,'#')
+k9.put(240,F-1,'M'); k9.fill(244,F-4,246,F-1,'#'); k9.put(245,F-5,'L')
+k9.fill(252,F-7,252,F-1,'H'); k9.put(258,F-1,'K'); k9.put(260,F-1,'B')
+# 5) Ejder'in eteği: rüzgârlı tırmanış
+k9.fill(263,F-2,267,25,'#'); k9.fill(268,F-4,272,25,'#'); k9.put(269,F-5,'p'); k9.put(270,F-5,'7')
+k9.fill(275,F-6,278,25,'#'); k9.put(282,F-7,'O'); k9.put(287,F-8,'O')
+k9.fill(291,F-9,296,25,'#'); k9.put(292,F-10,'K'); k9.fill(293,2,296,3,'#'); k9.put(294,4,'%')
+k9.fill(297,F-11,302,25,'#'); k9.fill(303,F-13,319,25,'#')
+k9.put(306,F-14,'8'); k9.put(310,F-14,'B'); k9.put(315,F-14,'E')
+lvl9=k9.rows()
+
+MAPS = [('kMapYerebatan', lvl1), ('kMapKule', lvl2), ('kMapGokyolu', lvl3), ('kMapKaf', lvl4), ('kMapAgri', lvl5), ('kMapGemi', lvl6), ('kMapNemrut', lvl7), ('kMapGunDogumu', lvl8), ('kMapKarYolu', lvl9)]
 
 out = ['// Bu dosya tools/generate_maps.py ile üretilir; elle düzenleme.',
        '// Gösterim: lib/game/level.dart başındaki açıklamaya bakın.', '']

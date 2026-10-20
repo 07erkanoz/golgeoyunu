@@ -25,7 +25,8 @@ const double kTile = 32;
 ///   `@` Perseus'un kalkanı (itilebilir).
 /// - Dağ: `i` düşen buz sarkıtı, `c` rüzgârda çalan çan, `&` manastır
 ///   kalıntısı (sol alt köşe, süs).
-/// - Buz: `-` (katı kaya gibi, üstü kaygan).
+/// - Buz: `-` (katı kaya gibi, üstü kaygan), `/` ince buz (çatlar, kırılır).
+/// - Karlı bölümlerde `b` yarasa değil kurttur.
 /// - Tufan: `o` (Sâye gelince en yakın hazne durmadan yükselmeye başlar).
 /// - Gemi hayvanları: `a` oyma hayvan sandığı, `d` eşinin gölgesi (kaide);
 ///   ilerleyiş sırasıyla eşleşir (ilk `a` ilk `d` ile).
@@ -99,6 +100,7 @@ class Level {
   final featherCells = <Vector2>[];
   final altarCells = <Vector2>[];
   final icicleCells = <Vector2>[];
+  final thinIceCells = <Vector2>[];
   final bellCells = <Vector2>[];
   final ruinCells = <Vector2>[];
   final _ice = <int>{};
@@ -262,6 +264,8 @@ class Level {
             altarCells.add(cell);
           case 'i':
             icicleCells.add(cell);
+          case '/':
+            thinIceCells.add(cell);
           case 'c':
             bellCells.add(cell);
           case '&':
