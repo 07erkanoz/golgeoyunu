@@ -80,7 +80,7 @@ y.put(163,18,'y'); y.put(166,11,'f')
 y.fill(169,6,172,19,'#'); y.put(171,5,'B'); y.put(172,5,'K')
 # 7) Medusa Salonu: iki baş, bir Kandilci, Perseus'un kalkanı
 y.fill(173,14,222,19,'#'); y.put(174,13,'K'); y.put(176,13,'p'); y.put(175,13,'(')
-y.put(178,13,'B'); y.put(184,13,'G'); y.put(180,13,'I'); y.put(187,13,'F')
+y.put(178,13,'B'); y.put(188,13,'G'); y.put(180,13,'I'); y.put(184,13,'F')
 y.fill(190,10,190,11,'#'); y.put(191,11,'U')          # sağa bakan baş
 y.fill(194,11,198,11,'#'); y.put(196,10,'M')           # taş Kandilci'yle çıkılan raf
 y.put(203,13,'@'); y.put(201,13,')')                   # Perseus'un kalkanı

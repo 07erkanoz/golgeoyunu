@@ -118,8 +118,16 @@ class Hints {
     'crow': 'Karga koşanı görüp bağırır, Kandilcileri uyarır. Parmak ucunda geç ({sneak}).',
     'watcher': 'Gözcü\'nün ışığında uzun kalma. Bir ateşböceği salarsan ({firefly}) ışığını ona kilitler; bir aynayla huzmeyi gözüne çevirirsen kamaşır.',
     'mirror': 'Aynanın yanında yukarı bas ({up}): döner, ışığı başka yöne kırar. Işığı kilide ulaştır.',
-    'medusa': 'Medusa\'nın gözleri açıkken kıpırdama, taşa dönersin. Gözler kapanınca yürü.',
-    'shield': 'Perseus\'un kalkanını it: ardında kalanı Medusa göremez. Kalkanı başa yaklaştırırsan kendi yüzünü görür.',
+    'medusa':
+        'Taş yüzlü kadın uyur, sonra uyanır.\n'
+        'Gözü kapalıyken yürü; gözü aralanınca dur.\n'
+        'Bakışında kıpırdayan taşa döner,\n'
+        'kıpırdamayanı görmez bile.',
+    'shield':
+        'Perseus ona hiç doğrudan bakmadı.\n'
+        'Cilalı kalkanın ardında yürü: önündeki göz seni görmez.\n'
+        'Kalkanı yüzüne tut, kendi bakışıyla taşa dönsün.\n'
+        'Ama arkandaki göz açılınca sen de taş kesil: kıpırdama.',
     'raft': 'Salın üstünde dur ve sırıkla it ({move}).',
     'vent': 'Baca aralıklarla alev püskürtür. Alev sönünce geç ya da üstüne bir sandık itip tıka.',
     'balloon': 'Fener balonunun ışığına girme; görülürsen yakalanırsın. Işığı uzaklaşınca ilerle.',
@@ -163,8 +171,16 @@ class Hints {
     'crow': 'A crow sees anyone running and cries out to the Lamplighters. Tiptoe past ({sneak}).',
     'watcher': 'Don\'t linger in the Watcher\'s light. Release a firefly ({firefly}) and it locks its beam on it; turn a beam into its eye with a mirror and it is dazzled.',
     'mirror': 'Press up beside a mirror ({up}): it turns and bends the light. Lead the light to the lock.',
-    'medusa': 'Don\'t move while Medusa\'s eyes are open, or you turn to stone. Walk when they close.',
-    'shield': 'Push Perseus\'s shield: whoever is behind it is hidden from Medusa. Bring it close to the head and she sees her own face.',
+    'medusa':
+        'The stone-faced woman sleeps, then wakes.\n'
+        'Walk while her eyes are shut; stop as they open.\n'
+        'Whatever moves in her gaze turns to stone;\n'
+        'whatever is still, she does not even see.',
+    'shield':
+        'Perseus never looked at her directly.\n'
+        'Walk behind the polished shield: the eye before you cannot see you.\n'
+        'Hold the shield to her face and let her own gaze turn her to stone.\n'
+        'But when the eye behind you opens, be stone yourself: stand still.',
     'raft': 'Stand on the raft and pole it along ({move}).',
     'vent': 'The chimney spits flame now and then. Pass when it dies down, or push a crate on top to plug it.',
     'balloon': 'Stay out of the lantern balloon\'s light; if you are seen, you are caught. Move on when the light drifts away.',

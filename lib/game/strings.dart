@@ -56,6 +56,10 @@ class S {
     'shadowLooked': 'Gölgen sana baktı. Yoksa sen mi onun gölgesisin?',
     'blizzard': 'Tipi geliyor. Kar her sesi yutar; fenerler bile körleşir.',
     'medusaSealed': 'Kendi bakışına yakalandı. Perseus\'un kalkanı gibi.',
+    'guardStone':
+        'Fener taşıyan taşa döndü: göz açıkken adım attı.\n'
+        'Sen göz kapanınca yürü, açılınca dur.\n'
+        'Şimdi o taş, senin basamağın.',
     'feather': 'Simurg\'un tüyü',
     'feathersAll': 'Tüyler tamam. Sunak seni bekliyor.',
     'horoscope': 'Gök, aslanın sırtındaki gibi dizildi. Taşlar yol veriyor.',
@@ -140,6 +144,10 @@ class S {
     'shadowLooked': 'Your shadow looked at you. Or are you its shadow?',
     'blizzard': 'A blizzard is coming. The snow swallows every sound; even lanterns go blind.',
     'medusaSealed': 'Caught in her own gaze. Like Perseus\'s shield.',
+    'guardStone':
+        'The lantern-bearer turned to stone: he took a step while her eye was open.\n'
+        'Walk when the eye closes; stop when it opens.\n'
+        'Now that stone is your stair.',
     'feather': 'A feather of the Simurgh',
     'feathersAll': 'The feathers are whole. The altar is waiting.',
     'horoscope':
