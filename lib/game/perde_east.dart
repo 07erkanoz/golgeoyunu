@@ -285,8 +285,8 @@ void _godsScene(Canvas canvas, double time, double u, {bool dawn = false}) {
     ink,
   );
   // Beş taht: kral ve tanrılar. Deprem başları yere indirir.
-  final quake = dawn ? 1.0 : _span(u, 1.9, 2.4);
-  if (!dawn && u > 1.8 && u < 2.5) {
+  final quake = dawn ? 1.0 : _span(u, 2.9, 3.4);
+  if (!dawn && u > 2.8 && u < 3.5) {
     canvas.translate(math.sin(time * 40) * 2, 0);
   }
   for (var i = 0; i < 5; i++) {
@@ -294,8 +294,8 @@ void _godsScene(Canvas canvas, double time, double u, {bool dawn = false}) {
     _seatedGod(canvas, 170 + i * 110.0, i, fallen ? 1 : 0, rise);
   }
   // Kandilciler ışığı doğuya taşır.
-  final carry = _span(u, 3.0, 3.9);
-  final ca = _shown(u, 2.9, 4.1);
+  final carry = dawn ? _span(u, 3.0, 3.9) : _span(u, 4.0, 4.9);
+  final ca = dawn ? _shown(u, 2.9, 4.1) : _shown(u, 3.9, 5.1);
   for (var i = 0; i < 2; i++) {
     _P._puppet(
       canvas,

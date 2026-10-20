@@ -138,7 +138,7 @@ class Hints {
         'Simurg\'un tüylerini topla. Hepsi toplanınca tüy sunağı yolu açar.',
     'crumble': 'Çatlak kaya basınca kopar. Üstünde durma, hemen atla.',
     'rope': 'İpe zıplayarak tutun, sallan ({move}), zıplayıp bırak ({jump}): savrulursun.',
-    'bell': 'Çanın yanından koşarak geçme; çalarsa Kandilciler sese gelir. Parmak ucunda geç ({sneak}).',
+    'bell': 'Çanın yanından koşarak geçme; çalarsa Kandilciler sese gelir. Parmak ucunda geç ({sneak}). Ya da yanında yukarı basıp ({up}) bilerek çal: Kandilcileri yoldan çekersin.',
     'icicle': 'Sarkıtlar altından geçince düşer. Hızlı geç, altında durma.',
     'animal': 'Oyma hayvanı eşinin gölgesinin önüne it: kavuşunca yol açılır. Sıra önemli.',
     'star': 'Yıldız taşının yanında yukarı bas ({up}): işaret değişir. Aslan Horoskobu\'ndaki sırayı kur.',
@@ -191,7 +191,7 @@ class Hints {
     'crumble':
         'Cracked rock breaks when you step on it. Don\'t stand still; jump on.',
     'rope': 'Jump to grab the rope, swing ({move}), then jump to let go ({jump}) and fly.',
-    'bell': 'Don\'t run past the bell; if it rings, the Lamplighters come. Tiptoe past ({sneak}).',
+    'bell': 'Don\'t run past the bell; if it rings, the Lamplighters come. Tiptoe past ({sneak}). Or press up beside it ({up}) and ring it on purpose to draw the Lamplighters away.',
     'icicle': 'Icicles fall when you pass beneath. Move fast; don\'t stop under them.',
     'animal': 'Push the carved animal before its mate\'s shadow: when they are reunited, the way opens. Order matters.',
     'star': 'Press up beside a star stone ({up}): its sign changes. Match the order on the Lion Horoscope.',

@@ -793,8 +793,8 @@ class PerdePainter {
     }
 
     // Hezarfen: kuleden atlar, kanatlarıyla süzülür.
-    final glide = _span(u, 1.15, 2.7);
-    final ha = _shown(u, 0, 2.75, 0.4);
+    final glide = _span(u, 3.1, 3.95);
+    final ha = _shown(u, 0.9, 4.3, 0.4);
     if (ha > 0) {
       final hx = tx - glide * 720;
       final hy = 118 + math.sin(glide * math.pi) * -40 + glide * 150;
@@ -841,13 +841,13 @@ class PerdePainter {
     }
 
     // Kalabalık: alkışlar, korkar, dağılır.
-    final ca = _shown(u, 1.7, 3.05, 0.35);
+    final ca = _shown(u, 3.3, 5.0, 0.35);
     if (ca > 0) {
       final cp = _inkPaint(ca);
       for (var i = 0; i < 11; i++) {
         final x = 60.0 + i * 38 + (i.isEven ? 6 : -4);
-        final cheer = u < 2.3 ? math.max(0.0, math.sin(time * 6 + i)) * 6 : 0.0;
-        final shrink = u > 2.3 ? _span(u, 2.3, 2.6) * 5 : 0.0;
+        final cheer = u < 4.2 ? math.max(0.0, math.sin(time * 6 + i)) * 6 : 0.0;
+        final shrink = u > 4.2 ? _span(u, 4.2, 4.6) * 5 : 0.0;
         canvas.drawCircle(Offset(x, 336 - cheer + shrink), 9, cp);
         canvas.drawRect(Rect.fromLTWH(x - 9, 340 - cheer + shrink, 18, 30), cp);
         if (cheer > 3) {
@@ -861,7 +861,7 @@ class PerdePainter {
     }
 
     // Sâye kuleye bakar; Hüdhüd kulenin tepesinde.
-    final sa = _span(u, 2.9, 3.3);
+    final sa = _span(u, 5.0, 5.4);
     _puppet(canvas, const Offset(260, 344), time, 0.9, sa, (ink, hole) {
       _saye(ink, hole, time);
     });
@@ -1034,7 +1034,7 @@ class PerdePainter {
         ..close(),
       _inkPaint(1),
     );
-    final away = _span(u, 2.9, 3.3);
+    final away = _span(u, 2.0, 2.4);
     const mc = Offset(390, 170);
     final mirrorA = 1 - away * 0.85;
     canvas.drawOval(
@@ -1068,7 +1068,7 @@ class PerdePainter {
       }
     }
     // Sâye ve aynadaki gölgesi: yansımada kavanozun ışığı yok.
-    final sa = _shown(u, 0.9, 3.1, 0.3);
+    final sa = _shown(u, 0.9, 2.3, 0.3);
     _puppet(canvas, const Offset(300, 330), time, 0.6, sa, (ink, hole) {
       _saye(ink, hole, time);
     });
@@ -1077,7 +1077,7 @@ class PerdePainter {
       canvas.translate(mc.dx + 30, mc.dy + 80);
       canvas.scale(-1.1, 1.1);
       // Gölge bir an başını çevirir.
-      final turn = u > 1.9 && u < 2.6 ? 1.0 : 0.0;
+      final turn = u > 1.3 && u < 1.9 ? 1.0 : 0.0;
       if (turn > 0) canvas.scale(-1, 1);
       _saye(
         _inkPaint(sa * 0.9),
@@ -1088,8 +1088,8 @@ class PerdePainter {
       canvas.restore();
     }
     // Kandilciler kandili doğuya taşır.
-    final carry = _span(u, 3.0, 4.0);
-    final ca = _shown(u, 2.95, 4.05, 0.25);
+    final carry = _span(u, 2.1, 3.1);
+    final ca = _shown(u, 2.05, 3.15, 0.25);
     for (var i = 0; i < 3; i++) {
       final x = 80 + i * 70 + carry * 520;
       _puppet(canvas, Offset(x, 352), time, i * 1.3, ca, (ink, hole) {
@@ -1099,6 +1099,30 @@ class PerdePainter {
     if (ca > 0) {
       final lx = 80 + 70 + carry * 520 + 44;
       canvas.drawCircle(Offset(lx, 245), 6, _holePaint(ca));
+    }
+    // Doğuda Ağrı'nın iki doruğu belirir: Büyük ve Küçük.
+    final agri = _span(u, 3.0, 3.6);
+    if (agri > 0) {
+      canvas.drawPath(
+        Path()
+          ..moveTo(60, 352)
+          ..lineTo(300, 120)
+          ..lineTo(360, 160)
+          ..lineTo(470, 250)
+          ..lineTo(560, 200)
+          ..lineTo(700, 352)
+          ..close(),
+        _inkPaint(0.55 * agri),
+      );
+      canvas.drawPath(
+        Path()
+          ..moveTo(300, 120)
+          ..lineTo(326, 142)
+          ..lineTo(310, 146)
+          ..lineTo(286, 136)
+          ..close(),
+        _holePaint(0.5 * agri),
+      );
     }
   }
 }

@@ -586,7 +586,11 @@ void main() {
         run(game, 2);
         expect(game.narration.inCinematic, isTrue);
         expect(game.levelIndex, 0);
-        run(game, 24);
+        // Açılış perdesi satır uzunluğuna göre sürer.
+        for (var i = 0; i < 60 * 150 && game.narration.inCinematic; i++) {
+          game.update(1 / 60);
+        }
+        run(game, 1);
         expect(game.narration.inCinematic, isFalse);
         expect(game.levelIndex, 1);
         expect(game.cinematic, isFalse);
