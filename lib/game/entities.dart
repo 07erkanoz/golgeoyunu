@@ -238,6 +238,18 @@ class Guard extends PositionComponent with HasGameReference<GolgeGame> {
     for (var r = r0; r <= r1; r++) {
       if (level.solid(c, r)) return false;
     }
+    // Sandıklar ve sürgü taşları geçişi keser.
+    final ahead = Rect.fromLTWH(
+      facing > 0 ? position.x + gw : position.x - dist,
+      position.y + 4,
+      dist,
+      gh - 8,
+    );
+    if (game.world.children.whereType<Crate>().any(
+      (k) => k.toRect().overlaps(ahead),
+    )) {
+      return false;
+    }
     final below = level.cell(c, ((position.y + gh + 1) / kTile).floor());
     // Çürük tahtaya devriyede basmaz; bir şeyin peşine düşünce basar.
     final rotten = below == 'u' && !_calmPatrol;

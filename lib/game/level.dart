@@ -22,7 +22,8 @@ const double kTile = 32;
 ///   `W` Hezarfen'in kanatları.
 /// - Efsaneler: `U` Medusa başı, `_` sal (suyun üstünde, 3 kare), `!`
 ///   alevli baca, `N` fener balonu, `T` Simurg tüyü, `s` tüy sunağı,
-///   `@` Perseus'un kalkanı (itilebilir), `"` peri halkası (göğe fırlatır).
+///   `@` Perseus'un kalkanı (mağarada: Derinkuyu'nun sürgü taşı), `"` peri
+///   halkası (göğe fırlatır).
 /// - Dağ: `i` düşen buz sarkıtı, `c` rüzgârda çalan çan, `&` manastır
 ///   kalıntısı (sol alt köşe, süs).
 /// - Buz: `-` (katı kaya gibi, üstü kaygan), `/` ince buz (çatlar, kırılır).

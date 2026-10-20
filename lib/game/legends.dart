@@ -777,3 +777,39 @@ class FairyRing extends PositionComponent with HasGameReference<GolgeGame> {
     }
   }
 }
+
+// ============================================================ Sürgü taşı
+
+/// Derinkuyu'nun yuvarlak sürgü taşı: itilerek yuvarlanır, geçidi kapatır.
+/// Kandilciler onu yerinden oynatamaz.
+class MillStone extends Crate {
+  MillStone(super.cell);
+
+  double _roll = 0;
+  double _lastX = 0;
+
+  @override
+  void update(double dt) {
+    super.update(dt);
+    _roll += (position.x - _lastX) / 15;
+    _lastX = position.x;
+  }
+
+  @override
+  void render(Canvas canvas) {
+    const s = Crate.side;
+    const c = Offset(s / 2, s / 2);
+    canvas.drawCircle(c, s / 2 + 1, Paint()..color = const Color(0xFF2A1C16));
+    canvas.save();
+    canvas.translate(c.dx, c.dy);
+    canvas.rotate(_roll);
+    final groove = Paint()
+      ..color = const Color(0xFF6A4A36).withValues(alpha: 0.6)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.2;
+    canvas.drawCircle(Offset.zero, s / 2 - 4, groove);
+    canvas.drawCircle(Offset.zero, 3, Paint()..color = const Color(0xFF0A0605));
+    canvas.drawLine(const Offset(0, -12), const Offset(0, -6), groove);
+    canvas.restore();
+  }
+}

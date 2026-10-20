@@ -1599,6 +1599,99 @@ void main() {
       },
     );
   });
+
+  group('Derinkuyu', () {
+    testWithGame<GolgeGame>(
+      'sürgü taşını aşağı kata düşür, yüksek kapıya basamak yap',
+      GolgeGame.new,
+      (game) async {
+        expect(levels[12].title, 'XIII · DERİNKUYU');
+        final p = await place(game, 12, 84, 15);
+        for (final g in game.world.children.whereType<Guard>().toList()) {
+          g.removeFromParent();
+        }
+        final stone = game.world.children.whereType<MillStone>().first;
+        keys(game).right = true;
+        for (var i = 0; i < 60 * 6 && stone.position.y < 22 * kTile; i++) {
+          game.update(1 / 60);
+        }
+        run(game, 1.5);
+        expect(stone.position.y, greaterThan(22 * kTile));
+        // Taşı yüksek kapının dibine it.
+        for (var i = 0; i < 60 * 20 && stone.position.x < 106.9 * kTile; i++) {
+          if (p.center.x > stone.position.x) {
+            p.position.setFrom(
+              Level.standOn(
+                Vector2(stone.position.x - kTile, 23 * kTile),
+                Player.w,
+                Player.h,
+              ),
+            );
+          }
+          game.update(1 / 60);
+        }
+        keys(game).right = false;
+        expect(stone.position.x, greaterThan(106 * kTile));
+        // Taşın üstüne çık, yukarı geçide zıpla.
+        p.position.setFrom(
+          Vector2(stone.position.x + 8, stone.position.y - Player.h - 1),
+        );
+        run(game, 0.3);
+        keys(game)
+          ..right = true
+          ..jump = true;
+        run(game, 0.8);
+        keys(game)
+          ..right = false
+          ..jump = false;
+        run(game, 0.5);
+        expect(p.isDead, isFalse);
+        expect(p.position.y + Player.h, lessThanOrEqualTo(21 * kTile + 1));
+      },
+    );
+
+    testWithGame<GolgeGame>(
+      'kuyuyu doldur, yüzen tahtayla üst geçide çık',
+      GolgeGame.new,
+      (game) async {
+        final p = await place(game, 12, 188, 39);
+        final basin = game.world.children.whereType<WaterBasin>().first;
+        run(game, 0.3);
+        keys(game).up = true;
+        run(game, 0.1);
+        keys(game).up = false;
+        expect(basin.target, closeTo(basin.high, 1));
+        // Tahtaya geç.
+        keys(game)
+          ..right = true
+          ..jump = true;
+        for (var i = 0; i < 180 && p.riding is! FloatPlank; i++) {
+          if (p.position.x > 193.6 * kTile) keys(game).right = false;
+          game.update(1 / 60);
+        }
+        keys(game)
+          ..right = false
+          ..jump = false;
+        expect(p.riding, isA<FloatPlank>());
+        run(game, 20);
+        expect(p.isDead, isFalse);
+        keys(game)
+          ..right = true
+          ..jump = true;
+        // Geçide varınca durur (ileride devriye gezen Kandilci var).
+        for (var i = 0; i < 120 && p.position.x < 199.5 * kTile; i++) {
+          game.update(1 / 60);
+        }
+        keys(game)
+          ..right = false
+          ..jump = false;
+        run(game, 0.3);
+        expect(p.isDead, isFalse);
+        expect(p.position.x, greaterThan(199 * kTile));
+        expect(p.position.y + Player.h, lessThanOrEqualTo(24 * kTile + 1));
+      },
+    );
+  });
 }
 
 const F = 20;

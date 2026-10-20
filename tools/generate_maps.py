@@ -685,7 +685,60 @@ pb.fill(338+PO,3,372+PO,3,'#')
 pb.put(345+PO,2,'9'); pb.put(352+PO,2,'K'); pb.put(360+PO,2,'B'); pb.put(366+PO,2,'E')
 lvl12=pb.rows()
 
-MAPS = [('kMapYerebatan', lvl1), ('kMapKule', lvl2), ('kMapGokyolu', lvl3), ('kMapKaf', lvl4), ('kMapAgri', lvl5), ('kMapGemi', lvl6), ('kMapNemrut', lvl7), ('kMapGunDogumu', lvl8), ('kMapKarYolu', lvl9), ('kMapPalandoken', lvl10), ('kMapCig', lvl11), ('kMapPeri', lvl12)]
+# ------------------------------------------------------------ XIII · DERİNKUYU
+W,H=362,48
+dk=G(W,H,fill='#')
+def carve(c0,r0,c1,r1): dk.fill(c0,r0,c1,r1,'.')
+# 1) Mahzen
+carve(1,10,22,15); dk.put(2,15,'P'); dk.put(3,15,'p'); dk.put(5,15,'1'); dk.put(7,15,'B'); dk.put(12,15,'F')
+# 2) Ahırlar ve şarap evi: alçak geçit, Kandilciler, sürgü taşı
+carve(22,12,94,15)
+carve(30,9,45,11); dk.fill(36,9,36,15,'#'); dk.put(34,15,'I'); dk.put(40,15,'K'); dk.put(42,15,'2')
+dk.put(50,15,'G'); carve(44,16,44,16); carve(44,17,57,17); carve(57,16,57,16)   # alçak geçit
+dk.put(52,17,'3'); dk.put(48,17,'M')
+carve(60,10,74,11); dk.put(66,15,'I'); dk.put(80,15,'G'); dk.put(70,15,'F')
+dk.put(86,15,'@'); dk.put(84,15,'K'); dk.put(85,15,'B')
+carve(90,16,94,23); carve(80,17,94,23)          # aşağı kat (üst katın altına uzanır)
+# Aşağı kat: şapel, karanlık; yüksek kapıya sürgü taşıyla çıkılır
+carve(95,17,107,23); carve(98,14,104,16); dk.put(101,23,'p'); dk.put(99,23,'K'); dk.put(103,23,'4')
+dk.put(105,23,'I')
+carve(108,17,150,20); dk.put(109,20,'B'); dk.put(116,20,'G'); dk.put(124,20,'~'); dk.put(125,20,'~')
+dk.put(128,17,'x'); dk.put(148,20,'X'); dk.put(132,20,'F'); dk.put(142,20,'F'); dk.put(138,18,'e')
+# 3) Havalandırma bacası: aşağıdan sıcak rüzgâr, devlerin nefesi
+carve(151,10,172,39); dk.put(152,20,'p'); dk.put(153,20,'5')
+dk.fill(151,21,154,21,'#'); dk.put(152,20,'.',force=True); dk.put(153,20,'5',force=True)
+dk.fill(158,22,161,39,'r')
+dk.fill(165,27,169,27,'#'); dk.put(167,26,'!'); dk.put(165,26,'M'); dk.put(151,19,'p')
+dk.fill(151,32,155,32,'#'); dk.put(153,31,'!'); dk.put(151,31,'F')
+dk.fill(164,36,169,36,'#'); dk.put(166,35,'!')
+# 4) Derin kuyu: boşalt, in, doldur, tahtayla üst geçide çık
+carve(173,34,198,39); dk.put(174,39,'K'); dk.put(175,39,'B'); dk.put(177,39,'6'); dk.put(176,39,'p')
+carve(186,21,198,33)
+dk.put(186,23,'q'); dk.put(198,39,'Q'); dk.put(188,39,'y'); dk.put(194,39,'f')
+dk.fill(186,40,198,40,'#')
+carve(199,20,250,23); dk.fill(199,24,250,24,'#'); dk.put(202,23,'K'); dk.put(204,23,'B')
+dk.put(215,23,'G'); dk.put(222,23,'I'); dk.put(232,23,'G'); dk.put(240,23,'M')
+# 5) Devlerin kapısı: en dip, ışığı yiyen karanlık, dev gölgesinden kaçış
+for i in range(6):
+    carve(250+i*2,24+i*3,252+i*2,27+i*3)
+carve(262,32,320,43); dk.put(263,43,'p'); dk.put(264,43,'K'); dk.put(266,43,'7'); dk.put(267,43,'F')
+dk.put(262,33,'x'); dk.put(319,43,'X'); dk.put(270,36,'e')
+dk.put(272,43,'z'); dk.put(318,43,'Z')
+for c in (280,292,304):
+    dk.fill(c,41,c+1,43,'#')
+dk.fill(286,43,288,43,'^'); dk.fill(298,43,300,43,'^')
+dk.put(276,43,'F'); dk.put(296,40,'F') if False else None
+# 6) Yukarıya: ana bacadan aya
+carve(320,4,330,43); dk.fill(325,6,325,43,'|')
+for r in (36,28,20,12):
+    dk.fill(321,r,323,r,'#'); dk.fill(327,r,329,r,'#')
+dk.put(322,35,'K'); dk.put(328,19,'M')
+carve(330,4,361,7); dk.put(333,7,'p') if False else None
+dk.put(334,7,'8'); dk.put(340,7,'K'); dk.put(346,7,'B'); dk.put(355,7,'E')
+dk.put(331,7,'p')
+lvl13=dk.rows()
+
+MAPS = [('kMapYerebatan', lvl1), ('kMapKule', lvl2), ('kMapGokyolu', lvl3), ('kMapKaf', lvl4), ('kMapAgri', lvl5), ('kMapGemi', lvl6), ('kMapNemrut', lvl7), ('kMapGunDogumu', lvl8), ('kMapKarYolu', lvl9), ('kMapPalandoken', lvl10), ('kMapCig', lvl11), ('kMapPeri', lvl12), ('kMapDerinkuyu', lvl13)]
 
 out = ['// Bu dosya tools/generate_maps.py ile üretilir; elle düzenleme.',
        '// Gösterim: lib/game/level.dart başındaki açıklamaya bakın.', '']

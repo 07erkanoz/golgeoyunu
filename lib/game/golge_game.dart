@@ -384,7 +384,11 @@ class GolgeGame extends FlameGame with KeyboardEvents {
       for (final c in level.giantCells) StoneGiant(c),
       if (level.def.quakes) QuakeClock(),
       for (final z in level.rainZones) RainZone(z),
-      for (final c in level.shieldCells) ShieldCrate(c),
+      for (final c in level.shieldCells)
+        if (level.def.theme == LevelTheme.cave)
+          MillStone(c)
+        else
+          ShieldCrate(c),
       for (final c in level.ringCells) FairyRing(c),
       for (final c in level.raftCells) Raft(c),
       for (var i = 0; i < level.ventCells.length; i++)
