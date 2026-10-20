@@ -534,7 +534,98 @@ k9.fill(297,F-11,302,25,'#'); k9.fill(303,F-13,319,25,'#')
 k9.put(306,F-14,'8'); k9.put(310,F-14,'B'); k9.put(315,F-14,'E')
 lvl9=k9.rows()
 
-MAPS = [('kMapYerebatan', lvl1), ('kMapKule', lvl2), ('kMapGokyolu', lvl3), ('kMapKaf', lvl4), ('kMapAgri', lvl5), ('kMapGemi', lvl6), ('kMapNemrut', lvl7), ('kMapGunDogumu', lvl8), ('kMapKarYolu', lvl9)]
+# ------------------------------------------------------------ kayak pisti
+class Ski:
+    """Kayak yamacı: segmentlerle yükseklik dizisi kurar, işaretleri koyar."""
+    def __init__(s, start_row):
+        s.y=[]; s.row=start_row; s.marks=[]; s.magnets=[]
+    @property
+    def x(s): return len(s.y)
+    def flat(s,n):
+        s.y += [s.row]*n
+    def slope(s,n,drop,amp=0.0,period=10):
+        for i in range(n):
+            t=(i+1)/n
+            s.y.append(s.row + drop*t + amp*math.sin(i*2*math.pi/period))
+        s.row += drop
+    def kicker(s,n,rise):
+        for i in range(n):
+            s.y.append(s.row - rise*(i+1)/n)
+        s.row -= rise
+    def gap(s,n,drop_after):
+        s.y += [-1]*n
+        s.row += drop_after
+    def magnet(s,n,rise):
+        a=s.x
+        s.kicker(n,rise)
+        s.magnets.append((a,s.x-1))
+    def mark(s,ch,dx=0,up=1):
+        c=s.x+dx
+        s.marks.append((c,ch,up))
+    def rail_over_gap(s,n,drop_after):
+        c=s.x; r=int(round(s.row))
+        s.marks.append((c-1,'=',('rail',n+2,r)))
+        s.gap(n,drop_after)
+    def build(s,H):
+        W=len(s.y)
+        g=G(W,H)
+        for c,ch,up in s.marks:
+            if isinstance(up,tuple):
+                _,n,r=up
+                for k in range(n):
+                    g.put(c+k,r-1,'=',force=True)
+                continue
+            base=s.y[c] if 0<=c<W and s.y[c]>=0 else s.row
+            r=int(math.floor(base))-up
+            if g.g[r][c]=='.': g.g[r][c]=ch
+        return g, [round(v,2) for v in s.y]
+
+import math
+# ------------------------------------------------------------ X · PALANDÖKEN
+sk=Ski(8)
+sk.flat(3); sk.mark('P',0); sk.mark('p',1); sk.mark('1',2); sk.flat(6); sk.mark('B',0)
+sk.slope(24,5,0.6,9); sk.mark('K'); sk.mark('2',2)
+sk.slope(10,2); sk.mark('%',0); sk.slope(10,3); sk.mark('%',0); sk.slope(8,2)
+sk.mark('p'); sk.kicker(3,1); sk.gap(4,5); sk.slope(14,4); sk.mark('F',-8,4)
+sk.mark('K'); sk.mark('B',1); sk.slope(10,2)
+sk.rail_over_gap(7,2); sk.slope(14,4); sk.mark('3',3)
+sk.slope(40,10,1.6,10); sk.mark('F',-12,4); sk.mark('F',-22,4); sk.mark('M',-30,5)
+sk.mark('K'); sk.mark('p',1); sk.mark('4',3)
+sk.slope(44,10,0.8,14); sk.mark('N',-14,7); sk.mark('N',-34,7); sk.mark('%',-20,0); sk.mark('B',-2)
+sk.mark('K'); sk.mark('p',2); sk.mark('5',3)
+sk.slope(6,2); sk.magnet(24,6); sk.mark('F',-6,3); sk.slope(4,1)
+sk.mark('6',0); sk.mark('K',1)
+sk.slope(12,3); sk.mark('p'); sk.kicker(4,2); sk.gap(9,10); sk.slope(16,5); sk.mark('F',-14,7); sk.mark('7',2)
+sk.mark('K'); sk.mark('B',1)
+for i in range(4):
+    sk.slope(14,4); sk.mark('%',0)
+sk.slope(8,2); sk.rail_over_gap(5,2); sk.slope(8,2); sk.rail_over_gap(6,3); sk.slope(10,3); sk.mark('M',-4,1)
+sk.mark('K'); sk.mark('p',1); sk.mark('8',3)
+sk.slope(60,14,1.2,12); sk.mark('F',-20,4); sk.mark('F',-40,4)
+sk.flat(12); sk.mark('B',-6); sk.mark('E',-3)
+pal_grid, pal_surface = sk.build(int(max(sk.y))+12)
+lvl10 = pal_grid.rows()
+
+# ------------------------------------------------------------ XI · ÇIĞ
+ck=Ski(8)
+ck.flat(4); ck.mark('P',1); ck.mark('p',2); ck.mark('1',3); ck.flat(6); ck.mark('B',0); ck.mark('z',2)
+ck.slope(30,9,0.8,10); ck.mark('2',-10)
+ck.kicker(3,1); ck.gap(5,6); ck.slope(16,6); ck.mark('K'); ck.mark('F',-8,5)
+ck.slope(10,3); ck.mark('%',0); ck.slope(14,5); ck.mark('%',0); ck.slope(10,3)
+ck.mark('p'); ck.mark('3',2); ck.slope(40,14,1.4,11); ck.mark('M',-20,5)
+ck.rail_over_gap(6,3); ck.slope(12,4); ck.mark('K'); ck.mark('B',1)
+ck.mark('p',2); ck.mark('4',3)
+for i in range(3):
+    ck.slope(10,3); ck.kicker(2,1); ck.gap(4,5); ck.slope(8,3); ck.mark('%',-4)
+ck.slope(20,6,0.6,8); ck.mark('K')
+ck.mark('p',1); ck.mark('5',2); ck.slope(10,4); ck.kicker(4,2); ck.gap(10,12); ck.slope(20,8)
+ck.mark('F',-18,8); ck.mark('M',-6,1)
+ck.slope(40,10,1.0,13); ck.mark('Z',-2)
+ck.flat(14); ck.mark('p',-12); ck.mark('6',-10); ck.mark('K',-9); ck.mark('B',-6); ck.mark('E',-3)
+cig_grid, cig_surface = ck.build(int(max(ck.y))+12)
+lvl11 = cig_grid.rows()
+
+MAPS = [('kMapYerebatan', lvl1), ('kMapKule', lvl2), ('kMapGokyolu', lvl3), ('kMapKaf', lvl4), ('kMapAgri', lvl5), ('kMapGemi', lvl6), ('kMapNemrut', lvl7), ('kMapGunDogumu', lvl8), ('kMapKarYolu', lvl9), ('kMapPalandoken', lvl10), ('kMapCig', lvl11)]
 
 out = ['// Bu dosya tools/generate_maps.py ile üretilir; elle düzenleme.',
        '// Gösterim: lib/game/level.dart başındaki açıklamaya bakın.', '']
@@ -545,4 +636,11 @@ for name, rows in MAPS:
     out += [f"  '{r}'," for r in rows]
     out += ['];', '']
     print(name, len(rows), 'x', widths.pop())
+SURFACES = [('kSkiPalandoken', pal_surface), ('kSkiCig', cig_surface)]
+for name, ys in SURFACES:
+    out.append(f'const {name} = <double>[')
+    for i in range(0, len(ys), 12):
+        out.append('  ' + ', '.join(f'{v:.2f}' if v >= 0 else '-1' for v in ys[i:i+12]) + ',')
+    out += ['];', '']
 open('lib/game/maps.dart', 'w').write('\n'.join(out))
+print('magnet', sk.magnets)

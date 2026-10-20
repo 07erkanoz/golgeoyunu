@@ -50,6 +50,8 @@ class LevelDef {
     this.headwind = 0,
     this.storm = false,
     this.quakes = false,
+    this.skiSurface,
+    this.magnet = const [],
     this.titleEn = '',
     this.subtitleEn = '',
     this.whispersEn = const [],
@@ -97,6 +99,13 @@ class LevelDef {
   /// Ara ara tipi bastırır: ekran beyaza boğulur; Kandilciler az görür,
   /// hiç duymaz.
   final bool storm;
+
+  /// Kayak bölümü: sütun başına kar yamacının yüksekliği (kare). Negatif
+  /// değer uçurumdur. Verilirse oyuncu kayakla iner.
+  final List<double>? skiSurface;
+
+  /// Manyetik Tepe bölgeleri (sütun aralıkları): kar yokuş yukarı akar.
+  final List<(int, int)> magnet;
 
   /// Ara ara deprem olur: yer sarsılır, gevşek kayalar düşer.
   final bool quakes;
@@ -764,5 +773,112 @@ const levels = <LevelDef>[
       'Memory · "An inn is the traveler\'s heart," he said. "No one enters an inn whose hearth is cold, even if the door is open."',
     ],
     map: kMapKarYolu,
+  ),
+  LevelDef(
+    title: 'X · PALANDÖKEN',
+    subtitle: 'Ejderlerin uyuduğu dağdan aşağı.',
+    theme: LevelTheme.snow,
+    variant: 1,
+    skiSurface: kSkiPalandoken,
+    magnet: [(203, 226)],
+    titleEn: 'X · PALANDÖKEN',
+    subtitleEn: 'Down from the mountain where the dragons sleep.',
+    place: 'Palandöken Dağı · Erzurum, Aralık 1660',
+    placeEn: 'Mount Palandöken · Erzurum, December 1660',
+    areas: [
+      'Çoban Kulübesi',
+      'Ejder\'in Sırtı',
+      'Kandil Balonları',
+      'Manyetik Tepe',
+      'Ejder\'in Sıçrayışı',
+      'Erzurum\'a İniş',
+    ],
+    areasEn: [
+      'The Shepherd\'s Hut',
+      'The Dragon\'s Back',
+      'The Lantern Balloons',
+      'The Magnetic Hill',
+      'The Dragon\'s Leap',
+      'The Descent to Erzurum',
+    ],
+    whispers: [
+      'Bu dağa Palandöken derler. Yokuşları öyle dikmiş ki kervanların sırtındaki palanlar kayıp dökülürmüş; adı da oradan kalmış.',
+      'Kar seni taşımak ister. Sırtından havalan, dönerek in; ayakların yere doğru gelsin.',
+      'İki zirvenin adı Büyük Ejder ile Küçük Ejder. Eski inanışta dağların doruğu kutsaldır; orada koruyucu ruhlar, dev ejderler yaşar. Fırtına onların nefesi, sis onların uykusudur.',
+      'Kandilciler fenerlerini balonlara asmış, yamacı tarıyor. Işıklarında oyalanma; hız, gölgenin kalkanıdır.',
+      'Burada kar yokuş yukarı akar. Çobanlar bunun bir göz aldanması mı, yoksa dağın seni geri çağırması mı olduğunu hiç bilememiş.',
+      'Dağ çağırırsa direnme. Seni sırtına kadar taşır; oradan uçarsın.',
+      'Ejder\'in Sıçrayışı. Buradan atlayan rüzgârın kanadına biner. Korkan düşer, inanan uçar.',
+      'Aşağıda Erzurum\'un kandilleri titriyor. Dağın sırtında bir gürültü uyanıyor.',
+    ],
+    whispersEn: [
+      'They call this mountain Palandöken. Its slopes were so steep that the pack saddles slid off the caravans\' backs and fell, and so it got its name.',
+      'The snow wants to carry you. Lift off its ridges, land turning; let your feet come down to the ground.',
+      'The two summits are the Great Dragon and the Little Dragon. In the old belief mountaintops are sacred; guardian spirits and giant dragons dwell there. The storm is their breath, the fog their sleep.',
+      'The Lamplighters have hung their lanterns on balloons and sweep the slope. Do not linger in their light; speed is a shadow\'s shield.',
+      'Here the snow flows uphill. The shepherds never knew whether it was a trick of the eye or the mountain calling you back.',
+      'If the mountain calls, do not resist. It carries you up to its crest; from there you fly.',
+      'The Dragon\'s Leap. Whoever jumps from here rides the wing of the wind. Those who fear fall; those who believe fly.',
+      'Below, the lamps of Erzurum flicker. On the mountain\'s back, a rumbling wakes.',
+    ],
+    memories: [
+      'Hatıra · Bir kış ustam bana tahtadan bir kızak yaptı. "Kaymayı bilen düşmeyi de bilir," dedi. Düşe kalka öğrendim.',
+      'Hatıra · Perdeye bir ejder çizmişti; ağzından ateş değil, kar çıkıyordu. "Her ejder ateş püskürmez," dedi.',
+    ],
+    memoriesEn: [
+      'Memory · One winter my master made me a wooden sled. "Whoever knows how to slide knows how to fall," he said. I learned by falling.',
+      'Memory · He once drew a dragon on the screen that breathed snow, not fire. "Not every dragon breathes fire," he said.',
+    ],
+    map: kMapPalandoken,
+  ),
+  LevelDef(
+    title: 'XI · ÇIĞ',
+    subtitle: 'Ejder uyandı. Beyaz bir nefes peşinde.',
+    theme: LevelTheme.snow,
+    variant: 2,
+    skiSurface: kSkiCig,
+    titleEn: 'XI · THE AVALANCHE',
+    subtitleEn: 'The dragon has woken. A white breath at your heels.',
+    place: 'Küçük Ejder Yamacı · Erzurum, Aralık 1660',
+    placeEn: 'The Slopes of the Little Dragon · Erzurum, December 1660',
+    areas: [
+      'Ejder Uyanıyor',
+      'Beyaz Nefes',
+      'Kırık Sırt',
+      'Son Atlayış',
+      'Sığınak',
+    ],
+    areasEn: [
+      'The Dragon Wakes',
+      'The White Breath',
+      'The Broken Ridge',
+      'The Last Leap',
+      'The Shelter',
+    ],
+    whispers: [
+      'Derler ki Küçük Ejder uyurken dağ susar; uyanınca kar akar. Bu gece Kandilcilerin fenerleri onu uyandırdı.',
+      'Çığdan kaçılmaz, onunla yarışılır. Yavaşlayan kar olur.',
+      'Erzurum\'un yaşlıları anlatır: bir kervan bir gece çığa yakalanmış. Baharda karlar eriyince develeri ayakta, donmuş bulmuşlar; boyunlarındaki çanlar rüzgârda hâlâ çalıyormuş.',
+      'Kırık sırt. Kayalar çığdan önce düşer; gözünü yoldan ayırma.',
+      'Son atlayış. Ejderin nefesi sırtında: ya uçarsın, ya kar olursun.',
+      'Çığ dağın dibinde durdu, Ejder yeniden uykuya daldı. Batıda, peri bacalarının ülkesinde bir kandil yanıp sönüyor.',
+    ],
+    whispersEn: [
+      'They say when the Little Dragon sleeps, the mountain is silent; when it wakes, the snow flows. Tonight the Lamplighters\' lanterns woke it.',
+      'There is no fleeing an avalanche, only racing it. Whoever slows becomes snow.',
+      'The elders of Erzurum tell of a caravan caught by an avalanche one night. When the snow melted in spring, they found the camels standing, frozen; the bells on their necks still rang in the wind.',
+      'The broken ridge. The rocks fall before the snow; keep your eyes on the path.',
+      'The last leap. The dragon\'s breath at your back: you fly, or you become snow.',
+      'The avalanche stopped at the mountain\'s foot, and the dragon sank back into sleep. In the west, in the land of the fairy chimneys, a lamp flickers.',
+    ],
+    memories: [
+      'Hatıra · Bir kış ustam perdeyi titreterek çığ yapmıştı. Sonra kandili kıstı: "Dağ da yorulur," dedi.',
+      'Hatıra · "Korkudan kaçılmaz," derdi, "korkuyla birlikte koşulur. Bir gün önüne geçersin."',
+    ],
+    memoriesEn: [
+      'Memory · One winter my master made an avalanche by shaking the screen. Then he dimmed the lamp: "Mountains get tired too," he said.',
+      'Memory · "You cannot flee fear," he said. "You run alongside it. One day you get ahead of it."',
+    ],
+    map: kMapCig,
   ),
 ];

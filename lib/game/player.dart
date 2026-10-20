@@ -11,6 +11,7 @@ import 'level.dart';
 import 'mechanics.dart';
 import 'palette.dart';
 import 'legends.dart';
+import 'ski.dart';
 import 'puzzles.dart';
 
 enum PlayerState { normal, hang, climbUp, vine, swing, dead }
@@ -156,6 +157,8 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     }
 
     switch (state) {
+      case PlayerState.normal when game.skiSurface != null:
+        _updateSki(dt, dir, jump, jumpPressed);
       case PlayerState.normal:
         _updateNormal(dt, dir, up, down, jump);
       case PlayerState.hang:
@@ -180,7 +183,7 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     if (lurePressed && state != PlayerState.climbUp) {
       game.releaseFirefly(light.$1, facing);
     }
-    if (!isDead) _checkHazards();
+    if (!isDead && game.skiSurface == null) _checkHazards();
     inShadow = level.rectHits(
       position.x + 2,
       position.y + 6,
@@ -587,6 +590,172 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     if (onGround && vy > 0) _setState(PlayerState.normal);
   }
 
+  // -------------------------------------------------------------- kayak
+
+  /// Kayarken gövdenin (ve tahtanın) açısı.
+  double skiAngle = 0;
+  double _skiSpeed = 0;
+  bool _skiAir = false;
+  double _airSpin = 0;
+  SkiRail? _grind;
+
+  bool get skiing => game.skiSurface != null;
+
+  static double _wrap(double a) {
+    while (a > math.pi) {
+      a -= 2 * math.pi;
+    }
+    while (a < -math.pi) {
+      a += 2 * math.pi;
+    }
+    return a;
+  }
+
+  void _updateSki(double dt, int dir, bool jump, bool jumpPressed) {
+    final s = game.skiSurface!;
+    const g = 1500.0;
+    facing = 1;
+    crouching = false;
+    sneaking = false;
+    onGround = false;
+    final rail = _grind;
+    if (rail != null) {
+      // Kütüğün üstünde kayar: sürtünme yok.
+      position.x += _skiSpeed * dt;
+      position.y = rail.top - h;
+      skiAngle += (0 - skiAngle) * math.min(1, dt * 12);
+      onGround = true;
+      velocity.setValues(_skiSpeed, 0);
+      if (jumpPressed) {
+        _grind = null;
+        _skiAir = true;
+        velocity.setValues(_skiSpeed, -430);
+        GameAudio.instance.play('jump', volume: 0.6);
+      } else if (center.x > rail.position.x + rail.size.x) {
+        _grind = null;
+        _skiAir = true;
+      }
+      _gait += _skiSpeed * dt / 40;
+      return;
+    }
+    if (!_skiAir) {
+      final x = center.x;
+      final ground = s.at(x);
+      if (ground == null) {
+        _skiAir = true;
+        velocity.setValues(
+          _skiSpeed * math.cos(skiAngle),
+          _skiSpeed * math.sin(skiAngle),
+        );
+      } else {
+        final th = s.slope(x);
+        var a = g * 0.55 * math.sin(th) * (game.inMagnet(x) ? -1.4 : 1.0);
+        a -= _skiSpeed * 0.12 + 0.00035 * _skiSpeed * _skiSpeed.abs();
+        if (dir > 0 && _skiSpeed < 300) a += 280;
+        if (dir < 0) a -= 460 * (_skiSpeed >= 0 ? 1 : -1);
+        if (game.inMagnet(x)) a -= 180;
+        _skiSpeed = (_skiSpeed + a * dt).clamp(-180.0, 640.0);
+        final nx = x + _skiSpeed * math.cos(th) * dt;
+        // Kar hizasındaki kütüğe kayarak çıkar.
+        for (final r in game.world.children.whereType<SkiRail>()) {
+          if (nx > r.position.x &&
+              nx < r.position.x + r.size.x &&
+              (r.top - ground).abs() < 10) {
+            _grind = r;
+            _skiSpeed = math.max(_skiSpeed, 160);
+            position.y = r.top - h;
+            return;
+          }
+        }
+        final ny = s.at(nx);
+        final vy = _skiSpeed * math.sin(th);
+        final yb = ground + vy * dt + 0.5 * g * dt * dt;
+        if (ny == null || ny > yb + 1.5) {
+          // Sırttan havalanır.
+          _skiAir = true;
+          _airSpin = 0;
+          velocity.setValues(_skiSpeed * math.cos(th), vy);
+        } else {
+          position.setValues(nx - w / 2, ny - h);
+          skiAngle += (th - skiAngle) * math.min(1, dt * 18);
+          onGround = true;
+          velocity.setValues(_skiSpeed * math.cos(th), vy);
+          _gait += _skiSpeed.abs() * dt / 40;
+          if (jumpPressed) {
+            _skiAir = true;
+            _airSpin = 0;
+            velocity.setValues(
+              _skiSpeed * math.cos(th) + math.sin(th) * 60,
+              vy - 440,
+            );
+            GameAudio.instance.play('jump', volume: 0.6);
+          }
+        }
+      }
+    }
+    if (_skiAir) {
+      velocity.y = math.min(velocity.y + g * dt, 900);
+      position.add(velocity * dt);
+      if (jump) {
+        // Basılı tutunca geriye takla.
+        skiAngle -= 6.2 * dt;
+        _airSpin += 6.2 * dt;
+      } else {
+        // Takla atmıyorsa beden, ineceği yamaca kendiliğinden hizalanır.
+        skiAngle = _wrap(skiAngle);
+        final below = s.at(center.x + velocity.x * 0.15);
+        final target = below == null
+            ? math.atan2(velocity.y, velocity.x) * 0.5
+            : s.slope(center.x + velocity.x * 0.15);
+        skiAngle += (target - skiAngle) * math.min(1, dt * 5);
+      }
+      // Kütüğe konar.
+      for (final r in game.world.children.whereType<SkiRail>()) {
+        final feet = position.y + h;
+        if (velocity.y > 0 &&
+            center.x > r.position.x &&
+            center.x < r.position.x + r.size.x &&
+            feet >= r.top &&
+            feet - velocity.y * dt <= r.top + 2) {
+          _grind = r;
+          _skiSpeed = math.max(velocity.x, 160);
+          _skiAir = false;
+          position.y = r.top - h;
+          GameAudio.instance.play('creak', volume: 0.6);
+          return;
+        }
+      }
+      final ground = s.at(center.x);
+      if (ground != null && position.y + h >= ground) {
+        final th = s.slope(center.x);
+        final diff = _wrap(skiAngle - th);
+        if (diff.abs() < 1.1) {
+          _skiSpeed = velocity.x * math.cos(th) + velocity.y * math.sin(th);
+          final flips = (_airSpin / (2 * math.pi) + 0.15).floor();
+          if (flips > 0) {
+            _skiSpeed += 60.0 * flips;
+            GameAudio.instance.play('firefly', volume: 0.6);
+          }
+          _airSpin = 0;
+          _skiAir = false;
+          skiAngle = th;
+          position.y = ground - h;
+          GameAudio.instance.play('land', volume: 0.7);
+        } else {
+          die();
+          return;
+        }
+      }
+      if (position.y > level.pixelHeight + 80) die(fell: true);
+    }
+    for (final r in game.world.children.whereType<SkiRock>()) {
+      if (r.toRect().deflate(4).overlaps(toRect())) {
+        die();
+        return;
+      }
+    }
+  }
+
   // ---------------------------------------------------------------- ip
 
   /// Tutunulan ip ve sarkaç durumu: açı (dikeyden), açısal hız, ipteki yer.
@@ -778,11 +947,23 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
 
   @override
   void render(Canvas canvas) {
+    final ski = skiing && !isDead;
+    if (ski) {
+      canvas.save();
+      canvas.translate(w / 2, h);
+      canvas.rotate(skiAngle);
+      canvas.translate(-w / 2, -h);
+      drawSpray(canvas, Offset(w / 2 - 12, h), onGround ? _skiSpeed : 0, _anim);
+    }
     canvas.save();
     canvas.translate((w - _artW * _artScale) / 2, 0);
     canvas.scale(_artScale);
     jarStyle ? _renderJar(canvas) : _renderEyes(canvas);
     canvas.restore();
+    if (ski) {
+      drawSkis(canvas, Offset(w / 2, h), 34);
+      canvas.restore();
+    }
   }
 
   void _renderEyes(Canvas canvas) {
@@ -1071,6 +1252,13 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
         foot1 = Offset(cx + 2, _artH);
         foot2 = Offset(cx - 2, _artH);
         arm2 = -0.3;
+      case PlayerState.normal when skiing:
+        // Kayak duruşu: dizler kırık, gövde öne eğik, ayaklar tahtada.
+        hipY = 30;
+        lean = 0.28;
+        foot1 = Offset(cx + 3, _artH - 0.5);
+        foot2 = Offset(cx - 3, _artH - 0.5);
+        arm2 = -0.7 + math.sin(_anim * 3) * 0.1;
       case PlayerState.normal:
         if (!onGround) {
           final rising = velocity.y < 0;

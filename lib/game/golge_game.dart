@@ -21,6 +21,7 @@ import 'palette.dart';
 import 'player.dart';
 import 'legends.dart';
 import 'nemrut.dart';
+import 'ski.dart';
 import 'winter.dart';
 import 'puzzles.dart';
 import '../settings.dart';
@@ -112,6 +113,12 @@ class GolgeGame extends FlameGame with KeyboardEvents {
 
   double _darkT = 0;
   bool _darkWarned = false;
+
+  /// Kayak bölümünün yamacı (kayak bölümü değilse yok).
+  SkiSurface? skiSurface;
+
+  bool inMagnet(double x) =>
+      world.children.whereType<MagnetZone>().any((m) => m.covers(x));
 
   /// Deprem (0-1): Nemrut'ta ara ara yer sarsılır.
   double quake = 0;
@@ -337,6 +344,8 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     world.removeAll(world.children.toList());
     levelIndex = index;
     level = Level((debugLevels ?? levels)[index]);
+    final ski = level.def.skiSurface;
+    skiSurface = ski == null ? null : SkiSurface(ski);
     if (!respawn || _respawn == null) {
       _respawn = Level.standOn(level.playerStart, Player.w, Player.h);
       _darkWarned = false;
@@ -408,7 +417,15 @@ class GolgeGame extends FlameGame with KeyboardEvents {
           AnimalKind.values[i % AnimalKind.values.length],
         ),
       if (level.chaseStart != null && level.chaseEnd != null)
-        Karabasan(level.chaseStart!, level.chaseEnd!),
+        skiSurface != null
+            ? Avalanche(level.chaseStart!, level.chaseEnd!)
+            : Karabasan(level.chaseStart!, level.chaseEnd!),
+      if (skiSurface != null) SkiTerrain(skiSurface!),
+      if (skiSurface != null)
+        for (final c in level.skiRocks) SkiRock(c, skiSurface!),
+      for (final (c, r, n) in level.skiRails) SkiRail(c, r, n),
+      for (final (a, b) in level.def.magnet)
+        MagnetZone(a * kTile.toDouble(), (b + 1) * kTile.toDouble()),
       for (var i = 0; i < level.memoryCells.length; i++)
         if (!_memories.contains('$index:$i'))
           MemoryShard(level.memoryCells[i], i),

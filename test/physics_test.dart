@@ -11,6 +11,7 @@ import 'package:golge/game/golge_game.dart';
 import 'package:golge/game/level.dart';
 import 'package:golge/game/mechanics.dart';
 import 'package:golge/game/nemrut.dart';
+import 'package:golge/game/ski.dart';
 import 'package:golge/game/winter.dart';
 import 'package:golge/game/perde.dart';
 import 'package:golge/game/player.dart';
@@ -1476,6 +1477,73 @@ void main() {
         expect(wolf.isMounted, isFalse, reason: 'kurt buzdan düşmeliydi');
       },
     );
+  });
+
+  group('Palandöken', () {
+    /// Kayakçı: hep sağa; kaya ya da (kütüksüz) uçurum yaklaşınca zıplar.
+    int skiRun(GolgeGame game, double seconds, double goalX) {
+      final s = game.skiSurface!;
+      final rails = game.world.children.whereType<SkiRail>().toList();
+      bool railAt(double xx) =>
+          rails.any((r) => xx > r.position.x && xx < r.position.x + r.size.x);
+      var deaths = 0;
+      var wasDead = false;
+      keys(game).right = true;
+      for (var i = 0; i < 60 * seconds; i++) {
+        final pl = game.player!;
+        if (pl.center.x > goalX) break;
+        final x = pl.center.x;
+        final rock = game.world.children.whereType<SkiRock>().any(
+          (r) => r.position.x - x > 0 && r.position.x - x < 70,
+        );
+        final gap =
+            (s.at(x + 50) == null && !railAt(x + 50)) ||
+            (s.at(x + 90) == null && !railAt(x + 90));
+        keys(game).jump = pl.onGround && (rock || gap);
+        game.update(1 / 60);
+        if (pl.isDead && !wasDead) deaths++;
+        wasDead = pl.isDead;
+      }
+      keys(game)
+        ..right = false
+        ..jump = false;
+      return deaths;
+    }
+
+    testWithGame<GolgeGame>('pist baştan sona kayılır', GolgeGame.new, (
+      game,
+    ) async {
+      expect(levels[9].title, 'X · PALANDÖKEN');
+      await place(game, 9, 3, 7);
+      final end = game.level.exitCell.x;
+      final deaths = skiRun(game, 150, end - kTile);
+      expect(game.player!.center.x, greaterThan(end - kTile * 2));
+      expect(deaths, lessThanOrEqualTo(3));
+    });
+
+    testWithGame<GolgeGame>('çığdan kaçarak sığınağa varılır', GolgeGame.new, (
+      game,
+    ) async {
+      expect(levels[10].title, 'XI · ÇIĞ');
+      await place(game, 10, 4, 7);
+      final end = game.level.exitCell.x;
+      final deaths = skiRun(game, 150, end - kTile);
+      expect(game.player!.center.x, greaterThan(end - kTile * 2));
+      expect(deaths, lessThanOrEqualTo(4));
+    });
+
+    testWithGame<GolgeGame>('takla atıp ters inen düşer', GolgeGame.new, (
+      game,
+    ) async {
+      final p = await place(game, 9, 3, 7);
+      keys(game).right = true;
+      run(game, 2);
+      keys(game).jump = true;
+      run(game, 0.45);
+      p.skiAngle += 3.0;
+      run(game, 1.5);
+      expect(p.isDead, isTrue);
+    });
   });
 }
 

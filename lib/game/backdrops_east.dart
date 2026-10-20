@@ -239,6 +239,23 @@ extension _EastBackdrops on Backdrop {
       salt: 3,
     );
     if (variant == 1) {
+      // Sisin içinde Ejder: zirvenin çevresine dolanmış, belli belirsiz.
+      final dragon = Paint()
+        ..color = const Color(0xFFDCE6F2).withValues(alpha: 0.06);
+      final ox = w * 0.65 - cam.x * 0.03;
+      for (var i = 0; i < 40; i++) {
+        final k = i / 40;
+        final x =
+            ox +
+            math.cos(k * math.pi * 2.2 + _t * 0.05) * w * 0.18 * (1 - k * 0.4);
+        final y =
+            h * 0.42 +
+            math.sin(k * math.pi * 3 + _t * 0.07) * h * 0.08 -
+            k * h * 0.12;
+        canvas.drawCircle(Offset(x, y), (1 - k) * 22 + 4, dragon);
+      }
+    }
+    if (variant == 1) {
       // Uzakta Erzurum: kalenin ve medrese minarelerinin ışıkları.
       final city = Paint()
         ..color = const Color(0xFFFFC27A).withValues(alpha: 0.6);

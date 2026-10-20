@@ -35,6 +35,8 @@ const double kTile = 32;
 /// - Nemrut: `*` yıldız taşı (soldan sağa sırayla), `+` Aslan Horoskobu
 ///   kabartması, `%` gevşek kaya, `?` oturan taş tanrı, `;` düşmüş dev baş,
 ///   `:` kartal, `,` aslan heykeli, backtick taş dev Nemrud.
+/// - Kayak bölümlerinde (`skiSurface`): `%` kaya, `=` kütük çit, `z`/`Z`
+///   çığın başı/sonu.
 /// - Sağanak: `<` sol üst ve `>` sağ alt köşe (kanatlar ıslanır, süzülünmez).
 /// - Bölgeler: `x` sol üst ve `X` sağ alt köşeleriyle karanlık bölge (ışığı
 ///   yer, ateşböcekleri birer birer söner).
@@ -101,6 +103,10 @@ class Level {
   final altarCells = <Vector2>[];
   final icicleCells = <Vector2>[];
   final thinIceCells = <Vector2>[];
+
+  /// Kayak bölümü: kayalar (sütun) ve kütük çitler (sütun, satır, uzunluk).
+  final skiRocks = <int>[];
+  final skiRails = <(int, int, int)>[];
   final bellCells = <Vector2>[];
   final ruinCells = <Vector2>[];
   final _ice = <int>{};
@@ -236,8 +242,19 @@ class Level {
             starCells.add(cell);
           case '+':
             reliefCells.add(cell);
+          case '%' when def.skiSurface != null:
+            skiRocks.add(c);
           case '%':
             boulderCells.add(cell);
+          case '=' when def.skiSurface != null:
+            final line = def.map[r].padRight(width, '.');
+            if (c == 0 || line[c - 1] != '=') {
+              var len = 1;
+              while (c + len < width && line[c + len] == '=') {
+                len++;
+              }
+              skiRails.add((c, r, len));
+            }
           case '?':
             statueCells.add((cell, 0));
           case ';':
