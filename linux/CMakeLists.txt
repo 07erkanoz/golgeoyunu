@@ -97,6 +97,13 @@ install(TARGETS ${BINARY_NAME} RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}"
 install(FILES "${FLUTTER_ICU_DATA_FILE}" DESTINATION "${INSTALL_BUNDLE_DATA_DIR}"
   COMPONENT Runtime)
 
+# Uygulama menüsüne ekleyen betik ve ikonu (Linux'ta çalıştırılabilir
+# dosyanın kendi ikonu olmaz; ikon .desktop dosyasından gelir).
+install(PROGRAMS "${CMAKE_CURRENT_SOURCE_DIR}/packaging/kur.sh"
+  DESTINATION "${CMAKE_INSTALL_PREFIX}" COMPONENT Runtime)
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/packaging/golge.png"
+  DESTINATION "${CMAKE_INSTALL_PREFIX}" COMPONENT Runtime)
+
 install(FILES "${FLUTTER_LIBRARY}" DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
   COMPONENT Runtime)
 

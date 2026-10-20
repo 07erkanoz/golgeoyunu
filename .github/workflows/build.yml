@@ -136,6 +136,7 @@ jobs:
             ```
             sudo pacman -S --needed gtk3 gstreamer gst-plugins-base gst-plugins-good gst-libav
             tar -xzf GolgeOyunu-linux-x64.tar.gz
+            ./GolgeOyunu/kur.sh      # uygulama menüsüne Sâye ikonuyla ekler (bir kez)
             ./GolgeOyunu/golge
             ```
 
