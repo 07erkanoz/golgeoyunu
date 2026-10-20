@@ -115,6 +115,7 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     _anim += dt;
     _stateTime += dt;
     _landDip = math.max(0, _landDip - dt);
+    _updateShadow(dt);
 
     final c = game.controls;
     final active = !game.cinematic && !isDead;
@@ -1030,26 +1031,135 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
           ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1.6),
       );
     }
-    // Açık havada arkada gölgenin düşeceği duvar yok.
-    if (!jarStyle || hidden || crouching || !level.def.theme.indoor) return;
-    // Duvardaki gölge: kavanoz önde, gölge arkaya ve biraz yukarı uzanır.
+    _wallShadow(canvas);
+  }
+
+  // ------------------------------------------------------- duvardaki gölge
+  //
+  // Kavanoz önde, Sâye'nin gölgesi arkasındaki duvara iri ve dağınık düşer:
+  // perdeye vuran bir izdüşüm. Korku anlarında gölge kendi aklıyla davranır:
+  // geriden gelir ya da Sâye'den ayrılıp gider, durup döner, geri koşar.
+
+  _ShadowMood _mood = _ShadowMood.follow;
+  double _moodT = 0;
+  // Gölgenin dünyadaki ayak noktası (ayrıldığında) ve yönü.
+  double _shadowX = 0;
+  double _shadowY = 0;
+  int _shadowFacing = 1;
+  double _shadowGait = 0;
+  double _shadowFade = 1;
+  // Geriden gelme için son konumlar (zaman, x, y).
+  final _trail = <(double, double, double)>[];
+
+  /// Korku anında gölgenin tepkisi: güçlü korkuda ayrılıp gider, hafifte
+  /// geriden gelir.
+  void shadowFright(double amount) {
+    if (isDead || skiing) return;
+    if (amount >= 0.8) {
+      _mood = _ShadowMood.astray;
+      _shadowX = center.x - facing * 20;
+      _shadowY = position.y + h;
+      _shadowFacing = -facing;
+      _shadowFade = 1;
+    } else if (amount >= 0.4 && _mood == _ShadowMood.follow) {
+      _mood = _ShadowMood.lag;
+    } else {
+      return;
+    }
+    _moodT = 0;
+  }
+
+  void _updateShadow(double dt) {
+    _trail.add((_anim, center.x, position.y + h));
+    while (_trail.length > 2 && _anim - _trail.first.$1 > 1.2) {
+      _trail.removeAt(0);
+    }
+    _moodT += dt;
+    switch (_mood) {
+      case _ShadowMood.follow:
+        break;
+      case _ShadowMood.lag:
+        if (_moodT > 4.5) _mood = _ShadowMood.follow;
+      case _ShadowMood.astray:
+        // 0–0.6 sn donar; sonra ters yöne yürüyüp solar; 2.6'da durur,
+        // 3.2'de döner ve bakar; 4.0'dan sonra hızla geri gelir.
+        if (_moodT > 0.6 && _moodT < 2.6) {
+          _shadowX += _shadowFacing * 46 * dt;
+          _shadowGait += 46 * dt / 30;
+          _shadowFade = math.max(0.6, _shadowFade - dt * 0.2);
+        } else if (_moodT > 3.2 && _moodT < 4.0) {
+          _shadowFacing = (center.x - _shadowX).sign.toInt();
+          if (_shadowFacing == 0) _shadowFacing = 1;
+        } else if (_moodT >= 4.0) {
+          final dx = center.x - facing * 20 - _shadowX;
+          final step = 260 * dt;
+          _shadowFacing = dx >= 0 ? 1 : -1;
+          _shadowX += dx.abs() < step ? dx : dx.sign * step;
+          _shadowY += (position.y + h - _shadowY) * math.min(1, dt * 8);
+          _shadowGait += step / 22;
+          _shadowFade = math.min(1, _shadowFade + dt);
+          if (dx.abs() < 2 || _moodT > 7) _mood = _ShadowMood.follow;
+        }
+    }
+  }
+
+  void _wallShadow(Canvas canvas) {
+    final mood = _mood;
+    if (!jarStyle || !level.def.theme.indoor) return;
+    // Saklanırken gölge yok; ama korku anında gölge kendi başına kalabilir.
+    if ((hidden || crouching) && mood == _ShadowMood.follow) return;
     final flicker = 0.85 + 0.15 * math.sin(_anim * 11) * math.sin(_anim * 3.7);
-    _fill.color = const Color(0xFF000000).withValues(alpha: 0.5 * flicker);
+    var alpha = 0.38 * flicker;
+    // Gölgenin ayak noktası (yerel koordinat) ve yönü.
+    var foot = Offset(w / 2 - facing * (20 + math.sin(_anim * 1.3)), h);
+    var dirFacing = facing;
+    var walking = false;
+    switch (mood) {
+      case _ShadowMood.follow:
+        break;
+      case _ShadowMood.lag:
+        // Yarım saniye önceki yerinde: Sâye'nin peşinden geç gelir.
+        final when = _anim - 0.5 * (1 - (_moodT - 3.5).clamp(0.0, 1.0));
+        var past = _trail.first;
+        for (final t in _trail) {
+          if (t.$1 <= when) past = t;
+        }
+        foot = Offset(past.$2 - position.x - facing * 20, past.$3 - position.y);
+      case _ShadowMood.astray:
+        foot = Offset(_shadowX - position.x, _shadowY - position.y);
+        dirFacing = _shadowFacing;
+        walking = (_moodT > 0.6 && _moodT < 2.6) || _moodT >= 4.0;
+        alpha *= _shadowFade * 1.5;
+    }
+    // Gölgenin kendi duruşu: ayrıldığında yürür, Sâye dursa bile.
+    final saved = (facing, velocity.x, _gait, onGround, state);
+    if (mood == _ShadowMood.astray) {
+      facing = dirFacing;
+      state = PlayerState.normal;
+      onGround = true;
+      velocity.x = walking ? dirFacing * 60.0 : 0;
+      _gait = _shadowGait;
+    }
+    _fill.color = const Color(0xFF000000).withValues(alpha: alpha);
     _limb.color = _fill.color;
-    _fill.maskFilter = const MaskFilter.blur(BlurStyle.normal, 1.2);
+    _fill.maskFilter = const MaskFilter.blur(BlurStyle.normal, 1.6);
     _limb.maskFilter = _fill.maskFilter;
     _rimPass = true;
     canvas.save();
-    // Ayakların dibinden büyür: ışık yakında, gölge iri.
-    canvas.translate(w / 2, h);
-    canvas.translate(-facing * (13 + math.sin(_anim * 1.3) * 0.6), -4);
-    canvas.scale(1.22, 1.18);
+    // Işık yakında ve aşağıda: gölge ayaklardan büyüyerek yukarı uzanır.
+    canvas.translate(foot.dx, foot.dy);
+    canvas.scale(1.45, 1.7);
     canvas.translate(-w / 2, -h);
     canvas.translate((w - _artW * _artScale) / 2, 0);
     canvas.scale(_artScale);
     _renderJar(canvas);
     canvas.restore();
     _rimPass = false;
+    facing = saved.$1;
+    velocity.x = saved.$2;
+    _gait = saved.$3;
+    onGround = saved.$4;
+    state = saved.$5;
     _fill
       ..color = kInk
       ..maskFilter = null;
@@ -1073,7 +1183,8 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       // Kenar ışığı: kavanozun sıcak ışığı siluetin önünü ve tepesini yalar.
       // Aynı figür ışık renginde, ışığa doğru biraz kaydırılarak önce çizilir;
       // mürekkep figür üstüne gelince geriye yalnızca ince parlak bir kenar kalır.
-      final flicker = 0.85 + 0.15 * math.sin(_anim * 11) * math.sin(_anim * 3.7);
+      final flicker =
+          0.85 + 0.15 * math.sin(_anim * 11) * math.sin(_anim * 3.7);
       _fill.color = _jarLight.withValues(alpha: 0.42 * flicker);
       _limb.color = _fill.color;
       _rimPass = true;
@@ -1710,3 +1821,5 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     }
   }
 }
+
+enum _ShadowMood { follow, lag, astray }

@@ -63,6 +63,9 @@ class GameAudio {
     'thunder',
   ];
 
+  // Döngüler `loopLongAudio` ile çalar: Android'de `loop` SoundPool kullanır
+  // ve SoundPool uzun sesleri ilk birkaç saniyede keser; menü müziği ve ortam
+  // sesleri o kırpılmış parçayı baştan başa döndürüyordu.
   bool _ready = false;
 
   /// Menü müziği yüklendi mi (efektlerden önce hazır olur).
@@ -209,7 +212,7 @@ class GameAudio {
       if (_music != null || _musicStarting) return;
       _musicStarting = true;
       _log('döngü menu_theme');
-      FlameAudio.loop('menu_theme.mp3', volume: Settings.music)
+      FlameAudio.loopLongAudio('menu_theme.mp3', volume: Settings.music)
           .then((p) {
             _music = p;
             _musicStarting = false;
@@ -238,7 +241,7 @@ class GameAudio {
       _stopAmbient();
       dread(0);
       _log('döngü perde_ney');
-      FlameAudio.loop('perde_ney.wav', volume: Settings.music)
+      FlameAudio.loopLongAudio('perde_ney.wav', volume: Settings.music)
           .then((p) {
             if (!_neyWanted || _ney != null) {
               p.stop();
@@ -274,7 +277,10 @@ class GameAudio {
     final gen = _ambientGen;
     try {
       _log('döngü $name');
-      final p = await FlameAudio.loop('$name.wav', volume: _ambientVolume);
+      final p = await FlameAudio.loopLongAudio(
+        '$name.wav',
+        volume: _ambientVolume,
+      );
       if (gen != _ambientGen || _musicWanted || _neyWanted) {
         await p.stop();
         return;
@@ -366,7 +372,7 @@ class _LoopChannel {
       if (_starting) return;
       _starting = true;
       GameAudio._log('döngü $file');
-      FlameAudio.loop(file, volume: _volume)
+      FlameAudio.loopLongAudio(file, volume: _volume)
           .then((p) {
             player = p;
             _starting = false;

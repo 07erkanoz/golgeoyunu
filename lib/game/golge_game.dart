@@ -715,6 +715,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     threat = math.max(threat, amount);
     if (sting) GameAudio.instance.play('sting', volume: amount, minGapMs: 1500);
     if (slow) _slow = 0.45;
+    player?.shadowFright(amount);
   }
 
   /// Oyuncu kavanozdan bir ateşböceği salar; Kandilciler ışığa yönelir.

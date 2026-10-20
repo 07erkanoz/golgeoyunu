@@ -36,7 +36,7 @@ void main() {
     await _fonts();
     S.lang = Lang.tr;
     game.onGameResize(Vector2(1280, 720));
-    // ad:bölüm:sütun:satır:yakınlık:saniye
+    // ad:bölüm:sütun:satır:yakınlık:saniye[:korku]
     for (final spec in shots.split(',')) {
       final p = spec.split(':');
       game.debugLoadLevel(int.parse(p[1]));
@@ -47,6 +47,7 @@ void main() {
             Vector2(int.parse(p[2]) * kTile, int.parse(p[3]) * kTile), Player.w, Player.h));
       }
       game.debugCloseUp = double.parse(p[4]);
+      if (p.length > 6) game.scare(double.parse(p[6]), sting: false);
       for (var t = 0.0; t < double.parse(p[5]); t += 1 / 60) {
         game.update(1 / 60);
       }
