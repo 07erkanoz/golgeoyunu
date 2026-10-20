@@ -200,7 +200,12 @@ const interludes = <List<String>>[
     'Kandilciler topladıkları ışığı göğe astı; güneşi onlar kırdı.',
     'Ustanın kandili orada, Sâye. Ve sen her adımda ona biraz daha benziyorsun.',
   ],
-  [],
+  [
+    'Bulutların bittiği yerde dünyanın kıyısı göründü: zümrüt kayalardan bir dağ, Kaf.',
+    'Binlerce kuş Simurg\'u aramak için yola çıkmıştı. Yedi vadiden geçtiler: talep, aşk, marifet, istiğna, tevhid, hayret ve yokluk.',
+    'Kimi korktu, kimi yoruldu, kimi yolda bir dala kondu ve kaldı. Kaf\'a yalnızca otuz kuş vardı.',
+    'Simurg üç tüyünü bu dağa bırakmış. Üçünü bulmayan, zirvedeki aynayı göremez.',
+  ],
   [
     'Kaf\'ın tepesinde bir ayna vardı. Kuşlar Simurg\'u aradı; aynada kendilerini gördüler.',
     'Sâye de baktı. Aynada bir çocuk yoktu. Bir gölge vardı.',
@@ -281,7 +286,12 @@ const interludesEn = <List<String>>[
     'The Lamplighters hung their stolen light in the sky; it was they who broke the sun.',
     'Your master\'s lamp is there, Saye. And with every step, you look more like it.',
   ],
-  [],
+  [
+    'Where the clouds ended, the edge of the world appeared: a mountain of emerald rock, Qaf.',
+    'Thousands of birds had set out to find the Simurgh. They crossed seven valleys: quest, love, knowledge, detachment, unity, bewilderment and nothingness.',
+    'Some grew afraid, some grew tired, some settled on a branch along the way and stayed. Only thirty birds reached Qaf.',
+    'The Simurgh left three of its feathers on this mountain. Whoever does not find all three cannot see the mirror at the summit.',
+  ],
   [
     'At the summit of Qaf there was a mirror. The birds sought the Simurgh; in the mirror they saw themselves.',
     'Saye looked too. There was no child in the mirror. There was a shadow.',

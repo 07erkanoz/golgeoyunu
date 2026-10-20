@@ -650,12 +650,9 @@ class GolgeGame extends FlameGame with KeyboardEvents {
             ending.last,
           ],
           () {
-            _memories.clear();
-            _whispersShown.clear();
-            effects.setFade(1, kInk);
-            _buildLevel(0);
+            // Perde kapanır: ana menüye dönülür, kayıt (son bölüm) korunur.
             _transitioning = false;
-            _startPrologue();
+            _enterMenu();
           },
           instantBlack: true,
           scene: PerdeScene.epilogue,

@@ -47,7 +47,7 @@ enum PerdeScene {
 /// Bölümden önce oynanan perde sahnesi (yoksa düz geçiş).
 PerdeScene? interludeScene(int level) => switch (level) {
   1 => PerdeScene.galata,
-  2 => PerdeScene.kaf,
+  2 || 3 => PerdeScene.kaf,
   4 => PerdeScene.mirror,
   5 => PerdeScene.flood,
   6 => PerdeScene.gods,
