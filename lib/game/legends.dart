@@ -134,7 +134,7 @@ class MedusaHead extends PositionComponent with HasGameReference<GolgeGame> {
         game.world.add(StoneGuard(g.position.clone(), g.facing));
         g.removeFromParent();
         GameAudio.instance.play('grind', volume: 0.6);
-        game.once('guardStone', S.of('guardStone'), hint: true);
+        game.once('guardStone', S.of('guardStone'));
       }
     }
   }

@@ -836,6 +836,9 @@ class GolgeGame extends FlameGame with KeyboardEvents {
       // taramada yeniden denenir (geçip gittiyse sonra çıkmaz).
       if (!narration.hint(Hints.text(key))) return;
       _whispersShown.add(id);
+      // Bazı düzeneklerin kuralı bir de şiirle, hikâyenin içinde anlatılır.
+      final poem = Hints.poem(key);
+      if (poem.isNotEmpty) once('poem:$key', poem);
     }
 
     bool near(PositionComponent c, double dx, [double? dy]) {

@@ -102,7 +102,8 @@ class Narration extends Component with HasGameReference<GolgeGame> {
 
   void whisper(String text) => _whispers.add(text);
 
-  /// Kullanım ipucu: fısıltılardan ayrı, ekranın üstünde, sıcak renkte.
+  /// Kullanım istemi: Sâye'nin başının üstünde küçük bir etiket; hikâye
+  /// fısıltısıyla yarışmaz.
   /// Yer ipuçları sıraya girmez: ekran boşsa hemen gösterilir ve `true`
   /// döner; doluysa `false` (oyuncu hâlâ yakındaysa sonra yeniden denenir).
   /// Olay ipuçları ([queue]) sıraya girer.
@@ -123,10 +124,7 @@ class Narration extends Component with HasGameReference<GolgeGame> {
   final _hints = <String>[];
   String? _hint;
   double _hintT = 0;
-
-  /// İpucu varken alttaki fısıltı duraklar ve solar (0-1).
-  double _hush = 0;
-  double _hintDuration(String s) => 3.5 + s.length * 0.045;
+  double _hintDuration(String s) => 2.6 + s.length * 0.04;
 
   void pulseCounter() => _counterT = 0;
 
@@ -162,14 +160,12 @@ class Narration extends Component with HasGameReference<GolgeGame> {
       _areaT += dt;
       if (_areaT > 5) _area = null;
     }
-    // İpucu ekrandayken fısıltı duraklar; ikisi aynı anda okunmaz.
-    _hush = (_hush + (_hint != null ? dt * 4 : -dt * 2)).clamp(0.0, 1.0);
     if (_whisper == null) {
-      if (_whispers.isNotEmpty && !inCinematic && _hint == null) {
+      if (_whispers.isNotEmpty && !inCinematic) {
         _whisper = _whispers.removeAt(0);
         _whisperT = 0;
       }
-    } else if (_hint == null) {
+    } else {
       _whisperT += dt;
       if (_whisperT > _whisperDuration(_whisper!)) _whisper = null;
     }
@@ -229,6 +225,59 @@ class Narration extends Component with HasGameReference<GolgeGame> {
   }
 
   final _cache = <String, TextPainter>{};
+
+  /// İstem etiketi: Sâye'nin başının üstünde, koyu zemin, ılık kenar.
+  void _prompt(
+    Canvas canvas,
+    String s,
+    double w,
+    double h,
+    double unit,
+    double alpha,
+  ) {
+    if (alpha <= 0) return;
+    final a = (alpha * 20).round() / 20;
+    final size = math.max(13.0, unit * 0.021);
+    final key = 'istem|$s|$size|$a';
+    final tp = _cache[key] ??= _layout(
+      s,
+      size,
+      a,
+      false,
+      0.5,
+      w * 0.5,
+      const Color(0xFFFFE9C4),
+      false,
+    );
+    var at = Offset(w / 2, h * 0.32);
+    final p = game.player;
+    if (p != null && p.isMounted && !p.isDead) {
+      final g = game.camera.localToGlobal(
+        Vector2(p.center.x, p.position.y - 22),
+      );
+      at = Offset(g.x, g.y);
+    }
+    final bw = tp.width + 24;
+    final bh = tp.height + 12;
+    final left = (at.dx - bw / 2).clamp(8.0, w - bw - 8);
+    final top = (at.dy - bh).clamp(8.0, h - bh - 8);
+    final box = RRect.fromRectAndRadius(
+      Rect.fromLTWH(left, top, bw, bh),
+      Radius.circular(bh / 2),
+    );
+    canvas.drawRRect(
+      box,
+      Paint()..color = const Color(0xFF140C09).withValues(alpha: 0.82 * a),
+    );
+    canvas.drawRRect(
+      box,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1
+        ..color = const Color(0xFFE0A15F).withValues(alpha: 0.55 * a),
+    );
+    tp.paint(canvas, Offset(left + 12, top + 6));
+  }
 
   TextPainter _layout(
     String s,
@@ -384,9 +433,12 @@ class Narration extends Component with HasGameReference<GolgeGame> {
     }
 
     if (_whisper != null) {
-      final a =
-          _envelope(_whisperT, 0.8, _whisperDuration(_whisper!) - 1.6, 0.8) *
-          (1 - _hush);
+      final a = _envelope(
+        _whisperT,
+        0.8,
+        _whisperDuration(_whisper!) - 1.6,
+        0.8,
+      );
       _text(
         canvas,
         _whisper!,
@@ -401,16 +453,8 @@ class Narration extends Component with HasGameReference<GolgeGame> {
     if (game.menuMode.value) return;
 
     if (_hint != null && !inCinematic) {
-      final a = _envelope(_hintT, 0.5, _hintDuration(_hint!) - 1.3, 0.8);
-      _text(
-        canvas,
-        _hint!,
-        Offset(w / 2, h * 0.2),
-        unit * 0.026,
-        a,
-        maxWidth: w * 0.62,
-        color: const Color(0xFFFFD9A0),
-      );
+      final a = _envelope(_hintT, 0.3, _hintDuration(_hint!) - 0.9, 0.6);
+      _prompt(canvas, _hint!, w, h, unit, a);
     }
 
     // Kavanozdaki ateşböcekleri: sol üstte küçük ışıklar.
