@@ -155,6 +155,28 @@ class Level {
   double get pixelWidth => width * kTile;
   double get pixelHeight => height * kTile;
 
+  /// Oyuncunun önünde çizilen sütunlar ve direkler (`I`): tavandan tabana
+  /// kapladıkları alan. Işık bunların önüne düşmez.
+  late final List<Rect> frontColumns = () {
+    final out = <Rect>[];
+    for (var c = 0; c < width; c++) {
+      for (var r = 0; r < height; r++) {
+        if (cell(c, r) != 'I' || (r > 0 && cell(c, r - 1) == 'I')) continue;
+        var top = r;
+        while (top > 0 && !solid(c, top - 1)) {
+          top--;
+        }
+        var bottom = r;
+        while (bottom < height && !solid(c, bottom) && cell(c, bottom) != 'w') {
+          bottom++;
+        }
+        final cx = c * kTile + kTile / 2;
+        out.add(Rect.fromLTRB(cx - 12, top * kTile, cx + 12, bottom * kTile));
+      }
+    }
+    return out;
+  }();
+
   void _parse() {
     height = def.map.length;
     width = def.map.map((r) => r.length).reduce(math.max);

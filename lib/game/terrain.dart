@@ -138,6 +138,7 @@ Picture _buildTerrain(Level lv, int c0, int c1, int r0, int r1) {
             Rect.fromLTWH(x - 0.5, y - 0.5, kTile + 1, kTile + 1),
             ink,
           );
+          if (theme == LevelTheme.ark) _hullPlanks(canvas, lv, c, r, x, y);
           if (r > 0 && !lv.solid(c, r - 1) && theme != LevelTheme.cistern) {
             _topDressing(canvas, theme, x, y, rnd, ink, line);
           }
@@ -186,6 +187,8 @@ Picture _buildTerrain(Level lv, int c0, int c1, int r0, int r1) {
             }
           }
           for (final side in [-1, 1]) {
+            // Ahşap gövdenin kenarında kaya tümsekleri olmaz.
+            if (theme == LevelTheme.ark) break;
             if (lv.solid(c + side, r)) continue;
             final ex = side < 0 ? x : x + kTile;
             for (var i = 0; i < 2; i++) {
@@ -474,6 +477,116 @@ void _beam(Canvas canvas, double x, double y, math.Random rnd) {
   }
 }
 
+/// Gemi gövdesi: dolu kareler üst üste bindirilmiş kalaslardır. Her kalas
+/// sırasının ek yerleri kaydırılır, eklerde ağaç çiviler; havaya bakan
+/// kenarlar fenerin ışığını hafifçe yakalar.
+void _hullPlanks(Canvas canvas, Level lv, int c, int r, double x, double y) {
+  const plank = kTile / 4;
+  final wood = Paint()..color = const Color(0xFF140B07);
+  final seam = Paint()
+    ..color = const Color(0xFF050302)
+    ..strokeWidth = 1;
+  final grain = Paint()
+    ..color = const Color(0xFF1C110A)
+    ..strokeWidth = 0.6;
+  canvas.drawRect(Rect.fromLTWH(x, y, kTile, kTile), wood);
+  for (var i = 0; i < 4; i++) {
+    final row = r * 4 + i;
+    final py = y + i * plank;
+    canvas.drawLine(Offset(x, py), Offset(x + kTile, py), seam);
+    canvas.drawLine(
+      Offset(x, py + plank * 0.55),
+      Offset(x + kTile, py + plank * 0.55),
+      grain,
+    );
+    // Ek yeri: her sırada 112 pikselde bir, sıradan sıraya kayar.
+    final joint = (row * 47) % 112;
+    final jx = ((x - joint) / 112).ceil() * 112.0 + joint;
+    if (jx >= x && jx < x + kTile) {
+      canvas.drawLine(Offset(jx, py), Offset(jx, py + plank), seam);
+      canvas.drawCircle(Offset(jx + 2.5, py + plank / 2), 0.9, grain);
+      canvas.drawCircle(Offset(jx - 2.5, py + plank / 2), 0.9, grain);
+    }
+  }
+  // Havaya bakan kenar: ince ışık çizgisi.
+  final lit = Paint()
+    ..color = const Color(0xFF5A3A22).withValues(alpha: 0.55)
+    ..strokeWidth = 1.2;
+  if (!lv.solid(c, r - 1) && r > 0) {
+    canvas.drawLine(Offset(x, y + 0.6), Offset(x + kTile, y + 0.6), lit);
+  }
+  if (!lv.solid(c, r + 1) && r + 1 < lv.height) {
+    // Güverte altı: kalın bir kiriş payı.
+    canvas.drawRect(
+      Rect.fromLTWH(x, y + kTile - 5, kTile, 5),
+      Paint()..color = const Color(0xFF0B0604),
+    );
+  }
+}
+
+/// Gemi ambarının direği: tavandaki kirişten tabana iner, demir çemberli;
+/// tepesinde iki eğik destek (diz). Saklanma yeri olarak oyuncunun önünde.
+void _mast(Canvas canvas, double cx, double top, double bottom) {
+  const hw = 12.0;
+  canvas.drawRect(
+    Rect.fromLTRB(cx - hw, top - 2, cx + hw, bottom),
+    Paint()
+      ..shader = ui.Gradient.linear(
+        Offset(cx - hw, 0),
+        Offset(cx + hw, 0),
+        const [Color(0xFF3A2414), Color(0xFF20130B), Color(0xFF0C0705)],
+        const [0, 0.45, 1],
+      ),
+  );
+  // Ağaç lifleri.
+  final grain = Paint()
+    ..color = const Color(0xFF0A0604).withValues(alpha: 0.6)
+    ..strokeWidth = 0.8;
+  for (final gx in [-6.0, -1.5, 4.0, 8.0]) {
+    canvas.drawLine(Offset(cx + gx, top), Offset(cx + gx + 0.6, bottom), grain);
+  }
+  // Tepede iki eğik diz: kirişe bağlanır.
+  final knee = Paint()..color = const Color(0xFF170D07);
+  for (final s in [-1.0, 1.0]) {
+    canvas.drawPath(
+      Path()
+        ..moveTo(cx + s * hw, top + 34)
+        ..lineTo(cx + s * hw, top + 22)
+        ..lineTo(cx + s * (hw + 26), top)
+        ..lineTo(cx + s * (hw + 40), top)
+        ..close(),
+      knee,
+    );
+  }
+  // Demir çemberler ve perçinler.
+  final band = Paint()..color = const Color(0xFF241A16);
+  final rivet = Paint()..color = const Color(0xFF6A5040);
+  for (var y = top + 48; y < bottom - 20; y += 64) {
+    canvas.drawRect(
+      Rect.fromLTRB(cx - hw - 1.5, y, cx + hw + 1.5, y + 5),
+      band,
+    );
+    for (final rx in [-7.0, 0.0, 7.0]) {
+      canvas.drawCircle(Offset(cx + rx, y + 2.5), 0.9, rivet);
+    }
+  }
+  // Tabanda halat yumağı.
+  final rope = Paint()
+    ..color = const Color(0xFF2A1C10)
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 2.2;
+  for (var i = 0; i < 3; i++) {
+    canvas.drawOval(
+      Rect.fromCenter(
+        center: Offset(cx + 15, bottom - 3 - i * 3.2),
+        width: 20 - i * 3,
+        height: 5,
+      ),
+      rope,
+    );
+  }
+}
+
 const _stone = Color(0xFF150C09);
 const _rim = Color(0xFF8A4A2A);
 
@@ -676,6 +789,16 @@ Picture _buildForeground(Level lv, int c0, int c1, int r0, int r1) {
     ..strokeCap = StrokeCap.round;
   for (var r = r0; r <= r1; r++) {
     for (var c = c0; c <= c1; c++) {
+      if (lv.cell(c, r) == 'I' && lv.def.theme == LevelTheme.ark) {
+        if (r > 0 && lv.cell(c, r - 1) == 'I') continue;
+        _mast(
+          canvas,
+          c * kTile + kTile / 2,
+          _ceilingBottom(lv, c),
+          _floorTop(lv, c, r + 1),
+        );
+        continue;
+      }
       if (lv.cell(c, r) == 'I') {
         final top = _ceilingBottom(lv, c);
         _column(

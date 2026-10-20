@@ -91,10 +91,23 @@ class LightShafts extends Component with HasGameReference<GolgeGame> {
     if (style == null) return;
     final (color, flicker) = style;
     final view = game.camera.visibleWorldRect.inflate(120);
+    // Işık ön plandaki sütunların arkasından geçer.
+    final columns = game.level.frontColumns.where(view.overlaps).toList();
+    canvas.save();
+    if (columns.isNotEmpty) {
+      final clip = Path()
+        ..fillType = PathFillType.evenOdd
+        ..addRect(view);
+      for (final c in columns) {
+        clip.addRect(c);
+      }
+      canvas.clipPath(clip);
+    }
     for (final s in _shafts) {
       if (!s.bounds.overlaps(view)) continue;
       _shaft(canvas, s, color, flicker);
     }
+    canvas.restore();
   }
 
   void _shaft(Canvas canvas, _Shaft s, Color color, double flicker) {

@@ -32,7 +32,7 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
     LevelTheme.sky => 0.18,
     LevelTheme.kaf => 0.3,
     LevelTheme.snow => 0.3,
-    LevelTheme.ark => 0.5,
+    LevelTheme.ark => 0.42,
     LevelTheme.nemrut => 0.24,
     LevelTheme.peri => 0.26,
     LevelTheme.konya => 0.38,
@@ -95,11 +95,6 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
     );
     _darkZones(canvas, rect);
 
-    final p = game.player;
-    if (p != null && p.isMounted && !p.isDead) {
-      final (pos, radius) = p.light;
-      _light(canvas, pos.toOffset(), radius);
-    }
     for (final c in game.world.children) {
       switch (c) {
         case Guard g:
@@ -210,6 +205,21 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
             l.strength,
           );
       }
+    }
+    // Ön plandaki sütunlar ve direkler ışığın önünde durur: üstlerine düşen
+    // fener ve kandil ışığı geri örtülür, ışık arkalarından geçiyormuş gibi.
+    final shade = Paint()
+      ..color = const Color(0xFF040201).withValues(
+        alpha: darknessFor(game.level.def.theme) * 0.85 * (1 - game.lightning),
+      );
+    for (final col in game.level.frontColumns) {
+      if (col.overlaps(rect)) canvas.drawRect(col, shade);
+    }
+    // Sâye'nin kendi ışığı en son: yanındaki sütunu o aydınlatır.
+    final p = game.player;
+    if (p != null && p.isMounted && !p.isDead) {
+      final (pos, radius) = p.light;
+      _light(canvas, pos.toOffset(), radius);
     }
     canvas.restore();
   }

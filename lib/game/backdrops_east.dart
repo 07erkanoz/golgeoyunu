@@ -295,113 +295,142 @@ extension _EastBackdrops on Backdrop {
 
   /// Taşlaşmış geminin içi: dev kaburgalar, asılı kandiller ve duvarda
   /// ikişer ikişer yürüyen hayvan gölgeleri.
+  /// Kameranın baktığı yerde ambarın tavanı ve tabanı (ekran koordinatı).
+  (double, double) _holdBand(double h) {
+    final lv = game.level;
+    final view = game.camera.visibleWorldRect;
+    final c = (view.center.dx / 32.0).floor();
+    const tile = 32.0; // kTile
+    var r = (view.center.dy / tile).floor().clamp(0, lv.height - 1);
+    // Kamera kayanın içindeyse en yakın boşluğu bul.
+    var k = 0;
+    while (lv.solid(c, r) && k < lv.height) {
+      r = (r + 1) % lv.height;
+      k++;
+    }
+    var top = r;
+    while (top > 0 && !lv.solid(c, top - 1)) {
+      top--;
+    }
+    var bottom = r;
+    while (bottom < lv.height && !lv.solid(c, bottom)) {
+      bottom++;
+    }
+    double toScreen(double wy) => (wy - view.top) / view.height * h;
+    return (toScreen(top * tile), toScreen(bottom * tile));
+  }
+
+  /// Nuh'un Gemisi'nin ambarı: bindirme kalaslı iç gövde, eğri postalar,
+  /// güverteyi taşıyan kirişler, aralıklarından sızan gün ışığı; fenerlerin
+  /// önünden geçen hayvanların gölgeleri gövdeye perde gibi düşer.
   void _arkHull(Canvas canvas, double w, double h, Vector2 cam) {
     _gradient(canvas, Rect.fromLTWH(0, 0, w, h), const [
       Color(0xFF0C0705),
       Color(0xFF24150C),
       Color(0xFF3A2414),
     ]);
-    // Tahta aralıklarından sızan soluk gün ışığı.
-    for (var i = 0; i < 5; i++) {
-      final x =
-          ((i * 337 + 90 - cam.x * 0.15) % (w + 300) + w + 300) % (w + 300) -
-          150;
-      canvas.drawPath(
-        Path()
-          ..moveTo(x, 0)
-          ..lineTo(x + 8, 0)
-          ..lineTo(x + 70, h)
-          ..lineTo(x + 40, h)
-          ..close(),
-        Paint()
-          ..shader = ui.Gradient.linear(Offset(x, 0), Offset(x + 50, h), [
-            const Color(0xFFE8D0A0).withValues(alpha: 0.12),
-            const Color(0xFFE8D0A0).withValues(alpha: 0),
-          ]),
-      );
+    final (top, bottom) = _holdBand(h);
+    final hold = (bottom - top).clamp(120.0, h);
+
+    // İç gövde: yatay kalaslar, ek yerleri kaydırılmış.
+    const plank = 22.0;
+    final wallX = cam.x * 0.25;
+    final seam = Paint()
+      ..color = const Color(0xFF0E0805).withValues(alpha: 0.75)
+      ..strokeWidth = 1.4;
+    final tone = Paint();
+    final y0 = top - ((top / plank).ceil() + 1) * plank;
+    for (var y = y0, i = 0; y < h; y += plank, i++) {
+      tone.color =
+          (i.isEven ? const Color(0xFF3A2414) : const Color(0xFF1A0E07))
+              .withValues(alpha: 0.12);
+      canvas.drawRect(Rect.fromLTWH(0, y, w, plank), tone);
+      canvas.drawLine(Offset(0, y), Offset(w, y), seam);
+      final shift = (i * 83) % 190;
+      for (var x = -((wallX + shift) % 190); x < w; x += 190) {
+        canvas.drawLine(Offset(x, y), Offset(x, y + plank), seam);
+      }
     }
-    // Hayvan gölgeleri: perde gibi gövdenin iç duvarına düşer.
+
+    // Fenerlerin gövdeye vurduğu sıcak ışık halkaları.
+    const lampGap = 380.0;
+    final lampX = cam.x * 0.5;
+    _repeat(w, lampX, lampGap, (x, rnd) {
+      _lightLeak(
+        canvas,
+        Offset(x, top + hold * 0.45),
+        hold * 0.9,
+        0.13,
+        const Color(0xFFFFB46A),
+      );
+    }, salt: 4);
+
+    // Hayvan gölgeleri: gövdenin iç duvarına düşer, duvarla birlikte kayar.
     final shade = Paint()
-      ..color = const Color(0xFF120A06).withValues(alpha: 0.6);
+      ..color = const Color(0xFF0A0503).withValues(alpha: 0.45)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.5);
     final walk = _t * 14;
-    _repeat(w, cam.x * 0.3 - walk, 520, (x, rnd) {
+    final scale = (hold / 230).clamp(0.6, 1.4);
+    _repeat(w, wallX - walk, 520, (x, rnd) {
       final kind = rnd.nextInt(3);
-      for (final dx in [0.0, 70.0]) {
+      for (final dx in [0.0, 80.0]) {
         canvas.save();
-        canvas.translate(x + dx, h * 0.72);
-        final bob = math.sin(_t * 2 + dx) * 2;
-        canvas.translate(0, bob);
-        switch (kind) {
-          case 0: // fil
-            canvas.drawOval(const Rect.fromLTWH(-34, -50, 68, 40), shade);
-            canvas.drawCircle(const Offset(34, -40), 14, shade);
-            canvas.drawRect(const Rect.fromLTWH(42, -36, 6, 34), shade);
-            for (final lx in [-26.0, -12.0, 10.0, 22.0]) {
-              canvas.drawRect(Rect.fromLTWH(lx, -14, 9, 16), shade);
-            }
-          case 1: // zürafa
-            canvas.drawOval(const Rect.fromLTWH(-22, -50, 44, 24), shade);
-            canvas.drawPath(
-              Path()
-                ..moveTo(14, -46)
-                ..lineTo(30, -104)
-                ..lineTo(38, -102)
-                ..lineTo(24, -42)
-                ..close(),
-              shade,
-            );
-            canvas.drawOval(const Rect.fromLTWH(28, -112, 18, 9), shade);
-            for (final lx in [-16.0, -6.0, 8.0, 16.0]) {
-              canvas.drawRect(Rect.fromLTWH(lx, -30, 4, 30), shade);
-            }
-          default: // aslan
-            canvas.drawOval(const Rect.fromLTWH(-26, -34, 52, 22), shade);
-            canvas.drawCircle(const Offset(28, -30), 13, shade);
-            canvas.drawPath(
-              Path()
-                ..moveTo(-26, -26)
-                ..quadraticBezierTo(-44, -30, -46, -14)
-                ..lineTo(-42, -14)
-                ..quadraticBezierTo(-40, -26, -26, -22)
-                ..close(),
-              shade,
-            );
-            for (final lx in [-20.0, -8.0, 10.0, 18.0]) {
-              canvas.drawRect(Rect.fromLTWH(lx, -16, 5, 16), shade);
-            }
-        }
+        canvas.translate(x + dx * scale, bottom - 4);
+        canvas.scale(scale);
+        canvas.translate(0, math.sin(_t * 2 + dx) * 2);
+        _arkAnimal(canvas, kind, shade);
         canvas.restore();
       }
     }, salt: 9);
-    // Kaburgalar: iki derinlikte kıvrık kirişler.
-    for (final (depth, color, thick, spacing) in [
-      (0.35, const Color(0xFF2A190E), 16.0, 210.0),
-      (0.6, const Color(0xFF170D07), 26.0, 300.0),
-    ]) {
-      final rib = Paint()
-        ..color = color
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = thick;
-      _repeat(w, cam.x * depth, spacing, (x, rnd) {
-        canvas.drawPath(
-          Path()
-            ..moveTo(x - spacing * 0.15, h + 20)
-            ..quadraticBezierTo(
-              x - spacing * 0.2,
-              h * 0.1,
-              x + spacing * 0.35,
-              -20,
-            ),
-          rib,
-        );
-      });
-    }
-    // Asılı kandiller.
-    _repeat(w, cam.x * 0.6, 380, (x, rnd) {
-      final y = h * (0.25 + rnd.nextDouble() * 0.1);
+
+    // Postalar: tabandan yükselen, tavana doğru içe kıvrılan kalın kaburgalar;
+    // tepede güverte kirişine bir dizle bağlanır.
+    final frameX = cam.x * 0.5;
+    const frameGap = 260.0;
+    final frame = Paint()..color = const Color(0xFF1A0F08);
+    final edge = Paint()
+      ..color = const Color(0xFF6A4226).withValues(alpha: 0.35)
+      ..strokeWidth = 1.2;
+    _repeat(w, frameX, frameGap, (x, rnd) {
+      final path = Path()
+        ..moveTo(x - 11, bottom + 30)
+        ..quadraticBezierTo(x - 20, top + hold * 0.5, x - 6, top + 14)
+        ..lineTo(x - 40, top)
+        ..lineTo(x + 46, top)
+        ..lineTo(x + 12, top + 18)
+        ..quadraticBezierTo(x + 2, top + hold * 0.5, x + 11, bottom + 30)
+        ..close();
+      canvas.drawPath(path, frame);
+      // Fenere bakan kenar ışığı yakalar.
+      canvas.drawPath(
+        Path()
+          ..moveTo(x + 11, bottom)
+          ..quadraticBezierTo(x + 2, top + hold * 0.5, x + 12, top + 18),
+        edge..style = PaintingStyle.stroke,
+      );
+    }, salt: 2);
+
+    // Güverte kirişi (iç kemer) ve güverte kalaslarının aralığından sızan ışık.
+    canvas.drawRect(
+      Rect.fromLTRB(0, top - 2, w, top + 9),
+      Paint()..color = const Color(0xFF120A06),
+    );
+    final slit = Paint();
+    _repeat(w, cam.x * 0.5, 97, (x, rnd) {
+      final a = 0.25 + 0.25 * math.sin(_t * 0.7 + x * 0.05);
+      slit.color = const Color(0xFFE8D6B0).withValues(alpha: a);
+      canvas.drawRect(
+        Rect.fromLTWH(x, top - 1, 30 + rnd.nextDouble() * 40, 1.2),
+        slit,
+      );
+    }, salt: 6);
+
+    // Kirişlerden sarkan kandiller.
+    _repeat(w, lampX, lampGap, (x, rnd) {
+      final y = top + hold * (0.28 + rnd.nextDouble() * 0.1);
       final sway = math.sin(_t * 0.8 + x * 0.01) * 4;
       canvas.drawLine(
-        Offset(x, 0),
+        Offset(x, top + 8),
         Offset(x + sway, y),
         Paint()
           ..color = const Color(0xFF170D07)
@@ -410,16 +439,72 @@ extension _EastBackdrops on Backdrop {
       _lightLeak(
         canvas,
         Offset(x + sway, y + 6),
-        60,
-        0.25,
+        54,
+        0.3,
         const Color(0xFFFFC27A),
       );
-      canvas.drawCircle(
-        Offset(x + sway, y + 6),
-        3,
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromCenter(
+            center: Offset(x + sway, y + 6),
+            width: 7,
+            height: 10,
+          ),
+          const Radius.circular(2),
+        ),
         Paint()..color = const Color(0xFFFFE2A8),
       );
     }, salt: 4);
+  }
+
+  void _arkAnimal(Canvas canvas, int kind, Paint shade) {
+    switch (kind) {
+      case 0: // fil
+        canvas.drawOval(const Rect.fromLTWH(-34, -58, 68, 40), shade);
+        canvas.drawCircle(const Offset(34, -48), 14, shade);
+        canvas.drawPath(
+          Path()
+            ..moveTo(42, -44)
+            ..quadraticBezierTo(52, -24, 46, -6)
+            ..lineTo(41, -7)
+            ..quadraticBezierTo(45, -24, 36, -40)
+            ..close(),
+          shade,
+        );
+        for (final lx in [-26.0, -12.0, 10.0, 22.0]) {
+          canvas.drawRect(Rect.fromLTWH(lx, -22, 9, 22), shade);
+        }
+      case 1: // zürafa
+        canvas.drawOval(const Rect.fromLTWH(-22, -62, 44, 24), shade);
+        canvas.drawPath(
+          Path()
+            ..moveTo(14, -58)
+            ..lineTo(30, -116)
+            ..lineTo(38, -114)
+            ..lineTo(24, -54)
+            ..close(),
+          shade,
+        );
+        canvas.drawOval(const Rect.fromLTWH(28, -124, 18, 9), shade);
+        for (final lx in [-16.0, -6.0, 8.0, 16.0]) {
+          canvas.drawRect(Rect.fromLTWH(lx, -42, 4, 42), shade);
+        }
+      default: // aslan
+        canvas.drawOval(const Rect.fromLTWH(-26, -38, 52, 22), shade);
+        canvas.drawCircle(const Offset(28, -34), 13, shade);
+        canvas.drawPath(
+          Path()
+            ..moveTo(-26, -30)
+            ..quadraticBezierTo(-44, -34, -46, -18)
+            ..lineTo(-42, -18)
+            ..quadraticBezierTo(-40, -30, -26, -26)
+            ..close(),
+          shade,
+        );
+        for (final lx in [-20.0, -8.0, 10.0, 18.0]) {
+          canvas.drawRect(Rect.fromLTWH(lx, -18, 5, 18), shade);
+        }
+    }
   }
 
   // ------------------------------------------------------------ Nemrut
