@@ -575,6 +575,9 @@ void main() {
           closeTo(71 * kTile, 3),
           reason: 'kefe yukarı çıkmadı',
         );
+        // Sandık inen kefede kalır (içinden düşmez).
+        expect(crate.isMounted, isTrue, reason: 'sandık düştü');
+        expect(crate.riding, isA<LiftPan>(), reason: 'sandık kefede değil');
         // Kefeden soldaki tahtaya geç.
         keys(game)
           ..left = true
