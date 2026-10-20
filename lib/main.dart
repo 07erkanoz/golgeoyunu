@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'game/audio.dart';
+import 'display.dart';
 import 'game/golge_game.dart';
 import 'settings.dart';
 import 'ui/main_menu.dart';
@@ -36,6 +37,7 @@ Future<void> main() async {
   if (_isMobile) {
     await Flame.device.fullScreen();
     await Flame.device.setLandscape();
+    await applyRefreshRate();
   }
   if (_isDesktop) {
     await windowManager.ensureInitialized();
@@ -61,11 +63,34 @@ class GolgeApp extends StatefulWidget {
 
 class _GolgeAppState extends State<GolgeApp> {
   final _game = GolgeGame();
+  late final AppLifecycleListener _lifecycle;
 
   @override
   void initState() {
     super.initState();
     _game.onToggleFullscreen = () => _setFullscreen(!Settings.fullscreen);
+    // Telefon oyunu arka plana alınca (ya da kapatılırken) ilerleme ve
+    // ayarlar hemen yazılır; sistem uygulamayı öldürse de kaybolmaz.
+    _lifecycle = AppLifecycleListener(
+      onStateChange: (state) {
+        if (state == AppLifecycleState.paused ||
+            state == AppLifecycleState.hidden ||
+            state == AppLifecycleState.detached) {
+          _game.saveNow();
+          Settings.save();
+        }
+        // Geri dönünce yüksek yenileme hızı yeniden istenir.
+        if (state == AppLifecycleState.resumed && _isMobile) {
+          applyRefreshRate();
+        }
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _lifecycle.dispose();
+    super.dispose();
   }
 
   Future<void> _setFullscreen(bool on) async {

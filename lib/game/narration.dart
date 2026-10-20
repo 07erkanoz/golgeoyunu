@@ -323,7 +323,7 @@ class Narration extends Component with HasGameReference<GolgeGame> {
       if (_place.isNotEmpty) {
         _text(
           canvas,
-          _place.toUpperCase(),
+          S.upper(_place),
           Offset(w / 2, h * 0.53),
           unit * 0.02,
           a * 0.55,

@@ -1,0 +1,282 @@
+import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+import '../game/strings.dart';
+import '../settings.dart';
+
+const _text = Color(0xFFEBDDCB);
+const _accent = Color(0xFFE0A15F);
+const _ink = Color(0xFF1A0B05);
+
+/// Başlık ve altında ince bir süs çizgisi.
+class _Heading extends StatelessWidget {
+  const _Heading(this.title);
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Text(
+          title,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            color: _text,
+            fontSize: 20,
+            letterSpacing: 6,
+            fontWeight: FontWeight.w300,
+          ),
+        ),
+        const SizedBox(height: 10),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(width: 48, height: 1, color: _accent.withAlpha(90)),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 8),
+              child: Icon(
+                Icons.local_fire_department,
+                size: 12,
+                color: _accent,
+              ),
+            ),
+            Container(width: 48, height: 1, color: _accent.withAlpha(90)),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+TextStyle get _body =>
+    TextStyle(color: _text.withValues(alpha: 0.82), fontSize: 13, height: 1.55);
+
+// ================================================================= Hikâye
+
+/// Oyunun hikâyesi: oyuncunun ulaştığı perdeye kadar açılır, sonu söylemez.
+class StoryPage extends StatelessWidget {
+  const StoryPage({super.key});
+
+  /// Her perdenin ilk bölümü (0 tabanlı).
+  static const _actStarts = [0, 4, 8, 11, 13];
+
+  @override
+  Widget build(BuildContext context) {
+    final reached = SaveGame.current?.level ?? 0;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _Heading(S.of('storyTitle')),
+        const SizedBox(height: 18),
+        Text(S.of('storyIntro'), style: _body),
+        for (var i = 0; i < _actStarts.length; i++) ...[
+          const SizedBox(height: 18),
+          Text(
+            S.upper(S.of('storyAct$i')),
+            style: TextStyle(
+              color: reached >= _actStarts[i]
+                  ? _accent
+                  : _accent.withValues(alpha: 0.35),
+              fontSize: 11,
+              letterSpacing: 2.5,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            reached >= _actStarts[i]
+                ? S.of('storyAct${i}Text')
+                : S.of('storyLocked'),
+            style: reached >= _actStarts[i]
+                ? _body
+                : _body.copyWith(
+                    color: _text.withValues(alpha: 0.35),
+                    fontStyle: FontStyle.italic,
+                  ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+// =============================================================== Hakkında
+
+class AboutPage extends StatelessWidget {
+  const AboutPage({super.key});
+
+  Future<void> _open(Uri uri) async {
+    try {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {
+      // Tarayıcı açılamazsa sessizce geçilir.
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _Heading(S.of('aboutTitle')),
+        const SizedBox(height: 18),
+        Text(
+          S.of('aboutGame'),
+          textAlign: TextAlign.center,
+          style: _body.copyWith(fontStyle: FontStyle.italic),
+        ),
+        const SizedBox(height: 20),
+        // Geliştirici kartı: arkadan kandille aydınlanan küçük bir perde.
+        Container(
+          padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: const Color(0x55E0A15F)),
+            gradient: const RadialGradient(
+              center: Alignment(0, -0.3),
+              radius: 1.2,
+              colors: [Color(0xFF4A2512), Color(0xFF24120A), Color(0xFF140C09)],
+              stops: [0, 0.55, 1],
+            ),
+          ),
+          child: Column(
+            children: [
+              Container(
+                width: 64,
+                height: 64,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: _ink,
+                  border: Border.all(color: _accent, width: 1.2),
+                  boxShadow: const [
+                    BoxShadow(color: Color(0x66E0A15F), blurRadius: 18),
+                  ],
+                ),
+                child: const Text(
+                  'EÖ',
+                  style: TextStyle(
+                    color: _accent,
+                    fontSize: 22,
+                    letterSpacing: 2,
+                    fontWeight: FontWeight.w300,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'Erkan Öz',
+                style: TextStyle(color: _text, fontSize: 17, letterSpacing: 1),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                S.of('aboutRole'),
+                style: TextStyle(
+                  color: _accent.withValues(alpha: 0.85),
+                  fontSize: 11,
+                  letterSpacing: 2,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                S.of('aboutDev'),
+                textAlign: TextAlign.center,
+                style: _body.copyWith(fontSize: 12.5),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 14),
+        _LinkTile(
+          icon: Icons.person_outline,
+          title: 'erkanoz.com',
+          subtitle: S.of('aboutSite'),
+          onTap: () => _open(Uri.https('erkanoz.com', '/')),
+        ),
+        _LinkTile(
+          icon: Icons.nightlight_outlined,
+          title: 'lifeos.com.tr/gölgeler',
+          subtitle: S.of('aboutGamePage'),
+          onTap: () => _open(Uri.https('lifeos.com.tr', '/gölgeler/')),
+        ),
+        const SizedBox(height: 18),
+        Text(
+          S.upper(S.of('aboutMusic')),
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: _accent.withValues(alpha: 0.7),
+            fontSize: 10,
+            letterSpacing: 3,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          S.of('musicLicense'),
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: _text.withValues(alpha: 0.45),
+            fontSize: 10.5,
+            height: 1.45,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _LinkTile extends StatelessWidget {
+  const _LinkTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      type: MaterialType.transparency,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+          child: Row(
+            children: [
+              Icon(icon, color: _accent, size: 20),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(color: _text, fontSize: 14),
+                    ),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        color: _text.withValues(alpha: 0.5),
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.open_in_new,
+                color: _text.withValues(alpha: 0.35),
+                size: 16,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

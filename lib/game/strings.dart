@@ -10,6 +10,11 @@ class S {
 
   static String of(String key) => (en ? _en : _tr)[key] ?? _tr[key] ?? key;
 
+  /// Dile göre büyük harf: Türkçede i → İ, ı → I.
+  static String upper(String s) => en
+      ? s.toUpperCase()
+      : s.replaceAll('i', 'İ').replaceAll('ı', 'I').toUpperCase();
+
   static const _tr = {
     'gameTitle': 'GÖLGE OYUNU',
     'menuSubtitle': 'İstanbul, 1660',
@@ -59,7 +64,35 @@ class S {
     'wings': 'Hezarfen\'in kanatları. Rüzgâra güvenen düşmez.',
     'memoriesFound': 'Toplanan hatıralar',
     'musicCredit': 'Menü müziği: vjgalaxy · Pixabay',
-    'credits': 'Emeği geçenler',
+    'highRefresh': 'Yüksek yenileme hızı (120 Hz)',
+    'story': 'Hikâye',
+    'about': 'Hakkında',
+    'back': 'Geri',
+    'storyTitle': 'HİKÂYE',
+    'storyIntro':
+        'Temmuz 1660. İstanbul iki gündür yanıyor. Kandilciler Loncası küllerin arasında dolaşıp her kandili, her mumu, her gözdeki ışığı topluyor.\n\n'
+        'Son olarak Hayali Usta\'nın perdesine gelirler; kandilini söndürür, ustayı götürürler. Işık sönmeden önce perdeden bir gölge düşer: Sâye.\n\n'
+        'Sâye ustasını aramak için yola çıkar. Yanında bir kavanoz ateşböceği ve yolu bilen bir kuş vardır: Hüdhüd.',
+    'storyAct0': 'Birinci Perde · Işığın Çalındığı Şehir',
+    'storyAct0Text': 'Yerebatan\'ın karanlık suları, Galata\'nın kulesi, Hezarfen\'in kanatları, buluttan bir yol ve dünyanın kıyısında Kaf Dağı. Simurg\'un aynasında Sâye kim olduğunu görür.',
+    'storyAct1': 'İkinci Perde · Dağ',
+    'storyAct1Text': 'Kandilciler ustanın kandilini doğuya taşıdı. Ağrı\'nın buzulları, Nuh\'un taşa dönmüş gemisi, Nemrut\'un başı düşmüş tanrıları. Sâye her adımda bir ışığa yetişir; Kandilciler hep bir adım öndedir.',
+    'storyAct2': 'Üçüncü Perde · Kar',
+    'storyAct2Text': 'Sâye bir an ustasını görür: karların içinde, zincirli, kandili bir mum kadar kalmış. Palandöken\'de ejderler uyurken kervanın peşinden kayar; Ejder uyanınca çığla yarışır.',
+    'storyAct3': 'Dördüncü Perde · Periler',
+    'storyAct3Text': 'Kapadokya\'da bacaların tepesinde periler, yerin altında devler uyur. Kandilciler Derinkuyu\'nun dibine iner; Sâye de iner.',
+    'storyAct4': 'Son Perde · Düğün',
+    'storyAct4Text': 'Konya, 17 Aralık 1660: Şeb-i Arûs. Kandilciler ustayı Mevlânâ\'nın düğün gecesine getirdi. Düğün gecesinde ışığın ölmeyeceğine inanıyorlar.',
+    'storyLocked': 'Bu perde henüz açılmadı.',
+    'aboutTitle': 'HAKKINDA',
+    'aboutGame': 'Gölge Oyunu, hayal perdesinin ardında geçen bir yolculuk: bir kandil, bir gölge ve Anadolu\'nun gün yüzüne çıkmayı bekleyen efsaneleri.',
+    'aboutRole': 'Tasarım ve geliştirme',
+    'aboutDev':
+        'Erkan Öz avukat ve arabulucudur. Gündüzleri insanların hikâyelerini dinler, geceleri onları anlatacak araçlar yapar. '
+        'Gölge Oyunu, çocukluğundaki Karagöz perdesine ve Anadolu\'nun yarım bırakılmış efsanelerine bir selamdır: bir gölgenin, bir kandilin ve uzun bir yolun hikâyesi.',
+    'aboutSite': 'Kişisel sayfa',
+    'aboutGamePage': 'Oyunun sayfası · LifeOS ailesinin bir parçası',
+    'aboutMusic': 'Müzik ve sesler',
     'musicLicense':
         'Menü müziği: "Turkish Maqam Soundscape", vjgalaxy (Pixabay). '
         'Pixabay İçerik Lisansı ile kullanılmaktadır.\n'
@@ -116,7 +149,35 @@ class S {
     'wings': 'Hezarfen\'s wings. Whoever trusts the wind does not fall.',
     'memoriesFound': 'Memories found',
     'musicCredit': 'Menu music: vjgalaxy · Pixabay',
-    'credits': 'Credits',
+    'highRefresh': 'High refresh rate (120 Hz)',
+    'story': 'Story',
+    'about': 'About',
+    'back': 'Back',
+    'storyTitle': 'STORY',
+    'storyIntro':
+        'July 1660. Istanbul has been burning for two days. The Lamplighters\' Guild walks among the ashes, gathering every lamp, every candle, every light in every eye.\n\n'
+        'Last, they come to Master Hayali\'s screen; they snuff his lamp and take him away. Before the light dies, a shadow falls from the screen: Saye.\n\n'
+        'Saye sets out to find his master, with only a jar of fireflies and a bird who knows the way: the Hoopoe.',
+    'storyAct0': 'The First Veil · The City Whose Light Was Stolen',
+    'storyAct0Text': 'The dark waters of the cistern, the tower of Galata, Hezarfen\'s wings, a road of clouds, and Mount Qaf at the edge of the world. In the Simurgh\'s mirror, Saye sees what he is.',
+    'storyAct1': 'The Second Veil · The Mountain',
+    'storyAct1Text': 'The Lamplighters carried the master\'s lamp east. The glaciers of Ararat, Noah\'s ship turned to stone, the fallen gods of Nemrut. At every step Saye reaches a light; the Lamplighters are always one step ahead.',
+    'storyAct2': 'The Third Veil · Snow',
+    'storyAct2Text': 'For a moment Saye sees his master: in the snow, in chains, his lamp shrunk to a candle\'s flame. While the dragons of Palandoken sleep he skis after the caravan; when the Dragon wakes, he races the avalanche.',
+    'storyAct3': 'The Fourth Veil · The Fairies',
+    'storyAct3Text': 'In Cappadocia, fairies sleep atop the chimneys and giants beneath the earth. The Lamplighters go down to the depths of Derinkuyu; so does Saye.',
+    'storyAct4': 'The Last Veil · The Wedding',
+    'storyAct4Text': 'Konya, 17 December 1660: Sheb-i Arus. The Lamplighters have brought the master to Mevlana\'s wedding night. They believe that on the wedding night, light cannot die.',
+    'storyLocked': 'This veil has not opened yet.',
+    'aboutTitle': 'ABOUT',
+    'aboutGame': 'Shadow Play is a journey behind the shadow-play screen: a lamp, a shadow, and the legends of Anatolia waiting to come to light.',
+    'aboutRole': 'Design and development',
+    'aboutDev':
+        'Erkan Öz is a lawyer and mediator. By day he listens to people\'s stories; by night he builds tools to tell them. '
+        'Shadow Play is a greeting to the Karagöz screen of his childhood and to the half-told legends of Anatolia: the story of a shadow, a lamp, and a long road.',
+    'aboutSite': 'Personal site',
+    'aboutGamePage': 'The game\'s page · part of the LifeOS family',
+    'aboutMusic': 'Music and sound',
     'musicLicense':
         'Menu music: "Turkish Maqam Soundscape" by vjgalaxy (Pixabay), '
         'used under the Pixabay Content License.\n'

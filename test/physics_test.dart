@@ -1773,6 +1773,87 @@ void main() {
     );
 
     testWithGame<GolgeGame>(
+      'Semâhane: avizeden avizeye çıkışa varılır',
+      GolgeGame.new,
+      (game) async {
+        // Avizeler belirlenimci döner: her atlayış için uygun an aranır.
+        // plan[i]: i. atlayışın zamanı (bölüm yüklendikten sonra, saniye).
+        final plan = <double>[];
+        final k = keys(game);
+
+        /// Planı baştan oynatır; son atlayışın sonucunu döndürür:
+        /// 1 hedefe kondu, 0 kondu ama yanlış yere, -1 düştü/öldü.
+        Future<int> play(List<double> times, int target) async {
+          final p = await place(game, 13, 380, 33);
+          final wheels = game.world.children.whereType<Chandelier>().toList()
+            ..sort((a, b) => a.position.x.compareTo(b.position.x));
+          var t = 0.0;
+          for (var j = 0; j < times.length; j++) {
+            k
+              ..left = false
+              ..right = false
+              ..jump = false;
+            while (t < times[j]) {
+              game.update(1 / 60);
+              t += 1 / 60;
+              if (p.isDead) return -1;
+            }
+            final goal = j < wheels.length ? wheels[j] : null;
+            k
+              ..right = true
+              ..jump = true;
+            game.update(1 / 60);
+            t += 1 / 60;
+            var landed = false;
+            for (var i = 0; i < 240; i++) {
+              // Hedef tablanın üstüne gelince sağa basmayı bırakır.
+              if (goal != null) {
+                final tray = goal.planks.reduce(
+                  (a, b) =>
+                      (a.center.x - p.center.x).abs() <
+                          (b.center.x - p.center.x).abs()
+                      ? a
+                      : b,
+                );
+                k.right = p.center.x < tray.center.x - 4;
+              }
+              k.jump = !p.onGround;
+              game.update(1 / 60);
+              t += 1 / 60;
+              if (p.isDead) return -1;
+              if (p.onGround && i > 3) {
+                landed = true;
+                break;
+              }
+            }
+            if (!landed) return -1;
+            final ok = goal == null
+                ? p.position.y + Player.h <= 22 * kTile + 1 &&
+                      p.position.x > 411 * kTile
+                : p.riding is CandleTray &&
+                      (p.riding! as CandleTray).owner == goal;
+            if (j == times.length - 1) return ok ? 1 : 0;
+            if (!ok) return 0;
+          }
+          return 0;
+        }
+
+        for (var stage = 0; stage < 4; stage++) {
+          final from = plan.isEmpty ? 0.3 : plan.last + 0.6;
+          var found = false;
+          for (var t = from; t < from + 7; t += 0.1) {
+            if (await play([...plan, t], stage) == 1) {
+              plan.add(t);
+              found = true;
+              break;
+            }
+          }
+          expect(found, isTrue, reason: 'atlayış ${stage + 1}: $plan');
+        }
+      },
+    );
+
+    testWithGame<GolgeGame>(
       'büyük fenerin huzmesi açıktakini siler',
       GolgeGame.new,
       (game) async {

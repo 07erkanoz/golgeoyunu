@@ -229,6 +229,9 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     _enterMenu();
   }
 
+  /// Uygulama arka plana alınırken: son kontrol noktası kaydedilir.
+  void saveNow() => _saveProgress();
+
   void _saveProgress() {
     final r = _respawn;
     if (menuMode.value || r == null) return;

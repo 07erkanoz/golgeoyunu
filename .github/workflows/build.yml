@@ -50,7 +50,23 @@ jobs:
         run: flutter pub get
       # Test sürecinde yalnızca arm64 (bugünkü telefonların neredeyse hepsi);
       # mağaza için ileride tam paket (AAB) hazırlanacak.
+      # Kalıcı imza: sürümler birbirinin üstüne kurulur, kayıtlar silinmez.
+      # Gizli değişkenler yoksa debug anahtarıyla imzalanır.
+      - name: İmza anahtarı
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/golge-upload.jks"
+            echo "ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/golge-upload.jks" >> "$GITHUB_ENV"
+          else
+            echo "::warning::ANDROID_KEYSTORE_BASE64 yok; APK debug anahtarıyla imzalanıyor."
+          fi
       - name: Android için derle (APK, arm64)
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: flutter build apk --release --target-platform android-arm64
       - name: Yeniden adlandır
         run: cp build/app/outputs/flutter-apk/app-release.apk GolgeOyunu-android-arm64.apk

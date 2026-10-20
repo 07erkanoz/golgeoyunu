@@ -26,39 +26,67 @@ class Settings {
   /// Dokunmatik düğmelerin görünürlüğü (0.1 – 1).
   static double touchOpacity = 0.7;
 
+  /// Yüksek yenileme hızı (90/120 Hz ve üstü ekranlarda): açıkken telefon
+  /// ekranın desteklediği en yüksek hızda çizer.
+  static bool highRefresh = true;
+
   static SharedPreferences? _prefs;
 
-  static Future<void> load({bool lowGraphicsByDefault = false}) async {
-    lowGraphics = lowGraphicsByDefault;
+  /// Ayar deposu: açılamazsa bir sonraki kayıtta yeniden denenir.
+  static Future<SharedPreferences?> _open() async {
     try {
-      final p = _prefs = await SharedPreferences.getInstance();
-      ambience = p.getDouble('ambience') ?? ambience;
-      music = p.getDouble('music') ?? music;
-      effects = p.getDouble('effects') ?? effects;
-      fullscreen = p.getBool('fullscreen') ?? fullscreen;
-      lowGraphics = p.getBool('low_graphics') ?? lowGraphics;
-      touchGestures = p.getBool('touch_gestures') ?? touchGestures;
-      touchOpacity = p.getDouble('touch_opacity') ?? touchOpacity;
-      brightness = (p.getDouble('brightness') ?? brightness).clamp(0.8, 1.3);
-      S.lang = p.getString('lang') == 'en' ? Lang.en : Lang.tr;
-      SaveGame.current = SaveData.decode(p.getString('save'));
+      return _prefs ??= await SharedPreferences.getInstance();
     } catch (_) {
-      // Ayarlar okunamazsa varsayılanlarla devam edilir.
+      return null;
     }
   }
 
-  static Future<void> save() async {
-    final p = _prefs;
+  /// Tek bir değeri okur; bozuk bir kayıt ötekileri götürmez.
+  static T? _read<T>(T? Function() get) {
+    try {
+      return get();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static Future<void> load({bool lowGraphicsByDefault = false}) async {
+    lowGraphics = lowGraphicsByDefault;
+    final p = await _open();
     if (p == null) return;
-    await p.setDouble('ambience', ambience);
-    await p.setDouble('music', music);
-    await p.setDouble('effects', effects);
-    await p.setBool('fullscreen', fullscreen);
-    await p.setBool('low_graphics', lowGraphics);
-    await p.setBool('touch_gestures', touchGestures);
-    await p.setDouble('touch_opacity', touchOpacity);
-    await p.setDouble('brightness', brightness);
-    await p.setString('lang', S.en ? 'en' : 'tr');
+    ambience = _read(() => p.getDouble('ambience')) ?? ambience;
+    music = _read(() => p.getDouble('music')) ?? music;
+    effects = _read(() => p.getDouble('effects')) ?? effects;
+    fullscreen = _read(() => p.getBool('fullscreen')) ?? fullscreen;
+    lowGraphics = _read(() => p.getBool('low_graphics')) ?? lowGraphics;
+    touchGestures = _read(() => p.getBool('touch_gestures')) ?? touchGestures;
+    touchOpacity = _read(() => p.getDouble('touch_opacity')) ?? touchOpacity;
+    brightness = (_read(() => p.getDouble('brightness')) ?? brightness).clamp(
+      0.8,
+      1.3,
+    );
+    highRefresh = _read(() => p.getBool('high_refresh')) ?? highRefresh;
+    S.lang = _read(() => p.getString('lang')) == 'en' ? Lang.en : Lang.tr;
+    SaveGame.current = SaveData.decode(_read(() => p.getString('save')));
+  }
+
+  static Future<void> save() async {
+    final p = await _open();
+    if (p == null) return;
+    try {
+      await p.setDouble('ambience', ambience);
+      await p.setDouble('music', music);
+      await p.setDouble('effects', effects);
+      await p.setBool('fullscreen', fullscreen);
+      await p.setBool('low_graphics', lowGraphics);
+      await p.setBool('touch_gestures', touchGestures);
+      await p.setDouble('touch_opacity', touchOpacity);
+      await p.setDouble('brightness', brightness);
+      await p.setBool('high_refresh', highRefresh);
+      await p.setString('lang', S.en ? 'en' : 'tr');
+    } catch (_) {
+      // Yazılamazsa bir sonraki değişiklikte yeniden denenir.
+    }
   }
 }
 
@@ -118,11 +146,17 @@ class SaveGame {
 
   static Future<void> write(SaveData data) async {
     current = data;
-    await Settings._prefs?.setString('save', data.encode());
+    try {
+      await (await Settings._open())?.setString('save', data.encode());
+    } catch (_) {
+      // Bir sonraki kontrol noktasında yeniden denenir.
+    }
   }
 
   static Future<void> clear() async {
     current = null;
-    await Settings._prefs?.remove('save');
+    try {
+      await (await Settings._open())?.remove('save');
+    } catch (_) {}
   }
 }

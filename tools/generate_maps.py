@@ -801,10 +801,10 @@ kc(376,12,427,43)
 kn.fill(376,34,381,43,'#')                        # mutribhane
 kn.fill(382,34,382,43,'|')
 kn.put(376,33,'p'); kn.put(377,33,'K'); kn.put(378,33,']'); kn.put(379,33,'F'); kn.put(380,33,'B')
-for c,r in ((387,32),(398,28),(409,24)): kn.put(c,r,'d')
+for c,r in ((387,32),(396,28),(405,24)): kn.put(c,r,'d')
 for c in (392,404): kn.put(c,43,'a')
-kn.put(397,43,'G'); kn.put(411,43,'G')
-kn.fill(416,22,427,43,'#')                        # çıkış
+kn.put(397,43,'G'); kn.put(408,43,'G')
+kn.fill(412,22,427,43,'#')                        # çıkış
 kc(428,18,430,21)
 # 9) Kubbe-i Hadrâ: ışık seli yükselirken tepeye tırmanış
 kn.fill(431,22,467,47,'#')
