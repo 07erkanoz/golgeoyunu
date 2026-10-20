@@ -299,6 +299,7 @@ HO=75
 f.fill(122+HO,0,171+HO,2,'#')
 f.fill(122+HO,18,171+HO,23,'#'); f.put(124+HO,17,'K'); f.put(127+HO,17,'B'); f.put(132+HO,17,'5')
 f.fill(136+HO,13,149+HO,13,'#'); f.fill(151+HO,13,152+HO,13,'#'); f.fill(134+HO,11,134+HO,12,'#')
+f.fill(135+HO,13,135+HO,17,'|')                          # raftan sarkan zincir: tırmanılır
 f.put(140+HO,4,'j'); f.put(140+HO,12,'m'); f.put(150+HO,12,'m'); f.put(150+HO,17,'m')
 f.put(152+HO,17,'C'); f.put(153+HO,18,'.',force=True)
 f.put(146+HO,17,'G'); f.put(138+HO,12,'M'); f.put(143+HO,17,'F')
@@ -442,7 +443,8 @@ m.put(98,F,'O'); m.put(103,F-1,'O'); m.put(108,F,'O'); m.put(113,F-1,'O'); m.put
 m.fill(127,F,140,25,'#'); m.put(128,F-1,'K'); m.put(130,F-1,'4'); m.put(133,F-1,'B')
 # 4) Kartalın gözü: kartalın tepesinde Gözcü, düşmüş başların ardı saklanma yeri
 m.fill(141,F,199,25,'#'); m.put(142,F-1,'p')
-m.fill(176,F-5,178,F-1,'#'); m.put(175,F-1,':'); m.put(177,F-6,'g')
+m.fill(176,F-5,178,F-1,'#'); m.put(177,F-6,'g')
+m.fill(172,F-2,173,F-1,'#'); m.fill(174,F-3,175,F-1,'#'); m.put(175,F-4,':')   # kartalın kaidesi: iki basamak
 for x in (148,156,164,186):
     m.put(x,F-1,';'); m.put(x+1,F-1,'I')
 m.put(152,F-1,'G'); m.put(160,F-1,'F'); m.put(170,F-1,'5'); m.put(190,F-1,'M')
@@ -527,11 +529,13 @@ k9.fill(203,F-7,203,F-2,'#'); k9.put(201,F-1,'p'); k9.put(205,F-1,'6')
 k9.put(212,F-1,'G'); k9.put(216,F-1,'I'); k9.put(222,F-1,'I'); k9.put(228,F-1,'G')
 k9.put(234,F-1,'~'); k9.put(235,F-1,'~'); k9.put(219,F-7,'c'); k9.fill(218,F-8,220,F-8,'#')
 k9.put(240,F-1,'M'); k9.fill(244,F-4,246,F-1,'#'); k9.put(245,F-5,'L')
+k9.fill(242,F-2,243,F-1,'#')                     # kolun kayasına basamak
 k9.fill(252,F-7,252,F-1,'H'); k9.put(258,F-1,'K'); k9.put(260,F-1,'B')
 # 5) Ejder'in eteği: rüzgârlı tırmanış
 k9.fill(263,F-2,267,25,'#'); k9.fill(268,F-4,272,25,'#'); k9.put(269,F-5,'p'); k9.put(270,F-5,'7')
-k9.fill(275,F-6,278,25,'#'); k9.put(282,F-7,'O'); k9.put(287,F-8,'O')
-k9.fill(291,F-9,296,25,'#'); k9.put(292,F-10,'K'); k9.fill(293,2,296,3,'#'); k9.put(294,4,'%')
+# Karşıdan esen rüzgâr süzülmeyi kısar: boşluklar en çok iki kare.
+k9.fill(275,F-6,278,25,'#'); k9.put(280,F-7,'O'); k9.put(283,F-8,'O')
+k9.fill(286,F-9,296,25,'#'); k9.put(292,F-10,'K'); k9.fill(293,2,296,3,'#'); k9.put(294,4,'%')
 k9.fill(297,F-11,302,25,'#'); k9.fill(303,F-13,319,25,'#')
 k9.put(306,F-14,'8'); k9.put(310,F-14,'B'); k9.put(315,F-14,'E')
 lvl9=k9.rows()
@@ -641,6 +645,7 @@ def chimney(g,x,top,ring=False,holds=True,w=2):
 pb.fill(0,26,43,29,'#')
 pb.put(2,25,'P'); pb.put(3,25,'p'); pb.put(4,25,'1'); pb.put(6,25,'B')
 pb.fill(10,21,14,25,'#'); pb.put(12,20,'k'); pb.fill(20,19,25,25,'#'); pb.put(22,18,'k')
+pb.fill(9,21,9,25,'|'); pb.fill(19,19,19,25,'|')     # evlerin oyma tutamakları: damlara tırmanılır
 pb.put(17,25,'2'); pb.put(28,25,'F'); pb.put(32,25,'K'); pb.put(35,25,'M')
 # 2) Peri bacaları: tutamaklarla tırmanış, peri halkalarıyla yükseliş
 pb.fill(44,26,108,29,'#'); pb.put(45,25,'p'); pb.put(46,25,'3')
@@ -665,7 +670,7 @@ pb.fill(193+PO,26,196+PO,29,'#')
 pb.put(198+PO,25,'p'); pb.put(199+PO,25,'K'); pb.put(201+PO,25,'7')
 for x in (206+PO,214+PO,230+PO,238+PO):
     pb.put(x,25,'I')
-pb.put(210+PO,25,'G'); pb.put(234+PO,25,'G'); pb.put(222+PO,22,'M')
+pb.put(210+PO,25,'G'); pb.put(234+PO,25,'G'); pb.put(222+PO,23,'M')
 pb.put(220+PO,14,'j'); pb.put(220+PO,24,'m'); pb.put(248+PO,25,'g')
 pb.fill(252+PO,23,254+PO,25,'.')                    # apsisin ardındaki çıkış
 pb.put(244+PO,25,'F')
@@ -693,7 +698,8 @@ def carve(c0,r0,c1,r1): dk.fill(c0,r0,c1,r1,'.')
 carve(1,10,22,15); dk.put(2,15,'P'); dk.put(3,15,'p'); dk.put(5,15,'1'); dk.put(7,15,'B'); dk.put(12,15,'F')
 # 2) Ahırlar ve şarap evi: alçak geçit, Kandilciler, sürgü taşı
 carve(22,12,94,15)
-carve(30,9,45,11); dk.fill(36,9,36,15,'#'); dk.put(34,15,'I'); dk.put(40,15,'K'); dk.put(42,15,'2')
+carve(30,9,45,11); dk.fill(36,9,36,13,'#');   # alçak kemer: Sâye geçer, Kandilci geçemez
+dk.put(34,15,'I'); dk.put(40,15,'K'); dk.put(42,15,'2')
 dk.put(50,15,'G'); carve(44,16,44,16); carve(44,17,57,17); carve(57,16,57,16)   # alçak geçit
 dk.put(52,17,'3'); dk.put(48,17,'M')
 carve(60,10,74,11); dk.put(66,15,'I'); dk.put(80,15,'G'); dk.put(70,15,'F')

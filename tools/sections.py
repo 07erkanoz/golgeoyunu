@@ -143,9 +143,9 @@ def lever_gate(g, x, F):
     ground(g, x, F, 14)
     g.fill(x + 10, F - 4, x + 10, F - 1, 'H')
     g.fill(x + 10, 0, x + 10, F - 5, '#')
-    g.fill(x + 3, F - 4, x + 7, F - 4, '=')
-    g.fill(x + 1, F - 8, x + 2, F - 8, '=')
-    g.put(x + 2, F - 9, 'L')
+    g.fill(x + 3, F - 3, x + 7, F - 3, '=')        # sandığın üstünden iki kare
+    g.fill(x + 1, F - 5, x + 2, F - 5, '=')        # alttaki tahtadan iki kare yukarı
+    g.put(x + 2, F - 6, 'L')
     g.put(x + 6, F - 1, 'C')
     return x + 14
 
