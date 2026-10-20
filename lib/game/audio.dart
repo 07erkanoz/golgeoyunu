@@ -22,6 +22,10 @@ class GameAudio {
     'step_wood_1',
     'step_wood_2',
     'step_wood_3',
+    'step_snow_1',
+    'step_snow_2',
+    'step_snow_3',
+    'step_snow_4',
     'jump',
     'land',
     'firefly',
@@ -64,13 +68,17 @@ class GameAudio {
     'step_wood_1',
     'step_wood_2',
     'step_wood_3',
+    'step_snow_1',
+    'step_snow_2',
+    'step_snow_3',
+    'step_snow_4',
     'land',
     'jump',
     'creak',
   };
 
   /// Tekdüze olmasın diye birden çok varyasyonu olan sesler.
-  static const _variants = {'step': 4, 'step_wood': 3};
+  static const _variants = {'step': 4, 'step_wood': 3, 'step_snow': 4};
   final _rnd = math.Random();
   final _lastVariant = <String, int>{};
   AudioPlayer? _music;

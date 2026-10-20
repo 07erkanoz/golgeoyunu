@@ -100,7 +100,8 @@ class S {
     'musicLicense':
         'Menü müziği: "Turkish Maqam Soundscape", vjgalaxy (Pixabay). '
         'Pixabay İçerik Lisansı ile kullanılmaktadır.\n'
-        'Oyun içi sesler ve efektler bu oyun için sentezlenmiştir.',
+        'Gerçek kayıtlı efektler ve ortam sesleri: Kenney (kenney.nl); OpenGameArt\'ta rubberduck, JaggedStone, AntumDeluge ve SketchMan3 (CC0). '
+        'Diğer sesler bu oyun için sentezlenmiştir.',
   };
 
   static const _en = {
@@ -189,6 +190,7 @@ class S {
     'musicLicense':
         'Menu music: "Turkish Maqam Soundscape" by vjgalaxy (Pixabay), '
         'used under the Pixabay Content License.\n'
-        'In-game ambience and sound effects were synthesized for this game.',
+        'Recorded effects and ambiences: Kenney (kenney.nl); rubberduck, JaggedStone, AntumDeluge and SketchMan3 on OpenGameArt (CC0). '
+        'Other sounds were synthesized for this game.',
   };
 }

@@ -51,7 +51,16 @@ def room(data, wet):
     return out[:end]
 
 
+# Gerçek kayıtlı CC0 seslerle değiştirilenler (tools/import_cc0.py):
+# bunların üzerine yazılmaz.
+CC0 = {'step_1', 'step_2', 'step_3', 'step_4', 'step_wood_1', 'step_wood_2',
+       'step_wood_3', 'land', 'jump', 'glide', 'creak', 'lever', 'gate', 'crumble',
+       'splash', 'shatter', 'bell', 'fire', 'amb_cistern', 'amb_wind', 'gust'}
+
+
 def save(name, data, gain=0.9):
+    if name in CC0:
+        return
     if name not in LOOPS:
         kind = name.rsplit('_', 1)[0] if name[-1].isdigit() else name
         data = room(data, WET.get(kind, 0.12))

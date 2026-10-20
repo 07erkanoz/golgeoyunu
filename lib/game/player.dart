@@ -307,7 +307,9 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       final loud = !quiet && velocity.x.abs() > 105;
       final speedVol = (velocity.x.abs() / runSpeed).clamp(0.25, 1.0);
       GameAudio.instance.play(
-        _onWalkway ? 'step_wood' : 'step',
+        _onWalkway
+            ? 'step_wood'
+            : (level.def.theme.snowy ? 'step_snow' : 'step'),
         volume: quiet ? 0.12 : 0.55 * speedVol,
         minGapMs: 90,
       );
