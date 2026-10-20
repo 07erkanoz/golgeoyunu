@@ -217,7 +217,7 @@ class GameAudio {
             _music = p;
             _musicStarting = false;
             if (!_musicWanted) {
-              p.stop();
+              _drop(p);
               _music = null;
             }
           })
@@ -225,7 +225,7 @@ class GameAudio {
             _musicStarting = false;
           });
     } else {
-      _music?.stop();
+      _drop(_music);
       _music = null;
       final wanted = _wantedAmbient;
       if (wanted != null) _startAmbient(wanted);
@@ -244,14 +244,14 @@ class GameAudio {
       FlameAudio.loopLongAudio('perde_ney.wav', volume: Settings.music)
           .then((p) {
             if (!_neyWanted || _ney != null) {
-              p.stop();
+              _drop(p);
               return;
             }
             _ney = p;
           })
           .catchError((_) {});
     } else {
-      _ney?.stop();
+      _drop(_ney);
       _ney = null;
       final wanted = _wantedAmbient;
       if (wanted != null && !_musicWanted) _startAmbient(wanted);
@@ -263,9 +263,16 @@ class GameAudio {
   /// döngü menüde bile sürmesin).
   int _ambientGen = 0;
 
+  /// Durdurup yerel oynatıcıyı serbest bırakır (Android'de oynatıcılar
+  /// sınırlıdır; bırakılmayan her biri birikir).
+  static void _drop(AudioPlayer? p) {
+    if (p == null) return;
+    p.dispose().catchError((_) {});
+  }
+
   void _stopAmbient() {
     _ambientGen++;
-    _ambient?.stop();
+    _drop(_ambient);
     _ambient = null;
     _ambientName = null;
   }
@@ -282,7 +289,7 @@ class GameAudio {
         volume: _ambientVolume,
       );
       if (gen != _ambientGen || _musicWanted || _neyWanted) {
-        await p.stop();
+        _drop(p);
         return;
       }
       _ambient = p;
@@ -328,7 +335,7 @@ class GameAudio {
     _ney?.pause();
     _ambient?.pause();
     for (final l in _loops) {
-      l.player?.pause();
+      l.pause();
     }
   }
 
@@ -336,7 +343,7 @@ class GameAudio {
     _ney?.resume();
     _ambient?.resume();
     for (final l in _loops) {
-      l.player?.resume();
+      l.resume();
     }
   }
 
@@ -356,19 +363,26 @@ class _LoopChannel {
   final String file;
   AudioPlayer? player;
   bool _starting = false;
+  bool _paused = false;
   double _level = 0;
 
   double get _volume => (_level * Settings.effects).clamp(0.0, 1.0);
 
+  /// Tek bir oynatıcı bir kez kurulur; sessizken duraklar, gerekince devam
+  /// eder. (Her seferinde yenisini kurmak Android'de yerel oynatıcıları
+  /// tüketip uygulamayı çökertiyordu.)
   void set(double level) {
     if ((level - _level).abs() < 0.03 && (level > 0 || _level == 0)) return;
     _level = level;
+    final p = player;
     if (level <= 0) {
-      player?.stop();
-      player = null;
+      if (p != null && !_paused) {
+        _paused = true;
+        p.pause().catchError((_) {});
+      }
       return;
     }
-    if (player == null) {
+    if (p == null) {
       if (_starting) return;
       _starting = true;
       GameAudio._log('döngü $file');
@@ -376,21 +390,32 @@ class _LoopChannel {
           .then((p) {
             player = p;
             _starting = false;
-            // Başlarken seviye düştüyse hemen sustur.
+            _paused = false;
+            // Başlarken seviye düştüyse duraklat.
             if (_level <= 0) {
-              p.stop();
-              player = null;
+              _paused = true;
+              p.pause().catchError((_) {});
             } else {
-              p.setVolume(_volume);
+              p.setVolume(_volume).catchError((_) {});
             }
           })
           .catchError((_) {
             _starting = false;
           });
-    } else {
-      player!.setVolume(_volume);
+      return;
+    }
+    p.setVolume(_volume).catchError((_) {});
+    if (_paused) {
+      _paused = false;
+      p.resume().catchError((_) {});
     }
   }
 
-  void refresh() => player?.setVolume(_volume);
+  void refresh() => player?.setVolume(_volume).catchError((_) {});
+
+  void pause() => player?.pause().catchError((_) {});
+
+  void resume() {
+    if (!_paused && _level > 0) player?.resume().catchError((_) {});
+  }
 }
