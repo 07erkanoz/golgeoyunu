@@ -178,9 +178,7 @@ class GameAudio {
     _musicWanted = on;
     if (!_ready) return;
     if (on) {
-      _ambient?.stop();
-      _ambient = null;
-      _ambientName = null;
+      _stopAmbient();
       dread(0);
       if (_music != null || _musicStarting) return;
       _musicStarting = true;
@@ -210,9 +208,7 @@ class GameAudio {
     if (!_ready) return;
     if (on) {
       if (_ney != null) return;
-      _ambient?.stop();
-      _ambient = null;
-      _ambientName = null;
+      _stopAmbient();
       dread(0);
       FlameAudio.loop('perde_ney.wav', volume: Settings.music)
           .then((p) {
@@ -231,13 +227,33 @@ class GameAudio {
     }
   }
 
+  /// Ortam döngüsünün kuşağı: yüklenirken yeni bir istek gelirse geç kalan
+  /// yükleme kendini susturur (iki döngü üst üste çalmasın, sahipsiz bir
+  /// döngü menüde bile sürmesin).
+  int _ambientGen = 0;
+
+  void _stopAmbient() {
+    _ambientGen++;
+    _ambient?.stop();
+    _ambient = null;
+    _ambientName = null;
+  }
+
   Future<void> _startAmbient(String name) async {
-    if (_ambientName == name && _ambient != null) return;
+    if (_ambientName == name) return;
+    _stopAmbient();
     _ambientName = name;
+    final gen = _ambientGen;
     try {
-      await _ambient?.stop();
-      _ambient = await FlameAudio.loop('$name.wav', volume: _ambientVolume);
-    } catch (_) {}
+      final p = await FlameAudio.loop('$name.wav', volume: _ambientVolume);
+      if (gen != _ambientGen || _musicWanted || _neyWanted) {
+        await p.stop();
+        return;
+      }
+      _ambient = p;
+    } catch (_) {
+      if (gen == _ambientGen) _ambientName = null;
+    }
   }
 
   /// Karabasan'ın gümbürtüsü: 0 = yok, 1 = ensende.

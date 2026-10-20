@@ -20,6 +20,7 @@ import 'perde.dart';
 import 'palette.dart';
 import 'player.dart';
 import 'konya.dart';
+import 'hints.dart';
 import 'legends.dart';
 import 'nemrut.dart';
 import 'ski.dart';
@@ -788,11 +789,100 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     if (!cinematic && !p.isDead) {
       _checkStoryPoints(p);
       _updateTension(p, dt);
+      _updateHints(p, dt);
     } else {
       threat = math.max(0, threat - dt * 2);
       hideAmount = math.max(0, hideAmount - dt * 2);
     }
     _updateCamera(p, dt);
+  }
+
+  double _hintScan = 0;
+
+  /// Bu ipucu gösterildi mi (testler için)?
+  bool hintShown(String key) => _whispersShown.contains('hint:$key');
+
+  /// İlk karşılaşmada düzeneğin nasıl kullanıldığını söyler (bir kez;
+  /// kayıtla hatırlanır).
+  void _updateHints(Player p, double dt) {
+    _hintScan += dt;
+    if (_hintScan < 0.3) return;
+    _hintScan = 0;
+    void show(String key) {
+      final id = 'hint:$key';
+      if (_whispersShown.contains(id)) return;
+      _whispersShown.add(id);
+      narration.hint(Hints.text(key));
+    }
+
+    bool near(PositionComponent c, double dx, [double? dy]) {
+      final r = c.toRect();
+      final d = r.center - Offset(p.center.x, p.center.y);
+      return d.dx.abs() < dx * kTile + r.width / 2 &&
+          d.dy.abs() < (dy ?? dx) * kTile + r.height / 2;
+    }
+
+    if (skiSurface != null) show('ski');
+    if (p.hasWings && !p.onGround && p.velocity.y > 60) show('glide');
+    final pc = (p.center.x / kTile).floor();
+    final pr = (p.center.y / kTile).floor();
+    for (var c = pc - 3; c <= pc + 3; c++) {
+      for (var r = pr - 2; r <= pr + 2; r++) {
+        switch (level.cell(c, r)) {
+          case '|':
+            show('climb');
+          case 'I' || '~':
+            show('hide');
+          case 'r':
+            if ((c - pc).abs() < 2) show('wind');
+        }
+      }
+    }
+    for (final comp in world.children) {
+      final key = switch (comp) {
+        PhasePlank k when near(k, 4, 3) =>
+          k.shade ? 'shadePlank' : 'lightPlank',
+        Guard g when near(g, 11, 4) => 'guard',
+        ShieldCrate s when near(s, 5, 3) => 'shield',
+        MillStone m when near(m, 5, 3) => 'millstone',
+        AnimalCrate a when near(a, 4, 3) => 'animal',
+        Crate k when near(k, 3, 2) => 'crate',
+        Lever l when near(l, 4, 4) => 'lever',
+        Valve v when near(v, 4, 3) => 'valve',
+        Mirror m when near(m, 5, 4) => 'mirror',
+        LiftPan l when near(l, 4, 3) => 'lift',
+        RottenPlank k when near(k, 4, 3) => 'rotten',
+        CrumbleRock k when near(k, 3, 3) => 'crumble',
+        FireflySwarm f when near(f, 4, 3) => 'fireflyPickup',
+        WingsPickup w when near(w, 5, 4) => 'wings',
+        SwingRope s
+            when (s.anchor.x - p.center.x).abs() < 6 * kTile &&
+                p.center.y > s.anchor.y - kTile &&
+                p.center.y < s.anchor.y + s.length + 3 * kTile =>
+          'rope',
+        BatRoost b when near(b, 8, 6) => 'bats',
+        Crow k when near(k, 8, 5) => 'crow',
+        Watcher w when near(w, 12, 10) => 'watcher',
+        MedusaHead m when near(m, 15, 4) => 'medusa',
+        Raft k when near(k, 4, 3) => 'raft',
+        FireVent v when near(v, 6, 4) => 'vent',
+        LanternBalloon b when near(b, 10, 10) => 'balloon',
+        SimurgFeather f when near(f, 6, 5) => 'feather',
+        FairyRing k when near(k, 4, 3) => 'ring',
+        WindBell b when near(b, 6, 4) => 'bell',
+        StarStone s when near(s, 5, 3) => 'star',
+        StoneGiant g when near(g, 14, 8) => 'giant',
+        Wolf w when near(w, 11, 5) => 'wolf',
+        ThinIce i when near(i, 3, 2) => 'ice',
+        FallingIcicle i when near(i, 5, 6) => 'icicle',
+        Semazen s when near(s, 8, 3) => 'semazen',
+        Chandelier c when near(c, 12, 8) => 'chandelier',
+        GreatLamp l when near(l, 22, 22) => 'lamp',
+        LightFlood f when f.awake => 'flood',
+        _ => null,
+      };
+      if (key != null) show(key);
+    }
   }
 
   void _updateTension(Player p, double dt) {

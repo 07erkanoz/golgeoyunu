@@ -9,6 +9,7 @@ import 'package:golge/game/legends.dart';
 import 'package:golge/game/levels.dart';
 import 'package:golge/game/entities.dart';
 import 'package:golge/game/golge_game.dart';
+import 'package:golge/game/hints.dart';
 import 'package:golge/game/konya.dart';
 import 'package:golge/game/level.dart';
 import 'package:golge/game/mechanics.dart';
@@ -1690,6 +1691,22 @@ void main() {
         expect(p.isDead, isFalse);
         expect(p.position.x, greaterThan(199 * kTile));
         expect(p.position.y + Player.h, lessThanOrEqualTo(24 * kTile + 1));
+      },
+    );
+  });
+
+  group('ipuçları', () {
+    testWithGame<GolgeGame>(
+      'ilk Kandilci\'de ateşböceği, gölge tahtasında çömelme anlatılır',
+      GolgeGame.new,
+      (game) async {
+        await place(game, 0, 25, 13);
+        run(game, 0.6);
+        expect(game.hintShown('guard'), isTrue);
+        await place(game, 0, 135, 9);
+        run(game, 0.6);
+        expect(game.hintShown('shadePlank'), isTrue);
+        expect(Hints.text('shadePlank'), contains('Çömel'));
       },
     );
   });

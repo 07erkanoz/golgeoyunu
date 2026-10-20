@@ -481,7 +481,6 @@ const _rim = Color(0xFF8A4A2A);
 /// karede bir sütuna oturur; harita `I` sütunlarını da aynı hizaya koyar.
 void _cisternVaults(Canvas canvas, Level lv, int c0, int c1) {
   final ceiling = _ceilingBottom(lv, 1);
-  final water = _floorTop(lv, 1, ceiling ~/ kTile);
   final ink = Paint()..color = kInk;
   const span = kTile * 5;
   for (var x = kTile * 1.5; x < lv.pixelWidth; x += span) {
@@ -500,7 +499,12 @@ void _cisternVaults(Canvas canvas, Level lv, int c0, int c1) {
     for (var r = 0; r < lv.height; r++) {
       if (lv.cell(c, r) == 'I') hasFront = true;
     }
-    if (!hasFront) _column(canvas, x, ceiling + 40, water, back: true);
+    // Sütun kendi altındaki zemine (ya da suya) iner; zeminin önüne taşmaz.
+    final top = _ceilingBottom(lv, c);
+    final floor = _floorTop(lv, c, top ~/ kTile);
+    if (!hasFront && floor > top + 80) {
+      _column(canvas, x, top + 40, floor, back: true);
+    }
   }
 }
 

@@ -102,6 +102,16 @@ class Narration extends Component with HasGameReference<GolgeGame> {
 
   void whisper(String text) => _whispers.add(text);
 
+  /// Kullanım ipucu: fısıltılardan ayrı, ekranın üstünde, sıcak renkte.
+  void hint(String text) {
+    if (_hint != text && !_hints.contains(text)) _hints.add(text);
+  }
+
+  final _hints = <String>[];
+  String? _hint;
+  double _hintT = 0;
+  double _hintDuration(String s) => 4.5 + s.length * 0.05;
+
   void pulseCounter() => _counterT = 0;
 
   void pulseFireflies() => _fireflyT = 0;
@@ -144,6 +154,15 @@ class Narration extends Component with HasGameReference<GolgeGame> {
     } else {
       _whisperT += dt;
       if (_whisperT > _whisperDuration(_whisper!)) _whisper = null;
+    }
+    if (_hint == null) {
+      if (_hints.isNotEmpty && !inCinematic && !game.menuMode.value) {
+        _hint = _hints.removeAt(0);
+        _hintT = 0;
+      }
+    } else {
+      _hintT += dt;
+      if (_hintT > _hintDuration(_hint!)) _hint = null;
     }
     _counterT += dt;
     _fireflyT += dt;
@@ -365,6 +384,19 @@ class Narration extends Component with HasGameReference<GolgeGame> {
     }
 
     if (game.menuMode.value) return;
+
+    if (_hint != null && !inCinematic) {
+      final a = _envelope(_hintT, 0.5, _hintDuration(_hint!) - 1.3, 0.8);
+      _text(
+        canvas,
+        _hint!,
+        Offset(w / 2, h * 0.2),
+        unit * 0.026,
+        a,
+        maxWidth: w * 0.62,
+        color: const Color(0xFFFFD9A0),
+      );
+    }
 
     // Kavanozdaki ateşböcekleri: sol üstte küçük ışıklar.
     final hudAlpha = 0.35 + 0.65 * (1 - (_fireflyT / 2.5).clamp(0.0, 1.0));
