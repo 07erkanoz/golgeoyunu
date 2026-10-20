@@ -1,13 +1,65 @@
 """Gölge Oyunu için sentez sesler: saf Python ile, dış kaynak kullanmadan."""
 import math, random, struct, sys, wave, os
 
-SR = 22050
+SR = 44100
 OUT = sys.argv[1]
 os.makedirs(OUT, exist_ok=True)
 rnd = random.Random(1660)
 
 
+# Döngüler: başı sonuna bağlı; yankı ve bitiş yumuşatması uygulanmaz.
+LOOPS = {'amb_cistern', 'amb_wind', 'amb_sky', 'amb_snow', 'amb_ark', 'amb_konya',
+         'karabasan', 'perde_ney', 'heartbeat', 'murmur'}
+# Efektlere eklenen oda yankısının oranı (adımlarda az, büyülü seslerde çok).
+WET = {'step': 0.06, 'step_wood': 0.07, 'jump': 0.05, 'land': 0.08,
+       'firefly': 0.2, 'pickup': 0.18, 'memory': 0.22, 'bell': 0.2}
+
+
+def room(data, wet):
+    """Freeverb benzeri küçük oda yankısı: dört tarak, iki tüm geçiren."""
+    if wet <= 0:
+        return data
+    tail = n(1.2)
+    src = list(data) + [0.0] * tail
+    combs = [1557, 1617, 1491, 1422]
+    acc = [0.0] * len(src)
+    for d in combs:
+        buf = [0.0] * d
+        idx = 0
+        store = 0.0
+        for i, x in enumerate(src):
+            y = buf[idx]
+            store = y * 0.8 + store * 0.2        # sönümleme: tizler daha çabuk söner
+            buf[idx] = x + store * 0.76
+            idx = (idx + 1) % d
+            acc[i] += y
+    for d in (556, 441):
+        buf = [0.0] * d
+        idx = 0
+        for i, x in enumerate(acc):
+            b = buf[idx]
+            y = -x + b
+            buf[idx] = x + b * 0.5
+            idx = (idx + 1) % d
+            acc[i] = y
+    out = [x * (1 - wet) + a * wet * 0.25 for x, a in zip(src, acc)]
+    # Sessiz kuyruğu kırp.
+    peak = max(1e-9, max(abs(x) for x in out))
+    end = len(out)
+    while end > len(data) and abs(out[end - 1]) < peak * 0.001:
+        end -= 1
+    return out[:end]
+
+
 def save(name, data, gain=0.9):
+    if name not in LOOPS:
+        kind = name.rsplit('_', 1)[0] if name[-1].isdigit() else name
+        data = room(data, WET.get(kind, 0.12))
+        # Tık olmasın: çok kısa giriş, sıfıra inen bitiş.
+        fi, fo = n(0.0015), min(n(0.03), len(data) // 3)
+        data = [x * (i / fi if i < fi else 1.0) for i, x in enumerate(data)]
+        L = len(data)
+        data = [x * ((L - i) / fo if i > L - fo else 1.0) for i, x in enumerate(data)]
     peak = max(1e-9, max(abs(x) for x in data))
     k = gain / peak
     with wave.open(os.path.join(OUT, name + '.wav'), 'wb') as w:
@@ -21,18 +73,33 @@ def n(sec):
     return int(sec * SR)
 
 
-def lowpass(data, cutoff):
-    a = 1 - math.exp(-2 * math.pi * cutoff / SR)
-    y, out = 0.0, []
+def _biquad(data, b0, b1, b2, a1, a2):
+    x1 = x2 = y1 = y2 = 0.0
+    out = []
     for x in data:
-        y += a * (x - y)
+        y = b0 * x + b1 * x1 + b2 * x2 - a1 * y1 - a2 * y2
+        x2, x1, y2, y1 = x1, x, y1, y
         out.append(y)
     return out
 
 
+def lowpass(data, cutoff):
+    """İki kutuplu Butterworth alçak geçiren (12 dB/oktav)."""
+    cutoff = min(cutoff, SR * 0.45)
+    w = 2 * math.pi * cutoff / SR
+    c, sn = math.cos(w), math.sin(w)
+    al = sn / math.sqrt(2)
+    a0 = 1 + al
+    return _biquad(data, (1 - c) / 2 / a0, (1 - c) / a0, (1 - c) / 2 / a0, -2 * c / a0, (1 - al) / a0)
+
+
 def highpass(data, cutoff):
-    low = lowpass(data, cutoff)
-    return [x - l for x, l in zip(data, low)]
+    """İki kutuplu Butterworth yüksek geçiren."""
+    w = 2 * math.pi * cutoff / SR
+    c, sn = math.cos(w), math.sin(w)
+    al = sn / math.sqrt(2)
+    a0 = 1 + al
+    return _biquad(data, (1 + c) / 2 / a0, -(1 + c) / a0, (1 + c) / 2 / a0, -2 * c / a0, (1 - al) / a0)
 
 
 def bandpass(data, lo, hi):
@@ -222,8 +289,18 @@ save('pickup', pick, 0.45)
 bell = mix(*[(decay(sine(f, 2.2), d), g) for f, d, g in
              ((660, 0.9, 0.6), (1320 * 1.01, 0.5, 0.25), (1980 * 0.99, 0.3, 0.12), (495, 1.1, 0.25))])
 save('memory', echo(bell, 0.21, 0.35, 0.35), 0.55)
-save('suspect', env(lowpass(mix((saw(lambda t: 147 + 6 * t, 0.7), 0.6), (sine(147, 0.7), 0.4)), 600), 0.12, 0.35), 0.45)
-save('alert', env(lowpass(mix((saw(110, 0.8), 0.5), (saw(116.5, 0.8), 0.5), (saw(220, 0.8), 0.2)), 1400), 0.02, 0.5), 0.55)
+# Şüphe: kapalı ağızla, soru gibi yükselen kısık bir "hım?".
+hum = mix(
+    (sine(lambda t: 140 + 50 * (t / 0.55) ** 2, 0.55, vib=0.01, vib_rate=5), 1.0),
+    (sine(lambda t: 280 + 100 * (t / 0.55) ** 2, 0.55), 0.3),
+    (sine(lambda t: 420 + 150 * (t / 0.55) ** 2, 0.55), 0.1),
+)
+save('suspect', env(lowpass(hum, 900), 0.06, 0.25), 0.4)
+# Alarm: fenerin metal gövdesi çınlar, asa yere vurur.
+clang = mix(*[(decay(sine(f, 1.2), d), g) for f, d, g in
+              ((523, 0.5, 0.6), (1347, 0.3, 0.4), (2213, 0.18, 0.3), (3170, 0.1, 0.2))])
+thud = decay(sine(lambda t: 90 - 30 * min(1, t / 0.1), 0.4), 0.07)
+save('alert', mix((clang, 0.8), (thud, 1.0), (decay(highpass(noise(0.05), 2500), 0.01), 0.3)), 0.55)
 bats = [x * (0.5 + 0.5 * math.sin(2 * math.pi * 28 * i / SR)) for i, x in enumerate(bandpass(noise(1.4), 300, 2000))]
 bats = env(bats, 0.02, 0.6)
 tt = 0.0
