@@ -968,19 +968,54 @@ class AnimalCrate extends Crate {
   @override
   void render(Canvas canvas) {
     const s = Crate.side;
-    final wood = Paint()..color = const Color(0xFF3A2414);
-    canvas.drawRect(const Rect.fromLTWH(0, s - 6, s, 6), wood);
-    canvas.save();
-    canvas.translate(s / 2, s - 6);
-    _animal(canvas, kind, wood, 0.42);
-    canvas.restore();
-    canvas.drawLine(
-      const Offset(0, s - 5.5),
-      const Offset(s, s - 5.5),
+    // Arkasında fenerin vurduğu hafif bir hale: karanlık ambarda seçilsin.
+    canvas.drawCircle(
+      const Offset(s / 2, s - 18),
+      34,
       Paint()
-        ..color = const Color(0xFFD08A5A).withValues(alpha: 0.5)
-        ..strokeWidth = 1.2,
+        ..shader = Gradient.radial(const Offset(s / 2, s - 18), 34, [
+          const Color(0xFFE0A15F).withValues(alpha: 0.16),
+          const Color(0xFFE0A15F).withValues(alpha: 0),
+        ]),
     );
+    // Kaide: üstü aydınlık tahta.
+    canvas.drawRect(
+      const Rect.fromLTWH(-1, s - 7, s + 2, 7),
+      Paint()..color = const Color(0xFF4A2C17),
+    );
+    canvas.drawLine(
+      const Offset(-1, s - 6.5),
+      const Offset(s + 1, s - 6.5),
+      Paint()
+        ..color = const Color(0xFFE0A15F).withValues(alpha: 0.7)
+        ..strokeWidth = 1.4,
+    );
+    // Oyma figür: açık ahşap, ışığı yakalayan kenar çizgisiyle.
+    const scale = 0.56;
+    canvas.save();
+    canvas.translate(s / 2, s - 7);
+    _animal(
+      canvas,
+      kind,
+      Paint()
+        ..color = const Color(0xFFE6B07A).withValues(alpha: 0.85)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.6 / scale
+        ..strokeJoin = StrokeJoin.round,
+      scale,
+    );
+    _animal(
+      canvas,
+      kind,
+      Paint()
+        ..shader = Gradient.linear(
+          const Offset(0, -60),
+          const Offset(0, 0),
+          [const Color(0xFF8A5832), const Color(0xFF5A361C)],
+        ),
+      scale,
+    );
+    canvas.restore();
   }
 }
 

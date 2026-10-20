@@ -203,6 +203,33 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     _startPrologue();
   }
 
+  /// Bölüm listesinden: açılmış bir bölümü baştan oynar. Toplanan hatıralar
+  /// korunur; o bölümün fısıltıları ve yer adları yeniden anlatılır.
+  void startChapter(int index) {
+    if (!isLoaded || !menuMode.value) return;
+    if (index < 0 || index > Settings.unlocked) return;
+    final save = SaveGame.current;
+    _memories
+      ..clear()
+      ..addAll(save?.memories ?? const []);
+    _whispersShown
+      ..clear()
+      ..addAll(
+        (save?.whispers ?? const []).where((w) => !w.startsWith('$index:')),
+      );
+    fireflies = startFireflies;
+    // Kanatlar Kule'de (2. bölüm) bulunur; sonraki bölümler onlarla oynanır.
+    wingsCollected = (save?.wings ?? false) || index >= 2;
+    _respawn = null;
+    _leaveMenu();
+    _buildLevel(index);
+    _saveProgress();
+    cinematic = false;
+    effects.setFade(1, kInk);
+    effects.fadeTo(0, 1.4);
+    _showLevelTitle();
+  }
+
   /// Kaldığın yerden: son kontrol noktasında, toplananlarla birlikte.
   void continueGame() {
     if (!isLoaded || !menuMode.value) return;
@@ -359,6 +386,11 @@ class GolgeGame extends FlameGame with KeyboardEvents {
   void _buildLevel(int index, {bool respawn = false, bool withPlayer = true}) {
     world.removeAll(world.children.toList());
     levelIndex = index;
+    // Oynanan en ileri bölüm açılır (bölüm listesi için).
+    if (withPlayer && index > Settings.unlocked) {
+      Settings.unlocked = index;
+      Settings.save();
+    }
     level = Level((debugLevels ?? levels)[index]);
     final ski = level.def.skiSurface;
     skiSurface = ski == null ? null : SkiSurface(ski);

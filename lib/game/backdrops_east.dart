@@ -296,28 +296,50 @@ extension _EastBackdrops on Backdrop {
   /// Taşlaşmış geminin içi: dev kaburgalar, asılı kandiller ve duvarda
   /// ikişer ikişer yürüyen hayvan gölgeleri.
   /// Kameranın baktığı yerde ambarın tavanı ve tabanı (ekran koordinatı).
+  /// Her sütunda yukarıdan ilk boşluk tavan, ondan aşağı ilk kaya taban
+  /// sayılır; ambarın içindeki bloklar (sandık rafı vb.) etkilemez. Ekranın
+  /// ortasındaki geniş bir pencerenin ortancası alınır: kamera kaydıkça
+  /// kirişler, kandiller ve hayvan gölgeleri zıplamaz.
   (double, double) _holdBand(double h) {
     final lv = game.level;
+    if (!identical(_holdFor, lv)) {
+      _holdFor = lv;
+      _hold = [
+        for (var c = 0; c < lv.width; c++)
+          () {
+            var r = 0;
+            while (r < lv.height && lv.solid(c, r)) {
+              r++;
+            }
+            if (r >= lv.height) return null;
+            var b = r;
+            while (b < lv.height && !lv.solid(c, b)) {
+              b++;
+            }
+            return (r, b);
+          }(),
+      ];
+    }
     final view = game.camera.visibleWorldRect;
-    final c = (view.center.dx / 32.0).floor();
+    final c0 = (view.center.dx / 32.0).floor();
+    final tops = <int>[];
+    final bottoms = <int>[];
+    for (var c = c0 - 14; c <= c0 + 14; c++) {
+      if (c < 0 || c >= lv.width) continue;
+      final band = _hold![c];
+      if (band == null) continue;
+      tops.add(band.$1);
+      bottoms.add(band.$2);
+    }
+    if (tops.isEmpty) return (h * 0.25, h * 0.8);
+    tops.sort();
+    bottoms.sort();
     const tile = 32.0; // kTile
-    var r = (view.center.dy / tile).floor().clamp(0, lv.height - 1);
-    // Kamera kayanın içindeyse en yakın boşluğu bul.
-    var k = 0;
-    while (lv.solid(c, r) && k < lv.height) {
-      r = (r + 1) % lv.height;
-      k++;
-    }
-    var top = r;
-    while (top > 0 && !lv.solid(c, top - 1)) {
-      top--;
-    }
-    var bottom = r;
-    while (bottom < lv.height && !lv.solid(c, bottom)) {
-      bottom++;
-    }
     double toScreen(double wy) => (wy - view.top) / view.height * h;
-    return (toScreen(top * tile), toScreen(bottom * tile));
+    return (
+      toScreen(tops[tops.length ~/ 2] * tile),
+      toScreen(bottoms[bottoms.length ~/ 2] * tile),
+    );
   }
 
   /// Nuh'un Gemisi'nin ambarı: bindirme kalaslı iç gövde, eğri postalar,
@@ -338,19 +360,27 @@ extension _EastBackdrops on Backdrop {
     final seam = Paint()
       ..color = const Color(0xFF0E0805).withValues(alpha: 0.75)
       ..strokeWidth = 1.4;
-    final tone = Paint();
+    // Bütün kalaslar tek iki çizimde (telefonda yüzlerce ayrı çizim yerine).
+    final light = Path();
+    final seams = Path();
     final y0 = top - ((top / plank).ceil() + 1) * plank;
     for (var y = y0, i = 0; y < h; y += plank, i++) {
-      tone.color =
-          (i.isEven ? const Color(0xFF3A2414) : const Color(0xFF1A0E07))
-              .withValues(alpha: 0.12);
-      canvas.drawRect(Rect.fromLTWH(0, y, w, plank), tone);
-      canvas.drawLine(Offset(0, y), Offset(w, y), seam);
+      if (i.isEven) light.addRect(Rect.fromLTWH(0, y, w, plank));
+      seams
+        ..moveTo(0, y)
+        ..lineTo(w, y);
       final shift = (i * 83) % 190;
       for (var x = -((wallX + shift) % 190); x < w; x += 190) {
-        canvas.drawLine(Offset(x, y), Offset(x, y + plank), seam);
+        seams
+          ..moveTo(x, y)
+          ..lineTo(x, y + plank);
       }
     }
+    canvas.drawPath(
+      light,
+      Paint()..color = const Color(0xFF3A2414).withValues(alpha: 0.12),
+    );
+    canvas.drawPath(seams, seam..style = PaintingStyle.stroke);
 
     // Fenerlerin gövdeye vurduğu sıcak ışık halkaları.
     const lampGap = 380.0;
@@ -365,10 +395,15 @@ extension _EastBackdrops on Backdrop {
       );
     }, salt: 4);
 
+    // Geminin yalpası: kandiller ve lumbuzdaki ufuk aynı ritimle eğilir.
+    final roll = math.sin(_t * 2 * math.pi / 7) * 0.07;
+    _gunports(canvas, w, h, wallX, top, hold, roll);
+
     // Hayvan gölgeleri: gövdenin iç duvarına düşer, duvarla birlikte kayar.
     final shade = Paint()
-      ..color = const Color(0xFF0A0503).withValues(alpha: 0.45)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.5);
+      ..color = const Color(0xFF0A0503).withValues(alpha: 0.3);
+    final halo = Paint()
+      ..color = const Color(0xFF0A0503).withValues(alpha: 0.14);
     final walk = _t * 14;
     final scale = (hold / 230).clamp(0.6, 1.4);
     _repeat(w, wallX - walk, 520, (x, rnd) {
@@ -378,6 +413,12 @@ extension _EastBackdrops on Backdrop {
         canvas.translate(x + dx * scale, bottom - 4);
         canvas.scale(scale);
         canvas.translate(0, math.sin(_t * 2 + dx) * 2);
+        // Yumuşak kenar, bulanıklaştırmasız: önce biraz büyük ve soluk bir
+        // hale, üstüne asıl gölge (perdeye düşen gölge gibi dağınık).
+        canvas.save();
+        canvas.scale(1.07, 1.05);
+        _arkAnimal(canvas, kind, halo);
+        canvas.restore();
         _arkAnimal(canvas, kind, shade);
         canvas.restore();
       }
@@ -428,7 +469,8 @@ extension _EastBackdrops on Backdrop {
     // Kirişlerden sarkan kandiller.
     _repeat(w, lampX, lampGap, (x, rnd) {
       final y = top + hold * (0.28 + rnd.nextDouble() * 0.1);
-      final sway = math.sin(_t * 0.8 + x * 0.01) * 4;
+      // Gemi yalpaladıkça kandil ters yöne sarkar.
+      final sway = -roll * (y - top) * 1.4 + math.sin(_t * 1.7 + x) * 0.6;
       canvas.drawLine(
         Offset(x, top + 8),
         Offset(x + sway, y),
@@ -455,6 +497,163 @@ extension _EastBackdrops on Backdrop {
         Paint()..color = const Color(0xFFFFE2A8),
       );
     }, salt: 4);
+
+    // Zemindeki yük: fıçılar, halat yumakları, saman balyaları.
+    _cargo(canvas, w, cam.x * 0.62, bottom, (hold / 230).clamp(0.6, 1.3));
+  }
+
+  /// Gövdedeki lumbuzlar: içinde tufanın gece denizi, yağmur, arada şimşek;
+  /// ufuk geminin yalpasıyla eğilir. Lumbuzdan ambara soğuk ışık düşer.
+  void _gunports(
+    Canvas canvas,
+    double w,
+    double h,
+    double wallX,
+    double top,
+    double hold,
+    double roll,
+  ) {
+    final size = (hold * 0.2).clamp(30.0, 58.0);
+    final cy = top + hold * 0.36;
+    // Şimşek: seyrek ve kısa.
+    final flash =
+        math.max(
+          0.0,
+          math.sin(_t * 0.37) * math.sin(_t * 1.31) * math.sin(_t * 0.23) -
+              0.55,
+        ) *
+        4;
+    _repeat(w, wallX, 430, (x, rnd) {
+      final c = Offset(x, cy);
+      final port = Rect.fromCenter(center: c, width: size, height: size * 0.82);
+      // İçeri düşen soğuk ışık.
+      canvas.drawPath(
+        Path()
+          ..moveTo(port.left + 4, port.bottom)
+          ..lineTo(port.right - 4, port.bottom)
+          ..lineTo(port.right + size * 1.6, top + hold)
+          ..lineTo(port.left + size * 0.4, top + hold)
+          ..close(),
+        Paint()
+          ..shader = ui.Gradient.linear(
+            port.bottomCenter,
+            Offset(c.dx, top + hold),
+            [
+              const Color(0xFFAFC6E8).withValues(alpha: 0.10 + 0.25 * flash),
+              const Color(0xFFAFC6E8).withValues(alpha: 0),
+            ],
+          ),
+      );
+      // Çerçeve.
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(port.inflate(5), const Radius.circular(3)),
+        Paint()..color = const Color(0xFF140B06),
+      );
+      canvas.save();
+      canvas.clipRRect(RRect.fromRectAndRadius(port, const Radius.circular(2)));
+      // Gece göğü.
+      canvas.drawRect(
+        port,
+        Paint()
+          ..shader = ui.Gradient.linear(port.topCenter, port.bottomCenter, [
+            Color.lerp(
+              const Color(0xFF0B1424),
+              const Color(0xFFDDE8FF),
+              flash,
+            )!,
+            Color.lerp(
+              const Color(0xFF1E2C44),
+              const Color(0xFFB8C8E8),
+              flash,
+            )!,
+          ]),
+      );
+      // Deniz: yalpayla eğilen ufuk, kayan dalgalar.
+      canvas.save();
+      canvas.translate(c.dx, c.dy);
+      canvas.rotate(roll);
+      final sea = Path()..moveTo(-size, size);
+      for (var k = -size; k <= size; k += 3) {
+        sea.lineTo(
+          k,
+          size * 0.08 + math.sin(k * 0.25 + _t * 2.2 + x * 0.01) * 2.2,
+        );
+      }
+      sea
+        ..lineTo(size, size)
+        ..close();
+      canvas.drawPath(sea, Paint()..color = const Color(0xFF2C3E58));
+      canvas.restore();
+      // Yağmur.
+      final rain = Paint()
+        ..color = const Color(0xFFCAD8F0).withValues(alpha: 0.45)
+        ..strokeWidth = 0.8;
+      for (var k = 0; k < 7; k++) {
+        final rx = port.left + ((k * 9.3 + _t * 40) % size);
+        final ry = port.top + ((k * 13.7 + _t * 160) % (size * 0.82));
+        canvas.drawLine(Offset(rx, ry), Offset(rx - 2, ry + 6), rain);
+      }
+      canvas.restore();
+      // Çerçevenin aydınlık alt kenarı ve perçinler.
+      canvas.drawLine(
+        Offset(port.left - 5, port.bottom + 5),
+        Offset(port.right + 5, port.bottom + 5),
+        Paint()
+          ..color = const Color(0xFF6A4226).withValues(alpha: 0.6)
+          ..strokeWidth = 1.4,
+      );
+    }, salt: 11);
+  }
+
+  /// Ambarın zeminindeki yük siluetleri.
+  void _cargo(Canvas canvas, double w, double offset, double floor, double k) {
+    final ink = Paint()..color = const Color(0xFF140B06);
+    final edge = Paint()
+      ..color = const Color(0xFF7A4C2A).withValues(alpha: 0.45)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.2;
+    _repeat(w, offset, 330, (x, rnd) {
+      final kind = rnd.nextInt(3);
+      canvas.save();
+      canvas.translate(x, floor);
+      canvas.scale(k);
+      switch (kind) {
+        case 0: // iki fıçı
+          for (final (bx, bh) in [(0.0, 34.0), (26.0, 28.0)]) {
+            final r = RRect.fromRectAndRadius(
+              Rect.fromLTWH(bx, -bh, 24, bh),
+              const Radius.circular(7),
+            );
+            canvas.drawRRect(r, ink);
+            canvas.drawRRect(r, edge);
+            for (final hy in [0.25, 0.75]) {
+              canvas.drawLine(
+                Offset(bx + 1, -bh * hy),
+                Offset(bx + 23, -bh * hy),
+                edge,
+              );
+            }
+          }
+        case 1: // halat yumağı
+          for (var i = 0; i < 4; i++) {
+            final rr = Rect.fromCenter(
+              center: Offset(14, -4 - i * 5.0),
+              width: 34 - i * 5.0,
+              height: 9,
+            );
+            canvas.drawOval(rr, ink);
+            canvas.drawOval(rr, edge);
+          }
+        default: // saman balyası
+          final b = Rect.fromLTWH(0, -24, 46, 24);
+          canvas.drawRect(b, ink);
+          canvas.drawRect(b, edge);
+          for (final sx in [12.0, 34.0]) {
+            canvas.drawLine(Offset(sx, -24), Offset(sx, 0), edge);
+          }
+      }
+      canvas.restore();
+    }, salt: 13);
   }
 
   void _arkAnimal(Canvas canvas, int kind, Paint shade) {

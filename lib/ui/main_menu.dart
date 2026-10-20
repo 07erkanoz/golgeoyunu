@@ -30,6 +30,9 @@ class _MainMenuState extends State<MainMenu>
   )..forward();
   bool _confirmNew = false;
 
+  /// Bölüm listesi açık mı.
+  bool _chapters = false;
+
   @override
   void dispose() {
     _fade.dispose();
@@ -94,38 +97,78 @@ class _MainMenuState extends State<MainMenu>
                       children: [
                         const _Ornament(),
                         SizedBox(height: 18 * k),
-                        if (save != null)
-                          _item(
-                            S.of('continue'),
-                            scale: itemK,
-                            hint: savedLevel,
-                            primary: true,
-                            onTap: widget.game.continueGame,
+                        if (_chapters) ...[
+                          Flexible(
+                            child: SingleChildScrollView(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  for (
+                                    var i = 0;
+                                    i <= Settings.unlocked && i < levels.length;
+                                    i++
+                                  )
+                                    _item(
+                                      levels[i].titleText,
+                                      scale: itemK * 0.85,
+                                      hint: levels[i].placeText
+                                          .split(' · ')
+                                          .first,
+                                      onTap: () => widget.game.startChapter(i),
+                                    ),
+                                ],
+                              ),
+                            ),
                           ),
-                        _item(
-                          _confirmNew ? S.of('confirmNew') : S.of('newGame'),
-                          scale: itemK,
-                          primary: save == null,
-                          warn: _confirmNew,
-                          onTap: () {
-                            if (save != null && !_confirmNew) {
-                              setState(() => _confirmNew = true);
-                              return;
-                            }
-                            widget.game.startNewGame();
-                          },
-                        ),
-                        _item(
-                          S.of('settings'),
-                          scale: itemK,
-                          onTap: widget.game.toggleSettings,
-                        ),
-                        if (widget.onQuit != null)
                           _item(
-                            S.of('quit'),
+                            S.of('back'),
                             scale: itemK,
-                            onTap: widget.onQuit!,
+                            onTap: () => setState(() => _chapters = false),
                           ),
+                        ] else ...[
+                          if (save != null)
+                            _item(
+                              S.of('continue'),
+                              scale: itemK,
+                              hint: savedLevel,
+                              primary: true,
+                              onTap: widget.game.continueGame,
+                            ),
+                          _item(
+                            _confirmNew ? S.of('confirmNew') : S.of('newGame'),
+                            scale: itemK,
+                            primary: save == null,
+                            warn: _confirmNew,
+                            onTap: () {
+                              if (save != null && !_confirmNew) {
+                                setState(() => _confirmNew = true);
+                                return;
+                              }
+                              widget.game.startNewGame();
+                            },
+                          ),
+                          if (Settings.unlocked >= 1)
+                            _item(
+                              S.of('chapters'),
+                              scale: itemK,
+                              hint: S.of('chaptersHint'),
+                              onTap: () => setState(() {
+                                _chapters = true;
+                                _confirmNew = false;
+                              }),
+                            ),
+                          _item(
+                            S.of('settings'),
+                            scale: itemK,
+                            onTap: widget.game.toggleSettings,
+                          ),
+                          if (widget.onQuit != null)
+                            _item(
+                              S.of('quit'),
+                              scale: itemK,
+                              onTap: widget.onQuit!,
+                            ),
+                        ],
                         SizedBox(height: 18 * k),
                         const _Ornament(),
                         SizedBox(height: 14 * k),

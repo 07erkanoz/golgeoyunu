@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:flame/components.dart';
 import 'package:flame_test/flame_test.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:golge/settings.dart';
 import 'package:golge/game/creatures.dart';
 import 'package:golge/game/legends.dart';
 import 'package:golge/game/levels.dart';
@@ -57,6 +58,39 @@ T nearest<T extends PositionComponent>(GolgeGame g, double x) {
 }
 
 void main() {
+  group('bölüm seçme', () {
+    testWithGame<GolgeGame>(
+      'açılmış bölüm baştan başlar; hatıralar korunur, kanatlar hazır',
+      GolgeGame.new,
+      (game) async {
+        await game.ready();
+        Settings.unlocked = 5;
+        SaveGame.current = SaveData(
+          level: 5,
+          x: 100,
+          y: 100,
+          memories: ['0:1', '2:0'],
+          whispers: ['3:p0', '3:1', '0:2'],
+          fireflies: 3,
+          wings: true,
+        );
+        // Açılmamış bölüm başlamaz.
+        game.startChapter(9);
+        expect(game.menuMode.value, isTrue);
+        game.startChapter(3);
+        expect(game.menuMode.value, isFalse);
+        expect(game.levelIndex, 3);
+        expect(game.wingsCollected, isTrue);
+        expect(game.memoryCount, 2);
+        // Yeniden oynanan bölümün fısıltıları yeniden anlatılır.
+        expect(SaveGame.current!.whispers, isNot(contains('3:1')));
+        expect(SaveGame.current!.whispers, contains('0:2'));
+        expect(SaveGame.current!.level, 3);
+        Settings.unlocked = 0;
+      },
+    );
+  });
+
   group('hareket', () {
     testWithGame<GolgeGame>('zıplama yaklaşık 3 kare yükselir', GolgeGame.new, (
       game,
@@ -1431,6 +1465,60 @@ void main() {
   });
 
   group('Nuh\'un Gemisi', () {
+    testWithGame<GolgeGame>(
+      'iç içe geçmiş iki sandık ayrılır; önündeki sandık birlikte itilir',
+      GolgeGame.new,
+      (game) async {
+        final p = await place(game, 5, 4, 25);
+        for (final g in game.world.children.whereType<Guard>().toList()) {
+          g.removeFromParent();
+        }
+        final crates = game.world.children.whereType<Crate>().toList()
+          ..sort((a, b) => a.position.x.compareTo(b.position.x));
+        final a = crates[0];
+        final b = crates[1];
+        // İkisini zeminde yan yana, 3 piksel iç içe koy.
+        a.position.setValues(12 * kTile, 26 * kTile - Crate.side);
+        b.position.setValues(
+          12 * kTile + Crate.side - 3,
+          26 * kTile - Crate.side,
+        );
+        run(game, 0.2);
+        // Soldan iterken ikisi birlikte kayar.
+        p.position.setValues(10 * kTile, 26 * kTile - Player.h);
+        keys(game).right = true;
+        run(game, 1.5);
+        keys(game).right = false;
+        expect(
+          a.position.x,
+          greaterThan(12 * kTile + 8),
+          reason: 'sol sandık itilmedi',
+        );
+        expect(
+          b.position.x,
+          greaterThan(12 * kTile + Crate.side + 5),
+          reason: 'öndeki sandık birlikte itilmedi',
+        );
+        // Sağdan itince de ikisi birlikte sola kayar (hiçbir yönde kilitlenmez).
+        final ax = a.position.x;
+        b.position.x = a.position.x + Crate.side - 3;
+        p.position.setValues(
+          b.position.x + Crate.side + 40,
+          26 * kTile - Player.h,
+        );
+        run(game, 0.2);
+        keys(game).left = true;
+        run(game, 0.6);
+        keys(game).left = false;
+        expect(
+          a.position.x,
+          lessThan(ax - 8),
+          reason: 'sağdan itilince sandıklar kımıldamadı',
+        );
+        expect(p.isDead, isFalse);
+      },
+    );
+
     testWithGame<GolgeGame>(
       'önce raftaki sandık çukura, sonra zürafa ve fil eşlerine: kapı açılır',
       GolgeGame.new,

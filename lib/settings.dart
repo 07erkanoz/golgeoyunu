@@ -27,6 +27,9 @@ class Settings {
   /// Parlaklık (0.6 – 1.6): karanlık örtüyü ve ekranın genel ışığını ayarlar.
   static double brightness = 1.0;
 
+  /// Ulaşılan en ileri bölüm: bölüm listesinde buraya kadarı açıktır.
+  static int unlocked = 0;
+
   /// Dokunmatik düğmelerin görünürlüğü (0.1 – 1).
   static double touchOpacity = 0.7;
 
@@ -90,6 +93,9 @@ class Settings {
     final fromPrefs = SaveData.decode(_read(() => p.getString('save')));
     final fromFile = SaveData.decode(await SaveGame._readFile());
     SaveGame.current = SaveData.newer(fromPrefs, fromFile);
+    unlocked = _read(() => p.getInt('unlocked')) ?? 0;
+    final reached = SaveGame.current?.level ?? 0;
+    if (reached > unlocked) unlocked = reached;
   }
 
   static Future<void> save() async {
@@ -105,6 +111,7 @@ class Settings {
       await p.setDouble('touch_opacity', touchOpacity);
       await p.setDouble('brightness', brightness);
       await p.setString('lang', S.en ? 'en' : 'tr');
+      await p.setInt('unlocked', unlocked);
     } catch (_) {
       // Yazılamazsa bir sonraki değişiklikte yeniden denenir.
     }

@@ -963,25 +963,42 @@ class Crate extends PositionComponent with HasGameReference<GolgeGame> {
 
   Level get level => game.level;
 
-  bool _blockedAt(Rect r) {
+  /// [dir] yönünde ilerlerken [r] alanı engelli mi? Geride kalan (ya da
+  /// iç içe geçmiş ama uzaklaşılan) sandık engel sayılmaz: iki sandık bir
+  /// kez değince bir daha hiç ayrılamıyordu.
+  bool _blockedAt(Rect r, {double dir = 0}) {
     if (level.rectSolid(r.left, r.top, r.right, r.bottom)) return true;
     for (final g in game.world.children.whereType<Gate>()) {
       if (g.solid && g.toRect().overlaps(r)) return true;
     }
     for (final c in game.world.children.whereType<Crate>()) {
-      if (c != this && c.toRect().overlaps(r)) return true;
+      if (c == this || !c.toRect().overlaps(r)) continue;
+      if (dir != 0 && (c.center.x - center.x) * dir <= 0) continue;
+      return true;
     }
     return false;
   }
 
-  /// İtilmeye çalışılır; gerçekte ne kadar kaydığını döndürür.
-  double push(double dx) {
-    if (_vy.abs() > 1) return 0;
+  /// İtilmeye çalışılır; gerçekte ne kadar kaydığını döndürür. Önündeki
+  /// sandığı da (en çok üç sandık) birlikte iter.
+  double push(double dx, {int depth = 0}) {
+    if (_vy.abs() > 1 || dx == 0) return 0;
     final target = toRect().shift(Offset(dx, 0)).deflate(0.5);
-    if (_blockedAt(target)) {
+    if (depth < 3) {
+      for (final c in game.world.children.whereType<Crate>().toList()) {
+        if (c == this || !c.toRect().overlaps(target)) continue;
+        if ((c.center.x - center.x) * dx <= 0) continue;
+        // Öndeki sandık, bu sandığın varacağı yerin dışına kadar itilir
+        // (iç içe geçmiş kalmasın).
+        final r = c.toRect();
+        final need = dx > 0 ? target.right - r.left : target.left - r.right;
+        c.push(need, depth: depth + 1);
+      }
+    }
+    if (_blockedAt(target, dir: dx)) {
       // Küçük bir basamağı (çukura oturmuş sandığın kenarı) aşar.
       final up = target.shift(const Offset(0, -3));
-      if (_blockedAt(up)) return 0;
+      if (_blockedAt(up, dir: dx)) return 0;
       position.y -= 3;
     }
     position.x += dx;
@@ -1018,7 +1035,8 @@ class Crate extends PositionComponent with HasGameReference<GolgeGame> {
     for (final c in game.world.children.whereType<Crate>()) {
       if (c == this) continue;
       final rect = c.toRect();
-      if (position.x + side - 4 <= rect.left || position.x + 4 >= rect.right) {
+      // Birazcık örtüşse de üstüne konar (yanından kayıp iç içe geçmesin).
+      if (position.x + side - 1 <= rect.left || position.x + 1 >= rect.right) {
         continue;
       }
       if (prevBottom <= rect.top + 1 &&

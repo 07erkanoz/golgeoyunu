@@ -1040,16 +1040,22 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       final drop = (ground - h).clamp(0.0, 6 * kTile);
       final k = 1 - drop / (6 * kTile);
       final width = (18 + 8 * k) * (crouching ? 1.2 : 1);
-      canvas.drawOval(
-        Rect.fromCenter(
-          center: Offset(w / 2, ground + 0.5),
-          width: width,
-          height: 4.5 * k + 1.5,
-        ),
+      // Bulanıklaştırma yerine yumuşak geçişli elips (telefonda ucuz).
+      final c = Offset(w / 2, ground + 0.5);
+      canvas.save();
+      canvas.translate(c.dx, c.dy);
+      canvas.scale(1, (4.5 * k + 1.5) / width);
+      canvas.drawCircle(
+        Offset.zero,
+        width / 2,
         Paint()
-          ..color = const Color(0xFF000000).withValues(alpha: 0.62 * k)
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1.6),
+          ..shader = ui.Gradient.radial(Offset.zero, width / 2, [
+            const Color(0xFF000000).withValues(alpha: 0.62 * k),
+            const Color(0xFF000000).withValues(alpha: 0.3 * k),
+            const Color(0x00000000),
+          ], const [0, 0.55, 1]),
       );
+      canvas.restore();
     }
     _wallShadow(canvas);
   }
@@ -1160,11 +1166,22 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       velocity.x = walking ? dirFacing * 60.0 : 0;
       _gait = _shadowGait;
     }
-    _fill.color = const Color(0xFF000000).withValues(alpha: alpha);
+    // Gölge tek parça çizilir, küçük bir katmanda tek seferde bulanıklaşır
+    // (her uzvu ayrı bulanıklaştırmak telefonda pahalıydı).
+    _fill.color = const Color(0xFF000000);
     _limb.color = _fill.color;
-    _fill.maskFilter = const MaskFilter.blur(BlurStyle.normal, 1.6);
-    _limb.maskFilter = _fill.maskFilter;
     _rimPass = true;
+    final bounds = Rect.fromCenter(
+      center: foot.translate(0, -h * 0.85),
+      width: w * 3.4 + 40,
+      height: h * 1.9 + 28,
+    );
+    canvas.saveLayer(
+      bounds,
+      Paint()
+        ..color = Color.fromRGBO(0, 0, 0, (alpha * 1.7).clamp(0.0, 0.85))
+        ..imageFilter = ui.ImageFilter.blur(sigmaX: 2.2, sigmaY: 2.2),
+    );
     canvas.save();
     // Işık yakında ve aşağıda: gölge ayaklardan büyüyerek yukarı uzanır.
     canvas.translate(foot.dx, foot.dy);
@@ -1174,18 +1191,15 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     canvas.scale(_artScale);
     _renderJar(canvas);
     canvas.restore();
+    canvas.restore();
     _rimPass = false;
     facing = saved.$1;
     velocity.x = saved.$2;
     _gait = saved.$3;
     onGround = saved.$4;
     state = saved.$5;
-    _fill
-      ..color = kInk
-      ..maskFilter = null;
-    _limb
-      ..color = kInk
-      ..maskFilter = null;
+    _fill.color = kInk;
+    _limb.color = kInk;
   }
 
   @override

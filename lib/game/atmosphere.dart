@@ -17,6 +17,11 @@ part 'backdrops_east.dart';
 class Backdrop extends Component with HasGameReference<GolgeGame> {
   double _t = 0;
 
+  /// Gemi ambarının her sütundaki tavanı ve tabanı (satır), bölüm başına
+  /// bir kez hesaplanır.
+  List<(int, int)?>? _hold;
+  Object? _holdFor;
+
   @override
   void update(double dt) => _t += dt;
 
@@ -573,6 +578,92 @@ class ScreenEffects extends Component with HasGameReference<GolgeGame> {
 
   /// Korku anı: kısa soğuk çakma, sonra kenarlardan içeri sızan ve kalp
   /// gibi atan mürekkep karanlığı.
+  /// Kar fırtınası. Ekranı düz bir beyazla boğmaz: kenarlara doğru koyulaşan
+  /// bir boran perdesi (Sâye'nin çevresi açık kalır), esintiyle dalgalanan
+  /// savrulan kar perdeleri ve üç derinlikte taneler (uzakta küçük ve soluk,
+  /// yakında iri, hızdan uzayan).
+  void _blizzard(Canvas canvas, double w, double h, double storm) {
+    final low = Settings.lowGraphics;
+    // Esinti: birkaç saniyede bir kabarıp söner.
+    final gust =
+        0.95 + 0.14 * math.sin(_t * 0.9) + 0.06 * math.sin(_t * 2.3 + 1.1);
+    // Sâye'nin ekrandaki yeri: perde orada incelir.
+    var focus = Offset(w * 0.5, h * 0.55);
+    final p = game.player;
+    if (p != null && p.isMounted) {
+      final view = game.camera.visibleWorldRect;
+      focus = Offset(
+        (p.center.x - view.left) / view.width * w,
+        (p.center.y - view.top) / view.height * h,
+      );
+    }
+    final r = math.max(w, h);
+    canvas.drawRect(
+      Rect.fromLTWH(0, 0, w, h),
+      Paint()
+        ..shader = ui.Gradient.radial(
+          focus,
+          r * 0.75,
+          [
+            const Color(0xFFE6EEF7).withValues(alpha: 0.05 * storm),
+            const Color(0xFFDCE6F2).withValues(alpha: 0.22 * storm * gust),
+            const Color(0xFFD2DDEA).withValues(alpha: 0.46 * storm * gust),
+          ],
+          const [0.12, 0.45, 1],
+        ),
+    );
+    // Savrulan kar perdeleri: sağdan sola hızla geçen uzun, yumuşak bantlar.
+    if (!low) {
+      for (var k = 0; k < 4; k++) {
+        final bandY =
+            h * (0.18 + 0.22 * k) + math.sin(_t * 0.4 + k * 1.7) * h * 0.06;
+        final span = w * 1.6;
+        final x =
+            w - ((_t * (260 + k * 70) * (0.6 + gust) + k * 431) % (span + w));
+        final rect = Rect.fromCenter(
+          center: Offset(x + span / 2, bandY),
+          width: span,
+          height: h * (0.08 + 0.04 * (k % 2)),
+        );
+        canvas.drawOval(
+          rect,
+          Paint()
+            ..shader = ui.Gradient.radial(rect.center, span / 2, [
+              const Color(0xFFF2F6FA).withValues(alpha: 0.24 * storm * gust),
+              const Color(0xFFF2F6FA).withValues(alpha: 0),
+            ]),
+        );
+      }
+    }
+    // Taneler: üç derinlik.
+    final flake = Paint()..strokeCap = StrokeCap.round;
+    final count = low ? 70 : 170;
+    for (var i = 0; i < count; i++) {
+      final depth = i % 3; // 0 uzak, 2 yakın
+      final seed = (i * 0.6180339) % 1.0;
+      final seed2 = (i * 0.4142135) % 1.0;
+      final speed = (420 + depth * 380) * (0.55 + gust * 0.6);
+      final fall = 70 + depth * 55;
+      final wobble = math.sin(_t * (1.5 + depth) + i) * (10 + depth * 8);
+      final x = w + 40 - ((seed * (w + 80) * 3 + _t * speed) % (w + 80));
+      final y = (seed2 * h + _t * fall + wobble) % (h + 20) - 10;
+      final a = (0.35 + 0.25 * depth) * storm;
+      flake.color = const Color(0xFFF8FBFF).withValues(alpha: a);
+      if (depth == 2) {
+        // Yakın taneler hızdan uzar.
+        final len = speed * 0.022;
+        flake.strokeWidth = 2.2;
+        canvas.drawLine(
+          Offset(x, y),
+          Offset(x + len, y - len * fall / speed),
+          flake,
+        );
+      } else {
+        canvas.drawCircle(Offset(x, y), 0.9 + depth * 0.8, flake);
+      }
+    }
+  }
+
   void _scarePulse(Canvas canvas, double w, double h) {
     final s = _scare;
     if (s <= 0.01) return;
@@ -727,28 +818,9 @@ class ScreenEffects extends Component with HasGameReference<GolgeGame> {
       );
     }
 
-    // Tipi: ekran beyaza boğulur, kar yatay savrulur.
+    // Tipi: kar katman katman savrulur; Sâye'nin çevresi okunur kalır.
     final storm = game.blizzard;
-    if (storm > 0.01) {
-      canvas.drawRect(
-        Rect.fromLTWH(0, 0, w, h),
-        Paint()
-          ..color = const Color(0xFFDCE6F2)
-              .withValues(alpha: 0.6 * storm * (0.9 + 0.1 * math.sin(_t * 9))),
-      );
-      final streak = Paint()
-        ..color = const Color(0xFFF4F8FC).withValues(alpha: 0.5 * storm)
-        ..strokeWidth = 1.4;
-      for (var i = 0; i < (Settings.lowGraphics ? 30 : 80); i++) {
-        final y = (i * 97.0 + _t * 40) % h;
-        final x = w - ((i * 211.0 + _t * (700 + i % 5 * 90)) % (w + 120));
-        canvas.drawLine(
-          Offset(x, y),
-          Offset(x + 26 + i % 4 * 8, y + 3),
-          streak,
-        );
-      }
-    }
+    if (storm > 0.01) _blizzard(canvas, w, h, storm);
 
     _scarePulse(canvas, w, h);
 
