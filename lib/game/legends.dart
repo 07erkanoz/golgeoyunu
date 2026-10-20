@@ -297,7 +297,10 @@ class Raft extends Deck {
     : super(
         position: Vector2(cell.x, cell.y + kTile + 3),
         size: Vector2(kTile * 3, 10),
-      );
+      ) {
+    // Suyun üstünde yüzer: su katmanının önünde çizilir.
+    priority = 27;
+  }
 
   double _vx = 0;
   double _t = 0;
@@ -354,12 +357,29 @@ class Raft extends Deck {
         log,
       );
     }
+    // Karanlık suda seçilsin: kütüklerin üstüne vuran ılık ışık.
+    canvas.drawLine(
+      const Offset(3, 1),
+      Offset(size.x - 3, 1),
+      Paint()
+        ..color = kWarmLight.withValues(alpha: 0.45)
+        ..strokeWidth = 1.6,
+    );
     final rope = Paint()
-      ..color = const Color(0xFF6A4A30)
-      ..strokeWidth = 1.2;
+      ..color = const Color(0xFFA07A52)
+      ..strokeWidth = 1.6;
     canvas.drawLine(const Offset(8, 1), const Offset(8, 9), rope);
     canvas.drawLine(Offset(size.x - 8, 1), Offset(size.x - 8, 9), rope);
-    // Sırık.
+    // Sırık: binilmeden önce salın üstüne yatırılmış durur.
+    if (!carrying) {
+      canvas.drawLine(
+        const Offset(4, -3),
+        Offset(size.x - 2, -6),
+        Paint()
+          ..color = kInk
+          ..strokeWidth = 2,
+      );
+    }
     if (carrying) {
       final sway = math.sin(_t * 3) * 6;
       canvas.drawLine(

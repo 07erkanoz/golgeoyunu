@@ -128,7 +128,8 @@ class Hints {
         'Cilalı kalkanın ardında yürü: önündeki göz seni görmez.\n'
         'Kalkanı yüzüne tut, kendi bakışıyla taşa dönsün.\n'
         'Ama arkandaki göz açılınca sen de taş kesil: kıpırdama.',
-    'raft': 'Salın üstünde dur ve sırıkla it ({move}).',
+    'raft':
+        'Sala bin; üstündeyken yön tuşları salı sırıkla iter ({move}). Karşı kıyıya varınca zıplayarak in ({jump}).',
     'vent': 'Baca aralıklarla alev püskürtür. Alev sönünce geç ya da üstüne bir sandık itip tıka.',
     'balloon': 'Fener balonunun ışığına girme; görülürsen yakalanırsın. Işığı uzaklaşınca ilerle.',
     'wings': 'Hezarfen\'in kanatları. Havada süzülmek için zıplamayı basılı tut ({glide}).',
@@ -181,7 +182,8 @@ class Hints {
         'Walk behind the polished shield: the eye before you cannot see you.\n'
         'Hold the shield to her face and let her own gaze turn her to stone.\n'
         'But when the eye behind you opens, be stone yourself: stand still.',
-    'raft': 'Stand on the raft and pole it along ({move}).',
+    'raft':
+        'Step onto the raft; while on it, the direction keys pole it along ({move}). At the far bank, jump off ({jump}).',
     'vent': 'The chimney spits flame now and then. Pass when it dies down, or push a crate on top to plug it.',
     'balloon': 'Stay out of the lantern balloon\'s light; if you are seen, you are caught. Move on when the light drifts away.',
     'wings': 'Hezarfen\'s wings. To glide in the air, hold jump ({glide}).',

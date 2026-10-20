@@ -133,9 +133,10 @@ drone = mix(
     (sine(55, L + 2, vib=0.004, vib_rate=0.1), 0.5),
     (sine(82.4, L + 2, vib=0.003, vib_rate=0.13), 0.3),
     (sine(110.3, L + 2, vib=0.003, vib_rate=0.07), 0.15),
-    (lowpass(brown(L + 2), 300), 6.0),
+    (lowpass(brown(L + 2), 160), 1.2),
 )
-drone = [x * (0.75 + 0.25 * math.sin(2 * math.pi * i / SR / 6.5)) for i, x in enumerate(drone)]
+# Derin, sakin bir uğultu: kabarıp sönen gürültü hışırtı gibi duyuluyordu.
+drone = [x * (0.9 + 0.1 * math.sin(2 * math.pi * i / SR / 6.5)) for i, x in enumerate(drone)]
 t = 0.8
 while t < L:
     place(drone, echo(drip(), 0.23, 0.45), t, 0.35 * rnd.uniform(0.5, 1))
@@ -331,25 +332,28 @@ def heartbeat_loop():
 
 
 def murmur_loop():
-    # Anlaşılmayan bir dua: hece hece değişen ünlüler, aralarda nefes.
+    # Uzaktan duyulan, anlaşılmayan bir dua: kapalı ağızla mırıldanan alçak
+    # bir ilahi (hicaz dizisinden notalar), aralarda sessizlik.
     total = 12.0
     out = [0.0] * n(total)
-    t = 0.3
-    vowels = [(700, 1200), (400, 2000), (300, 900), (550, 1700), (350, 2300)]
     r = random.Random(7)
-    while t < total - 1.2:
-        phrase = r.randint(4, 9)
-        base = 98 * (0.92 + 0.16 * r.random())
+    scale = [110.0, 116.5, 138.6, 146.8, 164.8, 174.6]
+    t = 0.4
+    while t < total - 2.0:
+        phrase = r.randint(3, 5)
         for _ in range(phrase):
-            d = 0.12 + 0.12 * r.random()
-            f1, f2 = r.choice(vowels)
-            src = saw(lambda q, b=base: b * (1 + 0.03 * math.sin(q * 9)), d)
-            v = mix((bandpass(src, f1 * 0.7, f1 * 1.3), 1.0), (bandpass(src, f2 * 0.8, f2 * 1.2), 0.5))
-            place(out, env(v, 0.03, 0.05), t, 1.0)
-            t += d * 0.9
-        t += 0.5 + r.random() * 1.0
-    wet = echo(out, 0.23, 0.45, 0.6)[:len(out)]
-    return lowpass(wet, 1800)
+            d = 0.6 + 0.7 * r.random()
+            f = r.choice(scale)
+            tone = mix(
+                (sine(f, d, vib=0.006, vib_rate=4.5), 1.0),
+                (sine(f * 2, d, vib=0.006, vib_rate=4.5), 0.25),
+                (sine(f * 3, d, vib=0.006, vib_rate=4.5), 0.08),
+            )
+            place(out, env(tone, 0.18, 0.3), t, 1.0)
+            t += d * 0.85
+        t += 1.2 + r.random() * 1.5
+    wet = echo(out, 0.31, 0.4, 0.5)[:len(out)]
+    return lowpass(wet, 700)
 
 
 def shatter():
@@ -394,7 +398,7 @@ def chain():
 
 
 save('heartbeat', heartbeat_loop(), 0.8)
-save('murmur', loop(murmur_loop(), 1), 0.55)
+save('murmur', loop(murmur_loop(), 1), 0.4)
 save('shatter', shatter(), 0.7)
 save('breath', breath(), 0.6)
 save('fizzle', fizzle(), 0.4)

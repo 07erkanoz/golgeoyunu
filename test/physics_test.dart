@@ -942,6 +942,26 @@ void main() {
 
   group('Medusa Salonu', () {
     testWithGame<GolgeGame>(
+      'Sal Kanalı: sala bin, sonuna it, karşı kıyıya zıplayarak in',
+      GolgeGame.new,
+      (game) async {
+        final p = await place(game, 0, 225, 13);
+        final raft = game.world.children.whereType<Raft>().first;
+        keys(game).right = true;
+        for (var i = 0; i < 60 * 30 && raft.position.x < 259.9 * kTile; i++) {
+          game.update(1 / 60);
+        }
+        expect(p.riding, same(raft));
+        expect(p.isDead, isFalse);
+        keys(game).jump = true;
+        run(game, 0.2);
+        keys(game).jump = false;
+        run(game, 1.2);
+        expect(p.isDead, isFalse);
+        expect(p.position.x, greaterThan(263 * kTile));
+      },
+    );
+    testWithGame<GolgeGame>(
       'kalkanı iterek öndeki başı taşlaştır, arkadaki bakınca dur',
       GolgeGame.new,
       (game) async {
