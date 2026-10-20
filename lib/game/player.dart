@@ -995,6 +995,69 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
   static const double _artH = 40;
   static const double _artScale = h / _artH;
 
+  /// Sâye'nin gölgeleri: ayağının dibinde yere düşen yumuşak leke (havadayken
+  /// iniş yerini gösterir, yere yaklaştıkça koyulaşır) ve kavanozun ışığıyla
+  /// arkasındaki duvara uzanan silueti.
+  void _drawShadows(Canvas canvas) {
+    // Zemin: ayağın altındaki ilk dolu kare ya da iskele (en çok 6 kare).
+    double? ground;
+    if (onGround) {
+      ground = h;
+    } else {
+      final feet = position.y + h;
+      final r0 = (feet / kTile).floor();
+      for (var r = r0; r <= r0 + 6; r++) {
+        final ch = level.cell((center.x / kTile).floor(), r);
+        if (ch == '#' || ch == '=' || ch == 'w' || ch == '-') {
+          final top = r * kTile.toDouble();
+          if (top >= feet - 1) ground = top - position.y;
+          break;
+        }
+      }
+    }
+    if (ground != null) {
+      final drop = (ground - h).clamp(0.0, 6 * kTile);
+      final k = 1 - drop / (6 * kTile);
+      final width = (18 + 8 * k) * (crouching ? 1.2 : 1);
+      canvas.drawOval(
+        Rect.fromCenter(
+          center: Offset(w / 2, ground + 0.5),
+          width: width,
+          height: 4.5 * k + 1.5,
+        ),
+        Paint()
+          ..color = const Color(0xFF000000).withValues(alpha: 0.62 * k)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1.6),
+      );
+    }
+    // Açık havada arkada gölgenin düşeceği duvar yok.
+    if (!jarStyle || hidden || crouching || !level.def.theme.indoor) return;
+    // Duvardaki gölge: kavanoz önde, gölge arkaya ve biraz yukarı uzanır.
+    final flicker = 0.85 + 0.15 * math.sin(_anim * 11) * math.sin(_anim * 3.7);
+    _fill.color = const Color(0xFF000000).withValues(alpha: 0.5 * flicker);
+    _limb.color = _fill.color;
+    _fill.maskFilter = const MaskFilter.blur(BlurStyle.normal, 1.2);
+    _limb.maskFilter = _fill.maskFilter;
+    _rimPass = true;
+    canvas.save();
+    // Ayakların dibinden büyür: ışık yakında, gölge iri.
+    canvas.translate(w / 2, h);
+    canvas.translate(-facing * (13 + math.sin(_anim * 1.3) * 0.6), -4);
+    canvas.scale(1.22, 1.18);
+    canvas.translate(-w / 2, -h);
+    canvas.translate((w - _artW * _artScale) / 2, 0);
+    canvas.scale(_artScale);
+    _renderJar(canvas);
+    canvas.restore();
+    _rimPass = false;
+    _fill
+      ..color = kInk
+      ..maskFilter = null;
+    _limb
+      ..color = kInk
+      ..maskFilter = null;
+  }
+
   @override
   void render(Canvas canvas) {
     final ski = skiing && !isDead;
@@ -1005,6 +1068,7 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       canvas.translate(-w / 2, -h);
       drawSpray(canvas, Offset(w / 2 - 12, h), onGround ? _skiSpeed : 0, _anim);
     }
+    if (!ski && !isDead && !Settings.lowGraphics) _drawShadows(canvas);
     if (jarStyle && !hidden && !crouching && !isDead && !Settings.lowGraphics) {
       // Kenar ışığı: kavanozun sıcak ışığı siluetin önünü ve tepesini yalar.
       // Aynı figür ışık renginde, ışığa doğru biraz kaydırılarak önce çizilir;
