@@ -23,7 +23,10 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
 
   /// Temanın karanlığı, parlaklık ayarına göre biraz açılır ya da koyulaşır.
   static double darknessFor(LevelTheme theme) =>
-      (_baseDarkness(theme) * (2 - Settings.brightness)).clamp(0.05, 0.9);
+      (_baseDarkness(theme) * (1 - (Settings.brightness - 1) * 0.9)).clamp(
+        0.03,
+        0.92,
+      );
 
   static double _baseDarkness(LevelTheme theme) => switch (theme) {
     LevelTheme.cistern => 0.48,

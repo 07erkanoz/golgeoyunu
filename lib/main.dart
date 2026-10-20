@@ -42,16 +42,31 @@ Future<void> main() async {
   if (_isDesktop) {
     await windowManager.ensureInitialized();
     await windowManager.waitUntilReadyToShow(
-      const WindowOptions(title: 'Gölge Oyunu', minimumSize: Size(800, 450)),
+      const WindowOptions(
+        title: 'Gölge Oyunu',
+        size: Size(1280, 720),
+        minimumSize: Size(800, 450),
+        center: true,
+      ),
       () async {
         await windowManager.show();
         await windowManager.focus();
-        if (Settings.fullscreen) await windowManager.setFullScreen(true);
       },
     );
   }
   GameAudio.instance.init();
   runApp(const GolgeApp());
+  // Tam ekran, pencere gösterilip oyun ilk karesini çizdikten sonra: daha
+  // önce açılışta istenince Windows'ta çerçevesiz, görev çubuğunda görünmeyen
+  // ve içi çizilmeyen siyah bir pencere kalıyordu.
+  if (_isDesktop && Settings.fullscreen) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Future.delayed(const Duration(milliseconds: 500), () async {
+        await windowManager.setFullScreen(true);
+        await windowManager.focus();
+      });
+    });
+  }
 }
 
 class GolgeApp extends StatefulWidget {

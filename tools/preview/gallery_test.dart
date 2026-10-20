@@ -11,6 +11,7 @@ import 'package:golge/game/golge_game.dart';
 import 'package:golge/game/level.dart';
 import 'package:golge/game/player.dart';
 import 'package:golge/game/strings.dart';
+import 'package:golge/settings.dart';
 
 Future<void> _fonts() async {
   final loader = FontLoader('Roboto');
@@ -35,6 +36,8 @@ void main() {
   testWithGame<GolgeGame>('galeri', GolgeGame.new, (game) async {
     await _fonts();
     S.lang = Lang.tr;
+    Settings.brightness =
+        double.parse(const String.fromEnvironment('BRIGHT', defaultValue: '1'));
     game.onGameResize(Vector2(1280, 720));
     // ad:bölüm:sütun:satır:yakınlık:saniye[:korku]
     for (final spec in shots.split(',')) {

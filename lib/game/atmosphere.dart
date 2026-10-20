@@ -785,7 +785,7 @@ class ScreenEffects extends Component with HasGameReference<GolgeGame> {
       canvas.drawRect(
         Rect.fromLTWH(0, 0, w, h),
         Paint()
-          ..color = const Color(0xFFFFE2C2).withValues(alpha: (b - 1) * 0.22)
+          ..color = const Color(0xFFFFE8D0).withValues(alpha: (b - 1) * 0.2)
           ..blendMode = BlendMode.screen,
       );
     } else if (b < 0.999) {

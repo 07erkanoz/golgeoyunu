@@ -44,6 +44,9 @@ for r,row in enumerate(old):
     for c,ch in enumerate(row):
         if c<67: y.g[r][c]=ch
 y.put(65,10,'.',force=True)                 # eski çıkış kalktı
+# Kolun rafı yere kadar dolu: sandık altına kaçıp tırmanışı kapatmasın,
+# rafın dibine dayansın; sandıktan doğrudan kenara tutunulur.
+y.fill(53,11,56,13,'#')
 y.fill(0,0,W-1,1,'#'); y.fill(W-1,0,W-1,H-1,'#')
 # 4) yarasa galerisi
 y.fill(67,14,96,19,'#')
@@ -493,6 +496,7 @@ d.fill(125,2,125,F-7,'#'); d.fill(125,F-6,125,F-1,'H')
 # 4) Güneşin doğduğu yer: ayin, Kandilciler, ışık
 d.put(127,F-1,'K'); d.put(128,F-1,'p'); d.put(130,F-1,'B')
 d.fill(134,F-2,137,F-1,'#'); d.fill(140,F-4,143,F-1,'#'); d.fill(146,F-6,212-1,F-1,'#')
+d.fill(144,F-2,145,F-1,'#')                 # basamak arası çukur sığ: düşen çıkar
 d.put(150,F-7,'G'); d.fill(154,F-7,155,F-7,'~'); d.put(160,F-7,';'); d.put(161,F-7,'I')
 d.put(166,F-7,'G'); d.fill(170,F-7,171,F-7,'~'); d.put(176,F-7,'G'); d.put(172,F-15,'N')
 d.put(180,F-7,'6'); d.put(184,F-7,'M'); d.put(190,F-7,'K'); d.put(195,F-7,'B'); d.put(205,F-7,'E')
@@ -655,6 +659,7 @@ for x,top,ring in [(48,22,True),(54,19,False),(60,16,True),(67,13,False),(74,15,
 pb.put(88,6,'M'); pb.put(81,9,'k'); pb.put(60,15,'F') if False else None
 pb.put(72,25,'4'); pb.put(92,25,'F'); pb.put(105,25,'K'); pb.put(107,25,'B')
 # 3) Güvercinlik vadisi: iki ipli geçiş (Ağrı'da denenmiş düzen), ortada güvercinlikli ada
+pb.fill(108,18,108,25,'|')                  # çukurdan çıkış sarmaşığı
 x=rope_chasm(pb,109,18,n=5)
 pb.fill(x,18,156,29,'#')
 pb.put(110,17,'p'); pb.put(111,17,'5'); pb.put(112,17,'K')
@@ -689,6 +694,7 @@ for r in (21,16,11):
     pb.fill(338,r,341,r,'.')                  # dinlenme oyukları
 pb.fill(338+PO,3,372+PO,3,'#')
 pb.put(345+PO,2,'9'); pb.put(352+PO,2,'K'); pb.put(360+PO,2,'B'); pb.put(366+PO,2,'E')
+pb.fill(373+PO,3,W-1,25,'#')                # çıkışın ötesi kaya: dibe düşülmez
 lvl12=pb.rows()
 
 # ------------------------------------------------------------ XIII · DERİNKUYU
@@ -803,6 +809,7 @@ for c in (342,352,362): kn.put(c,33,'a')
 kn.put(346,33,'G'); kn.put(360,33,'G'); kn.put(370,33,'I')
 # 8) Semâhane: dönen avizeler, yerde semâ ve Kandilciler
 kn.fill(373,8,430,47,'#')
+kn.fill(372,8,372,25,'|')                         # avludan çatıya zincir
 kc(373,30,375,33); kn.put(373,33,'#',force=True)  # kapı eşiği
 kc(376,12,427,43)
 kn.fill(376,34,381,43,'#')                        # mutribhane

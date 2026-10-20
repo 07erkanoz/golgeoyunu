@@ -317,6 +317,80 @@ void main() {
     );
 
     testWithGame<GolgeGame>(
+      'sandığı kolun altına it, üstüne çık, tutun, kolu çek, kapıdan geç',
+      GolgeGame.new,
+      (game) async {
+        final p = await place(game, 0, 48, 13);
+        final crate = nearest<Crate>(game, 49 * kTile);
+        final k = keys(game);
+        // 1) Sandığı kolun rafının dibine it.
+        k.right = true;
+        for (var i = 0; i < _hz * 6 && crate.position.x < 52 * kTile + 1; i++) {
+          game.update(_dt);
+        }
+        k.right = false;
+        expect(crate.position.x, greaterThan(52 * kTile));
+        // 2) Sandığın üstüne zıpla.
+        k
+          ..jump = true
+          ..right = true;
+        for (
+          var i = 0;
+          i < _hz && !(p.onGround && p.position.y < 12.5 * kTile);
+          i++
+        ) {
+          game.update(_dt);
+          if (p.position.x > crate.position.x + 4) k.right = false;
+        }
+        k
+          ..jump = false
+          ..right = false;
+        run(game, 0.2);
+        expect(
+          p.position.y + Player.h,
+          closeTo(crate.position.y, 2),
+          reason: 'sandığın üstüne çıkamadı',
+        );
+        // 3) Rafın çıkıntısına tutun ve tırman.
+        k
+          ..jump = true
+          ..right = true;
+        var climbed = false;
+        for (var i = 0; i < _hz * 3 && !climbed; i++) {
+          k.up = p.state == PlayerState.hang;
+          game.update(_dt);
+          climbed = p.onGround && p.position.y + Player.h <= 10 * kTile + 1;
+        }
+        k
+          ..jump = false
+          ..up = false;
+        expect(climbed, isTrue, reason: 'kolun rafına çıkamadı');
+        // 4) Kola yürü, çek.
+        for (var i = 0; i < _hz * 2 && p.center.x < 55.5 * kTile; i++) {
+          game.update(_dt);
+        }
+        k.right = false;
+        k.up = true;
+        run(game, 0.1);
+        k.up = false;
+        expect(nearest<Lever>(game, 55 * kTile).pulled, isTrue);
+        run(game, 2.5);
+        // 5) Açılan kapıdan geç.
+        k.right = true;
+        for (var i = 0; i < _hz * 4 && p.position.x < 62 * kTile; i++) {
+          game.update(_dt);
+        }
+        k.right = false;
+        expect(p.isDead, isFalse);
+        expect(
+          p.position.x,
+          greaterThan(62 * kTile),
+          reason: 'kapıdan geçemedi',
+        );
+      },
+    );
+
+    testWithGame<GolgeGame>(
       'kapı kapalıyken geçilmez, kol çekilince açılır',
       GolgeGame.new,
       (game) async {

@@ -1000,15 +1000,18 @@ class Crate extends PositionComponent with HasGameReference<GolgeGame> {
     _vy = math.min(_vy + 1900 * dt, 900);
     position.y += _vy * dt;
     final bottom = position.y + side;
+    // Değilen yüzeylerden en yüksekteki seçilir (büyük adımda hareketli
+    // tahtayı geçip altındaki zemine gömülmesin).
+    double? best;
+    Deck? bestDeck;
     final r = ((bottom - 0.001) / kTile).floor();
     final c0 = ((position.x + 1) / kTile).floor();
     final c1 = ((position.x + side - 1) / kTile).floor();
     for (var c = c0; c <= c1; c++) {
       final ch = level.cell(c, r);
       if (ch == '#' || (ch == '=' && prevBottom <= r * kTile + 0.5)) {
-        position.y = r * kTile - side;
-        _vy = 0;
-        return;
+        best = r * kTile.toDouble();
+        break;
       }
     }
     // Başka bir sandığın üstüne oturur (çukuru dolduran sandık köprü olur).
@@ -1018,10 +1021,11 @@ class Crate extends PositionComponent with HasGameReference<GolgeGame> {
       if (position.x + side - 4 <= rect.left || position.x + 4 >= rect.right) {
         continue;
       }
-      if (prevBottom <= rect.top + 1 && position.y + side >= rect.top) {
-        position.y = rect.top - side;
-        _vy = 0;
-        return;
+      if (prevBottom <= rect.top + 1 &&
+          position.y + side >= rect.top &&
+          (best == null || rect.top < best)) {
+        best = rect.top;
+        bestDeck = null;
       }
     }
     for (final d in game.world.children.whereType<Deck>()) {
@@ -1030,13 +1034,18 @@ class Crate extends PositionComponent with HasGameReference<GolgeGame> {
       if (position.x + side - 2 <= rect.left || position.x + 2 >= rect.right) {
         continue;
       }
-      if (d.catches(prevBottom, position.y + side)) {
-        position.y = rect.top - side;
-        _vy = 0;
-        _riding = d;
-        if (d is CrumbleRock) d.stoodOn = true;
-        return;
+      if (d.catches(prevBottom, position.y + side) &&
+          (best == null || rect.top < best)) {
+        best = rect.top;
+        bestDeck = d;
       }
+    }
+    if (best != null) {
+      position.y = best - side;
+      _vy = 0;
+      _riding = bestDeck;
+      if (bestDeck is CrumbleRock) bestDeck.stoodOn = true;
+      return;
     }
     if (position.y > level.pixelHeight + 200) removeFromParent();
   }

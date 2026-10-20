@@ -266,6 +266,7 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     }
     if (velocity.y >= 0) _jumpCut = true;
 
+    final vyBefore = velocity.y;
     // Kanatlar: havada zıplamayı basılı tutunca süzülür.
     final wasGliding = gliding;
     final inWind = level.cellAt(center.x, center.y) == 'r';
@@ -294,7 +295,14 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     }
     pushing = false;
     _moveX(velocity.x * dt, dir);
-    _moveY(velocity.y * dt, allowOneWay: _dropThrough <= 0);
+    // Kare hızından bağımsız yörünge: yerçekimi/süzülme/rüzgâr ivmesi için
+    // küçük bir düzeltme, her kare hızında 60 FPS'teki eğrinin aynısını
+    // çizdirir (30 FPS'te zıplayış alçalmaz, 144'te yükselmez).
+    final ay = dt > 0 ? (velocity.y - vyBefore) / dt : 0.0;
+    _moveY(
+      velocity.y * dt + ay * dt * (1 / 60 - dt) / 2,
+      allowOneWay: _dropThrough <= 0,
+    );
 
     // Sesler: koşarken adımlar, sert inişler. Tahta iskele daha çok gıcırdar.
     final quiet = sneaking || crouching;
@@ -404,16 +412,19 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     final c0 = ((position.x + 1) / kTile).floor();
     final c1 = ((position.x + w - 1) / kTile).floor();
     if (dy > 0) {
+      // Bu karede değilen yüzeylerden en yüksekteki (ilk değilen) seçilir:
+      // büyük bir adımda (düşük FPS) hem bir hareketli tahtayı hem altındaki
+      // zemini geçen ayak, tahtanın içine değil üstüne konar.
+      double? best;
+      Deck? bestDeck;
       final r = ((position.y + h - 0.001) / kTile).floor();
       final top = r * kTile;
       for (var c = c0; c <= c1; c++) {
         final ch = level.cell(c, r);
         if (ch == '#' ||
             (allowOneWay && ch == '=' && prevBottom <= top + 0.5)) {
-          position.y = top - h;
-          velocity.y = 0;
-          onGround = true;
-          return;
+          best = top.toDouble();
+          break;
         }
       }
       // Hareketli kayalar ve asansör kefeleri: yalnızca üstten basılır.
@@ -424,12 +435,10 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
           if (position.x + w - 2 <= rect.left || position.x + 2 >= rect.right) {
             continue;
           }
-          if (d.catches(prevBottom, position.y + h)) {
-            position.y = rect.top - h;
-            velocity.y = 0;
-            onGround = true;
-            riding = d;
-            return;
+          if (d.catches(prevBottom, position.y + h) &&
+              (best == null || rect.top < best)) {
+            best = rect.top;
+            bestDeck = d;
           }
         }
       }
@@ -439,12 +448,19 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
         if (position.x + w - 1 <= rect.left || position.x + 1 >= rect.right) {
           continue;
         }
-        if (prevBottom <= rect.top + 0.5 && position.y + h >= rect.top) {
-          position.y = rect.top - h;
-          velocity.y = 0;
-          onGround = true;
-          return;
+        if (prevBottom <= rect.top + 0.5 &&
+            position.y + h >= rect.top &&
+            (best == null || rect.top < best)) {
+          best = rect.top;
+          bestDeck = null;
         }
+      }
+      if (best != null) {
+        position.y = best - h;
+        velocity.y = 0;
+        onGround = true;
+        riding = bestDeck;
+        return;
       }
     } else if (dy < 0) {
       final r = (position.y / kTile).floor();
@@ -848,23 +864,28 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       _setState(PlayerState.normal);
       return;
     }
-    // Sarkaç: yerçekimi, salınıma güç katan girdi, hafif sönüm.
+    // Sarkaç: yerçekimi, salınıma güç katan girdi, hafif sönüm. Küçük, sabit
+    // adımlarla hesaplanır: salınım kare hızından bağımsız aynı kalır.
     final g = gravity * 0.55;
-    var alpha = -(g / _ropeD) * math.sin(ropeAngle);
-    alpha += dir * 2.6;
-    _ropeOmega += alpha * dt;
-    _ropeOmega *= 1 - 0.18 * dt;
-    if (up) {
-      _ropeD = math.max(36, _ropeD - 80 * dt);
-    } else if (down) {
-      _ropeD = math.min(r.length, _ropeD + 80 * dt);
-    } else if (_ropeD < r.length * 0.65) {
-      // Yukarıdan yakalayan ipte biraz aşağı kayar: salınım uzar.
-      _ropeD = math.min(r.length * 0.65, _ropeD + 110 * dt);
-    }
     final prevAngle = ropeAngle;
-    ropeAngle = (ropeAngle + _ropeOmega * dt).clamp(-1.4, 1.4);
-    if (ropeAngle.abs() >= 1.4) _ropeOmega *= -0.2;
+    final steps = math.max(1, (dt * 120).ceil());
+    final h = dt / steps;
+    for (var i = 0; i < steps; i++) {
+      var alpha = -(g / _ropeD) * math.sin(ropeAngle);
+      alpha += dir * 2.6;
+      _ropeOmega += alpha * h;
+      _ropeOmega *= 1 - 0.18 * h;
+      if (up) {
+        _ropeD = math.max(36, _ropeD - 80 * h);
+      } else if (down) {
+        _ropeD = math.min(r.length, _ropeD + 80 * h);
+      } else if (_ropeD < r.length * 0.65) {
+        // Yukarıdan yakalayan ipte biraz aşağı kayar: salınım uzar.
+        _ropeD = math.min(r.length * 0.65, _ropeD + 110 * h);
+      }
+      ropeAngle = (ropeAngle + _ropeOmega * h).clamp(-1.4, 1.4);
+      if (ropeAngle.abs() >= 1.4) _ropeOmega *= -0.2;
+    }
     _placeOnRope(r);
     // Kayaya çarparsa geri sekip durur.
     if (_hitsSolid()) {

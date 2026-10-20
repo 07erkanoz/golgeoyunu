@@ -93,6 +93,8 @@ jobs:
         run: flutter pub get
       - name: Testler
         run: flutter test
+      - name: Bölüm denetimi (varılamayan yer, sıkışma, kapalı kapı)
+        run: python3 tools/audit.py
       - name: Fizik testleri (yüksek yenileme hızı)
         run: |
           flutter test test/physics_test.dart --dart-define=HZ=120

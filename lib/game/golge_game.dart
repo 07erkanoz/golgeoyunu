@@ -654,6 +654,9 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         if (next < levels.length) {
           void enter() {
             _buildLevel(next);
+            // Yeni bölüme girer girmez kaydedilir (ilk kontrol noktasına
+            // varmadan uygulama kapansa da bölüm kaybolmasın).
+            _saveProgress();
             cinematic = false;
             _transitioning = false;
             effects.fadeTo(0, 1.8);
