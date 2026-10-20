@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:ui' show PlatformDispatcher;
 
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -50,8 +51,20 @@ class Settings {
     }
   }
 
+  /// Cihazın dili Türkçeyse Türkçe, değilse İngilizce.
+  static Lang deviceLang() {
+    try {
+      final locales = PlatformDispatcher.instance.locales;
+      final code = locales.isEmpty ? '' : locales.first.languageCode;
+      return code.toLowerCase() == 'tr' ? Lang.tr : Lang.en;
+    } catch (_) {
+      return Lang.tr;
+    }
+  }
+
   static Future<void> load({bool lowGraphicsByDefault = false}) async {
     lowGraphics = lowGraphicsByDefault;
+    S.lang = deviceLang();
     final p = await _open();
     if (p == null) return;
     ambience = _read(() => p.getDouble('ambience')) ?? ambience;
@@ -66,7 +79,13 @@ class Settings {
       1.3,
     );
     highRefresh = _read(() => p.getBool('high_refresh')) ?? highRefresh;
-    S.lang = _read(() => p.getString('lang')) == 'en' ? Lang.en : Lang.tr;
+    // Kayıtlı bir tercih yoksa cihazın dili: Türkçe değilse İngilizce.
+    final lang = _read(() => p.getString('lang'));
+    S.lang = switch (lang) {
+      'en' => Lang.en,
+      'tr' => Lang.tr,
+      _ => deviceLang(),
+    };
     SaveGame.current = SaveData.decode(_read(() => p.getString('save')));
   }
 
