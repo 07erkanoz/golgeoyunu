@@ -56,7 +56,7 @@ def room(data, wet):
 CC0 = {'step_1', 'step_2', 'step_3', 'step_4', 'step_wood_1', 'step_wood_2',
        'step_wood_3', 'land', 'jump', 'glide', 'creak', 'lever', 'gate', 'crumble',
        'splash', 'shatter', 'bell', 'fire', 'amb_cistern', 'amb_wind', 'gust',
-       'sting', 'karabasan'}
+       'sting', 'karabasan', 'perde_ney'}
 
 
 def save(name, data, gain=0.9):
@@ -353,53 +353,8 @@ print('ok', sorted(os.listdir(OUT)))
 
 
 # ------------------------------------------------------------- perde: ney
-# Perde sahnelerinde çalan ney: Hicaz makamında, nefesli, notalar arasında
-# kayarak geçen ağır bir taksim ve altında hafif bir dem.
-def ney_taksim():
-    D = 293.66
-    hz = {'D': D, 'Eb': D * 1.0593, 'F#': D * 1.26, 'G': D * 1.335, 'A': D * 1.5,
-          'Bb': D * 1.5874, 'C': D * 1.7818, 'D2': D * 2, 'C3': D * 0.8909, 'A3': D * 0.75}
-    # (nota, süre sn); None = nefes arası
-    phrase = [('A', 2.6), ('Bb', 1.0), ('A', 1.6), ('G', 1.0), ('F#', 2.4), (None, 1.0),
-              ('D', 1.2), ('Eb', 0.8), ('F#', 1.0), ('G', 1.4), ('A', 3.2), (None, 1.2),
-              ('C', 1.4), ('Bb', 1.0), ('A', 1.0), ('G', 0.8), ('F#', 1.2), ('Eb', 1.6), ('D', 3.6), (None, 2.0)]
-    total = sum(d for _, d in phrase)
-    N = n(total)
-    out = [0.0] * N
-    breath = bandpass(noise(total), 500, 2600)
-    ph = 0.0
-    f_prev = hz['A']
-    i = 0
-    for note, dur in phrase:
-        m = n(dur)
-        if note is None:
-            i += m
-            continue
-        f_to = hz[note]
-        for k in range(m):
-            if i >= N:
-                break
-            t = k / SR
-            # Notaya kayarak varış (ney'in glissandosu).
-            slide = min(1.0, t / 0.18)
-            f = f_prev + (f_to - f_prev) * (slide * slide * (3 - 2 * slide))
-            vib = 1 + 0.006 * min(1.0, t / 0.9) * math.sin(2 * math.pi * 5.2 * t)
-            ph += 2 * math.pi * f * vib / SR
-            att = min(1.0, t / 0.22)
-            rel = min(1.0, (dur - t) / 0.3)
-            a = att * rel * (0.85 + 0.15 * math.sin(2 * math.pi * 0.7 * t))
-            tone = math.sin(ph) + 0.22 * math.sin(2 * ph) + 0.1 * math.sin(3 * ph)
-            out[i] = a * (tone * 0.75 + breath[i] * 1.6 * (0.4 + 0.6 * (1 - att)))
-            i += 1
-        f_prev = f_to
-    # Hafif oda yankısı ve dem.
-    wet = echo(out, 0.19, 0.42, 0.45)[:N]
-    dem = mix((sine(hz['D'] / 2, total + 0.1, vib=0.002, vib_rate=0.2), 0.12),
-              (lowpass(brown(total + 0.1), 250), 1.5))
-    return mix((wet, 1.0), (dem, 1.0))
-
-
-save('perde_ney', loop(ney_taksim(), 2), 0.6)
+# Perde neyi ayrı üretilir: tools/synth_ney.py (legato, perdeye ayarlı nefes,
+# salon yankısı). Burada üzerine yazılmaz.
 
 
 # ------------------------------------------------------------- gerilim
