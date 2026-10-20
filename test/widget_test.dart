@@ -19,7 +19,13 @@ void main() {
       final c = (lv.playerStart.x / kTile).floor();
       final r = (lv.playerStart.y / kTile).floor();
       expect(lv.solid(c, r), isFalse, reason: def.title);
-      expect(lv.solid(c, r + 1), isTrue, reason: def.title);
+      final ski = def.skiSurface;
+      if (ski == null) {
+        expect(lv.solid(c, r + 1), isTrue, reason: def.title);
+      } else {
+        // Kayak bölümü: başlangıçta yamaç var, oyuncu karın üstünde.
+        expect(ski[c], greaterThan(r), reason: def.title);
+      }
     }
   });
 }
