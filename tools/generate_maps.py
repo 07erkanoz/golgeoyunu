@@ -283,8 +283,9 @@ f.fill(122,18,196,23,'#'); f.put(123,17,'K'); f.put(125,17,'p'); f.put(126,17,'6
 f.fill(128,7,129,17,'r'); f.fill(131,6,135,6,'#'); f.put(133,5,'T'); f.put(134,5,'k'); f.put(132,5,'k')
 # tüy 2: iki Gözcü'nün sırayla süpürdüğü gölge köprüsü
 f.fill(139,18,158,23,'.'); f.fill(139,18,158,18,'n')
-f.put(148,15,'T')
+f.put(148,17,'T')                            # köprünün üstünde: çömelerek yürürken alınır
 f.fill(159,10,161,23,'#'); f.put(160,9,'g')
+f.fill(159,16,161,17,'.')                    # gözcünün altı, kör noktası: geçit
 f.fill(139,10,141,10,'#'); f.put(139,9,'#'); f.put(140,9,'g')
 f.put(138,17,'7')
 # tüy 3: dikey kayan kayalarla yüksek buluta

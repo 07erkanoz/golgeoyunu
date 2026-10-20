@@ -1215,6 +1215,38 @@ void main() {
 
   group('Kaf uzantısı', () {
     testWithGame<GolgeGame>(
+      'gölge köprüsü: çömelerek geçilir, tüy alınır, gözcünün altından çıkılır',
+      GolgeGame.new,
+      (game) async {
+        final p = await place(game, 3, 136, 17);
+        final feather = game.world.children.whereType<SimurgFeather>().reduce(
+          (a, b) =>
+              (a.position.x - 148.5 * kTile).abs() <
+                  (b.position.x - 148.5 * kTile).abs()
+              ? a
+              : b,
+        );
+        keys(game)
+          ..down = true
+          ..right = true;
+        for (
+          var i = 0;
+          i < _hz * 30 && !p.isDead && p.position.x < 163 * kTile;
+          i++
+        ) {
+          game.update(_dt);
+        }
+        keys(game)
+          ..down = false
+          ..right = false;
+        expect(p.isDead, isFalse, reason: '${p.deathCause}');
+        expect(feather.taken, isTrue, reason: 'köprüdeki tüy alınamadı');
+        expect(p.position.x, greaterThan(163 * kTile));
+        expect(p.position.y + Player.h, closeTo(18 * kTile, 2));
+      },
+    );
+
+    testWithGame<GolgeGame>(
       'üç tüy toplanınca sunak tüy kapısını açar',
       GolgeGame.new,
       (game) async {

@@ -419,8 +419,16 @@ class GolgeGame extends FlameGame with KeyboardEvents {
       for (final c in level.perdeCells) GiantPerde(c),
       for (final (c, r, n) in level.glowRuns)
         PhasePlank(Vector2(c * kTile, r * kTile.toDouble()), n, shade: false),
+      // Gölge köprüsü ikişer karelik parçalardan: ışık yalnızca değdiği
+      // parçayı siler (tek parça olunca ışığın bir ucu bütün köprüyü
+      // siliyordu; iki gözcülü köprü hiç geçilemiyordu).
       for (final (c, r, n) in level.shadeRuns)
-        PhasePlank(Vector2(c * kTile, r * kTile.toDouble()), n, shade: true),
+        for (var k = 0; k < n; k += 2)
+          PhasePlank(
+            Vector2((c + k) * kTile, r * kTile.toDouble()),
+            math.min(2, n - k),
+            shade: true,
+          ),
       for (final (c, r, n) in level.rottenRuns) RottenPlank(c, r, n),
       ..._basins(),
       for (final c in level.drainValves) Valve(c, fill: false),

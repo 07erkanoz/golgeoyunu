@@ -5,6 +5,7 @@ import 'package:flame/components.dart';
 
 import 'golge_game.dart';
 import 'level.dart';
+import 'levels.dart';
 import 'palette.dart';
 
 /// Rüzgâr akımları (`r`) ve süzülme izleri: görünmeyen havayı görünür kılar.
@@ -67,7 +68,16 @@ class WindCurrents extends Component with HasGameReference<GolgeGame> {
     _trail(canvas);
   }
 
+  /// Açık renkli göklerde (Kaf, Gökyolu) krem çizgiler kaybolur: orada
+  /// akım beyaz ve daha belirgin çizilir.
+  bool get _bright {
+    final t = game.level.def.theme;
+    return t == LevelTheme.kaf || t == LevelTheme.sky;
+  }
+
   void _zone(Canvas canvas, Rect z) {
+    final bright = _bright;
+    final air = bright ? const Color(0xFFFFFFFF) : kWarmLight;
     // Soluk bir hava sütunu: kenarları yumuşak.
     canvas.drawRect(
       z,
@@ -76,9 +86,9 @@ class WindCurrents extends Component with HasGameReference<GolgeGame> {
           Offset(z.left, 0),
           Offset(z.right, 0),
           [
-            kWarmLight.withValues(alpha: 0),
-            kWarmLight.withValues(alpha: 0.13),
-            kWarmLight.withValues(alpha: 0),
+            air.withValues(alpha: 0),
+            air.withValues(alpha: bright ? 0.24 : 0.13),
+            air.withValues(alpha: 0),
           ],
           const [0, 0.5, 1],
         ),
@@ -86,7 +96,7 @@ class WindCurrents extends Component with HasGameReference<GolgeGame> {
     // Yukarı kıvrılan rüzgâr çizgileri.
     final streak = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.9
+      ..strokeWidth = bright ? 2.4 : 1.9
       ..strokeCap = StrokeCap.round;
     final count = (z.width * z.height / 1700).clamp(8, 90).toInt();
     for (var i = 0; i < count; i++) {
@@ -98,9 +108,11 @@ class WindCurrents extends Component with HasGameReference<GolgeGame> {
       final len = 18 + (i % 4) * 8.0;
       final fadeTop = ((y - z.top) / 60).clamp(0.0, 1.0);
       final fadeBot = ((z.bottom - y) / 40).clamp(0.0, 1.0);
-      final a = 0.55 * fadeTop * fadeBot;
+      final a = (bright ? 0.9 : 0.55) * fadeTop * fadeBot;
       if (a <= 0.01) continue;
-      streak.color = const Color(0xFFFFF0D0).withValues(alpha: a);
+      streak.color =
+          (bright ? const Color(0xFFFFFFFF) : const Color(0xFFFFF0D0))
+              .withValues(alpha: a);
       canvas.drawPath(
         Path()
           ..moveTo(x + sway, y + len)
@@ -114,7 +126,7 @@ class WindCurrents extends Component with HasGameReference<GolgeGame> {
       final y = z.bottom - ((_t * (60 + i * 7 % 40) + i * 53) % z.height);
       final x =
           z.left + ((i * 0.37) % 1.0) * z.width + math.sin(_t * 2 + i) * 8;
-      mote.color = kWarmLight.withValues(alpha: 0.5);
+      mote.color = air.withValues(alpha: bright ? 0.8 : 0.5);
       canvas.drawCircle(Offset(x, y), 1.6, mote);
     }
   }
