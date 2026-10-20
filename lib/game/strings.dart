@@ -101,7 +101,7 @@ class S {
     'musicLicense':
         'Menü müziği: "Turkish Maqam Soundscape", vjgalaxy (Pixabay). '
         'Pixabay İçerik Lisansı ile kullanılmaktadır.\n'
-        'Gerçek kayıtlı efektler ve ortam sesleri: Kenney (kenney.nl); OpenGameArt\'ta rubberduck, JaggedStone, AntumDeluge ve SketchMan3 (CC0). '
+        'Gerçek kayıtlı efektler ve ortam sesleri: Kenney (kenney.nl); OpenGameArt\'ta rubberduck, JaggedStone, AntumDeluge, SketchMan3, psychhead_, pauliuw, techiew ve congusbongus (CC0). '
         'Diğer sesler bu oyun için sentezlenmiştir.',
   };
 
@@ -192,7 +192,7 @@ class S {
     'musicLicense':
         'Menu music: "Turkish Maqam Soundscape" by vjgalaxy (Pixabay), '
         'used under the Pixabay Content License.\n'
-        'Recorded effects and ambiences: Kenney (kenney.nl); rubberduck, JaggedStone, AntumDeluge and SketchMan3 on OpenGameArt (CC0). '
+        'Recorded effects and ambiences: Kenney (kenney.nl); rubberduck, JaggedStone, AntumDeluge, SketchMan3, psychhead_, pauliuw, techiew and congusbongus on OpenGameArt (CC0). '
         'Other sounds were synthesized for this game.',
   };
 }

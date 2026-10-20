@@ -59,6 +59,7 @@ class GameAudio {
     'fire',
     'fire_warn',
     'sting',
+    'growl',
     'thunder',
   ];
 
@@ -133,6 +134,7 @@ class GameAudio {
         'amb_snow.wav',
         'amb_ark.wav',
         'amb_konya.wav',
+        'amb_cave.wav',
         'karabasan.wav',
         'heartbeat.wav',
         'murmur.wav',
@@ -185,7 +187,8 @@ class GameAudio {
   /// Bölümün temasına uygun ortam döngüsü.
   void ambientFor(LevelTheme theme) {
     final name = switch (theme) {
-      LevelTheme.cistern || LevelTheme.cave => 'amb_cistern',
+      LevelTheme.cistern => 'amb_cistern',
+      LevelTheme.cave => 'amb_cave',
       LevelTheme.ark => 'amb_ark',
       LevelTheme.cliffs || LevelTheme.peri => 'amb_wind',
       LevelTheme.sky || LevelTheme.kaf => 'amb_sky',

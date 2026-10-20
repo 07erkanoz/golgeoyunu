@@ -543,8 +543,8 @@ class KarabasanGlimpse extends PositionComponent
       final d = p.center - position;
       if (d.x.abs() < triggerDistance && d.y.abs() < 220) {
         _t = 0;
-        GameAudio.instance.play('breath', volume: 0.8);
-        game.scare(0.45);
+        GameAudio.instance.play('growl', volume: 0.8);
+        game.scare(0.45, sting: false);
       }
       return;
     }

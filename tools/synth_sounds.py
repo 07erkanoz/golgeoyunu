@@ -55,7 +55,8 @@ def room(data, wet):
 # bunların üzerine yazılmaz.
 CC0 = {'step_1', 'step_2', 'step_3', 'step_4', 'step_wood_1', 'step_wood_2',
        'step_wood_3', 'land', 'jump', 'glide', 'creak', 'lever', 'gate', 'crumble',
-       'splash', 'shatter', 'bell', 'fire', 'amb_cistern', 'amb_wind', 'gust'}
+       'splash', 'shatter', 'bell', 'fire', 'amb_cistern', 'amb_wind', 'gust',
+       'sting', 'karabasan'}
 
 
 def save(name, data, gain=0.9):
