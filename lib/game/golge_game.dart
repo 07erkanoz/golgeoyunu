@@ -15,6 +15,7 @@ import 'entities.dart';
 import 'level.dart';
 import 'lighting.dart';
 import 'shafts.dart';
+import 'fps.dart';
 import 'levels.dart';
 import 'narration.dart';
 import 'perde.dart';
@@ -148,7 +149,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     camera.backdrop = Backdrop();
     effects = ScreenEffects();
     narration = Narration();
-    camera.viewport.addAll([effects, narration]);
+    camera.viewport.addAll([effects, narration, FpsCounter()]);
     _enterMenu();
   }
 

@@ -267,7 +267,9 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
 
     // Kanatlar: havada zıplamayı basılı tutunca süzülür.
     final wasGliding = gliding;
-    gliding = hasWings && !onGround && jump && velocity.y > -40;
+    final inWind = level.cellAt(center.x, center.y) == 'r';
+    // Rüzgâr akımında açık kanat kapanmaz: akım onu yukarı taşır.
+    gliding = hasWings && !onGround && jump && (velocity.y > -40 || inWind);
     if (gliding && !wasGliding) GameAudio.instance.play('glide', volume: 0.7);
     if (gliding) {
       velocity.y = math.min(velocity.y + gravity * 0.3 * dt, 75);
@@ -280,7 +282,6 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       velocity.y = math.min(velocity.y + gravity * dt, maxFall);
     }
     // Rüzgâr akımı yukarı iter; açık kanatları çok daha güçlü.
-    final inWind = level.cellAt(center.x, center.y) == 'r';
     if (inWind && !_inWind) {
       GameAudio.instance.play('gust', volume: 0.55, minGapMs: 2500);
     }
@@ -627,6 +628,34 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     return a;
   }
 
+  /// Sırttan havalanma: yamacın kırık çizgisinde bir köşe geçilirken,
+  /// zemin 1/60 sn'lik bir uçuşun düşeceğinden 1,5 pikselden fazla aşağı
+  /// kaçıyorsa kayakçı havalanır. Karar yalnızca köşelerde ve sabit bir
+  /// zaman penceresiyle verilir; böylece 60, 120 ya da 144 Hz'de aynı sırtta,
+  /// aynı hızda aynı sonuç çıkar.
+  static bool _skiLiftsOff(
+    SkiSurface s,
+    double x,
+    double nx,
+    double vx,
+    double g,
+  ) {
+    if (nx <= x) return false;
+    // Köşeler sütun ortalarında: (i + 0.5) * kTile.
+    final k = ((nx / kTile) - 0.5).floor();
+    final vk = (k + 0.5) * kTile;
+    if (!(vk > x && vk <= nx)) return false;
+    const look = 1 / 60;
+    final half = vx * look / 2;
+    final before = s.at(vk - half);
+    final atV = s.at(vk);
+    final ahead = s.at(vk + half);
+    if (before == null || atV == null || ahead == null) return false;
+    final rate = (atV - before) / math.max(half, 0.001);
+    final ballistic = before + rate * 2 * half + 0.5 * g * look * look;
+    return ahead > ballistic + 1.5;
+  }
+
   void _updateSki(double dt, int dir, bool jump, bool jumpPressed) {
     final s = game.skiSurface!;
     const g = 1500.0;
@@ -667,7 +696,9 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
         final th = s.slope(x);
         var a = g * 0.55 * math.sin(th) * (game.inMagnet(x) ? -1.4 : 1.0);
         a -= _skiSpeed * 0.12 + 0.00035 * _skiSpeed * _skiSpeed.abs();
-        if (dir > 0 && _skiSpeed < 300) a += 280;
+        // Yavaşken sopalarla güçlü itiş: en dik yokuşa da ağır ağır
+        // tırmanılır, hiçbir vadide sıkışıp kalınmaz.
+        if (dir > 0 && _skiSpeed < 300) a += _skiSpeed < 140 ? 760 : 280;
         if (dir < 0) a -= 460 * (_skiSpeed >= 0 ? 1 : -1);
         if (game.inMagnet(x)) a -= 180;
         _skiSpeed = (_skiSpeed + a * dt).clamp(-180.0, 640.0);
@@ -685,8 +716,7 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
         }
         final ny = s.at(nx);
         final vy = _skiSpeed * math.sin(th);
-        final yb = ground + vy * dt + 0.5 * g * dt * dt;
-        if (ny == null || ny > yb + 1.5) {
+        if (ny == null || _skiLiftsOff(s, x, nx, _skiSpeed * math.cos(th), g)) {
           // Sırttan havalanır.
           _skiAir = true;
           _airSpin = 0;

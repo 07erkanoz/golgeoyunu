@@ -31,6 +31,9 @@ class Settings {
   /// ekranın desteklediği en yüksek hızda çizer.
   static bool highRefresh = true;
 
+  /// Köşede kare hızı (FPS) göstergesi.
+  static bool showFps = false;
+
   static SharedPreferences? _prefs;
 
   /// Ayar deposu: açılamazsa bir sonraki kayıtta yeniden denenir.
@@ -79,6 +82,7 @@ class Settings {
       1.3,
     );
     highRefresh = _read(() => p.getBool('high_refresh')) ?? highRefresh;
+    showFps = _read(() => p.getBool('show_fps')) ?? showFps;
     // Kayıtlı bir tercih yoksa cihazın dili: Türkçe değilse İngilizce.
     final lang = _read(() => p.getString('lang'));
     S.lang = switch (lang) {
@@ -102,6 +106,7 @@ class Settings {
       await p.setDouble('touch_opacity', touchOpacity);
       await p.setDouble('brightness', brightness);
       await p.setBool('high_refresh', highRefresh);
+      await p.setBool('show_fps', showFps);
       await p.setString('lang', S.en ? 'en' : 'tr');
     } catch (_) {
       // Yazılamazsa bir sonraki değişiklikte yeniden denenir.

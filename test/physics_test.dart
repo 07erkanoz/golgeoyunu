@@ -20,6 +20,10 @@ import 'package:golge/game/perde.dart';
 import 'package:golge/game/player.dart';
 import 'package:golge/game/puzzles.dart';
 
+/// Kare hızı: `--dart-define=HZ=120` ile yüksek yenileme hızında da denenir.
+const int _hz = int.fromEnvironment('HZ', defaultValue: 60);
+const double _dt = 1 / _hz;
+
 /// Sabit adımlı simülasyon: oyuncuyu bir hücreye koyar, girişi uygular.
 Future<Player> place(GolgeGame game, int levelIndex, int col, int row) async {
   game.debugLoadLevel(levelIndex);
@@ -33,8 +37,8 @@ Future<Player> place(GolgeGame game, int levelIndex, int col, int row) async {
 }
 
 void run(GolgeGame game, double seconds) {
-  for (var t = 0.0; t < seconds; t += 1 / 60) {
-    game.update(1 / 60);
+  for (var t = 0.0; t < seconds; t += _dt) {
+    game.update(_dt);
   }
 }
 
@@ -62,8 +66,8 @@ void main() {
       final ground = p.position.y;
       keys(game).jump = true;
       var minY = ground;
-      for (var i = 0; i < 60; i++) {
-        game.update(1 / 60);
+      for (var i = 0; i < 60 * _hz ~/ 60; i++) {
+        game.update(_dt);
         if (p.position.y < minY) minY = p.position.y;
       }
       expect(ground - minY, inInclusiveRange(80, 100));
@@ -78,10 +82,10 @@ void main() {
         keys(game).right = true;
         for (
           var i = 0;
-          i < 300 && p.position.x + Player.w < 14 * kTile - 4;
+          i < 300 * _hz ~/ 60 && p.position.x + Player.w < 14 * kTile - 4;
           i++
         ) {
-          game.update(1 / 60);
+          game.update(_dt);
         }
         keys(game).jump = true;
         run(game, 1.0);
@@ -106,8 +110,8 @@ void main() {
         run(game, 0.4);
         keys(game).jump = true;
         var grabbed = false;
-        for (var i = 0; i < 90 && !grabbed; i++) {
-          game.update(1 / 60);
+        for (var i = 0; i < 90 * _hz ~/ 60 && !grabbed; i++) {
+          game.update(_dt);
           grabbed = p.state == PlayerState.hang;
         }
         expect(grabbed, isTrue, reason: 'kenara tutunamadı');
@@ -130,8 +134,8 @@ void main() {
         run(game, 0.2);
         keys(game).jump = true;
         var onChain = false;
-        for (var i = 0; i < 60 && !onChain; i++) {
-          game.update(1 / 60);
+        for (var i = 0; i < 60 * _hz ~/ 60 && !onChain; i++) {
+          game.update(_dt);
           onChain = p.state == PlayerState.vine;
         }
         expect(onChain, isTrue, reason: 'zinciri yakalayamadı');
@@ -160,8 +164,8 @@ void main() {
         expect(p.hidden, isTrue);
         final guard = guardOf(game);
         var passed = false;
-        for (var i = 0; i < 60 * 14; i++) {
-          game.update(1 / 60);
+        for (var i = 0; i < _hz * 14; i++) {
+          game.update(_dt);
           if (guard.position.x + Guard.gw < p.position.x) passed = true;
         }
         expect(p.isDead, isFalse);
@@ -304,8 +308,8 @@ void main() {
           ..jump = true
           ..right = true;
         var grabbed = false;
-        for (var i = 0; i < 90 && !grabbed; i++) {
-          game.update(1 / 60);
+        for (var i = 0; i < 90 * _hz ~/ 60 && !grabbed; i++) {
+          game.update(_dt);
           grabbed = p.state == PlayerState.hang;
         }
         expect(grabbed, isTrue, reason: 'çıkıntıya tutunamadı');
@@ -485,8 +489,12 @@ void main() {
         final crate = nearest<Crate>(game, 15 * kTile);
         // Sandığı sola, tahtanın ucundan kefeye it.
         keys(game).left = true;
-        for (var i = 0; i < 400 && crate.position.x > 12 * kTile - 20; i++) {
-          game.update(1 / 60);
+        for (
+          var i = 0;
+          i < 400 * _hz ~/ 60 && crate.position.x > 12 * kTile - 20;
+          i++
+        ) {
+          game.update(_dt);
         }
         expect(
           crate.position.x,
@@ -494,13 +502,17 @@ void main() {
           reason: 'sandık düşmedi',
         );
         // Tahtanın ucuna gel ve yükselen kefeye zıpla.
-        for (var i = 0; i < 120 && p.position.x > 12 * kTile + 1; i++) {
-          game.update(1 / 60);
+        for (
+          var i = 0;
+          i < 120 * _hz ~/ 60 && p.position.x > 12 * kTile + 1;
+          i++
+        ) {
+          game.update(_dt);
         }
         keys(game).jump = true;
         var onPan = false;
-        for (var i = 0; i < 120 && !onPan; i++) {
-          game.update(1 / 60);
+        for (var i = 0; i < 120 * _hz ~/ 60 && !onPan; i++) {
+          game.update(_dt);
           onPan = p.riding is LiftPan;
         }
         expect(onPan, isTrue, reason: 'kefeye inemedi');
@@ -532,8 +544,8 @@ void main() {
         final p = await place(game, 2, 67, 11);
         final w = game.world.children.whereType<Watcher>().first;
         var died = false;
-        for (var i = 0; i < 60 * 14 && !died; i++) {
-          game.update(1 / 60);
+        for (var i = 0; i < _hz * 14 && !died; i++) {
+          game.update(_dt);
           died = p.isDead;
         }
         expect(w.facing, 1);
@@ -587,8 +599,8 @@ void main() {
         expect(game.narration.inCinematic, isTrue);
         expect(game.levelIndex, 0);
         // Açılış perdesi satır uzunluğuna göre sürer.
-        for (var i = 0; i < 60 * 150 && game.narration.inCinematic; i++) {
-          game.update(1 / 60);
+        for (var i = 0; i < _hz * 150 && game.narration.inCinematic; i++) {
+          game.update(_dt);
         }
         run(game, 1);
         expect(game.narration.inCinematic, isFalse);
@@ -660,8 +672,8 @@ void main() {
       (game) async {
         final p = await place(game, 0, 126, 9);
         keys(game).right = true;
-        for (var i = 0; i < 60 * 3 && p.position.x < 134 * kTile; i++) {
-          game.update(1 / 60);
+        for (var i = 0; i < _hz * 3 && p.position.x < 134 * kTile; i++) {
+          game.update(_dt);
         }
         keys(game).right = false;
         run(game, 0.5);
@@ -696,8 +708,8 @@ void main() {
           ..down = true;
         run(game, 0.3);
         keys(game).right = true;
-        for (var i = 0; i < 60 * 8 && p.position.x < 142 * kTile; i++) {
-          game.update(1 / 60);
+        for (var i = 0; i < _hz * 8 && p.position.x < 142 * kTile; i++) {
+          game.update(_dt);
         }
         expect(p.isDead, isFalse);
         expect(p.position.x, greaterThanOrEqualTo(142 * kTile));
@@ -740,8 +752,8 @@ void main() {
         expect(basin.surface, closeTo(basin.low, 1));
         // Haznenin dibine in, dolduran vanaya yürü.
         keys(game).right = true;
-        for (var i = 0; i < 60 * 4 && p.position.x < 163 * kTile; i++) {
-          game.update(1 / 60);
+        for (var i = 0; i < _hz * 4 && p.position.x < 163 * kTile; i++) {
+          game.update(_dt);
         }
         keys(game).right = false;
         run(game, 0.6);
@@ -753,14 +765,18 @@ void main() {
         keys(game)
           ..right = true
           ..jump = true;
-        for (var i = 0; i < 60 && p.position.x < 166.2 * kTile; i++) {
-          game.update(1 / 60);
+        for (
+          var i = 0;
+          i < 60 * _hz ~/ 60 && p.position.x < 166.2 * kTile;
+          i++
+        ) {
+          game.update(_dt);
         }
         keys(game)
           ..right = false
           ..jump = false;
-        for (var i = 0; i < 60 && p.riding is! FloatPlank; i++) {
-          game.update(1 / 60);
+        for (var i = 0; i < 60 * _hz ~/ 60 && p.riding is! FloatPlank; i++) {
+          game.update(_dt);
         }
         expect(p.riding, isA<FloatPlank>());
         run(game, 18);
@@ -863,7 +879,7 @@ void main() {
       required double release,
       required double goal,
     }) {
-      for (var i = 0; i < 60 * 25; i++) {
+      for (var i = 0; i < _hz * 25; i++) {
         final inSwing = p.state == PlayerState.swing;
         if (!inSwing &&
             p.onGround &&
@@ -881,7 +897,7 @@ void main() {
             ..right = true
             ..left = false;
         }
-        game.update(1 / 60);
+        game.update(_dt);
         if (const bool.fromEnvironment('IPIZ') && i % 10 == 0) {
           // ignore: avoid_print
           print(
@@ -935,9 +951,9 @@ void main() {
       final p = await place(game, 4, 33, 16);
       run(game, 0.3);
       keys(game).right = true;
-      for (var i = 0; i < 60 * 6 && !p.isDead; i++) {
+      for (var i = 0; i < _hz * 6 && !p.isDead; i++) {
         keys(game).jump = true;
-        game.update(1 / 60);
+        game.update(_dt);
       }
       // Ya düşer ya da bir ipe tutunup kalır: karşıya süzülemez.
       expect(p.isDead || p.position.x < 59 * kTile, isTrue);
@@ -952,8 +968,8 @@ void main() {
         final p = await place(game, 0, 225, 13);
         final raft = game.world.children.whereType<Raft>().first;
         keys(game).right = true;
-        for (var i = 0; i < 60 * 30 && raft.position.x < 259.9 * kTile; i++) {
-          game.update(1 / 60);
+        for (var i = 0; i < _hz * 30 && raft.position.x < 259.9 * kTile; i++) {
+          game.update(_dt);
         }
         expect(p.riding, same(raft));
         expect(p.isDead, isFalse);
@@ -977,14 +993,14 @@ void main() {
           ..sort((a, b) => a.position.x.compareTo(b.position.x));
         final back = heads.first;
         final front = heads.last;
-        for (var i = 0; i < 60 * 60 && !front.sealed && !p.isDead; i++) {
+        for (var i = 0; i < _hz * 60 && !front.sealed && !p.isDead; i++) {
           // Arkadaki baş açılırken ve onun bakışındayken kıpırdama; kalkan
           // başın dibine gelince bekle.
           final danger = back.eyes > 0 && back.inGaze(p.center);
           final shield = game.world.children.whereType<ShieldCrate>().first;
           final close = front.position.x - shield.toRect().right < kTile * 2;
           keys(game).right = !danger && !close;
-          game.update(1 / 60);
+          game.update(_dt);
         }
         keys(game).right = false;
         expect(p.isDead, isFalse);
@@ -1009,12 +1025,16 @@ void main() {
         }
         final vent = nearest<FireVent>(game, 15 * kTile);
         // Baca sönükken kenara koş, sola zıpla.
-        for (var i = 0; i < 600 && vent.heat > 0; i++) {
-          game.update(1 / 60);
+        for (var i = 0; i < 600 * _hz ~/ 60 && vent.heat > 0; i++) {
+          game.update(_dt);
         }
         keys(game).left = true;
-        for (var i = 0; i < 60 && p.position.x > 14 * kTile + 2; i++) {
-          game.update(1 / 60);
+        for (
+          var i = 0;
+          i < 60 * _hz ~/ 60 && p.position.x > 14 * kTile + 2;
+          i++
+        ) {
+          game.update(_dt);
         }
         keys(game).jump = true;
         run(game, 0.5);
@@ -1023,8 +1043,12 @@ void main() {
         expect(p.isDead, isFalse);
         expect(p.position.y + Player.h, closeTo(148 * kTile, 2));
         // Rafın ucundan sarmaşığa, oradan yukarı.
-        for (var i = 0; i < 240 && p.state != PlayerState.vine; i++) {
-          game.update(1 / 60);
+        for (
+          var i = 0;
+          i < 240 * _hz ~/ 60 && p.state != PlayerState.vine;
+          i++
+        ) {
+          game.update(_dt);
         }
         keys(game)
           ..left = false
@@ -1059,14 +1083,14 @@ void main() {
           ..sort((a, b) => a.position.x.compareTo(b.position.x));
         // Sandığı ilk bacanın üstüne it.
         keys(game).right = true;
-        for (var i = 0; i < 400 && !vents.first.plugged; i++) {
-          game.update(1 / 60);
+        for (var i = 0; i < 400 * _hz ~/ 60 && !vents.first.plugged; i++) {
+          game.update(_dt);
         }
         keys(game).right = false;
         expect(vents.first.plugged, isTrue);
         // Kalan iki baca sönükken koş.
         var tries = 0;
-        while (p.position.x < 22 * kTile && !p.isDead && tries < 60 * 30) {
+        while (p.position.x < 22 * kTile && !p.isDead && tries < _hz * 30) {
           final next = vents.where(
             (v) => !v.plugged && v.position.x > p.center.x - 10,
           );
@@ -1079,7 +1103,7 @@ void main() {
               p.center.x < vents.first.position.x) {
             keys(game).jump = true;
           }
-          game.update(1 / 60);
+          game.update(_dt);
           tries++;
         }
         expect(p.isDead, isFalse);
@@ -1099,7 +1123,7 @@ void main() {
         var prevX = balloon.position.x;
         for (
           var i = 0;
-          i < 60 * 90 && p.position.x < 218 * kTile && !p.isDead;
+          i < _hz * 90 && p.position.x < 218 * kTile && !p.isDead;
           i++
         ) {
           final bx = balloon.position.x;
@@ -1117,7 +1141,7 @@ void main() {
             go = true;
           }
           keys(game).right = go;
-          game.update(1 / 60);
+          game.update(_dt);
         }
         expect(p.isDead, isFalse);
         expect(p.position.x, greaterThanOrEqualTo(218 * kTile));
@@ -1151,7 +1175,7 @@ void main() {
         final safe = p.position.clone();
         for (final f in feathers) {
           p.position.setFrom(f.position - Vector2(Player.w / 2, Player.h / 2));
-          game.update(1 / 60);
+          game.update(_dt);
           p.position.setFrom(safe);
           p.velocity.setZero();
           run(game, 0.2);
@@ -1179,22 +1203,22 @@ void main() {
         expect(rocks.length, 3);
         // Hedef zemin şu ankinden alçak ya da en çok yarım kare yüksekken atla.
         void hopTo(double targetX, double Function() targetTop) {
-          for (var i = 0; i < 60 * 15; i++) {
+          for (var i = 0; i < _hz * 15; i++) {
             final feet = p.position.y + Player.h;
             if (p.onGround && targetTop() > feet - 70) break;
-            game.update(1 / 60);
+            game.update(_dt);
           }
           keys(game)
             ..right = true
             ..jump = true;
-          for (var i = 0; i < 90 && p.position.x < targetX; i++) {
-            game.update(1 / 60);
+          for (var i = 0; i < 90 * _hz ~/ 60 && p.position.x < targetX; i++) {
+            game.update(_dt);
           }
           keys(game)
             ..right = false
             ..jump = false;
-          for (var i = 0; i < 60 && !p.onGround; i++) {
-            game.update(1 / 60);
+          for (var i = 0; i < 60 * _hz ~/ 60 && !p.onGround; i++) {
+            game.update(_dt);
           }
         }
 
@@ -1220,8 +1244,8 @@ void main() {
           g.removeFromParent();
         }
         keys(game).right = true;
-        for (var i = 0; i < 60 * 4 && p.position.x < 232 * kTile; i++) {
-          game.update(1 / 60);
+        for (var i = 0; i < _hz * 4 && p.position.x < 232 * kTile; i++) {
+          game.update(_dt);
         }
         run(game, 1);
         expect(p.isDead, isFalse);
@@ -1239,8 +1263,8 @@ void main() {
         keys(game)
           ..right = true
           ..sneak = true;
-        for (var i = 0; i < 60 * 12 && !p.isDead; i++) {
-          game.update(1 / 60);
+        for (var i = 0; i < _hz * 12 && !p.isDead; i++) {
+          game.update(_dt);
         }
         expect(p.isDead, isTrue);
       },
@@ -1285,11 +1309,11 @@ void main() {
             ),
           );
           run(game, 0.2);
-          for (var i = 0; i < 60 * 20; i++) {
+          for (var i = 0; i < _hz * 20; i++) {
             final cx = c.position.x + Crate.side / 2;
             if (cx >= targetCenter - 3) break;
             keys(game).right = true;
-            game.update(1 / 60);
+            game.update(_dt);
           }
           keys(game).right = false;
           run(game, 0.3);
@@ -1316,7 +1340,7 @@ void main() {
         for (final r in [24, 22, 20, 18, 16, 14, 12, 10]) {
           final left = ((24 - r) ~/ 2).isEven;
           final x = left ? 205.6 : 206.4;
-          for (var i = 0; i < 60 * 3; i++) {
+          for (var i = 0; i < _hz * 3; i++) {
             final dx = x * kTile - p.center.x;
             keys(game)
               ..right = dx > 6
@@ -1324,14 +1348,19 @@ void main() {
               ..jump =
                   (p.onGround &&
                       (p.position.y + Player.h) > r * kTile + 2 &&
-                      dx.abs() < 3.6 * kTile) ||
+                      dx.abs() < 4.2 * kTile) ||
                   (!p.onGround && p.velocity.y < 0);
-            game.update(1 / 60);
+            game.update(_dt);
             if (p.onGround && (p.position.y + Player.h - r * kTile).abs() < 2) {
               break;
             }
           }
-          expect(p.isDead, isFalse, reason: 'satır $r');
+          expect(
+            p.isDead,
+            isFalse,
+            reason:
+                'satır $r ${p.deathCause} ${p.position} su ${basin.surface}',
+          );
         }
         keys(game)
           ..left = false
@@ -1358,7 +1387,7 @@ void main() {
         final gate = nearest<Gate>(game, 91 * kTile);
         // İlk tanrıya gerçekten tırman: diz, taht, kol, omuz.
         void climbTo(double x, int row) {
-          for (var i = 0; i < 60 * 3; i++) {
+          for (var i = 0; i < _hz * 3; i++) {
             final dx = x * kTile - p.center.x;
             final feetRow = (p.position.y + Player.h) / kTile;
             keys(game)
@@ -1367,7 +1396,7 @@ void main() {
               ..jump =
                   (p.onGround && feetRow > row + 0.1) ||
                   (!p.onGround && p.velocity.y < 0);
-            game.update(1 / 60);
+            game.update(_dt);
             if (p.onGround && (feetRow - row).abs() < 0.05 && dx.abs() < 8) {
               break;
             }
@@ -1389,7 +1418,7 @@ void main() {
         Future<void> setStone(StarStone st) async {
           for (var n = 0; n < 12 && st.sign != horoscope[st.index]; n++) {
             keys(game).up = true;
-            game.update(1 / 60);
+            game.update(_dt);
             keys(game).up = false;
             run(game, 0.1);
           }
@@ -1465,14 +1494,14 @@ void main() {
         }
         final giant = game.world.children.whereType<StoneGiant>().first;
         final gate = nearest<Gate>(game, 125 * kTile);
-        for (var i = 0; i < 60 * 90 && !giant.fallen && !p.isDead; i++) {
+        for (var i = 0; i < _hz * 90 && !giant.fallen && !p.isDead; i++) {
           final lures = game.world.children.whereType<FireflyLure>();
           if (lures.isEmpty && game.fireflies < 3) game.fireflies = 3;
           if (lures.isEmpty && p.onGround) {
             p.facing = 1;
             game.controls.queueLure();
           }
-          game.update(1 / 60);
+          game.update(_dt);
         }
         expect(
           p.isDead,
@@ -1495,13 +1524,13 @@ void main() {
         final p = await place(game, 8, 73, 19);
         final wolf = nearest<Wolf>(game, 78 * kTile);
         keys(game).left = true;
-        for (var i = 0; i < 60 * 5 && !p.isDead; i++) {
+        for (var i = 0; i < _hz * 5 && !p.isDead; i++) {
           if (p.center.x <= 72.6 * kTile) {
             keys(game)
               ..left = false
               ..up = true;
           }
-          game.update(1 / 60);
+          game.update(_dt);
         }
         expect(wolf.hunting, isTrue);
         expect(p.isDead, isFalse);
@@ -1518,7 +1547,7 @@ void main() {
         keys(game).right = true;
         for (
           var i = 0;
-          i < 60 * 18 && p.position.x < 191 * kTile && !p.isDead;
+          i < _hz * 18 && p.position.x < 191 * kTile && !p.isDead;
           i++
         ) {
           final hole = game.world.children.whereType<ThinIce>().any(
@@ -1532,7 +1561,7 @@ void main() {
             F - 1,
           );
           keys(game).jump = hole || block;
-          game.update(1 / 60);
+          game.update(_dt);
         }
         expect(p.isDead, isFalse);
         expect(p.position.x, greaterThan(190 * kTile));
@@ -1551,7 +1580,7 @@ void main() {
       var deaths = 0;
       var wasDead = false;
       keys(game).right = true;
-      for (var i = 0; i < 60 * seconds; i++) {
+      for (var i = 0; i < _hz * seconds; i++) {
         final pl = game.player!;
         if (pl.center.x > goalX) break;
         final x = pl.center.x;
@@ -1562,7 +1591,7 @@ void main() {
             (s.at(x + 50) == null && !railAt(x + 50)) ||
             (s.at(x + 90) == null && !railAt(x + 90));
         keys(game).jump = pl.onGround && (rock || gap);
-        game.update(1 / 60);
+        game.update(_dt);
         if (pl.isDead && !wasDead) deaths++;
         wasDead = pl.isDead;
       }
@@ -1601,9 +1630,17 @@ void main() {
       keys(game).right = true;
       run(game, 2);
       keys(game).jump = true;
-      run(game, 0.45);
-      p.skiAngle += 3.0;
-      run(game, 1.5);
+      run(game, 0.2);
+      keys(game).jump = false;
+      // Yere değmeden hemen önce beden ters döner.
+      final surface = game.skiSurface!;
+      for (var t = 0.0; t < 2 && !p.isDead; t += _dt) {
+        final ground = surface.at(p.center.x);
+        if (ground != null && ground - (p.position.y + Player.h) < 24) {
+          p.skiAngle = surface.slope(p.center.x) + 3.0;
+        }
+        game.update(_dt);
+      }
       expect(p.isDead, isTrue);
     });
   });
@@ -1616,8 +1653,8 @@ void main() {
       final p = await place(game, 11, 49, 21);
       final y0 = p.position.y;
       var top = y0;
-      for (var i = 0; i < 60; i++) {
-        game.update(1 / 60);
+      for (var i = 0; i < 60 * _hz ~/ 60; i++) {
+        game.update(_dt);
         top = math.min(top, p.position.y);
       }
       expect(y0 - top, greaterThan(4 * kTile));
@@ -1630,7 +1667,7 @@ void main() {
         final p = await place(game, 11, 111, 17);
         run(game, 0.3);
         for (final goal in [151.5, 192.5]) {
-          for (var i = 0; i < 60 * 30; i++) {
+          for (var i = 0; i < _hz * 30; i++) {
             if (p.isDead || (p.onGround && p.position.x > goal * kTile)) break;
             final inSwing = p.state == PlayerState.swing;
             if (!inSwing &&
@@ -1648,7 +1685,7 @@ void main() {
                 ..right = true
                 ..left = false;
             }
-            game.update(1 / 60);
+            game.update(_dt);
           }
           keys(game)
             ..jump = false
@@ -1673,13 +1710,13 @@ void main() {
         }
         final stone = game.world.children.whereType<MillStone>().first;
         keys(game).right = true;
-        for (var i = 0; i < 60 * 6 && stone.position.y < 22 * kTile; i++) {
-          game.update(1 / 60);
+        for (var i = 0; i < _hz * 6 && stone.position.y < 22 * kTile; i++) {
+          game.update(_dt);
         }
         run(game, 1.5);
         expect(stone.position.y, greaterThan(22 * kTile));
         // Taşı yüksek kapının dibine it.
-        for (var i = 0; i < 60 * 20 && stone.position.x < 106.9 * kTile; i++) {
+        for (var i = 0; i < _hz * 20 && stone.position.x < 106.9 * kTile; i++) {
           if (p.center.x > stone.position.x) {
             p.position.setFrom(
               Level.standOn(
@@ -1689,7 +1726,7 @@ void main() {
               ),
             );
           }
-          game.update(1 / 60);
+          game.update(_dt);
         }
         keys(game).right = false;
         expect(stone.position.x, greaterThan(106 * kTile));
@@ -1726,28 +1763,32 @@ void main() {
         keys(game)
           ..right = true
           ..jump = true;
-        for (var i = 0; i < 180 && p.riding is! FloatPlank; i++) {
+        for (var i = 0; i < 180 * _hz ~/ 60 && p.riding is! FloatPlank; i++) {
           if (p.position.x > 193.6 * kTile) keys(game).right = false;
-          game.update(1 / 60);
+          game.update(_dt);
         }
         keys(game)
           ..right = false
           ..jump = false;
         expect(p.riding, isA<FloatPlank>());
         run(game, 20);
-        expect(p.isDead, isFalse);
+        expect(p.isDead, isFalse, reason: '${p.deathCause} ${p.position}');
         keys(game)
           ..right = true
           ..jump = true;
         // Geçide varınca durur (ileride devriye gezen Kandilci var).
-        for (var i = 0; i < 120 && p.position.x < 199.5 * kTile; i++) {
-          game.update(1 / 60);
+        for (
+          var i = 0;
+          i < 120 * _hz ~/ 60 && p.position.x < 199.5 * kTile;
+          i++
+        ) {
+          game.update(_dt);
         }
         keys(game)
           ..right = false
           ..jump = false;
-        run(game, 0.3);
-        expect(p.isDead, isFalse);
+        // Geçide varılır; ileride Kandilci var, beklemeden bakılır.
+        expect(p.isDead, isFalse, reason: '${p.deathCause} ${p.position}');
         expect(p.position.x, greaterThan(199 * kTile));
         expect(p.position.y + Player.h, lessThanOrEqualTo(24 * kTile + 1));
       },
@@ -1766,15 +1807,15 @@ void main() {
         run(game, 0.6);
         expect(game.hintShown('hide'), isTrue);
         expect(game.hintShown('guard'), isFalse);
-        for (var i = 0; i < 60 * 20 && !game.hintShown('guard'); i++) {
-          game.update(1 / 60);
+        for (var i = 0; i < _hz * 20 && !game.hintShown('guard'); i++) {
+          game.update(_dt);
         }
         expect(p.isDead, isFalse);
         expect(game.hintShown('guard'), isTrue);
         keys(game).down = false;
         await place(game, 0, 135, 9);
-        for (var i = 0; i < 60 * 30 && !game.hintShown('shadePlank'); i++) {
-          game.update(1 / 60);
+        for (var i = 0; i < _hz * 30 && !game.hintShown('shadePlank'); i++) {
+          game.update(_dt);
         }
         expect(game.hintShown('shadePlank'), isTrue);
         expect(Hints.text('shadePlank'), contains('Çömel'));
@@ -1791,8 +1832,8 @@ void main() {
         final m = game.world.children.whereType<MedusaHead>().first;
         run(game, 0.3);
         keys(game).right = true;
-        for (var i = 0; i < 60 * 25 && !m.sealed && !p.isDead; i++) {
-          game.update(1 / 60);
+        for (var i = 0; i < _hz * 25 && !m.sealed && !p.isDead; i++) {
+          game.update(_dt);
         }
         keys(game).right = false;
         expect(p.isDead, isFalse);
@@ -1809,10 +1850,11 @@ void main() {
         final s = game.world.children.whereType<Semazen>().first;
         for (
           var i = 0;
-          i < 600 && !(s.inFront && (s.position.x - 342 * kTile).abs() < 20);
+          i < 600 * _hz ~/ 60 &&
+              !(s.inFront && (s.position.x - 342 * kTile).abs() < 20);
           i++
         ) {
-          game.update(1 / 60);
+          game.update(_dt);
         }
         expect(s.inFront, isTrue);
         p.position.setValues(
@@ -1822,8 +1864,8 @@ void main() {
         run(game, 0.2);
         expect(p.hidden, isTrue);
         // Semâzen arkaya dönünce saklamaz.
-        for (var i = 0; i < 1200 && s.inFront; i++) {
-          game.update(1 / 60);
+        for (var i = 0; i < 1200 * _hz ~/ 60 && s.inFront; i++) {
+          game.update(_dt);
         }
         p.position.setValues(
           s.position.x - Player.w / 2,
@@ -1882,18 +1924,18 @@ void main() {
               ..right = false
               ..jump = false;
             while (t < times[j]) {
-              game.update(1 / 60);
-              t += 1 / 60;
+              game.update(_dt);
+              t += _dt;
               if (p.isDead) return -1;
             }
             final goal = j < wheels.length ? wheels[j] : null;
             k
               ..right = true
               ..jump = true;
-            game.update(1 / 60);
-            t += 1 / 60;
+            game.update(_dt);
+            t += _dt;
             var landed = false;
-            for (var i = 0; i < 240; i++) {
+            for (var i = 0; i < 240 * _hz ~/ 60; i++) {
               // Hedef tablanın üstüne gelince sağa basmayı bırakır.
               if (goal != null) {
                 final tray = goal.planks.reduce(
@@ -1906,8 +1948,8 @@ void main() {
                 k.right = p.center.x < tray.center.x - 4;
               }
               k.jump = !p.onGround;
-              game.update(1 / 60);
-              t += 1 / 60;
+              game.update(_dt);
+              t += _dt;
               if (p.isDead) return -1;
               if (p.onGround && i > 3) {
                 landed = true;
@@ -1979,16 +2021,16 @@ void main() {
           k
             ..left = dir < 0
             ..right = dir > 0;
-          for (var i = 0; i < 600; i++) {
+          for (var i = 0; i < 600 * _hz ~/ 60; i++) {
             final front = dir > 0 ? p.position.x + Player.w : p.position.x;
             if (p.onGround && (front - edge) * dir >= 0) break;
-            game.update(1 / 60);
+            game.update(_dt);
           }
           k.jump = true;
-          game.update(1 / 60);
-          for (var i = 0; i < 240; i++) {
+          game.update(_dt);
+          for (var i = 0; i < 240 * _hz ~/ 60; i++) {
             k.jump = p.velocity.y < 0;
-            game.update(1 / 60);
+            game.update(_dt);
             if (p.onGround && p.velocity.y >= 0) break;
           }
           k.jump = false;
@@ -2002,14 +2044,22 @@ void main() {
         k
           ..right = true
           ..left = false;
-        for (var i = 0; i < 300 && p.center.x < 453.5 * kTile; i++) {
-          game.update(1 / 60);
+        for (
+          var i = 0;
+          i < 300 * _hz ~/ 60 && p.center.x < 453.5 * kTile;
+          i++
+        ) {
+          game.update(_dt);
         }
         k
           ..right = false
           ..up = true;
-        for (var i = 0; i < 400 && p.position.y + Player.h > 7 * kTile; i++) {
-          game.update(1 / 60);
+        for (
+          var i = 0;
+          i < 400 * _hz ~/ 60 && p.position.y + Player.h > 7 * kTile;
+          i++
+        ) {
+          game.update(_dt);
         }
         k.up = false;
         expect(p.isDead, isFalse, reason: 'merdiven');
@@ -2017,10 +2067,10 @@ void main() {
         k
           ..left = true
           ..jump = true;
-        game.update(1 / 60);
-        for (var i = 0; i < 240 && !p.onGround; i++) {
+        game.update(_dt);
+        for (var i = 0; i < 240 * _hz ~/ 60 && !p.onGround; i++) {
           k.jump = p.velocity.y < 0;
-          game.update(1 / 60);
+          game.update(_dt);
         }
         k.jump = false;
         expect(p.position.y + Player.h, closeTo(8 * kTile, 2));

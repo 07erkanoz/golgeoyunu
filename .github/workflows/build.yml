@@ -93,6 +93,10 @@ jobs:
         run: flutter pub get
       - name: Testler
         run: flutter test
+      - name: Fizik testleri (yüksek yenileme hızı)
+        run: |
+          flutter test test/physics_test.dart --dart-define=HZ=120
+          flutter test test/physics_test.dart --dart-define=HZ=144
       - name: Linux için derle
         run: flutter build linux --release
       - name: tar.gz olarak paketle
