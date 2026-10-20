@@ -805,6 +805,19 @@ class GolgeGame extends FlameGame with KeyboardEvents {
 
   double _hintScan = 0;
 
+  /// Olay mesajı: kayıt başına bir kez gösterilir; ölüp yeniden denerken
+  /// tekrarlanmaz. [hint] ise üstte ipucu olarak sıraya girer.
+  void once(String key, String text, {bool hint = false}) {
+    final id = 'once:$key';
+    if (_whispersShown.contains(id)) return;
+    _whispersShown.add(id);
+    if (hint) {
+      narration.hint(text, queue: true);
+    } else {
+      narration.whisper(text);
+    }
+  }
+
   /// Bu ipucu gösterildi mi (testler için)?
   bool hintShown(String key) => _whispersShown.contains('hint:$key');
 
@@ -986,7 +999,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
       GameAudio.instance.play('gust', volume: 0.8, minGapMs: 4000);
       if (!_stormWarned) {
         _stormWarned = true;
-        narration.whisper(S.of('blizzard'));
+        once('blizzard', S.of('blizzard'));
       }
     }
     blizzard = target;
@@ -1004,7 +1017,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     }
     if (!_darkWarned) {
       _darkWarned = true;
-      narration.whisper(S.of('darkZone'));
+      once('darkZone$levelIndex', S.of('darkZone'));
     }
     _darkT += dt;
     if (fireflies > 0) {

@@ -111,7 +111,7 @@ class StarStone extends PositionComponent
     final stones = game.world.children.whereType<StarStone>().toList();
     if (stones.every((s) => s.correct)) {
       GameAudio.instance.play('memory', volume: 0.7);
-      game.narration.whisper(S.of('horoscope'));
+      game.once('horoscope', S.of('horoscope'));
       Gate? best;
       var bestD = double.infinity;
       for (final g in game.world.children.whereType<Gate>()) {
@@ -504,7 +504,7 @@ class StoneGiant extends PositionComponent with HasGameReference<GolgeGame> {
         if (hits >= hitsToFall) {
           fallen = true;
           GameAudio.instance.play('crumble');
-          game.narration.whisper(S.of('giantFell'));
+          game.once('giantFell', S.of('giantFell'));
           game.world.add(
             GiantBridge(Vector2(position.x - kTile, position.y - kTile * 1.2)),
           );

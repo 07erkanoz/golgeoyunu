@@ -109,7 +109,7 @@ class MedusaHead extends PositionComponent with HasGameReference<GolgeGame> {
           sealed = true;
           GameAudio.instance.play('grind');
           GameAudio.instance.play('memory', volume: 0.5);
-          game.narration.whisper(S.of('medusaSealed'));
+          game.once('medusaSealed', S.of('medusaSealed'));
           return;
         }
       }
@@ -134,7 +134,7 @@ class MedusaHead extends PositionComponent with HasGameReference<GolgeGame> {
         game.world.add(StoneGuard(g.position.clone(), g.facing));
         g.removeFromParent();
         GameAudio.instance.play('grind', volume: 0.6);
-        game.narration.hint(S.of('guardStone'), queue: true);
+        game.once('guardStone', S.of('guardStone'), hint: true);
       }
     }
   }

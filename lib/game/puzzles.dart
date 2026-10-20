@@ -742,7 +742,7 @@ class GiantPerde extends PositionComponent with HasGameReference<GolgeGame> {
     } else if (lagT < lagLength) {
       lagT += dt;
       if (lagT >= lagLength) {
-        game.narration.whisper(S.of('shadowLooked'));
+        game.once('shadowLooked', S.of('shadowLooked'));
       }
     }
   }
