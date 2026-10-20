@@ -507,12 +507,30 @@ def grind():
 
 
 def fire():
-    roar = env(bandpass(noise(1.3), 150, 1800), 0.05, 0.6)
-    crackle = [0.0] * n(1.3)
+    # Alev süresince (1,3 sn) harlayan, titreyen ateş; düzensiz çıtırtılar.
+    d = 1.3
     r = random.Random(8)
-    for _ in range(25):
-        place(crackle, decay(highpass(noise(0.03), 2000), 0.006), r.random() * 1.2, 0.5)
-    return mix((roar, 1.0), (crackle, 0.6))
+    body = mix((lowpass(brown(d), 500), 3.0), (bandpass(noise(d), 180, 900), 0.6))
+    p1, p2 = r.random() * 6, r.random() * 6
+    body = [x * (0.65 + 0.2 * math.sin(2 * math.pi * 7.3 * i / SR + p1)
+                 + 0.15 * math.sin(2 * math.pi * 12.7 * i / SR + p2))
+            for i, x in enumerate(body)]
+    whoosh = env(bandpass(noise(0.35), 300, 2500), 0.04, 0.3)
+    roar = env(body, 0.06, 0.35)
+    crackle = [0.0] * n(d)
+    t = 0.05
+    while t < d - 0.1:
+        lo = r.uniform(1500, 3500)
+        place(crackle, decay(bandpass(noise(0.02), lo, lo * 1.8), 0.004 + r.random() * 0.004),
+              t, 0.3 + r.random() * 0.7)
+        t += r.uniform(0.02, 0.15)
+    return mix((roar, 1.0), (whoosh, 0.5), (crackle, 0.35))
+
+
+def fire_warn():
+    # Duman: alevden önce yükselen boğuk bir hışırtı (0,7 sn).
+    hiss = lowpass(bandpass(noise(0.7), 300, 1400), 1200)
+    return [x * (i / len(hiss)) ** 2 for i, x in enumerate(hiss)]
 
 
 def thunder():
@@ -524,4 +542,5 @@ def thunder():
 
 save('grind', grind(), 0.6)
 save('fire', fire(), 0.55)
+save('fire_warn', fire_warn(), 0.35)
 save('thunder', thunder(), 0.7)

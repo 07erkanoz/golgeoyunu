@@ -47,6 +47,7 @@ class GameAudio {
     'bell',
     'grind',
     'fire',
+    'fire_warn',
     'thunder',
   ];
 

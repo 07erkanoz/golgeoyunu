@@ -172,10 +172,10 @@ k.fill(26, B + 20, 26, B + 37, '|')
 k.fill(14, B + 20, 25, B + 21, '#')
 k.put(24, B + 19, 'K'); k.put(22, B + 19, '~'); k.put(23, B + 19, '~'); k.put(18, B + 19, 'G')
 k.put(15, B + 19, '!'); k.put(20, B + 19, 'M'); k.put(25, B + 19, 'B')
-k.fill(4, B + 17, 12, B + 17, '=')
-k.fill(3, TOP + 92, 3, B + 16, '|')          # eski zeminden yukarı sarmaşık
+k.fill(4, B + 18, 12, B + 18, '=')          # adadan iki kare yukarıda: zıplanır
+k.fill(3, TOP + 92, 3, B + 17, '|')          # eski zeminden rafın hizasına sarmaşık
 k.fill(8, TOP + 96, 27, TOP + 97, '#')       # Haliç'in dibi
-k.put(5, B + 16, 'B')
+k.put(5, B + 17, 'B')
 # --- Çan Katı ve külah
 k.fill(14, 22, 16, TOP + 1, 'r')
 k.fill(2, 26, 9, 27, '#'); k.fill(3, 23, 5, 23, '#'); k.put(4, 24, 'c')

@@ -431,11 +431,21 @@ class FireVent extends PositionComponent with HasGameReference<GolgeGame> {
   void update(double dt) {
     super.update(dt);
     final was = burning;
+    final warm = heat;
     _t += dt;
-    if (burning && !was) {
-      GameAudio.instance.play('fire', volume: 0.6, minGapMs: 300);
-    }
     final p = game.player;
+    // Ses yalnızca yakındaki bacadan gelir; uzaklaştıkça kısılır.
+    final near = p == null
+        ? 0.0
+        : (1 - (p.center - position).length / (12 * kTile)).clamp(0.0, 1.0);
+    if (!plugged && near > 0) {
+      if (warm == 0 && heat > 0) {
+        GameAudio.instance.play('fire_warn', volume: 0.5 * near, minGapMs: 0);
+      }
+      if (burning && !was) {
+        GameAudio.instance.play('fire', volume: 0.7 * near, minGapMs: 0);
+      }
+    }
     if (burning &&
         p != null &&
         !p.isDead &&

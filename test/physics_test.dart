@@ -996,6 +996,41 @@ void main() {
 
   group('Kule uzantısı', () {
     testWithGame<GolgeGame>(
+      'yanan adadan raftaki sarmaşığa zıplanır',
+      GolgeGame.new,
+      (game) async {
+        final p = await place(game, 1, 14, 149);
+        for (final g in game.world.children.whereType<Guard>().toList()) {
+          if ((g.position.y / kTile - 149).abs() < 3) g.removeFromParent();
+        }
+        final vent = nearest<FireVent>(game, 15 * kTile);
+        // Baca sönükken kenara koş, sola zıpla.
+        for (var i = 0; i < 600 && vent.heat > 0; i++) {
+          game.update(1 / 60);
+        }
+        keys(game).left = true;
+        for (var i = 0; i < 60 && p.position.x > 14 * kTile + 2; i++) {
+          game.update(1 / 60);
+        }
+        keys(game).jump = true;
+        run(game, 0.5);
+        keys(game).jump = false;
+        run(game, 0.6);
+        expect(p.isDead, isFalse);
+        expect(p.position.y + Player.h, closeTo(148 * kTile, 2));
+        // Rafın ucundan sarmaşığa, oradan yukarı.
+        for (var i = 0; i < 240 && p.state != PlayerState.vine; i++) {
+          game.update(1 / 60);
+        }
+        keys(game)
+          ..left = false
+          ..up = true;
+        run(game, 3);
+        expect(p.isDead, isFalse);
+        expect(p.position.y, lessThan(140 * kTile));
+      },
+    );
+    testWithGame<GolgeGame>(
       'çanı çalınca Kandilci çürük tahtadan düşer',
       GolgeGame.new,
       (game) async {
