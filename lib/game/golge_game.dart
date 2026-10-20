@@ -385,6 +385,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
       if (level.def.quakes) QuakeClock(),
       for (final z in level.rainZones) RainZone(z),
       for (final c in level.shieldCells) ShieldCrate(c),
+      for (final c in level.ringCells) FairyRing(c),
       for (final c in level.raftCells) Raft(c),
       for (var i = 0; i < level.ventCells.length; i++)
         FireVent(level.ventCells[i], phase: i * 1.1),

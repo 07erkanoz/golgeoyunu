@@ -1,4 +1,6 @@
 import sys
+sys.path.insert(0, 'tools')
+from sections import rope_chasm
 class G:
     def __init__(s,W,H,fill='.'):
         s.W,s.H=W,H; s.g=[[fill]*W for _ in range(H)]
@@ -625,7 +627,65 @@ ck.flat(14); ck.mark('p',-12); ck.mark('6',-10); ck.mark('K',-9); ck.mark('B',-6
 cig_grid, cig_surface = ck.build(int(max(ck.y))+12)
 lvl11 = cig_grid.rows()
 
-MAPS = [('kMapYerebatan', lvl1), ('kMapKule', lvl2), ('kMapGokyolu', lvl3), ('kMapKaf', lvl4), ('kMapAgri', lvl5), ('kMapGemi', lvl6), ('kMapNemrut', lvl7), ('kMapGunDogumu', lvl8), ('kMapKarYolu', lvl9), ('kMapPalandoken', lvl10), ('kMapCig', lvl11)]
+# ------------------------------------------------------------ XII · PERİ BACALARI
+W,H=388,30
+pb=G(W,H)
+def chimney(g,x,top,ring=False,holds=True,w=2):
+    g.fill(x,top+1,x+w-1,H-1,'#')
+    g.fill(x,top,x+w,top,'#')                   # bazalt şapka (sağa taşar)
+    if holds:
+        g.fill(x-1,top+1,x-1,H-5,'|')           # oyma tutamaklar (sol yüz)
+    if ring:
+        g.put(x+1,top-1,'"')
+# 1) Muşkara köyü
+pb.fill(0,26,43,29,'#')
+pb.put(2,25,'P'); pb.put(3,25,'p'); pb.put(4,25,'1'); pb.put(6,25,'B')
+pb.fill(10,21,14,25,'#'); pb.put(12,20,'k'); pb.fill(20,19,25,25,'#'); pb.put(22,18,'k')
+pb.put(17,25,'2'); pb.put(28,25,'F'); pb.put(32,25,'K'); pb.put(35,25,'M')
+# 2) Peri bacaları: tutamaklarla tırmanış, peri halkalarıyla yükseliş
+pb.fill(44,26,108,29,'#'); pb.put(45,25,'p'); pb.put(46,25,'3')
+for x,top,ring in [(48,22,True),(54,19,False),(60,16,True),(67,13,False),(74,15,True),(81,10,False),(88,7,False),(95,12,True),(102,17,False)]:
+    chimney(pb,x,top,ring)
+pb.put(88,6,'M'); pb.put(81,9,'k'); pb.put(60,15,'F') if False else None
+pb.put(72,25,'4'); pb.put(92,25,'F'); pb.put(105,25,'K'); pb.put(107,25,'B')
+# 3) Güvercinlik vadisi: iki ipli geçiş (Ağrı'da denenmiş düzen), ortada güvercinlikli ada
+x=rope_chasm(pb,109,18,n=5)
+pb.fill(x,18,156,29,'#')
+pb.put(110,17,'p'); pb.put(111,17,'5'); pb.put(112,17,'K')
+pb.put(152,17,'k'); pb.put(154,17,'k'); pb.put(153,17,'K'); pb.put(155,17,'B')
+x=rope_chasm(pb,157,18,n=4)
+pb.put(192,17,'6'); pb.put(193,17,'F')
+pb.fill(195,24,197,29,'#'); pb.put(196,23,'G')
+PO=4
+# 4) Kaya kilisesi: Kandilcilerin kampı, tavandan düşen ışık, apsiste Gözcü
+pb.fill(194+PO,6,254+PO,29,'#')
+pb.fill(197+PO,14,251+PO,25,'.')                    # nef
+pb.fill(194+PO,23,196+PO,25,'.')                    # kapı
+pb.fill(193+PO,26,196+PO,29,'#')
+pb.put(198+PO,25,'p'); pb.put(199+PO,25,'K'); pb.put(201+PO,25,'7')
+for x in (206+PO,214+PO,230+PO,238+PO):
+    pb.put(x,25,'I')
+pb.put(210+PO,25,'G'); pb.put(234+PO,25,'G'); pb.put(222+PO,22,'M')
+pb.put(220+PO,14,'j'); pb.put(220+PO,24,'m'); pb.put(248+PO,25,'g')
+pb.fill(252+PO,23,254+PO,25,'.')                    # apsisin ardındaki çıkış
+pb.put(244+PO,25,'F')
+# 5) Perilerin dansı: halkadan halkaya
+pb.fill(255+PO,26,329+PO,29,'#'); pb.put(256+PO,25,'K'); pb.put(257+PO,25,'p'); pb.put(258+PO,25,'8')
+for x,top,ring in [(262+PO,22,True),(269+PO,18,True),(276+PO,14,False),(283+PO,12,True),(291+PO,9,False),(299+PO,12,True),(307+PO,16,False),(314+PO,20,True)]:
+    chimney(pb,x,top,ring)
+pb.put(291+PO,8,'M'); pb.put(299+PO,11,'F') if False else None
+pb.put(320+PO,25,'F'); pb.put(324+PO,25,'K'); pb.put(326+PO,25,'B')
+# 6) Uçhisar: dev kaya kaleye tırmanış
+pb.fill(330+PO,26,383+PO,29,'#'); pb.put(331+PO,25,'p')
+pb.fill(338+PO,4,370+PO,25,'#')
+pb.fill(337+PO,4,337+PO,25,'|')
+for r in (21,16,11):
+    pb.fill(338,r,341,r,'.')                  # dinlenme oyukları
+pb.fill(338+PO,3,372+PO,3,'#')
+pb.put(345+PO,2,'9'); pb.put(352+PO,2,'K'); pb.put(360+PO,2,'B'); pb.put(366+PO,2,'E')
+lvl12=pb.rows()
+
+MAPS = [('kMapYerebatan', lvl1), ('kMapKule', lvl2), ('kMapGokyolu', lvl3), ('kMapKaf', lvl4), ('kMapAgri', lvl5), ('kMapGemi', lvl6), ('kMapNemrut', lvl7), ('kMapGunDogumu', lvl8), ('kMapKarYolu', lvl9), ('kMapPalandoken', lvl10), ('kMapCig', lvl11), ('kMapPeri', lvl12)]
 
 out = ['// Bu dosya tools/generate_maps.py ile üretilir; elle düzenleme.',
        '// Gösterim: lib/game/level.dart başındaki açıklamaya bakın.', '']

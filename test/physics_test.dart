@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:ui';
 
 import 'package:flame/components.dart';
@@ -1544,6 +1545,59 @@ void main() {
       run(game, 1.5);
       expect(p.isDead, isTrue);
     });
+  });
+
+  group('Peri Bacaları', () {
+    testWithGame<GolgeGame>('peri halkası göğe fırlatır', GolgeGame.new, (
+      game,
+    ) async {
+      expect(levels[11].title, 'XII · PERİ BACALARI');
+      final p = await place(game, 11, 49, 21);
+      final y0 = p.position.y;
+      var top = y0;
+      for (var i = 0; i < 60; i++) {
+        game.update(1 / 60);
+        top = math.min(top, p.position.y);
+      }
+      expect(y0 - top, greaterThan(4 * kTile));
+    });
+
+    testWithGame<GolgeGame>(
+      'Güvercinlik Vadisi iplerle geçilir',
+      GolgeGame.new,
+      (game) async {
+        final p = await place(game, 11, 111, 17);
+        run(game, 0.3);
+        for (final goal in [151.5, 192.5]) {
+          for (var i = 0; i < 60 * 30; i++) {
+            if (p.isDead || (p.onGround && p.position.x > goal * kTile)) break;
+            final inSwing = p.state == PlayerState.swing;
+            if (!inSwing &&
+                p.onGround &&
+                game.level.cellAt(p.center.x + 40, 18.5 * kTile) == '.') {
+              keys(game).jump = true;
+            }
+            if (inSwing) {
+              keys(game)
+                ..right = p.ropeOmega >= 0
+                ..left = p.ropeOmega < 0
+                ..jump = p.ropeAngle > 0.8 && p.ropeOmega > 0;
+            } else {
+              keys(game)
+                ..right = true
+                ..left = false;
+            }
+            game.update(1 / 60);
+          }
+          keys(game)
+            ..jump = false
+            ..right = false;
+          run(game, 0.3);
+          expect(p.isDead, isFalse, reason: 'hedef $goal');
+        }
+        expect(p.position.x, greaterThan(192 * kTile));
+      },
+    );
   });
 }
 

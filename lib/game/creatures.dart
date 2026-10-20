@@ -8,6 +8,7 @@ import 'audio.dart';
 import 'entities.dart';
 import 'golge_game.dart';
 import 'level.dart';
+import 'levels.dart';
 import 'palette.dart';
 import 'player.dart';
 import 'strings.dart';
@@ -166,7 +167,11 @@ class Crow extends PositionComponent with HasGameReference<GolgeGame> {
 
   @override
   void render(Canvas canvas) {
-    final ink = Paint()..color = kInk;
+    // Kapadokya'da kargalar değil, güvercinlik güvercinleri.
+    final ink = Paint()
+      ..color = game.level.def.theme == LevelTheme.peri
+          ? const Color(0xFFCFC6BC)
+          : kInk;
     canvas.save();
     if (_look < 0) canvas.scale(-1, 1);
     if (!_flying) {

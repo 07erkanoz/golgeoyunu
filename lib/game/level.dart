@@ -22,7 +22,7 @@ const double kTile = 32;
 ///   `W` Hezarfen'in kanatları.
 /// - Efsaneler: `U` Medusa başı, `_` sal (suyun üstünde, 3 kare), `!`
 ///   alevli baca, `N` fener balonu, `T` Simurg tüyü, `s` tüy sunağı,
-///   `@` Perseus'un kalkanı (itilebilir).
+///   `@` Perseus'un kalkanı (itilebilir), `"` peri halkası (göğe fırlatır).
 /// - Dağ: `i` düşen buz sarkıtı, `c` rüzgârda çalan çan, `&` manastır
 ///   kalıntısı (sol alt köşe, süs).
 /// - Buz: `-` (katı kaya gibi, üstü kaygan), `/` ince buz (çatlar, kırılır).
@@ -96,6 +96,7 @@ class Level {
   final giantCells = <Vector2>[];
   final medusaCells = <Vector2>[];
   final shieldCells = <Vector2>[];
+  final ringCells = <Vector2>[];
   final raftCells = <Vector2>[];
   final ventCells = <Vector2>[];
   final balloonCells = <Vector2>[];
@@ -269,6 +270,8 @@ class Level {
             medusaCells.add(cell);
           case '@':
             shieldCells.add(cell);
+          case '"':
+            ringCells.add(cell);
           case '_':
             raftCells.add(cell);
           case '!':

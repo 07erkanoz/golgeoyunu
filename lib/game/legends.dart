@@ -716,3 +716,64 @@ class RainZone extends Component with HasGameReference<GolgeGame> {
     }
   }
 }
+
+// ============================================================ Peri halkası
+
+/// Perilerin bıraktığı ışıklı halka: üstüne basanı göğe fırlatır.
+class FairyRing extends PositionComponent with HasGameReference<GolgeGame> {
+  FairyRing(Vector2 cell)
+    : super(
+        position: Vector2(cell.x + kTile / 2, cell.y + kTile),
+        priority: 19,
+      );
+
+  double _t = 0;
+  double _pulse = 0;
+
+  @override
+  void update(double dt) {
+    super.update(dt);
+    _t += dt;
+    _pulse = math.max(0, _pulse - dt * 2);
+    final p = game.player;
+    if (p == null || p.isDead || !p.onGround) return;
+    final feet = p.position.y + Player.h;
+    if ((p.center.x - position.x).abs() < 18 && (feet - position.y).abs() < 4) {
+      p.velocity.y = -880;
+      p.onGround = false;
+      _pulse = 1;
+      GameAudio.instance.play('firefly', volume: 0.8);
+      GameAudio.instance.play('glide', volume: 0.5);
+    }
+  }
+
+  @override
+  void render(Canvas canvas) {
+    final glow = 0.5 + 0.3 * math.sin(_t * 3) + _pulse * 0.5;
+    glowDot(
+      canvas,
+      const Offset(0, -6),
+      34,
+      const Color(0xFFE8C8FF),
+      0.35 * glow,
+    );
+    canvas.drawOval(
+      const Rect.fromLTWH(-15, -4, 30, 7),
+      Paint()
+        ..color = const Color(0xFFF2E0FF).withValues(alpha: 0.7 * glow)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2,
+    );
+    // Halkanın üstünde süzülen tozlar.
+    final dust = Paint()
+      ..color = const Color(0xFFF8EEFF).withValues(alpha: 0.8);
+    for (var i = 0; i < 6; i++) {
+      final k = ((_t * 0.6 + i / 6) % 1.0);
+      canvas.drawCircle(
+        Offset(math.sin(_t * 2 + i) * 10, -4 - k * 40),
+        1.2 * (1 - k) + 0.4,
+        dust,
+      );
+    }
+  }
+}
