@@ -1125,4 +1125,146 @@ class PerdePainter {
       );
     }
   }
+
+  /// Ana menünün perdesi: kandille aydınlanan bez, oymalı çerçeve, gölge
+  /// harflerle oyunun adı, önünde Sâye ve Hüdhüd.
+  static void paintMenu(
+    Canvas canvas,
+    Size size,
+    double time,
+    String title,
+    String tagline,
+  ) {
+    final w = size.width;
+    final r = Rect.fromLTWH(w * 0.06, w * 0.11, w * 0.88, w * 0.88 * 0.62);
+    final flicker =
+        0.9 + 0.06 * math.sin(time * 7.3) + 0.04 * math.sin(time * 13.1 + 1.7);
+    // Perdenin ışığı çevreye vurur.
+    canvas.drawCircle(
+      r.center,
+      r.width * 0.8,
+      Paint()
+        ..shader = ui.Gradient.radial(r.center, r.width * 0.8, [
+          const Color(0xFF3A1A0B).withValues(alpha: 0.75 * flicker),
+          const Color(0xFF3A1A0B).withValues(alpha: 0),
+        ]),
+    );
+    canvas.save();
+    canvas.clipRect(r);
+    final c = Offset(r.left + r.width * 0.5, r.top + r.height * 0.55);
+    canvas.drawRect(
+      r,
+      Paint()
+        ..shader = ui.Gradient.radial(
+          c,
+          r.width * 0.75,
+          const [
+            Color(0xFFFFE2B0),
+            Color(0xFFF2B46A),
+            Color(0xFFB8692F),
+            Color(0xFF4A2210),
+          ],
+          const [0, 0.2, 0.58, 1],
+        ),
+    );
+    final weave = Paint()
+      ..color = const Color(0xFF000000).withValues(alpha: 0.05)
+      ..strokeWidth = 1;
+    for (var y = r.top + 1.5; y < r.bottom; y += 3) {
+      canvas.drawLine(Offset(r.left, y), Offset(r.right, y), weave);
+    }
+    // Tasvirler 780×400'lük sanal sahnede (perde bezi 780×484).
+    canvas.save();
+    canvas.translate(r.left, r.top);
+    final k = r.width / _vw;
+    canvas.scale(k, k);
+    _c = canvas;
+    canvas.save();
+    canvas.translate(0, 84);
+    _city(canvas, 0.55);
+    canvas.restore();
+    // Oyunun adı: gölge harfler, kenarlarında kandilin sızan ışığı.
+    final titleTp = TextPainter(
+      text: TextSpan(
+        text: title,
+        style: TextStyle(
+          fontFamily: 'Roboto',
+          fontSize: 70,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 12,
+          color: _ink.withValues(alpha: 0.95),
+          shadows: [
+            Shadow(
+              color: const Color(0xFFFFF0C8).withValues(alpha: 0.5 * flicker),
+              blurRadius: 18,
+            ),
+          ],
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    titleTp.paint(canvas, Offset(390 - titleTp.width / 2, 70));
+    // Süs çizgisi: ortada bir lale.
+    final line = _inkPaint(0.8)..strokeWidth = 2;
+    canvas.drawLine(const Offset(210, 172), const Offset(370, 172), line);
+    canvas.drawLine(const Offset(410, 172), const Offset(570, 172), line);
+    canvas.drawPath(
+      Path()
+        ..moveTo(390, 160)
+        ..quadraticBezierTo(380, 168, 384, 180)
+        ..lineTo(390, 174)
+        ..lineTo(396, 180)
+        ..quadraticBezierTo(400, 168, 390, 160)
+        ..close(),
+      _inkPaint(0.9),
+    );
+    final tagTp = TextPainter(
+      text: TextSpan(
+        text: tagline,
+        style: TextStyle(
+          fontFamily: 'Roboto',
+          fontSize: 22,
+          fontStyle: FontStyle.italic,
+          letterSpacing: 1.5,
+          color: _ink.withValues(alpha: 0.85),
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout(maxWidth: 680);
+    tagTp.paint(canvas, Offset(390 - tagTp.width / 2, 192));
+    // Sâye ve Hüdhüd.
+    _puppet(canvas, const Offset(200, 470), time, 0.7, 1, (ink, hole) {
+      _saye(ink, hole, time);
+    }, scale: 1.25);
+    canvas.save();
+    canvas.translate(
+      600 + math.sin(time * 0.6) * 40,
+      300 + math.sin(time * 1.1) * 14,
+    );
+    _hoopoe(_inkPaint(1), time, flying: true);
+    canvas.restore();
+    canvas.restore();
+    // Kandil titrer; kenarlar gölgede.
+    canvas.drawRect(
+      r,
+      Paint()
+        ..color = const Color(0xFF050302)
+            .withValues(alpha: (1 - flicker) * 0.9),
+    );
+    canvas.drawRect(
+      r,
+      Paint()
+        ..shader = ui.Gradient.radial(
+          c,
+          r.width * 0.62,
+          [
+            const Color(0xFF2A1208).withValues(alpha: 0),
+            const Color(0xFF2A1208).withValues(alpha: 0.55),
+          ],
+          const [0.6, 1],
+        ),
+    );
+    canvas.restore();
+    _frame(canvas, r, flicker);
+  }
 }

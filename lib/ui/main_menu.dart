@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 
 import '../game/golge_game.dart';
 import '../game/levels.dart';
+import '../game/perde.dart';
 import '../game/strings.dart';
 import '../settings.dart';
 
-/// Ana menü: arkada oyunun dünyası yavaşça akar, solda başlık ve seçenekler.
+/// Ana menü: arkada oyunun dünyası yavaşça akar; solda kandille aydınlanan
+/// bir hayal perdesi (oyunun adı gölge harflerle), sağda seçenekler.
 class MainMenu extends StatefulWidget {
   const MainMenu({super.key, required this.game, this.onQuit});
 
@@ -53,89 +56,106 @@ class _MainMenuState extends State<MainMenu>
       opacity: CurvedAnimation(parent: _fade, curve: Curves.easeOut),
       child: Stack(
         children: [
-          // Okunabilirlik için soldan sağa açılan karartma.
+          // Perde karanlık bir odada: dünya arkada soluk akar.
           const Positioned.fill(
             child: DecoratedBox(
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Color(0xE6050302),
-                    Color(0x99050302),
-                    Color(0x00050302),
-                  ],
-                  stops: [0, 0.45, 0.8],
+                gradient: RadialGradient(
+                  center: Alignment(-0.35, -0.1),
+                  radius: 1.3,
+                  colors: [Color(0xB0050302), Color(0xF0050302)],
                 ),
               ),
             ),
           ),
           SafeArea(
             child: Padding(
-              padding: EdgeInsets.fromLTRB(64 * k, 40 * k, 32, 20 * k),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              padding: EdgeInsets.fromLTRB(28 * k, 16 * k, 40 * k, 16 * k),
+              child: Row(
                 children: [
-                  const Spacer(flex: 3),
-                  Text(
-                    S.of('gameTitle'),
-                    style: TextStyle(
-                      color: _text,
-                      fontSize: 52 * k,
-                      fontWeight: FontWeight.w200,
-                      letterSpacing: 14 * k,
-                      shadows: const [
-                        Shadow(color: Color(0xAAE0A15F), blurRadius: 24),
+                  Expanded(
+                    flex: 12,
+                    child: Center(
+                      child: AspectRatio(
+                        aspectRatio: 1 / 0.8,
+                        child: _MenuPerde(
+                          title: S.of('gameTitle'),
+                          tagline: S.of('menuTagline'),
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 36 * k),
+                  Expanded(
+                    flex: 8,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const _Ornament(),
+                        SizedBox(height: 18 * k),
+                        if (save != null)
+                          _item(
+                            S.of('continue'),
+                            scale: itemK,
+                            hint: savedLevel,
+                            primary: true,
+                            onTap: widget.game.continueGame,
+                          ),
+                        _item(
+                          _confirmNew ? S.of('confirmNew') : S.of('newGame'),
+                          scale: itemK,
+                          primary: save == null,
+                          warn: _confirmNew,
+                          onTap: () {
+                            if (save != null && !_confirmNew) {
+                              setState(() => _confirmNew = true);
+                              return;
+                            }
+                            widget.game.startNewGame();
+                          },
+                        ),
+                        _item(
+                          S.of('settings'),
+                          scale: itemK,
+                          onTap: widget.game.toggleSettings,
+                        ),
+                        if (widget.onQuit != null)
+                          _item(
+                            S.of('quit'),
+                            scale: itemK,
+                            onTap: widget.onQuit!,
+                          ),
+                        SizedBox(height: 18 * k),
+                        const _Ornament(),
+                        SizedBox(height: 14 * k),
+                        Row(
+                          children: [
+                            Flexible(
+                              child: Text(
+                                S.of('menuSubtitle'),
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: _accent.withValues(alpha: 0.7),
+                                  fontSize: 13,
+                                  fontStyle: FontStyle.italic,
+                                  letterSpacing: 2,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            _langButton('TR', Lang.tr),
+                            Text(
+                              ' / ',
+                              style: TextStyle(
+                                color: _text.withValues(alpha: 0.35),
+                              ),
+                            ),
+                            _langButton('EN', Lang.en),
+                          ],
+                        ),
                       ],
                     ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    S.of('menuSubtitle'),
-                    style: TextStyle(
-                      color: _text.withValues(alpha: 0.6),
-                      fontSize: 16,
-                      fontStyle: FontStyle.italic,
-                      letterSpacing: 2,
-                    ),
-                  ),
-                  SizedBox(height: 44 * k),
-                  if (save != null)
-                    _item(
-                      S.of('continue'),
-                      scale: itemK,
-                      hint: savedLevel,
-                      primary: true,
-                      onTap: widget.game.continueGame,
-                    ),
-                  _item(
-                    _confirmNew ? S.of('confirmNew') : S.of('newGame'),
-                    scale: itemK,
-                    primary: save == null,
-                    warn: _confirmNew,
-                    onTap: () {
-                      if (save != null && !_confirmNew) {
-                        setState(() => _confirmNew = true);
-                        return;
-                      }
-                      widget.game.startNewGame();
-                    },
-                  ),
-                  _item(
-                    S.of('settings'),
-                    scale: itemK,
-                    onTap: widget.game.toggleSettings,
-                  ),
-                  if (widget.onQuit != null)
-                    _item(S.of('quit'), scale: itemK, onTap: widget.onQuit!),
-                  const Spacer(flex: 4),
-                  Row(
-                    children: [
-                      _langButton('TR', Lang.tr),
-                      Text(
-                        '  /  ',
-                        style: TextStyle(color: _text.withValues(alpha: 0.35)),
-                      ),
-                      _langButton('EN', Lang.en),
-                    ],
                   ),
                 ],
               ),
@@ -240,31 +260,121 @@ class _MenuItemState extends State<_MenuItem> {
                   ),
                 ),
               ),
-              Text(
-                widget.label,
-                style: TextStyle(
-                  color: widget.warn
-                      ? const Color(0xFFE08A6A)
-                      : (lit ? text : text.withValues(alpha: 0.7)),
-                  fontSize: 21 * widget.scale,
-                  fontWeight: FontWeight.w300,
-                  letterSpacing: 1.5,
+              Flexible(
+                child: Text(
+                  widget.label,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: widget.warn
+                        ? const Color(0xFFE08A6A)
+                        : (lit ? text : text.withValues(alpha: 0.7)),
+                    fontSize: 21 * widget.scale,
+                    fontWeight: FontWeight.w300,
+                    letterSpacing: 1.5,
+                  ),
                 ),
               ),
               if (widget.hint != null) ...[
                 const SizedBox(width: 14),
-                Text(
-                  widget.hint!,
-                  style: TextStyle(
-                    color: accent.withValues(alpha: 0.8),
-                    fontSize: 13,
-                    letterSpacing: 2,
+                Flexible(
+                  child: Text(
+                    widget.hint!,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: accent.withValues(alpha: 0.8),
+                      fontSize: 13,
+                      letterSpacing: 2,
+                    ),
                   ),
                 ),
               ],
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Kandille aydınlanan menü perdesi: titreyen ışık, sallanan tasvirler.
+class _MenuPerde extends StatefulWidget {
+  const _MenuPerde({required this.title, required this.tagline});
+
+  final String title;
+  final String tagline;
+
+  @override
+  State<_MenuPerde> createState() => _MenuPerdeState();
+}
+
+class _MenuPerdeState extends State<_MenuPerde>
+    with SingleTickerProviderStateMixin {
+  late final Ticker _ticker;
+  final _time = ValueNotifier<double>(0);
+
+  @override
+  void initState() {
+    super.initState();
+    _ticker = createTicker((d) => _time.value = d.inMicroseconds / 1e6)
+      ..start();
+  }
+
+  @override
+  void dispose() {
+    _ticker.dispose();
+    _time.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      painter: _PerdePainter(_time, widget.title, widget.tagline),
+    );
+  }
+}
+
+class _PerdePainter extends CustomPainter {
+  _PerdePainter(this.time, this.title, this.tagline) : super(repaint: time);
+
+  final ValueNotifier<double> time;
+  final String title;
+  final String tagline;
+
+  @override
+  void paint(Canvas canvas, Size size) =>
+      PerdePainter.paintMenu(canvas, size, time.value, title, tagline);
+
+  @override
+  bool shouldRepaint(_PerdePainter old) =>
+      old.title != title || old.tagline != tagline;
+}
+
+/// İnce süs çizgisi: iki yanda çizgi, ortada eşkenar dörtgen.
+class _Ornament extends StatelessWidget {
+  const _Ornament();
+
+  @override
+  Widget build(BuildContext context) {
+    const accent = Color(0xFFE0A15F);
+    return SizedBox(
+      width: 260,
+      child: Row(
+        children: [
+          Expanded(child: Container(height: 1, color: accent.withAlpha(80))),
+          Transform.rotate(
+            angle: 0.785,
+            child: Container(
+              width: 7,
+              height: 7,
+              margin: const EdgeInsets.symmetric(horizontal: 10),
+              decoration: BoxDecoration(
+                border: Border.all(color: accent.withAlpha(170)),
+              ),
+            ),
+          ),
+          Expanded(child: Container(height: 1, color: accent.withAlpha(80))),
+        ],
       ),
     );
   }

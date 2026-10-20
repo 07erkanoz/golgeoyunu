@@ -18,6 +18,7 @@ class S {
   static const _tr = {
     'gameTitle': 'GÖLGE OYUNU',
     'menuSubtitle': 'İstanbul, 1660',
+    'menuTagline': 'Hayal perdesinde bir gölgenin yolculuğu',
     'continue': 'Kaldığın yerden devam et',
     'newGame': 'Yeni oyun',
     'confirmNew': 'Emin misin? Kayıt silinecek',
@@ -107,6 +108,7 @@ class S {
   static const _en = {
     'gameTitle': 'SHADOW PLAY',
     'menuSubtitle': 'Istanbul, 1660',
+    'menuTagline': 'A shadow\'s journey behind the screen',
     'continue': 'Continue',
     'newGame': 'New game',
     'confirmNew': 'Are you sure? Your save will be erased',

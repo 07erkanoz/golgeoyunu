@@ -63,6 +63,9 @@ class GameAudio {
 
   bool _ready = false;
 
+  /// Menü müziği yüklendi mi (efektlerden önce hazır olur).
+  bool _musicReady = false;
+
   /// Her efekt için önceden hazırlanmış oynatıcılar: çalarken yeni oynatıcı
   /// oluşturulmaz (Windows'ta bu, ses anında takılmaya yol açar).
   final _pools = <String, AudioPool>{};
@@ -117,6 +120,10 @@ class GameAudio {
         AudioContextConfig(focus: AudioContextConfigFocus.mixWithOthers)
             .build(),
       );
+      // Menü müziği her şeyden önce: efektler yüklenirken bekletmesin.
+      await FlameAudio.audioCache.load('menu_theme.mp3');
+      _musicReady = true;
+      if (_musicWanted) menuMusic(true);
       await FlameAudio.audioCache.loadAll([
         for (final e in _effects) '$e.wav',
         'amb_cistern.wav',
@@ -129,7 +136,6 @@ class GameAudio {
         'heartbeat.wav',
         'murmur.wav',
         'perde_ney.wav',
-        'menu_theme.mp3',
       ]);
       await Future.wait([
         for (final e in _effects)
@@ -192,7 +198,7 @@ class GameAudio {
   /// Ana menü müziği; açılınca ortam sesi susar, kapanınca geri gelir.
   void menuMusic(bool on) {
     _musicWanted = on;
-    if (!_ready) return;
+    if (!_musicReady) return;
     if (on) {
       _stopAmbient();
       dread(0);
