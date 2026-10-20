@@ -817,8 +817,10 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     void show(String key) {
       final id = 'hint:$key';
       if (_whispersShown.contains(id)) return;
+      // Ekran doluysa gösterilmiş sayılmaz; oyuncu hâlâ yakındaysa sonraki
+      // taramada yeniden denenir (geçip gittiyse sonra çıkmaz).
+      if (!narration.hint(Hints.text(key))) return;
       _whispersShown.add(id);
-      narration.hint(Hints.text(key));
     }
 
     bool near(PositionComponent c, double dx, [double? dy]) {
@@ -848,7 +850,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
       final key = switch (comp) {
         PhasePlank k when near(k, 4, 3) =>
           k.shade ? 'shadePlank' : 'lightPlank',
-        Guard g when near(g, 11, 4) => 'guard',
+        Guard g when near(g, 9, 3) => 'guard',
         ShieldCrate s when near(s, 5, 3) => 'shield',
         MillStone m when near(m, 5, 3) => 'millstone',
         AnimalCrate a when near(a, 4, 3) => 'animal',
@@ -866,24 +868,24 @@ class GolgeGame extends FlameGame with KeyboardEvents {
                 p.center.y > s.anchor.y - kTile &&
                 p.center.y < s.anchor.y + s.length + 3 * kTile =>
           'rope',
-        BatRoost b when near(b, 8, 6) => 'bats',
-        Crow k when near(k, 8, 5) => 'crow',
-        Watcher w when near(w, 12, 10) => 'watcher',
-        MedusaHead m when near(m, 15, 4) => 'medusa',
+        BatRoost b when near(b, 6, 5) => 'bats',
+        Crow k when near(k, 6, 4) => 'crow',
+        Watcher w when near(w, 9, 8) => 'watcher',
+        MedusaHead m when near(m, 11, 3) => 'medusa',
         Raft k when near(k, 4, 3) => 'raft',
         FireVent v when near(v, 6, 4) => 'vent',
-        LanternBalloon b when near(b, 10, 10) => 'balloon',
+        LanternBalloon b when near(b, 8, 8) => 'balloon',
         SimurgFeather f when near(f, 6, 5) => 'feather',
         FairyRing k when near(k, 4, 3) => 'ring',
         WindBell b when near(b, 6, 4) => 'bell',
         StarStone s when near(s, 5, 3) => 'star',
-        StoneGiant g when near(g, 14, 8) => 'giant',
-        Wolf w when near(w, 11, 5) => 'wolf',
+        StoneGiant g when near(g, 11, 6) => 'giant',
+        Wolf w when near(w, 9, 4) => 'wolf',
         ThinIce i when near(i, 3, 2) => 'ice',
         FallingIcicle i when near(i, 5, 6) => 'icicle',
-        Semazen s when near(s, 8, 3) => 'semazen',
-        Chandelier c when near(c, 12, 8) => 'chandelier',
-        GreatLamp l when near(l, 22, 22) => 'lamp',
+        Semazen s when near(s, 6, 3) => 'semazen',
+        Chandelier c when near(c, 9, 7) => 'chandelier',
+        GreatLamp l when near(l, 16, 22) => 'lamp',
         LightFlood f when f.awake => 'flood',
         _ => null,
       };

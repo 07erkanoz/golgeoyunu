@@ -103,14 +103,30 @@ class Narration extends Component with HasGameReference<GolgeGame> {
   void whisper(String text) => _whispers.add(text);
 
   /// Kullanım ipucu: fısıltılardan ayrı, ekranın üstünde, sıcak renkte.
-  void hint(String text) {
-    if (_hint != text && !_hints.contains(text)) _hints.add(text);
+  /// Yer ipuçları sıraya girmez: ekran boşsa hemen gösterilir ve `true`
+  /// döner; doluysa `false` (oyuncu hâlâ yakındaysa sonra yeniden denenir).
+  /// Olay ipuçları ([queue]) sıraya girer.
+  bool hint(String text, {bool queue = false}) {
+    if (queue) {
+      if (_hint != text && !_hints.contains(text)) _hints.add(text);
+      return true;
+    }
+    if (!canHint) return false;
+    _hint = text;
+    _hintT = 0;
+    return true;
   }
+
+  /// Şu an yeni bir ipucu gösterilebilir mi?
+  bool get canHint => _hint == null && _hints.isEmpty && !inCinematic;
 
   final _hints = <String>[];
   String? _hint;
   double _hintT = 0;
-  double _hintDuration(String s) => 4.5 + s.length * 0.05;
+
+  /// İpucu varken alttaki fısıltı duraklar ve solar (0-1).
+  double _hush = 0;
+  double _hintDuration(String s) => 3.5 + s.length * 0.045;
 
   void pulseCounter() => _counterT = 0;
 
@@ -146,12 +162,14 @@ class Narration extends Component with HasGameReference<GolgeGame> {
       _areaT += dt;
       if (_areaT > 5) _area = null;
     }
+    // İpucu ekrandayken fısıltı duraklar; ikisi aynı anda okunmaz.
+    _hush = (_hush + (_hint != null ? dt * 4 : -dt * 2)).clamp(0.0, 1.0);
     if (_whisper == null) {
-      if (_whispers.isNotEmpty && !inCinematic) {
+      if (_whispers.isNotEmpty && !inCinematic && _hint == null) {
         _whisper = _whispers.removeAt(0);
         _whisperT = 0;
       }
-    } else {
+    } else if (_hint == null) {
       _whisperT += dt;
       if (_whisperT > _whisperDuration(_whisper!)) _whisper = null;
     }
@@ -366,12 +384,9 @@ class Narration extends Component with HasGameReference<GolgeGame> {
     }
 
     if (_whisper != null) {
-      final a = _envelope(
-        _whisperT,
-        0.8,
-        _whisperDuration(_whisper!) - 1.6,
-        0.8,
-      );
+      final a =
+          _envelope(_whisperT, 0.8, _whisperDuration(_whisper!) - 1.6, 0.8) *
+          (1 - _hush);
       _text(
         canvas,
         _whisper!,
