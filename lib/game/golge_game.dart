@@ -14,6 +14,7 @@ import 'mechanics.dart';
 import 'entities.dart';
 import 'level.dart';
 import 'lighting.dart';
+import 'shafts.dart';
 import 'levels.dart';
 import 'narration.dart';
 import 'perde.dart';
@@ -369,6 +370,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     world.addAll([
       TerrainComponent(level),
       LightingLayer(),
+      LightShafts(),
       ForegroundComponent(level),
       WindCurrents(),
       WaterComponent(level),

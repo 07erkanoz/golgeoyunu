@@ -14,6 +14,7 @@ import 'konya.dart';
 import 'legends.dart';
 import 'ski.dart';
 import 'puzzles.dart';
+import '../settings.dart';
 
 enum PlayerState { normal, hang, climbUp, vine, swing, dead }
 
@@ -955,6 +956,10 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
   /// ateşböceği kavanozlu çocuk.
   static bool jarStyle = true;
 
+  /// Kenar ışığı geçişi: yalnızca siluet çizilir; ışıklar, kavanoz ve
+  /// kanatlar atlanır.
+  static bool _rimPass = false;
+
   // Çizimler 18x40'lık bir gövde için yapıldı; küçük çocuğa ölçeklenir.
   static const double _artW = 18;
   static const double _artH = 40;
@@ -969,6 +974,23 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       canvas.rotate(skiAngle);
       canvas.translate(-w / 2, -h);
       drawSpray(canvas, Offset(w / 2 - 12, h), onGround ? _skiSpeed : 0, _anim);
+    }
+    if (jarStyle && !hidden && !crouching && !isDead && !Settings.lowGraphics) {
+      // Kenar ışığı: kavanozun sıcak ışığı siluetin önünü ve tepesini yalar.
+      // Aynı figür ışık renginde, ışığa doğru biraz kaydırılarak önce çizilir;
+      // mürekkep figür üstüne gelince geriye yalnızca ince parlak bir kenar kalır.
+      final flicker = 0.85 + 0.15 * math.sin(_anim * 11) * math.sin(_anim * 3.7);
+      _fill.color = _jarLight.withValues(alpha: 0.42 * flicker);
+      _limb.color = _fill.color;
+      _rimPass = true;
+      canvas.save();
+      canvas.translate((w - _artW * _artScale) / 2 + facing * 0.6, -0.5);
+      canvas.scale(_artScale);
+      _renderJar(canvas);
+      canvas.restore();
+      _rimPass = false;
+      _fill.color = kInk;
+      _limb.color = kInk;
     }
     canvas.save();
     canvas.translate((w - _artW * _artScale) / 2, 0);
@@ -1344,7 +1366,7 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     final flicker = 0.85 + 0.15 * math.sin(_anim * 11) * math.sin(_anim * 3.7);
     final lightAmount = isDead ? 0.0 : (shielded ? 0.12 : 1.0) * flicker;
 
-    if (lightAmount > 0) {
+    if (lightAmount > 0 && !_rimPass) {
       canvas.drawCircle(
         jar,
         64,
@@ -1410,7 +1432,9 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       _fill,
     );
 
-    if (hasWings) _drawWings(canvas, Offset(cx - 1 + lean * 6, hipY - 10));
+    if (hasWings && !_rimPass) {
+      _drawWings(canvas, Offset(cx - 1 + lean * 6, hipY - 10));
+    }
 
     leg(foot1);
 
@@ -1477,6 +1501,10 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     final front = frontHand ?? jarHand;
     canvas.drawLine(shoulder, front, _limb);
     canvas.drawCircle(front, 1.9, _fill);
+    if (_rimPass) {
+      canvas.restore();
+      return;
+    }
     if (!jarAtHip && !shielded) {
       canvas.drawLine(
         jarHand,

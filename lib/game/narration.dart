@@ -99,6 +99,8 @@ class Narration extends Component with HasGameReference<GolgeGame> {
     _subtitle = subtitle;
     _place = place;
     _titleT = 0;
+    // Önceki bölümün alan adı yeni bölümün başında kalmasın.
+    _area = null;
   }
 
   void whisper(String text) => _whispers.add(text);
