@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 
 import 'package:flame/components.dart';
 import 'package:flutter/painting.dart';
@@ -121,6 +122,9 @@ class Narration extends Component with HasGameReference<GolgeGame> {
   /// Şu an yeni bir ipucu gösterilebilir mi?
   bool get canHint => _hint == null && _hints.isEmpty && !inCinematic;
 
+  String? get debugWhisper => _whisper;
+  String? get debugHint => _hint;
+
   final _hints = <String>[];
   String? _hint;
   double _hintT = 0;
@@ -130,7 +134,7 @@ class Narration extends Component with HasGameReference<GolgeGame> {
 
   void pulseFireflies() => _fireflyT = 0;
 
-  double _whisperDuration(String s) => 3.0 + s.length * 0.045;
+  double _whisperDuration(String s) => 3.5 + s.length * 0.06;
 
   @override
   void update(double dt) {
@@ -226,7 +230,7 @@ class Narration extends Component with HasGameReference<GolgeGame> {
 
   final _cache = <String, TextPainter>{};
 
-  /// İstem etiketi: Sâye'nin başının üstünde, koyu zemin, ılık kenar.
+  /// İstem etiketi: sol üst köşede, koyu zemin, ılık kenar.
   void _prompt(
     Canvas canvas,
     String s,
@@ -249,18 +253,11 @@ class Narration extends Component with HasGameReference<GolgeGame> {
       const Color(0xFFFFE9C4),
       false,
     );
-    var at = Offset(w / 2, h * 0.32);
-    final p = game.player;
-    if (p != null && p.isMounted && !p.isDead) {
-      final g = game.camera.localToGlobal(
-        Vector2(p.center.x, p.position.y - 22),
-      );
-      at = Offset(g.x, g.y);
-    }
+    // Sol üstte, ateşböceklerinin altında: sabit ve sakin bir yer.
     final bw = tp.width + 24;
     final bh = tp.height + 12;
-    final left = (at.dx - bw / 2).clamp(8.0, w - bw - 8);
-    final top = (at.dy - bh).clamp(8.0, h - bh - 8);
+    const left = 22.0;
+    const top = 54.0;
     final box = RRect.fromRectAndRadius(
       Rect.fromLTWH(left, top, bw, bh),
       Radius.circular(bh / 2),
@@ -293,6 +290,7 @@ class Narration extends Component with HasGameReference<GolgeGame> {
       text: TextSpan(
         text: s,
         style: TextStyle(
+          fontFamily: 'Roboto',
           color: color.withValues(alpha: alpha),
           fontSize: fontSize,
           fontStyle: italic ? FontStyle.italic : FontStyle.normal,
@@ -439,14 +437,32 @@ class Narration extends Component with HasGameReference<GolgeGame> {
         _whisperDuration(_whisper!) - 1.6,
         0.8,
       );
+      // Okunurluk için yumuşak, koyu bir şerit.
+      if (a > 0) {
+        final band = Rect.fromLTWH(0, h * 0.74, w, h * 0.22);
+        canvas.drawRect(
+          band,
+          Paint()
+            ..shader = ui.Gradient.linear(
+              band.topCenter,
+              band.bottomCenter,
+              [
+                const Color(0x00050302),
+                const Color(0xFF050302).withValues(alpha: 0.6 * a),
+                const Color(0x00050302),
+              ],
+              const [0, 0.5, 1],
+            ),
+        );
+      }
       _text(
         canvas,
         _whisper!,
-        Offset(w / 2, h * 0.84),
-        unit * 0.032,
+        Offset(w / 2, h * 0.85),
+        unit * 0.036,
         a,
         italic: true,
-        maxWidth: w * 0.75,
+        maxWidth: w * 0.72,
       );
     }
 

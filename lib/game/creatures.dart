@@ -432,7 +432,7 @@ class Karabasan extends PositionComponent with HasGameReference<GolgeGame> {
         position.setValues(p.center.x - 360, p.center.y);
         _speed = 60;
         game.once('chase${game.levelIndex}', S.of('chase'));
-        GameAudio.instance.play('alert');
+        game.scare(1.0, slow: true);
       }
       return;
     }
@@ -544,6 +544,7 @@ class KarabasanGlimpse extends PositionComponent
       if (d.x.abs() < triggerDistance && d.y.abs() < 220) {
         _t = 0;
         GameAudio.instance.play('breath', volume: 0.8);
+        game.scare(0.45);
       }
       return;
     }

@@ -631,3 +631,19 @@ save('grind', grind(), 0.6)
 save('fire', fire(), 0.55)
 save('fire_warn', fire_warn(), 0.35)
 save('thunder', thunder(), 0.7)
+
+
+def sting():
+    # Korku vurgusu: ani gümleme ve vuruş, titreşen uyumsuz yaylar, metalik çığlık.
+    d = 2.6
+    boom = decay(sine(lambda t: 55 - 20 * min(1, t / 0.4), d), 0.5)
+    hit = decay(highpass(noise(0.4), 900), 0.08)
+    cluster = mix(*[(saw(f, d), 0.25) for f in (220, 233.08, 311.13, 466.16)])
+    cluster = lowpass(cluster, 1600)
+    cluster = [x * (0.7 + 0.3 * math.sin(2 * math.pi * 7.5 * i / SR)) for i, x in enumerate(cluster)]
+    cluster = env(cluster, 0.02, 1.8)
+    screech = env(sine(lambda t: 2400 - 900 * min(1, t / 1.2), 1.6, vib=0.02, vib_rate=11), 0.01, 1.0)
+    return mix((boom, 1.0), (hit, 0.5), (cluster, 0.45), (screech, 0.12))
+
+
+save('sting', sting(), 0.8)

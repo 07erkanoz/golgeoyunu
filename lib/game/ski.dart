@@ -256,6 +256,7 @@ class Avalanche extends PositionComponent with HasGameReference<GolgeGame> {
         position.x = p.center.x - 700;
         _speed = 230;
         GameAudio.instance.play('thunder');
+        game.scare(0.8);
         game.narration.whisper('…');
       }
       return;

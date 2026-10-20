@@ -702,6 +702,18 @@ class GolgeGame extends FlameGame with KeyboardEvents {
   /// Kamerayı sarsar (Karabasan, çöken kayalar).
   void shake(double amount) => _shake = math.max(_shake, amount);
 
+  double _slow = 0;
+
+  /// Korku anı: ekran nabzı, sarsıntı, istenirse korku vurgusu sesi ve
+  /// kısa bir ağır çekim.
+  void scare(double amount, {bool sting = true, bool slow = false}) {
+    effects.scare(amount);
+    shake(10 * amount);
+    threat = math.max(threat, amount);
+    if (sting) GameAudio.instance.play('sting', volume: amount, minGapMs: 1500);
+    if (slow) _slow = 0.45;
+  }
+
   /// Oyuncu kavanozdan bir ateşböceği salar; Kandilciler ışığa yönelir.
   void releaseFirefly(Vector2 from, int direction) {
     if (fireflies <= 0) return;
@@ -783,6 +795,11 @@ class GolgeGame extends FlameGame with KeyboardEvents {
 
   @override
   void update(double dt) {
+    // Korku anında zaman kısa bir süre ağırlaşır.
+    if (_slow > 0) {
+      _slow -= dt;
+      dt *= 0.35;
+    }
     super.update(dt);
     if (menuMode.value) {
       _updateMenuCamera(dt);

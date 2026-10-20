@@ -110,6 +110,7 @@ class Guard extends PositionComponent with HasGameReference<GolgeGame> {
     if (_calm && suspicion >= 1) {
       _setState(GuardState.alert);
       GameAudio.instance.play('alert', minGapMs: 1200);
+      game.scare(0.3, sting: false);
     }
 
     // Şüphelenen Kandilci durur ve oyuncunun olduğu yere bakar.

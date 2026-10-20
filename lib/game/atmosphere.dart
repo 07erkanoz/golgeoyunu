@@ -474,6 +474,15 @@ class ScreenEffects extends Component with HasGameReference<GolgeGame> {
   double _wait = 0;
   VoidCallback? _afterWait;
 
+  /// Korku nabzı (0-1): çakma, kararan kenarlar, kalp gibi atan karanlık.
+  double _scare = 0;
+  double _scareT = 9;
+
+  void scare(double amount) {
+    _scare = math.max(_scare, amount.clamp(0.0, 1.0));
+    _scareT = 0;
+  }
+
   /// [seconds] sonra [then] çağrılır (karartı beklerken).
   void after(double seconds, VoidCallback then) {
     _wait = seconds;
@@ -483,6 +492,8 @@ class ScreenEffects extends Component with HasGameReference<GolgeGame> {
   @override
   void update(double dt) {
     _t += dt;
+    _scareT += dt;
+    _scare = math.max(0, _scare - dt * 0.45);
     if (_afterWait != null) {
       _wait -= dt;
       if (_wait <= 0) {
@@ -558,6 +569,79 @@ class ScreenEffects extends Component with HasGameReference<GolgeGame> {
         );
     }
     canvas.drawRect(Rect.fromLTWH(0, 0, w, h), _vignette!);
+  }
+
+  /// Korku anı: kısa soğuk çakma, sonra kenarlardan içeri sızan ve kalp
+  /// gibi atan mürekkep karanlığı.
+  void _scarePulse(Canvas canvas, double w, double h) {
+    final s = _scare;
+    if (s <= 0.01) return;
+    if (_scareT < 0.28) {
+      canvas.drawRect(
+        Rect.fromLTWH(0, 0, w, h),
+        Paint()
+          ..color = const Color(0xFFE8F4FF)
+              .withValues(alpha: 0.6 * s * (1 - _scareT / 0.28)),
+      );
+    }
+    // İki vuruşlu kalp: güm-güm, sessizlik.
+    final beat = (_t * 1.3) % 1.0;
+    final pulse = beat < 0.12
+        ? math.sin(beat / 0.12 * math.pi)
+        : (beat < 0.3 ? 0.6 * math.sin((beat - 0.15) / 0.15 * math.pi) : 0.0);
+    final r = math.max(w, h) * (0.6 - 0.24 * s - 0.06 * pulse);
+    canvas.drawRect(
+      Rect.fromLTWH(0, 0, w, h),
+      Paint()
+        ..shader = ui.Gradient.radial(
+          Offset(w / 2, h / 2),
+          r,
+          [
+            const Color(0x00200303),
+            const Color(0xFF200303).withValues(alpha: 0.75 * s),
+            const Color(0xFF0A0101).withValues(alpha: s),
+          ],
+          const [0.25, 0.62, 0.95],
+        ),
+    );
+    // Kalp atışıyla bütün ekrana vuran kızıl nabız.
+    canvas.drawRect(
+      Rect.fromLTWH(0, 0, w, h),
+      Paint()
+        ..color = const Color(0xFF8A0E0E)
+            .withValues(alpha: s * (0.06 + 0.12 * pulse)),
+    );
+    // Kenarlardan uzanan titrek kara çizgiler (mürekkep damarları); altında
+    // kızıl bir hare, karanlıkta seçilsinler.
+    final glow = Paint()
+      ..color = const Color(0xFFB01818).withValues(alpha: 0.35 * s)
+      ..strokeWidth = 7
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke;
+    final ink = Paint()
+      ..color = const Color(0xFF050202).withValues(alpha: 0.9 * s)
+      ..strokeWidth = 3.2
+      ..strokeCap = StrokeCap.round;
+    for (var i = 0; i < 26; i++) {
+      final ang = i / 26 * 2 * math.pi + math.sin(_t * 0.7 + i) * 0.05;
+      final edge = Offset(
+        w / 2 + math.cos(ang) * w * 0.56,
+        h / 2 + math.sin(ang) * h * 0.56,
+      );
+      final len = (0.25 + 0.2 * ((i * 37) % 5) / 5) * s * (1 + 0.3 * pulse);
+      var p = edge;
+      final path = Path()..moveTo(p.dx, p.dy);
+      for (var k = 1; k <= 5; k++) {
+        final t = k / 5 * len;
+        final jitter = math.sin(_t * 9 + i * 3 + k) * 6;
+        p =
+            Offset.lerp(edge, Offset(w / 2, h / 2), t)! +
+            Offset(-math.sin(ang) * jitter, math.cos(ang) * jitter);
+        path.lineTo(p.dx, p.dy);
+      }
+      canvas.drawPath(path, glow);
+      canvas.drawPath(path, ink..style = PaintingStyle.stroke);
+    }
   }
 
   /// Kar: yakındakiler büyük ve hızlı, uzaktakiler küçük; rüzgârla savrulur.
@@ -665,6 +749,8 @@ class ScreenEffects extends Component with HasGameReference<GolgeGame> {
         );
       }
     }
+
+    _scarePulse(canvas, w, h);
 
     // Gerilim: şüphe arttıkça kenarlar kararır; saklanırken renkler solar.
     final threat = game.threat;

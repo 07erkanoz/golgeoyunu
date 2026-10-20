@@ -436,6 +436,7 @@ class LightFlood extends PositionComponent with HasGameReference<GolgeGame> {
         position.y = p.position.y + Player.h + 7 * kTile;
         _speed = 40;
         GameAudio.instance.play('thunder', volume: 0.6);
+        game.scare(0.8);
       }
       return;
     }

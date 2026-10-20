@@ -58,6 +58,7 @@ class GameAudio {
     'grind',
     'fire',
     'fire_warn',
+    'sting',
     'thunder',
   ];
 

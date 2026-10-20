@@ -142,20 +142,41 @@ class MedusaHead extends PositionComponent with HasGameReference<GolgeGame> {
   @override
   void render(Canvas canvas) {
     final e = eyes;
-    // Bakış: soluk yeşil, taş tozu gibi bir kuşak.
+    // Bakış: gözlerden çıkan, açıldıkça uzayan ve genişleyen soluk yeşil
+    // bir ışın; içinde taş tozu süzülür.
     if (e > 0) {
-      final far = Offset(facing * range, 0);
-      canvas.drawRect(
-        Rect.fromPoints(
-          Offset(0, -halfHeight),
-          far + const Offset(0, halfHeight),
-        ),
+      final len = range * (0.25 + 0.75 * e);
+      final far = facing * len;
+      final spread = halfHeight * (0.4 + 0.6 * e);
+      final beam = Path()
+        ..moveTo(facing * 6.0, -4)
+        ..lineTo(far, -spread)
+        ..lineTo(far, spread)
+        ..lineTo(facing * 6.0, 4)
+        ..close();
+      final shimmer = 0.85 + 0.15 * math.sin(_t * 9);
+      canvas.drawPath(
+        beam,
         Paint()
-          ..shader = ui.Gradient.linear(Offset.zero, far, [
-            const Color(0xFFB8D8B0).withValues(alpha: 0.22 * e),
-            const Color(0xFFB8D8B0).withValues(alpha: 0),
-          ]),
+          ..shader = ui.Gradient.linear(
+            Offset(facing * 6.0, 0),
+            Offset(far, 0),
+            [
+              const Color(0xFFD8F0C8).withValues(alpha: 0.45 * e * shimmer),
+              const Color(0xFFB8D8B0).withValues(alpha: 0.18 * e),
+              const Color(0xFFB8D8B0).withValues(alpha: 0),
+            ],
+            const [0, 0.35, 1],
+          ),
       );
+      // Taş tozu: ışının içinde gözden uzağa akar.
+      final dust = Paint()
+        ..color = const Color(0xFFE8F4E0).withValues(alpha: 0.5 * e);
+      for (var i = 0; i < 18; i++) {
+        final k = (i * 0.61803 + _t * 0.35) % 1.0;
+        final y = (((i * 37) % 21) / 10 - 1) * spread * k;
+        canvas.drawCircle(Offset(far * k, y), 1.3, dust);
+      }
     }
     // Yılan saçlı taş baş (kabartma).
     final stone = Paint()..color = const Color(0xFF2A2420);
