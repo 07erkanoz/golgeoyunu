@@ -14,6 +14,12 @@ class GameAudio {
 
   static final instance = GameAudio._();
 
+  /// `--dart-define=AUDIO_LOG=true` ile her çalınan sesi yazar (hata arama).
+  static void _log(String s) {
+    // ignore: avoid_print
+    if (const bool.fromEnvironment('AUDIO_LOG')) print('[ses] $s');
+  }
+
   static const _effects = [
     'step_1',
     'step_2',
@@ -163,6 +169,7 @@ class GameAudio {
     _lastPlayed[name] = now;
     final pool = _pools[name];
     if (pool == null) return;
+    _log('çal $name');
     pool
         .start(volume: (volume * Settings.effects).clamp(0.0, 1.0))
         .catchError((_) => () async {});
@@ -191,6 +198,7 @@ class GameAudio {
       dread(0);
       if (_music != null || _musicStarting) return;
       _musicStarting = true;
+      _log('döngü menu_theme');
       FlameAudio.loop('menu_theme.mp3', volume: Settings.music)
           .then((p) {
             _music = p;
@@ -219,6 +227,7 @@ class GameAudio {
       if (_ney != null) return;
       _stopAmbient();
       dread(0);
+      _log('döngü perde_ney');
       FlameAudio.loop('perde_ney.wav', volume: Settings.music)
           .then((p) {
             if (!_neyWanted || _ney != null) {
@@ -254,6 +263,7 @@ class GameAudio {
     _ambientName = name;
     final gen = _ambientGen;
     try {
+      _log('döngü $name');
       final p = await FlameAudio.loop('$name.wav', volume: _ambientVolume);
       if (gen != _ambientGen || _musicWanted || _neyWanted) {
         await p.stop();
@@ -345,6 +355,7 @@ class _LoopChannel {
     if (player == null) {
       if (_starting) return;
       _starting = true;
+      GameAudio._log('döngü $file');
       FlameAudio.loop(file, volume: _volume)
           .then((p) {
             player = p;

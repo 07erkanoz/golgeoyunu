@@ -476,13 +476,19 @@ class StoneGiant extends PositionComponent with HasGameReference<GolgeGame> {
     position.x += _dir * 26 * dt;
     if (position.x > _home + span) _dir = -1;
     if (position.x < _home) _dir = 1;
+    final p = game.player;
     if (_t - _lastStep > 1.1) {
       _lastStep = _t;
-      GameAudio.instance.play('land', volume: 0.9);
-      game.shake(4);
-      game.quake = math.max(game.quake, 0.6);
+      // Adımlar yakında duyulur ve sarsar; uzaktan yalnızca hafif bir gümbürtü.
+      final near = p == null || p.isDead
+          ? 0.0
+          : (1 - (p.center - position).length / (24 * kTile)).clamp(0.0, 1.0);
+      if (near > 0) {
+        GameAudio.instance.play('land', volume: 0.9 * near);
+        game.shake(4 * near);
+        game.quake = math.max(game.quake, 0.6 * near);
+      }
     }
-    final p = game.player;
     if (p != null && !p.isDead) {
       // Ayakların dibi ezer.
       final feet = Rect.fromLTWH(position.x, position.y - 28, size.x, 28);

@@ -583,13 +583,14 @@ save('bell', bell(), 0.6)
 
 # ------------------------------------------------------------- efsaneler
 def grind():
-    base = bandpass(noise(1.4), 80, 700)
+    # Taşın taşa sürtünmesi: düzensiz, pürüzlü; düzenli titreme yok.
+    d = 1.4
+    base = bandpass(noise(d), 120, 900)
     r = random.Random(4)
-    out = []
-    for i, x in enumerate(base):
-        t = i / SR
-        out.append(x * (0.6 + 0.4 * math.sin(t * 37 + math.sin(t * 7) * 3)))
-    return env(mix((out, 1.0), (lowpass(brown(1.4), 120), 2.0)), 0.1, 0.5)
+    rough = lowpass([r.uniform(-1, 1) for _ in range(n(d))], 6)
+    top = max(abs(x) for x in rough) or 1
+    out = [x * (0.75 + 0.25 * rough[i] / top) for i, x in enumerate(base)]
+    return env(mix((out, 1.0), (lowpass(brown(d), 100), 2.5)), 0.25, 0.5)
 
 
 def fire():

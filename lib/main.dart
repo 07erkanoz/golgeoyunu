@@ -63,12 +63,17 @@ class GolgeApp extends StatefulWidget {
 
 class _GolgeAppState extends State<GolgeApp> {
   final _game = GolgeGame();
+  final _gameFocus = FocusNode(debugLabel: 'oyun');
   late final AppLifecycleListener _lifecycle;
 
   @override
   void initState() {
     super.initState();
     _game.onToggleFullscreen = () => _setFullscreen(!Settings.fullscreen);
+    // Menü ya da ayarlar kapanınca klavye yeniden oyuna gider.
+    _game.onFocusGame = () => WidgetsBinding.instance.addPostFrameCallback(
+      (_) => _gameFocus.requestFocus(),
+    );
     // Telefon oyunu arka plana alınca (ya da kapatılırken) ilerleme ve
     // ayarlar hemen yazılır; sistem uygulamayı öldürse de kaybolmaz.
     _lifecycle = AppLifecycleListener(
@@ -89,6 +94,7 @@ class _GolgeAppState extends State<GolgeApp> {
 
   @override
   void dispose() {
+    _gameFocus.dispose();
     _lifecycle.dispose();
     super.dispose();
   }
@@ -123,6 +129,8 @@ class _GolgeAppState extends State<GolgeApp> {
           children: [
             GameWidget(
               game: _game,
+              focusNode: _gameFocus,
+              autofocus: true,
               overlayBuilderMap: {
                 GolgeGame.menuOverlay: (context, GolgeGame game) => MainMenu(
                   game: game,
@@ -138,7 +146,6 @@ class _GolgeAppState extends State<GolgeApp> {
                       onTouchChanged: () => setState(() {}),
                     ),
               },
-              initialActiveOverlays: const [GolgeGame.menuOverlay],
             ),
             ValueListenableBuilder<bool>(
               valueListenable: _game.menuMode,

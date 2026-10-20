@@ -181,11 +181,14 @@ class GolgeGame extends FlameGame with KeyboardEvents {
   void _leaveMenu() {
     menuMode.value = false;
     overlays.remove(menuOverlay);
+    onFocusGame?.call();
     GameAudio.instance.menuMusic(false);
   }
 
   /// Baştan başlar; varsa kayıt silinir.
   void startNewGame() {
+    // Oyun yüklenmeden gelen tıklama yok sayılır (menü yarım kurulu kalmasın).
+    if (!isLoaded || !menuMode.value) return;
     SaveGame.clear();
     _memories.clear();
     _whispersShown.clear();
@@ -200,6 +203,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
 
   /// Kaldığın yerden: son kontrol noktasında, toplananlarla birlikte.
   void continueGame() {
+    if (!isLoaded || !menuMode.value) return;
     final save = SaveGame.current;
     if (save == null) {
       startNewGame();
@@ -310,10 +314,15 @@ class GolgeGame extends FlameGame with KeyboardEvents {
   /// Masaüstünde tam ekranı açıp kapatır (main.dart bağlar).
   void Function()? onToggleFullscreen;
 
+  /// Klavye odağını oyuna geri verir (main.dart bağlar). Menüde bir düğmeye
+  /// tıklanınca odak o düğmede kalır; menü kapanınca oyun tuşları duymaz.
+  void Function()? onFocusGame;
+
   void toggleSettings() {
     if (overlays.isActive(settingsOverlay)) {
       overlays.remove(settingsOverlay);
       settingsOpen.value = false;
+      onFocusGame?.call();
       if (!menuMode.value) {
         resumeEngine();
         GameAudio.instance.resumeAll();
@@ -1074,9 +1083,14 @@ class GolgeGame extends FlameGame with KeyboardEvents {
       ]);
     if (menuMode.value) {
       if (event is KeyDownEvent &&
-          event.logicalKey == LogicalKeyboardKey.escape &&
-          overlays.isActive(settingsOverlay)) {
-        toggleSettings();
+          event.logicalKey == LogicalKeyboardKey.escape) {
+        if (overlays.isActive(settingsOverlay)) {
+          toggleSettings();
+        } else if (SaveGame.current != null) {
+          // Ana menüde Esc: kaldığın yerden devam.
+          continueGame();
+        }
+        return KeyEventResult.handled;
       }
       return KeyEventResult.ignored;
     }

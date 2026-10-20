@@ -91,7 +91,12 @@ class MedusaHead extends PositionComponent with HasGameReference<GolgeGame> {
     final before = eyes;
     _t += dt;
     if (before == 0 && eyes > 0) {
-      GameAudio.instance.play('grind', volume: 0.7);
+      // Taş sürtünmesi yalnızca yakındaki baştan duyulur.
+      final p = game.player;
+      final near = p == null || p.isDead
+          ? 0.0
+          : (1 - (p.center - position).length / (20 * kTile)).clamp(0.0, 1.0);
+      if (near > 0) GameAudio.instance.play('grind', volume: 0.7 * near);
     }
     // Perseus'un kalkanı: gözler açılırken yakındaki cilalı kalkanda kendini
     // görür ve taşa döner.
