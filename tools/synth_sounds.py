@@ -56,7 +56,7 @@ def room(data, wet):
 CC0 = {'step_1', 'step_2', 'step_3', 'step_4', 'step_wood_1', 'step_wood_2',
        'step_wood_3', 'land', 'jump', 'glide', 'creak', 'lever', 'gate', 'crumble',
        'splash', 'shatter', 'bell', 'fire', 'amb_cistern', 'amb_wind', 'gust',
-       'sting', 'karabasan', 'perde_ney'}
+       'sting', 'karabasan', 'perde_ney', 'amb_konya'}
 
 
 def save(name, data, gain=0.9):
@@ -490,6 +490,8 @@ def amb_ark():
     return out
 
 
+# amb_konya artık tools/synth_konya.py ile üretilir (Hû zikri, ney, kudüm);
+# bu eski sürüm CC0 kümesinde olduğu için kaydedilmez.
 def amb_konya():
     # Uzaktan bir semâhane: kudümün ağır vuruşları ve ney'in uzun sesi.
     L = 24

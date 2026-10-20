@@ -22,7 +22,7 @@ import sys
 import wave
 
 SR = 44100
-OUT = sys.argv[1]
+OUT = sys.argv[1] if len(sys.argv) > 1 else '.'
 rnd = random.Random(1660)
 
 
@@ -94,19 +94,24 @@ def smooth(t):
     return t * t * (3 - 2 * t)
 
 
-def taksim():
-    D = 293.66
-    hz = {'D': D, 'Eb': D * 1.0593, 'F#': D * 1.2599, 'G': D * 1.3348,
-          'A': D * 1.4983, 'Bb': D * 1.5874, 'C': D * 1.7818, 'D2': D * 2}
-    # Nefes cümleleri: her biri tek nefeste, notalar birbirine bağlı.
-    phrases = [
-        [('A', 2.4), ('Bb', 0.9), ('A', 1.5), ('G', 0.9), ('F#', 2.6)],
-        [('D', 1.1), ('Eb', 0.8), ('F#', 1.0), ('G', 1.3), ('A', 3.2)],
-        [('C', 1.4), ('Bb', 0.9), ('A', 0.9), ('G', 0.8), ('F#', 1.1),
-         ('Eb', 1.4), ('D', 3.4)],
-    ]
-    rests = [0.9, 1.1, 2.4]           # son nefes arası döngünün dikişi olur
-    total = sum(sum(d for _, d in p) for p in phrases) + sum(rests) + 0.3
+D = 293.66
+# Hicaz dizisi (Re karar).
+HICAZ = {'D': D, 'Eb': D * 1.0593, 'F#': D * 1.2599, 'G': D * 1.3348,
+         'A': D * 1.4983, 'Bb': D * 1.5874, 'C': D * 1.7818, 'D2': D * 2}
+# Nefes cümleleri: her biri tek nefeste, notalar birbirine bağlı.
+PERDE_PHRASES = [
+    [('A', 2.4), ('Bb', 0.9), ('A', 1.5), ('G', 0.9), ('F#', 2.6)],
+    [('D', 1.1), ('Eb', 0.8), ('F#', 1.0), ('G', 1.3), ('A', 3.2)],
+    [('C', 1.4), ('Bb', 0.9), ('A', 0.9), ('G', 0.8), ('F#', 1.1),
+     ('Eb', 1.4), ('D', 3.4)],
+]
+PERDE_RESTS = [0.9, 1.1, 2.4]     # son nefes arası döngünün dikişi olur
+
+
+def taksim(phrases=PERDE_PHRASES, rests=PERDE_RESTS, hz=HICAZ, with_dem=True,
+           lead=0.3):
+    """Kuru (yankısız) ney taksimi; [lead] sn sessizlikle başlar."""
+    total = sum(sum(d for _, d in p) for p in phrases) + sum(rests) + lead
     N = n(total)
     out = [0.0] * N
 
@@ -115,7 +120,7 @@ def taksim():
     # Geniş bantlı nefes: 1,8–6 kHz arası, çok az.
     air = lowpass(highpass(white, 1800), 6000)
 
-    i = n(0.3)
+    i = n(lead)
     ph = 0.0
     vib_ph = 0.0
     vib_rate = 5.0
@@ -197,7 +202,7 @@ def taksim():
 
     # Çok hafif bir dem: Re ve La, nefes gibi kabarıp söner.
     dem = [0.0] * N
-    for k in range(N):
+    for k in range(N if with_dem else 0):
         t = k / SR
         s = 0.5 + 0.5 * math.sin(2 * math.pi * t / total - math.pi / 2)
         dem[k] = 0.045 * (0.6 + 0.4 * s) * (
@@ -218,10 +223,10 @@ def loop(data, fade):
     return body
 
 
-def save(name, data, gain):
+def save(name, data, gain, out_dir=None):
     peak = max(1e-9, max(abs(x) for x in data))
     k = gain / peak
-    with wave.open(os.path.join(OUT, name + '.wav'), 'wb') as w:
+    with wave.open(os.path.join(out_dir or OUT, name + '.wav'), 'wb') as w:
         w.setnchannels(1)
         w.setsampwidth(2)
         w.setframerate(SR)
