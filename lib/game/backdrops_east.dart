@@ -786,8 +786,20 @@ extension _EastBackdrops on Backdrop {
         );
       }
     }, salt: 2);
-    // Yeşil Kubbe: dilimli, sivri, külah biçimli kubbe ve gövdesi.
-    final gx = w * 0.55 - cam.x * 0.05;
+    // Yeşil Kubbe: dilimli, sivri, külah biçimli kubbe ve gövdesi. Uzakta
+    // belirir, bölümün sonuna doğru yaklaşır ve büyür.
+    final goal = game.level.pixelWidth - 960;
+    final gx = w * 0.5 + (goal - cam.x) * 0.15;
+    if (gx < -200 || gx > w + 200) {
+      _konyaSnow(canvas, w, h, cam);
+      return;
+    }
+    canvas.save();
+    final near = (1 - (goal - cam.x).abs() / 6000).clamp(0.0, 1.0);
+    final k = 1 + 0.45 * near;
+    canvas.translate(gx, base);
+    canvas.scale(k);
+    canvas.translate(-gx, -base);
     final green = Paint()..color = const Color(0xFF1E5A50);
     final rib = Paint()
       ..color = const Color(0xFF3E8C7A).withValues(alpha: 0.7)
@@ -828,6 +840,12 @@ extension _EastBackdrops on Backdrop {
         candle,
       );
     }
+    canvas.restore();
+    _konyaSnow(canvas, w, h, cam);
+  }
+
+  /// Ovanın karlı sırtı.
+  void _konyaSnow(Canvas canvas, double w, double h, Vector2 cam) {
     _ridge(
       canvas,
       w,

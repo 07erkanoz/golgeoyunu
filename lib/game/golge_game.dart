@@ -19,6 +19,7 @@ import 'narration.dart';
 import 'perde.dart';
 import 'palette.dart';
 import 'player.dart';
+import 'konya.dart';
 import 'legends.dart';
 import 'nemrut.dart';
 import 'ski.dart';
@@ -422,9 +423,26 @@ class GolgeGame extends FlameGame with KeyboardEvents {
           AnimalKind.values[i % AnimalKind.values.length],
         ),
       if (level.chaseStart != null && level.chaseEnd != null)
-        skiSurface != null
-            ? Avalanche(level.chaseStart!, level.chaseEnd!)
-            : Karabasan(level.chaseStart!, level.chaseEnd!),
+        if (skiSurface != null)
+          Avalanche(level.chaseStart!, level.chaseEnd!)
+        else if (level.def.theme == LevelTheme.konya)
+          LightFlood(level.chaseStart!, level.chaseTop!)
+        else
+          Karabasan(level.chaseStart!, level.chaseEnd!),
+      for (var i = 0; i < level.semazenCells.length; i++)
+        Semazen(level.semazenCells[i], index: i),
+      for (var i = 0; i < level.chandelierCells.length; i++)
+        ..._chandelier(level.chandelierCells[i], i),
+      for (var i = 0; i < level.lampCells.length; i++)
+        GreatLamp(level.lampCells[i], index: i),
+      // İki fener aynı şerefedeyse aralarında bir minare yükselir.
+      if (level.lampCells.length >= 2)
+        MinaretCap(
+          Vector2(
+            (level.lampCells[0].x + level.lampCells[1].x) / 2 + kTile / 2,
+            level.lampCells[0].y - kTile - 24,
+          ),
+        ),
       if (skiSurface != null) SkiTerrain(skiSurface!),
       if (skiSurface != null)
         for (final c in level.skiRocks) SkiRock(c, skiSurface!),
@@ -455,6 +473,12 @@ class GolgeGame extends FlameGame with KeyboardEvents {
 
   /// Su hazneleri ve içlerindeki yüzen tahtalar: başlangıç su seviyesi
   /// tahtanın satırıdır (tahta yoksa hazne boş başlar).
+  Iterable<Component> _chandelier(Vector2 cell, int index) sync* {
+    final c = Chandelier(cell, index: index);
+    yield c;
+    yield* c.planks;
+  }
+
   Iterable<Component> _basins() sync* {
     for (final area in level.basins) {
       final floats = [
@@ -719,6 +743,10 @@ class GolgeGame extends FlameGame with KeyboardEvents {
       }
       _whispersShown.add(key);
       narration.showArea(areas[i]);
+      // Konya: semâhaneye girerken neyzen ilk nefesini üfler.
+      if (level.def.theme == LevelTheme.konya && i == areas.length - 2) {
+        GameAudio.instance.play('perde_ney', volume: 0.8);
+      }
     }
     for (final (i, cell) in level.triggers) {
       final key = '$levelIndex:$i';

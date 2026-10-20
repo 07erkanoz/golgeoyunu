@@ -9,6 +9,7 @@ import 'package:golge/game/legends.dart';
 import 'package:golge/game/levels.dart';
 import 'package:golge/game/entities.dart';
 import 'package:golge/game/golge_game.dart';
+import 'package:golge/game/konya.dart';
 import 'package:golge/game/level.dart';
 import 'package:golge/game/mechanics.dart';
 import 'package:golge/game/nemrut.dart';
@@ -1689,6 +1690,185 @@ void main() {
         expect(p.isDead, isFalse);
         expect(p.position.x, greaterThan(199 * kTile));
         expect(p.position.y + Player.h, lessThanOrEqualTo(24 * kTile + 1));
+      },
+    );
+  });
+
+  group('Konya', () {
+    testWithGame<GolgeGame>(
+      'İkonion: kalkanı iterek Medusa mühürlenir',
+      GolgeGame.new,
+      (game) async {
+        final p = await place(game, 13, 88, 37);
+        final m = game.world.children.whereType<MedusaHead>().first;
+        run(game, 0.3);
+        keys(game).right = true;
+        for (var i = 0; i < 60 * 25 && !m.sealed && !p.isDead; i++) {
+          game.update(1 / 60);
+        }
+        keys(game).right = false;
+        expect(p.isDead, isFalse);
+        expect(m.sealed, isTrue);
+      },
+    );
+
+    testWithGame<GolgeGame>(
+      'önden geçen semâzenin eteğinde saklanılır',
+      GolgeGame.new,
+      (game) async {
+        final p = await place(game, 13, 330, 33);
+        keys(game).down = true;
+        final s = game.world.children.whereType<Semazen>().first;
+        for (
+          var i = 0;
+          i < 600 && !(s.inFront && (s.position.x - 342 * kTile).abs() < 20);
+          i++
+        ) {
+          game.update(1 / 60);
+        }
+        expect(s.inFront, isTrue);
+        p.position.setValues(
+          s.position.x - Player.w / 2,
+          34 * kTile - Player.h,
+        );
+        run(game, 0.2);
+        expect(p.hidden, isTrue);
+        // Semâzen arkaya dönünce saklamaz.
+        for (var i = 0; i < 1200 && s.inFront; i++) {
+          game.update(1 / 60);
+        }
+        p.position.setValues(
+          s.position.x - Player.w / 2,
+          34 * kTile - Player.h,
+        );
+        run(game, 0.1);
+        expect(p.hidden, isFalse);
+      },
+    );
+
+    testWithGame<GolgeGame>(
+      'avizenin mum tablası binene taşır',
+      GolgeGame.new,
+      (game) async {
+        final p = await place(game, 13, 377, 33);
+        run(game, 0.1);
+        final tray = game.world.children
+            .whereType<Chandelier>()
+            .first
+            .planks
+            .first;
+        p.position.setValues(
+          tray.position.x + tray.size.x / 2 - Player.w / 2,
+          tray.position.y - Player.h - 2,
+        );
+        p.velocity.setZero();
+        run(game, 0.2);
+        expect(p.riding, same(tray));
+        final before = p.position.clone();
+        run(game, 1.0);
+        expect(p.isDead, isFalse);
+        expect(p.riding, same(tray));
+        expect((p.position - before).length, greaterThan(30));
+      },
+    );
+
+    testWithGame<GolgeGame>(
+      'büyük fenerin huzmesi açıktakini siler',
+      GolgeGame.new,
+      (game) async {
+        final p = await place(game, 13, 255, 27);
+        run(game, 8);
+        expect(p.isDead, isTrue);
+        expect(p.deathCause, DeathCause.light);
+      },
+    );
+
+    testWithGame<GolgeGame>('revakın altında fener görmez', GolgeGame.new, (
+      game,
+    ) async {
+      final p = await place(game, 13, 242, 27);
+      run(game, 8);
+      expect(p.isDead, isFalse);
+    });
+
+    testWithGame<GolgeGame>(
+      'Yeşil Kubbe: ışık seli yükselirken tepeye tırmanılır',
+      GolgeGame.new,
+      (game) async {
+        final p = await place(game, 13, 418, 21);
+        run(game, 0.3);
+        final k = keys(game);
+        final flood = game.world.children.whereType<LightFlood>().first;
+        // Sıçrama adımları: (yön, sıçrama kenarı).
+        final jumps = <(int, double)>[
+          (1, 437 * kTile - 3),
+          (1, 441 * kTile - 3),
+          (1, 445 * kTile - 3),
+          (1, 448 * kTile - 3),
+        ];
+        Future<void> leap(int dir, double edge) async {
+          k
+            ..left = dir < 0
+            ..right = dir > 0;
+          for (var i = 0; i < 600; i++) {
+            final front = dir > 0 ? p.position.x + Player.w : p.position.x;
+            if (p.onGround && (front - edge) * dir >= 0) break;
+            game.update(1 / 60);
+          }
+          k.jump = true;
+          game.update(1 / 60);
+          for (var i = 0; i < 240; i++) {
+            k.jump = p.velocity.y < 0;
+            game.update(1 / 60);
+            if (p.onGround && p.velocity.y >= 0) break;
+          }
+          k.jump = false;
+        }
+
+        for (final (d, e) in jumps) {
+          await leap(d, e);
+          expect(p.isDead, isFalse, reason: 'sıçrama $e');
+        }
+        // Merdiven: sütun 453.
+        k
+          ..right = true
+          ..left = false;
+        for (var i = 0; i < 300 && p.center.x < 453.5 * kTile; i++) {
+          game.update(1 / 60);
+        }
+        k
+          ..right = false
+          ..up = true;
+        for (var i = 0; i < 400 && p.position.y + Player.h > 7 * kTile; i++) {
+          game.update(1 / 60);
+        }
+        k.up = false;
+        expect(p.isDead, isFalse, reason: 'merdiven');
+        // Merdivenden sola, rafa atla.
+        k
+          ..left = true
+          ..jump = true;
+        game.update(1 / 60);
+        for (var i = 0; i < 240 && !p.onGround; i++) {
+          k.jump = p.velocity.y < 0;
+          game.update(1 / 60);
+        }
+        k.jump = false;
+        expect(p.position.y + Player.h, closeTo(8 * kTile, 2));
+        for (final (d, e) in <(int, double)>[
+          (-1, 446 * kTile + 3),
+          (-1, 441 * kTile + 3),
+          (-1, 436 * kTile + 3),
+        ]) {
+          await leap(d, e);
+          expect(p.isDead, isFalse, reason: 'sıçrama $e');
+        }
+        // ignore: avoid_print
+        print(
+          'sel payı: ${(flood.surface - p.position.y - Player.h) / kTile} kare',
+        );
+        expect(p.position.y + Player.h, lessThanOrEqualTo(3 * kTile + 1));
+        expect(flood.awake, isFalse);
       },
     );
   });

@@ -738,7 +738,86 @@ dk.put(334,7,'8'); dk.put(340,7,'K'); dk.put(346,7,'B'); dk.put(355,7,'E')
 dk.put(331,7,'p')
 lvl13=dk.rows()
 
-MAPS = [('kMapYerebatan', lvl1), ('kMapKule', lvl2), ('kMapGokyolu', lvl3), ('kMapKaf', lvl4), ('kMapAgri', lvl5), ('kMapGemi', lvl6), ('kMapNemrut', lvl7), ('kMapGunDogumu', lvl8), ('kMapKarYolu', lvl9), ('kMapPalandoken', lvl10), ('kMapCig', lvl11), ('kMapPeri', lvl12), ('kMapDerinkuyu', lvl13)]
+# ------------------------------------------------------------ XIV · KONYA (ŞEB-İ ARÛS)
+from sections import ground, stealth_hall, crumble_run, lever_gate, mirror_lock
+W,H=468,48
+kn=G(W,H)
+def kc(c0,r0,c1,r1): kn.fill(c0,r0,c1,r1,'.')
+# 1) Konya Ovası ve eski höyük: damdan girilen evler; donmuş bataklık, kurtlar
+kn.fill(0,40,65,47,'#')
+kn.put(2,39,'P'); kn.put(3,39,'p'); kn.put(5,39,'1'); kn.put(7,39,'B')
+kn.fill(18,38,62,39,'#'); kn.fill(24,36,56,37,'#'); kn.fill(30,34,50,35,'#'); kn.fill(36,32,44,33,'#')
+kn.put(20,37,'p'); kn.put(21,37,'2'); kn.put(40,31,'B')
+kc(32,36,46,39)                                   # evin içi
+kn.fill(33,34,33,39,'|'); kn.fill(45,34,45,39,'|')   # damdaki delikler
+kn.put(35,39,'K'); kn.put(36,39,'3'); kn.put(38,39,'F'); kn.put(40,39,'M')
+kn.fill(66,40,79,40,'/'); kn.fill(66,41,79,46,'w'); kn.fill(66,47,79,47,'#')   # donmuş bataklık
+kn.fill(80,40,85,47,'#'); kn.put(82,39,'b'); kn.put(84,39,'b')
+# 2) İkonion Kapısı: surun içinden geçen kemer, sonunda Medusa'nın başı
+kn.fill(86,28,124,47,'#')
+kc(86,34,121,37)
+kn.put(121,35,'U'); kn.put(90,37,'@')
+kn.fill(117,28,117,37,'|')                        # sura çıkan merdiven
+kn.put(87,37,'p'); kn.put(88,37,'K'); kn.put(89,37,'4'); kn.put(95,37,'5')
+kn.put(100,27,'M'); kn.put(119,27,'6'); kn.put(122,27,'F')
+# 3) Alâeddin Tepesi: Selçuklu köşkünün kalıntıları
+x=stealth_hall(kn,125,28,n=30,guards=2)
+kn.put(125,27,'K'); kn.put(126,27,'p'); kn.put(128,27,'7')
+x=crumble_run(kn,x,28,n=4)
+kn.put(175,27,'8'); kn.put(176,27,'B')
+kn.put(177,27,'K')
+x=lever_gate(kn,x,28)
+# 4) Karatay Medresesi: kubbedeki açıklıktan inen ay ışığı
+kn.put(191,27,'p')
+x=mirror_lock(kn,x,28)
+kn.put(194,27,'9'); kn.put(218,27,'K')
+# 5) İnce Minare: şerefedeki büyük fenerler damları tarar
+ground(kn,219,28,16); kn.fill(220,24,226,25,'#')
+kn.put(220,27,'p'); kn.put(221,27,'('); kn.put(223,27,'K')
+kn.fill(231,26,231,27,'#')                        # baca
+ground(kn,238,28,27); kn.fill(239,24,245,25,'#')  # revak
+kn.fill(249,9,250,23,'#'); kn.fill(246,9,253,9,'#')   # minare (altı kemer)
+kn.put(247,10,'0'); kn.put(252,10,'0')
+kn.fill(260,26,261,27,'#'); kn.put(263,27,'I')    # kubbe, gölge
+ground(kn,269,28,14); kn.fill(270,24,280,25,'#')
+kn.put(271,27,'K'); kn.put(275,27,'M'); kn.put(277,27,'F')
+# 6) Şems'in Kuyusu: sokak kuyuda biter; dipte karanlık bir geçit
+kn.fill(283,28,331,47,'#')
+kn.fill(330,12,331,27,'#')                        # dergâhın duvarı
+kc(305,28,306,39); kc(305,40,331,42)
+kn.put(305,42,'p'); kn.put(306,42,'K'); kn.put(309,42,'F'); kn.put(308,41,')')
+kn.put(307,40,'x'); kn.put(330,42,'X'); kn.put(318,40,'e'); kn.put(322,42,'M')
+# 7) Dergâh avlusu: semâzenler döner, Kandilciler dolaşır
+kn.fill(332,26,372,47,'#')
+kc(330,30,372,33)
+kn.fill(331,34,331,42,'|')                        # avluya çıkan merdiven
+kn.put(330,33,'I'); kn.put(333,33,'p'); kn.put(335,33,'[')
+for c in (342,352,362): kn.put(c,33,'a')
+kn.put(346,33,'G'); kn.put(360,33,'G'); kn.put(370,33,'I')
+# 8) Semâhane: dönen avizeler, yerde semâ ve Kandilciler
+kn.fill(373,8,430,47,'#')
+kc(373,30,375,33); kn.put(373,33,'#',force=True)  # kapı eşiği
+kc(376,12,427,43)
+kn.fill(376,34,381,43,'#')                        # mutribhane
+kn.fill(382,34,382,43,'|')
+kn.put(376,33,'p'); kn.put(377,33,'K'); kn.put(378,33,']'); kn.put(379,33,'F'); kn.put(380,33,'B')
+for c,r in ((387,32),(398,28),(409,24)): kn.put(c,r,'d')
+for c in (392,404): kn.put(c,43,'a')
+kn.put(397,43,'G'); kn.put(411,43,'G')
+kn.fill(416,22,427,43,'#')                        # çıkış
+kc(428,18,430,21)
+# 9) Kubbe-i Hadrâ: ışık seli yükselirken tepeye tırmanış
+kn.fill(431,22,467,47,'#')
+kn.put(418,21,'K'); kn.put(419,21,'{'); kn.put(431,21,'p'); kn.put(434,21,'z')
+kn.fill(438,20,440,20,'#'); kn.fill(442,18,444,18,'#'); kn.put(446,16,'O'); kn.put(447,16,'O')
+kn.fill(450,14,453,14,'#'); kn.fill(453,5,453,13,'|')
+kn.fill(446,8,452,8,'#')
+kn.fill(441,6,443,6,'#'); kn.fill(436,4,438,4,'#')
+kn.fill(430,3,434,3,'#'); kn.put(435,4,'Z')
+kn.put(431,2,'E'); kn.put(433,2,'M')
+lvl14=kn.rows()
+
+MAPS = [('kMapYerebatan', lvl1), ('kMapKule', lvl2), ('kMapGokyolu', lvl3), ('kMapKaf', lvl4), ('kMapAgri', lvl5), ('kMapGemi', lvl6), ('kMapNemrut', lvl7), ('kMapGunDogumu', lvl8), ('kMapKarYolu', lvl9), ('kMapPalandoken', lvl10), ('kMapCig', lvl11), ('kMapPeri', lvl12), ('kMapDerinkuyu', lvl13), ('kMapKonya', lvl14)]
 
 out = ['// Bu dosya tools/generate_maps.py ile üretilir; elle düzenleme.',
        '// Gösterim: lib/game/level.dart başındaki açıklamaya bakın.', '']

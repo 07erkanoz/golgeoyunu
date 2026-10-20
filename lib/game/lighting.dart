@@ -6,6 +6,7 @@ import 'package:flame/components.dart';
 
 import 'creatures.dart';
 import 'entities.dart';
+import 'konya.dart';
 import 'legends.dart';
 import 'mechanics.dart';
 import 'nemrut.dart';
@@ -171,6 +172,34 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
           }
         case SunLock l when l.open || l.charge > 0:
           _light(canvas, l.position.toOffset(), 60, 0.6);
+        case CandleTray t:
+          _light(canvas, (t.position + Vector2(kTile, -8)).toOffset(), 70, 0.8);
+        case Chandelier c:
+          _light(canvas, c.position.toOffset(), 60, 0.5);
+        case Semazen s when s.inFront:
+          _light(canvas, (s.position - Vector2(0, 30)).toOffset(), 46, 0.35);
+        case GreatLamp g:
+          _light(canvas, g.position.toOffset(), 90, 0.9);
+          canvas.save();
+          canvas.translate(g.position.x, g.position.y);
+          _cut.shader = null;
+          _cut.color = const Color(0xA0000000);
+          canvas.drawPath(g.beamPath(), _cut);
+          _cut.color = const Color(0xFF000000);
+          canvas.restore();
+        case LightFlood f when f.awake:
+          final top = f.surface - 60;
+          if (top < _view.bottom) {
+            _cut.shader = ui.Gradient.linear(
+              Offset(0, top),
+              Offset(0, top + 120),
+              const [Color(0x00000000), Color(0xFF000000)],
+            );
+            canvas.drawRect(
+              Rect.fromLTRB(_view.left, top, _view.right, _view.bottom),
+              _cut,
+            );
+          }
         case FireflySwarm f:
           _light(canvas, f.position.toOffset(), 70, 0.7 * f.strength);
         case FireflyLure l:

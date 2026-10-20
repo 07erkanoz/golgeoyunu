@@ -259,6 +259,23 @@ Picture _buildTerrain(Level lv, int c0, int c1, int r0, int r1) {
             Offset(x + kTile / 2, y + kTile / 2 + 4),
             c.isOdd ? math.pi / 2 : math.pi,
           );
+        case '|' when theme == LevelTheme.konya:
+          // Şehirde tırmanılan yerler ahşap merdivendir.
+          line.strokeWidth = 2.4;
+          canvas.drawLine(Offset(x + 8, y), Offset(x + 8, y + kTile), line);
+          canvas.drawLine(
+            Offset(x + kTile - 8, y),
+            Offset(x + kTile - 8, y + kTile),
+            line,
+          );
+          line.strokeWidth = 2;
+          for (final k in [6.0, 22.0]) {
+            canvas.drawLine(
+              Offset(x + 8, y + k),
+              Offset(x + kTile - 8, y + k),
+              line,
+            );
+          }
         case '|':
           line.strokeWidth = 2.2;
           final vine = Path();

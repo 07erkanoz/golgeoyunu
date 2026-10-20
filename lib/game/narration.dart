@@ -18,6 +18,13 @@ class Narration extends Component with HasGameReference<GolgeGame> {
   static const _lineHold = 2.8;
   static const _lineOut = 1.0;
 
+  /// Satır ekranda kalma süresi: uzun satırlar okunacak kadar kalır.
+  double get _hold {
+    if (_lines.isEmpty) return _lineHold;
+    final line = _lines[_lineIndex.clamp(0, _lines.length - 1)];
+    return math.max(_lineHold, line.length * 0.055);
+  }
+
   List<String> _lines = const [];
   int _lineIndex = 0;
   double _lineT = 0;
@@ -74,13 +81,13 @@ class Narration extends Component with HasGameReference<GolgeGame> {
   void skipAll() {
     if (!inCinematic) return;
     _lineIndex = _lines.length - 1;
-    _lineT = _lineIn + _lineHold;
+    _lineT = _lineIn + _hold;
   }
 
   /// Satırı kapatmaya başla; zaten kapanıyorsa hemen sonrakine geç.
   void skip() {
     if (!inCinematic) return;
-    final fadeOutStart = _lineIn + _lineHold;
+    final fadeOutStart = _lineIn + _hold;
     _lineT = _lineT < fadeOutStart
         ? fadeOutStart
         : fadeOutStart + _lineOut + 0.001;
@@ -107,7 +114,7 @@ class Narration extends Component with HasGameReference<GolgeGame> {
       _backdrop = math.min(1, _backdrop + dt / 1.5);
       _lineT += dt;
       _sceneT += dt;
-      if (_lineT > _lineIn + _lineHold + _lineOut) {
+      if (_lineT > _lineIn + _hold + _lineOut) {
         _lineT = 0;
         _lineIndex++;
         if (_lineIndex >= _lines.length) {
@@ -233,14 +240,13 @@ class Narration extends Component with HasGameReference<GolgeGame> {
         Paint()..color = kInk.withValues(alpha: _backdrop),
       );
       final line = _lines[_lineIndex];
-      final a = _envelope(_lineT, _lineIn, _lineHold, _lineOut);
+      final a = _envelope(_lineT, _lineIn, _hold, _lineOut);
       final isEnd = line == line.toUpperCase();
       final scene = _scene;
       if (scene != null) {
         // Perde: satırlar altında, son satır (başlık) perdenin üstüne düşen
         // bir gölge yazı olarak.
-        final progress =
-            _lineIndex + (_lineT / (_lineIn + _lineHold + _lineOut));
+        final progress = _lineIndex + (_lineT / (_lineIn + _hold + _lineOut));
         PerdePainter.paint(
           canvas,
           Size(w, h),

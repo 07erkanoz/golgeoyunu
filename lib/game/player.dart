@@ -10,6 +10,7 @@ import 'golge_game.dart';
 import 'level.dart';
 import 'mechanics.dart';
 import 'palette.dart';
+import 'konya.dart';
 import 'legends.dart';
 import 'ski.dart';
 import 'puzzles.dart';
@@ -191,6 +192,12 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       position.y + h - 1,
       (ch) => ch == '~' || ch == 'I',
     );
+    if (!inShadow && level.semazenCells.isNotEmpty) {
+      final r = toRect();
+      inShadow = game.world.children.whereType<Semazen>().any(
+        (s) => s.shades(r),
+      );
+    }
     hidden =
         inShadow &&
         state == PlayerState.normal &&

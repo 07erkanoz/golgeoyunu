@@ -29,6 +29,9 @@ const double kTile = 32;
 /// - Buz: `-` (katı kaya gibi, üstü kaygan), `/` ince buz (çatlar, kırılır).
 /// - Karlı bölümlerde `b` yarasa değil kurttur.
 /// - Tufan: `o` (Sâye gelince en yakın hazne durmadan yükselmeye başlar).
+/// - Konya: `a` semâzen (önden geçerken eteğinde saklanılır), `d` dönen
+///   avize (göbeği; kollarında mum tablaları), `0` Kandilcilerin büyük
+///   feneri (damları tarar), `z`/`Z` ışık selinin başı ve bittiği yükseklik.
 /// - Gemi hayvanları: `a` oyma hayvan sandığı, `d` eşinin gölgesi (kaide);
 ///   ilerleyiş sırasıyla eşleşir (ilk `a` ilk `d` ile).
 /// - İp: dikey `S` dizisi (üst hücre bağlantı noktası, uzunluğu dizi kadar).
@@ -73,6 +76,10 @@ class Level {
   final wingsCells = <Vector2>[];
   double? chaseStart;
   double? chaseEnd;
+
+  /// Kovalamacanın bittiği hücrenin yüksekliği (Konya'da ışık seli bunun
+  /// üstüne çıkılınca durur).
+  double? chaseTop;
   final leverCells = <Vector2>[];
   final glimpseCells = <Vector2>[];
 
@@ -115,6 +122,12 @@ class Level {
   final floodCells = <Vector2>[];
   final animalCells = <Vector2>[];
   final pedestalCells = <Vector2>[];
+
+  /// Konya: semâzenler, semâhanenin dönen avizeleri, Kandilcilerin büyük
+  /// fenerleri.
+  final semazenCells = <Vector2>[];
+  final chandelierCells = <Vector2>[];
+  final lampCells = <Vector2>[];
 
   /// Hücre buz mu (kaygan zemin)?
   bool isIce(int c, int r) => _ice.contains(r * 100000 + c);
@@ -190,6 +203,7 @@ class Level {
             chaseStart = cell.x;
           case 'Z':
             chaseEnd = cell.x;
+            chaseTop = cell.y;
           case 'L':
             leverCells.add(cell);
           case 'e':
@@ -297,6 +311,12 @@ class Level {
             continue;
           case 'o':
             floodCells.add(cell);
+          case 'a' when def.theme == LevelTheme.konya:
+            semazenCells.add(cell);
+          case 'd' when def.theme == LevelTheme.konya:
+            chandelierCells.add(cell);
+          case '0':
+            lampCells.add(cell);
           case 'a':
             animalCells.add(cell);
           case 'd':

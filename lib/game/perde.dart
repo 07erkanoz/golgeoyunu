@@ -5,6 +5,8 @@ import 'package:flutter/painting.dart';
 
 import 'palette.dart';
 
+part 'perde_east.dart';
+
 /// Perde sahneleri: prologda, bölüm aralarında ve finalde oynanan gölge oyunu.
 enum PerdeScene {
   prologue,
@@ -13,6 +15,32 @@ enum PerdeScene {
 
   /// Kaf'ın sırrı: aynadaki gölge, kandil doğuya taşınır.
   mirror,
+
+  /// Tufan: gemi Ağrı'ya oturur, güvercin zeytin dalıyla döner.
+  flood,
+
+  /// Nemrut'un taş tanrıları; depremde başları düşer.
+  gods,
+
+  /// Nemrut'ta gün doğumu: kırık güneş tanrıların yüzüne vurur.
+  dawn,
+
+  /// Palandöken: karda kervan, palanlar dökülür, doruklarda ejderler.
+  caravan,
+
+  /// Ejder uyanır, çığ iner.
+  avalanche,
+
+  /// Periler devlerin ateşini söndürür, küllerden bacalar yükselir.
+  fairies,
+
+  /// Derinkuyu'nun kesiti: inen fenerler, uyuyan dev.
+  underground,
+
+  /// Konya: düğün gecesi, semâzenler, neyzen.
+  sema,
+
+  /// Son: Yeşil Kubbe'de kandil söner, gölge ışığa karışır.
   epilogue,
 }
 
@@ -21,6 +49,14 @@ PerdeScene? interludeScene(int level) => switch (level) {
   1 => PerdeScene.galata,
   2 => PerdeScene.kaf,
   4 => PerdeScene.mirror,
+  5 => PerdeScene.flood,
+  6 => PerdeScene.gods,
+  7 => PerdeScene.dawn,
+  8 || 9 => PerdeScene.caravan,
+  10 => PerdeScene.avalanche,
+  11 => PerdeScene.fairies,
+  12 => PerdeScene.underground,
+  13 => PerdeScene.sema,
   _ => null,
 };
 
@@ -125,8 +161,24 @@ class PerdePainter {
         _kaf(canvas, time, progress);
       case PerdeScene.mirror:
         _mirror(canvas, time, progress);
+      case PerdeScene.flood:
+        _floodScene(canvas, time, progress);
+      case PerdeScene.gods:
+        _godsScene(canvas, time, progress);
+      case PerdeScene.dawn:
+        _godsScene(canvas, time, progress, dawn: true);
+      case PerdeScene.caravan:
+        _caravanScene(canvas, time, progress);
+      case PerdeScene.avalanche:
+        _caravanScene(canvas, time, progress, avalanche: true);
+      case PerdeScene.fairies:
+        _fairiesScene(canvas, time, progress);
+      case PerdeScene.underground:
+        _fairiesScene(canvas, time, progress, underground: true);
+      case PerdeScene.sema:
+        _semaScene(canvas, time, progress);
       case PerdeScene.epilogue:
-        _epilogue(canvas, time, progress);
+        _endingScene(canvas, time, progress);
     }
     canvas.restore();
 
@@ -156,6 +208,7 @@ class PerdePainter {
   }
 
   static double _lampFor(PerdeScene scene, double u) {
+    if (scene == PerdeScene.epilogue) return _endingLamp(u);
     if (scene != PerdeScene.prologue) return 1;
     // Kandili söndürdüler: perde kararır, sonra bir gölge düşer.
     if (u < 2.7) return 1;
@@ -1047,85 +1100,5 @@ class PerdePainter {
       final lx = 80 + 70 + carry * 520 + 44;
       canvas.drawCircle(Offset(lx, 245), 6, _holePaint(ca));
     }
-  }
-
-  static void _epilogue(Canvas canvas, double time, double u) {
-    _c = canvas;
-    // Hüdhüd ışığın içinde kaybolur.
-    const light = Offset(600, 110);
-    final open = 0.6 + 0.4 * _span(u, 0, 1.0);
-    canvas.drawCircle(
-      light,
-      70 * open,
-      Paint()
-        ..shader = ui.Gradient.radial(
-          light,
-          70 * open,
-          [
-            const Color(0xFFFFF6DC).withValues(alpha: 0.95),
-            const Color(0xFFFFD08A).withValues(alpha: 0.4),
-            const Color(0xFFFFB060).withValues(alpha: 0),
-          ],
-          const [0, 0.4, 1],
-        ),
-    );
-    final fly = _span(u, 0.1, 1.0);
-    final ha = 1 - _span(u, 0.8, 1.05);
-    if (ha > 0) {
-      canvas.save();
-      canvas.translate(200 + fly * 400, 260 - fly * 150);
-      canvas.scale(1 - fly * 0.6);
-      _hoopoe(_inkPaint(ha), time, flying: true);
-      canvas.restore();
-    }
-
-    // Uzakta Kaf ve sızan bir kandil.
-    final far = _span(u, 1.9, 2.3);
-    canvas.drawPath(
-      Path()
-        ..moveTo(0, 360)
-        ..lineTo(70, 220)
-        ..lineTo(96, 250)
-        ..lineTo(130, 180)
-        ..lineTo(190, 280)
-        ..lineTo(260, 360)
-        ..close(),
-      _inkPaint(0.4 * far),
-    );
-    final sputter = math.max(
-      0.0,
-      math.sin(time * 4.7) * math.sin(time * 2.3 + 1),
-    );
-    canvas.drawCircle(
-      const Offset(130, 176),
-      3.5,
-      _holePaint(far * (0.3 + 0.7 * sputter)),
-    );
-
-    // Zemin ve kırık güneşin parçasını tutan Sâye.
-    canvas.drawPath(
-      Path()
-        ..moveTo(0, 400)
-        ..lineTo(0, 362)
-        ..quadraticBezierTo(390, 336, 780, 362)
-        ..lineTo(780, 400)
-        ..close(),
-      _inkPaint(1),
-    );
-    final sa = _span(u, 0.8, 1.3);
-    _puppet(canvas, const Offset(400, 350), time, 1.1, sa, (ink, hole) {
-      _saye(ink, hole, time, jar: 0);
-      // Avuçlarda titreyen parça.
-      final glow = 0.75 + 0.25 * math.sin(time * 6);
-      _c.drawPath(
-        Path()
-          ..moveTo(24, -44)
-          ..lineTo(32, -34)
-          ..lineTo(26, -24)
-          ..lineTo(18, -32)
-          ..close(),
-        hole..color = _hole.withValues(alpha: 0.95 * sa * glow),
-      );
-    });
   }
 }

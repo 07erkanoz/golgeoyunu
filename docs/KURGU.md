@@ -9,7 +9,7 @@ Ton: mistik, az sözlü, beyit gibi. Gerilim var, dehşet yok: tehdit sezilir,
 
 Coğrafya bir rüya coğrafyasıdır. Perde, gerçekte uzak olan yerleri tek bir
 yolculukta yan yana koyar: İstanbul'dan Kaf'a, oradan Ağrı'ya, Nemrut'a,
-Palandöken'e ve Kapadokya'ya.
+Palandöken'e, Kapadokya'ya ve Konya'ya.
 
 ## Zaman çizgisi
 
@@ -46,61 +46,82 @@ yattığı dağa götürmüştür. Perde kapanır, yeniden açılır.
 
 ---
 
-## II. Perde · Dağ (Ağrı)
+## II. Perde · Dağ
 
-Rivayet: Nuh'un gemisi kırk gün kırk gece karanlık sularda yüzerken içinde hiç
-sönmeyen bir ışık vardı. Gemi Ağrı'ya oturdu, ışık taşa gömüldü. Kandilciler o
-ışığı istiyor: onunla perdenin ardındaki asıl kandili, âlemin kandilini
-söndürebilirler.
+Nuh'un gemisinde tufandan beri hiç sönmeyen bir ışık vardı. Kandilciler kırık
+güneşin yerine yenisini yakmak için bu gibi ışıkları topluyor ve her birini
+ustanın kandiliyle canlandırıyor; usta her adımda biraz daha sönüyor.
 
 | Bölüm | Mekân | Öz | Mekanik / bulmaca |
 |---|---|---|---|
-| V · Ağrı Etekleri | Kar fırtınası, buzul | Yalnızlık, soğuk | **Sallanarak atlama** (iplere tutunup savrulmak), buzda kayma, rüzgârda eğilmek, çığ kovalamacası |
-| VI · Nemrut | Taş tanrılar, düşmüş dev başlar | Kibir ve sabır | **Heykellere tırmanma** (omuz, taç, kartal kanadı), dev başlar platform; gün doğumuna göre dönen gölgeler |
-| VII · Nuh'un Gemisi | Dağa gömülü taşlaşmış gövde | Tufan, umut | Gemi güverteleri, **yükselen su**, hayvan gölgeleri (çiftler) bulmacası, güvercin |
-| VIII · Ağrı'nın Zirvesi | Kandilcilerin ordugâhı | Yüzleşme | Fırtınada gizlilik, gemi ışığını kurtarmak; zor final |
+| V · Ağrı | Etekler, Akori, Aziz Hakob Manastırı | Yalnızlık, soğuk | İplerle sallanma, tipide gizlilik, çan, düşen sarkıtlar |
+| VI · Nuh'un Gemisi | Dağa gömülü taşlaşmış gövde | Tufan, umut | Hayvan gölgelerini eşleriyle kavuşturma, yükselen su |
+| VII · Nemrut | Taş tanrılar, düşmüş başlar | Kibir | Yıldız taşları ve Aslan Horoskobu, heykellere tırmanma, deprem |
+| VIII · Gün Doğumu | Doğu terası | Sabır | Taş Dev Nemrud: kulağına salınan tek ateşböceğiyle yıkılır |
 
-**Nemrut'un efsaneleri:**
-- Kommagene kralı Antiochos tanrılarla yan yana oturmak için dağın tepesine
-  taş tanrılar dikti. Depremler başlarını yere düşürdü; başlar hâlâ güneşin
-  doğduğu yere bakar.
-- Halk Nemrut'u, göğe ok atıp Tanrı'yla savaşmaya kalkan Nemrud'la bağdaştırır.
-  Nemrud'u bir sivrisinek yendi: burnundan girdi, beynine ulaştı.
-  **Bulmaca:** Dev taş bekçiyi kuvvetle değil, kulağına salınan tek bir
-  ateşböceğiyle yıkmak. Kandilciler de Nemrud gibi göğü fethetmeye kalkmıştır.
-
-**Gemide:** Hayvanların gölgeleri ikişer ikişer perdede gezinir. Eşini yitirmiş
-gölgeleri birleştirmek kapıları açar. Su yükselir; Sâye yukarı kaçar. Güvercin
-zeytin dalını taşır; Hüdhüd onunla konuşur (iki rehber kuş).
+**Nemrut:** Antiochos tanrılarla yan yana oturmak istedi; deprem başları yere
+indirdi. Halk dağı Nemrud'la bağdaştırır: göğe ok atan kralı bir sivrisinek
+yendi.
 
 ---
 
-## III. Perde · Yol
+## III. Perde · Kar
 
 | Bölüm | Mekân | Öz | Mekanik |
 |---|---|---|---|
-| IX · Palandöken | Gece karlı yamaç | Akış, özgürlük | **Kayak**: Alto gibi durmadan akış, atlamalar, takla, çığ |
-| X · Peri Bacaları | Ürgüp, Nevşehir | Masal | Peri bacalarının masalsı siluetleri, kaya oyma şapeller, yeraltı şehri, perilerin fısıltıları |
-| … | | Yolculuk sürer | |
+| IX · Kar Yolu | Palandöken'in eteği | Takip | Kurtlar (kokuyla bulur), ince buz, kar fırtınası |
+| X · Palandöken | Ejder dorukları | Akış | Alto tarzı kayak: atlayış, takla, kütük çit, Manyetik Tepe |
+| XI · Çığ | Küçük Ejder yamacı | Kaçış | Arkadan gelen çığla yarış |
 
-**Peri bacaları:** Rivayete göre bacalarda periler yaşardı; insanlar gelince
-saklandılar. Perde onları yeniden görünür kılar: gölgeleri bacaların üstünde
-dans eder. Saklanmayı bilen periler Sâye'ye gölgede yürümeyi öğretir.
+Palandöken: yokuşlarda kervanların palanları dökülür. Büyük ve Küçük Ejder
+doruklarında koruyucu ejderler uyur; fırtına nefesleri, sis uykularıdır.
+(Tabyalar 1884-1896 yapımıdır, bu yüzden 1660'ta yoklar.)
 
 ---
 
-## Final · Konya, Şeb-i Arûs
+## IV. Perde · Periler
 
-**Şeb-i Arûs**, "düğün gecesi" demektir (Farsça *şeb*: gece, Arapça *arûs*:
-düğün). Mevlânâ ölümünü bir ayrılık değil, sevgiliye kavuşma (vuslat) olarak
-gördüğü için ölüm gecesi bu adla anılır.
+| Bölüm | Mekân | Öz | Mekanik |
+|---|---|---|---|
+| XII · Peri Bacaları | Muşkara, Güvercinlik, kaya kilisesi, Uçhisar | Masal | Bacalara tırmanma, peri halkaları, ipler, güvercinler |
+| XIII · Derinkuyu | Yeraltı şehri | Unutuş | Sürgü taşı (basamak olur), havalandırma bacası, kuyu, devlerin karanlığı |
 
-- **XIII · Konya:** Kar altındaki şehir, dergâhın kubbesi, semâhane.
-- **Ney'in şikâyeti:** Mesnevî ney'in sazlıktan koparılışını anlatarak başlar;
-  ney aslına dönmeyi özler. Oyunun neyi de baştan beri bu sesi çalıyordu.
-- **Final:** Dönen semâzenlerin gölgeleri perdede açılan çiçekler gibidir.
-  Sâye, gölge olduğunu bilerek kandile yürür. Gölgenin ışığa dönüşü yok oluş
-  değil, düğün gecesidir. Hayali Usta'nın kandili yeniden yanar.
+Peri Padişahı ateşli devleri karla buzla yenip yerin altına sürdü; küllerden
+bacalar yükseldi. Her insanla bir peri eşi doğar: hemzat. 1660'ta Nevşehir
+henüz Muşkara köyüdür.
+
+---
+
+## Son Perde · Düğün (XIV · Şeb-i Arûs, Konya)
+
+**Şeb-i Arûs**, "düğün gecesi" demektir. Mevlânâ ölümünü sevgiliye kavuşma
+olarak gördüğü için vefat gecesi (17 Aralık 1273) bu adla anılır.
+
+| Bölge | Efsane | Mekanik |
+|---|---|---|
+| Konya Ovası, Eski Höyük | "Kon ya!" diyen uçan dervişler; damdan girilen en eski evler, ana tanrıça | Donmuş bataklık: kurtlar ince buzu kırar |
+| İkonion Kapısı | Tufandan sonra çamurdan suretler (ikon); Perseus ve Medusa; Nannakos'un ağıtı | Perseus'un kalkanını iterek Medusa'yı mühürlemek |
+| Alâeddin Tepesi | Selçuklu başkenti; Belh'ten gelen çocuk ve Attâr | Gizlilik salonu, çöken taşlar, kol ve kapı |
+| Karatay Medresesi | Kubbedeki gök, havuzdaki ay | Ay ışığını aynalarla kilide ulaştırmak |
+| İnce Minare | Kandilcilerin büyük fenerleri | **Dönen huzme**: kubbe, baca ve revakın gölgesinde beklemek |
+| Şems'in Kuyusu | Şems, "güneş" demektir; kaybolur, Mevlânâ onu kendinde bulur | Karanlık bölge |
+| Dergâh Avlusu | Semânın doğuşu; sikke, tennure, açık eller | **Semâzenin eteğinde saklanma** (yalnızca önden geçerken) |
+| Semâhane | Neyin şikâyeti | **Dönen avizeler**: mum tablalarıyla yükselmek |
+| Kubbe-i Hadrâ | Düğün gecesi | **Işık seli**: biriktirilen ışık taşar, tepeye tırmanış |
+
+**Cevaplar (son perde):**
+- **Sâye kimdir?** Ustanın gölgesi değil, duası: hem eşi, hem yolu, hem hemzatı.
+- **Kandilciler neden ışığı topladı?** Işığı saklayan gölgesini kaybeder.
+  Ustanın kandili gölgelere can veren tek ışıktır; onu istediler.
+- **Güneş neden kırıldı?** Onu yalnız kendileri için asmak istediler. Işık
+  bölünmeye razı olur, sahiplenilmeye razı olmaz.
+- **Usta neden Konya'da?** Kandilciler düğün gecesinde ışığın ölmeyeceğini
+  sandı. Usta bu geceyi kendi düğünü bildi.
+- **Son:** Kandil söner, usta gider. Sâye kaybolmaz; ışığa karışır.
+  Biriktirilen bütün ışık göğe döner, Kandilciler yüzyıllar sonra ilk kez
+  gölgelerini görüp ağlar.
+- **Devamı:** Hüdhüd: kırık güneşin yalnızca bir parçası buradaydı, ötekiler
+  dünyaya dağıldı. *Sâye'nin yolculuğu sürecek.*
 
 ---
 
