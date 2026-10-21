@@ -129,11 +129,19 @@ class IronVein extends Gate {
       return;
     }
     if (!lit) {
-      for (final l in game.world.children.whereType<FireflyLure>()) {
-        if (l.glowing &&
-            (l.position.toOffset() - forge).distance < 3.5 * kTile) {
+      // Sönmüş ocak yakına salınan ateşböceğini kendine çeker; böcek
+      // közlere değince ocak yanar.
+      final mouth = Vector2(forge.dx, forge.dy - 18);
+      for (final l in game.world.children.whereType<FireflyLure>().toList()) {
+        if (!l.glowing && l.pull == null) continue;
+        final d = (l.position - mouth).length;
+        if (d < 9 * kTile) l.pull = mouth;
+        if (d < 10) {
           lit = true;
+          _flash = 1;
+          l.removeFromParent();
           GameAudio.instance.play('fire', volume: 0.8);
+          game.shake(3);
           game.once('forgeLit', S.of('forgeLit'));
         }
       }
@@ -181,17 +189,122 @@ class IronVein extends Gate {
         Paint()..color = const Color(0xFFFFB050).withValues(alpha: 0.8),
       );
     }
-    // Ocak: dipte köz yatağı; yanınca közler parlar.
-    final coal = Paint()
+    _forge(canvas, w, h);
+  }
+
+  /// Ocak: damarın dibinde taştan kubbeli bir yuva. Sönmüşken kül ve ince
+  /// bir duman, ağzında ateşböceğini çağıran soluk bir ışıltı; yanınca
+  /// alevler ve ısıyla büyüyen kor ışığı.
+  void _forge(Canvas canvas, double w, double h) {
+    final cx = w / 2;
+    final base = h;
+    // Isı ve kor ışığı.
+    if (lit) {
+      final r = 70 + 70 * math.max(heat, melt) + 30 * _flash;
+      canvas.drawCircle(
+        Offset(cx, base - 16),
+        r,
+        Paint()
+          ..shader = ui.Gradient.radial(Offset(cx, base - 16), r, [
+            const Color(0xFFFFB050).withValues(alpha: 0.45 + 0.2 * heat),
+            const Color(0x00FF8030),
+          ]),
+      );
+    }
+    // Taş kubbe: iki yanda yığma taşlar, ortada ağız.
+    final stone = Paint()..color = const Color(0xFF3A3230);
+    final stoneLit = Paint()
       ..color = lit
-          ? Color.lerp(
-              const Color(0xFFB8401A),
-              const Color(0xFFFFC060),
-              0.5 + 0.5 * math.sin(_t * 6) * 0.5 + _flash * 0.5,
-            )!
-          : const Color(0xFF2A2420);
+          ? Color.lerp(const Color(0xFF5A4038), const Color(0xFFB86A40), heat)!
+          : const Color(0xFF4A423E);
+    for (final (x, y, r) in const [
+      (-34.0, -8.0, 11.0),
+      (-24.0, -20.0, 10.0),
+      (-12.0, -30.0, 10.0),
+      (2.0, -34.0, 10.0),
+      (16.0, -32.0, 10.0),
+      (28.0, -22.0, 10.0),
+      (38.0, -10.0, 11.0),
+      (-30.0, -2.0, 9.0),
+      (34.0, -2.0, 9.0),
+    ]) {
+      canvas.drawCircle(Offset(cx + x - 2, base + y), r, stone);
+      canvas.drawCircle(Offset(cx + x - 4, base + y - 3), r * 0.55, stoneLit);
+    }
+    // Ağız.
+    final mouth = Path()
+      ..moveTo(cx - 20, base)
+      ..quadraticBezierTo(cx - 18, base - 26, cx, base - 27)
+      ..quadraticBezierTo(cx + 18, base - 26, cx + 20, base)
+      ..close();
+    canvas.drawPath(mouth, Paint()..color = const Color(0xFF0E0A08));
+    if (!lit) {
+      // Kül ve tüten ince duman; ağzında çağıran ışıltı.
+      canvas.drawOval(
+        Rect.fromCenter(center: Offset(cx, base - 3), width: 30, height: 7),
+        Paint()..color = const Color(0xFF5A5450),
+      );
+      final call = 0.5 + 0.5 * math.sin(_t * 2.2);
+      canvas.drawCircle(
+        Offset(cx, base - 14),
+        22 + 6 * call,
+        Paint()
+          ..shader = ui.Gradient.radial(Offset(cx, base - 14), 28, [
+            const Color(0xFFFFD890).withValues(alpha: 0.18 + 0.14 * call),
+            const Color(0x00FFD890),
+          ]),
+      );
+      canvas.drawCircle(
+        Offset(cx, base - 6),
+        1.6,
+        Paint()
+          ..color = const Color(0xFFFF9050).withValues(alpha: 0.4 + 0.4 * call),
+      );
+      final smoke = Paint();
+      for (var i = 0; i < 4; i++) {
+        final u = (_t * 0.15 + i / 4) % 1.0;
+        smoke.color = const Color(0xFF8A8480).withValues(alpha: 0.2 * (1 - u));
+        canvas.drawCircle(
+          Offset(cx + math.sin(_t + i) * 5 + u * 10, base - 30 - u * 70),
+          4 + u * 10,
+          smoke,
+        );
+      }
+      return;
+    }
+    // Köz yatağı ve alevler (ısı arttıkça büyür).
+    final coal = Paint()
+      ..color = Color.lerp(
+        const Color(0xFFB8401A),
+        const Color(0xFFFFC060),
+        0.5 + 0.5 * math.sin(_t * 6) * 0.5 + _flash * 0.5,
+      )!;
     for (var i = 0; i < 5; i++) {
-      canvas.drawCircle(Offset(-6 + i * 11.0, h - 3), 4.5, coal);
+      canvas.drawCircle(Offset(cx - 12 + i * 6.0, base - 3), 3.6, coal);
+    }
+    final flame = Paint();
+    final size = 0.6 + 0.5 * math.max(heat, melt) + 0.4 * _flash;
+    for (var i = 0; i < 4; i++) {
+      final fx = cx - 9 + i * 6.0;
+      final ht = (14 + 6 * math.sin(_t * (7 + i) + i * 2)) * size;
+      flame.color = Color.lerp(
+        const Color(0xFFFF7A2A),
+        const Color(0xFFFFE0A0),
+        i.isEven ? 0.2 : 0.6,
+      )!.withValues(alpha: 0.9);
+      canvas.drawPath(
+        Path()
+          ..moveTo(fx - 4, base - 3)
+          ..quadraticBezierTo(
+            fx - 4,
+            base - ht * 0.6,
+            fx + math.sin(_t * 9 + i) * 2,
+            base - ht,
+          )
+          ..quadraticBezierTo(fx + 4, base - ht * 0.6, fx + 4, base - 3)
+          ..close(),
+        flame,
+      );
     }
   }
 }
@@ -274,9 +387,10 @@ class Bellows extends PositionComponent
       ink,
     );
     // Çentikler: sırası (ışıklı oyuk).
+    final hot = vein?.lit ?? false;
     final notch = Paint()
-      ..color = const Color(0xFFFFD890)
-          .withValues(alpha: 0.75 + 0.25 * math.sin(_t * 2));
+      ..color = (hot ? const Color(0xFFFFD890) : const Color(0xFF8A7A68))
+          .withValues(alpha: hot ? 0.75 + 0.25 * math.sin(_t * 2) : 0.5);
     for (var i = 0; i < order; i++) {
       canvas.drawCircle(
         Offset((i - (order - 1) / 2) * 5.0, top - 9),

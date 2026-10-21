@@ -1165,6 +1165,9 @@ class FireflyLure extends PositionComponent with HasGameReference<GolgeGame> {
   final Vector2 _vel;
   double _t = 0;
 
+  /// Bir şey onu kendine çekiyorsa (sönmüş ocak): oraya süzülür.
+  Vector2? pull;
+
   bool get glowing => _t < life - 0.6;
   double get strength =>
       (1 - ((_t - (life - 1.2)) / 1.2).clamp(0.0, 1.0)) *
@@ -1174,6 +1177,19 @@ class FireflyLure extends PositionComponent with HasGameReference<GolgeGame> {
   void update(double dt) {
     super.update(dt);
     _t += dt;
+    final target = pull;
+    if (target != null) {
+      final d = target - position;
+      final step = 240 * dt;
+      if (d.length <= step) {
+        position.setFrom(target);
+      } else {
+        position.add(d.normalized()..scale(step));
+      }
+      // Çekilirken sönmez.
+      _t = math.min(_t, 1.0);
+      return;
+    }
     if (_t < 0.9) {
       final next = position + _vel * dt;
       if (game.level.cellAt(next.x, next.y) == '#') {

@@ -106,6 +106,31 @@ void main() {
   );
 
   testWithGame<GolgeGame>(
+    'oyunda: ocağa doğru salınan ateşböceği ocağa çekilir ve yakar',
+    GolgeGame.new,
+    (game) async {
+      GolgeGame.debugLevels = null;
+      game.debugLoadLevel(15);
+      await game.ready();
+      game.cinematic = false;
+      final vein = game.world.children.whereType<IronVein>().first;
+      final forge = vein.forge;
+      final p = game.player!;
+      p.position.setFrom(
+        Level.standOn(
+          Vector2(forge.dx - 7 * kTile, forge.dy - kTile),
+          Player.w,
+          Player.h,
+        ),
+      );
+      run(game, 0.3);
+      game.releaseFirefly(p.center.clone(), 1);
+      run(game, 3);
+      expect(vein.lit, isTrue);
+    },
+  );
+
+  testWithGame<GolgeGame>(
     'körükler arasında geç kalınırsa ateş söner',
     GolgeGame.new,
     (game) async {
