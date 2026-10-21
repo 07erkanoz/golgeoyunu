@@ -164,6 +164,8 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     _prevUp = up;
     _jumpBuffer = jumpPressed ? 0.12 : _jumpBuffer - dt;
     _grabCooldown -= dt;
+    _lastRopeT -= dt;
+    if (_lastRope != null && (onGround || _lastRopeT <= 0)) _lastRope = null;
     _dropThrough -= dt;
 
     // Kol çekmek ↑ ile: zincire/sarmaşığa tutunmadan önce bakılır.
@@ -964,9 +966,16 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
   /// Ellerin dünyadaki yeri (ipe tutunurken).
   Vector2 get hand => Vector2(center.x, position.y + 6);
 
+  /// Az önce bırakılan ip: bırakınca zincir elin hızıyla aynı yöne savrulur,
+  /// yanından geçerken yeniden yakalanmasın. Yere basınca ya da başka ipe
+  /// tutununca (veya bir süre geçince) yine tutulabilir.
+  SwingRope? _lastRope;
+  double _lastRopeT = 0;
+
   bool _tryRope() {
     for (final r in game.world.children.whereType<SwingRope>()) {
       if (r.holder != null) continue;
+      if (r == _lastRope) continue;
       final d = hand - r.anchor;
       final len = d.length;
       if (len < 30 || len > r.length + 6 || d.y < 0) continue;
@@ -975,6 +984,7 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       if (along == null || along < 26) continue;
       rope = r;
       r.holder = this;
+      _lastRope = null;
       ropeAngle = math.atan2(d.x, d.y);
       _swingBody.reset(ropeAngle);
       _ropeD = len.clamp(36.0, r.length);
@@ -1043,6 +1053,8 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
         ..setFrom(tangent * (_ropeOmega * _ropeD * 1.08))
         ..y -= 260;
       r.release(ropeAngle, _ropeOmega);
+      _lastRope = r;
+      _lastRopeT = 1.2;
       rope = null;
       _grabCooldown = 0.35;
       _jumpCut = false;
