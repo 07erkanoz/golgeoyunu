@@ -91,6 +91,7 @@ class PerdePainter {
     double alpha,
   ) {
     if (alpha <= 0) return;
+    _time = time;
     final r = screenRect(size);
     final layered = alpha < 0.999;
     if (layered) {
@@ -449,6 +450,27 @@ class PerdePainter {
   /// Tasvirlerin çizildiği tuval (her sahnenin başında atanır).
   static late Canvas _c;
 
+  /// Sahnenin zamanı: eklemli parçalar (baş, kol) buna göre oynar.
+  static double _time = 0;
+
+  /// Karagöz tasviri gibi: [draw] parçası [pin] çivisinden [angle] kadar
+  /// döner; çivi perdede ışık geçen küçük bir delik olarak görünür.
+  static void _hinge(
+    Offset pin,
+    double angle,
+    Paint hole,
+    void Function() draw,
+  ) {
+    final c = _c;
+    c.save();
+    c.translate(pin.dx, pin.dy);
+    c.rotate(angle);
+    c.translate(-pin.dx, -pin.dy);
+    draw();
+    c.restore();
+    c.drawCircle(pin, 1.8, hole);
+  }
+
   /// Kandilci: kukuletalı, kambur, asasında fener (ayak noktası orijinde).
   static void _lamplighter(Paint ink, Paint hole, {double lanternLift = 0}) {
     final c = _c;
@@ -464,16 +486,23 @@ class PerdePainter {
         ..close(),
       ink,
     );
-    // Sivri kukulete.
-    c.drawPath(
-      Path()
-        ..moveTo(-5, -150)
-        ..lineTo(-11, -176)
-        ..quadraticBezierTo(1, -164, 11, -144)
-        ..close(),
-      ink,
-    );
-    // Kol ve asa.
+    // Sivri kukulete: boyun çivisinden hafifçe başını eğip kaldırır.
+    _hinge(const Offset(3, -147), math.sin(_time * 0.8 + 1) * 0.06, hole, () {
+      c.drawPath(
+        Path()
+          ..moveTo(-5, -150)
+          ..lineTo(-11, -176)
+          ..quadraticBezierTo(1, -164, 11, -144)
+          ..close(),
+        ink,
+      );
+    });
+    // Kol ve asa: omuz çivisinden döner; fener hafifçe sallanır.
+    final armAngle = math.sin(_time * 1.1) * 0.04;
+    c.save();
+    c.translate(29, -86);
+    c.rotate(armAngle);
+    c.translate(-29, 86);
     c.drawPath(
       Path()
         ..moveTo(27, -90)
@@ -503,6 +532,8 @@ class PerdePainter {
       ink,
     );
     c.drawRect(Rect.fromLTWH(82, -194 - lift, 12, 12), hole);
+    c.restore();
+    c.drawCircle(const Offset(29, -86), 1.8, hole);
     // Oymalar.
     c.drawCircle(const Offset(3, -72), 2.5, hole);
     c.drawCircle(const Offset(-5, -54), 2, hole);
@@ -528,44 +559,55 @@ class PerdePainter {
         ..close(),
       ink,
     );
-    // Uzun kavuk.
-    c.drawPath(
-      Path()
-        ..moveTo(-14, -172)
-        ..quadraticBezierTo(-12, -222, 4, -228)
-        ..quadraticBezierTo(20, -222, 20, -170)
-        ..close(),
-      ink,
+    // Kavuk, sakal ve burun boyun çivisinden ağır ağır sallanır: yaşlı bir
+    // başın yorgun eğilişi.
+    _hinge(
+      const Offset(2, -150),
+      math.sin(_time * 0.7) * 0.05 - 0.02,
+      hole,
+      () {
+        // Uzun kavuk.
+        c.drawPath(
+          Path()
+            ..moveTo(-14, -172)
+            ..quadraticBezierTo(-12, -222, 4, -228)
+            ..quadraticBezierTo(20, -222, 20, -170)
+            ..close(),
+          ink,
+        );
+        // Uzun, sivri sakal: göğsüne iner.
+        c.drawPath(
+          Path()
+            ..moveTo(6, -146)
+            ..quadraticBezierTo(24, -146, 22, -134)
+            ..quadraticBezierTo(20, -116, 10, -100)
+            ..quadraticBezierTo(8, -118, 2, -134)
+            ..close(),
+          ink,
+        );
+        // Burun.
+        c.drawPath(
+          Path()
+            ..moveTo(21, -162)
+            ..lineTo(29, -152)
+            ..lineTo(22, -150)
+            ..close(),
+          ink,
+        );
+      },
     );
-    // Uzun, sivri sakal: göğsüne iner.
-    c.drawPath(
-      Path()
-        ..moveTo(6, -146)
-        ..quadraticBezierTo(24, -146, 22, -134)
-        ..quadraticBezierTo(20, -116, 10, -100)
-        ..quadraticBezierTo(8, -118, 2, -134)
-        ..close(),
-      ink,
-    );
-    // Burun.
-    c.drawPath(
-      Path()
-        ..moveTo(21, -162)
-        ..lineTo(29, -152)
-        ..lineTo(22, -150)
-        ..close(),
-      ink,
-    );
-    // Arkada bağlı kollar.
-    c.drawPath(
-      Path()
-        ..moveTo(-28, -106)
-        ..quadraticBezierTo(-50, -80, -36, -56)
-        ..lineTo(-28, -60)
-        ..quadraticBezierTo(-38, -78, -20, -98)
-        ..close(),
-      ink,
-    );
+    // Arkada bağlı kollar: omuz çivisinden zincire çekilir gibi kıpırdar.
+    _hinge(const Offset(-24, -102), math.sin(_time * 1.3 + 2) * 0.07, hole, () {
+      c.drawPath(
+        Path()
+          ..moveTo(-28, -106)
+          ..quadraticBezierTo(-50, -80, -36, -56)
+          ..lineTo(-28, -60)
+          ..quadraticBezierTo(-38, -78, -20, -98)
+          ..close(),
+        ink,
+      );
+    });
     // Eklem çivileri ve oymalar.
     c.drawCircle(const Offset(-2, -80), 3, hole);
     c.drawCircle(const Offset(10, -66), 2.2, hole);
@@ -583,20 +625,23 @@ class PerdePainter {
   /// Sâye: küçük gölge, dağınık saç, uzun atkı, kavanozun ışığı.
   static void _saye(Paint ink, Paint hole, double time, {double jar = 1}) {
     final c = _c;
-    c.drawCircle(const Offset(0, -66), 11, ink);
-    // Dağınık saç: tutamlar rüzgârla arkaya yatar.
-    final sway = math.sin(time * 2.1) * 2;
-    c.drawPath(
-      Path()
-        ..moveTo(10, -70)
-        ..quadraticBezierTo(6, -80, -2, -78)
-        ..quadraticBezierTo(-12, -84 + sway, -22, -80 + sway)
-        ..quadraticBezierTo(-14, -77, -13, -74)
-        ..quadraticBezierTo(-22, -72 + sway, -26, -66 + sway)
-        ..quadraticBezierTo(-16, -66, -10, -64)
-        ..close(),
-      ink,
-    );
+    // Baş ve saç boyun çivisinden: bakınır, hafifçe başını kaldırır.
+    _hinge(const Offset(0, -56), math.sin(time * 0.9 + 0.4) * 0.07, hole, () {
+      c.drawCircle(const Offset(0, -66), 11, ink);
+      // Dağınık saç: tutamlar rüzgârla arkaya yatar.
+      final sway = math.sin(time * 2.1) * 2;
+      c.drawPath(
+        Path()
+          ..moveTo(10, -70)
+          ..quadraticBezierTo(6, -80, -2, -78)
+          ..quadraticBezierTo(-12, -84 + sway, -22, -80 + sway)
+          ..quadraticBezierTo(-14, -77, -13, -74)
+          ..quadraticBezierTo(-22, -72 + sway, -26, -66 + sway)
+          ..quadraticBezierTo(-16, -66, -10, -64)
+          ..close(),
+        ink,
+      );
+    });
     c.drawPath(
       Path()
         ..moveTo(-8, -56)
@@ -617,23 +662,27 @@ class PerdePainter {
         ..close(),
       ink,
     );
-    // Kavanozu tutan kol.
-    c.drawPath(
-      Path()
-        ..moveTo(8, -46)
-        ..lineTo(24, -34)
-        ..lineTo(21, -30)
-        ..lineTo(6, -40)
-        ..close(),
-      ink,
-    );
-    if (jar > 0) {
-      c.drawCircle(
-        const Offset(26, -26),
-        5 + 1.2 * math.sin(time * 5),
-        hole..color = _hole.withValues(alpha: hole.color.a * jar),
+    // Kavanozu tutan kol: omuz çivisinden, kavanozla birlikte sallanır.
+    final jarHole = Paint()
+      ..color = _hole.withValues(alpha: hole.color.a * jar);
+    _hinge(const Offset(8, -46), math.sin(time * 1.5 + 0.8) * 0.12, hole, () {
+      c.drawPath(
+        Path()
+          ..moveTo(8, -46)
+          ..lineTo(24, -34)
+          ..lineTo(21, -30)
+          ..lineTo(6, -40)
+          ..close(),
+        ink,
       );
-    }
+      if (jar > 0) {
+        c.drawCircle(
+          const Offset(26, -26),
+          5 + 1.2 * math.sin(time * 5),
+          jarHole,
+        );
+      }
+    });
   }
 
   /// Hüdhüd: tepelikli, ince uzun gagalı kuş.

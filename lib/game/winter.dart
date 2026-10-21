@@ -72,9 +72,26 @@ class Wolf extends PositionComponent with HasGameReference<GolgeGame> {
         GameAudio.instance.play('crow', volume: 0.6, minGapMs: 3000);
       }
       if (hunting) {
+        _pounceCd = math.max(0, _pounceCd - dt);
         if (_fear > 0) {
           _fear -= dt;
+          _crouch = 0;
           vx = -d.x.sign * runSpeed * 0.8;
+        } else if (_crouch > 0) {
+          // Atılmadan önce bir an çöker, hırlar: oyuncuya kaçacak an kalır.
+          _crouch -= dt;
+          facing = d.x >= 0 ? 1 : -1;
+          if (_crouch <= 0) _lunge = 0.45;
+        } else if (_lunge > 0) {
+          _lunge -= dt;
+          vx = facing * runSpeed * 1.35;
+        } else if (_pounceCd <= 0 &&
+            d.x.abs() < 3.5 * kTile &&
+            d.x.abs() > 20 &&
+            d.y.abs() < kTile) {
+          _crouch = 0.32;
+          _pounceCd = 2.4;
+          GameAudio.instance.play('growl', volume: 0.6, minGapMs: 1500);
         } else if (d.x.abs() > 6) {
           vx = d.x.sign * runSpeed;
         }
@@ -96,6 +113,7 @@ class Wolf extends PositionComponent with HasGameReference<GolgeGame> {
     if (vx != 0) facing = vx > 0 ? 1 : -1;
     _move(vx * dt);
     _fall(dt);
+    _crouchS += ((_crouch > 0 ? 1.0 : 0.0) - _crouchS) * math.min(1, dt * 14);
     if (dt > 0) {
       final pace = (_gait - _lastGait) / dt;
       _pace += (pace - _pace) * math.min(1, dt * 10);
@@ -130,6 +148,12 @@ class Wolf extends PositionComponent with HasGameReference<GolgeGame> {
     position.x += dx;
     _gait += dx.abs();
   }
+
+  /// Saldırı: kısa bir çöküş, ardından atılış; arada bekleme.
+  double _crouch = 0;
+  double _lunge = 0;
+  double _pounceCd = 0;
+  double _crouchS = 0;
 
   /// Gerçekten yürünen yol: bacaklar buna göre döner (duvara dayanmış kurt
   /// yerinde koşmaz).
@@ -186,7 +210,8 @@ class Wolf extends PositionComponent with HasGameReference<GolgeGame> {
     final amp = moving ? 0.4 + 0.35 * run : 0.06;
     final ph = _gait / (6 + 3.4 * run) + (moving ? 0 : _t * 1.5);
     final bob = math.sin(ph * 2) * 0.8 * run;
-    canvas.translate(0, bob);
+    // Çökerken gövde alçalır, baş öne iner.
+    canvas.translate(0, bob + _crouchS * 3.5);
 
     // Bacaklar: arkadaki çift biraz daha koyu, gövdenin ardında kalır.
     final far = Paint()
