@@ -8,6 +8,7 @@ import 'package:golge/game/levels.dart';
 import 'package:golge/game/persist.dart';
 import 'package:golge/game/player.dart';
 import 'package:golge/game/puzzles.dart';
+import 'package:golge/game/umay.dart';
 import 'package:golge/settings.dart';
 
 import 'physics_test.dart' show run;
@@ -51,6 +52,30 @@ void _standAt(GolgeGame game, int col) {
 
 void main() {
   tearDown(() => GolgeGame.debugLevels = null);
+
+  testWithGame<GolgeGame>(
+    'kontrol noktasında Umay ağacı durur; dokununca uyanır, ölünce uyanık kalır',
+    GolgeGame.new,
+    (game) async {
+      await _load(game);
+      final tree = game.world.children.whereType<UmayTree>().single;
+      expect(tree.awake, isFalse);
+      // Ağaç kontrol noktasının zeminine dikilir.
+      expect(tree.position.y, closeTo(10 * kTile, 0.01));
+      _standAt(game, 20);
+      run(game, 2);
+      expect(tree.awake, isTrue);
+      expect(tree.lit, closeTo(1, 0.01));
+      expect(game.hintShown('umay'), isTrue);
+      _standAt(game, 26);
+      run(game, 0.2);
+      game.player!.die();
+      run(game, 3);
+      final again = game.world.children.whereType<UmayTree>().single;
+      expect(again.awake, isTrue, reason: 'uyanmış ağaç kayıtta uyanık');
+      expect(again.lit, closeTo(1, 0.01));
+    },
+  );
 
   testWithGame<GolgeGame>(
     'ölünce kontrol noktasındaki düzen geri gelir: kapı açık, sandık yerinde',

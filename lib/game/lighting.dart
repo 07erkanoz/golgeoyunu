@@ -12,6 +12,7 @@ import 'mechanics.dart';
 import 'nemrut.dart';
 import 'palette.dart';
 import 'puzzles.dart';
+import 'umay.dart';
 import '../settings.dart';
 import 'golge_game.dart';
 import 'level.dart';
@@ -153,6 +154,8 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
           );
         case MemoryShard m:
           _light(canvas, m.position.toOffset(), 80, 0.8);
+        case UmayTree u:
+          _light(canvas, u.glowCenter, u.glowRadius, 0.45 + 0.4 * u.lit);
         case Bird b:
           _light(canvas, b.position.toOffset().translate(0, -6), 60, 0.6);
         case Lever l when !l.pulled:

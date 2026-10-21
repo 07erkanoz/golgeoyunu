@@ -127,6 +127,7 @@ class Hints {
     'shadePlank': '{down} Çömel · gölge tahtası ışıkta erir',
     'crate': 'Sandığı it · üstüne çıkıp yüksel',
     'lever': '{up} Kolu çek',
+    'umay': 'Umay ağacı · dokun: düştüğünde buradan yeniden başlarsın',
     'valve': '{up} Vanayı çevir',
     'scale': 'Terazi · eşleri iki kefeye koy · ağırlıklar denk gelmeli · {up} kol teraziyi boşaltır',
     'cord': '{up} İpi çek · kandil perdenin ardında kayar',
@@ -174,6 +175,7 @@ class Hints {
     'shadePlank': '{down} Crouch · the shadow plank melts in light',
     'crate': 'Push the crate · climb it to reach higher',
     'lever': '{up} Pull the lever',
+    'umay': 'Umay tree · touch it: if you fall, you rise here again',
     'valve': '{up} Turn the valve',
     'scale':
         'The scales · put the pair on the two pans · the weights must match',
@@ -217,6 +219,9 @@ class Hints {
   static String poem(String key) => (S.en ? _poemEn : _poemTr)[key] ?? '';
 
   static const _poemTr = {
+    'umay':
+        'Taşın çatlağında bir kayın.\n'
+        'Umay her çocuğun yanındadır: düşersen buradan kalkarsın.',
     'medusa':
         'Taş yüzlü kadın uyur, sonra uyanır.\n'
         'Gözü kapalıyken yürü; gözü aralanınca dur.\n'
@@ -230,6 +235,9 @@ class Hints {
   };
 
   static const _poemEn = {
+    'umay':
+        'A birch in the crack of the stone.\n'
+        'Umay stands by every child: if you fall, you rise here.',
     'medusa':
         'The stone-faced woman sleeps, then wakes.\n'
         'Walk while her eyes are shut; stop as they open.\n'

@@ -24,6 +24,7 @@ import 'player.dart';
 import 'konya.dart';
 import 'hints.dart';
 import 'legends.dart';
+import 'umay.dart';
 import 'nemrut.dart';
 import 'ski.dart';
 import 'wind.dart';
@@ -363,10 +364,29 @@ class GolgeGame extends FlameGame with KeyboardEvents {
   /// Kontrol noktasına dokunuldu: konum, bulmaca durumu ve elde olanlar
   /// saklanır.
   void _reachCheckpoint(Vector2 cell) {
+    // Umay ağacı uyanır (bulmaca durumuyla birlikte uyanık saklanır).
+    for (final t in world.children.whereType<UmayTree>()) {
+      if (t.cell.x == cell.x && t.cell.y == cell.y) t.wake();
+    }
     _respawn = Level.standOn(cell, Player.w, Player.h);
     _puzzle = capturePuzzle(world.children);
     _checkpointFireflies = fireflies;
     _saveProgress();
+  }
+
+  /// Kontrol noktası hücresinin üstündeki boşluk (piksel): ağaç tavana
+  /// sığacak kadar büyür.
+  double _headroom(Vector2 cell) {
+    final c = (cell.x / kTile).floor();
+    final r0 = (cell.y / kTile).floor();
+    var rows = 1;
+    for (var r = r0 - 1; r >= 0 && rows < 5; r--) {
+      if (level.solid(c, r) || level.solid(c - 1, r) || level.solid(c + 1, r)) {
+        break;
+      }
+      rows++;
+    }
+    return rows * kTile;
   }
 
   /// Testler için: kontrol noktasına dokunulmuş gibi şimdiki düzeni saklar.
@@ -516,6 +536,8 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         WindCurrents(),
         WaterComponent(level),
         ExitPortal(level.exitCell),
+        for (final k in level.checkpointCells)
+          UmayTree(k, headroom: _headroom(k)),
         for (final g in level.guardCells) Guard(g),
         for (final c in level.crateCells) Crate(c),
         for (final l in level.leverCells) Lever(l),
@@ -1180,6 +1202,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         AnimalCrate a when near(a, 4, 3) => 'animal',
         Crate k when near(k, 3, 2) => 'crate',
         Lever l when near(l, 4, 4) => 'lever',
+        UmayTree u when near(u, 3, 3) => 'umay',
         Valve v when near(v, 4, 3) => 'valve',
         PerdeCord k when near(k, 4, 3) => 'cord',
         ArkScale s when near(s.lift.a, 6, 4) || near(s.lift.b, 6, 4) => 'scale',
