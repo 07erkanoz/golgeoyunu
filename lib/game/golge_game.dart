@@ -279,7 +279,9 @@ class GolgeGame extends FlameGame with KeyboardEvents {
   /// korunur; o bölümün fısıltıları ve yer adları yeniden anlatılır.
   void startChapter(int index) {
     if (!isLoaded || !menuMode.value) return;
-    if (index < 0 || index >= levels.length || index > Settings.unlocked) {
+    if (index < 0 ||
+        index >= levels.length ||
+        orderOf(index) > Settings.unlocked) {
       return;
     }
     final save = SaveGame.current;
@@ -298,7 +300,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     fireflies = startFireflies;
     // Kanatlar Kule'de (2. bölüm) bulunur: ondan önceki bölümler kanatsız,
     // sonrakiler kanatla oynanır (öğretim dengesi bozulmasın).
-    wingsCollected = index >= 2;
+    wingsCollected = orderOf(index) >= 2;
     _respawn = null;
     _puzzle = null;
     _leaveMenu();
@@ -567,8 +569,8 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     _atCheckpoint = null;
     levelIndex = index;
     // Oynanan en ileri bölüm açılır (bölüm listesi için).
-    if (withPlayer && index > Settings.unlocked) {
-      Settings.unlocked = index;
+    if (withPlayer && orderOf(index) > Settings.unlocked) {
+      Settings.unlocked = orderOf(index);
       Settings.save();
     }
     level = Level((debugLevels ?? levels)[index]);
@@ -978,8 +980,8 @@ class GolgeGame extends FlameGame with KeyboardEvents {
       1.4,
       color: kLight,
       onDone: () {
-        final next = levelIndex + 1;
-        if (next < levels.length) {
+        final next = nextLevel(levelIndex);
+        if (next != null) {
           void enter() {
             _buildLevel(next);
             // Yeni bölüme girer girmez kaydedilir (ilk kontrol noktasına
@@ -1614,7 +1616,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
       // Geliştirici kısayolu: --dart-define=DEV=true ile N bir sonraki bölüm.
       if (const bool.fromEnvironment('DEV') &&
           event.logicalKey == LogicalKeyboardKey.keyN) {
-        debugLoadLevel((levelIndex + 1) % levels.length);
+        debugLoadLevel(nextLevel(levelIndex) ?? levelOrder.first);
         _showLevelTitle();
       }
       // Geliştirici kısayolu: C yakın plan (ekran görüntüsü için).

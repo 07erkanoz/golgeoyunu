@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'game/levels.dart';
 import 'game/strings.dart';
 
 /// Oyuncu ayarları: ses seviyeleri, dil ve tam ekran. Cihazda saklanır.
@@ -115,9 +116,15 @@ class Settings {
         : SaveData.decode(_read(() => p.getString('save')));
     final fromFile = SaveData.decode(await SaveGame._readFile());
     SaveGame.current = SaveData.newer(fromPrefs, fromFile);
+    // "unlocked": oynanış sırasındaki en ileri yer. Sıra değiştiyse (yeni
+    // bölümler araya girdiyse) eski yer yeni sıraya çevrilir.
     final u = p == null ? null : _read(() => p.getInt('unlocked'));
-    unlocked = (u ?? 0).clamp(0, 99);
-    final reached = SaveGame.current?.level ?? 0;
+    final v = p == null ? null : _read(() => p.getInt('unlockedOrder'));
+    unlocked = migrateOrderPosition(
+      (u ?? 0).clamp(0, 99),
+      v ?? 1,
+    ).clamp(0, levelOrder.length - 1);
+    final reached = orderOf(SaveGame.current?.level ?? 0);
     if (reached > unlocked) unlocked = reached;
   }
 
@@ -138,6 +145,7 @@ class Settings {
       await p.setDouble('brightness', brightness);
       await p.setString('lang', S.en ? 'en' : 'tr');
       await p.setInt('unlocked', unlocked);
+      await p.setInt('unlockedOrder', levelOrderVersion);
     } catch (_) {
       // Yazılamazsa bir sonraki değişiklikte yeniden denenir.
     }

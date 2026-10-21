@@ -31,7 +31,7 @@ class _MainMenuState extends State<MainMenu>
     _lastTap = now;
     if (_taps < 7) return;
     _taps = 0;
-    Settings.unlocked = levels.length - 1;
+    Settings.unlocked = levelOrder.length - 1;
     Settings.save();
     setState(() => _unlockedNote = true);
     Future.delayed(const Duration(seconds: 2), () {
@@ -121,11 +121,9 @@ class _MainMenuState extends State<MainMenu>
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  for (
-                                    var i = 0;
-                                    i <= Settings.unlocked && i < levels.length;
-                                    i++
-                                  )
+                                  for (final i in levelOrder.take(
+                                    Settings.unlocked + 1,
+                                  ))
                                     _item(
                                       levels[i].titleText,
                                       scale: itemK * 0.85,

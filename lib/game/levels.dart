@@ -438,6 +438,39 @@ const interludesEn = <List<String>>[
   ],
 ];
 
+/// Oynanış sırası. Bölümün kimliği `levels` listesindeki yeridir ve hiç
+/// değişmez (kayıt, hatıralar, görülen olaylar bu kimlikle tutulur); yeni
+/// bölümler listenin sonuna eklenir, oynanıştaki yerlerine bu sırada girer.
+const levelOrder = <int>[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
+
+/// Sıra değişince artar: kayıttaki "açılan en ileri bölüm" (sıradaki yer)
+/// eski sıradan yenisine çevrilir.
+const levelOrderVersion = 1;
+
+/// Eski sıra sürümlerinde her yerdeki bölüm kimliği (1. sürüm: kimlik =
+/// yer).
+const _levelOrderHistory = <int, List<int>>{
+  1: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13],
+};
+
+/// Bölümün oynanış sırasındaki yeri (yoksa -1).
+int orderOf(int level) => levelOrder.indexOf(level);
+
+/// Sıradaki bölüm (son bölümse null).
+int? nextLevel(int level) {
+  final i = orderOf(level);
+  return i >= 0 && i + 1 < levelOrder.length ? levelOrder[i + 1] : null;
+}
+
+/// Eski bir sıra sürümündeki yeri bugünkü sıradaki yere çevirir.
+int migrateOrderPosition(int position, int fromVersion) {
+  final old = _levelOrderHistory[fromVersion] ?? _levelOrderHistory[1]!;
+  if (position < 0) return 0;
+  final level = old[position.clamp(0, old.length - 1)];
+  final now = orderOf(level);
+  return now < 0 ? 0 : now;
+}
+
 List<String> interludeText(int level) {
   final all = S.en ? interludesEn : interludes;
   return level < all.length ? all[level] : const [];

@@ -73,14 +73,14 @@ class MemoryBookPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final open = Settings.unlocked.clamp(0, levels.length - 1);
+    final open = levelOrder.take(Settings.unlocked + 1);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _Heading(S.of('bookTitle')),
         const SizedBox(height: 14),
         Text(S.of('bookIntro'), style: _body),
-        for (var l = 0; l <= open; l++)
+        for (final l in open)
           if (levels[l].memoryTexts.isNotEmpty) ...[
             const SizedBox(height: 16),
             Row(
