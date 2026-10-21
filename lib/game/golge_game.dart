@@ -242,6 +242,8 @@ class GolgeGame extends FlameGame with KeyboardEvents {
 
   @override
   Future<void> onLoad() async {
+    // Nemrut görselleri arka planda yüklenir; gelene dek kod çizimi kullanılır.
+    NemrutImages.load();
     camera.viewfinder.anchor = Anchor.center;
     camera.backdrop = Backdrop();
     effects = ScreenEffects();

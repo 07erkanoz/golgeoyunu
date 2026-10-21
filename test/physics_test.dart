@@ -59,6 +59,8 @@ T nearest<T extends PositionComponent>(GolgeGame g, double x) {
 }
 
 void main() {
+  // Görseller (Nemrut) gerçek oyundaki gibi yüklensin.
+  TestWidgetsFlutterBinding.ensureInitialized();
   group('güvenilirlik', () {
     test('bozuk ya da anlamsız kayıt yok sayılır', () {
       String raw(Object level, Object x) =>

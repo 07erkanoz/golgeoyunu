@@ -10,6 +10,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:golge/game/entities.dart';
 import 'package:golge/game/golge_game.dart';
 import 'package:golge/game/level.dart';
+import 'package:golge/game/nemrut.dart';
 import 'package:golge/game/player.dart';
 import 'package:golge/game/strings.dart';
 import 'package:golge/settings.dart';
@@ -41,9 +42,13 @@ Future<void> _shot(GolgeGame game, String name) async {
 }
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   const shots = String.fromEnvironment('SHOTS');
   testWithGame<GolgeGame>('galeri', GolgeGame.new, (game) async {
     await _fonts();
+    await NemrutImages.load();
+    // ignore: avoid_print
+    print('nemrut görselleri: ${NemrutImages.ready} ${NemrutImages.lastError}');
     S.lang = Lang.tr;
     Settings.brightness = double.parse(
       const String.fromEnvironment('BRIGHT', defaultValue: '1'),

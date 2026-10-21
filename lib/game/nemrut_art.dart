@@ -579,3 +579,53 @@ abstract final class NemrutArt {
     c.restore();
   }
 }
+
+/// Kullanıcının verdiği Nemrut SVG'lerinden üretilen görseller
+/// (assets/images/nemrut, tools/import_nemrut_svg.py). Oyun açılırken bir
+/// kez yüklenir; yüklenemezse kodla çizilen hâller kullanılır.
+abstract final class NemrutImages {
+  static final _cache = <String, Image>{};
+
+  static bool get ready => _cache.length == nemrutSprites.length;
+
+  /// Son yükleme hatası (tanı için).
+  static String? lastError;
+
+  static Image? get(String key) => _cache[key];
+
+  static Future<void> load() async {
+    for (final k in nemrutSprites.keys) {
+      if (_cache.containsKey(k)) continue;
+      try {
+        final data = await rootBundle.load('assets/images/nemrut/$k.png');
+        final codec = await instantiateImageCodec(data.buffer.asUint8List());
+        _cache[k] = (await codec.getNextFrame()).image;
+      } catch (e) {
+        // Görsel yoksa kod çizimine düşülür.
+        lastError = '$k: $e';
+      }
+    }
+  }
+
+  /// Gündüz renkli taşı sahnenin ışığına uydurur: gece soğuk ve koyu,
+  /// şafakta sıcak.
+  static Color tint(GolgeGame game) => game.level.def.variant == 1
+      ? const Color(0xFF8A8296)
+      : const Color(0xFF8C86A0);
+
+  /// Görseli SVG koordinatındaki yerine çizer.
+  static bool draw(Canvas c, String key, GolgeGame game, {bool flip = false}) {
+    final im = _cache[key];
+    final r = nemrutSprites[key];
+    if (im == null || r == null) return false;
+    c.drawImageRect(
+      im,
+      Rect.fromLTWH(0, 0, im.width.toDouble(), im.height.toDouble()),
+      r,
+      Paint()
+        ..filterQuality = FilterQuality.medium
+        ..colorFilter = ColorFilter.mode(tint(game), BlendMode.modulate),
+    );
+    return true;
+  }
+}

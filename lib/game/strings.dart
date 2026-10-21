@@ -148,6 +148,7 @@ class S {
         'Pixabay İçerik Lisansı ile kullanılmaktadır.\n'
         'Efektler ve ortam sesleri: Kenney, OpenGameArt ve Wikimedia Commons\'taki kamu malı (CC0) kayıtlar. '
         'Efsane varlıklarının siluetleri PhyloPic\'teki kamu malı çizimlerden uyarlanmıştır. '
+        'Nemrut heykel başları Wikimedia Commons\'taki Dosseman, Bernard Gagnon, Carole Raddato ve Vincent Vega fotoğraflarından yeniden çizilmiştir (CC BY-SA 4.0). '
         'Diğer sesler bu oyun için sentezlenmiştir.',
   };
 
@@ -287,6 +288,7 @@ class S {
         'used under the Pixabay Content License.\n'
         'Effects and ambiences: public-domain (CC0) recordings from Kenney, OpenGameArt and Wikimedia Commons. '
         'The silhouettes of the legendary beings are adapted from public-domain drawings on PhyloPic. '
+        'The Nemrut statue heads are redrawn from photos by Dosseman, Bernard Gagnon, Carole Raddato and Vincent Vega on Wikimedia Commons (CC BY-SA 4.0). '
         'Other sounds were synthesized for this game.',
   };
 }
