@@ -296,6 +296,13 @@ class WaterFace extends Component with HasGameReference<GolgeGame> {
 
   double get alpha => _up;
 
+  /// Vanaya doğru eğilme (-1 sola, 1 sağa), sudan çıktıkça.
+  double get _lean {
+    final v = _valve;
+    if (v == null) return 0;
+    return (v.position.x < _at.dx ? -1.0 : 1.0) * _up;
+  }
+
   Offset get _at => Offset(basin.area.center.dx, basin.surface);
 
   /// Gösterdiği vana: önce boşaltan (bulmaca onunla başlar), en yakını.
@@ -363,6 +370,7 @@ class WaterFace extends Component with HasGameReference<GolgeGame> {
     canvas.save();
     canvas.clipRect(Rect.fromLTRB(x - 80, s - 120, x + 80, s + 0.5));
     canvas.translate(x, feetY);
+    canvas.rotate(_lean * 0.12);
     canvas.scale(sc);
     canvas.drawPath(
       body,
@@ -415,40 +423,39 @@ class WaterFace extends Component with HasGameReference<GolgeGame> {
               .withValues(alpha: 0.6 * up * (1 - u)),
       );
     }
-    // Vanayı gösteren kol ve vanaya akan ışık.
+    // Vanaya kavis çizerek akan su ışığı: elinin hizasından süzülür, damla
+    // damla vanaya varır, vana ışır.
     final v = _valve;
-    if (v != null && _t > rise * 0.7) {
-      final shoulder = Offset(x, feetY - 80 * sc);
+    if (v != null && _t > rise * 0.8) {
+      final from = Offset(x + _lean * 10, feetY - 72 * sc);
       final to = Offset(v.position.x, v.position.y - 8);
-      final dir = (to - shoulder) / (to - shoulder).distance;
-      final arm = Paint()
-        ..color = const Color(0xFFE8FFFA).withValues(alpha: 0.85 * up)
-        ..strokeWidth = 3.2
-        ..strokeCap = StrokeCap.round;
-      canvas.drawLine(shoulder, shoulder + dir * 22, arm);
-      final u = ((_t - rise) / 2.2).clamp(0.0, 1.0);
-      final from = shoulder + dir * 22;
-      final head = Offset.lerp(from, to, u)!;
-      canvas.drawLine(
-        from,
-        head,
-        Paint()
-          ..shader = ui.Gradient.linear(from, head, [
-            const Color(0x00CFF4F0),
-            const Color(0xFFCFF4F0).withValues(alpha: 0.7 * up),
-          ])
-          ..strokeWidth = 1.6,
-      );
-      if (u >= 1) {
-        final pulse = 0.6 + 0.4 * math.sin(_t * 5);
+      final mid = Offset((from.dx + to.dx) / 2, math.min(from.dy, to.dy) - 40);
+      Offset at(double u) {
+        final a = Offset.lerp(from, mid, u)!;
+        final b = Offset.lerp(mid, to, u)!;
+        return Offset.lerp(a, b, u)!;
+      }
+
+      final reach = ((_t - rise * 0.8) / 2.4).clamp(0.0, 1.0);
+      final drop = Paint();
+      for (var i = 0; i < 18; i++) {
+        final u = ((i / 18) + _t * 0.25) % 1.0;
+        if (u > reach) continue;
+        final p = at(u);
+        drop.color = const Color(0xFFCFF4F0)
+            .withValues(alpha: 0.75 * up * (0.4 + 0.6 * math.sin(u * math.pi)));
+        canvas.drawCircle(p, 1.6, drop);
+      }
+      if (reach >= 1) {
+        final pulse = 0.6 + 0.4 * math.sin(_t * 4);
         canvas.drawCircle(
           to,
-          14,
+          16,
           Paint()
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = 1.4
-            ..color = const Color(0xFFCFF4F0)
-                .withValues(alpha: 0.8 * up * pulse),
+            ..shader = ui.Gradient.radial(to, 16, [
+              const Color(0xFFCFF4F0).withValues(alpha: 0.5 * up * pulse),
+              const Color(0x00CFF4F0),
+            ]),
         );
       }
     }
