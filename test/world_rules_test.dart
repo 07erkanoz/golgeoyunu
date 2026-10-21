@@ -9,6 +9,7 @@ import 'package:golge/game/hints.dart';
 import 'package:golge/settings.dart';
 import 'package:golge/game/level.dart';
 import 'package:golge/game/levels.dart';
+import 'package:golge/game/player.dart';
 import 'package:golge/game/winter.dart';
 
 import 'physics_test.dart' show run;
@@ -273,6 +274,28 @@ void main() {
         {LogicalKeyboardKey.gameButtonX},
       );
       expect(game.controls.takeLure(), isTrue);
+    },
+  );
+
+  testWithGame<GolgeGame>(
+    'Gökyolu: Gözcü\'nün dibindeki otta saklanan bir tam taramada yakalanmaz',
+    GolgeGame.new,
+    (game) async {
+      game.debugLoadLevel(2);
+      await game.ready();
+      game.cinematic = false;
+      final p = game.player!;
+      p.position.setFrom(
+        Level.standOn(Vector2(242 * kTile, 6 * kTile), Player.w, Player.h),
+      );
+      game.controls.keyboard.down = true;
+      for (var i = 0; i < 60 * 10; i++) {
+        game.update(1 / 60);
+        if (p.isDead) break;
+      }
+      game.controls.keyboard.down = false;
+      expect(p.hidden, isTrue);
+      expect(p.isDead, isFalse);
     },
   );
 }

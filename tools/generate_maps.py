@@ -247,6 +247,7 @@ s.fill(218,10,223,11,'#'); s.put(219,9,'B')
 # C) Fırtına adaları: çöken ve kayan kayalar, rüzgâr, Gözcü
 s.put(226,10,'O'); s.put(230,9,'O'); s.put(234,8,'R')
 s.fill(242,7,244,16,'#'); s.put(243,6,'g')
+s.put(242,6,'~')                             # Gözcü'nün dibinde saklanılacak ot
 s.fill(247,4,248,15,'r'); s.put(245,3,'p')
 s.fill(251,6,256,7,'#'); s.put(252,5,'K'); s.put(253,5,'7'); s.put(255,5,'B')
 s.put(260,7,'O'); s.put(265,8,'V'); s.put(270,7,'O')

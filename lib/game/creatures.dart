@@ -319,9 +319,9 @@ class Watcher extends PositionComponent with HasGameReference<GolgeGame> {
       final d = lure.position - lamp;
       target = math.atan2(d.y, d.x * facing);
     } else {
-      // Tarama: uçlarda bir an bekler (sinüs düzleştirilir), sonra döner.
-      final s = math.sin(_t * 0.7);
-      target = 0.6 + 0.55 * s.sign * math.pow(s.abs(), 0.55);
+      // Tarama: düzgün gidip gelir (uçlarda beklemek kayalardaki geçiş
+      // aralığını daraltıyordu).
+      target = 0.6 + 0.55 * math.sin(_t * 0.7);
     }
     _eye = approach(_eye, target, dt, 0.08);
     _aim.update(target, dt);
@@ -336,8 +336,9 @@ class Watcher extends PositionComponent with HasGameReference<GolgeGame> {
     if (sees && suspicion == 0) {
       GameAudio.instance.play('suspect', volume: 0.7, minGapMs: 1500);
     }
+    // Işıkta ~0,74 sn kalan yakalanır (geçerken bir anlık değmek affedilir).
     suspicion = sees
-        ? math.min(1, suspicion + dt * 1.6)
+        ? math.min(1, suspicion + dt * 1.35)
         : math.max(0, suspicion - dt * 0.6);
     if (suspicion >= 1) {
       p.die(cause: DeathCause.light);

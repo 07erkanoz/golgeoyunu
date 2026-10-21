@@ -491,11 +491,13 @@ class Level {
   }
 
   bool lineOfSight(Vector2 a, Vector2 b) {
-    final d = b - a;
-    final steps = math.max(1, (d.length / 8).ceil());
+    // Her karede çok sık sorulur: geçici nesne üretmeden hesaplanır.
+    final dx = b.x - a.x;
+    final dy = b.y - a.y;
+    final steps = math.max(1, (math.sqrt(dx * dx + dy * dy) / 8).ceil());
     for (var i = 1; i < steps; i++) {
-      final p = a + d * (i / steps);
-      if (cellAt(p.x, p.y) == '#') return false;
+      final k = i / steps;
+      if (cellAt(a.x + dx * k, a.y + dy * k) == '#') return false;
     }
     return true;
   }

@@ -674,15 +674,41 @@ class GolgeGame extends FlameGame with KeyboardEvents {
   /// ateşböceği, Kandilci feneri ve konisi, güneş huzmesi. Kaya duvar ışığı
   /// keser: duvarın ardındaki tahta yanmaz (güneş huzmesi ve uçan fener kendi
   /// ışınlarını zaten duvarda keser).
+  /// Bu karenin ışık kaynakları (tahtalar her karede çok kez sorar; bütün
+  /// dünyayı her seferinde dolaşmasın).
+  final _lights = <Component>[];
+  int _lightsFrame = -1;
+  int _frame = 0;
+
   bool litAt(Vector2 at) {
-    bool reaches(Vector2 from, double radius) =>
-        (from - at).length2 < radius * radius && level.lineOfSight(from, at);
+    bool reaches(Vector2 from, double radius) {
+      final dx = from.x - at.x;
+      final dy = from.y - at.y;
+      return dx * dx + dy * dy < radius * radius && level.lineOfSight(from, at);
+    }
+
+    if (_lightsFrame != _frame) {
+      _lightsFrame = _frame;
+      _lights
+        ..clear()
+        ..addAll(
+          world.children.where(
+            (c) =>
+                c is FireflyLure ||
+                c is Guard ||
+                c is SunBeam ||
+                c is LanternBalloon ||
+                c is FireVent,
+          ),
+        );
+    }
     final p = player;
     if (p != null && p.isMounted && !p.isDead && !p.crouching && !p.hidden) {
       final (pos, r) = p.light;
       if (reaches(pos, r * 0.7)) return true;
     }
-    for (final c in world.children) {
+    for (final c in _lights) {
+      if (!c.isMounted) continue;
       switch (c) {
         case FireflyLure l when l.glowing:
           if (reaches(l.position, 110)) return true;
@@ -1048,6 +1074,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     }
     final steps = math.max(1, (dt / maxStep - 1e-9).ceil());
     for (var i = 0; i < steps; i++) {
+      _frame++;
       super.update(dt / steps);
     }
     if (menuMode.value) {

@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'dart:ui';
+import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flame/components.dart';
@@ -1140,21 +1141,37 @@ class RainZone extends Component with HasGameReference<GolgeGame> {
   @override
   void update(double dt) => _t += dt;
 
+  /// Damlaların uçları (yeniden kullanılır: her karede bellek ayrılmaz).
+  Float32List _drops = Float32List(0);
+  static final _rain = Paint()
+    ..color = const Color(0xFFB8C8E0).withValues(alpha: 0.35)
+    ..strokeWidth = 1.2;
+
   @override
   void render(Canvas canvas) {
     final view = game.camera.visibleWorldRect;
     final r = area.intersect(view);
     if (r.width <= 0 || r.height <= 0) return;
-    final rain = Paint()
-      ..color = const Color(0xFFB8C8E0).withValues(alpha: 0.35)
-      ..strokeWidth = 1.2;
     final count = (area.width * area.height / 2600).clamp(20, 220).toInt();
+    if (_drops.length != count * 4) _drops = Float32List(count * 4);
+    // Bütün damlalar tek çizim çağrısında (tek tek çizgi çizmek telefonda
+    // yağmurda takılmaya yol açıyordu).
+    var n = 0;
     for (var i = 0; i < count; i++) {
       final x = area.left + (i * 97.0 % area.width);
       final y = area.top + ((i * 211.0 + _t * 520) % area.height);
-      if (!r.contains(Offset(x, y))) continue;
-      canvas.drawLine(Offset(x, y), Offset(x - 4, y + 14), rain);
+      if (x < r.left || x > r.right || y < r.top || y > r.bottom) continue;
+      _drops[n++] = x;
+      _drops[n++] = y;
+      _drops[n++] = x - 4;
+      _drops[n++] = y + 14;
     }
+    if (n == 0) return;
+    canvas.drawRawPoints(
+      PointMode.lines,
+      Float32List.sublistView(_drops, 0, n),
+      _rain,
+    );
   }
 }
 
