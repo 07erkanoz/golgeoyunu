@@ -463,11 +463,14 @@ void main() {
         k.up = false;
         expect(nearest<Lever>(game, 55 * kTile).pulled, isTrue);
         run(game, 2.5);
-        // 5) Açılan kapıdan geç.
+        // 5) Açılan kapıdan geç (raftan inerken zincire tutunulursa sağa
+        // zıplayarak bırakılır).
         k.right = true;
         for (var i = 0; i < _hz * 4 && p.position.x < 62 * kTile; i++) {
+          k.jump = p.state == PlayerState.vine;
           game.update(_dt);
         }
+        k.jump = false;
         k.right = false;
         expect(p.isDead, isFalse);
         expect(

@@ -163,6 +163,10 @@ Picture _buildTerrain(Level lv, int c0, int c1, int r0, int r1) {
             ink,
           );
           if (theme == LevelTheme.ark) _hullPlanks(canvas, lv, c, r, x, y);
+          // Zeminin yüzü: üst kenarda ışık alan ince bir şerit; taşın
+          // içine doğru söner (zemin karanlıkta da seçilsin).
+          if (r > 0 && !lv.solid(c, r - 1))
+            _surfaceLight(canvas, theme, x, y, rnd);
           // Sarnıçta ve yerin altında taşın üstünde ot bitmez.
           if (r > 0 &&
               !lv.solid(c, r - 1) &&
@@ -960,6 +964,58 @@ class WaterComponent extends Component with HasGameReference<GolgeGame> {
       Paint()
         ..color = const Color(0xFFC0703A).withValues(alpha: 0.25)
         ..strokeWidth = 1,
+    );
+  }
+}
+
+/// Temanın zemin ışığı: kenarı yalayan rengin tonu.
+Color _surfaceTint(LevelTheme t) => switch (t) {
+  LevelTheme.cistern => const Color(0xFFC07A44),
+  LevelTheme.cave => const Color(0xFFC0602E),
+  LevelTheme.cliffs => const Color(0xFFC08A62),
+  LevelTheme.sky || LevelTheme.kaf => const Color(0xFFE0A070),
+  LevelTheme.snow ||
+  LevelTheme.nemrut ||
+  LevelTheme.konya => const Color(0xFF9AB4D0),
+  LevelTheme.ark => const Color(0xFFB8885A),
+  LevelTheme.peri => const Color(0xFFD09A70),
+  LevelTheme.underworld => const Color(0xFF8A6AC0),
+  LevelTheme.ergenekon => const Color(0xFF8AA070),
+  LevelTheme.heavens => const Color(0xFFE8E0F0),
+};
+
+/// Üst yüzün ışığı ve ince taş dokusu.
+void _surfaceLight(
+  Canvas canvas,
+  LevelTheme theme,
+  double x,
+  double y,
+  math.Random rnd,
+) {
+  final tint = _surfaceTint(theme);
+  canvas.drawRect(
+    Rect.fromLTWH(x - 0.5, y, kTile + 1, 22),
+    Paint()
+      ..shader = ui.Gradient.linear(Offset(x, y), Offset(x, y + 22), [
+        tint.withValues(alpha: 0.42),
+        tint.withValues(alpha: 0),
+      ]),
+  );
+  canvas.drawRect(
+    Rect.fromLTWH(x - 0.5, y, kTile + 1, 2),
+    Paint()..color = tint.withValues(alpha: 0.75),
+  );
+  // Taş dokusu: yüzeye yakın birkaç kısa çatlak ve çakıl.
+  final grain = Paint()
+    ..color = tint.withValues(alpha: 0.28)
+    ..strokeWidth = 1;
+  for (var i = 0; i < 3; i++) {
+    final gx = x + 3 + rnd.nextDouble() * (kTile - 8);
+    final gy = y + 4 + rnd.nextDouble() * 9;
+    canvas.drawLine(
+      Offset(gx, gy),
+      Offset(gx + 3 + rnd.nextDouble() * 4, gy + 1),
+      grain,
     );
   }
 }
