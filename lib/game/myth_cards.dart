@@ -273,5 +273,73 @@ class MythCard {
       sourceTr: 'Orhun Yazıtları',
       sourceEn: 'Orkhon Inscriptions',
     ),
+    MythCard(
+      id: 'ergenekon',
+      nameTr: 'Ergenekon',
+      nameEn: 'Ergenekon',
+      whoTr:
+          'Dört yanı aşılmaz dağlarla çevrili vadiden demir dağı eritip çıkış.',
+      whoEn: 'The way out of a valley walled by mountains, through a mountain of iron melted down.',
+      storyTr:
+          'Anlatıya göre bir yenilgiden yalnız Kıyan ile Nüküz eşleriyle '
+          'kurtulur ve çayırlı, ırmaklı, meyveli bir vadiye, Ergenekon\'a '
+          'sığınır. Dört yüz yılda boy çoğalır, vadi dar gelir. Bir demirci '
+          'dağın demir olduğunu söyler; odun ve kömür yığılır, deriden '
+          'yetmiş körük kurulur, dağ erir ve yüklü bir devenin geçeceği yol '
+          'açılır. O gün kutsal sayılır: her yıl bir demir ateşte kızdırılıp '
+          'dövülür.',
+      storyEn:
+          'As the story goes, after a defeat only Kıyan and Nüküz escape with '
+          'their wives and take refuge in Ergenekon, a valley of meadows, '
+          'rivers and fruit. Over four hundred years the people multiply and '
+          'the valley grows too small. A smith says the mountain is iron; '
+          'wood and coal are piled up, seventy bellows of hide are set, the '
+          'mountain melts and a road opens wide enough for a laden camel. '
+          'That day became sacred: every year a piece of iron was heated in '
+          'the fire and struck on the anvil.',
+      sourceTr: 'Reşidüddin, Câmiu\'t-Tevârîh; Ebulgazi Bahadır Han, Şecere-i Terâkime',
+      sourceEn: 'Rashid al-Din, Jami al-Tawarikh; Abu al-Ghazi Bahadur, Shajara-i Tarakima',
+    ),
+    MythCard(
+      id: 'demirci',
+      nameTr: 'Demirci',
+      nameEn: 'The Smith',
+      whoTr: 'Ergenekon\'da demir dağı eritmeyi akıl eden usta.',
+      whoEn:
+          'The master who thought of melting the iron mountain in Ergenekon.',
+      storyTr:
+          'Ergenekon anlatısında çıkış yolunu bulan bir demircidir: dağın '
+          'demir damarını gösterir, körüklerin kurulmasını önerir. Türk '
+          'kültüründe demircilik kutsal bir zanaat sayılmış; demir döven usta '
+          'saygı görmüştür.',
+      storyEn:
+          'In the Ergenekon story it is a smith who finds the way out: he '
+          'shows the iron vein of the mountain and proposes setting up the '
+          'bellows. In Turkic culture smithing was held to be a sacred craft, '
+          'and the master who forged iron was honoured.',
+      sourceTr: 'Ergenekon Destanı',
+      sourceEn: 'The Ergenekon legend',
+    ),
+    MythCard(
+      id: 'asena',
+      nameTr: 'Asena',
+      nameEn: 'Asena',
+      whoTr: 'Göktürk türeyiş efsanesinde çocuğu kurtarıp büyüten dişi kurt.',
+      whoEn: 'In the Göktürk origin legend, the she-wolf who saved and raised a child.',
+      storyTr:
+          'Çin kaynaklarına geçen Göktürk efsanesine göre boyu yok edilince '
+          'geriye kalan tek çocuğu bir dişi kurt kurtarır ve besler. Kurt '
+          'onunla dağların arasındaki bir mağaraya sığınır; mağaranın içinde '
+          'çevresi dağlarla kuşatılmış bir ova vardır. Göktürk hanedanı '
+          'Aşina adını bu soydan alır.',
+      storyEn:
+          'According to the Göktürk legend preserved in Chinese sources, when '
+          'the tribe was destroyed a she-wolf saved and fed the only child '
+          'left. She took refuge with him in a cave among the mountains; '
+          'inside the cave lay a plain encircled by mountains. The Göktürk '
+          'ruling house, Ashina, took its name from this line.',
+      sourceTr: 'Göktürk türeyiş efsanesi (Çin kaynakları, Zhoushu)',
+      sourceEn: 'Göktürk origin legend (Chinese sources, Zhoushu)',
+    ),
   ];
 }

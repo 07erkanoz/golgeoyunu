@@ -77,6 +77,9 @@ class Level {
 
   /// Erlik'in katı: hapsedilmiş kut kafesleri (`a`).
   final kutCells = <Vector2>[];
+
+  /// Ergenekon: demir damarları (`d` dikey dizisi: sütun, üst, alt).
+  final ironVeins = <(int, int, int)>[];
   double? chaseStart;
   double? chaseEnd;
 
@@ -346,6 +349,16 @@ class Level {
             semazenCells.add(cell);
           case 'a' when def.theme == LevelTheme.underworld:
             kutCells.add(cell);
+          case 'd' when def.theme == LevelTheme.ergenekon:
+            // Demir damarı: üst üste hücreler tek damar.
+            if (r == 0 || def.map[r - 1].padRight(width, '.')[c] != 'd') {
+              var end = r;
+              while (end + 1 < height &&
+                  def.map[end + 1].padRight(width, '.')[c] == 'd') {
+                end++;
+              }
+              ironVeins.add((c, r, end));
+            }
           case 'd' when def.theme == LevelTheme.konya:
             chandelierCells.add(cell);
           case '0':

@@ -287,7 +287,14 @@ satır), yeni perdede kopuz motifi müzikte duyulur.
    *(Yapıldı: Ak Ana perde sahnesi; XIV Erlik'in Katı — lib/game/erlik.dart:
    Körmös `b`, kut kafesi `a`, Çalkuyruk `W` ve binince yükselen karanlık
    `z`/`Z`; ters perde mevcut gölge/ışık tahtaları ve Erlik'in feneri `N`
-   ile. Kimlik 14, sıra sürümü 2. XV ve XVI bekliyor; Konya şimdilik XV.)*
+   ile. Kimlik 14.
+   XV Ergenekon — lib/game/ergenekon.dart: demir damarı `d` (ocağını
+   ateşböceği yakar, körükler çentik sırasıyla basılır; geç kalınca söner),
+   körükler LevelDef.bellows (sıra 0 süs), akan demir `u`, sis
+   LevelDef.mists, sonda akkor demir seli. Anlatı Reşidüddin ve Ebulgazi'ye
+   göre: yeşil vadi, Kıyan ile Nüküz, yetmiş deri körük, örste dövülen
+   demir; Asena (Göktürk efsanesi) mağarada sığınak. Kimlik 15, sıra
+   sürümü 3. XVI bekliyor; Konya şimdilik XVI.)*
 7. Konya eklemeleri (Gökbörü, çiçek açan ağaç, çaputlar).
 
 ---

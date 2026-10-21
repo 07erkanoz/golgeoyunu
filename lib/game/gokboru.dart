@@ -178,7 +178,8 @@ class PawTrail extends PositionComponent with HasGameReference<GolgeGame> {
     : super(
         position: _min(prints),
         size: _max(prints) - _min(prints) + Vector2.all(1),
-        priority: 5,
+        // Sisin (18) üstünde parlar.
+        priority: 19,
       );
 
   /// İzlerin dünya konumları (zeminin hemen üstü).

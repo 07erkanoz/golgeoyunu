@@ -409,8 +409,16 @@ class GreatLamp extends PositionComponent with HasGameReference<GolgeGame> {
 /// yüz tutunca taşar: aşağıdan yükselen soğuk bir ışık seli. Gölgeye değerse
 /// siler. Sâye ancak tırmanarak kurtulur.
 class LightFlood extends PositionComponent with HasGameReference<GolgeGame> {
-  LightFlood(this.startX, this.topY, {this.dark = false, this.wake})
-    : super(priority: 30);
+  LightFlood(
+    this.startX,
+    this.topY, {
+    this.dark = false,
+    this.molten = false,
+    this.wake,
+  }) : super(priority: 30);
+
+  /// Ergenekon: eriyen demir dağdan akkor demir yükselir.
+  final bool molten;
 
   final double startX;
 
@@ -468,7 +476,15 @@ class LightFlood extends PositionComponent with HasGameReference<GolgeGame> {
     final gap = position.y - (p.position.y + Player.h);
     game.threat = math.max(game.threat, (1 - gap / 300).clamp(0.0, 1.0));
     GameAudio.instance.dread(((400 - gap) / 360).clamp(0.2, 1.0));
-    if (gap < 2) p.die(cause: dark ? DeathCause.dark : DeathCause.light);
+    if (gap < 2) {
+      p.die(
+        cause: dark
+            ? DeathCause.dark
+            : molten
+            ? DeathCause.hazard
+            : DeathCause.light,
+      );
+    }
   }
 
   @override
@@ -491,6 +507,11 @@ class LightFlood extends PositionComponent with HasGameReference<GolgeGame> {
                   const Color(0xFF2A1640).withValues(alpha: 0.95 * a),
                   const Color(0xFF05030A).withValues(alpha: a),
                 ]
+              : molten
+              ? [
+                  const Color(0xFFFFC060).withValues(alpha: 0.95 * a),
+                  const Color(0xFFB8301A).withValues(alpha: a),
+                ]
               : [
                   const Color(0xFFE4FFF8).withValues(alpha: 0.85 * a),
                   kCold.withValues(alpha: 0.55 * a),
@@ -499,8 +520,13 @@ class LightFlood extends PositionComponent with HasGameReference<GolgeGame> {
     );
     // Dalgalanan yüzey ve yukarı uçuşan kıvılcımlar.
     final edge = Paint()
-      ..color = (dark ? const Color(0xFFB27AE8) : const Color(0xFFFFFFFF))
-          .withValues(alpha: 0.9 * a)
+      ..color =
+          (dark
+                  ? const Color(0xFFB27AE8)
+                  : molten
+                  ? const Color(0xFFFFE8B0)
+                  : const Color(0xFFFFFFFF))
+              .withValues(alpha: 0.9 * a)
       ..strokeWidth = 3;
     final path = Path()..moveTo(left, 0);
     for (var x = 0.0; x <= width; x += 24) {
@@ -508,9 +534,13 @@ class LightFlood extends PositionComponent with HasGameReference<GolgeGame> {
     }
     canvas.drawPath(path, edge..style = PaintingStyle.stroke);
     final spark = Paint()
-      ..color = (dark ? const Color(0xFFB27AE8) : kCold).withValues(
-        alpha: 0.7 * a,
-      );
+      ..color =
+          (dark
+                  ? const Color(0xFFB27AE8)
+                  : molten
+                  ? const Color(0xFFFFB050)
+                  : kCold)
+              .withValues(alpha: 0.7 * a);
     for (var i = 0; i < 30; i++) {
       final k = (i * 0.37 + _t * 0.4) % 1.0;
       final x = left + ((i * 97.0) % width);

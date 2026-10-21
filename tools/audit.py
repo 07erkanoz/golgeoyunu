@@ -37,8 +37,24 @@ LEVELS = [
     ('kMapNemrut', True, 80), ('kMapGunDogumu', True, 0), ('kMapKarYolu', True, 120),
     ('kMapPalandoken', None, 0), ('kMapCig', None, 0), ('kMapPeri', True, 0),
     ('kMapDerinkuyu', True, 0), ('kMapKonya', True, 0),
-    ('kMapErlik', False, 0),
+    ('kMapErlik', False, 0), ('kMapErgenekon', True, 0),
 ]
+
+# Ergenekon: `d` demir damarı kapı gibi kapalıdır; ona bağlı bütün körüklere
+# (LevelDef.bellows, sırası > 0, en yakın damara bağlı) varılınca erir.
+VEINS = {'kMapErgenekon'}
+
+
+def bellows_of(name):
+    src = open('lib/game/levels.dart', encoding='utf-8').read()
+    i = src.index('map: %s' % name)
+    j = src.rindex('LevelDef(', 0, i)
+    block = src[j:i]
+    k = block.find('bellows: [')
+    if k < 0:
+        return []
+    body = block[k:block.index(']', k)]
+    return [tuple(int(v) for v in t) for t in re.findall(r'\((\d+),\s*(\d+),\s*(\d+)\)', body)]
 
 # Yerin altı (Erlik'in katı): `a` kut kafesi (kol gibi en yakın kapıyı
 # açar, üstüne basılmaz), `b` Körmös (havada, engel değil), `W` Çalkuyruk:
@@ -382,6 +398,8 @@ def audit(idx):
     if wings is None:
         return None
     rows = load(name)
+    if name in VEINS:
+        rows = [r.replace('d', 'H') for r in rows]
     start = cells(rows, 'P')[0]
     gs = gates(rows)
     opened_gates = []
@@ -434,6 +452,18 @@ def audit(idx):
                 if (c in reach or (c[0], c[1] - 1) in reach) and ('d', c) not in used:
                     new.append((('d', c), nearest_gate(gs, opened_gates, c)))
         new = [(k, g) for k, g in new if g is not None]
+        if name in VEINS:
+            veins = [g for g in gs if g not in opened_gates]
+            groups = defaultdict(list)
+            for (bc, br, order) in bellows_of(name):
+                if order <= 0:
+                    continue
+                g = min(gs, key=lambda g: abs(g[0] - bc) + abs(g[2] - br))
+                groups[g].append((bc, br))
+            for g in veins:
+                bs = groups.get(g, [])
+                if bs and all(b in reach for b in bs) and ('vein', g) not in used:
+                    new.append((('vein', g), g))
         if under and not horse and any(c in reach for c in cells(rows, 'W')):
             # Çalkuyruk'a varıldı: bundan sonra atla zıplanır.
             horse = True

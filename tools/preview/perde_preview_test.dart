@@ -49,6 +49,12 @@ void main() {
       'efs_konya': (PerdeScene.sema, 5.5),
       'efs_ertostuk': (PerdeScene.akAna, 5.5),
       'efs_kormos': (PerdeScene.akAna, 6.5),
+      'erg_kiyan': (PerdeScene.ergenekon, 0.6),
+      'erg_vadi': (PerdeScene.ergenekon, 2.5),
+      'erg_korukler': (PerdeScene.ergenekon, 3.5),
+      'erg_kurt': (PerdeScene.ergenekon, 4.7),
+      'erg_ors': (PerdeScene.ergenekon, 5.5),
+      'erg_ocak': (PerdeScene.ergenekon, 6.5),
     };
     for (final e in shots.entries) {
       final rec = ui.PictureRecorder();

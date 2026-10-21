@@ -924,7 +924,60 @@ ec(278,3,298,5)
 er.put(270,8,'Z'); er.put(280,5,'9'); er.put(286,5,'K'); er.put(290,5,'M'); er.put(296,5,'E')
 lvl_erlik=er.rows()
 
-MAPS = [('kMapYerebatan', lvl1), ('kMapKule', lvl2), ('kMapGokyolu', lvl3), ('kMapKaf', lvl4), ('kMapAgri', lvl5), ('kMapGemi', lvl6), ('kMapNemrut', lvl7), ('kMapGunDogumu', lvl8), ('kMapKarYolu', lvl9), ('kMapPalandoken', lvl10), ('kMapCig', lvl11), ('kMapPeri', lvl12), ('kMapDerinkuyu', lvl13), ('kMapKonya', lvl14), ('kMapErlik', lvl_erlik)]
+# ------------------------------------------------------------ XV · ERGENEKON (Ötüken)
+# Dört yanı aşılmaz dağlarla çevrili vadi. `d` demir damarı (dikey), `u`
+# akan demir (yatay dizi), `z`/`Z` eriyen dağdan yükselen akkor demir.
+# Körükler ve sis LevelDef'te (bellows, mists).
+W,H=332,44
+eg=G(W,H)
+F=34                                     # zemin: 34. satırda durulur
+eg.fill(0,F+1,W-1,H-1,'#')
+def gc(c0,r0,c1,r1): eg.fill(c0,r0,c1,r1,'.')
+def mountain(c0,c1,top): eg.fill(c0,top,c1,F,'#')
+# A) Kıyan Boğazı
+mountain(0,0,0)
+eg.put(2,F,'P'); eg.put(3,F,'p'); eg.put(5,F,'1'); eg.put(12,F,'F'); eg.put(20,F,'F')
+eg.fill(24,F-1,27,F,'#')
+eg.put(32,F,'K')
+# B) Demir dağın dibi: ilk ocak (iki körük), Demirci
+eg.put(42,F,'p'); eg.put(45,F,'2')
+eg.fill(64,F-2,72,F-2,'#')                          # körük rafı
+eg.put(80,F,'F'); eg.put(83,F,'F')
+mountain(93,99,0); eg.fill(92,0,92,F-7,'#'); eg.fill(92,F-6,92,F,'d')
+gc(93,F-6,99,F)                                     # damarın ardındaki tünel
+# C) Akan demir: çukurlar üstünde akıp soğuyan yollar
+eg.put(100,F,'3'); eg.put(101,F,'p')
+x=104
+for n in (6,6,7,6):
+    gc(x,F+1,x+n-1,H-3); eg.fill(x,H-3,x+n-1,H-3,'^'); eg.fill(x,F+1,x+n-1,F+1,'u')
+    x+=n+3
+eg.put(146,F,'K'); eg.put(148,F,'F')
+# D) Sisli çayır: gizli çukurlar (Gökbörü'nün izleri gösterir)
+eg.put(151,F,'4'); eg.put(152,F,'p')
+for c0,c1 in ((160,161),(171,173),(183,184),(195,197),(206,207)):
+    gc(c0,F+1,c1,H-3); eg.fill(c0,H-3,c1,H-3,'^')
+# Asena'nın mağarası: kaya tavan, Umay ağacı
+eg.fill(214,F-6,234,F-6,'#'); eg.fill(214,F-5,214,F-3,'#'); eg.fill(234,F-5,234,F-2,'#')
+eg.put(217,F,'5'); eg.put(218,F,'p'); eg.put(222,F,'K'); eg.put(229,F,'M')
+# E) İkinci damar: üç körük (biri yukarıda, biri akan demirin ötesinde)
+eg.put(236,F,'6'); eg.put(237,F,'p'); eg.put(244,F,'F')
+eg.fill(256,F-7,264,F-7,'#'); eg.fill(255,F-6,255,F,'|'); eg.put(262,F-8,'M')
+gc(266,F+1,272,H-3); eg.fill(266,H-3,272,H-3,'^'); eg.fill(266,F+1,272,F+1,'u')
+eg.put(280,F,'F'); eg.put(282,F,'F')
+mountain(287,293,0); eg.fill(286,0,286,F-9,'#'); eg.fill(286,F-8,286,F,'d')
+gc(287,F-6,293,F)
+# F) Nevruz yarığı: dağ erir, akkor demir yükselir; yukarı, şafağa
+mountain(294,331,6)
+gc(294,F-6,299,F); gc(300,6,310,F)
+eg.put(294,F,'7'); eg.put(295,F,'p'); eg.put(296,F,'K'); eg.put(298,F,'z')
+eg.fill(302,F-14,302,F,'|'); eg.fill(303,F-15,306,F-15,'#')
+eg.fill(307,7,307,F-16,'|'); eg.fill(304,9,306,9,'#'); eg.fill(308,6,310,6,'#')
+gc(311,3,330,5); eg.fill(311,6,330,6,'#')
+eg.put(305,8,'Z')
+eg.put(313,5,'8'); eg.put(318,5,'K'); eg.put(322,4,'M'); eg.put(328,5,'E')
+lvl_ergenekon=eg.rows()
+
+MAPS = [('kMapYerebatan', lvl1), ('kMapKule', lvl2), ('kMapGokyolu', lvl3), ('kMapKaf', lvl4), ('kMapAgri', lvl5), ('kMapGemi', lvl6), ('kMapNemrut', lvl7), ('kMapGunDogumu', lvl8), ('kMapKarYolu', lvl9), ('kMapPalandoken', lvl10), ('kMapCig', lvl11), ('kMapPeri', lvl12), ('kMapDerinkuyu', lvl13), ('kMapKonya', lvl14), ('kMapErlik', lvl_erlik), ('kMapErgenekon', lvl_ergenekon)]
 
 out = ['// Bu dosya tools/generate_maps.py ile üretilir; elle düzenleme.',
        '// Gösterim: lib/game/level.dart başındaki açıklamaya bakın.', '']

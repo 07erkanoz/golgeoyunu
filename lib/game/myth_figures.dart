@@ -1730,4 +1730,80 @@ class MythFigures {
     c.restore();
     c.restore();
   }
+
+  // ----------------------------------------------------------- Ergenekon
+
+  /// Asena: Göktürk efsanesinin dişi kurdu; gümüş-boz ışıktan, sıcak.
+  /// Kurtardığı çocuğu koruyan ana kurt.
+  static void asena(Canvas c, double t, {double alpha = 1}) {
+    c.drawOval(
+      Rect.fromCenter(center: Offset.zero, width: 110, height: 9),
+      Paint()
+        ..color = const Color(0xFFE8D8B0).withValues(alpha: 0.35 * alpha)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
+    );
+    _skyBody(
+      c,
+      MythShapes.wolfStand,
+      t,
+      top: const Color(0xFFF6F0E2),
+      bottom: const Color(0xFFB8A888),
+      glow: const Color(0xFFF0E0B8),
+      star: const Color(0xFFFFF8E8),
+      alpha: alpha,
+      stars: 20,
+    );
+    _eyeGlow(c, const Offset(39, -84), const Color(0xFFFFF0C8), alpha);
+  }
+
+  /// Demirci: örsün başında, elinde çekiç; ocağın ateşiyle kenarı yanar.
+  static void demirci(Canvas c, double t) {
+    final strike = math.pow((t * 0.9) % 1, 3).toDouble();
+    const fire = Color(0xFFFF8A3A);
+    _inkBody(c, MythShapes.kam, t, rim: fire);
+    // Örs.
+    final ink = Paint()..color = const Color(0xFF140C08);
+    c.drawPath(
+      Path()
+        ..moveTo(18, -22)
+        ..lineTo(46, -22)
+        ..lineTo(42, -16)
+        ..lineTo(36, -14)
+        ..lineTo(36, 0)
+        ..lineTo(26, 0)
+        ..lineTo(26, -14)
+        ..lineTo(20, -16)
+        ..close(),
+      ink,
+    );
+    // Örsün üstünde kızgın demir.
+    c.drawRect(
+      const Rect.fromLTWH(26, -25, 14, 3),
+      Paint()..color = const Color(0xFFFFB050),
+    );
+    // Çekiç: sağ elden kalkıp iner.
+    const hand = Offset(25, -46);
+    final ang = -2.3 + strike * 1.6;
+    final head = hand + Offset(math.cos(ang), math.sin(ang)) * 18;
+    c.drawLine(
+      hand,
+      head,
+      Paint()
+        ..color = const Color(0xFF140C08)
+        ..strokeWidth = 1.6,
+    );
+    c.drawRect(Rect.fromCenter(center: head, width: 7, height: 5), ink);
+    if (strike > 0.9) {
+      final spark = Paint()..color = const Color(0xFFFFE0A0);
+      for (var i = 0; i < 6; i++) {
+        final a = -math.pi / 2 + (i - 2.5) * 0.4;
+        c.drawCircle(
+          const Offset(33, -26) + Offset(math.cos(a), math.sin(a)) * 8,
+          0.9,
+          spark,
+        );
+      }
+    }
+    _eyeGlow(c, const Offset(-0.8, -94), fire, 0.5);
+  }
 }

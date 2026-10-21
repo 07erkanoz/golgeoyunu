@@ -211,7 +211,9 @@ class GameAudio {
       LevelTheme.cistern => 'amb_cistern',
       LevelTheme.cave || LevelTheme.underworld => 'amb_cave',
       LevelTheme.ark => 'amb_ark',
-      LevelTheme.cliffs || LevelTheme.peri => 'amb_wind',
+      LevelTheme.cliffs ||
+      LevelTheme.peri ||
+      LevelTheme.ergenekon => 'amb_wind',
       LevelTheme.sky || LevelTheme.kaf => 'amb_sky',
       LevelTheme.snow || LevelTheme.nemrut => 'amb_snow',
       LevelTheme.konya => 'amb_konya',

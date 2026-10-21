@@ -28,6 +28,7 @@ import 'umay.dart';
 import 'gokboru.dart';
 import 'cameos.dart';
 import 'erlik.dart';
+import 'ergenekon.dart';
 import 'myth_cards.dart';
 import 'nemrut.dart';
 import 'ski.dart';
@@ -696,7 +697,25 @@ class GolgeGame extends FlameGame with KeyboardEvents {
               math.min(2, n - k),
               shade: true,
             ),
-        for (final (c, r, n) in level.rottenRuns) RottenPlank(c, r, n),
+        for (final (c, r, n) in level.rottenRuns)
+          if (level.def.theme == LevelTheme.ergenekon)
+            MoltenChannel(
+              Vector2(c * kTile.toDouble(), r * kTile.toDouble()),
+              n,
+              phase: (c * 0.73) % MoltenChannel.period,
+            )
+          else
+            RottenPlank(c, r, n),
+        ..._forges(),
+        for (final (c0, r0, c1, r1) in level.def.mists)
+          MistZone(
+            Rect.fromLTRB(
+              c0 * kTile.toDouble(),
+              r0 * kTile.toDouble(),
+              (c1 + 1) * kTile.toDouble(),
+              (r1 + 1) * kTile.toDouble(),
+            ),
+          ),
         ..._basins(),
         for (final c in level.drainValves) Valve(c, fill: false),
         for (final c in level.fillValves) Valve(c, fill: true),
@@ -715,6 +734,9 @@ class GolgeGame extends FlameGame with KeyboardEvents {
             Avalanche(level.chaseStart!, level.chaseEnd!)
           else if (level.def.theme == LevelTheme.konya)
             LightFlood(level.chaseStart!, level.chaseTop!)
+          else if (level.def.theme == LevelTheme.ergenekon)
+            // Dağ erir: akkor demir aşağıdan yükselir.
+            LightFlood(level.chaseStart!, level.chaseTop!, molten: true)
           else if (level.def.theme == LevelTheme.underworld)
             // Erlik'in karanlığı: Sâye Çalkuyruk'a binince yükselir.
             LightFlood(
@@ -937,6 +959,36 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         }
       }
       yield BalanceLift(a, b, travel: travel * kTile);
+    }
+  }
+
+  /// Ergenekon: demir damarları ve onlara bağlı körükler (her körük en
+  /// yakın damara).
+  Iterable<Component> _forges() sync* {
+    final veins = [for (final (c, t, b) in level.ironVeins) IronVein(c, t, b)];
+    if (veins.isEmpty) return;
+    final counts = <IronVein, int>{};
+    for (final (c, r, order) in level.def.bellows) {
+      final b = Bellows(
+        Vector2(c * kTile.toDouble(), r * kTile.toDouble()),
+        order,
+      );
+      IronVein? best;
+      var bestD = double.infinity;
+      for (final v in veins) {
+        final d = (v.forge - b.position.toOffset()).distance;
+        if (d < bestD) {
+          bestD = d;
+          best = v;
+        }
+      }
+      b.vein = best;
+      if (order > 0) counts[best!] = (counts[best] ?? 0) + 1;
+      yield b;
+    }
+    for (final v in veins) {
+      v.bellowsCount = counts[v] ?? 1;
+      yield v;
     }
   }
 
@@ -1329,6 +1381,9 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         Kormos k when near(k, 7, 5) => 'kormos',
         KutCage k when near(k, 3, 3) && !k.freed => 'kut',
         Calkuyruk c when near(c, 5, 4) && !onHorse => 'horse',
+        IronVein v when near(v, 6, 4) && !v.lit => 'forge',
+        Bellows b when near(b, 4, 3) && b.order > 0 => 'bellows',
+        MoltenChannel m when near(m, 4, 3) => 'molten',
         Valve v when near(v, 4, 3) => 'valve',
         PerdeCord k when near(k, 4, 3) => 'cord',
         ArkScale s when near(s.lift.a, 6, 4) || near(s.lift.b, 6, 4) => 'scale',

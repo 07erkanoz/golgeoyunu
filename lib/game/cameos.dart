@@ -30,6 +30,8 @@ import 'strings.dart';
 ///   yanına yaklaşamaz.
 /// - `erlik`: hücrenin yakınında yerin dibinden boğuk bir ses.
 /// - `erTostuk`: hücrenin duvarında Er Töştük'ün atlı gölgesi belirir.
+/// - `demirci`: ocağın başında örsünü döven Demirci.
+/// - `asena`: mağaranın ağzında yatan ak boz dişi kurt (sığınak).
 class CameoWarden extends Component with HasGameReference<GolgeGame> {
   CameoWarden(this.cameos);
 
@@ -127,6 +129,24 @@ class CameoWarden extends Component with HasGameReference<GolgeGame> {
           if (_still < 4) break;
           game.markEvent(_key(kind));
           game.world.add(AlbastiShade());
+          _say(kind);
+          game.meetMyth(kind);
+        case 'demirci' || 'asena':
+          if (d.x.abs() > 9 * kTile || d.y.abs() > 4 * kTile) break;
+          game.markEvent(_key(kind));
+          final row = standRow(game.level, c, r) ?? r;
+          game.world.add(
+            Apparition(
+              Vector2((c + 0.5) * kTile, (row + 1) * kTile.toDouble()),
+              draw: kind == 'asena' ? MythFigures.asena : MythFigures.demirci,
+              drawScale: kind == 'asena' ? 0.42 : 0.36,
+              facing: p.center.x < cell.x ? -1 : 1,
+              glow: kind == 'asena'
+                  ? const Color(0xFFF0E0B8)
+                  : const Color(0xFFFF8A3A),
+              hold: kind == 'asena' ? 600 : 14,
+            ),
+          );
           _say(kind);
           game.meetMyth(kind);
         case 'erTostuk':

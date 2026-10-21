@@ -31,7 +31,10 @@ enum LevelTheme {
   konya,
 
   /// Erlik'in katı: yerin altı, kara kayalar, yeraltı ırmakları.
-  underworld;
+  underworld,
+
+  /// Ergenekon: dört yanı aşılmaz dağlarla çevrili yeşil vadi, demir dağ.
+  ergenekon;
 
   /// Kapalı mekân: tavanın üstü kaya, uzaktan zincir sesleri.
   bool get indoor =>
@@ -75,7 +78,16 @@ class LevelDef {
     this.cameos = const [],
     this.bard = '',
     this.bardEn = '',
+    this.bellows = const [],
+    this.mists = const [],
   });
+
+  /// Ergenekon: deri körükler (sütun, satır, sıra); her biri en yakın demir
+  /// damarına bağlanır, sırası üstündeki çentiklerle gösterilir.
+  final List<(int, int, int)> bellows;
+
+  /// Yolu gizleyen sis alanları (sol, üst, sağ, alt sütun/satır).
+  final List<(int, int, int, int)> mists;
 
   /// Bölüm başında, başlıktan sonra ozanın tek dizesi (Dede Korkut
   /// havasında; bir kez).
@@ -364,6 +376,15 @@ const interludes = <List<String>>[
     'Yerin altında Erlik\'in gölgeleri dolaşır: Körmösler. Işığa gelirler; çalınan canları, kutları kafeslerde tutarlar.',
     'BEŞİNCİ PERDE · ÖTÜKEN',
   ],
+  [
+    'Ozan der ki: Bir zaman Türklerin ataları büyük bir savaşta yenildi; yalnız iki yiğit, Kıyan ile Nüküz, eşleriyle kurtuldu.',
+    'Dağların arasında, yolu bir keçi yolundan dar bir vadiye sığındılar: Ergenekon. İçi çayır, ırmak, meyve ağacı ve av doluydu.',
+    'Dört yüz yıl geçti; boy çoğaldı, vadi dar geldi. Ama dışarı çıkacak yol yoktu: dört yanı aşılmaz dağ.',
+    'Bir demirci dedi ki: "Şu dağ demirdir. Odun, kömür yığalım; körük kuralım, eritelim." Deriden yetmiş körük kurdular.',
+    'Dağ eridi; yüklü bir devenin geçeceği kadar yol açıldı. Kimi anlatılar, yolu bir boz kurdun gösterdiğini söyler.',
+    'O gün kutsal sayıldı: her yıl o gün bir parça demir ateşte kızdırılır, örsün üstünde dövülürdü.',
+    'Kandilciler vadinin ocağındaki ateşi de toplamıştı. Ocak sönük, Sâye; körükler bekliyor.',
+  ],
 ];
 
 const interludesEn = <List<String>>[
@@ -480,22 +501,34 @@ const interludesEn = <List<String>>[
     'Erlik\'s shades roam beneath the earth: the Körmös. They come to the light, and keep stolen lives, the kuts, in cages.',
     'THE FIFTH VEIL · ÖTÜKEN',
   ],
+  [
+    'The bard says: once the forefathers of the Turks were defeated in a great war; only two heroes, Kıyan and Nüküz, escaped with their wives.',
+    'Among the mountains, by a path narrower than a goat track, they took refuge in a valley: Ergenekon. It was full of meadows, rivers, fruit trees and game.',
+    'Four hundred years passed; the people multiplied and the valley grew too small. But there was no way out: impassable mountains on every side.',
+    'A smith said: "That mountain is iron. Let us pile up wood and coal, set up bellows and melt it." They set up seventy bellows of hide.',
+    'The mountain melted, and a road opened wide enough for a laden camel. Some tellings say a grey wolf showed the way.',
+    'That day was held sacred: every year on that day a piece of iron was heated in the fire and struck upon the anvil.',
+    'The Lamplighters had taken the fire from the valley\'s forge as well. The forge is cold, Saye; the bellows are waiting.',
+  ],
 ];
 
 /// Oynanış sırası. Bölümün kimliği `levels` listesindeki yeridir ve hiç
 /// değişmez (kayıt, hatıralar, görülen olaylar bu kimlikle tutulur); yeni
 /// bölümler listenin sonuna eklenir, oynanıştaki yerlerine bu sırada girer.
-const levelOrder = <int>[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 13];
+const levelOrder = <int>[
+  0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 13, //
+];
 
 /// Sıra değişince artar: kayıttaki "açılan en ileri bölüm" (sıradaki yer)
 /// eski sıradan yenisine çevrilir.
-const levelOrderVersion = 2;
+const levelOrderVersion = 3;
 
 /// Eski sıra sürümlerinde her yerdeki bölüm kimliği (1. sürüm: kimlik =
 /// yer).
 const _levelOrderHistory = <int, List<int>>{
   1: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13],
   2: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 13],
+  3: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 13],
 };
 
 /// Bölümün oynanış sırasındaki yeri (yoksa -1).
@@ -1354,14 +1387,14 @@ const levels = <LevelDef>[
     map: kMapDerinkuyu,
   ),
   LevelDef(
-    title: 'XV · ŞEB-İ ARÛS',
+    title: 'XVI · ŞEB-İ ARÛS',
     bard: 'Ozan der ki: Dönen döner, gölge düşer; kim dönerse yolunu bulur.',
     bardEn: 'The bard says: the whirling turn, the shadows fall; whoever turns finds the way.',
     gokboruGuard: true,
     subtitle: 'Bu gece ölüm bir düğündür.',
     theme: LevelTheme.konya,
     wings: true,
-    titleEn: 'XV · SHEB-I ARUS',
+    titleEn: 'XVI · SHEB-I ARUS',
     subtitleEn: 'Tonight, death is a wedding.',
     place: 'Konya · 17 Aralık 1660, Şeb-i Arûs gecesi',
     placeEn: 'Konya · 17 December 1660, the night of Sheb-i Arus',
@@ -1496,5 +1529,83 @@ const levels = <LevelDef>[
       'Memory · "Every life has its light," he used to say. "No one can put it in a cage; if they do, the light dies and only the cage remains."',
     ],
     map: kMapErlik,
+  ),
+  LevelDef(
+    title: 'XV · ERGENEKON',
+    subtitle: 'Dört yanı dağ; çıkış demirin içinden.',
+    titleEn: 'XV · ERGENEKON',
+    subtitleEn: 'Mountains on every side; the way out runs through iron.',
+    theme: LevelTheme.ergenekon,
+    bard: 'Ozan der ki: Dağ demirse demir erir; sabreden boyun önü açılır.',
+    bardEn: 'The bard says: if the mountain is iron, iron melts; the patient people find the way open.',
+    place: 'Ötüken · Ergenekon vadisi',
+    placeEn: 'Ötüken · The valley of Ergenekon',
+    gokboruHelp: true,
+    gokboruWatch: [(316, 5)],
+    pawTrails: [(152, 213, 34)],
+    mists: [(152, 26, 213, 37)],
+    cameos: [('demirci', 88, 34), ('asena', 227, 34)],
+    bellows: [
+      (68, 31, 1),
+      (55, 34, 2),
+      (60, 34, 0),
+      (75, 34, 0),
+      (78, 34, 0),
+      (240, 34, 1),
+      (260, 26, 2),
+      (276, 34, 3),
+      (248, 34, 0),
+      (251, 34, 0),
+      (283, 34, 0),
+    ],
+    areas: [
+      'Kıyan Boğazı',
+      'Demir Dağın Dibi',
+      'Akan Demir',
+      'Sisli Çayır',
+      'Asena\'nın Mağarası',
+      'İkinci Damar',
+      'Nevruz Yarığı',
+    ],
+    areasEn: [
+      'Kıyan\'s Gorge',
+      'At the Foot of the Iron Mountain',
+      'Flowing Iron',
+      'The Misty Meadow',
+      'Asena\'s Cave',
+      'The Second Vein',
+      'The Nevruz Cleft',
+    ],
+    whispers: [
+      'Ergenekon: dört yanı aşılmaz dağ. İçeride çayır, ırmak, meyve; ama çıkış yok.',
+      'Dağın dibinde körükler: deriden, sıra sıra. Ocak sönük.',
+      'Demir aktı. Akarken yakar; soğuyup kararınca yol olur.',
+      'Sabah sisi vadiyi örttü. Yolu göremiyorsun; ama biri önünden geçmiş.',
+      'Bir mağara, içinde ak boz bir kurt. Göktürkler derdi ki kurt, yok olmaktan kurtulan çocuğu böyle bir mağarada büyüttü.',
+      'İkinci damar daha derin. Üç körük: biri yukarıda, biri akan demirin ötesinde.',
+      'Dağ eriyor! Aşağıdan akkor demir yükseliyor: yukarı, yarıktan!',
+      'Vadiden çıkış: ilk sabah. Bu güne Nevruz derler; o gün bir demir ateşte kızdırılır, örste dövülür.',
+    ],
+    whispersEn: [
+      'Ergenekon: impassable mountains on every side. Inside, meadows, a river, fruit; but no way out.',
+      'Bellows at the foot of the mountain: made of hide, row upon row. The forge is cold.',
+      'The iron flowed. While it flows it burns; when it cools and darkens it becomes a road.',
+      'The morning mist has covered the valley. You cannot see the way; but someone has walked ahead of you.',
+      'A cave, and in it a pale grey wolf. The Göktürks said a wolf raised the child saved from destruction in just such a cave.',
+      'The second vein runs deeper. Three bellows: one above, one beyond the flowing iron.',
+      'The mountain is melting! Molten iron rises from below: up, through the cleft!',
+      'Out of the valley: the first morning. They call this day Nevruz; on it a piece of iron is heated in the fire and struck on the anvil.',
+    ],
+    memories: [
+      'Hatıra · "Bir gün bu perdeden çıkacağız," derdi ustam. "Dört yanımız dağ olsa da."',
+      'Hatıra · Ustam deriyi gerip perdeye çakarken söylerdi: "Sabırla gerilen deri yırtılmaz."',
+      'Hatıra · "Ocak sönerse ne olur, usta?" "Biri yeniden yakar, Sâye. Ateş hep birinin elinden gelir."',
+    ],
+    memoriesEn: [
+      'Memory · "One day we will step out of this screen," my master used to say. "Even if there are mountains on every side."',
+      'Memory · Stretching the hide and nailing it to the screen, my master would say: "Hide stretched with patience does not tear."',
+      'Memory · "What happens if the forge goes out, master?" "Someone lights it again, Saye. Fire always comes from someone\'s hand."',
+    ],
+    map: kMapErgenekon,
   ),
 ];

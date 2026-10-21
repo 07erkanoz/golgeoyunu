@@ -1314,3 +1314,175 @@ void _mythOverlay(Canvas canvas, PerdeScene scene, double time, double u) {
       return;
   }
 }
+
+void _ergenekonScene(Canvas canvas, double time, double u) {
+  _P._c = canvas;
+  const g = PerdePainter._ground;
+  // Ortadaki demir dağ erir: tepesi alçalır, dibinde akkor yarık açılır.
+  final melt = _span(u, 4.0, 4.7);
+  // Dört yanı aşılmaz dağlar: iki yanda yüksek, ortada demir dağ.
+  canvas.drawPath(
+    Path()
+      ..moveTo(0, g)
+      ..lineTo(0, 60)
+      ..lineTo(90, 30)
+      ..lineTo(170, 120)
+      ..lineTo(230, g)
+      ..close(),
+    _ink(0.55),
+  );
+  canvas.drawPath(
+    Path()
+      ..moveTo(780, g)
+      ..lineTo(780, 50)
+      ..lineTo(700, 40)
+      ..lineTo(610, 130)
+      ..lineTo(560, g)
+      ..close(),
+    _ink(0.55),
+  );
+  final peak = 90 + melt * 170;
+  canvas.drawPath(
+    Path()
+      ..moveTo(300, g)
+      ..lineTo(395, peak)
+      ..lineTo(490, g)
+      ..close(),
+    _ink(0.7),
+  );
+  if (melt > 0) {
+    // Akkor yarık: perdede ışık sızan bir çatlak.
+    canvas.drawPath(
+      Path()
+        ..moveTo(380, g)
+        ..lineTo(395, g - 120 * melt)
+        ..lineTo(410, g)
+        ..close(),
+      _hole(0.8 * melt),
+    );
+  }
+  canvas.drawRect(Rect.fromLTWH(0, g, 780, 50), _ink(1));
+  // Vadi yeşerir: meyve ağaçları ve atlar.
+  final green = _span(u, 1.0, 1.8);
+  if (green > 0) {
+    for (final x in [250.0, 520.0, 545.0]) {
+      _shape(
+        canvas,
+        MythShapes.umayTree,
+        Offset(x, g + 30 * 0.7),
+        70 * green,
+        _ink(green),
+      );
+    }
+    for (var i = 0; i < 3; i++) {
+      _shape(
+        canvas,
+        MythShapes.horse,
+        Offset(270 + i * 34.0, g),
+        28,
+        _ink(green * (1 - melt * 0.5)),
+        flip: i.isOdd,
+      );
+    }
+  }
+  // Kıyan ile Nüküz, eşleriyle: keçi yolundan vadiye iner.
+  final walk = _span(u, 0.1, 0.9);
+  final people = _span(u, 0.05, 0.3) * (1 - _span(u, 3.0, 3.3));
+  if (people > 0) {
+    for (var i = 0; i < 4; i++) {
+      final x = 40 + walk * 160 - i * 26.0;
+      _shape(
+        canvas,
+        i.isEven ? MythShapes.kam : MythFigures.akAnaSilhouette,
+        Offset(x, g),
+        i.isEven ? 62 : 58,
+        _ink(people),
+      );
+    }
+  }
+  // Dört yüz yıl: boy çoğalır.
+  final crowd = _span(u, 2.0, 2.6) * (1 - _span(u, 5.8, 6.1));
+  if (crowd > 0) {
+    for (var i = 0; i < 9; i++) {
+      final x = 520 + (i % 5) * 34.0 - melt * 120 - _span(u, 4.4, 5.0) * 200;
+      _shape(
+        canvas,
+        i.isEven ? MythShapes.kam : MythFigures.akAnaSilhouette,
+        Offset(x, g),
+        40 + (i % 3) * 4.0,
+        _ink(crowd * 0.9),
+        flip: true,
+      );
+    }
+  }
+  // Demirci ve yetmiş körük: dağın dibinde sıra sıra deri körükler, ateş.
+  final forge = _span(u, 3.0, 3.4);
+  if (forge > 0) {
+    for (var i = 0; i < 9; i++) {
+      final x = 292 + i * 22.0;
+      final pump = 0.5 + 0.5 * math.sin(time * 6 + i);
+      canvas.drawRect(
+        Rect.fromLTWH(x - 8, g - 6 - 6 * pump, 16, 6 + 6 * pump),
+        _ink(forge),
+      );
+      canvas.drawCircle(
+        Offset(x, g - 3),
+        2.5,
+        _hole(forge * (0.4 + 0.5 * pump)),
+      );
+    }
+  }
+  // Yolu gösteren kurt: eriyen yarıktan çıkar, boy ardından.
+  final wolf = _span(u, 4.3, 5.0);
+  if (wolf > 0 && wolf < 1) {
+    _shape(
+      canvas,
+      MythShapes.wolfWalk,
+      Offset(395 - 40 + wolf * 340, g),
+      42,
+      _ink(1),
+    );
+  }
+  // Kutsal gün: örsün üstünde kızgın demir, çekiç iner; doğan güneş.
+  final anvil = _span(u, 5.0, 5.4) * (1 - _span(u, 5.85, 6.0));
+  if (anvil > 0) {
+    canvas.drawCircle(
+      Offset(640, 110 - 20 * _span(u, 5.0, 6.0)),
+      34,
+      _hole(0.6 * anvil),
+    );
+    canvas.drawPath(
+      Path()
+        ..moveTo(330, g - 26)
+        ..lineTo(390, g - 26)
+        ..lineTo(380, g - 16)
+        ..lineTo(370, g - 14)
+        ..lineTo(370, g)
+        ..lineTo(350, g)
+        ..lineTo(350, g - 14)
+        ..lineTo(340, g - 16)
+        ..close(),
+      _ink(anvil),
+    );
+    canvas.drawRect(Rect.fromLTWH(346, g - 30, 26, 4), _hole(anvil));
+    final strike = math.pow((time * 1.2) % 1, 3).toDouble();
+    _shape(canvas, MythShapes.kam, Offset(300, g), 80, _ink(anvil));
+    final hand = const Offset(300 + 20, g - 37);
+    final ang = -2.2 + strike * 1.5;
+    canvas.drawLine(
+      hand,
+      hand + Offset(math.cos(ang), math.sin(ang)) * 30,
+      _ink(anvil)..strokeWidth = 4,
+    );
+  }
+  // Bugün: ocak sönük; Sâye külün başında.
+  final now = _span(u, 6.0, 6.4);
+  if (now > 0) {
+    for (var i = 0; i < 5; i++) {
+      canvas.drawCircle(Offset(370 + i * 9.0, g - 2), 4, _ink(now));
+    }
+    _P._puppet(canvas, const Offset(440, g), time, 0.6, now, (ink, hole) {
+      _P._saye(ink, hole, time);
+    }, scale: 0.5);
+  }
+}

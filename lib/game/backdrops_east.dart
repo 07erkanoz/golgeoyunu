@@ -1142,4 +1142,140 @@ extension _EastBackdrops on Backdrop {
       color: const Color(0xFFB8C4D8),
     );
   }
+
+  // ----------------------------------------------------------- Ergenekon
+
+  /// Ergenekon: dört yanı aşılmaz dağlarla çevrili, çayırlı, ırmaklı, meyve
+  /// ağaçlı vadi; ortada pas renkli, kızıl damarlı demir dağ. Bölümde
+  /// ilerledikçe şafak söker: çıkışta Nevruz güneşi doğar.
+  void _ergenekon(Canvas canvas, double w, double h, Vector2 cam) {
+    final lv = game.level;
+    final dawn = (cam.x / lv.pixelWidth).clamp(0.0, 1.0);
+    final sun = ((dawn - 0.7) / 0.3).clamp(0.0, 1.0);
+    _gradient(canvas, Rect.fromLTWH(0, 0, w, h), [
+      Color.lerp(const Color(0xFF3A4A6E), const Color(0xFF5A6A98), dawn)!,
+      Color.lerp(const Color(0xFF6A7A88), const Color(0xFFD89A6A), sun)!,
+      Color.lerp(const Color(0xFF9AA894), const Color(0xFFF2D49A), sun)!,
+    ]);
+    if (dawn < 0.4)
+      _stars(canvas, w, h, (30 * (1 - dawn * 2.5)).round(), cam.x);
+    if (sun > 0) {
+      final c = Offset(w * 0.72, h * (0.62 - 0.22 * sun));
+      _lightLeak(canvas, c, h * 1.1, 0.45 * sun, const Color(0xFFFFC890));
+      canvas.drawCircle(
+        c,
+        h * 0.06,
+        Paint()..color = const Color(0xFFFFF0D0).withValues(alpha: sun),
+      );
+    }
+    final dy = -cam.y * 0.04;
+    // Aşılmaz dağlar: dik, yüksek, mavi-gri.
+    _ridge(
+      canvas,
+      w,
+      h,
+      offset: cam.x * 0.08,
+      base: h * 0.42 + dy,
+      amp: h * 0.3,
+      freq: 0.009,
+      seed: 21,
+      color: Color.lerp(const Color(0xFF3E4A5E), const Color(0xFF6A5A5A), sun)!,
+      bumpy: true,
+    );
+    // Demir dağ: pas renkli gövde, içinde kızıl damarlar.
+    final ironX = w * 0.55 - cam.x * 0.16 % (w * 2.2);
+    final iron = Path()
+      ..moveTo(ironX - w * 0.35, h * 0.78)
+      ..lineTo(ironX - w * 0.12, h * 0.3 + dy)
+      ..lineTo(ironX, h * 0.24 + dy)
+      ..lineTo(ironX + w * 0.1, h * 0.32 + dy)
+      ..lineTo(ironX + w * 0.38, h * 0.78)
+      ..close();
+    canvas.drawPath(iron, Paint()..color = const Color(0xFF3A2A26));
+    final vein = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2
+      ..color = const Color(0xFFE0603A)
+          .withValues(alpha: 0.35 + 0.15 * math.sin(_t * 0.7));
+    for (var i = 0; i < 5; i++) {
+      final x0 = ironX - w * 0.2 + i * w * 0.09;
+      canvas.drawPath(
+        Path()
+          ..moveTo(x0, h * 0.75)
+          ..quadraticBezierTo(x0 + 18, h * 0.55, x0 - 6 + i * 4, h * 0.36 + dy),
+        vein,
+      );
+    }
+    // Vadi: çayırlar, ırmak, meyve ağaçları, otlayan atlar.
+    _ridge(
+      canvas,
+      w,
+      h,
+      offset: cam.x * 0.25,
+      base: h * 0.74 + dy,
+      amp: 26,
+      freq: 0.006,
+      seed: 22,
+      color: const Color(0xFF34583A),
+    );
+    final river = Paint()
+      ..color = Color.lerp(
+        const Color(0xFF6A8AA0),
+        const Color(0xFFF2D49A),
+        sun,
+      )!.withValues(alpha: 0.35);
+    canvas.drawRect(Rect.fromLTWH(0, h * 0.8 + dy, w, 5), river);
+    final tree = Paint()..color = const Color(0xFF243E28);
+    _repeat(w, cam.x * 0.32, 150, (x, rnd) {
+      if (rnd.nextDouble() < 0.4) return;
+      final base = h * 0.79 + dy;
+      final th = 24 + rnd.nextDouble() * 18;
+      canvas.drawRect(Rect.fromLTWH(x - 2, base - th, 4, th), tree);
+      for (var k = 0; k < 4; k++) {
+        canvas.drawCircle(
+          Offset(
+            x + (k - 1.5) * 7 + rnd.nextDouble() * 4,
+            base - th - 6 + (k.isEven ? 0 : -8),
+          ),
+          10 + rnd.nextDouble() * 5,
+          tree,
+        );
+      }
+      // Meyveler: birkaç sıcak nokta.
+      if (rnd.nextDouble() < 0.6) {
+        for (var k = 0; k < 4; k++) {
+          canvas.drawCircle(
+            Offset(
+              x - 10 + rnd.nextDouble() * 20,
+              base - th - rnd.nextDouble() * 18,
+            ),
+            1.6,
+            Paint()..color = const Color(0xFFC8784A).withValues(alpha: 0.7),
+          );
+        }
+      }
+    }, salt: 5);
+    final herd = Paint()..color = const Color(0xFF162418);
+    _repeat(w, cam.x * 0.36, 420, (x, rnd) {
+      if (rnd.nextDouble() < 0.5) return;
+      for (var k = 0; k < 3; k++) {
+        canvas.save();
+        canvas.translate(x + k * 26, h * 0.82 + dy + (k % 2) * 3);
+        canvas.scale((rnd.nextBool() ? 1 : -1) * 0.16, 0.16);
+        canvas.drawPath(MythShapes.horse, herd);
+        canvas.restore();
+      }
+    }, salt: 9);
+    _ridge(
+      canvas,
+      w,
+      h,
+      offset: cam.x * 0.45,
+      base: h * 0.9 + dy,
+      amp: 20,
+      freq: 0.01,
+      seed: 23,
+      color: const Color(0xFF16261A),
+    );
+  }
 }
