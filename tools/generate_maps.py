@@ -47,6 +47,9 @@ y.put(65,10,'.',force=True)                 # eski çıkış kalktı
 # Kolun rafı yere kadar dolu: sandık altına kaçıp tırmanışı kapatmasın,
 # rafın dibine dayansın; sandıktan doğrudan kenara tutunulur.
 y.fill(53,11,56,13,'#')
+# Rafın sağ yüzünde zincir: kolu çekmeden aşağı inen geri tırmanabilsin
+# (kapı ile raf arasında sıkışıp kalmasın).
+y.fill(57,10,57,13,'|')
 y.fill(0,0,W-1,1,'#'); y.fill(W-1,0,W-1,H-1,'#')
 # 4) yarasa galerisi
 y.fill(67,14,96,19,'#')
