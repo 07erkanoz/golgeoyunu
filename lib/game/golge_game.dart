@@ -15,6 +15,7 @@ import 'entities.dart';
 import 'level.dart';
 import 'lighting.dart';
 import 'shafts.dart';
+import 'ski_decor.dart';
 import 'ski_fx.dart';
 import 'ski_light.dart';
 import 'levels.dart';
@@ -889,6 +890,9 @@ class GolgeGame extends FlameGame with KeyboardEvents {
             ),
           ),
         if (skiSurface != null) SkiTerrain(skiSurface!),
+        if (skiSurface != null) SkiDecor(skiSurface!, level.def.skiDecor),
+        if (skiSurface != null)
+          SkiDecor(skiSurface!, level.def.skiDecor, front: true),
         if (skiSurface != null) skiFx = SkiFx(),
         if (skiSurface != null)
           for (final c in level.skiRocks) SkiRock(c, skiSurface!),

@@ -31,15 +31,18 @@ class SkiFx extends Component with HasGameReference<GolgeGame> {
   double kut = 0;
 
   /// Sâye bir numara yaptı: yazı, ses, hız.
-  void trick(String name, {int weight = 1}) {
+  void trick(String name, {int weight = 1, bool flip = false}) {
     final p = game.player;
     if (p == null) return;
     combo = _comboT > 0 ? combo + weight : weight;
     _comboT = 2.5;
     final label = combo > 1 ? '$name  ×$combo' : name;
     _popups.add(_Popup(label, p.center.x, p.position.y - 18));
-    kut = math.min(3, kut + 0.9 * weight);
-    p.skiKick(40.0 * weight);
+    // Yalnız takla kut hızı verir (takla uçurumları bununla aşılır).
+    if (flip) {
+      kut = math.min(4, kut + 1.6 * weight);
+      p.skiKick(40.0 * weight);
+    }
     GameAudio.instance.play('firefly', volume: 0.5);
   }
 

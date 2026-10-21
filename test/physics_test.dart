@@ -1884,12 +1884,36 @@ void main() {
   group('Palandöken', () {
     // Son kayışın süresi (saniye).
     var simT = 0.0;
+
     /// Kayakçı: hep sağa; kaya ya da (kütüksüz) uçurum yaklaşınca zıplar.
-    int skiRun(GolgeGame game, double seconds, double goalX) {
+    /// Havada inişe yeterli süre varsa takla atar (takla uçurumları ancak
+    /// takladan sonraki hızla aşılır).
+    int skiRun(
+      GolgeGame game,
+      double seconds,
+      double goalX, {
+      bool flips = true,
+    }) {
       final s = game.skiSurface!;
       final rails = game.world.children.whereType<SkiRail>().toList();
       bool railAt(double xx) =>
           rails.any((r) => xx > r.position.x && xx < r.position.x + r.size.x);
+      // Havadaki kayakçının yere inmesine kalan süre (balistik).
+      double toLand(Player pl) {
+        var x = pl.center.x;
+        var y = pl.position.y + Player.h;
+        var vx = pl.velocity.x;
+        var vy = pl.velocity.y;
+        for (var t = 0.0; t < 3; t += 1 / 120) {
+          vy = math.min(vy + 1500 / 120, 900);
+          x += vx / 120;
+          y += vy / 120;
+          final g = s.at(x);
+          if (g != null && y >= g) return t;
+        }
+        return 3;
+      }
+
       var deaths = 0;
       var wasDead = false;
       simT = 0;
@@ -1898,16 +1922,33 @@ void main() {
         final pl = game.player!;
         if (pl.center.x > goalX) break;
         final x = pl.center.x;
-        final rock = game.world.children.whereType<SkiRock>().any(
-          (r) => r.position.x - x > 0 && r.position.x - x < 70,
-        );
-        final gap =
-            (s.at(x + 50) == null && !railAt(x + 50)) ||
-            (s.at(x + 90) == null && !railAt(x + 90));
-        keys(game).jump = pl.onGround && (rock || gap);
+        if (pl.onGround) {
+          final rock = game.world.children.whereType<SkiRock>().any(
+            (r) => r.position.x - x > 0 && r.position.x - x < 70,
+          );
+          // Uçurumun kenarına yakın zıplar (takla uçurumu iyi zamanlama ister).
+          final gap =
+              (s.at(x + 36) == null && !railAt(x + 36)) ||
+              (s.at(x + 52) == null && !railAt(x + 52));
+          keys(game).jump = rock || gap;
+        } else {
+          final spin = pl.skiAirSpin % (2 * math.pi);
+          final left = toLand(pl);
+          keys(game).jump =
+              flips &&
+              (spin > 0.15
+                  ? (2 * math.pi - spin) / 6.2 < left
+                  : left > 2 * math.pi / 6.2 + 0.08);
+        }
         game.update(_dt);
         simT += _dt;
-        if (pl.isDead && !wasDead) deaths++;
+        if (pl.isDead && !wasDead) {
+          deaths++;
+          // ignore: avoid_print
+          print(
+            'ölüm ${(x / kTile).toStringAsFixed(0)}. sütun ${pl.deathCause}',
+          );
+        }
         wasDead = pl.isDead;
       }
       keys(game)
@@ -1922,12 +1963,23 @@ void main() {
       expect(levels[9].title, 'X · PALANDÖKEN');
       await place(game, 9, 3, 7);
       final end = game.level.exitCell.x;
-      final deaths = skiRun(game, 150, end - kTile);
+      final deaths = skiRun(game, 400, end - kTile);
       // ignore: avoid_print
       print('palandöken süre ${simT.toStringAsFixed(1)} sn, ölüm $deaths');
       expect(game.player!.center.x, greaterThan(end - kTile * 2));
       expect(deaths, lessThanOrEqualTo(3));
     });
+
+    testWithGame<GolgeGame>(
+      'takla atmayan takla uçurumunu aşamaz',
+      GolgeGame.new,
+      (game) async {
+        await place(game, 9, 3, 7);
+        final end = game.level.exitCell.x;
+        final deaths = skiRun(game, 120, end - kTile, flips: false);
+        expect(deaths, greaterThan(0));
+      },
+    );
 
     testWithGame<GolgeGame>('çığdan kaçarak sığınağa varılır', GolgeGame.new, (
       game,
@@ -1935,7 +1987,7 @@ void main() {
       expect(levels[10].title, 'XI · ÇIĞ');
       await place(game, 10, 4, 7);
       final end = game.level.exitCell.x;
-      final deaths = skiRun(game, 150, end - kTile);
+      final deaths = skiRun(game, 400, end - kTile);
       // ignore: avoid_print
       print('çığ süre ${simT.toStringAsFixed(1)} sn, ölüm $deaths');
       expect(game.player!.center.x, greaterThan(end - kTile * 2));

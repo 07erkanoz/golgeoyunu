@@ -50,8 +50,14 @@ class SkiSurface {
   double slope(double x) {
     final y0 = at(x - 6);
     final y1 = at(x + 6);
-    if (y0 == null || y1 == null) return 0;
-    return math.atan2(y1 - y0, 12);
+    if (y0 != null && y1 != null) return math.atan2(y1 - y0, 12);
+    // Uçurum kenarında tek yönlü: rampanın açısı kenara dek korunur
+    // (havalanış kare hızından bağımsız olsun).
+    final y = at(x);
+    if (y == null) return 0;
+    if (y0 != null) return math.atan2(y - y0, 6);
+    if (y1 != null) return math.atan2(y1 - y, 6);
+    return 0;
   }
 }
 
@@ -91,6 +97,34 @@ class SkiTerrain extends Component with HasGameReference<GolgeGame> {
     );
     final bottom = view.bottom + 200;
     _pines(canvas, c0, c1, lt);
+    // Uçurumların içi: dipsiz, koyu bir yarık (gök görünmesin).
+    for (var g = c0; g <= c1; g++) {
+      if (surface.rows[g] >= 0 || (g > 0 && surface.rows[g - 1] < 0)) continue;
+      var e = g;
+      while (e < surface.rows.length && surface.rows[e] < 0) {
+        e++;
+      }
+      final top =
+          math.min(
+            g > 0 ? surface.rows[g - 1] : 9999.0,
+            e < surface.rows.length ? surface.rows[e] : 9999.0,
+          ) *
+          kTile;
+      final r = Rect.fromLTRB(
+        g * kTile - 2.0,
+        top + 30,
+        e * kTile + 2.0,
+        bottom,
+      );
+      canvas.drawRect(
+        r,
+        Paint()
+          ..shader = Gradient.linear(r.topLeft, Offset(r.left, r.top + 300), [
+            Color.lerp(lt.deep, lt.skyLow, 0.15)!,
+            Color.lerp(lt.deep, const Color(0xFF000000), 0.6)!,
+          ]),
+      );
+    }
     var c = c0;
     while (c <= c1) {
       if (surface.rows[c] < 0) {
@@ -293,8 +327,14 @@ class SkiTerrain extends Component with HasGameReference<GolgeGame> {
     final body = Color.lerp(lt.ridge, lt.deep, 0.35)!;
     final tree = Paint()..color = body;
     final snow = Paint()..color = Color.lerp(lt.snowLit, lt.skyLow, 0.3)!;
+    final forests = [
+      for (final (k, c) in game.level.def.skiDecor)
+        if (k == 'forest') (c, c + 70),
+    ];
+    bool inForest(int i) => forests.any((f) => i >= f.$1 && i < f.$2);
     for (var i = c0; i <= c1; i++) {
-      if (surface.rows[i] < 0 || (i * 7919) % 7 != 0) continue;
+      if (surface.rows[i] < 0) continue;
+      if ((i * 7919) % (inForest(i) ? 2 : 7) != 0) continue;
       final x = (i + 0.5) * kTile + ((i * 37) % 11 - 5);
       final y = surface.at(x);
       if (y == null) continue;

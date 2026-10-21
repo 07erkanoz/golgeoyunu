@@ -690,6 +690,9 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
   /// Havada geçen süre (takla adı için).
   double _airTime = 0;
 
+  /// Havadaki dönüş (radyan, takla sayımı için).
+  double get skiAirSpin => _airSpin;
+
   /// Kayarken hız. Ak Kurt'un izi ve taklalar dışarıdan iter.
   double get skiSpeed => _skiSpeed;
 
@@ -869,7 +872,20 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
         }
       }
       final ground = s.at(center.x);
-      if (ground != null && position.y + h >= ground) {
+      // Uçurumun karşı duvarına çarpma: bir önceki karede boşluğun
+      // üstündeydi ve ayakları kenarın epey altında: kenara çıkamaz, geri
+      // seker ve düşer.
+      if (ground != null &&
+          position.y + h > ground + 14 &&
+          s.at(center.x - velocity.x * dt) == null) {
+        position.x -= velocity.x * dt + 2;
+        velocity.setValues(
+          -math.min(80.0, velocity.x.abs() * 0.15),
+          velocity.y,
+        );
+        _airSpin = 0;
+        GameAudio.instance.play('land', volume: 0.6);
+      } else if (ground != null && position.y + h >= ground) {
         final th = s.slope(center.x);
         final diff = _wrap(skiAngle - th);
         if (diff.abs() < 1.1) {
@@ -885,6 +901,7 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
                   ? S.of('trickFlip2')
                   : S.of('trickFlipN').replaceAll('{n}', '$flips'),
               weight: flips,
+              flip: true,
             );
           } else if (_airTime > 1.1) {
             fx?.trick(S.of('trickAir'));
@@ -901,6 +918,15 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
         }
       }
       if (position.y > level.pixelHeight + 80) die(fell: true);
+      // Uçurumun dibine düştü: kenarların epey altına inince karanlık
+      // yutar (dipsiz boşlukta uzun uzun düşmesin).
+      if (ground == null) {
+        double? edge;
+        for (var k = 1; k < 30 && edge == null; k++) {
+          edge = s.at(center.x + k * kTile) ?? s.at(center.x - k * kTile);
+        }
+        if (edge != null && position.y > edge + 260) die(fell: true);
+      }
     }
     for (final r in game.world.children.whereType<SkiRock>()) {
       if (r.toRect().deflate(4).overlaps(toRect())) {

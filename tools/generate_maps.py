@@ -587,10 +587,18 @@ k9.fill(247,16,247,19,'|')
 lvl9=k9.rows()
 
 # ------------------------------------------------------------ kayak pisti
+# Kayak fiziği (lib/game/player.dart _updateSki ile aynı sabitler).
+SKI_G = 1500.0
+SKI_JUMP = 440.0
+SKI_VMAX = 640.0      # olağan en yüksek hız
+SKI_KUT = 720.0       # takladan sonraki "kut" hızı
+TILE = 32.0
+
 class Ski:
-    """Kayak yamacı: segmentlerle yükseklik dizisi kurar, işaretleri koyar."""
+    """Kayak yamacı: segmentlerle yükseklik dizisi kurar, işaretleri koyar,
+    atlayışları fizikle sınar."""
     def __init__(s, start_row):
-        s.y=[]; s.row=start_row; s.marks=[]; s.magnets=[]
+        s.y=[]; s.row=start_row; s.marks=[]; s.magnets=[]; s.gaps=[]; s.decor=[]
     @property
     def x(s): return len(s.y)
     def flat(s,n):
@@ -604,7 +612,8 @@ class Ski:
         for i in range(n):
             s.y.append(s.row - rise*(i+1)/n)
         s.row -= rise
-    def gap(s,n,drop_after):
+    def gap(s,n,drop_after,kind='normal'):
+        s.gaps.append((s.x, s.x+n, kind))
         s.y += [-1]*n
         s.row += drop_after
     def magnet(s,n,rise):
@@ -614,13 +623,74 @@ class Ski:
     def mark(s,ch,dx=0,up=1):
         c=s.x+dx
         s.marks.append((c,ch,up))
+    def deco(s,kind,dx=0):
+        s.decor.append((kind,s.x+dx))
+    def rail_over_gap(s,n,drop_after):
+        c=s.x; r=int(round(s.row))
+        s.marks.append((c-1,'=',('rail',n+2,r)))
+        s.gap(n,drop_after,'rail')
     def jump(s,kick_n,kick_rise,gap_n,land_drop,land_n):
-        """Rampa, uçurum ve aşağı eğimli iniş yamacı (iniş yumuşak olsun)."""
+        """Rampa, uçurum ve aşağı eğimli iniş yamacı."""
+        # Rampadan önce kısa düzlük: yaklaşırken çukura düşülmez, zıplama
+        # zamanı bağışlayıcı olur.
+        s.flat(3)
         s.kicker(kick_n,kick_rise)
-        s.gap(gap_n,land_drop*0.35)
-        s.slope(land_n,land_drop*0.65)
+        s.gap(gap_n,land_drop*0.6)
+        s.slope(land_n,land_drop*0.4)
+    def flip_ramp(s,land_n=26):
+        """Takla rampası: dik bir yamaca uzun bir uçuş; zıplayan her hızda bir
+        takla sığar (1,02 sn dönüş + pay). Derinlik bunu sağlayana dek artar."""
+        x0=s.x; r0=s.row; g0=len(s.gaps)
+        for dd in range(8,40):
+            del s.y[x0:]; s.row=r0; del s.gaps[g0:]
+            s.flat(3); s.kicker(5,2.5)
+            s.gap(5,dd,'flip')
+            s.slope(land_n,9)
+            g=s.gaps[-1]; edge=(g[0]-0.5)*TILE; far=(g[1]+0.5)*TILE
+            good=True
+            for v in (420,500,580,640):
+                for j in (10,40,80):
+                    lx,diff,wall=s.fly(edge-j,v,True)
+                    if (lx is None or wall or lx<far+8 or s.last_t<1.2
+                            or lx>far+(land_n-3)*TILE):
+                        good=False
+            if good:
+                return
+        raise AssertionError(f'takla rampası {x0} kurulamadı')
+    def takla_gap(s,n=12,drop=7,land_n=24):
+        """Takla hızıyla aşılan uçurum: yalnız takladan sonraki kut hızıyla
+        karşıya varılır (normal en yüksek hızla, iyi zamanlı zıplayan bile
+        kısa düşer). Genişlik ve derinlik bu koşulu sağlayana dek aranır."""
+        x0=s.x; r0=s.row; g0=len(s.gaps)
+        for kr in (1.2,2.0,3.0):
+            for dd in range(10,44,2):
+                for nn in range(8,48):
+                    del s.y[x0:]; s.row=r0; del s.gaps[g0:]
+                    s.flat(2); s.kicker(4,kr)
+                    s.gap(nn,dd*0.75,'takla')
+                    s.slope(land_n,dd*0.25+drop*0.3)
+                    st=s._takla_ok(s.gaps[-1])
+                    if st=='ok':
+                        print(f'takla uçurumu {x0}: genişlik {nn}, derinlik {dd}, rampa {kr}')
+                        return
+                    if st=='short': break
+        raise AssertionError(f'takla uçurumu {x0} için ölçü bulunamadı')
+    def _takla_ok(s,gap):
+        g0,g1,_=gap
+        edge=(g0-0.5)*TILE; far=(g1+0.5)*TILE
+        def ok(jx,v):
+            lx,diff,wall=s.fly(jx,v,True)
+            return lx is not None and lx>=far+8 and not wall
+        # İyi zamanlı (kenara yakın) zıplayış normal hızla aşamamalı.
+        if any(ok(edge-j,v) for j in (5,10,20,30,40,50) for v in (600,620,640)):
+            return 'easy'
+        # Kut hızıyla erken zıplayan da aşabilmeli.
+        if all(ok(edge-j,v) for j in (10,30,50) for v in (700,720)):
+            return 'ok'
+        return 'short'
     def drop_off(s,gap_n,drop,land_n,land_drop):
         """Rampasız uçurum: kenardan düşülür, dik bir yamaca inilir."""
+        s.flat(3)
         s.gap(gap_n,drop)
         s.slope(land_n,land_drop)
     def rollers(s,k,n,drop,rise):
@@ -628,111 +698,197 @@ class Ski:
         for _ in range(k):
             s.slope(n,drop)
             s.kicker(max(3,n//2),rise)
-    def ok_rock(s,c):
-        """Kaya buraya konabilir mi: inişin hemen ardında, uçurumun ya da
-        yükselen bir yerin (rampa, tümsek) hemen önünde değil."""
-        W=len(s.y)
-        if not (2<=c<W-8) or s.y[c]<0: return False
-        for g in range(max(1,c-12),c+1):
-            if s.y[g]>=0 and s.y[g-1]<0: return False
-        # Önünde rampa ya da tümsek (yükselen yer) olmasın: oradan havalanan
-        # kayanın üstüne düşer.
-        for g in range(max(2,c-10),c+1):
-            if min(s.y[g],s.y[g-1],s.y[g-2])<0: continue
-            d0=s.y[g-1]-s.y[g-2]; d1=s.y[g]-s.y[g-1]
-            if d0-d1>0.3: return False
-        for c2 in range(c+1,min(W,c+8)):
-            if s.y[c2]<0: return False
-            if s.y[c2]<s.y[c2-1]-0.05: return False
-        # Kayanın olduğu yer de aşağı insin.
-        return s.y[c+1]>=s.y[c]
+
+    # ---------------------------------------------- yüzey (Dart ile aynı)
+    def at(s,x):
+        f=x/TILE-0.5; i=math.floor(f); r=s.y
+        if i<0: return None if r[0]<0 else r[0]*TILE
+        if i+1>=len(r): return None
+        a=r[i]; b=r[i+1]
+        if a<0 or b<0: return None
+        t=f-i
+        p0=r[i-1] if i>0 and r[i-1]>=0 else 2*a-b
+        p3=r[i+2] if i+2<len(r) and r[i+2]>=0 else 2*b-a
+        v=0.5*(2*a+(-p0+b)*t+(2*p0-5*a+4*b-p3)*t*t+(-p0+3*a-3*b+p3)*t*t*t)
+        return v*TILE
+    def slope_at(s,x):
+        y0=s.at(x-6); y1=s.at(x+6); y=s.at(x)
+        if y0 is not None and y1 is not None: return math.atan2(y1-y0,12)
+        if y is None: return 0.0
+        if y0 is not None: return math.atan2(y-y0,6)
+        if y1 is not None: return math.atan2(y1-y,6)
+        return 0.0
+
+    def fly(s,x,v,jump):
+        """x'ten v hızla (zıplayarak ya da kenardan) uçuş: (iniş x'i, iniş
+        açı farkı, karşı duvara çarptı mı)."""
+        th=s.slope_at(x); y=s.at(x)
+        vx=v*math.cos(th); vy=v*math.sin(th)
+        if jump: vx+=math.sin(th)*60; vy-=SKI_JUMP
+        dt=1/240; t=0
+        while t<4:
+            vy=min(vy+SKI_G*dt,900); x+=vx*dt; y+=vy*dt; t+=dt
+            g=s.at(x)
+            if g is not None and y>=g:
+                prev=s.at(x-vx*dt)
+                wall = prev is None and y-g>14
+                diff=abs(math.atan2(vy,vx)*0.5-s.slope_at(x))
+                s.last_t=t
+                return x,diff,wall
+        return None,0,False
+
     def check(s,name):
-        """Her kaya yakındaki ilk uygun yere taşınır; yoksa durur."""
+        """Atlayışları sınar; iniş bölgelerine ve rampaların önüne kaya
+        koymaz (yakındaki uygun yere taşır)."""
+        zones=[]
+        for g0,g1,kind in s.gaps:
+            if kind=='rail': continue
+            edge=(g0-0.5)*TILE
+            far=(g1+0.5)*TILE
+            for v in range(300,int(SKI_KUT)+1,20):
+                for jx in ([edge-1] if kind!='takla' else [edge-20,edge-40,edge-70])+([edge-30,edge-60,edge-90] if kind!='takla' else []):
+                    jump = jx<edge-1
+                    if s.at(jx) is None: continue
+                    lx,diff,wall=s.fly(jx,v,jump)
+                    ok = lx is not None and lx>=far+8 and not wall
+                    if kind=='takla':
+                        pass
+                    elif v>=480 and (jump or v>=520):
+                        assert ok, f'{name}: uçurum {g0} {v} hızla aşılamıyor (zıplama {jump}, iniş {lx}, duvar {wall})'
+                    if ok:
+                        zones.append((lx-24, lx+v*0.75))
+        s.zones=zones
         out=[]
         for c,ch,up in s.marks:
             if ch=='%':
-                for d in [0]+[k*sg for k in range(1,26) for sg in (1,-1)]:
+                for d in [0]+[k*sg for k in range(1,30) for sg in (1,-1)]:
                     if s.ok_rock(c+d):
                         c=c+d; break
                 else:
-                    # Dalgalı (takla) bölümünde kayaya yer yok: konmaz.
-                    print(f'{name}: kaya {c} kaldırıldı (dalgalı yamaç)')
+                    print(f'{name}: kaya {c} kaldırıldı (yer yok)')
                     continue
             out.append((c,ch,up))
         s.marks=out
-    def rail_over_gap(s,n,drop_after):
-        c=s.x; r=int(round(s.row))
-        s.marks.append((c-1,'=',('rail',n+2,r)))
-        s.gap(n,drop_after)
-    def build(s,H):
+
+    def ok_rock(s,c):
         W=len(s.y)
-        g=G(W,H)
+        if not (2<=c<W-8) or s.y[c]<0: return False
+        x=(c+0.5)*TILE
+        for a,b in s.zones:
+            if a-30<=x<=b+20: return False
+        for g in range(max(1,c-14),c+1):
+            if s.y[g]>=0 and s.y[g-1]<0: return False
+        for c2 in range(c+1,min(W,c+8)):
+            if s.y[c2]<0: return False
+            if s.y[c2]<s.y[c2-1]-0.05: return False
+        for g in range(max(2,c-14),c+1):
+            if min(s.y[g],s.y[g-1],s.y[g-2])<0: continue
+            if (s.y[g-1]-s.y[g-2])-(s.y[g]-s.y[g-1])>0.25: return False
+        return s.y[c+1]>=s.y[c]
+
+    def build(s):
+        """İşaretler (sütun, satır, harf) ve yükseklikler."""
+        W=len(s.y)
+        cells={}
         for c,ch,up in s.marks:
             if isinstance(up,tuple):
                 _,n,r=up
                 for k in range(n):
-                    g.put(c+k,r-1,'=',force=True)
+                    cells[(c+k,r-1)]='='
                 continue
             base=s.y[c] if 0<=c<W and s.y[c]>=0 else s.row
             r=int(math.floor(base))-up
-            if g.g[r][c]=='.': g.g[r][c]=ch
-        return g, [round(v,2) for v in s.y]
+            cells.setdefault((c,r),ch)
+        return sorted((c,r,ch) for (c,r),ch in cells.items()), [round(v,2) for v in s.y]
 
 import math
 # ------------------------------------------------------------ X · PALANDÖKEN
-# Gün batımında başlar, geceden geçer, şafakta Erzurum'a iner (gök, pistteki
-# ilerleyişe göre döner). Uzun akışlı inişler, takla tümsekleri, büyük
-# atlayışlar; kayalar inişlerin hemen ardında olmaz.
+# Gün batımında başlar, geceden geçer, şafakta Erzurum'a iner. Uzun akışlı
+# inişler, ormanlar, donmuş göl, rampalar ve takla uçurumları; engeller
+# seyrek ama dikkat ister. Kayalar inişlerin hemen ardında olmaz.
 sk=Ski(8)
 # 1) Çoban Kulübesi
-sk.flat(3); sk.mark('P',0); sk.mark('p',1); sk.mark('1',2); sk.flat(8); sk.mark('B',0)
-sk.slope(34,7,0.9,14); sk.mark('K',-4)
-sk.mark('2',2); sk.kicker(3,1); sk.gap(3,1.5); sk.slope(18,5)
-sk.slope(22,5,0.5,11); sk.mark('%',-8)
-sk.rollers(3,9,3,1.5); sk.mark('F',-4,4)
-sk.slope(16,5)
-# 2) Ejder'in Sırtı: uzun, dalgalı iniş ve ilk büyük atlayış
-sk.mark('p'); sk.mark('3',3)
-sk.slope(56,15,1.5,13); sk.mark('M',-30,5); sk.mark('%',-12)
-sk.mark('K',4); sk.slope(14,5)
-sk.jump(4,2,8,9,22)
-sk.slope(26,6,0.6,13); sk.mark('%',-6)
-sk.slope(8,2); sk.rail_over_gap(7,2); sk.slope(18,5)
-# 3) Kandil Balonları: gece iner, fenerler yamacı tarar
+sk.deco('hut',2); sk.flat(4); sk.mark('P',0); sk.mark('p',1); sk.mark('1',2); sk.flat(8); sk.mark('B',0)
+sk.deco('forest',0); sk.slope(44,8,0.8,15)
+sk.mark('K',-6); sk.mark('2',-2)
+sk.jump(3,1,4,6,18)
+sk.slope(30,7,0.6,12); sk.deco('deer',-10)
+sk.rollers(3,9,3,1.4); sk.mark('F',-6,4)
+sk.slope(26,7); sk.mark('%',-8)
+sk.deco('lake',0); sk.flat(14); sk.deco('lake_end',0)
+sk.slope(24,7,0.5,10)
+# 2) Ejder'in Sırtı
+sk.mark('p'); sk.mark('3',3); sk.mark('K',2)
+sk.deco('forest',0); sk.slope(70,18,1.4,14); sk.mark('M',-36,5); sk.mark('%',-14)
+sk.jump(4,2,7,9,22); sk.deco('birds',-12)
+sk.slope(30,8,0.7,12); sk.mark('%',-8)
+sk.slope(10,3); sk.rail_over_gap(7,2); sk.slope(20,6)
+sk.mark('K',-4); sk.rollers(4,10,3.4,1.5); sk.mark('F',-8,4)
+sk.deco('arch',8); sk.slope(36,10,0.4,12)
+sk.drop_off(4,5,18,6)
+sk.slope(28,8,0.8,12); sk.mark('%',-10)
+# Orman geçidi: çamların arasından kıvrılan uzun, yumuşak iniş; geyikler
+sk.deco('forest',0); sk.slope(60,14,1.2,16); sk.deco('deer',-30)
+sk.jump(3,1.5,5,8,20)
+sk.rollers(3,12,3.6,1.4); sk.deco('birds',-10)
+sk.slope(30,8,0.5,12); sk.mark('%',-10)
+# 3) Kandil Balonları: gece iner
 sk.mark('p',1); sk.mark('4',3); sk.mark('K',0)
-sk.slope(70,17,0.9,14); sk.mark('N',-16,7); sk.mark('N',-40,7); sk.mark('N',-60,7)
-sk.mark('%',-28); sk.mark('B',-2)
-sk.rollers(4,10,3.5,1.6); sk.mark('F',-6,4); sk.mark('F',-26,4)
-sk.slope(12,4); sk.mark('%',-5)
-sk.slope(16,5); sk.mark('K',-2)
-sk.drop_off(5,6,18,7)
-sk.slope(30,8,1.1,10); sk.mark('%',-9)
+sk.deco('forest',0)
+sk.slope(90,22,1.0,15); sk.mark('N',-20,7); sk.mark('N',-46,7); sk.mark('N',-72,7)
+sk.mark('%',-34); sk.mark('B',-2)
+sk.rollers(4,10,3.6,1.6); sk.mark('F',-6,4); sk.mark('F',-28,4)
+sk.slope(16,5); sk.mark('K',-4)
+sk.flip_ramp(); sk.slope(6,2); sk.takla_gap(); sk.deco('shooting',0)
+sk.slope(30,8,0.9,11); sk.mark('%',-9)
+sk.jump(3,1.5,6,8,20)
+sk.slope(24,7,0.6,10)
 # 4) Manyetik Tepe: ayın altında kar yokuş yukarı akar
 sk.mark('p',2); sk.mark('5',3)
-sk.slope(10,3); sk.magnet(26,6); sk.mark('F',-6,3); sk.slope(4,1)
+sk.slope(12,3); sk.magnet(28,6); sk.mark('F',-6,3); sk.slope(4,1)
 sk.mark('6',0); sk.mark('K',2)
-sk.slope(14,5)
-# 5) Ejder'in Sıçrayışı: en büyük atlayış ve uçurumdan düşüş
-sk.mark('p',1); sk.jump(5,2.5,10,12,26); sk.mark('7',-20,3)
-sk.slope(20,5,0.6,10); sk.mark('%',-6)
-sk.slope(10,3); sk.drop_off(6,10,20,9)
-sk.mark('K',2); sk.slope(18,5)
-for i in range(4):
-    sk.slope(16,5); sk.mark('%',-7)
-sk.slope(8,2); sk.rail_over_gap(5,2); sk.slope(10,3); sk.rail_over_gap(6,3); sk.slope(14,4); sk.mark('M',-6,1)
-# 6) Şafak: hızlı tümsekler ve son büyük atlayış
-sk.mark('K',2); sk.slope(20,6,0.8,10)
+sk.deco('forest',0); sk.slope(40,12,0.6,14)
+sk.jump(5,2.5,8,12,26); sk.deco('deer',-8)
+sk.slope(30,8,0.8,12); sk.mark('%',-10)
+sk.deco('lake',0); sk.flat(12); sk.deco('lake_end',0)
+sk.slope(20,6)
+# Donmuş şelale: buz sarkıtlı kayalıktan düşüş, altında uzun koşu
+sk.deco('waterfall',2); sk.drop_off(5,10,22,8)
+sk.slope(40,11,0.9,13); sk.mark('%',-14)
+sk.jump(4,2,7,10,22)
+sk.slope(24,7,0.6,10)
+# 5) Ejder'in Sıçrayışı: en büyük atlayışlar
+sk.mark('p',1); sk.mark('K',0); sk.mark('7',3)
+sk.slope(30,9,0.5,10)
+sk.flip_ramp(); sk.slope(6,2); sk.takla_gap(14,9,26)
+sk.slope(24,7,0.6,10); sk.mark('%',-8)
+sk.slope(10,3); sk.drop_off(6,9,20,8)
+sk.mark('K',2); sk.slope(20,6)
+for i in range(3):
+    sk.slope(20,6,0.4,10); sk.mark('%',-9)
+sk.slope(10,3); sk.rail_over_gap(5,2); sk.slope(10,3); sk.rail_over_gap(6,3); sk.slope(16,5); sk.mark('M',-6,1)
+# 6) Şafak
+sk.mark('K',2); sk.deco('forest',0); sk.slope(30,8,0.8,10)
 sk.rollers(5,10,4,1.8); sk.mark('F',-8,4); sk.mark('F',-30,4)
-sk.slope(14,5); sk.jump(4,2,10,11,24)
+sk.slope(16,5); sk.jump(4,2,8,11,24); sk.deco('birds',-6)
 sk.slope(30,8,0.9,12); sk.mark('%',-10)
+sk.flip_ramp(); sk.slope(6,2); sk.takla_gap(12,8,24)
+sk.slope(30,8,0.6,12); sk.mark('%',-10)
+sk.deco('arch',10); sk.slope(40,11,0.8,12)
+sk.slope(10,3); sk.rail_over_gap(6,2); sk.slope(10,3); sk.rail_over_gap(6,2); sk.slope(14,4)
+sk.rollers(4,11,3.8,1.6)
+sk.slope(20,6); sk.mark('%',-8)
 # 7) Erzurum'a İniş
 sk.mark('p'); sk.mark('8',3); sk.mark('K',4)
-sk.slope(70,16,1.2,13); sk.mark('F',-24,4); sk.mark('F',-48,4)
-sk.flat(14); sk.mark('B',-6); sk.mark('E',-3)
+sk.deco('village',40); sk.slope(90,20,1.2,14); sk.mark('F',-30,4); sk.mark('F',-60,4)
+sk.jump(3,1,5,6,18)
+sk.slope(30,6,0.5,12)
+sk.flat(16); sk.mark('B',-6); sk.mark('E',-3)
 sk.check('Palandöken')
-pal_grid, pal_surface = sk.build(int(max(sk.y))+12)
-lvl10 = pal_grid.rows()
+pal_marks, pal_surface = sk.build()
+lvl10 = ['.']
 PAL_MAGNET = sk.magnets
+PAL_DECOR = sk.decor
 
 # ------------------------------------------------------------ XI · ÇIĞ
 # Arkadan çığ: fırtınalı bir alacakaranlıkta uzun, dik bir kaçış. Sonunda
@@ -740,32 +896,47 @@ PAL_MAGNET = sk.magnets
 ck=Ski(8)
 # 1) Ejder Uyanıyor
 ck.flat(4); ck.mark('P',1); ck.mark('p',2); ck.mark('1',3); ck.flat(6); ck.mark('B',0); ck.mark('z',2)
-ck.slope(40,11,0.8,12); ck.mark('2',-14)
+ck.deco('forest',0); ck.slope(50,13,0.8,12); ck.mark('2',-16)
 ck.jump(3,1,5,7,18); ck.mark('K',-2); ck.mark('F',-8,5)
-ck.slope(24,7,0.6,10); ck.mark('%',-8)
+ck.slope(30,8,0.6,10); ck.mark('%',-8)
 ck.rollers(3,10,3.5,1.5)
+ck.slope(20,6); ck.mark('%',-8)
 # 2) Beyaz Nefes: uzun, hızlı iniş
 ck.mark('p'); ck.mark('3',2)
-ck.slope(60,18,1.3,12); ck.mark('M',-30,5); ck.mark('%',-14)
-ck.rail_over_gap(6,3); ck.slope(16,5); ck.mark('K',-2); ck.mark('B',1)
-ck.slope(20,6,0.6,9); ck.mark('%',-6)
-# 3) Kırık Sırt: kırık kayalar, ardı ardına uçurumlar
+ck.slope(70,20,1.3,12); ck.mark('M',-34,5); ck.mark('%',-16)
+ck.rail_over_gap(6,3); ck.slope(18,5); ck.mark('K',-2); ck.mark('B',1)
+ck.slope(24,7,0.6,9); ck.mark('%',-8)
+ck.flip_ramp(); ck.slope(6,2); ck.takla_gap(); ck.deco('caravan',10)
+ck.slope(30,8,0.6,10)
+ck.deco('forest',0); ck.slope(50,14,1.0,12); ck.mark('%',-20)
+ck.jump(3,1.5,6,9,20)
+ck.rollers(3,10,3.6,1.5)
+# 3) Kırık Sırt
 ck.mark('p',2); ck.mark('4',3)
 for i in range(4):
-    ck.slope(12,4); ck.kicker(2,1); ck.gap(4,3); ck.slope(16,5); ck.slope(10,3); ck.mark('%',-5)
-ck.slope(14,4,0.6,8); ck.mark('K',-2)
+    ck.slope(14,4); ck.jump(2,1,4,7,16); ck.slope(18,5); ck.mark('%',-6)
+ck.slope(16,4,0.6,8); ck.mark('K',-2)
 ck.drop_off(5,8,18,7)
-ck.slope(24,7,0.8,10); ck.mark('%',-8)
+ck.slope(28,8,0.8,10); ck.mark('%',-8)
+ck.deco('arch',8); ck.slope(36,10,0.6,12)
+ck.rail_over_gap(6,3); ck.slope(16,5)
+ck.flip_ramp(); ck.slope(6,2); ck.takla_gap()
+ck.slope(26,7,0.6,10); ck.mark('%',-8)
+ck.rollers(4,10,3.6,1.6)
+ck.slope(20,6); ck.mark('%',-8)
 # 4) Son Atlayış
-ck.mark('p',1); ck.mark('5',2); ck.slope(12,5); ck.jump(4,2,10,13,26)
-ck.mark('F',-18,8); ck.mark('M',-6,1); ck.mark('K',-2)
+ck.mark('p',1); ck.mark('5',2); ck.mark('K',0); ck.slope(16,5)
+ck.flip_ramp(); ck.slope(6,2); ck.takla_gap(14,10,26)
+ck.mark('F',-18,8); ck.mark('M',-6,1)
 ck.rollers(3,10,4,1.6)
-ck.slope(50,14,1.0,13); ck.mark('%',-22); ck.mark('Z',-2)
+ck.jump(4,2,8,10,22)
+ck.slope(60,16,1.0,13); ck.mark('%',-24); ck.mark('Z',-2)
 # 5) Sığınak
 ck.flat(16); ck.mark('p',-14); ck.mark('6',-12); ck.mark('K',-10); ck.mark('B',-6); ck.mark('E',-3)
 ck.check('Çığ')
-cig_grid, cig_surface = ck.build(int(max(ck.y))+12)
-lvl11 = cig_grid.rows()
+cig_marks, cig_surface = ck.build()
+lvl11 = ['.']
+CIG_DECOR = ck.decor
 
 # ------------------------------------------------------------ XII · PERİ BACALARI
 W,H=388,30
@@ -1139,6 +1310,15 @@ for name, rows in MAPS:
     out += ['];', '']
     print(name, len(rows), 'x', widths.pop())
 SURFACES = [('kSkiPalandoken', pal_surface), ('kSkiCig', cig_surface)]
+for name, marks in [('kSkiMarksPalandoken', pal_marks), ('kSkiMarksCig', cig_marks)]:
+    out.append(f'const {name} = <(int, int, String)>[')
+    for i in range(0, len(marks), 6):
+        out.append('  ' + ' '.join(f"({c}, {r}, '{ch}')," for c,r,ch in marks[i:i+6]))
+    out += ['];', '']
+for name, dec in [('kSkiDecorPalandoken', PAL_DECOR), ('kSkiDecorCig', CIG_DECOR)]:
+    out.append(f'const {name} = <(String, int)>[')
+    out.append('  ' + ' '.join(f"('{k}', {c})," for k,c in dec))
+    out += ['];', '']
 for name, ys in SURFACES:
     out.append(f'const {name} = <double>[')
     for i in range(0, len(ys), 12):

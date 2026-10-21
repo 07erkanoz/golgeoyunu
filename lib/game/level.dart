@@ -191,12 +191,28 @@ class Level {
     return out;
   }();
 
+  /// Haritanın satırları: kayak bölümünde işaretlerden kurulur.
+  late final List<String> _rows = _buildRows(def);
+
+  static List<String> _buildRows(LevelDef def) {
+    final marks = def.skiMarks;
+    final ys = def.skiSurface;
+    if (marks == null || ys == null) return def.map;
+    final w = ys.length;
+    final hgt = ys.reduce(math.max).floor() + 12;
+    final g = List.generate(hgt, (_) => List.filled(w, '.'));
+    for (final (c, r, ch) in marks) {
+      if (r >= 0 && r < hgt && c >= 0 && c < w) g[r][c] = ch;
+    }
+    return [for (final row in g) row.join()];
+  }
+
   void _parse() {
-    height = def.map.length;
-    width = def.map.map((r) => r.length).reduce(math.max);
+    height = _rows.length;
+    width = _rows.map((r) => r.length).reduce(math.max);
     _cells = [];
     for (var r = 0; r < height; r++) {
-      final row = def.map[r].padRight(width, '.').split('');
+      final row = _rows[r].padRight(width, '.').split('');
       for (var c = 0; c < width; c++) {
         final ch = row[c];
         final cell = Vector2(c * kTile, r * kTile);
@@ -246,7 +262,7 @@ class Level {
             glimpseCells.add(cell);
           case 'l' || 'n' || 'u':
             // Bir dizinin ilk hücresinde tüm diziyi kaydet.
-            final line = def.map[r].padRight(width, '.');
+            final line = _rows[r].padRight(width, '.');
             if (c > 0 && line[c - 1] == ch) {
               if (ch == 'u') continue;
             } else {
@@ -301,7 +317,7 @@ class Level {
           case '%':
             boulderCells.add(cell);
           case '=' when def.skiSurface != null:
-            final line = def.map[r].padRight(width, '.');
+            final line = _rows[r].padRight(width, '.');
             if (c == 0 || line[c - 1] != '=') {
               var len = 1;
               while (c + len < width && line[c + len] == '=') {
@@ -355,10 +371,10 @@ class Level {
             kutCells.add(cell);
           case 'd' when def.theme == LevelTheme.ergenekon:
             // Demir damarı: üst üste hücreler tek damar.
-            if (r == 0 || def.map[r - 1].padRight(width, '.')[c] != 'd') {
+            if (r == 0 || _rows[r - 1].padRight(width, '.')[c] != 'd') {
               var end = r;
               while (end + 1 < height &&
-                  def.map[end + 1].padRight(width, '.')[c] == 'd') {
+                  _rows[end + 1].padRight(width, '.')[c] == 'd') {
                 end++;
               }
               ironVeins.add((c, r, end));
@@ -372,10 +388,10 @@ class Level {
           case 'd':
             pedestalCells.add(cell);
           case 'S':
-            if (r == 0 || def.map[r - 1].padRight(width, '.')[c] != 'S') {
+            if (r == 0 || _rows[r - 1].padRight(width, '.')[c] != 'S') {
               var end = r;
               while (end + 1 < height &&
-                  def.map[end + 1].padRight(width, '.')[c] == 'S') {
+                  _rows[end + 1].padRight(width, '.')[c] == 'S') {
                 end++;
               }
               ropes.add((c, r, end - r + 1));
@@ -399,10 +415,10 @@ class Level {
               );
             }
           case 'H':
-            if (r == 0 || def.map[r - 1].padRight(width, '.')[c] != 'H') {
+            if (r == 0 || _rows[r - 1].padRight(width, '.')[c] != 'H') {
               var end = r;
               while (end + 1 < height &&
-                  def.map[end + 1].padRight(width, '.')[c] == 'H') {
+                  _rows[end + 1].padRight(width, '.')[c] == 'H') {
                 end++;
               }
               gates.add((c, r, end));

@@ -64,6 +64,8 @@ class LevelDef {
     this.storm = false,
     this.quakes = false,
     this.skiSurface,
+    this.skiMarks,
+    this.skiDecor = const [],
     this.magnet = const [],
     this.echoes = const [],
     this.animalKinds = const [],
@@ -201,6 +203,13 @@ class LevelDef {
   final String subtitle;
   final LevelTheme theme;
   final List<String> map;
+
+  /// Kayak bölümünde haritanın işaretleri (sütun, satır, harf): ızgara
+  /// bunlardan ve yamaçtan kurulur (geniş, çoğu boş bir harita yerine).
+  final List<(int, int, String)>? skiMarks;
+
+  /// Kayak yamacının süsleri (tür, sütun): orman, göl, kemer, geyik...
+  final List<(String, int)> skiDecor;
 
   /// Rakam tetikleyicilerinde gösterilen anlatım satırları.
   final List<String> whispers;
@@ -1195,6 +1204,8 @@ const levels = <LevelDef>[
     theme: LevelTheme.snow,
     variant: 1,
     skiSurface: kSkiPalandoken,
+    skiMarks: kSkiMarksPalandoken,
+    skiDecor: kSkiDecorPalandoken,
     magnet: kSkiPalandokenMagnet,
     titleEn: 'X · PALANDÖKEN',
     subtitleEn: 'Down from the mountain where the dragons sleep.',
@@ -1255,6 +1266,8 @@ const levels = <LevelDef>[
     theme: LevelTheme.snow,
     variant: 2,
     skiSurface: kSkiCig,
+    skiMarks: kSkiMarksCig,
+    skiDecor: kSkiDecorCig,
     titleEn: 'XI · THE AVALANCHE',
     subtitleEn: 'The dragon has woken. A white breath at your heels.',
     place: 'Küçük Ejder Yamacı · Erzurum, Aralık 1660',
