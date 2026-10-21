@@ -146,8 +146,8 @@ class S {
     'musicLicense':
         'Menü müziği: "Turkish Maqam Soundscape", vjgalaxy (Pixabay). '
         'Pixabay İçerik Lisansı ile kullanılmaktadır.\n'
-        'Gerçek kayıtlı efektler ve ortam sesleri: Kenney (kenney.nl); OpenGameArt\'ta rubberduck, JaggedStone, AntumDeluge, SketchMan3, psychhead_, pauliuw, techiew, congusbongus, zeroisnotnull (karga), qubodup (karda adım), bart (kalp atışı), WuxiaScrub (gök gürültüsü) ve polymorpheva (yarasalar) (CC0); kurt uluması: ABD Balık ve Yaban Hayatı Servisi, Wikimedia Commons (kamu malı). '
-        'Efsane varlıklarının siluetleri PhyloPic\'teki kamu malı (CC0) çizimlerden uyarlanmıştır: Margot Michaud, François-Louis Pelissier, Tracy A. Heath, Andy Wilson, Mathieu Pélissié, Cagri Cevrim, Mali\'o Kodis. '
+        'Efektler ve ortam sesleri: Kenney, OpenGameArt ve Wikimedia Commons\'taki kamu malı (CC0) kayıtlar. '
+        'Efsane varlıklarının siluetleri PhyloPic\'teki kamu malı çizimlerden uyarlanmıştır. '
         'Diğer sesler bu oyun için sentezlenmiştir.',
   };
 
@@ -285,8 +285,8 @@ class S {
     'musicLicense':
         'Menu music: "Turkish Maqam Soundscape" by vjgalaxy (Pixabay), '
         'used under the Pixabay Content License.\n'
-        'Recorded effects and ambiences: Kenney (kenney.nl); rubberduck, JaggedStone, AntumDeluge, SketchMan3, psychhead_, pauliuw, techiew, congusbongus, zeroisnotnull (crow), qubodup (snow steps), bart (heartbeat), WuxiaScrub (thunder) and polymorpheva (bats) on OpenGameArt (CC0); wolf howl: U.S. Fish and Wildlife Service via Wikimedia Commons (public domain). '
-        'The silhouettes of the legendary beings are adapted from public-domain (CC0) drawings on PhyloPic: Margot Michaud, François-Louis Pelissier, Tracy A. Heath, Andy Wilson, Mathieu Pélissié, Cagri Cevrim, Mali\'o Kodis. '
+        'Effects and ambiences: public-domain (CC0) recordings from Kenney, OpenGameArt and Wikimedia Commons. '
+        'The silhouettes of the legendary beings are adapted from public-domain drawings on PhyloPic. '
         'Other sounds were synthesized for this game.',
   };
 }
