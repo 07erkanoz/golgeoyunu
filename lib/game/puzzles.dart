@@ -429,32 +429,92 @@ class Valve extends PositionComponent with HasGameReference<GolgeGame>, Usable {
 
   @override
   void render(Canvas canvas) {
-    final ink = Paint()..color = kInk;
-    // Boru ve çark.
-    canvas.drawRect(const Rect.fromLTWH(-3, -14, 6, 14), ink);
+    // Bakır boru: yerden çıkar, dirsek, flanş ve somunlar.
+    final pipe = Paint()
+      ..shader = ui.Gradient.linear(
+        const Offset(-3.5, 0),
+        const Offset(3.5, 0),
+        const [Color(0xFF8A5A3A), Color(0xFF4A2A18), Color(0xFF241408)],
+        const [0, 0.45, 1],
+      );
+    canvas.drawRect(const Rect.fromLTWH(-3.5, -14, 7, 14), pipe);
+    for (final y in [-3.0, -13.0]) {
+      canvas.drawRect(
+        Rect.fromLTWH(-5, y - 1.5, 10, 3),
+        Paint()..color = const Color(0xFF3A2416),
+      );
+      for (final x in [-3.5, 3.5]) {
+        canvas.drawCircle(
+          Offset(x, y),
+          0.8,
+          Paint()..color = const Color(0xFFB08A60),
+        );
+      }
+    }
+    // Patina lekesi.
+    canvas.drawOval(
+      const Rect.fromLTWH(-3, -10, 4, 3),
+      Paint()..color = const Color(0xFF4A7A68).withValues(alpha: 0.5),
+    );
+    // Dökme demir çark: kalın jant, kıvrık kollar, ortada göbek.
     canvas.save();
     canvas.translate(0, -18);
     canvas.rotate(_spin);
-    final rim = Paint()
-      ..color = const Color(0xFF2A1A12)
+    canvas.drawCircle(
+      Offset.zero,
+      8.5,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.8
+        ..color = const Color(0xFF1E1A18),
+    );
+    canvas.drawArc(
+      Rect.fromCircle(center: Offset.zero, radius: 8.5),
+      math.pi * 1.1,
+      math.pi * 0.7,
+      false,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 0.9
+        ..color = const Color(0xFFB0A090).withValues(alpha: 0.55),
+    );
+    final spoke = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.4;
-    canvas.drawCircle(Offset.zero, 8, rim);
-    for (var i = 0; i < 4; i++) {
-      final a = i * math.pi / 2;
-      canvas.drawLine(
-        Offset.zero,
-        Offset(math.cos(a) * 8, math.sin(a) * 8),
-        rim..strokeWidth = 1.6,
+      ..strokeWidth = 1.8
+      ..strokeCap = StrokeCap.round
+      ..color = const Color(0xFF1E1A18);
+    for (var i = 0; i < 5; i++) {
+      final a = i * 2 * math.pi / 5;
+      canvas.drawPath(
+        Path()
+          ..moveTo(0, 0)
+          ..quadraticBezierTo(
+            math.cos(a + 0.4) * 5,
+            math.sin(a + 0.4) * 5,
+            math.cos(a) * 8,
+            math.sin(a) * 8,
+          ),
+        spoke,
       );
     }
+    // Tutamak düğmesi.
+    canvas.drawCircle(
+      const Offset(0, -8.5),
+      1.6,
+      Paint()..color = const Color(0xFF4A2C18),
+    );
     canvas.restore();
     canvas.drawCircle(
       const Offset(0, -18),
-      1.6,
+      2.4,
+      Paint()..color = const Color(0xFF2A2624),
+    );
+    canvas.drawCircle(
+      const Offset(0, -18),
+      1.3,
       Paint()
         ..color = (fill ? const Color(0xFF7FB8D0) : const Color(0xFFD08A5A))
-            .withValues(alpha: 0.8),
+            .withValues(alpha: 0.9),
     );
   }
 }
@@ -507,26 +567,69 @@ class Mirror extends PositionComponent
 
   @override
   void render(Canvas canvas) {
-    final ink = Paint()..color = kInk;
-    // Ayak.
-    canvas.drawRect(const Rect.fromLTWH(-2, 6, 4, 10), ink);
-    canvas.drawRect(const Rect.fromLTWH(-7, 14, 14, 3), ink);
-    canvas.save();
-    canvas.rotate(_angle);
+    // Ahşap ayak: oyma direk ve geniş taban.
+    final wood = Paint()
+      ..shader = ui.Gradient.linear(
+        const Offset(-3, 0),
+        const Offset(3, 0),
+        const [Color(0xFF6A4226), Color(0xFF2A180C)],
+      );
+    canvas.drawRect(const Rect.fromLTWH(-2.2, 4, 4.4, 11), wood);
     canvas.drawRRect(
       RRect.fromRectAndRadius(
-        const Rect.fromLTWH(-15, -3, 30, 6),
-        const Radius.circular(2),
+        const Rect.fromLTWH(-8, 14, 16, 3.5),
+        const Radius.circular(1.5),
       ),
-      ink,
+      Paint()..color = const Color(0xFF3A2414),
     );
-    canvas.drawLine(
-      const Offset(-13, -2.5),
-      const Offset(13, -2.5),
+    canvas.drawCircle(
+      const Offset(0, 5),
+      2.6,
+      Paint()..color = const Color(0xFF8A6A40),
+    );
+    canvas.save();
+    canvas.rotate(_angle);
+    // Pirinç çerçeveli cilalı ayna: yüzünde gök yansır, ışıkta parlar.
+    final frame = RRect.fromRectAndRadius(
+      const Rect.fromLTWH(-16, -4, 32, 8),
+      const Radius.circular(3),
+    );
+    canvas.drawRRect(
+      frame,
       Paint()
-        ..color = const Color(0xFFF2E6D0).withValues(alpha: 0.75)
-        ..strokeWidth = 1.6,
+        ..shader = ui.Gradient.linear(
+          const Offset(0, -4),
+          const Offset(0, 4),
+          const [Color(0xFFD8B070), Color(0xFF6A4A20)],
+        ),
     );
+    final glass = RRect.fromRectAndRadius(
+      const Rect.fromLTWH(-14, -2.4, 28, 3.6),
+      const Radius.circular(1.6),
+    );
+    canvas.drawRRect(
+      glass,
+      Paint()
+        ..shader = ui.Gradient.linear(
+          const Offset(-14, 0),
+          const Offset(14, 0),
+          const [
+            Color(0xFF8AA8C0),
+            Color(0xFFF2F6FA),
+            Color(0xFF7A98B0),
+            Color(0xFFDCE8F2),
+          ],
+          const [0, 0.35, 0.6, 1],
+        ),
+    );
+    // Süslü uçlar.
+    for (final x in [-16.0, 16.0]) {
+      canvas.drawCircle(
+        Offset(x, 0),
+        2.2,
+        Paint()..color = const Color(0xFFB08A50),
+      );
+    }
     canvas.restore();
   }
 }
@@ -590,24 +693,55 @@ class SunLock extends PositionComponent
   void render(Canvas canvas) {
     final glow = open ? 1.0 : charge;
     if (glow > 0) {
-      glowDot(canvas, Offset.zero, 30, kWarmLight, 0.45 * glow);
+      glowDot(canvas, Offset.zero, 34, kWarmLight, 0.5 * glow);
     }
-    canvas.drawCircle(Offset.zero, 11, Paint()..color = kInk);
+    // Taşa oyulmuş güneş kilidi: dişli dış halka, ışınlar, ortada mühür.
+    final stone = Paint()
+      ..shader = ui.Gradient.radial(const Offset(-3, -3), 14, const [
+        Color(0xFF5A4636),
+        Color(0xFF1E1610),
+      ]);
+    final teeth = Path();
+    for (var i = 0; i < 24; i++) {
+      final a = i * math.pi / 12;
+      final r = i.isEven ? 13.0 : 11.2;
+      final pt = Offset(math.cos(a) * r, math.sin(a) * r);
+      i == 0 ? teeth.moveTo(pt.dx, pt.dy) : teeth.lineTo(pt.dx, pt.dy);
+    }
+    canvas.drawPath(teeth..close(), stone);
+    canvas.drawCircle(
+      Offset.zero,
+      9.5,
+      Paint()..color = const Color(0xFF140E0A),
+    );
     final ray = Paint()
+      ..strokeCap = StrokeCap.round
       ..color = Color.lerp(
-        const Color(0xFF4A3020),
-        const Color(0xFFFFE0A0),
+        const Color(0xFF6A4A2A),
+        const Color(0xFFFFE6A8),
         glow,
-      )!
-      ..strokeWidth = 1.6;
-    for (var i = 0; i < 8; i++) {
-      final a = i * math.pi / 4 + _t * 0.2 * glow;
+      )!;
+    for (var i = 0; i < 12; i++) {
+      final a = i * math.pi / 6 + _t * 0.25 * glow;
+      ray.strokeWidth = i.isEven ? 1.8 : 1.1;
       canvas.drawLine(
-        Offset(math.cos(a) * 4, math.sin(a) * 4),
-        Offset(math.cos(a) * 9, math.sin(a) * 9),
+        Offset(math.cos(a) * 4.2, math.sin(a) * 4.2),
+        Offset(
+          math.cos(a) * (i.isEven ? 8.6 : 7.2),
+          math.sin(a) * (i.isEven ? 8.6 : 7.2),
+        ),
         ray,
       );
     }
+    canvas.drawCircle(Offset.zero, 3.4, Paint()..color = ray.color);
+    canvas.drawCircle(
+      Offset.zero,
+      3.4,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 0.8
+        ..color = const Color(0xFF140E0A),
+    );
   }
 }
 

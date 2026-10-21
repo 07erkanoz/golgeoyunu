@@ -1417,31 +1417,108 @@ class Crate extends PositionComponent
   }
 
   @override
-  void render(Canvas canvas) {
-    final box = Rect.fromLTWH(0, 0, side, side);
-    canvas.drawRect(box, Paint()..color = const Color(0xFF2E1A10));
-    // Üst ve ön kenara vuran sıcak ışık: karanlıkta da seçilsin.
-    final rim = Paint()
-      ..color = const Color(0xFFD08A5A).withValues(alpha: 0.55)
-      ..strokeWidth = 1.6;
-    canvas.drawLine(const Offset(0, 0.8), const Offset(side, 0.8), rim);
-    canvas.drawLine(const Offset(0.8, 0), const Offset(0.8, side), rim);
-    final plank = Paint()
-      ..color = const Color(0xFF9A5A30).withValues(alpha: 0.6)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.2;
-    canvas.drawRect(box.deflate(1.5), plank);
-    canvas.drawLine(
-      const Offset(2, 2),
-      const Offset(side - 2, side - 2),
-      plank,
+  void render(Canvas canvas) => drawCrate(canvas, side);
+}
+
+/// Ahşap sandık: üç tahta, aralarında ince yarık; köşelerde demir köşebent
+/// ve çiviler, ortadan geçen çapraz destek; üst kenarı ılık ışık yakalar.
+void drawCrate(Canvas canvas, double side) {
+  final box = Rect.fromLTWH(0, 0, side, side);
+  // Gövde ve gölgeli iç.
+  canvas.drawRect(box, Paint()..color = const Color(0xFF1A0E08));
+  const boards = 3;
+  final bh = side / boards;
+  const tones = [Color(0xFF5A3620), Color(0xFF4A2C18), Color(0xFF543220)];
+  for (var i = 0; i < boards; i++) {
+    final r = Rect.fromLTWH(1.2, i * bh + 0.6, side - 2.4, bh - 1.4);
+    canvas.drawRect(
+      r,
+      Paint()
+        ..shader = ui.Gradient.linear(r.topCenter, r.bottomCenter, [
+          Color.lerp(tones[i], const Color(0xFFB07A48), 0.25)!,
+          tones[i],
+        ]),
     );
-    canvas.drawLine(
-      const Offset(2, side / 2),
-      const Offset(side - 2, side / 2),
-      plank,
-    );
+    // Lifler.
+    final grain = Paint()
+      ..color = const Color(0xFF241408).withValues(alpha: 0.55)
+      ..strokeWidth = 0.5
+      ..style = PaintingStyle.stroke;
+    for (var g = 0; g < 2; g++) {
+      final gy = r.top + r.height * (0.35 + g * 0.35);
+      canvas.drawPath(
+        Path()
+          ..moveTo(r.left + 2, gy)
+          ..quadraticBezierTo(
+            r.center.dx,
+            gy + (i.isEven ? 1.2 : -1.2),
+            r.right - 2,
+            gy,
+          ),
+        grain,
+      );
+    }
+    // Budak.
+    if (i == 1) {
+      canvas.drawOval(
+        Rect.fromCenter(
+          center: Offset(side * 0.7, r.center.dy),
+          width: 3.2,
+          height: 1.8,
+        ),
+        Paint()..color = const Color(0xFF241408),
+      );
+    }
   }
+  // Çapraz destek.
+  final brace = Path()
+    ..moveTo(3, side - 5)
+    ..lineTo(side - 7, 3)
+    ..lineTo(side - 3, 5)
+    ..lineTo(7, side - 3)
+    ..close();
+  canvas.drawPath(brace, Paint()..color = const Color(0xFF6A4226));
+  canvas.drawPath(
+    brace,
+    Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.6
+      ..color = const Color(0xFF1A0E08),
+  );
+  // Demir köşebentler ve çiviler.
+  final iron = Paint()..color = const Color(0xFF2A2624);
+  final nail = Paint()..color = const Color(0xFF8A7A6A);
+  for (final (x, y) in [
+    (0.0, 0.0),
+    (side - 6, 0.0),
+    (0.0, side - 6),
+    (side - 6, side - 6),
+  ]) {
+    canvas.drawRect(Rect.fromLTWH(x, y, 6, 6), iron);
+    canvas.drawCircle(Offset(x + 3, y + 3), 0.9, nail);
+  }
+  // Işık: üst ve sol kenar; altında yere düşen gölge.
+  canvas.drawLine(
+    const Offset(0, 0.7),
+    Offset(side, 0.7),
+    Paint()
+      ..color = const Color(0xFFE0A06A).withValues(alpha: 0.7)
+      ..strokeWidth = 1.4,
+  );
+  canvas.drawLine(
+    const Offset(0.7, 0),
+    Offset(0.7, side),
+    Paint()
+      ..color = const Color(0xFFE0A06A).withValues(alpha: 0.35)
+      ..strokeWidth = 1,
+  );
+  canvas.drawRect(
+    box,
+    Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.8
+      ..color = const Color(0xFF0E0704),
+  );
 }
 
 // ==================================================================== Kapı
@@ -1495,37 +1572,84 @@ class Gate extends PositionComponent
 
   @override
   void render(Canvas canvas) {
-    // Taş lento: kapının üstünde, yerinde kalır (kapı onun içine kalkar).
-    final stone = Paint()..color = const Color(0xFF241510);
-    canvas.drawRect(const Rect.fromLTWH(-9, -9, 34, 9), stone);
+    // Taş lento: iki iri yonu taşı, kapı onun içine kalkar.
+    for (final (x, w) in const [(-10.0, 18.0), (8.0, 18.0)]) {
+      final r = Rect.fromLTWH(x, -11, w, 11);
+      canvas.drawRect(
+        r,
+        Paint()
+          ..shader = ui.Gradient.linear(r.topCenter, r.bottomCenter, const [
+            Color(0xFF4A3426),
+            Color(0xFF1E140E),
+          ]),
+      );
+      canvas.drawRect(
+        r,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 0.8
+          ..color = const Color(0xFF0E0806),
+      );
+    }
     canvas.drawRect(
-      const Rect.fromLTWH(-9, -9, 34, 1.5),
-      Paint()..color = const Color(0xFF8A4A2A).withValues(alpha: 0.45),
+      const Rect.fromLTWH(-10, -11, 36, 1.4),
+      Paint()..color = const Color(0xFFC08458).withValues(alpha: 0.55),
     );
     canvas.save();
     canvas.translate(0, -_lift);
-    final bar = Paint()..color = const Color(0xFF0E0806);
-    for (var x = 0.0; x <= 14; x += 4.6) {
-      canvas.drawRect(Rect.fromLTWH(x, 0, 2.6, _height), bar);
-    }
-    for (var y = 6.0; y < _height; y += 24) {
-      canvas.drawRect(Rect.fromLTWH(-1, y, 18, 3), bar);
-    }
-    canvas.drawLine(
-      const Offset(0.5, 0),
-      Offset(0.5, _height),
-      Paint()
-        ..color = const Color(0xFF8A4A2A).withValues(alpha: 0.35)
-        ..strokeWidth = 1,
-    );
-    for (var x = 1.3; x <= 15; x += 4.6) {
+    // Dövme demir parmaklıklar: yuvarlak çubuklar (bir yanı parlar), yatay
+    // lamalarda perçin, uçları sivri; yer yer pas.
+    const bars = [0.0, 4.6, 9.2, 13.8];
+    for (final x in bars) {
+      final r = Rect.fromLTWH(x, 0, 2.8, _height);
+      canvas.drawRect(
+        r,
+        Paint()
+          ..shader = ui.Gradient.linear(
+            r.centerLeft,
+            r.centerRight,
+            const [Color(0xFF3A3432), Color(0xFF1A1614), Color(0xFF0A0806)],
+            const [0, 0.4, 1],
+          ),
+      );
+      canvas.drawLine(
+        Offset(x + 0.6, 0),
+        Offset(x + 0.6, _height),
+        Paint()
+          ..color = const Color(0xFFB08A6A).withValues(alpha: 0.35)
+          ..strokeWidth = 0.6,
+      );
+      // Sivri uç.
       canvas.drawPath(
         Path()
-          ..moveTo(x - 1.6, _height)
-          ..lineTo(x + 1.3, _height + 5)
-          ..lineTo(x + 4, _height),
-        bar,
+          ..moveTo(x - 0.6, _height)
+          ..lineTo(x + 1.4, _height + 6)
+          ..lineTo(x + 3.4, _height)
+          ..close(),
+        Paint()..color = const Color(0xFF1A1614),
       );
+    }
+    final rust = Paint()
+      ..color = const Color(0xFF6A3A1E).withValues(alpha: 0.45);
+    for (var y = 6.0; y < _height - 4; y += 26) {
+      final band = Rect.fromLTWH(-1.5, y, 19, 3.6);
+      canvas.drawRect(
+        band,
+        Paint()
+          ..shader = ui.Gradient.linear(
+            band.topCenter,
+            band.bottomCenter,
+            const [Color(0xFF4A423E), Color(0xFF14100E)],
+          ),
+      );
+      for (final x in bars) {
+        canvas.drawCircle(
+          Offset(x + 1.4, y + 1.8),
+          1,
+          Paint()..color = const Color(0xFF9A8A7A),
+        );
+      }
+      canvas.drawRect(Rect.fromLTWH(2 + (y % 7), y + 3.6, 3, 4), rust);
     }
     if (emblem) _eyePlate(canvas, Offset(8, _height * 0.42));
     canvas.restore();
@@ -1641,19 +1765,95 @@ class Lever extends PositionComponent
 
   @override
   void render(Canvas canvas) {
-    final ink = Paint()..color = kInk;
-    canvas.drawRect(const Rect.fromLTWH(-7, -5, 14, 5), ink);
+    // Duvara çakılı demir levha (iki perçin) ve yarıklı yuva.
+    final plate = RRect.fromRectAndRadius(
+      const Rect.fromLTWH(-8, -24, 16, 24),
+      const Radius.circular(2),
+    );
+    canvas.drawRRect(
+      plate,
+      Paint()
+        ..shader = ui.Gradient.linear(const Offset(0, -24), Offset.zero, const [
+          Color(0xFF3E3632),
+          Color(0xFF181412),
+        ]),
+    );
+    canvas.drawRRect(
+      plate,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 0.8
+        ..color = const Color(0xFF0A0806),
+    );
+    for (final y in [-21.0, -3.0]) {
+      canvas.drawCircle(
+        Offset(-5, y),
+        1.1,
+        Paint()..color = const Color(0xFF9A8A7A),
+      );
+      canvas.drawCircle(
+        Offset(5, y),
+        1.1,
+        Paint()..color = const Color(0xFF9A8A7A),
+      );
+    }
+    // Yay biçimli yarık: kolun gittiği yol.
+    canvas.drawArc(
+      Rect.fromCircle(center: const Offset(0, -6), radius: 9),
+      -math.pi / 2 - 0.75,
+      1.5,
+      false,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.2
+        ..strokeCap = StrokeCap.round
+        ..color = const Color(0xFF060403),
+    );
     canvas.save();
-    canvas.translate(0, -3);
+    canvas.translate(0, -6);
     canvas.rotate(-0.7 + _swing * 1.4);
-    canvas.drawRect(const Rect.fromLTWH(-1.5, -17, 3, 17), ink);
-    canvas.drawCircle(const Offset(0, -17), 3, ink);
-    canvas.drawCircle(
-      const Offset(-0.8, -17.8),
-      1.6,
-      Paint()..color = const Color(0xFFD08A5A).withValues(alpha: 0.7),
+    // Demir kol ve ahşap tutamak.
+    canvas.drawRect(
+      const Rect.fromLTWH(-1.3, -16, 2.6, 16),
+      Paint()
+        ..shader = ui.Gradient.linear(
+          const Offset(-1.3, 0),
+          const Offset(1.3, 0),
+          const [Color(0xFF5A504A), Color(0xFF1A1614)],
+        ),
+    );
+    final grip = RRect.fromRectAndRadius(
+      const Rect.fromLTWH(-2.6, -25, 5.2, 10),
+      const Radius.circular(2.4),
+    );
+    canvas.drawRRect(
+      grip,
+      Paint()
+        ..shader = ui.Gradient.linear(
+          const Offset(-2.6, 0),
+          const Offset(2.6, 0),
+          const [Color(0xFFB07A48), Color(0xFF4A2C18)],
+        ),
+    );
+    canvas.drawLine(
+      const Offset(-2.4, -21),
+      const Offset(2.4, -21),
+      Paint()
+        ..color = const Color(0xFF241408)
+        ..strokeWidth = 0.6,
     );
     canvas.restore();
+    // Mil başı.
+    canvas.drawCircle(
+      const Offset(0, -6),
+      2.6,
+      Paint()..color = const Color(0xFF2A2624),
+    );
+    canvas.drawCircle(
+      const Offset(-0.6, -6.6),
+      1,
+      Paint()..color = const Color(0xFFB0A090),
+    );
     final p = game.player;
     if (!pulled && p != null && near(p.center)) {
       final a = 0.55 + 0.45 * math.sin(_t * 5);

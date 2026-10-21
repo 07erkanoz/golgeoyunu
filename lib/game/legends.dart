@@ -612,25 +612,66 @@ class ShieldCrate extends Crate {
 
   @override
   void render(Canvas canvas) {
+    // Perseus'un cilalı tunç kalkanı: kenarda dövme halka, içinde iç içe
+    // halkalar ve ortada umbo; yüzünde karşıdaki ışık parlar. Yere dikili
+    // durur: altında ahşap destek.
     const s = Crate.side;
-    final c = const Offset(s / 2, s / 2);
-    canvas.drawCircle(c, s / 2, Paint()..color = const Color(0xFF3A2A14));
+    const c = Offset(s / 2, s / 2 - 1);
+    canvas.drawRect(
+      const Rect.fromLTWH(s / 2 - 8, s - 4, 16, 4),
+      Paint()..color = const Color(0xFF3A2414),
+    );
     canvas.drawCircle(
       c,
-      s / 2 - 3,
+      s / 2,
       Paint()
-        ..shader = ui.Gradient.radial(c.translate(-4, -4), s / 2, [
-          const Color(0xFFF2D8A0),
-          const Color(0xFF8A6030),
-        ]),
+        ..shader = ui.Gradient.linear(
+          const Offset(0, 0),
+          const Offset(s, s),
+          const [Color(0xFF8A6030), Color(0xFF3A2410)],
+        ),
     );
-    // Parıltı.
+    canvas.drawCircle(
+      c,
+      s / 2 - 2.6,
+      Paint()
+        ..shader = ui.Gradient.radial(
+          c.translate(-5, -5),
+          s * 0.6,
+          const [Color(0xFFFFF0C8), Color(0xFFD8A860), Color(0xFF7A5020)],
+          const [0, 0.35, 1],
+        ),
+    );
+    final ring = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.8
+      ..color = const Color(0xFF6A4420).withValues(alpha: 0.7);
+    canvas.drawCircle(c, s / 2 - 5, ring);
+    canvas.drawCircle(c, s / 2 - 8.5, ring);
+    // Kenar perçinleri.
+    for (var i = 0; i < 10; i++) {
+      final a = i * math.pi / 5;
+      canvas.drawCircle(
+        c + Offset(math.cos(a), math.sin(a)) * (s / 2 - 1.3),
+        0.9,
+        Paint()..color = const Color(0xFFE8C880),
+      );
+    }
+    // Umbo.
+    canvas.drawCircle(c, 3.2, Paint()..color = const Color(0xFFB08040));
+    canvas.drawCircle(
+      c.translate(-0.8, -0.8),
+      1.4,
+      Paint()..color = const Color(0xFFFFF4D8),
+    );
+    // Kayan parıltı.
     final glint = 0.5 + 0.5 * math.sin(_t * 2);
     canvas.drawCircle(
       c.translate(-5, -6),
-      2.5,
+      2.6,
       Paint()
-        ..color = const Color(0xFFFFFFFF).withValues(alpha: 0.4 + 0.4 * glint),
+        ..color = const Color(0xFFFFFFFF)
+            .withValues(alpha: 0.35 + 0.45 * glint),
     );
   }
 }
