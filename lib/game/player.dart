@@ -541,6 +541,9 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       _hangDir = d;
       _hangCol = c;
       _hangRow = r;
+      _hangSway
+        ..reset()
+        ..kick((velocity.x * d * 0.03 + velocity.y * 0.012).clamp(-4.0, 6.0));
       velocity.setZero();
       onGround = false;
       position.setValues(
@@ -591,19 +594,16 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
   void _updateClimbUp() {
     const duration = 0.32;
     final t = (_stateTime / duration).clamp(0.0, 1.0);
-    if (t < 0.6) {
-      final k = t / 0.6;
-      position.setValues(
-        _climbFrom.x,
-        _climbFrom.y + (_climbTo.y - _climbFrom.y) * k,
-      );
-    } else {
-      final k = (t - 0.6) / 0.4;
-      position.setValues(
-        _climbFrom.x + (_climbTo.x - _climbFrom.x) * k,
-        _climbTo.y,
-      );
-    }
+    // Önce kollarla çekinir (hızlı başlar, kenara yaklaşınca yavaşlar),
+    // yükselişin sonuna doğru beden kenarın üstüne kayar: iki hareket
+    // birbirine karışır, köşe kırılmaz.
+    double ease(double x) => x * x * (3 - 2 * x);
+    final v = 1 - math.pow(1 - (t / 0.65).clamp(0.0, 1.0), 2.2).toDouble();
+    final hx = ease(((t - 0.45) / 0.55).clamp(0.0, 1.0));
+    position.setValues(
+      _climbFrom.x + (_climbTo.x - _climbFrom.x) * hx,
+      _climbFrom.y + (_climbTo.y - _climbFrom.y) * v,
+    );
     if (t >= 1) {
       position.setFrom(_climbTo);
       velocity.setZero();
@@ -636,6 +636,7 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     }
     final vy = up ? -climbSpeed : (down ? climbSpeed : 0.0);
     _runPhase += vy.abs() * dt * 0.09;
+    _climbPhase -= vy * dt * 0.18;
     final prevY = position.y;
     _moveY(vy * dt, allowOneWay: false);
     velocity.setZero();
@@ -856,6 +857,13 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
 
   /// İpteki açısal hız (sağa salınım artı).
   double get ropeOmega => _ropeOmega;
+
+  /// Kenara tutununca beden gelen hızla bir kez savrulur, sonra durulur.
+  final _hangSway = Spring(stiffness: 30, damping: 3.2);
+
+  /// Sarmaşıkta tırmanma evresi: yukarı artar, aşağı azalır (eller ve
+  /// ayaklar sırayla tutar).
+  double _climbPhase = 0;
 
   /// Bağlantıdan ellere uzaklık (ipin hangi boğumunda tutunulduğu).
   double get ropeDistance => _ropeD;
@@ -1160,6 +1168,7 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     final run = onGround ? (velocity.x.abs() / runSpeed).clamp(0.0, 1.0) : 0.0;
     _leanS = approach(_leanS, run * 0.2, dt, 0.12);
     if (state == PlayerState.swing) _swingBody.update(ropeAngle, dt);
+    if (state == PlayerState.hang) _hangSway.update(0, dt);
     // İleri doğru ivme (+ hızlanma, - frenleme).
     final ax = (velocity.x - _prevVx) / dt * facing;
     _prevVx = velocity.x;
@@ -1581,24 +1590,30 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
             ? (_stateTime / 0.32).clamp(0.0, 1.0)
             : 0.0;
         if (t == 0) {
-          // Asılı: gövde kenarın altında sallanır.
-          final sway = math.sin(_anim * 2.5) * 1.2;
+          // Asılı: tutunma anındaki hızla savrulur, sonra durulur; bacaklar
+          // boşlukta hafifçe sallanır.
+          final sway = _hangSway.value + math.sin(_anim * 1.3) * 0.35;
+          final dangle = math.sin(_anim * 2.1) * 0.8;
           hipY = 22;
-          foot1 = Offset(cx + 1.5 + sway, 35.5);
-          foot2 = Offset(cx - 1.5 + sway, 35);
-        } else if (t < 0.6) {
-          // Kollarla çekinir, dizler yukarı toplanır.
-          hipY = 22;
-          foot1 = Offset(cx + 3, 22 + 9 - t * 4);
-          foot2 = Offset(cx - 2, 22 + 11 - t * 3);
-          lean = 0.15;
+          foot1 = Offset(cx + 1.5 + sway * 1.4 + dangle, 35.5);
+          foot2 = Offset(
+            cx - 1.5 + sway * 1.2 - dangle,
+            35 - dangle.abs() * 0.6,
+          );
+          lean = -sway * 0.03;
         } else {
-          // Dizini kenara atar ve doğrulur.
-          final k = (t - 0.6) / 0.4;
-          hipY = 22 + 5 * k;
-          foot1 = Offset(cx + 3, 29 + 10.5 * k);
-          foot2 = Offset(cx - 3, 31 + 8.5 * k);
-          lean = 0.3 * (1 - k);
+          // Kollarla çekinir, dizler toplanır; öndeki diz kenara atılır,
+          // arkadaki ayak iter; beden doğrulurken ağırlık öne geçer.
+          double ease(double x) => x * x * (3 - 2 * x);
+          final pull = ease((t / 0.55).clamp(0.0, 1.0));
+          final rise = ease(((t - 0.45) / 0.55).clamp(0.0, 1.0));
+          hipY = 22 + 5 * rise;
+          foot1 = Offset(
+            cx + 1.5 + 2.5 * pull,
+            35.5 - 8 * pull + 12 * rise - 4 * pull * (1 - rise),
+          );
+          foot2 = Offset(cx - 1.5 - 1.5 * rise, 35 - 3 * pull + 4.5 * rise);
+          lean = 0.22 * pull * (1 - rise) + 0.12 * math.sin(rise * math.pi);
         }
       case PlayerState.swing:
         // İpte: eller başın üstünde, bacaklar salınımla savrulur.
@@ -1619,9 +1634,18 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
         jarAtHip = true;
         onRope = true;
       case PlayerState.vine:
-        final p = math.sin(_runPhase * 2);
-        foot1 = Offset(cx + 1.5, _artH - 3 + p * 3);
-        foot2 = Offset(cx - 0.5, _artH - 3 - p * 3);
+        // Ayaklar sırayla basar: basan ayak sarmaşıkta durur (beden yükselir),
+        // öbürü bir üst tutamağa uzanır.
+        double grip(double ph, double lo, double hi) {
+          final q = (ph % 1 + 1) % 1;
+          if (q < 0.5) return hi + (lo - hi) * (q / 0.5);
+          final e = (q - 0.5) / 0.5;
+          return lo + (hi - lo) * (e * e * (3 - 2 * e));
+        }
+        final q = _climbPhase / (2 * math.pi);
+        foot1 = Offset(cx + 1.5, grip(q + 0.5, _artH, _artH - 6));
+        foot2 = Offset(cx - 0.5, grip(q, _artH, _artH - 6));
+        final p = math.sin(_climbPhase);
         arm2 = math.pi - 0.3 - p * 0.3;
         jarAtHip = true;
         onRope = true;
@@ -1651,6 +1675,9 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
           foot2 = stepFoot(cycle + math.pi).translate(-3, 0);
           arm2 = 1.45;
           jarAtHip = true;
+          // Avuçlar sandığın yüzüne dayanır; dirsekler zorlanırken bükülür.
+          frontHand = Offset(cx + 11.5, hipY - 9);
+          backHand = Offset(cx + 11, hipY - 6);
         } else if (sneaking) {
           // Parmak uçlarında: hafif çömelik, dizler yüksek kalkar, kol dengede.
           lean = 0.22;
@@ -1717,9 +1744,25 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     jarHand = limbEnd(shoulder, jarArm, 9.5);
     if (onRope) {
       // El ele, ipe tutunarak tırmanır; sallanırken eller kıpırdamaz.
-      final p = state == PlayerState.swing ? 0.0 : math.sin(_runPhase * 2);
-      frontHand = Offset(cx + 0.8, shoulder.dy - 7 + p * 3);
-      backHand = Offset(cx - 0.6, shoulder.dy - 3 - p * 3);
+      if (state == PlayerState.swing) {
+        frontHand = Offset(cx + 0.8, shoulder.dy - 7);
+        backHand = Offset(cx - 0.6, shoulder.dy - 3);
+      } else {
+        // El el üstüne: tutan el sarmaşıkta durur (bedene göre aşağı
+        // kayar), öbürü yukarı uzanıp yeni tutamağı kavrar.
+        double grip(double ph) {
+          final q = (ph % 1 + 1) % 1;
+          const hi = -10.0;
+          const lo = 5.0;
+          if (q < 0.5) return hi + (lo - hi) * (q / 0.5);
+          final e = (q - 0.5) / 0.5;
+          return lo + (hi - lo) * (e * e * (3 - 2 * e));
+        }
+
+        final q = _climbPhase / (2 * math.pi);
+        frontHand = Offset(cx + 0.8, shoulder.dy + grip(q));
+        backHand = Offset(cx - 0.6, shoulder.dy + grip(q + 0.5));
+      }
     }
     // Kavanoz ipin ucunda bir yay: ivmeye gecikmeli tepki verir; adımla
     // hafifçe sekip dururken neredeyse kıpırdamaz.
@@ -1865,7 +1908,12 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     );
     // Saç tek parça: alnın üstünden tepeye, ardından arkaya yatan üç tutam.
     final b = wind * 2.4;
-    double sw(int i) => math.sin(_anim * 5 + i * 1.4) * (0.25 + wind * 0.5);
+    // Dururken saç kıpırdamaz; rüzgârda dalgalanır; düşerken havalanır,
+    // yükselirken sarkar.
+    final float = (_fallBlend - 0.5) * 2 * _air;
+    double sw(int i) =>
+        math.sin(_anim * 5 + i * 1.4) * (0.06 + wind * 0.55) -
+        float * (1.4 + i * 0.5);
     Offset h(double x, double y) => head + Offset(x, y);
     final hair = Path()
       ..moveTo(h(5.8, -1.5).dx, h(5.8, -1.5).dy)

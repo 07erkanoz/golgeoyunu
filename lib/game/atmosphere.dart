@@ -847,24 +847,25 @@ class ScreenEffects extends Component with HasGameReference<GolgeGame> {
           ),
       );
     }
+    // Saklanırken renkler solar: soğuk gri bir örtü. (Önceden doygunluk
+    // karışımıyla yapılıyordu; o karışım telefon ekran kartlarında her karede
+    // bütün ekranı yeniden okutuyor, saklanırken kare hızı düşüyordu.)
     final hide = game.hideAmount;
-    if (hide > 0.02 && !Settings.lowGraphics) {
+    if (hide > 0.02) {
       canvas.drawRect(
         Rect.fromLTWH(0, 0, w, h),
-        Paint()
-          ..color = const Color(0xFF808080).withValues(alpha: 0.55 * hide)
-          ..blendMode = BlendMode.saturation,
+        Paint()..color = const Color(0xFF2E3036).withValues(alpha: 0.3 * hide),
       );
     }
 
     // Parlaklık: hafif sıcak bir aydınlatma ya da karartma.
     final b = Settings.brightness;
     if (b > 1.001) {
+      // Düz karışım (ekran karışımı telefonda her karede pahalıydı).
       canvas.drawRect(
         Rect.fromLTWH(0, 0, w, h),
         Paint()
-          ..color = const Color(0xFFFFE8D0).withValues(alpha: (b - 1) * 0.2)
-          ..blendMode = BlendMode.screen,
+          ..color = const Color(0xFFFFE8D0).withValues(alpha: (b - 1) * 0.16),
       );
     } else if (b < 0.999) {
       canvas.drawRect(

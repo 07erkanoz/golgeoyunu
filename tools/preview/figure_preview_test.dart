@@ -91,6 +91,59 @@ final _specs = <String, _Spec>{
       }
     },
   ),
+  'ledge': _Spec(
+    const [
+      '####################',
+      '#..................#',
+      '#..................#',
+      '#..........#########',
+      '#..........#########',
+      '#..........#########',
+      '#.P........#########',
+      '####################',
+    ],
+    LevelTheme.cistern,
+    (g) => g.player!,
+    150,
+    0.05,
+    count: 24,
+    act: (g, i) {
+      final p = g.player!;
+      // Duvarın dibinde, eli kenarın hizasına gelmiş düşerken tutunur.
+      if (i == 0) {
+        p.position.setValues(11 * 32.0 - 16 - 1, 3 * 32.0 + 2);
+        p.velocity.setValues(40, 60);
+        p.onGround = false;
+      }
+      g.controls.keyboard
+        ..right = i < 2 || i >= 8
+        ..up = i >= 8;
+    },
+  ),
+  'vine': _Spec(
+    const [
+      '##########',
+      '#....|...#',
+      '#....|...#',
+      '#....|...#',
+      '#....|...#',
+      '#....|...#',
+      '#....|...#',
+      '#....|...#',
+      '#P...|...#',
+      '##########',
+    ],
+    LevelTheme.cistern,
+    (g) => g.player!,
+    110,
+    0.05,
+    count: 24,
+    act: (g, i) {
+      final p = g.player!;
+      if (i == 0) p.position.setValues(5 * 32.0 + 8, 7 * 32.0);
+      g.controls.keyboard.up = i >= 1;
+    },
+  ),
   'rope': _Spec(
     const [
       '##############################',
@@ -161,9 +214,11 @@ void main() {
     game.player!.hidden = fig != 'wolf';
     game.update(1 / 60);
     final target = spec.find(game);
-    final anchor = target is SwingRope
+    var anchor = target is SwingRope
         ? target.anchor + Vector2(0, 110)
         : (target as PositionComponent).absoluteCenter.clone();
+    if (fig == 'ledge') anchor = Vector2(11 * 32.0, 3 * 32.0 + 10);
+    if (fig == 'vine') anchor = Vector2(5.5 * 32, 5 * 32.0);
 
     const cell = 240.0;
     final frames = <ui.Image>[];
