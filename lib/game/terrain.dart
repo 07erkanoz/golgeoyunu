@@ -237,7 +237,14 @@ Picture _buildTerrain(Level lv, int c0, int c1, int r0, int r1) {
           if (theme == LevelTheme.cistern) {
             _walkway(canvas, lv, c, r, rnd);
           } else if (theme == LevelTheme.ark) {
-            _beam(canvas, x, y, rnd);
+            _beam(
+              canvas,
+              x,
+              y,
+              rnd,
+              left: lv.cell(c - 1, r) != '=',
+              right: lv.cell(c + 1, r) != '=',
+            );
           } else if (theme.snowy) {
             canvas.drawRect(Rect.fromLTWH(x - 0.5, y, kTile + 1, 7), ink);
             canvas.drawRRect(
@@ -490,23 +497,76 @@ void _icicles(Canvas canvas, double x, double y, math.Random rnd) {
 }
 
 /// Gemi içi: kalın ahşap kiriş ve çivileri.
-void _beam(Canvas canvas, double x, double y, math.Random rnd) {
+/// Gemide basılan kalas: karanlık ambarda ve suyun üstünde seçilsin diye
+/// açık renkli ahşap; üst kenarı fenerin ışığını yakalar, altına gölge
+/// düşer, uçlarında duvara çakılı takozlar.
+void _beam(
+  Canvas canvas,
+  double x,
+  double y,
+  math.Random rnd, {
+  bool left = false,
+  bool right = false,
+}) {
+  // Altındaki gölge.
+  canvas.drawRect(
+    Rect.fromLTWH(x - 0.5, y + 9, kTile + 1, 5),
+    Paint()
+      ..shader = Gradient.linear(Offset(x, y + 9), Offset(x, y + 14), [
+        const Color(0xFF000000).withValues(alpha: 0.45),
+        const Color(0x00000000),
+      ]),
+  );
+  // Kalas gövdesi: üstü açık, altı koyu ahşap.
   canvas.drawRect(
     Rect.fromLTWH(x - 0.5, y, kTile + 1, 9),
-    Paint()..color = const Color(0xFF1A0F09),
-  );
-  canvas.drawLine(
-    Offset(x, y + 1),
-    Offset(x + kTile, y + 1),
     Paint()
-      ..color = const Color(0xFF6A4428).withValues(alpha: 0.5)
-      ..strokeWidth = 1,
+      ..shader = Gradient.linear(Offset(x, y), Offset(x, y + 9), [
+        const Color(0xFF7A5232),
+        const Color(0xFF3A2414),
+      ]),
+  );
+  // Fenerin ışığını yakalayan üst kenar.
+  canvas.drawLine(
+    Offset(x - 0.5, y + 0.8),
+    Offset(x + kTile + 0.5, y + 0.8),
+    Paint()
+      ..color = const Color(0xFFE0A15F).withValues(alpha: 0.85)
+      ..strokeWidth = 1.6,
+  );
+  // Ahşap damarı ve ek yeri.
+  canvas.drawLine(
+    Offset(x + 2, y + 5),
+    Offset(x + kTile - 3, y + 5.4),
+    Paint()
+      ..color = const Color(0xFF2A190D).withValues(alpha: 0.6)
+      ..strokeWidth = 0.6,
   );
   if (rnd.nextDouble() < 0.5) {
     canvas.drawCircle(
-      Offset(x + 6 + rnd.nextDouble() * 20, y + 5),
+      Offset(x + 6 + rnd.nextDouble() * 20, y + 4.5),
       1.3,
-      Paint()..color = const Color(0xFF3A2414),
+      Paint()..color = const Color(0xFF2A190D),
+    );
+  }
+  // Uçlarda duvara çakılı takoz.
+  final bracket = Paint()..color = const Color(0xFF4A2C17);
+  for (final (on, ex, dir) in [(left, x, 1.0), (right, x + kTile, -1.0)]) {
+    if (!on) continue;
+    canvas.drawPath(
+      Path()
+        ..moveTo(ex, y + 9)
+        ..lineTo(ex + dir * 9, y + 9)
+        ..lineTo(ex, y + 19)
+        ..close(),
+      bracket,
+    );
+    canvas.drawLine(
+      Offset(ex + dir * 2, y),
+      Offset(ex + dir * 2, y + 9),
+      Paint()
+        ..color = const Color(0xFF1A0F09)
+        ..strokeWidth = 1,
     );
   }
 }

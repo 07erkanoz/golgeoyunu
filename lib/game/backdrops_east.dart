@@ -304,6 +304,8 @@ extension _EastBackdrops on Backdrop {
     final lv = game.level;
     if (!identical(_holdFor, lv)) {
       _holdFor = lv;
+      _holdTop = null;
+      _holdBottom = null;
       _hold = [
         for (var c = 0; c < lv.width; c++)
           () {
@@ -336,10 +338,20 @@ extension _EastBackdrops on Backdrop {
     bottoms.sort();
     const tile = 32.0; // kTile
     double toScreen(double wy) => (wy - view.top) / view.height * h;
-    return (
-      toScreen(tops[tops.length ~/ 2] * tile),
-      toScreen(bottoms[bottoms.length ~/ 2] * tile),
-    );
+    final wantTop = tops[tops.length ~/ 2] * tile;
+    final wantBottom = bottoms[bottoms.length ~/ 2] * tile;
+    final dt = (_t - _holdT).clamp(0.0, 0.1);
+    _holdT = _t;
+    final k = math.min(1.0, dt * 1.5);
+    final top = _holdTop == null
+        ? wantTop
+        : _holdTop! + (wantTop - _holdTop!) * k;
+    final bottom = _holdBottom == null
+        ? wantBottom
+        : _holdBottom! + (wantBottom - _holdBottom!) * k;
+    _holdTop = top;
+    _holdBottom = bottom;
+    return (toScreen(top), toScreen(bottom));
   }
 
   /// Nuh'un Gemisi'nin ambarı: bindirme kalaslı iç gövde, eğri postalar,

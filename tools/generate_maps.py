@@ -102,7 +102,7 @@ y.fill(224,14,227,19,'#'); y.put(225,13,'K'); y.put(226,13,'p'); y.put(227,13,'[
 y.fill(228,14,262,19,'w'); y.put(228,13,'_')
 y.fill(232,10,258,10,'='); y.put(236,9,'G'); y.put(250,9,'G')
 for c in (238,246,254): y.put(c,13,'I')
-y.put(246,12,'M'); y.put(231,9,'B')
+y.put(246,12,'M'); y.put(233,9,'B')
 y.fill(263,14,267,19,'#'); y.put(264,13,'B')
 y.fill(266,12,267,13,'#')                              # kovalamacaya basamak
 O=160
@@ -433,6 +433,7 @@ n.fill(218,3,218,11,'S')                     # sallanılan ip
 n.fill(224,8,229,8,'=')
 n.fill(230,9,299,25,'#')                     # üst güverte (buzula gömülü)
 n.fill(230,8,236,8,'-')
+n.fill(237,8,299,8,'#')                      # güverte yüzü: nesneler 7. satırda durur
 # 5) Üst güverte: buz, Kandilci, sönmüş ışığın yeri
 n.put(232,7,'K'); n.put(233,7,'p'); n.put(234,7,'6'); n.put(238,7,'B')
 n.put(248,7,'G'); n.fill(244,7,245,7,'~'); n.put(258,7,'I'); n.put(262,7,'G')

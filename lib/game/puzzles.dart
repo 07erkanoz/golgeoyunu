@@ -1699,8 +1699,8 @@ class Pedestal extends PositionComponent
       ..color = const Color(0xFF0A0604)
           .withValues(alpha: 0.55 + 0.1 * math.sin(_t));
     canvas.save();
+    // Oyma hayvanla aynı yöne bakar: önüne gelince ikisi üst üste oturur.
     canvas.translate(0, -kTile * 0.4);
-    canvas.scale(-1, 1);
     _animal(canvas, kind, shade, 1.1);
     canvas.restore();
     if (_glow > 0) {

@@ -23,6 +23,12 @@ class Backdrop extends Component with HasGameReference<GolgeGame> {
   List<(int, int)?>? _hold;
   Object? _holdFor;
 
+  /// Ambar bandının (tavan, taban) dünyadaki yumuşatılmış yeri: oda
+  /// değişince arka plan bir anda sıçramaz, süzülerek yerine gelir.
+  double? _holdTop;
+  double? _holdBottom;
+  double _holdT = 0;
+
   @override
   void update(double dt) => _t += dt;
 

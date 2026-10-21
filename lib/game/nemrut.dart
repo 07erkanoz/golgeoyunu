@@ -175,35 +175,196 @@ class HoroscopeRelief extends PositionComponent
   @override
   void update(double dt) => _t += dt;
 
+  /// Kalınlığı incelen parça (bacak, kuyruk).
+  static Path _seg(Offset a, Offset b, double w0, double w1) {
+    final d = b - a;
+    final n = Offset(-d.dy, d.dx) / (d.distance == 0 ? 1 : d.distance);
+    return Path()
+      ..moveTo((a + n * w0 / 2).dx, (a + n * w0 / 2).dy)
+      ..lineTo((b + n * w1 / 2).dx, (b + n * w1 / 2).dy)
+      ..lineTo((b - n * w1 / 2).dx, (b - n * w1 / 2).dy)
+      ..lineTo((a - n * w0 / 2).dx, (a - n * w0 / 2).dy)
+      ..close()
+      ..addOval(Rect.fromCircle(center: a, radius: w0 / 2))
+      ..addOval(Rect.fromCircle(center: b, radius: w1 / 2));
+  }
+
+  /// Kalçadan çıkıp S çizerek yukarı kalkan kuyruk: eğri boyunca incelen
+  /// kısa parçalar (ekler görünmez).
+  static Path _tail() {
+    Offset at(double u) {
+      const p0 = Offset(38, -54);
+      const p1 = Offset(14, -54);
+      const p2 = Offset(12, -82);
+      const p3 = Offset(24, -86);
+      final v = 1 - u;
+      return p0 * (v * v * v) +
+          p1 * (3 * v * v * u) +
+          p2 * (3 * v * u * u) +
+          p3 * (u * u * u);
+    }
+
+    var out = Path();
+    const n = 16;
+    for (var i = 0; i < n; i++) {
+      final w0 = 4.2 - 2.0 * i / n;
+      final w1 = 4.2 - 2.0 * (i + 1) / n;
+      out = Path.combine(
+        PathOperation.union,
+        out,
+        _seg(at(i / n), at((i + 1) / n), w0, w1),
+      );
+    }
+    return out;
+  }
+
+  /// Aslan: sağa yürür; yeleli baş, kıvrılıp kalkan püsküllü kuyruk.
+  /// Antiochos'un Aslan Horoskobu'ndaki gibi (Nemrut, Batı Terası).
+  static final Path _lion = () {
+    final parts = <Path>[
+      // Gövde: kalça, sırt, göğüs, karın.
+      Path()
+        ..moveTo(38, -50)
+        ..cubicTo(36, -62, 46, -67, 60, -64)
+        ..cubicTo(82, -61, 104, -63, 122, -69)
+        ..cubicTo(132, -60, 134, -46, 128, -38)
+        ..cubicTo(110, -33, 72, -34, 52, -37)
+        ..cubicTo(42, -39, 38, -44, 38, -50)
+        ..close(),
+      // Arka bacaklar: but, diz, incik, pençe.
+      _seg(const Offset(50, -50), const Offset(42, -30), 15, 8),
+      _seg(const Offset(42, -30), const Offset(46, -10), 8, 6),
+      _seg(const Offset(62, -44), const Offset(60, -26), 11, 7),
+      _seg(const Offset(60, -26), const Offset(64, -10), 7, 6),
+      // Ön bacaklar.
+      _seg(const Offset(118, -44), const Offset(116, -10), 11, 7),
+      _seg(const Offset(128, -44), const Offset(132, -10), 10, 7),
+      // Kuyruk: kalçadan kıvrılıp yukarı kalkar (tek parça, incelen).
+      _tail(),
+      Path()..addOval(
+        Rect.fromCenter(center: const Offset(24, -87), width: 7, height: 9),
+      ),
+      // Baş ve burun.
+      Path()
+        ..addOval(Rect.fromCircle(center: const Offset(146, -66), radius: 10)),
+      Path()..addOval(
+        Rect.fromCenter(center: const Offset(157, -61), width: 13, height: 9),
+      ),
+      Path()
+        ..addOval(Rect.fromCircle(center: const Offset(141, -77), radius: 3)),
+    ];
+    // Pençeler.
+    for (final x in [47.0, 65.0, 117.0, 133.0]) {
+      parts.add(
+        Path()..addOval(
+          Rect.fromCenter(center: Offset(x + 2, -9), width: 10, height: 5),
+        ),
+      );
+    }
+    // Yele: başın ve boynun çevresinde dalgalı, sivri uçlu.
+    final mane = Path();
+    for (var i = 0; i <= 24; i++) {
+      final a = math.pi * 0.35 + i / 24 * math.pi * 1.45;
+      final r = i.isEven ? 21.0 : 15.5;
+      final pt = Offset(140 + math.cos(a) * r, -62 - math.sin(a) * r * 0.95);
+      i == 0 ? mane.moveTo(pt.dx, pt.dy) : mane.lineTo(pt.dx, pt.dy);
+    }
+    parts.add(mane..close());
+    var out = parts.first;
+    for (final p in parts.skip(1)) {
+      out = Path.combine(PathOperation.union, out, p);
+    }
+    return out;
+  }();
+
+  /// Aslanın üstündeki 19 yıldız (kabartmadaki gibi gövdeye ve yeleye
+  /// serpilmiş).
+  static const _stars = [
+    Offset(46, -54),
+    Offset(58, -58),
+    Offset(70, -52),
+    Offset(84, -56),
+    Offset(98, -50),
+    Offset(110, -58),
+    Offset(120, -50),
+    Offset(76, -42),
+    Offset(92, -40),
+    Offset(106, -42),
+    Offset(56, -44),
+    Offset(130, -66),
+    Offset(136, -78),
+    Offset(148, -80),
+    Offset(124, -60),
+    Offset(44, -24),
+    Offset(118, -24),
+    Offset(26, -72),
+    Offset(64, -24),
+  ];
+
   @override
   void render(Canvas canvas) {
     const w = 6 * kTile;
     const h = 4 * kTile;
-    final slab = Paint()..color = const Color(0xFF231E2A);
-    canvas.drawRect(const Rect.fromLTWH(0, -h, w, h), slab);
-    // Aslan.
-    final lion = Paint()..color = const Color(0xFF3A3242);
-    canvas.drawOval(const Rect.fromLTWH(30, -60, 110, 34), lion);
-    canvas.drawCircle(const Offset(145, -58), 18, lion);
-    for (final x in [42.0, 62.0, 110.0, 128.0]) {
-      canvas.drawRect(Rect.fromLTWH(x, -32, 9, 28), lion);
-    }
-    // Hilal aslanın göğsünde, yıldızlar ve gezegenler sırtında.
+    // Taş levha: ince bir çerçeve, içi oyulmuş.
+    canvas.drawRect(
+      const Rect.fromLTWH(0, -h, w, h),
+      Paint()..color = const Color(0xFF1C1822),
+    );
+    canvas.drawRect(
+      const Rect.fromLTWH(5, -h + 5, w - 10, h - 10),
+      Paint()..color = const Color(0xFF29232F),
+    );
+    canvas.drawRect(
+      const Rect.fromLTWH(5, -h + 5, w - 10, h - 10),
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1
+        ..color = const Color(0xFF0E0B12),
+    );
+    // Kabartma: alt-sağa düşen gölge, gövde, üst-sola vuran ışık.
+    canvas.save();
+    canvas.translate(2, 2);
+    canvas.drawPath(_lion, Paint()..color = const Color(0xFF110E15));
+    canvas.restore();
+    canvas.drawPath(
+      _lion,
+      Paint()
+        ..shader = Gradient.linear(const Offset(0, -90), const Offset(0, -8), [
+          const Color(0xFF5A5068),
+          const Color(0xFF3C3448),
+        ]),
+    );
+    canvas.save();
+    canvas.clipPath(_lion);
+    canvas.translate(1.2, 1.2);
+    canvas.drawPath(
+      _lion,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.4
+        ..color = const Color(0xFF8A80A0).withValues(alpha: 0.35),
+    );
+    canvas.restore();
+    // Göz ve ağız çizgisi.
+    final line = Paint()
+      ..color = const Color(0xFF15111B)
+      ..strokeWidth = 1.1
+      ..strokeCap = StrokeCap.round;
+    canvas.drawCircle(const Offset(150, -68), 1.3, line);
+    canvas.drawLine(const Offset(156, -58), const Offset(162, -59), line);
+    // Hilal aslanın boynunda, yıldızlar gövdesinde, gezegenler sırtının
+    // üstünde (bulmacanın sırası).
     final glow = 0.55 + 0.25 * math.sin(_t * 1.3);
     final mark = Paint()
       ..color = const Color(0xFFE8D8B0).withValues(alpha: glow);
-    _drawSign(canvas, Sign.moon, const Offset(150, -36), 9, mark);
+    _drawSign(canvas, Sign.moon, const Offset(134, -48), 8, mark);
     for (var i = 1; i < horoscope.length; i++) {
-      _drawSign(canvas, horoscope[i], Offset(40.0 + i * 30, -100), 8, mark);
+      _drawSign(canvas, horoscope[i], Offset(46.0 + i * 30, -100), 8, mark);
     }
-    for (var i = 0; i < 5; i++) {
-      _drawSign(
-        canvas,
-        Sign.star,
-        Offset(20 + i * 34.0, -78 + (i.isEven ? 0 : 8)),
-        3.5,
-        mark,
-      );
+    final star = Paint()
+      ..color = const Color(0xFFE8D8B0).withValues(alpha: glow * 0.85);
+    for (final p in _stars) {
+      _drawSign(canvas, Sign.star, p, 2.6, star);
     }
     // Kenar ve kar.
     canvas.drawRect(
