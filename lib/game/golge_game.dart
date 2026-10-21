@@ -201,10 +201,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     final card = MythCard.byId(id);
     if (card == null) return;
     _whispersShown.add(key);
-    narration.hint(
-      S.of('mythFound').replaceAll('{name}', card.name),
-      queue: true,
-    );
+    narration.showMyth(card.name, card.who);
   }
 
   int get memoryTotal => levels.fold(0, (sum, l) => sum + l.memories.length);
@@ -524,11 +521,36 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     }
   }
 
-  void _showLevelTitle() => narration.showTitle(
-    level.def.titleText,
-    level.def.subtitleText,
-    level.def.placeText,
-  );
+  /// Testler için: bölüm başlığını (ve ardından ozan dizesini) gösterir.
+  void debugShowTitle() => _showLevelTitle();
+
+  void _showLevelTitle() {
+    narration.showTitle(
+      level.def.titleText,
+      level.def.subtitleText,
+      level.def.placeText,
+    );
+    // Başlık söndükten sonra ozanın dizesi (bölüm başına bir kez).
+    final line = level.def.bardText;
+    if (line.isEmpty || _whispersShown.contains('once:bard:$levelIndex')) {
+      return;
+    }
+    _bardIn = 5.6;
+    _bardLevel = levelIndex;
+  }
+
+  /// Ozan dizesine kalan süre (yoksa negatif).
+  double _bardIn = -1;
+  int _bardLevel = -1;
+
+  void _updateBard(double dt) {
+    if (_bardIn < 0) return;
+    _bardIn -= dt;
+    if (_bardIn >= 0) return;
+    if (_bardLevel == levelIndex && !menuMode.value) {
+      once('bard:$levelIndex', level.def.bardText);
+    }
+  }
 
   /// Testler için: gerçek bölümlerin yerine küçük deneme haritaları.
   static List<LevelDef>? debugLevels;
@@ -1159,6 +1181,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
       _checkStoryPoints(p);
       _updateTension(p, dt);
       _updateHints(p, dt);
+      _updateBard(dt);
     } else {
       threat = math.max(0, threat - dt * 2);
       hideAmount = math.max(0, hideAmount - dt * 2);
@@ -1204,6 +1227,9 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     final poem = Hints.poem(key);
     if (poem.isNotEmpty) once('poem:$key', poem);
   }
+
+  /// Bu bir kezlik söz söylendi mi (testler için)?
+  bool onceShown(String key) => _whispersShown.contains('once:$key');
 
   /// Bu ipucu gösterildi mi (testler için)?
   bool hintShown(String key) => _whispersShown.contains('hint:$key');

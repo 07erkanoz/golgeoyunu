@@ -44,6 +44,17 @@ class Narration extends Component with HasGameReference<GolgeGame> {
   String? _area;
   double _areaT = 0;
 
+  /// Efsane varlığıyla ilk karşılaşma: adı, kim olduğu (tek cümle) ve
+  /// Defter'e yazıldığı. Sırayla gösterilir; bölüm başlığı varken bekler.
+  void showMyth(String name, String who) => _myths.add((name, who));
+
+  final _myths = <(String, String)>[];
+  (String, String)? _myth;
+  double _mythT = 0;
+
+  /// Şu an gösterilen efsane kartının adı (testler için).
+  String? get debugMyth => _myth?.$1;
+
   void showArea(String name) {
     _area = name;
     _areaT = 0;
@@ -108,6 +119,8 @@ class Narration extends Component with HasGameReference<GolgeGame> {
   /// Sahne değişince (yeni bölüm, menü) eski bölümün bekleyen fısıltıları
   /// ve ipuçları atılır; yeni bölümde bağlamsız belirmesinler.
   void resetScene() {
+    _myths.clear();
+    _myth = null;
     _whispers.clear();
     _whisper = null;
     _hints.clear();
@@ -186,6 +199,15 @@ class Narration extends Component with HasGameReference<GolgeGame> {
     if (_area != null) {
       _areaT += dt;
       if (_areaT > 5) _area = null;
+    }
+    if (_myth == null) {
+      if (_myths.isNotEmpty && _title == null && !inCinematic) {
+        _myth = _myths.removeAt(0);
+        _mythT = 0;
+      }
+    } else {
+      _mythT += dt;
+      if (_mythT > 6.5) _myth = null;
     }
     if (_whisper == null) {
       if (_whispers.isNotEmpty && !inCinematic) {
@@ -446,6 +468,56 @@ class Narration extends Component with HasGameReference<GolgeGame> {
           spacing: 4,
         );
       }
+    }
+
+    // Efsane kartı: adı büyük, altında kim olduğu, en altta Defter notu.
+    final myth = _myth;
+    if (myth != null) {
+      final a = _envelope(_mythT, 1.0, 4.2, 1.3);
+      // Okunurluk: arkada yumuşak, koyu bir şerit (parlak ağacın önünde de).
+      if (a > 0) {
+        final band = Rect.fromLTWH(0, h * 0.2, w, h * 0.24);
+        canvas.drawRect(
+          band,
+          Paint()
+            ..shader = ui.Gradient.linear(
+              band.topCenter,
+              band.bottomCenter,
+              [
+                const Color(0x00000000),
+                Color.fromRGBO(6, 3, 2, 0.55 * a),
+                Color.fromRGBO(6, 3, 2, 0.55 * a),
+                const Color(0x00000000),
+              ],
+              const [0, 0.3, 0.7, 1],
+            ),
+        );
+      }
+      _text(
+        canvas,
+        S.upper(myth.$1),
+        Offset(w / 2, h * 0.27),
+        unit * 0.046,
+        a,
+        spacing: 9,
+      );
+      _text(
+        canvas,
+        myth.$2,
+        Offset(w / 2, h * 0.335),
+        unit * 0.025,
+        a * 0.85,
+        italic: true,
+        maxWidth: w * 0.7,
+      );
+      _text(
+        canvas,
+        S.upper(S.of('mythNoted')),
+        Offset(w / 2, h * 0.39),
+        unit * 0.016,
+        a * 0.5,
+        spacing: 4,
+      );
     }
 
     // Yer adı: üstte, ince ve geniş aralıklı; başlık varken gösterilmez.

@@ -36,8 +36,11 @@ void main() {
       await _level(game, 0);
       _standAt(game, 157, 9);
       run(game, 1.5);
-      expect(game.world.children.whereType<WaterFace>(), isEmpty,
-          reason: 'hemen değil, beklemeyle');
+      expect(
+        game.world.children.whereType<WaterFace>(),
+        isEmpty,
+        reason: 'hemen değil, beklemeyle',
+      );
       run(game, 2);
       expect(game.world.children.whereType<WaterFace>(), hasLength(1));
       expect(game.mythsSeen, contains('suIyesi'));
@@ -77,13 +80,13 @@ void main() {
     GolgeGame.new,
     (game) async {
       await _level(game, 5);
-      final flood = game.world.children
-          .whereType<WaterBasin>()
-          .reduce((a, b) =>
-              (a.area.center.dx - 195 * kTile).abs() <
-                      (b.area.center.dx - 195 * kTile).abs()
-                  ? a
-                  : b);
+      final flood = game.world.children.whereType<WaterBasin>().reduce(
+        (a, b) =>
+            (a.area.center.dx - 195 * kTile).abs() <
+                (b.area.center.dx - 195 * kTile).abs()
+            ? a
+            : b,
+      );
       flood.startFlood();
       run(game, 0.5);
       expect(game.world.children.whereType<AkAnaRise>(), hasLength(1));
@@ -124,6 +127,19 @@ void main() {
       run(game, 2);
       expect(game.world.children.whereType<AlbastiShade>(), isEmpty);
       expect(game.jarSteal, 0);
+    },
+  );
+
+  testWithGame<GolgeGame>(
+    'bölüm başlığından sonra ozanın dizesi bir kez söylenir',
+    GolgeGame.new,
+    (game) async {
+      await _level(game, 0);
+      game.debugShowTitle();
+      run(game, 0.5);
+      expect(game.onceShown('bard:0'), isFalse);
+      run(game, 6.5);
+      expect(game.onceShown('bard:0'), isTrue);
     },
   );
 }

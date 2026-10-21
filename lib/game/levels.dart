@@ -69,7 +69,15 @@ class LevelDef {
     this.gokboruHelp = false,
     this.gokboruLead,
     this.cameos = const [],
+    this.bard = '',
+    this.bardEn = '',
   });
+
+  /// Bölüm başında, başlıktan sonra ozanın tek dizesi (Dede Korkut
+  /// havasında; bir kez).
+  final String bard;
+  final String bardEn;
+  String get bardText => S.en && bardEn.isNotEmpty ? bardEn : bard;
 
   /// Bölüme serpiştirilen kısa efsane görünüşleri: (tür, sütun, satır).
   /// Türler lib/game/cameos.dart'ta.
@@ -438,6 +446,8 @@ List<String> interludeText(int level) {
 const levels = <LevelDef>[
   LevelDef(
     title: 'I · YEREBATAN',
+    bard: 'Ozan der ki: Suyun altında şehir uyur; uyanık kalanı Umay korur.',
+    bardEn: 'The bard says: a city sleeps beneath the water; Umay guards the one who stays awake.',
     cameos: [('suIyesi', 0, 0)],
     subtitle: 'Suyun altında bir şehir uyur.',
     theme: LevelTheme.cistern,
@@ -522,6 +532,8 @@ const levels = <LevelDef>[
   ),
   LevelDef(
     title: 'II · KULE',
+    bard: 'Ozan der ki: Yükselen merdiven göğe varmaz; varan, gölgesini yerde bırakandır.',
+    bardEn: 'The bard says: no stair reaches the sky; only one who leaves the shadow on the ground arrives.',
     subtitle: 'Yükseldikçe ışık soğur.',
     theme: LevelTheme.cliffs,
     titleEn: 'II · THE TOWER',
@@ -588,6 +600,8 @@ const levels = <LevelDef>[
   ),
   LevelDef(
     title: 'III · GÖKYOLU',
+    bard: 'Ozan der ki: Bulut yol olur, yiğit yolcu; kanatlı at yolu önden bilir.',
+    bardEn: 'The bard says: the cloud becomes a road, the brave its traveller; the winged horse knows the way ahead.',
     cameos: [('tulpar', 140, 8)],
     subtitle: 'Kaf\'a giden yol buluttandır.',
     theme: LevelTheme.sky,
@@ -657,6 +671,8 @@ const levels = <LevelDef>[
   ),
   LevelDef(
     title: 'IV · KAF',
+    bard: 'Ozan der ki: Dünyanın kıyısında zümrüt bir dağ; büyük kuşun gölgesi orada dinlenir.',
+    bardEn: "The bard says: an emerald mountain at the edge of the world; the great bird's shadow rests there.",
     subtitle: 'Dünyanın kıyısında zümrüt bir dağ.',
     theme: LevelTheme.kaf,
     wings: true,
@@ -716,6 +732,8 @@ const levels = <LevelDef>[
   ),
   LevelDef(
     title: 'V · AĞRI',
+    bard: 'Ozan der ki: Karlı dağ sırrını söylemez; sabredene bir çan çalar.',
+    bardEn: 'The bard says: the snowy mountain keeps its secret; for the patient, a bell rings.',
     cameos: [('ayazAta', 243, 15)],
     gokboruWatch: [(218, 10)],
     subtitle: 'Tufandan beri karla örtülü bir sır.',
@@ -781,6 +799,9 @@ const levels = <LevelDef>[
   ),
   LevelDef(
     title: 'VI · NUH\'UN GEMİSİ',
+    bard:
+        'Ozan der ki: Su yükselir, gemi kalkar; ilk suyun anası da bunu bilir.',
+    bardEn: 'The bard says: the water rises, the ark lifts; the mother of the first water knows this too.',
     cameos: [('akAna', 200, 25)],
     subtitle: 'Kırk gün kırk gece. Sonra bir dal, bir güvercin.',
     theme: LevelTheme.ark,
@@ -838,6 +859,8 @@ const levels = <LevelDef>[
   ),
   LevelDef(
     title: 'VII · NEMRUT',
+    bard: 'Ozan der ki: Tanrılarla oturmak isteyen kralın başı, taşın dibinde yatar.',
+    bardEn: 'The bard says: the king who would sit with gods lies with his head at the foot of the stone.',
     subtitle: 'Tanrılarla yan yana oturmak isteyen bir kralın dağı.',
     theme: LevelTheme.nemrut,
     wings: true,
@@ -898,6 +921,8 @@ const levels = <LevelDef>[
   ),
   LevelDef(
     title: 'VIII · GÜN DOĞUMU',
+    bard: 'Ozan der ki: Gün doğar, dev uyanır; aslanlar arasında büyüyen yiğit korkmaz.',
+    bardEn: 'The bard says: the sun rises, the giant wakes; the hero raised among lions is not afraid.',
     cameos: [('basat', 0, 0)],
     subtitle: 'Güneş doğarken taşlar da gölge düşürür.',
     theme: LevelTheme.nemrut,
@@ -948,6 +973,9 @@ const levels = <LevelDef>[
   ),
   LevelDef(
     title: 'IX · KAR YOLU',
+    bard:
+        'Ozan der ki: Kervanın palanı yolda kalır; gök yeleli kurt yolu bilir.',
+    bardEn: "The bard says: the caravan's saddles are left on the road; the sky-maned wolf knows the way.",
     pawTrails: [(133, 190, 19)],
     gokboruGuard: true,
     gokboruHelp: true,
@@ -1010,6 +1038,8 @@ const levels = <LevelDef>[
   ),
   LevelDef(
     title: 'X · PALANDÖKEN',
+    bard: 'Ozan der ki: Dağdan inen rüzgârı geçemezsin; rüzgârla inersin.',
+    bardEn: 'The bard says: you cannot outrun the wind from the mountain; you ride down with it.',
     subtitle: 'Ejderlerin uyuduğu dağdan aşağı.',
     theme: LevelTheme.snow,
     variant: 1,
@@ -1067,6 +1097,8 @@ const levels = <LevelDef>[
   ),
   LevelDef(
     title: 'XI · ÇIĞ',
+    bard: 'Ozan der ki: Ak dağ yürür, yer titrer; koşan, önündeki ışığa bakar.',
+    bardEn: 'The bard says: the white mountain walks, the earth shakes; the runner looks to the light ahead.',
     subtitle: 'Ejder uyandı. Beyaz bir nefes peşinde.',
     theme: LevelTheme.snow,
     variant: 2,
@@ -1117,6 +1149,8 @@ const levels = <LevelDef>[
   ),
   LevelDef(
     title: 'XII · PERİ BACALARI',
+    bard: 'Ozan der ki: Peri bacası gölgede uzar; kızıl gölge ışığını ister, demirden korkar.',
+    bardEn: 'The bard says: the fairy chimneys stretch in shadow; the red shade wants your light and fears iron.',
     cameos: [('albasti', 207, 25)],
     subtitle: 'İnsanlar aşağıda, periler yukarıda yaşardı.',
     theme: LevelTheme.peri,
@@ -1179,6 +1213,8 @@ const levels = <LevelDef>[
   ),
   LevelDef(
     title: 'XIII · DERİNKUYU',
+    bard: 'Ozan der ki: Yerin altı kat kattır; en dipte bir ses seni adınla çağırır.',
+    bardEn: 'The bard says: the underworld lies layer upon layer; at the bottom a voice calls you by name.',
     cameos: [('erlik', 266, 43)],
     pawTrails: [(262, 318, 43)],
     gokboruHelp: true,
@@ -1241,6 +1277,8 @@ const levels = <LevelDef>[
   ),
   LevelDef(
     title: 'XIV · ŞEB-İ ARÛS',
+    bard: 'Ozan der ki: Dönen döner, gölge düşer; kim dönerse yolunu bulur.',
+    bardEn: 'The bard says: the whirling turn, the shadows fall; whoever turns finds the way.',
     gokboruGuard: true,
     subtitle: 'Bu gece ölüm bir düğündür.',
     theme: LevelTheme.konya,
