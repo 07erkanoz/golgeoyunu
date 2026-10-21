@@ -25,6 +25,7 @@ import 'konya.dart';
 import 'hints.dart';
 import 'legends.dart';
 import 'umay.dart';
+import 'gokboru.dart';
 import 'myth_cards.dart';
 import 'nemrut.dart';
 import 'ski.dart';
@@ -565,6 +566,17 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         ExitPortal(level.exitCell),
         for (final k in level.checkpointCells)
           UmayTree(k, headroom: _headroom(k)),
+        for (final (c0, c1, r) in level.def.pawTrails)
+          ?PawTrail.build(level, c0, c1, r),
+        if (level.def.gokboruGuard ||
+            level.def.gokboruHelp ||
+            level.def.gokboruWatch.isNotEmpty)
+          GokboruWarden(
+            guard: level.def.gokboruGuard,
+            help: level.def.gokboruHelp,
+            watch: level.def.gokboruWatch,
+            leadTo: level.def.gokboruLead,
+          ),
         for (final g in level.guardCells) Guard(g),
         for (final c in level.crateCells) Crate(c),
         for (final l in level.leverCells) Lever(l),
@@ -1241,6 +1253,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         Crate k when near(k, 3, 2) => 'crate',
         Lever l when near(l, 4, 4) => 'lever',
         UmayTree u when near(u, 3, 3) => 'umay',
+        PawTrail t when near(t, 4, 3) => 'gokboruTrail',
         Valve v when near(v, 4, 3) => 'valve',
         PerdeCord k when near(k, 4, 3) => 'cord',
         ArkScale s when near(s.lift.a, 6, 4) || near(s.lift.b, 6, 4) => 'scale',

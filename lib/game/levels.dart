@@ -63,7 +63,29 @@ class LevelDef {
     this.placeEn = '',
     this.areas = const [],
     this.areasEn = const [],
+    this.pawTrails = const [],
+    this.gokboruWatch = const [],
+    this.gokboruGuard = false,
+    this.gokboruHelp = false,
+    this.gokboruLead,
   });
+
+  /// Gökbörü'nün pençe izleri: (ilk sütun, son sütun, satır). Yalnızca
+  /// kavanoz örtülüyken ya da karanlıkta parlar; ince buza ve dikene iz
+  /// düşmez (izler güvenli yolu gösterir).
+  final List<(int, int, int)> pawTrails;
+
+  /// Gökbörü'nün uzaktan bir an belirip uluduğu hücreler (sezilir).
+  final List<(int, int)> gokboruWatch;
+
+  /// Aç kurtlar Sâye'yi sıkıştırınca Gökbörü bir kez araya girer.
+  final bool gokboruGuard;
+
+  /// Uzun süre ilerlenemezse Gökbörü yolun ilerisinde uluyup yönü gösterir.
+  final bool gokboruHelp;
+
+  /// Araya girdikten sonra yürüyüp Sâye'yi beklediği sütun.
+  final int? gokboruLead;
 
   /// Başlığın altında: yer ve zaman (ör. "Yerebatan Sarnıcı · İstanbul,
   /// Temmuz 1660").
@@ -687,6 +709,7 @@ const levels = <LevelDef>[
   ),
   LevelDef(
     title: 'V · AĞRI',
+    gokboruWatch: [(218, 10)],
     subtitle: 'Tufandan beri karla örtülü bir sır.',
     theme: LevelTheme.snow,
     wings: true,
@@ -915,6 +938,10 @@ const levels = <LevelDef>[
   ),
   LevelDef(
     title: 'IX · KAR YOLU',
+    pawTrails: [(133, 190, 19)],
+    gokboruGuard: true,
+    gokboruHelp: true,
+    gokboruLead: 131,
     subtitle: 'Palanlarını döken kervanların yolu.',
     theme: LevelTheme.snow,
     variant: 1,
@@ -1141,6 +1168,8 @@ const levels = <LevelDef>[
   ),
   LevelDef(
     title: 'XIII · DERİNKUYU',
+    pawTrails: [(262, 318, 43)],
+    gokboruHelp: true,
     subtitle: 'Yerin altında, unutulmuş bir şehir.',
     theme: LevelTheme.cave,
     wings: true,
@@ -1200,6 +1229,7 @@ const levels = <LevelDef>[
   ),
   LevelDef(
     title: 'XIV · ŞEB-İ ARÛS',
+    gokboruGuard: true,
     subtitle: 'Bu gece ölüm bir düğündür.',
     theme: LevelTheme.konya,
     wings: true,

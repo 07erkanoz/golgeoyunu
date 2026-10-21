@@ -65,5 +65,27 @@ class MythCard {
       sourceTr: 'Orhun Yazıtları (Kül Tigin Yazıtı)',
       sourceEn: 'Orkhon Inscriptions (Kül Tigin)',
     ),
+    MythCard(
+      id: 'gokboru',
+      nameTr: 'Gökbörü',
+      nameEn: 'Gökbörü',
+      whoTr: 'Gök tüylü, gök yeleli kurt; yol gösteren rehber.',
+      whoEn:
+          'The wolf with sky-coloured fur and mane; a guide who shows the way.',
+      storyTr:
+          'Oğuz Kağan Destanı\'nda bir sabah Oğuz\'un çadırına gökten bir '
+          'ışık düşer; ışığın içinden gök tüylü, gök yeleli bir erkek kurt '
+          'çıkar ve ordunun önünde yürüyerek yol gösterir. Ergenekon '
+          'anlatısında da dağlarla çevrili vadiden çıkış yolunu bir kurt '
+          'gösterir.',
+      storyEn:
+          'In the Oghuz Khagan epic a light falls into Oghuz\'s tent one '
+          'morning; out of it steps a male wolf with sky-coloured fur and '
+          'mane, who walks before the army and shows it the way. In the '
+          'Ergenekon legend, too, a wolf shows the people the way out of the '
+          'valley walled in by mountains.',
+      sourceTr: 'Oğuz Kağan Destanı; Ergenekon Destanı',
+      sourceEn: 'Oghuz Khagan epic; Ergenekon legend',
+    ),
   ];
 }

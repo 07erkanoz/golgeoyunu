@@ -261,10 +261,16 @@ satır), yeni perdede kopuz motifi müzikte duyulur.
 ## 8. Uygulama sırası
 
 1. **Umay ağacı** bütün kontrol noktalarında; Yerebatan'da ilk tanıtım.
-   *(Bu rehberle birlikte uygulanıyor.)*
+   *(Yapıldı: lib/game/umay.dart; çizim lib/game/myth_figures.dart.)*
 2. **Defter > Efsaneler** bölümü ve kart altyapısı; bölüm açılış dizeleri.
+   *(Kartlar yapıldı: lib/game/myth_cards.dart — Umay, Gökbörü. Açılış
+   dizeleri bekliyor.)*
 3. **Gökbörü:** varlık, pençe izi mekaniği (kavanozu örtünce görünür),
    uluma yardımı; Kar Yolu'nda ilk karşılaşma, Ağrı'da önsezi.
+   *(Yapıldı: lib/game/gokboru.dart. Kar Yolu: kurtlara karşı araya girer,
+   göl kıyısına yürür, izler sağlam buzu gösterir; Ağrı: tepede bir an
+   belirir; Derinkuyu: karanlıkta izler, takılınca uluma; Konya: kurtlara
+   karşı bir kez. Çığ'daki koşu henüz yok.)*
 4. **Ak Ana** (Gemi tufanı), **Su İyesi** (Yerebatan), **Tulpar** (Gökyolu
    önsezisi), **Ayaz Ata** (Ağrı), **Albastı** (Peri), **Basat** dizesi
    (Gün Doğumu), Derinkuyu'nun kuyusu.

@@ -128,6 +128,8 @@ class Hints {
     'crate': 'Sandığı it · üstüne çıkıp yüksel',
     'lever': '{up} Kolu çek',
     'umay': 'Umay ağacı · dokun: düştüğünde buradan yeniden başlarsın',
+    'gokboruTrail':
+        '{down} Kavanozunu ört · Gökbörü\'nün izleri karanlıkta parlar',
     'valve': '{up} Vanayı çevir',
     'scale': 'Terazi · eşleri iki kefeye koy · ağırlıklar denk gelmeli · {up} kol teraziyi boşaltır',
     'cord': '{up} İpi çek · kandil perdenin ardında kayar',
@@ -176,6 +178,8 @@ class Hints {
     'crate': 'Push the crate · climb it to reach higher',
     'lever': '{up} Pull the lever',
     'umay': 'Umay tree · touch it: if you fall, you rise here again',
+    'gokboruTrail':
+        '{down} Cover your jar · Gökbörü\'s tracks glow in the dark',
     'valve': '{up} Turn the valve',
     'scale':
         'The scales · put the pair on the two pans · the weights must match',

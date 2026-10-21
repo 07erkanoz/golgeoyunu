@@ -42,6 +42,15 @@ class Wolf extends PositionComponent with HasGameReference<GolgeGame> {
 
   bool _solidAt(double x, double y) => level.cellAt(x, y) == '#';
 
+  /// Korkutulur (Gökbörü'nün uluması): [seconds] boyunca avından kaçar,
+  /// atılmaktan vazgeçer.
+  void scare(double seconds) {
+    hunting = true;
+    _fear = math.max(_fear, seconds);
+    _crouch = 0;
+    _lunge = 0;
+  }
+
   @override
   void update(double dt) {
     super.update(dt);

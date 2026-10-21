@@ -52,6 +52,7 @@ void main() {
       }
       game.debugCloseUp = double.parse(p[4]);
       if (p.length > 6) game.scare(double.parse(p[6]), sting: false);
+      game.controls.keyboard.down = const bool.fromEnvironment('CROUCH');
       for (var t = 0.0; t < double.parse(p[5]); t += 1 / 60) {
         game.update(1 / 60);
       }

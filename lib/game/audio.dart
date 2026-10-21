@@ -60,6 +60,7 @@ class GameAudio {
     'fire_warn',
     'sting',
     'growl',
+    'howl',
     'thunder',
   ];
 

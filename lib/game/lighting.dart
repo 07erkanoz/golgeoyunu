@@ -13,6 +13,7 @@ import 'nemrut.dart';
 import 'palette.dart';
 import 'puzzles.dart';
 import 'umay.dart';
+import 'gokboru.dart';
 import '../settings.dart';
 import 'golge_game.dart';
 import 'level.dart';
@@ -154,6 +155,8 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
           );
         case MemoryShard m:
           _light(canvas, m.position.toOffset(), 80, 0.8);
+        case GokboruSpirit g:
+          _light(canvas, g.glowCenter, 90, 0.75 * g.alpha);
         case UmayTree u:
           _light(canvas, u.glowCenter, u.glowRadius, 0.45 + 0.4 * u.lit);
         case Bird b:
