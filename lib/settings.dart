@@ -33,6 +33,13 @@ class Settings {
   /// Dokunmatik düğmelerin görünürlüğü (0.1 – 1).
   static double touchOpacity = 0.7;
 
+  /// Erişilebilirlik: ekran sarsıntısı ve ani beyaz parlamalar (şimşek,
+  /// korku anı, yakalanma) büyük ölçüde azaltılır.
+  static bool calmEffects = false;
+
+  /// Sarsıntı ve parlamaların çarpanı.
+  static double get flashScale => calmEffects ? 0.25 : 1;
+
   static SharedPreferences? _prefs;
 
   /// Ayar deposu: açılamazsa bir sonraki kayıtta yeniden denenir.
@@ -84,6 +91,7 @@ class Settings {
       fullscreen = _read(() => p.getBool('fullscreen')) ?? fullscreen;
       lowGraphics = _read(() => p.getBool('low_graphics')) ?? lowGraphics;
       touchGestures = _read(() => p.getBool('touch_gestures')) ?? touchGestures;
+      calmEffects = _read(() => p.getBool('calm_effects')) ?? calmEffects;
       // Kayıtlı bir tercih yoksa cihazın dili: Türkçe değilse İngilizce.
       final lang = _read(() => p.getString('lang'));
       S.lang = switch (lang) {
@@ -115,6 +123,7 @@ class Settings {
       await p.setBool('fullscreen', fullscreen);
       await p.setBool('low_graphics', lowGraphics);
       await p.setBool('touch_gestures', touchGestures);
+      await p.setBool('calm_effects', calmEffects);
       await p.setDouble('touch_opacity', touchOpacity);
       await p.setDouble('brightness', brightness);
       await p.setString('lang', S.en ? 'en' : 'tr');

@@ -1,6 +1,7 @@
 import 'package:flame/components.dart';
 import 'package:flame_test/flame_test.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:golge/game/creatures.dart';
 import 'package:golge/game/entities.dart';
 import 'package:golge/game/golge_game.dart';
 import 'package:golge/game/level.dart';
@@ -116,6 +117,113 @@ void main() {
       run(game, 6);
       expect(wolf.position.x, greaterThanOrEqualTo(gate.position.x));
       expect(game.player!.isDead, isFalse);
+    },
+  );
+
+  testWithGame<GolgeGame>(
+    'kamera zıplamada inip çıkmaz; görünen alan ekranla kesintisiz değişir',
+    GolgeGame.new,
+    (game) async {
+      await _load(game, const [
+        '############################################################',
+        '#..........................................................#',
+        '#..........................................................#',
+        '#..........................................................#',
+        '#..........................................................#',
+        '#..........................................................#',
+        '#..........................................................#',
+        '#..........................................................#',
+        '#..........................................................#',
+        '#..........................................................#',
+        '#..........................................................#',
+        '#..........................................................#',
+        '#..........................................................#',
+        '#..........................................................#',
+        '#..........................................................#',
+        '#..........................................................#',
+        '#..........................................................#',
+        '#..........................................................#',
+        '#..........................................................#',
+        '#..........................................................#',
+        '#..........................................................#',
+        '#..........................................................#',
+        '#..........................................................#',
+        '#..........................................................#',
+        '#..........................................................#',
+        '#..........................................................#',
+        '#..........................................................#',
+        '#..........................................................#',
+        '#P.........................................................#',
+        '############################################################',
+      ]);
+      game.onGameResize(Vector2(1280, 720));
+      run(game, 1);
+      final y0 = game.camera.viewfinder.position.y;
+      var drift = 0.0;
+      game.controls.keyboard.jump = true;
+      for (var i = 0; i < 60; i++) {
+        game.update(1 / 60);
+        if (i == 5) game.controls.keyboard.jump = false;
+        final d = (game.camera.viewfinder.position.y - y0).abs();
+        if (d > drift) drift = d;
+      }
+      expect(drift, lessThan(6), reason: 'zıplarken kamera $drift px oynadı');
+
+      double tiles(double h) {
+        game.onGameResize(Vector2(h * 16 / 9, h));
+        return game.tilesTall;
+      }
+
+      final a = tiles(500);
+      final b = tiles(530);
+      expect(b - a, lessThan(1.0), reason: 'eşikte sıçrama yok');
+      expect(tiles(360), 13);
+      expect(tiles(900), 20);
+    },
+  );
+
+  testWithGame<GolgeGame>(
+    'geciken ayak sesi: yürüyüp durunca bir kez olur, hareketi etkilemez',
+    GolgeGame.new,
+    (game) async {
+      GolgeGame.debugLevels = [
+        const LevelDef(
+          title: 'YANKI',
+          subtitle: '',
+          theme: LevelTheme.cistern,
+          echoes: [(3, 30)],
+          map: [
+            '########################################',
+            '#......................................#',
+            '#......................................#',
+            '#P.....................................#',
+            '########################################',
+          ],
+        ),
+      ];
+      game.debugLoadLevel(0);
+      await game.ready();
+      game.cinematic = false;
+      run(game, 0.2);
+      final p = game.player!;
+      p.position.x = 4 * kTile;
+      game.controls.keyboard.right = true;
+      run(game, 1.2);
+      game.controls.keyboard.right = false;
+      run(game, 0.9);
+      expect(p.lookingBack, isTrue);
+      expect(game.eventSeen('echo:0:3'), isTrue);
+      // Oyuncu hâlâ serbest: yürüyebilir.
+      final x = p.position.x;
+      game.controls.keyboard.right = true;
+      run(game, 0.3);
+      expect(p.position.x, greaterThan(x + 20));
+      // Bir daha olmaz.
+      game.controls.keyboard.right = false;
+      run(game, 2.5);
+      game.debugLoadLevel(0);
+      run(game, 0.2);
+      expect(game.world.children.whereType<EchoSteps>(), isEmpty);
     },
   );
 }

@@ -52,6 +52,7 @@ class LevelDef {
     this.quakes = false,
     this.skiSurface,
     this.magnet = const [],
+    this.echoes = const [],
     this.titleEn = '',
     this.subtitleEn = '',
     this.whispersEn = const [],
@@ -106,6 +107,10 @@ class LevelDef {
 
   /// Manyetik Tepe bölgeleri (sütun aralıkları): kar yokuş yukarı akar.
   final List<(int, int)> magnet;
+
+  /// Geciken ayak sesi olaylarının sütun aralıkları (sırayla yükselir: ilki
+  /// yalnızca ses, ikincisi gölgeyle birlikte). Kayıt başına bir kez.
+  final List<(int, int)> echoes;
 
   /// Ara ara deprem olur: yer sarsılır, gevşek kayalar düşer.
   final bool quakes;
@@ -477,6 +482,7 @@ const levels = <LevelDef>[
       'The Dark Channels',
     ],
     map: kMapYerebatan,
+    echoes: [(20, 31), (72, 89)],
   ),
   LevelDef(
     title: 'II · KULE',

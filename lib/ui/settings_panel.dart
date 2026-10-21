@@ -36,7 +36,7 @@ class SettingsPanel extends StatefulWidget {
   State<SettingsPanel> createState() => _SettingsPanelState();
 }
 
-enum _Page { settings, story, about }
+enum _Page { settings, story, book, about }
 
 class _SettingsPanelState extends State<SettingsPanel> {
   static const _text = Color(0xFFEBDDCB);
@@ -96,6 +96,9 @@ class _SettingsPanelState extends State<SettingsPanel> {
             child: SingleChildScrollView(
               child: switch (_page) {
                 _Page.story => _subPage(const StoryPage()),
+                _Page.book => _subPage(
+                  MemoryBookPage(memories: widget.game.collectedMemories),
+                ),
                 _Page.about => _subPage(const AboutPage()),
                 _Page.settings => Column(
                   mainAxisSize: MainAxisSize.min,
@@ -256,7 +259,31 @@ class _SettingsPanelState extends State<SettingsPanel> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            S.of('calmEffects'),
+                            style: const TextStyle(color: _text, fontSize: 14),
+                          ),
+                        ),
+                        Switch(
+                          value: Settings.calmEffects,
+                          activeThumbColor: _accent,
+                          inactiveThumbColor: _text.withValues(alpha: 0.6),
+                          inactiveTrackColor: const Color(0x22EBDDCB),
+                          trackOutlineColor: const WidgetStatePropertyAll(
+                            Color(0x55EBDDCB),
+                          ),
+                          onChanged: (v) {
+                            Settings.calmEffects = v;
+                            Settings.save();
+                            setState(() {});
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
                     Row(
                       children: [
                         Text(
@@ -297,14 +324,18 @@ class _SettingsPanelState extends State<SettingsPanel> {
                       children: [
                         for (final (page, key, icon) in [
                           (_Page.story, 'story', Icons.auto_stories_outlined),
+                          (_Page.book, 'book', Icons.menu_book_outlined),
                           (_Page.about, 'about', Icons.info_outline),
                         ]) ...[
-                          if (page == _Page.about) const SizedBox(width: 12),
+                          if (page != _Page.story) const SizedBox(width: 8),
                           Expanded(
                             child: OutlinedButton.icon(
                               onPressed: () => setState(() => _page = page),
-                              icon: Icon(icon, size: 16),
-                              label: Text(S.of(key)),
+                              icon: Icon(icon, size: 15),
+                              label: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(S.of(key)),
+                              ),
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: _accent,
                                 side: const BorderSide(

@@ -721,3 +721,71 @@ class KarabasanGlimpse extends PositionComponent
     }
   }
 }
+
+// ======================================================= Geciken ayak sesi
+
+/// Sâye taş yolda yürüyüp durunca, bir an sonra arkasından bir adım daha
+/// duyulur; Sâye dönüp bakar. İkinci kez iki adım gelir ve duvardaki gölgesi
+/// geride kalır. Yalnızca sezdirir: oyuncunun hareketine, düşmanlara ya da
+/// sese hiçbir etkisi yoktur. Kayıt başına bir kez.
+class EchoSteps extends Component with HasGameReference<GolgeGame> {
+  EchoSteps(this.from, this.to, {required this.stage});
+
+  final int from;
+  final int to;
+
+  /// 0: yalnızca ses ve bakış; 1: iki adım ve geride kalan gölge.
+  final int stage;
+
+  double _walked = 0;
+  double _t = -1;
+
+  String get _key => 'echo:${game.levelIndex}:$from';
+
+  @override
+  void onMount() {
+    super.onMount();
+    if (game.eventSeen(_key)) removeFromParent();
+  }
+
+  String get _sound => game.level.def.theme.snowy
+      ? 'step_snow'
+      : (game.level.def.theme == LevelTheme.cistern ? 'step_wood' : 'step');
+
+  @override
+  void update(double dt) {
+    super.update(dt);
+    final p = game.player;
+    if (p == null || p.isDead || game.cinematic) return;
+    if (_t < 0) {
+      final col = p.center.x / kTile;
+      final inside = col >= from && col <= to;
+      if (!inside || game.threat > 0.3) {
+        _walked = 0;
+        return;
+      }
+      final moving = p.onGround && p.velocity.x.abs() > 40;
+      if (moving) {
+        _walked += dt;
+      } else if (_walked > 0.8 && p.onGround && p.velocity.x.abs() < 4) {
+        _t = 0;
+        game.markEvent(_key);
+      }
+      return;
+    }
+    final before = _t;
+    _t += dt;
+    bool at(double s) => before < s && _t >= s;
+    // Durduktan bir an sonra: yankı değil, bir adım daha.
+    if (at(0.45)) GameAudio.instance.play(_sound, volume: 0.32);
+    if (at(0.62)) {
+      p.lookBack(1.2);
+      game.threat = math.max(game.threat, 0.28);
+    }
+    if (stage > 0 && at(0.95)) {
+      GameAudio.instance.play(_sound, volume: 0.42);
+      p.shadowFright(0.5);
+    }
+    if (_t > 2.2) removeFromParent();
+  }
+}

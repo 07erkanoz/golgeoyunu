@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../game/levels.dart';
 import '../game/strings.dart';
 import '../settings.dart';
 
@@ -51,6 +52,77 @@ class _Heading extends StatelessWidget {
 
 TextStyle get _body =>
     TextStyle(color: _text.withValues(alpha: 0.82), fontSize: 13, height: 1.55);
+
+// ========================================================== Hatıra defteri
+
+/// Bulunan hatıraların defteri: açılmış her bölümün hatıraları sırayla;
+/// bulunmayanların yerinde boş bir satır.
+class MemoryBookPage extends StatelessWidget {
+  const MemoryBookPage({super.key, required this.memories});
+
+  /// "bölüm:sıra" anahtarları.
+  final Set<String> memories;
+
+  @override
+  Widget build(BuildContext context) {
+    final open = Settings.unlocked.clamp(0, levels.length - 1);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _Heading(S.of('bookTitle')),
+        const SizedBox(height: 14),
+        Text(S.of('bookIntro'), style: _body),
+        for (var l = 0; l <= open; l++)
+          if (levels[l].memoryTexts.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    S.upper(levels[l].titleText),
+                    style: const TextStyle(
+                      color: _accent,
+                      fontSize: 12,
+                      letterSpacing: 2,
+                    ),
+                  ),
+                ),
+                Text(
+                  '${[for (var i = 0; i < levels[l].memoryTexts.length; i++)
+                    if (memories.contains('$l:$i')) i].length}'
+                  ' / ${levels[l].memoryTexts.length}',
+                  style: TextStyle(
+                    color: _text.withValues(alpha: 0.5),
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ),
+            for (var i = 0; i < levels[l].memoryTexts.length; i++)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: memories.contains('$l:$i')
+                    ? Text(
+                        // "Hatıra ·" öneki defterde gereksiz.
+                        levels[l].memoryTexts[i].replaceFirst(
+                          RegExp(r'^\S+ · '),
+                          '',
+                        ),
+                        style: _body.copyWith(fontStyle: FontStyle.italic),
+                      )
+                    : Text(
+                        '· · ·',
+                        style: TextStyle(
+                          color: _text.withValues(alpha: 0.25),
+                          letterSpacing: 4,
+                        ),
+                      ),
+              ),
+          ],
+      ],
+    );
+  }
+}
 
 // ================================================================= Hikâye
 

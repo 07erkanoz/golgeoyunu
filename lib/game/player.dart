@@ -102,6 +102,15 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
 
   /// Kavanozun dünyadaki son çizildiği yer (ışık oradan çıkar).
   Vector2? _jarWorld;
+
+  /// Arkadan gelen bir ses: baş bir süre geriye döner (yalnızca çizim).
+  double _lookBackT = 0;
+  bool get lookingBack => _lookBackT > 0;
+  void lookBack(double seconds) => _lookBackT = math.max(_lookBackT, seconds);
+
+  /// Tetikte: kavanozu göğsüne çeker, eli hafifçe titrer. Güvenli yerde
+  /// yavaşça gevşer.
+  double _wary = 0;
   bool _jumpCut = true;
   bool _prevJump = false;
   bool _prevUp = false;
@@ -1123,6 +1132,9 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
   /// geçişlerini yumuşatır.
   void _updateMotion(double dt) {
     if (dt <= 0) return;
+    _lookBackT = math.max(0, _lookBackT - dt);
+    final tense = game.threat > 0.25 || _lookBackT > 0;
+    _wary = approach(_wary, tense ? 1 : 0, dt, tense ? 0.15 : 0.9);
     _air = approach(_air, onGround ? 0 : 1, dt, onGround ? 0.045 : 0.08);
     _fallBlend = approach(
       _fallBlend,
@@ -1666,11 +1678,14 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     final head = Offset(cx + 1 + lean * 9, headY);
 
     // Kavanozu tutan kol öne uzanır; yürürken hafifçe sallanır.
+    // Tetikteyken (dururken) kavanoz göğse çekilir, el hafifçe titrer.
+    final still = (1 - amount).clamp(0.0, 1.0) * _wary;
     final jarArm = shielded
         ? 1.9
         : (jarAtHip
               ? (pushing ? 1.4 : math.pi - 0.15)
-              : (sneaking ? 1.5 : 0.55 + math.sin(cycle) * 0.1 * amount));
+              : (sneaking ? 1.5 : 0.55 + math.sin(cycle) * 0.1 * amount) +
+                    still * (0.75 + math.sin(_anim * 37) * 0.03));
     Offset limbEnd(Offset from, double angle, double len) =>
         from + Offset(math.sin(angle) * len, math.cos(angle) * len);
     jarHand = limbEnd(shoulder, jarArm, 9.5);
@@ -1791,6 +1806,14 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
 
     leg(foot1);
 
+    // Arkadan bir ses: baş geriye döner (beden yerinde kalır).
+    final looking = _lookBackT > 0;
+    if (looking) {
+      canvas.save();
+      canvas.translate(head.dx, 0);
+      canvas.scale(-1, 1);
+      canvas.translate(-head.dx, 0);
+    }
     // Baş: yuvarlak kafatası, öne çıkan alın ve küçük burun, geriye çekilen
     // çene; dağınık saçlar rüzgârla arkaya yatar.
     canvas.drawCircle(head.translate(-0.3, -0.2), 6.0, _fill);
@@ -1841,6 +1864,8 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       ..lineTo(h(-2, -1).dx, h(-2, -1).dy)
       ..close();
     canvas.drawPath(hair, _fill);
+
+    if (looking) canvas.restore();
 
     // Uzun atkı: boyuna dolanır, iki ucu ardında dalgalanır.
     final neck = Offset(head.dx - 1.5, headY + 7);

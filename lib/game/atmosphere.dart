@@ -671,8 +671,9 @@ class ScreenEffects extends Component with HasGameReference<GolgeGame> {
       canvas.drawRect(
         Rect.fromLTWH(0, 0, w, h),
         Paint()
-          ..color = const Color(0xFFE8F4FF)
-              .withValues(alpha: 0.6 * s * (1 - _scareT / 0.28)),
+          ..color = const Color(0xFFE8F4FF).withValues(
+            alpha: 0.6 * s * (1 - _scareT / 0.28) * Settings.flashScale,
+          ),
       );
     }
     // İki vuruşlu kalp: güm-güm, sessizlik.
@@ -813,8 +814,13 @@ class ScreenEffects extends Component with HasGameReference<GolgeGame> {
       canvas.drawRect(
         Rect.fromLTWH(0, 0, w, h),
         Paint()
-          ..color = const Color(0xFFEAF0FF)
-              .withValues(alpha: 0.55 * bolt * flicker),
+          ..color = const Color(0xFFEAF0FF).withValues(
+            alpha:
+                0.55 *
+                bolt *
+                (Settings.calmEffects ? 0.35 : flicker) *
+                Settings.flashScale,
+          ),
       );
     }
 

@@ -29,6 +29,7 @@ import 'ski.dart';
 import 'wind.dart';
 import 'winter.dart';
 import 'puzzles.dart';
+import 'rig.dart';
 import '../settings.dart';
 import 'strings.dart';
 import 'terrain.dart';
@@ -110,9 +111,21 @@ class GolgeGame extends FlameGame with KeyboardEvents {
   set debugCloseUp(double v) => _closeUp = v;
 
   /// Ekranda görünen kare yüksekliği: masaüstünde Limbo gibi uzak, telefon
-  /// gibi alçak ekranlarda çocuk seçilebilsin diye daha yakın.
-  double get tilesTall => camera.viewport.size.y < 520 ? 13 : 20;
+  /// gibi alçak ekranlarda çocuk seçilebilsin diye daha yakın. Ekran boyuyla
+  /// kesintisiz değişir (önceden 520 pikselde 13'ten 20'ye sıçrıyordu:
+  /// pencereyi boyutlandırırken ya da tablet döndürünce dünya birden
+  /// küçülüyordu).
+  double get tilesTall =>
+      (13 + (camera.viewport.size.y - 380) * (7 / 340)).clamp(13.0, 20.0);
   double _lookAhead = 0;
+
+  /// Yumuşatılmış yakınlık (boyut değişiminde kamera sıçramaz).
+  double _zoomS = 0;
+
+  /// Kameranın dikeyde izlediği zemin: zıplarken kamera inip çıkmaz;
+  /// oyuncu bir bandın dışına çıkınca (yüksek kat, derin düşüş) peşinden
+  /// gider.
+  double _camFloor = double.nan;
   final _rnd = math.Random();
   int _devStop = 0;
 
@@ -160,6 +173,12 @@ class GolgeGame extends FlameGame with KeyboardEvents {
   final _whispersShown = <String>{};
 
   int get memoryCount => _memories.length;
+
+  /// Hatıra defteri için: kayıttakiler ve bu oturumda bulunanlar.
+  Set<String> get collectedMemories => {
+    ...?SaveGame.current?.memories,
+    ..._memories,
+  };
   int get memoryTotal => levels.fold(0, (sum, l) => sum + l.memories.length);
 
   @override
@@ -515,6 +534,8 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         if (!wingsCollected)
           for (final c in level.wingsCells) WingsPickup(c),
         for (final c in level.glimpseCells) KarabasanGlimpse(c),
+        for (var i = 0; i < level.def.echoes.length; i++)
+          EchoSteps(level.def.echoes[i].$1, level.def.echoes[i].$2, stage: i),
         for (final c in level.icicleCells) FallingIcicle(c),
         for (final c in level.medusaCells) MedusaHead(c),
         for (var i = 0; i < level.starCells.length; i++)
@@ -742,7 +763,10 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         effects.fadeTo(
           0.94,
           0.22,
-          color: const Color(0xFFE4FFF8),
+          // Sakin efektlerde göz alan beyaz yerine soluk bir gri.
+          color: Settings.calmEffects
+              ? const Color(0xFF5E6A68)
+              : const Color(0xFFE4FFF8),
           onDone: () {
             GameAudio.instance.play('shatter');
             effects.setFade(1, kInk);
@@ -859,7 +883,8 @@ class GolgeGame extends FlameGame with KeyboardEvents {
   double _shake = 0;
 
   /// Kamerayı sarsar (Karabasan, çöken kayalar).
-  void shake(double amount) => _shake = math.max(_shake, amount);
+  void shake(double amount) =>
+      _shake = math.max(_shake, amount * Settings.flashScale);
 
   double _slow = 0;
 
@@ -1242,20 +1267,36 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     final view = camera.viewport.size;
     if (view.x == 0 || view.y == 0) return;
     // Limbo gibi uzak bir kamera: ekranda yaklaşık 20 kare yükseklik.
-    final zoom =
+    final want =
         view.y /
         (kTile * math.min(tilesTall, level.height.toDouble())) *
         _closeUp *
         (1 + 0.05 * threat);
+    _zoomS = _snapCamera || _zoomS <= 0
+        ? want
+        : approach(_zoomS, want, dt, 0.3);
+    final zoom = _zoomS;
     camera.viewfinder.zoom = zoom;
 
     // Gidilen yöne doğru ileriyi gösterir; hızlandıkça daha çok.
     _lookAhead +=
         ((p.facing * 60 + p.velocity.x * 0.35) - _lookAhead) *
         (1 - math.exp(-dt * 1.5));
-    final target = p.center + Vector2(_lookAhead, -20);
     final halfW = view.x / zoom / 2;
     final halfH = view.y / zoom / 2;
+    // Dikey: basılan zemine göre; zıplama, ip ve kenara tutunma kamerayı
+    // oynatmaz. Bandın dışına çıkınca (ya da düşerken) izler.
+    final y = p.center.y;
+    if (_snapCamera || _camFloor.isNaN) _camFloor = y;
+    final band = halfH * 0.32;
+    if (p.onGround || p.isDead) {
+      _camFloor = approach(_camFloor, y, dt, 0.18);
+    } else if (y < _camFloor - band) {
+      _camFloor = y + band;
+    } else if (y > _camFloor + band * 0.5) {
+      _camFloor = y - band * 0.5;
+    }
+    final target = Vector2(p.center.x + _lookAhead, _camFloor - 20);
     target.x = level.pixelWidth <= halfW * 2
         ? level.pixelWidth / 2
         : target.x.clamp(halfW, level.pixelWidth - halfW);
