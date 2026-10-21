@@ -35,12 +35,12 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
   flame: ^1.38.2
-  flame_audio: ^2.12.2
   shared_preferences: ^2.5.6
   path_provider: ^2.1.6
   window_manager: ^0.5.2
   flutter_displaymode: ^0.7.0
   url_launcher: ^6.3.3
+  flutter_soloud: ^5.2.1
 
 dev_dependencies:
   flutter_test:
@@ -99,3 +99,10 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+# Ses motoru (flutter_soloud): yalnızca WAV ve MP3 kullanılır; Ogg/Opus/FLAC
+# kitaplıkları gerekmez (derlemede ek indirme yapılmaz, uygulama küçülür).
+hooks:
+  user_defines:
+    flutter_soloud:
+      no_xiph_libs: true

@@ -1157,8 +1157,9 @@ extension _EastBackdrops on Backdrop {
       Color.lerp(const Color(0xFF6A7A88), const Color(0xFFD89A6A), sun)!,
       Color.lerp(const Color(0xFF9AA894), const Color(0xFFF2D49A), sun)!,
     ]);
-    if (dawn < 0.4)
+    if (dawn < 0.4) {
       _stars(canvas, w, h, (30 * (1 - dawn * 2.5)).round(), cam.x);
+    }
     if (sun > 0) {
       final c = Offset(w * 0.72, h * (0.62 - 0.22 * sun));
       _lightLeak(canvas, c, h * 1.1, 0.45 * sun, const Color(0xFFFFC890));

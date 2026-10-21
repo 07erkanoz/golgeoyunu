@@ -165,8 +165,9 @@ Picture _buildTerrain(Level lv, int c0, int c1, int r0, int r1) {
           if (theme == LevelTheme.ark) _hullPlanks(canvas, lv, c, r, x, y);
           // Zeminin yüzü: üst kenarda ışık alan ince bir şerit; taşın
           // içine doğru söner (zemin karanlıkta da seçilsin).
-          if (r > 0 && !lv.solid(c, r - 1))
+          if (r > 0 && !lv.solid(c, r - 1)) {
             _surfaceLight(canvas, theme, x, y, rnd);
+          }
           // Sarnıçta ve yerin altında taşın üstünde ot bitmez.
           if (r > 0 &&
               !lv.solid(c, r - 1) &&

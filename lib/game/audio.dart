@@ -1,12 +1,19 @@
+import 'dart:async';
 import 'dart:math' as math;
 
-import 'package:flame_audio/flame_audio.dart';
+import 'package:flutter_soloud/flutter_soloud.dart';
 
 import '../settings.dart';
 import 'levels.dart';
 
-/// Oyunun sesleri: ortam döngüleri, Karabasan'ın gümbürtüsü ve efektler.
-/// Sesler `tools/synth_sounds.py` ile sentezlenir.
+/// Oyunun sesleri: arka plan (menü müziği, perde neyi ya da bölümün ortam
+/// sesi), seviyesi değişen gerilim döngüleri ve efektler.
+///
+/// Hepsi tek bir yerel ses motorunda (SoLoud, FFI ile) karışır: sesler açılışta
+/// bir kez yüklenir; çalmak, susturmak, ses düzeyini değiştirmek beklemesiz,
+/// doğrudan çağrılardır. (Önceki düzende her ses Android'in ayrı bir
+/// oynatıcısıydı; her ayak sesi kanal üstünden üç istek demekti ve oynatıcılar
+/// her cihazda başka türlü davranıyordu.)
 ///
 /// `init` çağrılana kadar sessizdir; testler böylece ses aygıtına dokunmaz.
 class GameAudio {
@@ -65,126 +72,180 @@ class GameAudio {
     'thunder',
   ];
 
-  // Döngüler `loopLongAudio` ile çalar: Android'de `loop` SoundPool kullanır
-  // ve SoundPool uzun sesleri ilk birkaç saniyede keser; menü müziği ve ortam
-  // sesleri o kırpılmış parçayı baştan başa döndürüyordu.
-  bool _ready = false;
-
-  /// Menü müziği yüklendi mi (efektlerden önce hazır olur).
-  bool _musicReady = false;
-
-  /// Her efekt için önceden hazırlanmış, sabit sayıda oynatıcı: oyun
-  /// sırasında asla yenisi kurulmaz ya da silinmez (Windows'ta kurulum anında
-  /// takılma, Android'de biriken yerel oynatıcılar çökme yapıyordu). Android'de
-  /// kısa efektler SoundPool'da (lowLatency) çalar: tek bir hafif havuz,
-  /// onlarca MediaPlayer yerine.
-  final _sfx = <String, _Sfx>{};
-  static const _frequent = {
-    'step_1',
-    'step_2',
-    'step_3',
-    'step_4',
-    'step_wood_1',
-    'step_wood_2',
-    'step_wood_3',
-    'step_snow_1',
-    'step_snow_2',
-    'step_snow_3',
-    'step_snow_4',
-    'land',
-    'jump',
-    'creak',
-  };
+  /// Uzun döngüler diskten akar (belleği şişirmesin); kısa efektler bellekte.
+  static const _streamed = [
+    'amb_cistern.wav',
+    'amb_wind.wav',
+    'amb_sky.wav',
+    'amb_snow.wav',
+    'amb_ark.wav',
+    'amb_konya.wav',
+    'amb_cave.wav',
+    'karabasan.wav',
+    'heartbeat.wav',
+    'murmur.wav',
+  ];
 
   /// Tekdüze olmasın diye birden çok varyasyonu olan sesler.
   static const _variants = {'step': 4, 'step_wood': 3, 'step_snow': 4};
   final _rnd = math.Random();
   final _lastVariant = <String, int>{};
-  AudioPlayer? _music;
-  bool _musicWanted = false;
-  bool _musicStarting = false;
-  AudioPlayer? _ambient;
-  String? _ambientName;
-  String? _wantedAmbient;
-  AudioPlayer? _ney;
-  bool _neyWanted = false;
-
-  /// Seviyesi sürekli değişen döngüler: Karabasan'ın gümbürtüsü, saklanırken
-  /// kalp atışı, Kandilcilerin mırıltısı.
-  final _dread = _LoopChannel('karabasan.wav');
-  final _heart = _LoopChannel('heartbeat.wav');
-  final _murmur = _LoopChannel('murmur.wav');
-  late final _loops = [_dread, _heart, _murmur];
-
-  /// Saklanırken ortam sesi boğuklaşır (0 = normal, 1 = tamamen kısık).
-  double _duck = 0;
   final _lastPlayed = <String, int>{};
+
+  SoLoud get _s => SoLoud.instance;
+
+  /// Yüklenmiş sesler: dosya adı (uzantısız) → kaynak.
+  final _src = <String, AudioSource>{};
+
+  bool _ready = false;
 
   /// Yüklenemeyen ses dosyaları (tanı için).
   final failed = <String>[];
 
-  /// Her dosya ayrı korunur: biri yüklenemese de müzik ve öteki sesler çalar.
-  Future<void> init() async {
-    Future<void> guard(String what, Future<void> Function() f) async {
-      try {
-        await f();
-      } catch (e) {
-        failed.add(what);
-        _log('yüklenemedi $what: $e');
-      }
-    }
+  // ------------------------------------------------------------ arka plan
 
-    // Android'de her oynatıcı varsayılan olarak ses odağını kendine alır;
-    // oyunun kendi sesleri (müzik, ortam, efektler) birbirinin odağını
-    // çalınca müzik duraklayıp baştan başlıyordu. Hepsi odak istemeden
-    // birlikte çalar.
-    await guard(
-      'ses bağlamı',
-      () => AudioPlayer.global.setAudioContext(
-        AudioContextConfig(focus: AudioContextConfigFocus.mixWithOthers)
-            .build(),
-      ),
-    );
-    // Menü müziği her şeyden önce: efektler yüklenirken bekletmesin.
-    await guard('menu_theme.mp3', () async {
-      await FlameAudio.audioCache.load('menu_theme.mp3');
-      _musicReady = true;
-      if (_musicWanted) menuMusic(true);
-    });
-    for (final f in [
-      for (final e in _effects) '$e.wav',
-      'amb_cistern.wav',
-      'amb_wind.wav',
-      'amb_sky.wav',
-      'amb_snow.wav',
-      'amb_ark.wav',
-      'amb_konya.wav',
-      'amb_cave.wav',
-      'karabasan.wav',
-      'heartbeat.wav',
-      'murmur.wav',
-      'perde_ney.wav',
-    ]) {
-      await guard(f, () => FlameAudio.audioCache.load(f));
+  /// Tek bir arka plan sesi çalar: menü müziği, perde neyi ya da bölümün
+  /// ortam sesi. Değişince eskisi yumuşakça söner, yenisi yumuşakça gelir.
+  bool _musicWanted = false;
+  bool _neyWanted = false;
+  String? _wantedAmbient;
+  SoundHandle? _bed;
+  String? _bedName;
+  bool _paused = false;
+
+  /// Saklanırken ortam sesi boğuklaşır (0 = normal, 1 = tamamen kısık).
+  double _duck = 0;
+
+  String? get _desiredBed => _musicWanted
+      ? 'menu_theme'
+      : _neyWanted
+      ? 'perde_ney'
+      : _wantedAmbient;
+
+  double get _ambientVolume => Settings.ambience * 0.8 * (1 - 0.65 * _duck);
+
+  double _bedVolume(String name) => name == 'menu_theme' || name == 'perde_ney'
+      ? Settings.music
+      : _ambientVolume;
+
+  static const _fadeIn = Duration(milliseconds: 900);
+  static const _fadeOut = Duration(milliseconds: 600);
+
+  void _updateBed() {
+    if (!_ready) return;
+    final want = _desiredBed;
+    if (want == _bedName && _bedAlive) return;
+    _fadeOutBed();
+    if (want == null) return;
+    final src = _src[want];
+    if (src == null) return; // yüklenince yeniden denenir
+    try {
+      final h = _s.play(src, volume: 0, looping: true, paused: _paused);
+      _s.fadeVolume(h, _bedVolume(want), _fadeIn);
+      _bed = h;
+      _bedName = want;
+      _log('arka plan $want');
+    } catch (e) {
+      _log('arka plan çalınamadı $want: $e');
     }
-    for (final e in _effects) {
-      if (failed.contains('$e.wav')) continue;
-      await guard(e, () async {
-        _sfx[e] = await _Sfx.create('$e.wav', _frequent.contains(e) ? 3 : 1);
-      });
-    }
-    _ready = true;
-    await guard('başlangıç döngüsü', () async {
-      if (_neyWanted) {
-        perde(true);
-      } else if (_musicWanted) {
-        menuMusic(true);
-      } else {
-        final wanted = _wantedAmbient;
-        if (wanted != null) await _startAmbient(wanted);
-      }
-    });
   }
+
+  bool get _bedAlive {
+    final h = _bed;
+    return h != null && _safe(() => _s.getIsValidVoiceHandle(h), false);
+  }
+
+  void _fadeOutBed() {
+    final h = _bed;
+    _bed = null;
+    _bedName = null;
+    if (h == null) return;
+    _safe(() {
+      _s.fadeVolume(h, 0, _fadeOut);
+      _s.scheduleStop(h, _fadeOut);
+    }, null);
+  }
+
+  void _setBedVolume() {
+    final h = _bed;
+    final name = _bedName;
+    if (h == null || name == null) return;
+    _safe(() => _s.setVolume(h, _bedVolume(name)), null);
+  }
+
+  /// Bölümün temasına uygun ortam döngüsü.
+  void ambientFor(LevelTheme theme) {
+    _wantedAmbient = switch (theme) {
+      LevelTheme.cistern => 'amb_cistern',
+      LevelTheme.cave || LevelTheme.underworld => 'amb_cave',
+      LevelTheme.ark => 'amb_ark',
+      LevelTheme.cliffs ||
+      LevelTheme.peri ||
+      LevelTheme.ergenekon => 'amb_wind',
+      LevelTheme.sky || LevelTheme.kaf || LevelTheme.heavens => 'amb_sky',
+      LevelTheme.snow || LevelTheme.nemrut => 'amb_snow',
+      LevelTheme.konya => 'amb_konya',
+    };
+    _updateBed();
+  }
+
+  /// Ana menü müziği; açılınca ortam sesi susar, kapanınca geri gelir.
+  void menuMusic(bool on) {
+    _musicWanted = on;
+    if (on) dread(0);
+    _updateBed();
+  }
+
+  /// Perde sahnelerinin neyi: çalarken ortam sesi susar.
+  void perde(bool on) {
+    _neyWanted = on;
+    if (on) dread(0);
+    _updateBed();
+  }
+
+  /// Saklanırken ortam sesini kısar.
+  void duck(double amount, {bool force = false}) {
+    amount = amount.clamp(0.0, 1.0);
+    if ((amount - _duck).abs() < 0.02 && !force) return;
+    _duck = amount;
+    if (_bedName?.startsWith('amb_') ?? false) _setBedVolume();
+  }
+
+  // ---------------------------------------------------- gerilim döngüleri
+
+  final _dread = _LoopChannel('karabasan');
+  final _heart = _LoopChannel('heartbeat');
+  final _murmur = _LoopChannel('murmur');
+  late final _loops = [_dread, _heart, _murmur];
+
+  /// Karabasan'ın gümbürtüsü: 0 = yok, 1 = ensende.
+  void dread(double level) => _set(_dread, level);
+
+  /// Saklanırken duyulan kalp atışı: tehlike yaklaştıkça yükselir.
+  void heartbeat(double level) => _set(_heart, level * 0.9);
+
+  /// En yakın Kandilci'nin mırıltısı.
+  void murmur(double level) => _set(_murmur, level * 0.6);
+
+  void _set(_LoopChannel ch, double level) {
+    if (!_ready) return;
+    ch.set(this, level.clamp(0.0, 1.0));
+  }
+
+  /// Sahne değişince bütün gerilim döngüleri susar.
+  void silenceLoops() {
+    if (_ready) {
+      for (final l in _loops) {
+        l.hush();
+      }
+    }
+    duck(0, force: true);
+  }
+
+  /// Eski düzenden kalan çağrı: sesler zaten açılışta yüklenir.
+  void prewarmLoops() {}
+
+  // ------------------------------------------------------------ efektler
 
   /// Bir efekt çalar; aynı efekt [minGapMs] içinde tekrar çalınmaz.
   void play(String name, {double volume = 1, int minGapMs = 60}) {
@@ -200,338 +261,169 @@ class GameAudio {
     final now = DateTime.now().millisecondsSinceEpoch;
     if (now - (_lastPlayed[name] ?? 0) < minGapMs) return;
     _lastPlayed[name] = now;
-    final sfx = _sfx[name];
-    if (sfx == null) return;
+    final src = _src[name];
+    if (src == null) return;
     _log('çal $name');
-    sfx.play((volume * Settings.effects).clamp(0.0, 1.0));
+    _safe(
+      () => _s.play(src, volume: (volume * Settings.effects).clamp(0.0, 1.0)),
+      null,
+    );
   }
 
-  /// Bölümün temasına uygun ortam döngüsü.
-  void ambientFor(LevelTheme theme) {
-    final name = switch (theme) {
-      LevelTheme.cistern => 'amb_cistern',
-      LevelTheme.cave || LevelTheme.underworld => 'amb_cave',
-      LevelTheme.ark => 'amb_ark',
-      LevelTheme.cliffs ||
-      LevelTheme.peri ||
-      LevelTheme.ergenekon => 'amb_wind',
-      LevelTheme.sky || LevelTheme.kaf || LevelTheme.heavens => 'amb_sky',
-      LevelTheme.snow || LevelTheme.nemrut => 'amb_snow',
-      LevelTheme.konya => 'amb_konya',
-    };
-    _wantedAmbient = name;
-    if (_ready && !_musicWanted && !_neyWanted) _startAmbient(name);
-  }
-
-  /// Ana menü müziği; açılınca ortam sesi susar, kapanınca geri gelir.
-  void menuMusic(bool on) {
-    _musicWanted = on;
-    if (!_musicReady) return;
-    if (on) {
-      _stopAmbient();
-      dread(0);
-      if (_music != null || _musicStarting) return;
-      _musicStarting = true;
-      _log('döngü menu_theme');
-      FlameAudio.loopLongAudio('menu_theme.mp3', volume: Settings.music)
-          .then((p) {
-            _music = p;
-            _musicStarting = false;
-            if (!_musicWanted) {
-              _drop(p);
-              _music = null;
-            }
-          })
-          .catchError((_) {
-            _musicStarting = false;
-          });
-    } else {
-      _drop(_music);
-      _music = null;
-      final wanted = _wantedAmbient;
-      if (wanted != null) _startAmbient(wanted);
-    }
-  }
-
-  /// Perde sahnelerinin neyi: çalarken ortam sesi susar.
-  void perde(bool on) {
-    _neyWanted = on;
-    if (!_ready) return;
-    if (on) {
-      if (_ney != null) return;
-      _stopAmbient();
-      dread(0);
-      _log('döngü perde_ney');
-      FlameAudio.loopLongAudio('perde_ney.wav', volume: Settings.music)
-          .then((p) {
-            if (!_neyWanted || _ney != null) {
-              _drop(p);
-              return;
-            }
-            _ney = p;
-          })
-          .catchError((_) {});
-    } else {
-      _drop(_ney);
-      _ney = null;
-      final wanted = _wantedAmbient;
-      if (wanted != null && !_musicWanted) _startAmbient(wanted);
-    }
-  }
-
-  /// Ortam döngüsünün kuşağı: yüklenirken yeni bir istek gelirse geç kalan
-  /// yükleme kendini susturur (iki döngü üst üste çalmasın, sahipsiz bir
-  /// döngü menüde bile sürmesin).
-  int _ambientGen = 0;
-
-  /// Durdurup yerel oynatıcıyı serbest bırakır (Android'de oynatıcılar
-  /// sınırlıdır; bırakılmayan her biri birikir).
-  static void _drop(AudioPlayer? p) {
-    if (p == null) return;
-    p.dispose().catchError((_) {});
-  }
-
-  void _stopAmbient() {
-    _ambientGen++;
-    _drop(_ambient);
-    _ambient = null;
-    _ambientName = null;
-  }
-
-  Future<void> _startAmbient(String name) async {
-    if (_ambientName == name) return;
-    _stopAmbient();
-    _ambientName = name;
-    final gen = _ambientGen;
-    try {
-      _log('döngü $name');
-      final p = await FlameAudio.loopLongAudio(
-        '$name.wav',
-        volume: _ambientVolume,
-      );
-      if (gen != _ambientGen || _musicWanted || _neyWanted) {
-        _drop(p);
-        return;
-      }
-      _ambient = p;
-    } catch (_) {
-      if (gen == _ambientGen) _ambientName = null;
-    }
-  }
-
-  /// Karabasan'ın gümbürtüsü: 0 = yok, 1 = ensende.
-  void dread(double level) => _set(_dread, level);
-
-  /// Saklanırken duyulan kalp atışı: tehlike yaklaştıkça yükselir.
-  void heartbeat(double level) => _set(_heart, level * 0.9);
-
-  /// En yakın Kandilci'nin mırıltısı.
-  void murmur(double level) => _set(_murmur, level * 0.6);
-
-  /// Saklanırken ortam sesini kısar.
-  void duck(double amount, {bool force = false}) {
-    amount = amount.clamp(0.0, 1.0);
-    if ((amount - _duck).abs() < 0.04 && !force) return;
-    // Yerel oynatıcıya en çok saniyede ~6 kez (saklanırken her karede
-    // çağrı yağması telefonda takılmaya yol açıyordu); uçlar hemen gider.
-    final now = DateTime.now().millisecondsSinceEpoch;
-    final edge = amount <= 0.001 || amount >= 0.999;
-    if (!force && !edge && now - _duckAt < 160) return;
-    _duckAt = now;
-    _duck = amount;
-    _ambient?.setVolume(_ambientVolume);
-  }
-
-  int _duckAt = 0;
-
-  double get _ambientVolume => Settings.ambience * 0.8 * (1 - 0.65 * _duck);
-
-  void _set(_LoopChannel ch, double level) {
-    if (!_ready) return;
-    ch.set(level.clamp(0.0, 1.0));
-  }
+  // ------------------------------------------------------- genel denetim
 
   void applyVolumes() {
-    _music?.setVolume(Settings.music);
-    _ney?.setVolume(Settings.music);
-    _ambient?.setVolume(_ambientVolume);
+    if (!_ready) return;
+    _setBedVolume();
     for (final l in _loops) {
       l.refresh();
     }
   }
 
+  /// Ayarlar açıkken ya da uygulama arka plandayken her şey bekler.
   void pauseAll() {
-    _ney?.pause();
-    _ambient?.pause();
-    for (final l in _loops) {
-      l.pause();
-    }
+    _paused = true;
+    _pauseHandles(true);
   }
 
   void resumeAll() {
-    _ney?.resume();
-    _ambient?.resume();
-    for (final l in _loops) {
-      l.resume();
-    }
+    _paused = false;
+    _pauseHandles(false);
   }
 
-  /// Sahne değişince bütün gerilim döngüleri susar.
-  void silenceLoops() {
-    for (final l in _loops) {
-      l.hush();
-    }
-    duck(0, force: true);
-  }
-
-  /// Gerilim döngülerini bölüm başında hazırlar (dosyalar yüklenir, sessiz
-  /// bekler).
-  void prewarmLoops() {
+  void _pauseHandles(bool pause) {
     if (!_ready) return;
+    final h = _bed;
+    if (h != null) _safe(() => _s.setPause(h, pause), null);
     for (final l in _loops) {
-      l.prewarm();
+      l.pause(pause);
     }
   }
-}
 
-/// Bir efektin sabit oynatıcıları; sırayla kullanılır (aynı ses üst üste
-/// gelirse en eskisi baştan başlar).
-class _Sfx {
-  _Sfx(this._players);
+  /// Yerel motora yapılan bir çağrı; motor kapanmışsa ya da ses geçersizse
+  /// oyun durmaz.
+  static T _safe<T>(T Function() f, T fallback) {
+    try {
+      return f();
+    } catch (e) {
+      _log('hata: $e');
+      return fallback;
+    }
+  }
 
-  final List<AudioPlayer> _players;
-  int _next = 0;
+  // ------------------------------------------------------------- yükleme
 
-  static Future<_Sfx> create(String file, int count) async {
-    final players = <AudioPlayer>[];
-    for (var i = 0; i < count; i++) {
-      final p = AudioPlayer()..audioCache = FlameAudio.audioCache;
+  /// Motoru açar ve bütün sesleri yükler. Her dosya ayrı korunur: biri
+  /// yüklenemese de öteki sesler çalar.
+  Future<void> init() async {
+    try {
+      if (!_s.isInitialized) await _s.init();
+      // Aynı anda çalabilecek ses sayısı (efektler, döngüler, arka plan).
+      _s.setMaxActiveVoiceCount(32);
+    } catch (e) {
+      failed.add('ses motoru');
+      _log('ses motoru açılamadı: $e');
+      return;
+    }
+    _ready = true;
+    Future<void> load(String file, LoadMode mode) async {
+      final name = file.substring(0, file.lastIndexOf('.'));
       try {
-        await p.setPlayerMode(PlayerMode.lowLatency);
-        await p.setReleaseMode(ReleaseMode.stop);
-        await p.setSource(AssetSource(file));
-        players.add(p);
-      } catch (_) {
-        p.dispose().catchError((_) {});
+        _src[name] = await _s.loadAsset('assets/audio/$file', mode: mode);
+      } catch (e) {
+        failed.add(file);
+        _log('yüklenemedi $file: $e');
       }
     }
-    return _Sfx(players);
-  }
 
-  void play(double volume) {
-    if (_players.isEmpty) return;
-    final p = _players[_next];
-    _next = (_next + 1) % _players.length;
-    () async {
-      try {
-        await p.stop();
-        await p.setVolume(volume);
-        await p.resume();
-      } catch (_) {}
-    }();
+    // Önce menü müziği ve perde: açılışta hemen duyulsun.
+    await load('menu_theme.mp3', LoadMode.disk);
+    await load('perde_ney.wav', LoadMode.disk);
+    _updateBed();
+    for (final e in _effects) {
+      await load('$e.wav', LoadMode.memory);
+    }
+    for (final f in _streamed) {
+      await load(f, LoadMode.disk);
+    }
+    // Yükleme sürerken istenmiş olanlar şimdi başlar.
+    _updateBed();
+    applyVolumes();
   }
 }
 
-/// Seviyesi değişen bir döngü: 0'a inince durur, yükselince yeniden başlar.
+/// Seviyesi sürekli değişen bir döngü: duyulur olunca başlar, ses düzeyi
+/// doğrudan ayarlanır; bir süre sessiz kalınca durur.
 class _LoopChannel {
-  _LoopChannel(this.file);
+  _LoopChannel(this.name);
 
-  final String file;
-  AudioPlayer? player;
-  bool _starting = false;
-  bool _paused = false;
+  final String name;
+  SoundHandle? _h;
   double _level = 0;
-  int _lastVolume = 0;
+  double _sent = -1;
+  int _silentAt = 0;
+
+  SoLoud get _s => SoLoud.instance;
 
   double get _volume => (_level * Settings.effects).clamp(0.0, 1.0);
 
-  /// Tek bir oynatıcı bir kez kurulur; sessizken duraklar, gerekince devam
-  /// eder. (Her seferinde yenisini kurmak Android'de yerel oynatıcıları
-  /// tüketip uygulamayı çökertiyordu.)
-  void set(double level) {
+  void set(GameAudio a, double level) {
+    _level = level;
     final now = DateTime.now().millisecondsSinceEpoch;
-    final p = player;
     if (level <= 0) {
-      // Sessizlik: önce yalnızca kısılır; ancak birkaç saniye sessiz kalırsa
-      // duraklar. (Saklanma otuna girip çıkarken her seferinde durdurup
-      // yeniden başlatmak Android'de oyunu takıltıyordu.)
-      if (_level > 0) {
-        _level = 0;
+      // Önce yalnızca kısılır; uzun süre sessiz kalırsa durur.
+      if (_sent > 0) {
         _silentAt = now;
-        if (p != null && !_paused) p.setVolume(0).catchError((_) {});
-      } else if (p != null && !_paused && now - _silentAt > 4000) {
-        _paused = true;
-        p.pause().catchError((_) {});
+        _apply();
+      } else if (_h != null && now - _silentAt > 4000) {
+        _stop();
       }
       return;
     }
-    if ((level - _level).abs() < 0.03) return;
-    _level = level;
-    if (p == null) {
-      _start();
+    if (!_alive) {
+      final src = a._src[name];
+      if (src == null) return;
+      _h = GameAudio._safe<SoundHandle?>(
+        () => _s.play(src, volume: _volume, looping: true, paused: a._paused),
+        null,
+      );
+      _sent = _volume;
       return;
     }
-    // Ses düzeyi en çok saniyede ~12 kez gönderilir (120 Hz'de her karede
-    // yerel oynatıcıya çağrı yağmasın).
-    if (_paused || now - _lastVolume > 80) {
-      _lastVolume = now;
-      p.setVolume(_volume).catchError((_) {});
-    }
-    if (_paused) {
-      _paused = false;
-      p.resume().catchError((_) {});
-    }
+    if ((_volume - _sent).abs() > 0.01) _apply();
   }
 
-  /// Sessizliğin başladığı an (ms).
-  int _silentAt = 0;
-
-  /// Oynatıcıyı kurar (dosya yüklenir); seviye sıfırsa kurulur kurulmaz
-  /// duraklar.
-  void _start() {
-    if (_starting || player != null) return;
-    _starting = true;
-    GameAudio._log('döngü $file');
-    FlameAudio.loopLongAudio(file, volume: _volume)
-        .then((p) {
-          player = p;
-          _starting = false;
-          _paused = false;
-          // Başlarken seviye düştüyse (ya da önceden hazırlanıyorsa) duraklar.
-          if (_level <= 0) {
-            _paused = true;
-            p.pause().catchError((_) {});
-          } else {
-            p.setVolume(_volume).catchError((_) {});
-          }
-        })
-        .catchError((_) {
-          _starting = false;
-        });
+  bool get _alive {
+    final h = _h;
+    return h != null &&
+        GameAudio._safe(() => _s.getIsValidVoiceHandle(h), false);
   }
 
-  /// Önceden hazırlar: dosya bölüm başında yüklenir, ilk saklanışta oyun
-  /// takılmaz.
-  void prewarm() {
-    if (Settings.effects <= 0) return;
-    _start();
+  void _apply() {
+    final h = _h;
+    if (h == null) return;
+    _sent = _volume;
+    GameAudio._safe(() => _s.setVolume(h, _sent), null);
   }
 
-  /// Hemen susar (sahne değişimi).
+  void refresh() {
+    if (_level > 0) _apply();
+  }
+
+  void pause(bool pause) {
+    final h = _h;
+    if (h != null) GameAudio._safe(() => _s.setPause(h, pause), null);
+  }
+
   void hush() {
     _level = 0;
-    final p = player;
-    if (p != null && !_paused) {
-      _paused = true;
-      p.pause().catchError((_) {});
-    }
+    _stop();
   }
 
-  void refresh() => player?.setVolume(_volume).catchError((_) {});
-
-  void pause() => player?.pause().catchError((_) {});
-
-  void resume() {
-    if (!_paused && _level > 0) player?.resume().catchError((_) {});
+  void _stop() {
+    final h = _h;
+    _h = null;
+    _sent = -1;
+    if (h != null) GameAudio._safe(() => unawaited(_s.stop(h)), null);
   }
 }
