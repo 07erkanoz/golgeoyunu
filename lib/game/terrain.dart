@@ -1106,13 +1106,18 @@ class WaterComponent extends Component with HasGameReference<GolgeGame> {
         canvas.drawRect(Rect.fromLTWH(cx - 10 + dx, y, 20, 3), reflection);
       }
     }
-    canvas.drawLine(
-      Offset(0, _surface.values.first),
-      Offset(level.pixelWidth, _surface.values.first),
-      Paint()
-        ..color = const Color(0xFFC0703A).withValues(alpha: 0.25)
-        ..strokeWidth = 1,
-    );
+    // Su yüzünün ince ışığı: yalnız suyun olduğu sütunlarda (önceden bütün
+    // bölüm boyunca, kayaların üstünden de geçen bir çizgiydi).
+    final edge = Paint()
+      ..color = const Color(0xFFC0703A).withValues(alpha: 0.25)
+      ..strokeWidth = 1;
+    for (final MapEntry(key: c, value: top) in visible) {
+      canvas.drawLine(
+        Offset(c * kTile.toDouble(), top),
+        Offset((c + 1) * kTile.toDouble(), top),
+        edge,
+      );
+    }
   }
 }
 
