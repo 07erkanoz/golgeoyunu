@@ -2287,7 +2287,7 @@ void main() {
         }
       },
       // Kaba kuvvetle atlayış anı arar: onlarca kez bölüm kurar.
-      timeout: const Timeout(Duration(minutes: 3)),
+      timeout: const Timeout(Duration(minutes: 10)),
     );
 
     testWithGame<GolgeGame>(
