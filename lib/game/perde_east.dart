@@ -1012,3 +1012,122 @@ void _endingScene(Canvas canvas, double time, double u) {
     );
   }
 }
+
+/// Bir silueti perdede çizer: ayakların ortası [at], boyu [height] birim.
+void _shape(
+  Canvas canvas,
+  Path shape,
+  Offset at,
+  double height,
+  Paint p, {
+  bool flip = false,
+  double rotate = 0,
+}) {
+  canvas.save();
+  canvas.translate(at.dx, at.dy);
+  canvas.rotate(rotate);
+  canvas.scale((flip ? -1 : 1) * height / 100, height / 100);
+  canvas.drawPath(shape, p);
+  canvas.restore();
+}
+
+void _akAnaScene(Canvas canvas, double time, double u) {
+  _P._c = canvas;
+  // İlk su: perdenin altını dolduran dalgalı su; çamurdan dünya kalkınca
+  // çekilir.
+  final land = _span(u, 3.0, 3.8);
+  final waterTop = 250.0 + land * 40;
+  final water = Path()..moveTo(0, 400);
+  for (var x = 0.0; x <= 780; x += 12) {
+    water.lineTo(
+      x,
+      waterTop +
+          math.sin(time * 1.4 + x / 46) * 5 +
+          math.sin(time + x / 23) * 2,
+    );
+  }
+  water
+    ..lineTo(780, 400)
+    ..close();
+  canvas.drawPath(water, _ink(0.75));
+  // Suyun yüzünde ışık kırıntıları.
+  for (var i = 0; i < 9; i++) {
+    final x = 40.0 + i * 86 + math.sin(time * 0.7 + i) * 10;
+    canvas.drawCircle(Offset(x, waterTop + 14), 2, _hole(0.35));
+  }
+  // Kayra Han: suyun üstünde yalnız, kolları açık.
+  final kayra = _span(u, 0.8, 1.4) * (1 - _span(u, 4.2, 4.8));
+  if (kayra > 0) {
+    _shape(
+      canvas,
+      MythShapes.kam,
+      Offset(200, 150 + math.sin(time * 0.6) * 4),
+      120,
+      _ink(kayra),
+    );
+  }
+  // Ak Ana sudan yükselir; "yarat" deyip yeniden suya döner.
+  final rise = _span(u, 1.8, 2.6) * (1 - _span(u, 2.9, 3.4));
+  if (rise > 0) {
+    canvas.save();
+    canvas.clipRect(Rect.fromLTWH(0, 0, 780, waterTop + 6));
+    _shape(
+      canvas,
+      MythShapes.akAna,
+      Offset(470, waterTop + 150 - 150 * rise),
+      150,
+      _ink(1),
+    );
+    // Başının ardında ışıktan bir hâle (perdede delik).
+    canvas.drawCircle(
+      Offset(470, waterTop + 150 - 150 * rise - 138),
+      22,
+      _hole(0.45 * rise),
+    );
+    canvas.restore();
+  }
+  // Çamurdan dünya kalkar.
+  if (land > 0) {
+    final hill = Path()..moveTo(80, 400);
+    for (var x = 80.0; x <= 700; x += 10) {
+      final k = (x - 80) / 620;
+      hill.lineTo(
+        x,
+        400 -
+            land * 120 * math.sin(k * math.pi) * (0.8 + 0.2 * math.sin(k * 9)),
+      );
+    }
+    hill
+      ..lineTo(700, 400)
+      ..close();
+    canvas.drawPath(hill, _ink(1));
+  }
+  // Erlik kendini büyük sanır, yerin altına sürülür: perdenin dibine düşer.
+  final fall = _span(u, 3.3, 4.1);
+  if (fall > 0 && fall < 1) {
+    _shape(
+      canvas,
+      MythShapes.kam,
+      Offset(600, 180 + fall * 260),
+      90,
+      _ink(1 - fall * 0.6),
+      rotate: fall * 2.4,
+    );
+  }
+  // Çalınan ışıklar yerin altına akar; Sâye bir damla gibi ardından iner.
+  final flow = _span(u, 4.0, 4.9);
+  if (flow > 0) {
+    for (var i = 0; i < 7; i++) {
+      final k = ((flow * 1.6 + i / 7) % 1.0);
+      canvas.drawCircle(
+        Offset(380 + math.sin(i * 2.3) * 40, 140 + k * 240),
+        3.5,
+        _hole(0.8 * (1 - k)),
+      );
+    }
+    final sa = _span(u, 4.4, 4.9);
+    _P._puppet(canvas, Offset(390, 140 + sa * 120), time, 1.2, sa, (ink, hole) {
+      _P._saye(ink, hole, time);
+    }, scale: 0.4);
+  }
+}

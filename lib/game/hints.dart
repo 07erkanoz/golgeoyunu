@@ -128,6 +128,9 @@ class Hints {
     'crate': 'Sandığı it · üstüne çıkıp yüksel',
     'lever': '{up} Kolu çek',
     'umay': 'Umay ağacı · dokun: düştüğünde buradan yeniden başlarsın',
+    'kormos': 'Körmösler ışığa gelir · {down} kavanozunu ört · ya da ateşböceği sal: {firefly}',
+    'kut': '{up} Kafesi aç · kut kavanoza girer, kapı açılır · kavanoz parladıkça Körmösler uzaktan görür',
+    'horse': 'Çalkuyruk · yanına git, sırtına bin · atla çok yükseğe sıçrarsın',
     'gokboruTrail':
         '{down} Kavanozunu ört · Gökbörü\'nün izleri karanlıkta parlar',
     'valve': '{up} Vanayı çevir',
@@ -178,6 +181,10 @@ class Hints {
     'crate': 'Push the crate · climb it to reach higher',
     'lever': '{up} Pull the lever',
     'umay': 'Umay tree · touch it: if you fall, you rise here again',
+    'kormos': 'Körmös drift toward light · {down} cover your jar · or release a firefly: {firefly}',
+    'kut': '{up} Open the cage · the kut enters your jar and a gate opens · the brighter the jar, the farther the Körmös see',
+    'horse':
+        'Çalkuyruk · go to him and climb on · on horseback you leap far higher',
     'gokboruTrail':
         '{down} Cover your jar · Gökbörü\'s tracks glow in the dark',
     'valve': '{up} Turn the valve',

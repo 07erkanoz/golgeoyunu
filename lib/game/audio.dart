@@ -209,7 +209,7 @@ class GameAudio {
   void ambientFor(LevelTheme theme) {
     final name = switch (theme) {
       LevelTheme.cistern => 'amb_cistern',
-      LevelTheme.cave => 'amb_cave',
+      LevelTheme.cave || LevelTheme.underworld => 'amb_cave',
       LevelTheme.ark => 'amb_ark',
       LevelTheme.cliffs || LevelTheme.peri => 'amb_wind',
       LevelTheme.sky || LevelTheme.kaf => 'amb_sky',

@@ -216,5 +216,62 @@ class MythCard {
       sourceTr: 'Altay yaratılış destanı (W. Radloff derlemesi)',
       sourceEn: 'Altai creation epic (collected by W. Radloff)',
     ),
+    MythCard(
+      id: 'erTostuk',
+      nameTr: 'Er Töştük ve Çalkuyruk',
+      nameEn: 'Er Töştük and Çalkuyruk',
+      whoTr: 'Yerin altına inen Kırgız destan kahramanı ve konuşan atı.',
+      whoEn: 'The Kyrgyz epic hero who descends beneath the earth, and his talking horse.',
+      storyTr:
+          'Kırgız destanı Er Töştük\'te kahraman yerin altına düşer; '
+          'yeraltının devleri ve cadılarıyla karşılaşır. Yolunu, konuşan ve '
+          'olacakları sezen atı Çalkuyruk\'un öğütleriyle bulur; sonunda '
+          'onunla yeryüzüne döner.',
+      storyEn:
+          'In the Kyrgyz epic of Er Töştük the hero falls beneath the earth '
+          'and meets the giants and witches of the underworld. He finds his '
+          'way by the counsel of his talking, far-seeing horse Çalkuyruk, and '
+          'at last returns with him to the surface.',
+      sourceTr: 'Er Töştük Destanı (Kırgız)',
+      sourceEn: 'The epic of Er Töştük (Kyrgyz)',
+    ),
+    MythCard(
+      id: 'kormos',
+      nameTr: 'Körmös',
+      nameEn: 'Körmös',
+      whoTr: 'Altay inancında yerin altının ruhları; Erlik\'e bağlı gölgeler.',
+      whoEn: 'In Altai belief, the spirits of the underworld; shades bound to Erlik.',
+      storyTr:
+          'Altay ve Sibirya Türklerinin inancında körmösler, yerin altında '
+          'Erlik\'e bağlı yaşayan ruhlardır; ölenlerin bir kısmının da körmöse '
+          'dönüştüğüne inanılır. Kamlar onlardan korunmak için dualar okur, '
+          'saçılar sunardı.',
+      storyEn:
+          'In the belief of the Altai and Siberian Turks, the körmös are '
+          'spirits living beneath the earth in Erlik\'s service; some of the '
+          'dead are believed to become körmös. Shamans recited prayers and '
+          'made offerings to keep them away.',
+      sourceTr: 'Altay Türk inançları',
+      sourceEn: 'Altai Turkic belief',
+    ),
+    MythCard(
+      id: 'kut',
+      nameTr: 'Kut',
+      nameEn: 'Kut',
+      whoTr: 'Gökten verilen kutsal güç ve can ışığı.',
+      whoEn: 'The sacred power and light of life granted by the sky.',
+      storyTr:
+          'Eski Türk inancında kut, Gök Tengri\'nin bağışladığı kutsal '
+          'güçtür; hükümdara yönetme hakkını, insana canlılığını verir. '
+          'Kutunu yitiren güçsüz düşer. Orhun Yazıtları\'nda kağanın kutu '
+          'sık sık anılır.',
+      storyEn:
+          'In old Turkic belief kut is the sacred power granted by Gök '
+          'Tengri, the Sky; it gives a ruler the right to rule and a person '
+          'their vitality. Whoever loses their kut grows weak. The Orkhon '
+          'inscriptions often speak of the khagan\'s kut.',
+      sourceTr: 'Orhun Yazıtları',
+      sourceEn: 'Orkhon Inscriptions',
+    ),
   ];
 }

@@ -284,6 +284,10 @@ satır), yeni perdede kopuz motifi müzikte duyulur.
 6. **Ötüken perdesi:** Ak Ana perde sahnesi, XIV Erlik'in Katı, XV
    Ergenekon, XVI Göğün Katları; Konya XVII olur. Her bölüm için harita,
    denetçi kuralları, testler ve önizlemeler.
+   *(Yapıldı: Ak Ana perde sahnesi; XIV Erlik'in Katı — lib/game/erlik.dart:
+   Körmös `b`, kut kafesi `a`, Çalkuyruk `W` ve binince yükselen karanlık
+   `z`/`Z`; ters perde mevcut gölge/ışık tahtaları ve Erlik'in feneri `N`
+   ile. Kimlik 14, sıra sürümü 2. XV ve XVI bekliyor; Konya şimdilik XV.)*
 7. Konya eklemeleri (Gökbörü, çiçek açan ağaç, çaputlar).
 
 ---

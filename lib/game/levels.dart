@@ -28,10 +28,14 @@ enum LevelTheme {
   peri,
 
   /// Konya: karlı gece, dergâh.
-  konya;
+  konya,
+
+  /// Erlik'in katı: yerin altı, kara kayalar, yeraltı ırmakları.
+  underworld;
 
   /// Kapalı mekân: tavanın üstü kaya, uzaktan zincir sesleri.
-  bool get indoor => this == cistern || this == cave || this == ark;
+  bool get indoor =>
+      this == cistern || this == cave || this == ark || this == underworld;
 
   /// Kar yağar, kayaların üstü karla örtülü.
   bool get snowy => this == snow || this == nemrut || this == konya;
@@ -332,12 +336,20 @@ const interludes = <List<String>>[
     'Yuvarlak taş kapılar yalnızca içeriden açılır. İçeride olan yaşar. Aşağı in, Sâye; ama uyuyanı uyandırma.',
   ],
   [
-    'Derinkuyu\'nun dibinden çıktığında gökte ay vardı; önünde uçsuz bucaksız, karlı bir ova.',
+    'Yerin altından çıktığında gökte ay vardı; önünde uçsuz bucaksız, karlı bir ova.',
     'Batıda bir şehrin kubbeleri parlıyordu. Kandilciler ustayı oraya götürmüştü: Konya\'ya, Selçukluların başkentine, Mevlânâ\'nın şehrine.',
     'O gece on yedi Aralık\'tı. Konya\'da bu geceye Şeb-i Arûs derler: düğün gecesi.',
     'Neredeyse dört yüz yıl önce bu gece Mevlânâ ölmüştü. "Ağlamayın," demişti, "bu benim düğünümdür."',
     'Kandilciler sanıyordu ki düğün gecesinde ışık ölmez. Ustanın kandilini sonsuza dek yakmak için bu geceyi bekliyorlardı.',
     'SON PERDE · DÜĞÜN',
+  ],
+  [
+    'Derinkuyu\'nun en dibinde, taşın altında bir ses vardı. Sâye kulağını taşa dayadı: su sesi.',
+    'Ozan der ki: Başlangıçta yalnız su vardı. Kayra Han suyun üstünde yalnızdı; ne yaratacağını bilmiyordu.',
+    'Sudan ak bir ana yükseldi: Ak Ana. "Yarat," dedi, ve yeniden suya döndü.',
+    'Kayra Han yarattı. Ama yarattıklarından biri, Erlik, kendini ondan büyük sandı; yerin altına sürüldü.',
+    'Kandilcilerin çaldığı ışıklar yerin altına, Erlik\'in katına akıyordu. Usta da o yoldan geçirilmişti.',
+    'BEŞİNCİ PERDE · ÖTÜKEN',
   ],
 ];
 
@@ -429,28 +441,37 @@ const interludesEn = <List<String>>[
     'The round stone doors open only from within. Whoever is inside lives. Go down, Saye; but do not wake the sleeper.',
   ],
   [
-    'When he climbed out of the depths of Derinkuyu, the moon was in the sky, and before him lay an endless snowy plain.',
+    'When he climbed up out of the underworld, the moon was in the sky, and before him lay an endless snowy plain.',
     'In the west the domes of a city were shining. The Lamplighters had taken the master there: to Konya, capital of the Seljuks, city of Mevlana.',
     'That night was the seventeenth of December. In Konya they call this night Sheb-i Arus: the wedding night.',
     'Almost four hundred years before, on this night, Mevlana had died. "Do not weep," he had said, "this is my wedding."',
     'The Lamplighters believed that on the wedding night, light cannot die. They had waited for this night to make the master\'s lamp burn forever.',
     'THE LAST VEIL · THE WEDDING',
   ],
+  [
+    'At the very bottom of Derinkuyu there was a sound beneath the stone. Saye pressed his ear to the rock: running water.',
+    'The bard says: in the beginning there was only water. Kayra Khan was alone above it; he did not know what to create.',
+    'A white mother rose from the water: Ak Ana. "Create," she said, and went back into the water.',
+    'Kayra Khan created. But one of his creatures, Erlik, thought himself greater; he was cast beneath the earth.',
+    'The light the Lamplighters stole was flowing beneath the earth, to Erlik\'s realm. The master had been taken that way too.',
+    'THE FIFTH VEIL · ÖTÜKEN',
+  ],
 ];
 
 /// Oynanış sırası. Bölümün kimliği `levels` listesindeki yeridir ve hiç
 /// değişmez (kayıt, hatıralar, görülen olaylar bu kimlikle tutulur); yeni
 /// bölümler listenin sonuna eklenir, oynanıştaki yerlerine bu sırada girer.
-const levelOrder = <int>[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
+const levelOrder = <int>[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 13];
 
 /// Sıra değişince artar: kayıttaki "açılan en ileri bölüm" (sıradaki yer)
 /// eski sıradan yenisine çevrilir.
-const levelOrderVersion = 1;
+const levelOrderVersion = 2;
 
 /// Eski sıra sürümlerinde her yerdeki bölüm kimliği (1. sürüm: kimlik =
 /// yer).
 const _levelOrderHistory = <int, List<int>>{
   1: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13],
+  2: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 13],
 };
 
 /// Bölümün oynanış sırasındaki yeri (yoksa -1).
@@ -1309,14 +1330,14 @@ const levels = <LevelDef>[
     map: kMapDerinkuyu,
   ),
   LevelDef(
-    title: 'XIV · ŞEB-İ ARÛS',
+    title: 'XV · ŞEB-İ ARÛS',
     bard: 'Ozan der ki: Dönen döner, gölge düşer; kim dönerse yolunu bulur.',
     bardEn: 'The bard says: the whirling turn, the shadows fall; whoever turns finds the way.',
     gokboruGuard: true,
     subtitle: 'Bu gece ölüm bir düğündür.',
     theme: LevelTheme.konya,
     wings: true,
-    titleEn: 'XIV · SHEB-I ARUS',
+    titleEn: 'XV · SHEB-I ARUS',
     subtitleEn: 'Tonight, death is a wedding.',
     place: 'Konya · 17 Aralık 1660, Şeb-i Arûs gecesi',
     placeEn: 'Konya · 17 December 1660, the night of Sheb-i Arus',
@@ -1391,5 +1412,65 @@ const levels = <LevelDef>[
       'Memory · "Why did the sun break, master?" "Someone wanted to hang it up for himself alone, Saye. Light agrees to be shared; it never agrees to be owned."',
     ],
     map: kMapKonya,
+  ),
+  LevelDef(
+    title: 'XIV · ERLİK\'İN KATI',
+    subtitle: 'Yerin altında ışık tehlikeli, karanlık güvenlidir.',
+    titleEn: 'XIV · ERLIK\'S REALM',
+    subtitleEn: 'Beneath the earth, light is danger and darkness is safety.',
+    theme: LevelTheme.underworld,
+    bard: 'Ozan der ki: Yerin altında ışık düşmandır; karanlık, sırtını dayayacağın duvardır.',
+    bardEn: 'The bard says: beneath the earth light is the enemy; darkness is the wall you lean your back on.',
+    place: 'Ötüken · Yerin altı, Erlik\'in katı',
+    placeEn: 'Ötüken · Beneath the earth, Erlik\'s realm',
+    gokboruHelp: true,
+    cameos: [('erTostuk', 20, 27)],
+    areas: [
+      'Kara Kapı',
+      'Mürekkep Köprüler',
+      'Körmös Mağarası',
+      'Kut Zindanı',
+      'Çalkuyruk Kuyusu',
+    ],
+    areasEn: [
+      'The Black Gate',
+      'The Ink Bridges',
+      'The Cave of the Körmös',
+      'The Dungeon of Kut',
+      'Çalkuyruk\'s Well',
+    ],
+    whispers: [
+      'Derinkuyu\'nun da altı: Erlik\'in katı. Burada kanatlar açılmaz; yerin altında gök yok.',
+      'Mürekkepten köprüler: ışığını örtersen tutar, açarsan erir.',
+      'Tepede Erlik\'in feneri dolaşıyor. Işığı köprüyü de seni de bulur. Taşın oyuğunda bekle.',
+      'Kimi tahta ışıkla, kimi karanlıkla durur. Kenarda dur, sonra kavanozunu aç ya da ört.',
+      'Körmösler: Erlik\'in gölgeleri. Açık kavanoza gelirler; ateşböceğine de.',
+      'Kafeslerde kutlar çırpınıyor: Erlik\'in çaldığı canlar. Her biri bir kapının anahtarı.',
+      'Kavanozun parladıkça yolun aydınlanır; ama karanlıkta seni daha uzaktan görürler.',
+      'Kuyunun dibinde bir at bekliyor: Er Töştük\'ün atı Çalkuyruk.',
+      'Yukarıda bir aralık. Ötesinde ışık var, ama bu kez senin ışığın.',
+    ],
+    whispersEn: [
+      'Below even Derinkuyu: Erlik\'s realm. Wings will not open here; beneath the earth there is no sky.',
+      'Bridges of ink: they hold if you cover your light, and melt if you open it.',
+      'Erlik\'s lantern drifts overhead. Its light finds the bridge and you alike. Wait in the hollow of the stone.',
+      'Some planks stand in light, some in darkness. Stop at the edge, then open or cover your jar.',
+      'The Körmös: Erlik\'s shades. They come to an open jar, and to a firefly.',
+      'Kuts flutter in the cages: lives Erlik has stolen. Each is the key to a gate.',
+      'The brighter your jar, the brighter your path; but in the dark they see you from farther away.',
+      'A horse waits at the bottom of the well: Çalkuyruk, Er Töştük\'s horse.',
+      'An opening above. Beyond it there is light, but this time it is your own.',
+    ],
+    memories: [
+      'Hatıra · Bir atın gölgesini perdeye ilk kez çizdiğimde ustam güldü: "Atın gölgesi bile seni taşır, Sâye."',
+      'Hatıra · Ustam bir gece kandili söndürdü. "Karanlıktan korkma," dedi, "gölge orada doğar."',
+      'Hatıra · "Her canın bir ışığı var," derdi. "Kimse onu kafese koyamaz; koyarsa ışık söner, kafes kalır."',
+    ],
+    memoriesEn: [
+      'Memory · The first time I drew a horse\'s shadow on the screen, my master laughed: "Even a horse\'s shadow will carry you, Saye."',
+      'Memory · One night my master put out the lamp. "Do not fear the dark," he said, "that is where the shadow is born."',
+      'Memory · "Every life has its light," he used to say. "No one can put it in a cage; if they do, the light dies and only the cage remains."',
+    ],
+    map: kMapErlik,
   ),
 ];

@@ -27,6 +27,7 @@ import 'legends.dart';
 import 'umay.dart';
 import 'gokboru.dart';
 import 'cameos.dart';
+import 'erlik.dart';
 import 'myth_cards.dart';
 import 'nemrut.dart';
 import 'ski.dart';
@@ -151,6 +152,25 @@ class GolgeGame extends FlameGame with KeyboardEvents {
 
   /// Albastı kavanozun ışığını çekiyor (0-1).
   double jarSteal = 0;
+
+  /// Erlik'in katı: Sâye Çalkuyruk'un sırtında.
+  bool onHorse = false;
+
+  /// Kavanoza giren kutlar kavanozu parlatır (ışık yarıçapı çarpanı):
+  /// Körmösler daha uzaktan görür, ışık tahtaları daha uzaktan yanar.
+  double get jarBoost =>
+      1 +
+      0.3 * world.children.whereType<KutCage>().where((k) => k.freed).length;
+
+  /// Çalkuyruk Sâye'yi sırtına alır.
+  void mountHorse() {
+    if (onHorse) return;
+    onHorse = true;
+    GameAudio.instance.play('land', volume: 0.7);
+    GameAudio.instance.play('gust', volume: 0.6);
+    once('calkuyruk', S.of('calkuyrukMount'));
+    meetMyth('erTostuk');
+  }
 
   /// Karanlık bölgede bir ateşböceğinin sönme süresi.
   static const darkDrain = 6.5;
@@ -617,11 +637,19 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         for (final c in level.crumbleCells) CrumbleRock(c),
         ..._lifts(),
         for (final c in level.batCells)
-          if (level.def.theme.snowy) Wolf(c) else BatRoost(c),
+          if (level.def.theme.snowy)
+            Wolf(c)
+          else if (level.def.theme == LevelTheme.underworld)
+            Kormos(c)
+          else
+            BatRoost(c),
+        for (final c in level.kutCells) KutCage(c),
         for (final c in level.thinIceCells) ThinIce(c),
         for (final c in level.crowCells) Crow(c),
         for (final c in level.watcherCells) Watcher(c),
-        if (!wingsCollected)
+        if (level.def.theme == LevelTheme.underworld)
+          for (final c in level.wingsCells) Calkuyruk(c)
+        else if (!wingsCollected)
           for (final c in level.wingsCells) WingsPickup(c),
         for (final c in level.glimpseCells) KarabasanGlimpse(c),
         for (var i = 0; i < level.def.echoes.length; i++)
@@ -687,6 +715,14 @@ class GolgeGame extends FlameGame with KeyboardEvents {
             Avalanche(level.chaseStart!, level.chaseEnd!)
           else if (level.def.theme == LevelTheme.konya)
             LightFlood(level.chaseStart!, level.chaseTop!)
+          else if (level.def.theme == LevelTheme.underworld)
+            // Erlik'in karanlığı: Sâye Çalkuyruk'a binince yükselir.
+            LightFlood(
+              level.chaseStart!,
+              level.chaseTop!,
+              dark: true,
+              wake: () => onHorse,
+            )
           else
             Karabasan(level.chaseStart!, level.chaseEnd!),
         for (var i = 0; i < level.semazenCells.length; i++)
@@ -724,6 +760,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     _stormT = 0;
     jarStrength = 1;
     jarSteal = 0;
+    onHorse = false;
     _darkT = 0;
     if (withPlayer) {
       player = Player(_respawn!.clone());
@@ -1289,6 +1326,9 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         Lever l when near(l, 4, 4) => 'lever',
         UmayTree u when near(u, 3, 3) => 'umay',
         PawTrail t when near(t, 4, 3) => 'gokboruTrail',
+        Kormos k when near(k, 7, 5) => 'kormos',
+        KutCage k when near(k, 3, 3) && !k.freed => 'kut',
+        Calkuyruk c when near(c, 5, 4) && !onHorse => 'horse',
         Valve v when near(v, 4, 3) => 'valve',
         PerdeCord k when near(k, 4, 3) => 'cord',
         ArkScale s when near(s.lift.a, 6, 4) || near(s.lift.b, 6, 4) => 'scale',

@@ -33,6 +33,10 @@ void main() {
       'ayna_golge': (PerdeScene.mirror, 1.5),
       'ayna_kandil': (PerdeScene.mirror, 2.6),
       'ayna_agri': (PerdeScene.mirror, 4.2),
+      'akana_kayra': (PerdeScene.akAna, 1.3),
+      'akana_yukselir': (PerdeScene.akAna, 2.6),
+      'akana_dunya': (PerdeScene.akAna, 3.7),
+      'akana_isiklar': (PerdeScene.akAna, 4.7),
     };
     for (final e in shots.entries) {
       final rec = ui.PictureRecorder();

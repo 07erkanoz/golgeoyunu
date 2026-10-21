@@ -409,9 +409,16 @@ class GreatLamp extends PositionComponent with HasGameReference<GolgeGame> {
 /// yüz tutunca taşar: aşağıdan yükselen soğuk bir ışık seli. Gölgeye değerse
 /// siler. Sâye ancak tırmanarak kurtulur.
 class LightFlood extends PositionComponent with HasGameReference<GolgeGame> {
-  LightFlood(this.startX, this.topY) : super(priority: 30);
+  LightFlood(this.startX, this.topY, {this.dark = false, this.wake})
+    : super(priority: 30);
 
   final double startX;
+
+  /// Erlik'in katında ışık değil karanlık yükselir (mor-kara, söndürür).
+  final bool dark;
+
+  /// Verilirse sel bu doğru olunca uyanır (yoksa Sâye [startX]'i geçince).
+  final bool Function()? wake;
 
   /// Bu yüksekliğin üstüne çıkınca sel durur ve çekilir.
   final double topY;
@@ -437,7 +444,8 @@ class LightFlood extends PositionComponent with HasGameReference<GolgeGame> {
       return;
     }
     if (!_awake) {
-      if (p.center.x > startX && !p.isDead) {
+      final w = wake;
+      if ((w != null ? w() : p.center.x > startX) && !p.isDead) {
         _awake = true;
         position.y = p.position.y + Player.h + 7 * kTile;
         _speed = 40;
@@ -460,7 +468,7 @@ class LightFlood extends PositionComponent with HasGameReference<GolgeGame> {
     final gap = position.y - (p.position.y + Player.h);
     game.threat = math.max(game.threat, (1 - gap / 300).clamp(0.0, 1.0));
     GameAudio.instance.dread(((400 - gap) / 360).clamp(0.2, 1.0));
-    if (gap < 2) p.die(cause: DeathCause.light);
+    if (gap < 2) p.die(cause: dark ? DeathCause.dark : DeathCause.light);
   }
 
   @override
@@ -475,21 +483,34 @@ class LightFlood extends PositionComponent with HasGameReference<GolgeGame> {
     canvas.drawRect(
       Rect.fromLTWH(left, 0, width, depth),
       Paint()
-        ..shader = ui.Gradient.linear(const Offset(0, 0), Offset(0, depth), [
-          const Color(0xFFE4FFF8).withValues(alpha: 0.85 * a),
-          kCold.withValues(alpha: 0.55 * a),
-        ]),
+        ..shader = ui.Gradient.linear(
+          const Offset(0, 0),
+          Offset(0, depth),
+          dark
+              ? [
+                  const Color(0xFF2A1640).withValues(alpha: 0.95 * a),
+                  const Color(0xFF05030A).withValues(alpha: a),
+                ]
+              : [
+                  const Color(0xFFE4FFF8).withValues(alpha: 0.85 * a),
+                  kCold.withValues(alpha: 0.55 * a),
+                ],
+        ),
     );
     // Dalgalanan yüzey ve yukarı uçuşan kıvılcımlar.
     final edge = Paint()
-      ..color = const Color(0xFFFFFFFF).withValues(alpha: 0.9 * a)
+      ..color = (dark ? const Color(0xFFB27AE8) : const Color(0xFFFFFFFF))
+          .withValues(alpha: 0.9 * a)
       ..strokeWidth = 3;
     final path = Path()..moveTo(left, 0);
     for (var x = 0.0; x <= width; x += 24) {
       path.lineTo(left + x, -3 * math.sin(_t * 3 + (left + x) / 40));
     }
     canvas.drawPath(path, edge..style = PaintingStyle.stroke);
-    final spark = Paint()..color = kCold.withValues(alpha: 0.7 * a);
+    final spark = Paint()
+      ..color = (dark ? const Color(0xFFB27AE8) : kCold).withValues(
+        alpha: 0.7 * a,
+      );
     for (var i = 0; i < 30; i++) {
       final k = (i * 0.37 + _t * 0.4) % 1.0;
       final x = left + ((i * 97.0) % width);

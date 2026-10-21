@@ -363,10 +363,11 @@ class GokboruWarden extends Component with HasGameReference<GolgeGame> {
   }
 
   /// Yolun ilerisinde Gökbörü'nün belireceği yer: sıradaki Hüdhüd konağının
-  /// zemini (yoksa çıkış).
+  /// ya da kontrol noktasının zemini (yoksa çıkış).
   Vector2? _ahead(double prog) {
     final level = game.level;
-    final stops = [...level.birdCells, level.exitCell]
+    // Hüdhüd'ün giremediği yerlerde (yerin altı) kontrol noktaları da konak.
+    final stops = [...level.birdCells, ...level.checkpointCells, level.exitCell]
       ..sort((a, b) => level.progressOf(a).compareTo(level.progressOf(b)));
     for (final s in stops) {
       if (level.progressOf(s) < prog + 3 * kTile) continue;

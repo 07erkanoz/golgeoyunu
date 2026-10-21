@@ -1696,4 +1696,31 @@ class MythFigures {
     c.drawLine(const Offset(-w / 2 - 2, 0), const Offset(w / 2 + 2, 0), iron);
     c.drawCircle(const Offset(0, -h - 6), 3, iron);
   }
+
+  /// Er Töştük'ün duvara düşen gölgesi: kut ışığının vurduğu taşta, atının
+  /// sırtında bir atlı.
+  static void erTostukShadow(Canvas c, double t) {
+    c.drawOval(
+      Rect.fromCenter(center: const Offset(0, -55), width: 190, height: 140),
+      Paint()
+        ..shader = ui.Gradient.radial(const Offset(0, -55), 95, [
+          const Color(0xFFFFE0A0).withValues(alpha: 0.28),
+          const Color(0x00FFE0A0),
+        ]),
+    );
+    final ink = Paint()
+      ..color = const Color(0xFF05030A).withValues(alpha: 0.85)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1.6);
+    c.save();
+    c.translate(0, math.sin(t * 0.8) * 1.2);
+    c.drawPath(MythShapes.horse, ink);
+    // Atlı: insan siluetinin belden yukarısı, eyerde.
+    c.save();
+    c.translate(4, -31.75);
+    c.scale(0.55);
+    c.clipRect(const Rect.fromLTRB(-80, -130, 80, -55));
+    c.drawPath(MythShapes.kam, ink);
+    c.restore();
+    c.restore();
+  }
 }

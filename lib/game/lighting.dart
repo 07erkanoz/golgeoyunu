@@ -15,6 +15,7 @@ import 'puzzles.dart';
 import 'umay.dart';
 import 'gokboru.dart';
 import 'cameos.dart';
+import 'erlik.dart';
 import '../settings.dart';
 import 'golge_game.dart';
 import 'level.dart';
@@ -43,6 +44,7 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
     LevelTheme.nemrut => 0.24,
     LevelTheme.peri => 0.26,
     LevelTheme.konya => 0.38,
+    LevelTheme.underworld => 0.42,
   };
 
   final _cut = Paint()..blendMode = BlendMode.dstOut;
@@ -156,6 +158,10 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
           );
         case MemoryShard m:
           _light(canvas, m.position.toOffset(), 80, 0.8);
+        case KutCage k when !k.freed:
+          _light(canvas, k.glowCenter, 70, 0.6);
+        case Calkuyruk c:
+          _light(canvas, c.glowCenter, 60, 0.45);
         case Apparition a:
           _light(canvas, a.glowCenter, a.glowRadius, 0.7 * a.alpha);
         case AkAnaRise a:
@@ -223,7 +229,7 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
           canvas.drawPath(g.beamPath(), _cut);
           _cut.color = const Color(0xFF000000);
           canvas.restore();
-        case LightFlood f when f.awake:
+        case LightFlood f when f.awake && !f.dark:
           final top = f.surface - 60;
           if (top < _view.bottom) {
             _cut.shader = ui.Gradient.linear(

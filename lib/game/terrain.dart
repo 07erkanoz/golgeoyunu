@@ -163,7 +163,11 @@ Picture _buildTerrain(Level lv, int c0, int c1, int r0, int r1) {
             ink,
           );
           if (theme == LevelTheme.ark) _hullPlanks(canvas, lv, c, r, x, y);
-          if (r > 0 && !lv.solid(c, r - 1) && theme != LevelTheme.cistern) {
+          // Sarnıçta ve yerin altında taşın üstünde ot bitmez.
+          if (r > 0 &&
+              !lv.solid(c, r - 1) &&
+              theme != LevelTheme.cistern &&
+              theme != LevelTheme.underworld) {
             _topDressing(canvas, theme, x, y, rnd, ink, line);
           }
           if (r + 1 < lv.height &&
@@ -173,7 +177,8 @@ Picture _buildTerrain(Level lv, int c0, int c1, int r0, int r1) {
               _icicles(canvas, x, y, rnd);
             } else if (theme == LevelTheme.ark || theme == LevelTheme.peri) {
               // Ahşap ve tüf: altından bir şey sarkmaz.
-            } else if (theme == LevelTheme.cave) {
+            } else if (theme == LevelTheme.cave ||
+                theme == LevelTheme.underworld) {
               for (var i = 0; i < 2; i++) {
                 if (rnd.nextDouble() < 0.4) continue;
                 final sx = x + rnd.nextDouble() * (kTile - 8);

@@ -29,6 +29,7 @@ import 'strings.dart';
 ///   kızıl bir gölge belirir, ışığını çeker; hücrenin solundaki demir nalın
 ///   yanına yaklaşamaz.
 /// - `erlik`: hücrenin yakınında yerin dibinden boğuk bir ses.
+/// - `erTostuk`: hücrenin duvarında Er Töştük'ün atlı gölgesi belirir.
 class CameoWarden extends Component with HasGameReference<GolgeGame> {
   CameoWarden(this.cameos);
 
@@ -128,6 +129,23 @@ class CameoWarden extends Component with HasGameReference<GolgeGame> {
           game.world.add(AlbastiShade());
           _say(kind);
           game.meetMyth(kind);
+        case 'erTostuk':
+          if (d.x.abs() > 8 * kTile || d.y.abs() > 4 * kTile) break;
+          game.markEvent(_key(kind));
+          game.world.add(
+            Apparition(
+              Vector2(cell.x, cell.y + kTile / 2),
+              draw: MythFigures.erTostukShadow,
+              drawScale: 0.9,
+              facing: p.center.x < cell.x ? -1 : 1,
+              glow: const Color(0xFFFFE0A0),
+              hold: 5,
+              fadeIn: 2,
+              fadeOut: 2.5,
+            ),
+          );
+          _say(kind);
+          game.meetMyth('erTostuk');
         case 'erlik':
           if (d.x.abs() > 3 * kTile || d.y.abs() > 3 * kTile) break;
           game.markEvent(_key(kind));

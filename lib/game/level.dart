@@ -74,6 +74,9 @@ class Level {
   final crowCells = <Vector2>[];
   final watcherCells = <Vector2>[];
   final wingsCells = <Vector2>[];
+
+  /// Erlik'in katı: hapsedilmiş kut kafesleri (`a`).
+  final kutCells = <Vector2>[];
   double? chaseStart;
   double? chaseEnd;
 
@@ -341,6 +344,8 @@ class Level {
             floodCells.add(cell);
           case 'a' when def.theme == LevelTheme.konya:
             semazenCells.add(cell);
+          case 'a' when def.theme == LevelTheme.underworld:
+            kutCells.add(cell);
           case 'd' when def.theme == LevelTheme.konya:
             chandelierCells.add(cell);
           case '0':

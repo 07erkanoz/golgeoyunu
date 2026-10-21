@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/painting.dart';
 
+import 'myth_shapes.dart';
 import 'palette.dart';
 
 part 'perde_east.dart';
@@ -37,6 +38,10 @@ enum PerdeScene {
   /// Derinkuyu'nun kesiti: inen fenerler, uyuyan dev.
   underground,
 
+  /// Ötüken açılışı: ilk su, sudan yükselen Ak Ana, çamurdan kalkan dünya,
+  /// yerin altına sürülen Erlik.
+  akAna,
+
   /// Konya: düğün gecesi, semâzenler, neyzen.
   sema,
 
@@ -57,6 +62,7 @@ PerdeScene? interludeScene(int level) => switch (level) {
   11 => PerdeScene.fairies,
   12 => PerdeScene.underground,
   13 => PerdeScene.sema,
+  14 => PerdeScene.akAna,
   _ => null,
 };
 
@@ -176,6 +182,8 @@ class PerdePainter {
         _fairiesScene(canvas, time, progress);
       case PerdeScene.underground:
         _fairiesScene(canvas, time, progress, underground: true);
+      case PerdeScene.akAna:
+        _akAnaScene(canvas, time, progress);
       case PerdeScene.sema:
         _semaScene(canvas, time, progress);
       case PerdeScene.epilogue:

@@ -5,9 +5,11 @@ import 'dart:ui' as ui;
 import 'package:flame/components.dart';
 
 import 'entities.dart';
+import 'erlik.dart';
 import 'audio.dart';
 import 'golge_game.dart';
 import 'level.dart';
+import 'levels.dart';
 import 'mechanics.dart';
 import 'palette.dart';
 import 'konya.dart';
@@ -75,6 +77,8 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
 
   bool get hasWings =>
       (game.level.def.wings || game.wingsCollected) &&
+      // Yerin altında gök yok: kanatlar açılmaz.
+      game.level.def.theme != LevelTheme.underworld &&
       !game.level.inRain(center);
 
   /// Uzaktan zor görülür (parmak ucu ya da çömelme).
@@ -234,7 +238,9 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
   /// Oyuncunun taşıdığı ışık: konumu ve yarıçapı (aydınlatma katmanı için).
   (Vector2, double) get light {
     final radius =
-        (crouching ? 55.0 : (sneaking ? 120.0 : 200.0)) * game.jarStrength;
+        (crouching ? 55.0 : (sneaking ? 120.0 : 200.0)) *
+        game.jarStrength *
+        game.jarBoost;
     if (jarStyle) {
       return (position + Vector2(w / 2 + facing * 5, 17), radius);
     }
@@ -246,9 +252,12 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
   void _updateNormal(double dt, int dir, bool up, bool down, bool jump) {
     final wasOnGround = onGround;
     final impact = velocity.y;
-    crouching = onGround && down;
+    // Çalkuyruk'un sırtında çömelinmez; at daha hızlı koşar.
+    crouching = onGround && down && !game.onHorse;
     if (crouching) sneaking = false;
-    final maxSpeed = crouching
+    final maxSpeed = game.onHorse
+        ? runSpeed * 1.4
+        : crouching
         ? crouchSpeed
         : (pushing ? pushSpeed : (sneaking ? sneakSpeed : runSpeed));
     // Salın üstünde yürümez; sal onu sırıkla taşır.
@@ -282,7 +291,8 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
         _dropThrough = 0.25;
         position.y += 2;
       } else {
-        velocity.y = -jumpVelocity;
+        // Atın sıçrayışı çok daha yüksektir (yaklaşık iki katı).
+        velocity.y = -jumpVelocity * (game.onHorse ? 1.42 : 1);
         _jumpCut = false;
         GameAudio.instance.play('jump', volume: sneaking ? 0.3 : 0.6);
       }
@@ -522,6 +532,8 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
   }
 
   void _tryLedgeGrab() {
+    // Atın sırtında kenara tutunulmaz.
+    if (game.onHorse) return;
     final d = facing;
     final probeX = d > 0 ? position.x + w + 3 : position.x - 3;
     final c = (probeX / kTile).floor();
@@ -1303,6 +1315,22 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
 
   @override
   void render(Canvas canvas) {
+    // Çalkuyruk'un sırtında: atın sırtına oturur (çömelik duruş), yere
+    // gölge düşmez; at kendi çizilir.
+    if (game.onHorse && !isDead) {
+      final was = crouching;
+      crouching = true;
+      canvas.save();
+      canvas.translate(0, -Calkuyruk.saddle + 4);
+      _renderBody(canvas, riding: true);
+      canvas.restore();
+      crouching = was;
+      return;
+    }
+    _renderBody(canvas);
+  }
+
+  void _renderBody(Canvas canvas, {bool riding = false}) {
     final ski = skiing && !isDead;
     if (ski) {
       canvas.save();
@@ -1311,7 +1339,9 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       canvas.translate(-w / 2, -h);
       drawSpray(canvas, Offset(w / 2 - 12, h), onGround ? _skiSpeed : 0, _anim);
     }
-    if (!ski && !isDead && !Settings.lowGraphics) _drawShadows(canvas);
+    if (!ski && !isDead && !riding && !Settings.lowGraphics) {
+      _drawShadows(canvas);
+    }
     if (jarStyle && !hidden && !crouching && !isDead && !Settings.lowGraphics) {
       // Kenar ışığı: kavanozun sıcak ışığı siluetin önünü ve tepesini yalar.
       // Aynı figür ışık renginde, ışığa doğru biraz kaydırılarak önce çizilir;

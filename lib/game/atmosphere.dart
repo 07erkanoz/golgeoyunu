@@ -120,6 +120,67 @@ class Backdrop extends Component with HasGameReference<GolgeGame> {
           seed: 4,
           color: const Color(0xFF2A140D),
         );
+      case LevelTheme.underworld:
+        // Erlik'in katı: mor-kara derinlik; aşağıda yeraltı ırmağının soğuk
+        // ışığı, tavandan sarkan kayalar, uzakta hapsedilmiş kut ışıkları.
+        _gradient(canvas, rect, const [
+          Color(0xFF0C0814),
+          Color(0xFF1E1430),
+          Color(0xFF2E2048),
+        ]);
+        _lightLeak(
+          canvas,
+          Offset(w * 0.4, h * 1.08),
+          h * 0.9,
+          0.16,
+          const Color(0xFF6A8AE0),
+        );
+        final dy = -cam.y * 0.05;
+        _ridge(
+          canvas,
+          w,
+          h,
+          offset: cam.x * 0.12,
+          base: h * 0.18 + dy,
+          amp: 50,
+          freq: 0.02,
+          seed: 7,
+          color: const Color(0xFF1A1226),
+          fromTop: true,
+        );
+        // Uzak kut ışıkları: ağır ağır yanıp söner.
+        if (!Settings.lowGraphics) {
+          for (var i = 0; i < 9; i++) {
+            final span = w + 200;
+            final x = ((i * 241.0 - cam.x * 0.2) % span + span) % span - 100;
+            final y = h * (0.3 + (i % 4) * 0.12) + math.sin(_t * 0.4 + i) * 8;
+            final a = 0.25 + 0.2 * math.sin(_t * 0.9 + i * 1.7);
+            glowDot(canvas, Offset(x, y), 14, const Color(0xFFFFE8B0), a);
+          }
+        }
+        _ridge(
+          canvas,
+          w,
+          h,
+          offset: cam.x * 0.3,
+          base: h * 0.82 + dy,
+          amp: 50,
+          freq: 0.014,
+          seed: 8,
+          color: const Color(0xFF120C1A),
+        );
+        _ridge(
+          canvas,
+          w,
+          h,
+          offset: cam.x * 0.35,
+          base: h * 0.08 + dy,
+          amp: 60,
+          freq: 0.018,
+          seed: 9,
+          color: const Color(0xFF0E0914),
+          fromTop: true,
+        );
       case LevelTheme.cliffs:
         // Kayalıklar: tırmandıkça açılan pas rengi alacakaranlık.
         _gradient(canvas, rect, [
@@ -782,6 +843,7 @@ class ScreenEffects extends Component with HasGameReference<GolgeGame> {
       LevelTheme.nemrut => (const Color(0xFFF0C4A0), 0.07),
       LevelTheme.peri => (const Color(0xFFF0C8A0), 0.07),
       LevelTheme.konya => (const Color(0xFFC8D8F0), 0.07),
+      LevelTheme.underworld => (const Color(0xFF8A6AC8), 0.06),
     };
     if (!Settings.lowGraphics) {
       for (var i = 0; i < 5; i++) {

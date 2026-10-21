@@ -849,7 +849,82 @@ kn.fill(430,3,434,3,'#'); kn.put(435,4,'Z')
 kn.put(431,2,'E'); kn.put(433,2,'M')
 lvl14=kn.rows()
 
-MAPS = [('kMapYerebatan', lvl1), ('kMapKule', lvl2), ('kMapGokyolu', lvl3), ('kMapKaf', lvl4), ('kMapAgri', lvl5), ('kMapGemi', lvl6), ('kMapNemrut', lvl7), ('kMapGunDogumu', lvl8), ('kMapKarYolu', lvl9), ('kMapPalandoken', lvl10), ('kMapCig', lvl11), ('kMapPeri', lvl12), ('kMapDerinkuyu', lvl13), ('kMapKonya', lvl14)]
+# ------------------------------------------------------------ XIV · ERLİK'İN KATI (Ötüken)
+# Yerin altı: ışık yolu siler, karanlık yol açar. `b` Körmös, `a` kut kafesi,
+# `W` Çalkuyruk, `z`/`Z` Çalkuyruk'a binince yükselen karanlık.
+W,H=300,48
+er=G(W,H,fill='#')
+def ec(c0,r0,c1,r1): er.fill(c0,r0,c1,r1,'.')
+F0=30                                   # ana zemin: 30. satırda durulur
+# A) Kara Kapı: varış, Er Töştük'ün gölgesi
+ec(1,21,40,F0)
+er.put(2,F0,'P'); er.put(3,F0,'p'); er.put(5,F0,'1'); er.put(10,F0,'F'); er.put(14,F0,'F')
+er.fill(24,F0-2,27,F0,'#'); er.put(25,F0-3,'F')              # alçak kaya basamak
+er.put(34,F0,'K')
+# B) Mürekkep köprüler: yeraltı ırmağının üstü
+ec(41,21,98,40)
+er.fill(41,37,98,40,'w')                                      # ırmak (boğar)
+def pillar(c0,c1,top=F0+1): er.fill(c0,top,c1,40,'#')
+er.fill(41,F0+1,52,F0+1,'n')                                  # 1. köprü: örtülü kavanozla
+er.put(42,F0,'2')
+pillar(53,55); er.put(54,F0,'p'); er.put(55,F0,'3')
+# 2. köprü: tepede Erlik'in feneri dolaşır; sütunlarda gölge oyukları
+er.fill(56,F0+1,60,F0+1,'n'); pillar(61,62); er.put(61,F0,'~'); er.put(62,F0,'~')
+er.fill(63,F0+1,67,F0+1,'n'); pillar(68,69); er.put(68,F0,'~'); er.put(69,F0,'~')
+er.fill(70,F0+1,74,F0+1,'n')
+er.put(65,F0-7,'N')
+pillar(75,77); er.put(76,F0,'4'); er.put(77,F0,'F')
+# 3. köprü: ışık ve gölge tahtaları sırayla (kenarda dur, sonra değiştir)
+er.fill(78,F0+1,81,F0+1,'l'); er.fill(82,F0+1,85,F0+1,'n')
+er.fill(86,F0+1,89,F0+1,'l'); er.fill(90,F0+1,93,F0+1,'n')
+er.fill(94,F0+1,95,F0+1,'l')
+pillar(96,98); er.put(97,F0,'K')
+# C) Körmös mağarası
+ec(99,22,170,F0)
+er.put(101,F0,'p'); er.put(102,F0,'5'); er.put(104,F0,'F'); er.put(106,F0,'F')
+er.put(110,F0-3,'b')
+ec(112,F0+1,116,34); er.fill(112,34,116,34,'^'); er.fill(112,F0+1,116,F0+1,'l')   # çukur, ışık tahtası
+er.put(118,F0,'~'); er.put(119,F0,'~')
+er.put(122,F0,'F')
+er.put(128,F0-4,'b')
+ec(130,F0+1,131,34); er.fill(130,34,131,34,'^')             # sıçranacak çukur (2 kare)
+er.fill(136,F0-1,139,F0,'#'); er.fill(140,F0-3,143,F0-3,'#'); er.put(141,F0-4,'M')   # basamak ve yüksek oyuk: hatıra
+er.put(137,F0-2,'~'); er.put(138,F0-2,'~')
+er.put(146,F0-3,'b')
+ec(148,F0+1,159,34); er.fill(148,34,159,34,'^')
+er.fill(148,F0+1,155,F0+1,'n'); er.fill(156,F0+1,159,F0+1,'l')
+er.put(162,F0,'~'); er.put(163,F0,'~'); er.put(165,F0,'K'); er.put(167,F0,'F')
+# D) Kut zindanı: üç kafes, üç kapı
+ec(171,20,262,F0)
+er.put(172,F0,'p'); er.put(173,F0,'6')
+er.put(177,F0,'a')
+er.fill(182,F0-4,182,F0,'H'); er.fill(182,20,182,F0-5,'#')
+er.put(186,F0,'K'); er.put(188,F0,'F')
+er.put(195,F0-3,'b'); er.put(206,F0-4,'b')
+er.fill(196,F0-1,199,F0,'#'); er.fill(200,F0-3,203,F0,'#')       # basamaklar: kafes yüksekte
+er.fill(205,F0-5,214,F0-5,'#')
+er.put(212,F0-6,'a'); er.put(208,F0-6,'M')
+er.put(192,F0,'~'); er.put(193,F0,'~')
+er.fill(217,F0-4,217,F0,'H'); er.fill(217,20,217,F0-5,'#')
+er.put(220,F0,'K'); er.put(222,F0,'7'); er.put(224,F0,'F'); er.put(226,F0,'F')
+# Son kafes: gölge tahtası zeminli oda, iki Körmös
+ec(229,F0+1,246,34); er.fill(229,34,246,34,'^')
+er.fill(229,F0+1,235,F0+1,'n'); er.fill(240,F0+1,246,F0+1,'n')
+er.fill(236,F0+1,239,34,'#'); er.put(237,F0,'a')                  # kaya adacık: kafes üstünde
+er.put(232,F0-5,'b'); er.put(244,F0-5,'b')
+er.fill(250,F0-4,250,F0,'H'); er.fill(250,20,250,F0-5,'#')
+er.put(255,F0,'p'); er.put(258,F0,'K'); er.put(259,F0,'8')
+# E) Çalkuyruk kuyusu: atın sıçrayışıyla yukarı, yükselen karanlıktan kaçış
+ec(263,3,277,F0)
+er.put(266,F0,'W'); er.put(268,F0,'z')
+for i,r in enumerate((25,20,15,10,5)):
+    if i%2==0: er.fill(272,r+1,277,r+1,'#')
+    else: er.fill(263,r+1,268,r+1,'#')
+ec(278,3,298,5)
+er.put(270,8,'Z'); er.put(280,5,'9'); er.put(286,5,'K'); er.put(290,5,'M'); er.put(296,5,'E')
+lvl_erlik=er.rows()
+
+MAPS = [('kMapYerebatan', lvl1), ('kMapKule', lvl2), ('kMapGokyolu', lvl3), ('kMapKaf', lvl4), ('kMapAgri', lvl5), ('kMapGemi', lvl6), ('kMapNemrut', lvl7), ('kMapGunDogumu', lvl8), ('kMapKarYolu', lvl9), ('kMapPalandoken', lvl10), ('kMapCig', lvl11), ('kMapPeri', lvl12), ('kMapDerinkuyu', lvl13), ('kMapKonya', lvl14), ('kMapErlik', lvl_erlik)]
 
 out = ['// Bu dosya tools/generate_maps.py ile üretilir; elle düzenleme.',
        '// Gösterim: lib/game/level.dart başındaki açıklamaya bakın.', '']

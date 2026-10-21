@@ -37,7 +37,14 @@ LEVELS = [
     ('kMapNemrut', True, 80), ('kMapGunDogumu', True, 0), ('kMapKarYolu', True, 120),
     ('kMapPalandoken', None, 0), ('kMapCig', None, 0), ('kMapPeri', True, 0),
     ('kMapDerinkuyu', True, 0), ('kMapKonya', True, 0),
+    ('kMapErlik', False, 0),
 ]
+
+# Yerin altı (Erlik'in katı): `a` kut kafesi (kol gibi en yakın kapıyı
+# açar, üstüne basılmaz), `b` Körmös (havada, engel değil), `W` Çalkuyruk:
+# ona varılınca atla zıplanır (1.42 kat hız: yaklaşık iki kat yükseklik).
+UNDERWORLD = {'kMapErlik'}
+HORSE_JUMP = 1.42
 
 ONEWAY = set('=luO/fAYRV_dC@a')     # üstüne basılır (n ayrı işlenir)
 DEADLY = set('w^')
@@ -56,11 +63,15 @@ def load(name):
 
 
 class Map:
-    def __init__(self, rows, wings, headwind, opened, konya=False):
+    def __init__(self, rows, wings, headwind, opened, konya=False,
+                 underworld=False, jump_k=1.0):
         self.rows = rows
         self.h = len(rows)
         self.w = len(rows[0])
-        self.wings = wings or any('W' in r for r in rows)
+        self.underworld = underworld
+        self.jump_k = jump_k
+        self.run_k = 1.4 if jump_k > 1 else 1.0          # atın koşusu
+        self.wings = (wings or any('W' in r for r in rows)) and not underworld
         self.glide_x = max(40.0, GLIDE_X - headwind)
         self.opened = opened                     # açılmış kapı hücreleri
         self.konya = konya
@@ -126,6 +137,8 @@ class Map:
         ch = self.rows[r][c]
         if ch == 'H' and (c, r) in self.opened:
             return '.'
+        if self.underworld and ch in 'ab':
+            return '.'
         return ch
 
     def solid(self, c, r):
@@ -157,7 +170,7 @@ def simulate(m, x, y, vx0, glide, swing=None, release=None):
     """Bir atlayış; (konulan yerler, ölümle bitti mi)."""
     out = set()
     vx = vx0
-    vy = -JUMP if swing is None else swing
+    vy = -JUMP * m.jump_k if swing is None else swing
     for step in range(int(8 / DT)):
         if release is not None and step * DT > release:
             glide = False
@@ -283,7 +296,8 @@ def search(m, start):
             x0 = c * T
             y0 = (r + 1) * T - H_P
             for off in (0, 9, 18):
-                for vx in (-RUN, -80, 0, 80, RUN):
+                run = RUN * m.run_k
+                for vx in (-run, -80, 0, 80, run):
                     for glide, rel in GLIDES:
                         res, died = simulate(m, x0 + off, y0, vx, glide, release=rel)
                         if died:
@@ -306,7 +320,7 @@ def search(m, start):
             rope = m.cell(c, r) == 'S'
             top = m.cell(c, r - 1) not in '|S'
             ys = (r * T, r * T - 13) if top else (r * T,)
-            for vx in (-RUN, RUN, -300, 300) if rope else (-RUN, RUN):
+            for vx in (-RUN, RUN, -300, 300) if rope else (-RUN * m.run_k, RUN * m.run_k):
                 for glide in (False, True):
                     vy = -400 if rope else -JUMP * 0.85
                     for y in ys:
@@ -372,9 +386,12 @@ def audit(idx):
     gs = gates(rows)
     opened_gates = []
     used = set()
+    under = name in UNDERWORLD
+    horse = False
     while True:
         opened = {(g[0], r) for g in opened_gates for r in range(g[1], g[2] + 1)}
-        m = Map(rows, wings, hw, opened, konya=name == 'kMapKonya')
+        m = Map(rows, wings, hw, opened, konya=name == 'kMapKonya',
+                underworld=under, jump_k=HORSE_JUMP if horse else 1.0)
         AIR.clear()
         seen, edges, escapes = search(m, start)
         reach = near_cells(seen)
@@ -384,7 +401,7 @@ def audit(idx):
             cs = cells(rows, ch)
             return cs and all(c in reach for c in cs)
 
-        for c in cells(rows, 'L'):
+        for c in cells(rows, 'L') + (cells(rows, 'a') if under else []):
             if c in reach and ('L', c) not in used:
                 new.append((('L', c), nearest_gate(gs, opened_gates, c)))
         if all_reached('T'):
@@ -417,6 +434,10 @@ def audit(idx):
                 if (c in reach or (c[0], c[1] - 1) in reach) and ('d', c) not in used:
                     new.append((('d', c), nearest_gate(gs, opened_gates, c)))
         new = [(k, g) for k, g in new if g is not None]
+        if under and not horse and any(c in reach for c in cells(rows, 'W')):
+            # Çalkuyruk'a varıldı: bundan sonra atla zıplanır.
+            horse = True
+            continue
         if not new:
             break
         for k, g in new:
