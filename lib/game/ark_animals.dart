@@ -490,10 +490,10 @@ ArkAnimal _build(String kind) {
 void drawCarvedAnimal(Canvas c, String kind, {double glow = 0}) {
   final a = ArkAnimal.of(kind);
   final b = a.silhouette.getBounds();
-  const lit = Color(0xFFE2B07A);
-  const mid = Color(0xFF8A5530);
-  const dark = Color(0xFF341A0C);
-  const far = Color(0xFF3E2414);
+  const lit = Color(0xFFB88250);
+  const mid = Color(0xFF66381C);
+  const dark = Color(0xFF22100A);
+  const far = Color(0xFF2A160C);
   // Arka bacaklar.
   c.drawPath(a.farLegs, Paint()..color = far);
   // Kuyruk ve boynuzlar (gövdenin arkasında kalsın).
