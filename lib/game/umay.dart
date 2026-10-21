@@ -18,14 +18,14 @@ class UmayTree extends PositionComponent with Persistent {
     required double headroom,
     this.bloom = false,
     this.small = false,
-  }) : scaleK = small ? 1 : _fit(headroom),
+  }) : scaleK = small ? math.min(_fit(headroom), 0.75) : _fit(headroom),
        super(anchor: Anchor.bottomCenter, priority: 4) {
     position = Vector2(cell.x + kTile / 2, cell.y + kTile);
-    size = small ? Vector2(40, 44) : Vector2(108 * scaleK, 112 * scaleK);
+    size = Vector2(108 * scaleK, 112 * scaleK);
   }
 
-  /// Aynı ekrana düşen ikinci kayıt noktası: ağaç değil, çaputlu değnekli bir
-  /// taş yığını (oba). Kayıt noktası olarak aynıdır.
+  /// Aynı ekrana düşen ikinci kayıt noktası: aynı ağacın genç, küçük bir
+  /// eşi (iki büyük ağaç yan yana dizilmesin). Kayıt noktası olarak aynıdır.
   final bool small;
 
   /// Ağacın durduğu kontrol noktası hücresi (sol üst köşe).
@@ -51,11 +51,10 @@ class UmayTree extends PositionComponent with Persistent {
   double get lit => _lit;
 
   /// Işığın merkezi (dünyada): tacın ortası.
-  Offset get glowCenter =>
-      Offset(position.x, position.y - (small ? 16 : 48 * scaleK));
+  Offset get glowCenter => Offset(position.x, position.y - 48 * scaleK);
 
   /// Işığın yarıçapı: uyurken yalnız yeri belli olacak kadar.
-  double get glowRadius => small ? 30 + 40 * _lit : (50 + 90 * _lit) * scaleK;
+  double get glowRadius => (50 + 90 * _lit) * scaleK;
 
   /// Sâye dokundu: ağaç uyanır (zaten uyanıksa bir şey olmaz).
   void wake() {
@@ -101,11 +100,7 @@ class UmayTree extends PositionComponent with Persistent {
     canvas.translate(size.x / 2, size.y);
     canvas.scale(scaleK);
     // Uyanırken ışık önce yükselir, ardından çaputlar kalkar.
-    if (small) {
-      MythFigures.umayCairn(canvas, _t, lit: _ease(_lit));
-    } else {
-      MythFigures.umayTree(canvas, _t, lit: _ease(_lit), bloom: bloom);
-    }
+    MythFigures.umayTree(canvas, _t, lit: _ease(_lit), bloom: bloom);
     canvas.restore();
   }
 
