@@ -51,12 +51,16 @@ def room(data, wet):
     return out[:end]
 
 
-# Gerçek kayıtlı CC0 seslerle değiştirilenler (tools/import_cc0.py):
+# Gerçek kayıtlı CC0 seslerle değiştirilenler (tools/import_cc0.py,
+# import_crow.py, import_nature.py):
 # bunların üzerine yazılmaz.
 CC0 = {'crow', 'step_1', 'step_2', 'step_3', 'step_4', 'step_wood_1', 'step_wood_2',
        'step_wood_3', 'land', 'jump', 'glide', 'creak', 'lever', 'gate', 'crumble',
        'splash', 'shatter', 'bell', 'fire', 'amb_cistern', 'amb_wind', 'gust',
-       'sting', 'karabasan', 'perde_ney', 'amb_konya'}
+       'sting', 'karabasan', 'perde_ney', 'amb_konya',
+       # tools/import_nature.py
+       'howl', 'heartbeat', 'thunder', 'bats', 'step_snow_1', 'step_snow_2',
+       'step_snow_3', 'step_snow_4'}
 
 
 def save(name, data, gain=0.9):

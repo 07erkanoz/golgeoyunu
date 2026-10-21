@@ -1,5 +1,7 @@
 """Gökbörü'nün uluması: saf Python sentezi (dış kaynak yok).
-Kullanım: python3 tools/synth_howl.py assets/audio"""
+Kullanım: python3 tools/synth_howl.py assets/audio
+Artık kullanılmıyor: howl.wav gerçek kayıttan gelir (tools/import_nature.py).
+"""
 import math, random, struct, sys, wave, os
 
 SR = 44100

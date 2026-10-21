@@ -521,6 +521,28 @@ class ScreenEffects extends Component with HasGameReference<GolgeGame> {
   double _t = 0;
   final _rnd = math.Random();
   final _grain = Float32List(2 * 260);
+
+  // Kar ve tipi tanelerinin rüzgârla biriken kayması (piksel). Hız esintiyle
+  // değişse de konum zamanla çarpılmaz, birikir: taneler yerinden sıçramaz,
+  // geri geri gitmez.
+  double _snowWind = 0;
+  final _blizX = [0.0, 0.0, 0.0];
+  final _blizY = [0.0, 0.0, 0.0];
+  final _bandX = [0.0, 0.0, 0.0, 0.0];
+
+  /// Tipi perdesinin açık kaldığı yer (ekranda); Sâye'yi yumuşakça izler.
+  Offset? _focus;
+
+  /// Tipinin esintisi: birkaç saniyede bir kabarıp söner.
+  double get _gust =>
+      0.95 + 0.14 * math.sin(_t * 0.9) + 0.06 * math.sin(_t * 2.3 + 1.1);
+
+  /// Tane başına sabit, dağınık sözde rastgele sayı (0-1).
+  static double _hash(int i) {
+    final x = math.sin(i * 12.9898 + 78.233) * 43758.5453;
+    return x - x.floorToDouble();
+  }
+
   Size? _vignetteSize;
   Paint? _vignette;
 
@@ -564,6 +586,31 @@ class ScreenEffects extends Component with HasGameReference<GolgeGame> {
   void update(double dt) {
     _t += dt;
     _scareT += dt;
+    _snowWind += dt * (20 + (math.sin(_t * 0.4) * 0.5 + 0.5) * 60);
+    final gust = _gust;
+    for (var d = 0; d < 3; d++) {
+      _blizX[d] += dt * (420 + d * 380) * (0.55 + gust * 0.6);
+      _blizY[d] += dt * (70 + d * 55);
+    }
+    for (var k = 0; k < 4; k++) {
+      _bandX[k] += dt * (260 + k * 70) * (0.6 + gust);
+    }
+    if (game.blizzard > 0.01) {
+      final size = game.camera.viewport.size;
+      var want = Offset(size.x * 0.5, size.y * 0.55);
+      final p = game.player;
+      if (p != null && p.isMounted) {
+        final view = game.camera.visibleWorldRect;
+        want = Offset(
+          (p.center.x - view.left) / view.width * size.x,
+          (p.center.y - view.top) / view.height * size.y,
+        );
+      }
+      final f = _focus ?? want;
+      _focus = Offset.lerp(f, want, math.min(1, dt * 1.2));
+    } else {
+      _focus = null;
+    }
     _scare = math.max(0, _scare - dt * 0.45);
     if (_afterWait != null) {
       _wait -= dt;
@@ -650,19 +697,8 @@ class ScreenEffects extends Component with HasGameReference<GolgeGame> {
   /// yakında iri, hızdan uzayan).
   void _blizzard(Canvas canvas, double w, double h, double storm) {
     final low = Settings.lowGraphics;
-    // Esinti: birkaç saniyede bir kabarıp söner.
-    final gust =
-        0.95 + 0.14 * math.sin(_t * 0.9) + 0.06 * math.sin(_t * 2.3 + 1.1);
-    // Sâye'nin ekrandaki yeri: perde orada incelir.
-    var focus = Offset(w * 0.5, h * 0.55);
-    final p = game.player;
-    if (p != null && p.isMounted) {
-      final view = game.camera.visibleWorldRect;
-      focus = Offset(
-        (p.center.x - view.left) / view.width * w,
-        (p.center.y - view.top) / view.height * h,
-      );
-    }
+    final gust = _gust;
+    final focus = _focus ?? Offset(w * 0.5, h * 0.55);
     final r = math.max(w, h);
     canvas.drawRect(
       Rect.fromLTWH(0, 0, w, h),
@@ -672,20 +708,21 @@ class ScreenEffects extends Component with HasGameReference<GolgeGame> {
           r * 0.75,
           [
             const Color(0xFFE6EEF7).withValues(alpha: 0.05 * storm),
-            const Color(0xFFDCE6F2).withValues(alpha: 0.22 * storm * gust),
-            const Color(0xFFD2DDEA).withValues(alpha: 0.46 * storm * gust),
+            const Color(0xFFDCE6F2).withValues(alpha: 0.2 * storm * gust),
+            const Color(0xFFD2DDEA).withValues(alpha: 0.42 * storm * gust),
           ],
           const [0.12, 0.45, 1],
         ),
     );
-    // Savrulan kar perdeleri: sağdan sola hızla geçen uzun, yumuşak bantlar.
+    final cam = game.camera.viewfinder.position;
+    final zoom = game.camera.viewfinder.zoom;
+    // Savrulan kar perdeleri: sağdan sola geçen uzun, yumuşak bantlar.
     if (!low) {
       for (var k = 0; k < 4; k++) {
         final bandY =
-            h * (0.18 + 0.22 * k) + math.sin(_t * 0.4 + k * 1.7) * h * 0.06;
+            h * (0.18 + 0.22 * k) + math.sin(_t * 0.4 + k * 1.7) * h * 0.05;
         final span = w * 1.6;
-        final x =
-            w - ((_t * (260 + k * 70) * (0.6 + gust) + k * 431) % (span + w));
+        final x = w - ((_bandX[k] + k * 431 + cam.x * zoom * 0.4) % (span + w));
         final rect = Rect.fromCenter(
           center: Offset(x + span / 2, bandY),
           width: span,
@@ -695,30 +732,39 @@ class ScreenEffects extends Component with HasGameReference<GolgeGame> {
           rect,
           Paint()
             ..shader = ui.Gradient.radial(rect.center, span / 2, [
-              const Color(0xFFF2F6FA).withValues(alpha: 0.24 * storm * gust),
+              const Color(0xFFF2F6FA).withValues(alpha: 0.18 * storm * gust),
               const Color(0xFFF2F6FA).withValues(alpha: 0),
             ]),
         );
       }
     }
-    // Taneler: üç derinlik.
+    // Taneler: üç derinlik; yakındakiler kamerayla daha çok kayar.
     final flake = Paint()..strokeCap = StrokeCap.round;
-    final count = low ? 70 : 170;
+    final count = low ? 70 : 160;
+    final spanX = w + 80;
+    final spanY = h + 40;
     for (var i = 0; i < count; i++) {
       final depth = i % 3; // 0 uzak, 2 yakın
-      final seed = (i * 0.6180339) % 1.0;
-      final seed2 = (i * 0.4142135) % 1.0;
-      final speed = (420 + depth * 380) * (0.55 + gust * 0.6);
-      final fall = 70 + depth * 55;
-      final wobble = math.sin(_t * (1.5 + depth) + i) * (10 + depth * 8);
-      final x = w + 40 - ((seed * (w + 80) * 3 + _t * speed) % (w + 80));
-      final y = (seed2 * h + _t * fall + wobble) % (h + 20) - 10;
-      final a = (0.35 + 0.25 * depth) * storm;
+      final par = (0.45 + depth * 0.25) * zoom;
+      final pace = 0.85 + 0.3 * _hash(i + 900);
+      final wobble = math.sin(_t * (1.2 + depth * 0.6) + i) * (8 + depth * 6);
+      final x =
+          (_hash(i) * spanX - _blizX[depth] * pace - cam.x * par) % spanX - 40;
+      final y =
+          (_hash(i + 500) * spanY +
+                  _blizY[depth] * pace +
+                  wobble -
+                  cam.y * par) %
+              spanY -
+          20;
+      final a = (0.3 + 0.22 * depth) * storm;
       flake.color = const Color(0xFFF8FBFF).withValues(alpha: a);
-      if (depth == 2) {
-        // Yakın taneler hızdan uzar.
-        final len = speed * 0.022;
-        flake.strokeWidth = 2.2;
+      if (depth == 2 && i % 2 == 0) {
+        // Yakın tanelerin bir kısmı hızdan uzar.
+        final speed = (420 + depth * 380) * (0.55 + gust * 0.6);
+        final fall = 70.0 + depth * 55;
+        final len = speed * 0.016;
+        flake.strokeWidth = 1.7;
         canvas.drawLine(
           Offset(x, y),
           Offset(x + len, y - len * fall / speed),
@@ -803,28 +849,28 @@ class ScreenEffects extends Component with HasGameReference<GolgeGame> {
   }
 
   /// Kar: yakındakiler büyük ve hızlı, uzaktakiler küçük; rüzgârla savrulur.
-  void _snow(Canvas canvas, double w, double h, double camX) {
+  void _snow(Canvas canvas, double w, double h, Vector2 cam) {
     final flake = Paint();
     final count = Settings.lowGraphics ? 40 : 110;
-    final gust = math.sin(_t * 0.4) * 0.5 + 0.5;
+    final zoom = game.camera.viewfinder.zoom;
+    final spanX = w + 40;
+    final spanY = h + 20;
     for (var i = 0; i < count; i++) {
       final depth = 0.3 + (i % 5) * 0.18;
       final speed = 30 + depth * 60;
-      final k = ((_t * speed / h + i * 0.618) % 1.0);
-      final drift = _t * (20 + gust * 60) * depth;
+      final par = depth * 0.6 * zoom;
       final x =
-          ((i * 173.0 +
-                          drift +
-                          math.sin(_t * 0.9 + i) * 18 -
-                          camX * depth * 0.6) %
-                      (w + 40) +
-                  w +
-                  40) %
-              (w + 40) -
+          (_hash(i) * spanX +
+                  _snowWind * depth +
+                  math.sin(_t * 0.9 + i) * 18 -
+                  cam.x * par) %
+              spanX -
           20;
+      final y =
+          (_hash(i + 300) * spanY + _t * speed - cam.y * par) % spanY - 10;
       flake.color = const Color(0xFFF2F6FA)
           .withValues(alpha: 0.25 + 0.5 * depth);
-      canvas.drawCircle(Offset(x, h * k), 0.8 + depth * 1.8, flake);
+      canvas.drawCircle(Offset(x, y), 0.8 + depth * 1.8, flake);
     }
   }
 
@@ -871,7 +917,7 @@ class ScreenEffects extends Component with HasGameReference<GolgeGame> {
     }
 
     if (theme.snowy) {
-      _snow(canvas, w, h, cam.x);
+      _snow(canvas, w, h, cam);
     } else {
       _embers(canvas, w, h, cam.x, theme);
     }
