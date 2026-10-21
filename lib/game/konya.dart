@@ -84,67 +84,248 @@ class Semazen extends PositionComponent with HasGameReference<GolgeGame> {
 }
 
 /// Semâzenin gölgesi (ayakları orijinde). Perde sahnelerinde de kullanılır.
+/// Tennure (etek) dönerken çan gibi açılır, ucu dalgalanır; destegül
+/// (ceket) ve elifî nemed (kuşak), başı sağ omzuna eğik, bal rengi keçe
+/// sikke. Sağ el göğe açık, sol el yere dönük; beden döndükçe kollar
+/// karşıdan uzun, yandan kısa görünür.
 void drawSemazen(Canvas canvas, double spin, {double alpha = 1, Color? ink}) {
-  final body = Paint()..color = (ink ?? kInk).withValues(alpha: alpha);
-  final pale = Paint()
-    ..color = const Color(0xFFF2ECE0).withValues(alpha: 0.85 * alpha);
-  // Tennure: kefen. Dönerken çan gibi açılır; etek ucu dönüşün gerisinde
-  // kalarak bir yana kabarır.
-  final flare = 21 + 2.5 * math.sin(spin * 2);
-  final swirl = math.sin(spin - 0.9) * 3;
-  final skirt = Path()
-    ..moveTo(-6, -30)
-    ..lineTo(6, -30)
-    ..quadraticBezierTo(14 + swirl, -14, flare + swirl, -2 - swirl * 0.3)
-    ..quadraticBezierTo(swirl, 3, -flare + swirl, -2 + swirl * 0.3)
-    ..quadraticBezierTo(-14 + swirl, -14, -6, -30)
-    ..close();
-  canvas.drawPath(skirt, pale);
-  // Dönen kıvrımlar.
-  final fold = Paint()
-    ..color = const Color(0xFFB8AE9E).withValues(alpha: 0.7 * alpha)
-    ..strokeWidth = 1;
-  for (var i = 0; i < 4; i++) {
-    final f = math.sin(spin + i * math.pi / 2);
-    canvas.drawLine(Offset(f * 4, -29), Offset(f * flare * 0.9, -2), fold);
-  }
-  // Gövde ve destegül: dönerken omuzlar yan gelince daralır.
+  Color a(Color c, [double k = 1]) => c.withValues(alpha: c.a * alpha * k);
+  final inkC = ink ?? kInk;
+  const lit = Color(0xFFF6F1E8);
+  const shade = Color(0xFFB9B3AA);
+  const deep = Color(0xFF8E877E);
   final turn = math.cos(spin);
-  final half = 4 + 1.2 * turn.abs();
-  canvas.drawRRect(
-    RRect.fromRectAndRadius(
-      Rect.fromLTWH(-half, -44, half * 2, 16),
-      const Radius.circular(3),
-    ),
-    pale,
+
+  // ---------------------------------------------------------- tennure
+  const waistY = -30.0;
+  const hemY = -2.5;
+  final flare = 21.5 + 2.2 * math.sin(spin * 2);
+  final lean = math.sin(spin - 0.9) * 2.4; // etek dönüşün gerisinde kalır
+  const ry = 3.6;
+  // Etek ucu: önden görülen yarı elips, üstünde dalga.
+  Offset hem(double th) {
+    final ripple =
+        math.sin(th * 7 + spin * 3) * 1.1 + math.sin(th * 3 - spin) * 0.6;
+    return Offset(
+      lean + flare * math.cos(th),
+      hemY + ry * math.sin(th) + ripple - lean * 0.25 * math.cos(th),
+    );
+  }
+
+  // Arkada kalan iç yüz (eteğin altı): koyu bir şerit.
+  final back = Path()..moveTo(hem(0).dx, hem(0).dy);
+  for (var i = 1; i <= 24; i++) {
+    final p = hem(-i / 24 * math.pi);
+    back.lineTo(p.dx, p.dy);
+  }
+  back.close();
+  canvas.drawPath(back, Paint()..color = a(deep, 0.9));
+  // Ayaklar (sol ayak dönüş ekseni).
+  final foot = Paint()..color = a(inkC);
+  canvas.drawOval(
+    Rect.fromCenter(center: const Offset(-1.5, -0.8), width: 6, height: 2.4),
+    foot,
   );
-  canvas.drawLine(
-    const Offset(-5, -31),
-    const Offset(5, -31),
+  canvas.drawOval(
+    Rect.fromCenter(
+      center: Offset(3 + turn * 1.5, -0.6),
+      width: 5,
+      height: 2.2,
+    ),
+    foot,
+  );
+  // Etek gövdesi: belden çan biçiminde açılır.
+  final left = hem(math.pi);
+  final right = hem(0);
+  final skirt = Path()
+    ..moveTo(-5, waistY)
+    ..cubicTo(-7, waistY + 9, left.dx + 7, left.dy - 12, left.dx, left.dy);
+  for (var i = 1; i < 32; i++) {
+    final p = hem(math.pi - i / 32 * math.pi);
+    skirt.lineTo(p.dx, p.dy);
+  }
+  skirt
+    ..lineTo(right.dx, right.dy)
+    ..cubicTo(right.dx - 7, right.dy - 12, 7, waistY + 9, 5, waistY)
+    ..close();
+  canvas.drawPath(
+    skirt,
     Paint()
-      ..color = body.color
-      ..strokeWidth = 1.6,
+      ..shader = ui.Gradient.linear(
+        Offset(left.dx, 0),
+        Offset(right.dx, 0),
+        [a(shade), a(lit), a(lit), a(shade)],
+        const [0, 0.38, 0.6, 1],
+      ),
   );
-  // Baş eğik, sikke: nefsin mezar taşı.
-  canvas.drawCircle(const Offset(1.5, -47), 3.6, body);
+  // Dönen kıvrımlar: belden etek ucuna, dönüşle birlikte kayar; yalnız öne
+  // bakanlar görünür.
+  final fold = Paint()
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 0.8
+    ..strokeCap = StrokeCap.round;
+  for (var k = 0; k < 12; k++) {
+    final th = k / 12 * 2 * math.pi + spin;
+    final front = math.sin(th);
+    if (front <= 0.05) continue;
+    final end = hem(th);
+    final start = Offset(4.6 * math.cos(th), waistY + 1);
+    fold.color = a(deep, 0.25 + 0.4 * front);
+    canvas.drawPath(
+      Path()
+        ..moveTo(start.dx, start.dy)
+        ..quadraticBezierTo(
+          start.dx * 0.4 + end.dx * 0.6 + lean * 0.3,
+          (start.dy + end.dy) / 2,
+          end.dx,
+          end.dy,
+        ),
+      fold,
+    );
+  }
+  // Etek ucunun ince gölgesi.
+  final rim = Path()..moveTo(left.dx, left.dy);
+  for (var i = 1; i <= 32; i++) {
+    final p = hem(math.pi - i / 32 * math.pi);
+    rim.lineTo(p.dx, p.dy);
+  }
+  canvas.drawPath(
+    rim,
+    Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1
+      ..color = a(deep, 0.7),
+  );
+
+  // ------------------------------------------------- destegül ve kollar
+  final half = 4.2 + 1.0 * turn.abs();
+  final torso = Path()
+    ..moveTo(-half, waistY)
+    ..lineTo(-half - 0.6, -40)
+    ..quadraticBezierTo(-half, -44.5, -2, -44.5)
+    ..lineTo(2, -44.5)
+    ..quadraticBezierTo(half, -44.5, half + 0.6, -40)
+    ..lineTo(half, waistY)
+    ..close();
+  // Kol: omuzdan bileğe genişleyen beyaz yen, ucunda el.
+  void arm(Offset sh, Offset el, Offset wr, {required bool up}) {
+    // Yen: yumuşak, yuvarlak uçlu; ince bir gölge kenarıyla.
+    final path = Path()
+      ..moveTo(sh.dx, sh.dy)
+      ..quadraticBezierTo(el.dx, el.dy, wr.dx, wr.dy);
+    canvas.drawPath(
+      path,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round
+        ..strokeWidth = 4.4
+        ..color = a(shade),
+    );
+    canvas.drawPath(
+      path,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round
+        ..strokeWidth = 3.3
+        ..color = a(lit),
+    );
+    // El: avuç yukarı (sağ) ya da aşağı (sol).
+    final d = wr - el;
+    final u = d / (d.distance + 1e-6);
+    final hand = wr + u * 2.2;
+    canvas.drawOval(
+      Rect.fromCenter(center: hand, width: 3.6, height: 2.2),
+      Paint()..color = a(inkC),
+    );
+    canvas.drawLine(
+      hand,
+      hand + u * 2 + Offset(0, up ? -0.8 : 0.8),
+      Paint()
+        ..color = a(inkC)
+        ..strokeWidth = 1.2
+        ..strokeCap = StrokeCap.round,
+    );
+  }
+
+  final shR = Offset(3.6 * turn, -42.5);
+  final shL = Offset(-3.6 * turn, -42.5);
+  // Arkada kalan kol önce.
+  void rightArm() =>
+      arm(shR, Offset(10 * turn, -48), Offset(15 * turn, -54.5), up: true);
+  void leftArm() =>
+      arm(shL, Offset(-11 * turn, -40), Offset(-18 * turn, -36.5), up: false);
+  if (math.sin(spin) > 0) {
+    leftArm();
+  } else {
+    rightArm();
+  }
+  canvas.drawPath(
+    torso,
+    Paint()
+      ..shader = ui.Gradient.linear(
+        Offset(-half, 0),
+        Offset(half, 0),
+        [a(shade), a(lit), a(shade)],
+        const [0, 0.5, 1],
+      ),
+  );
+  // Elifî nemed: belde kara kuşak.
   canvas.drawRRect(
     RRect.fromRectAndRadius(
-      const Rect.fromLTWH(-1.5, -62, 7, 14),
-      const Radius.circular(2),
+      Rect.fromLTWH(-half - 0.3, waistY - 2.4, half * 2 + 0.6, 2.2),
+      const Radius.circular(1),
     ),
-    body,
+    Paint()..color = a(inkC),
   );
-  // Kollar: sağ el göğe açık, sol el yere. Beden döndükçe kollar da
-  // döner: yandan bakınca kısalır, karşıdan bakınca uzanır.
-  final arm = Paint()
-    ..color = body.color
-    ..strokeWidth = 2.2
-    ..strokeCap = StrokeCap.round;
-  final sh = 4 * turn;
-  canvas.drawLine(Offset(sh, -42), Offset(14 * turn, -52), arm);
-  canvas.drawLine(Offset(14 * turn, -52), Offset(18 * turn, -55), arm);
-  canvas.drawLine(Offset(-sh, -42), Offset(-15 * turn, -38), arm);
-  canvas.drawLine(Offset(-15 * turn, -38), Offset(-19 * turn, -34), arm);
+  // Destegülün önü (düğme sırası).
+  canvas.drawLine(
+    const Offset(0.4, -44),
+    const Offset(0.4, waistY - 2.6),
+    Paint()
+      ..color = a(shade, 0.8)
+      ..strokeWidth = 0.6,
+  );
+  if (math.sin(spin) > 0) {
+    rightArm();
+  } else {
+    leftArm();
+  }
+
+  // -------------------------------------------------- baş ve sikke
+  canvas.save();
+  canvas.translate(0.6, -44.5);
+  canvas.rotate(0.28); // baş sağ omuza eğik
+  canvas.drawRect(
+    const Rect.fromLTWH(-1.2, -2.2, 2.4, 2.6),
+    Paint()..color = a(inkC),
+  );
+  canvas.drawOval(
+    Rect.fromCenter(center: const Offset(0, -5.4), width: 6.6, height: 7.4),
+    Paint()..color = a(inkC),
+  );
+  // Sikke: bal rengi keçe, yukarı doğru hafif incelen, tepesi yuvarlak.
+  final hat = Path()
+    ..moveTo(-3.4, -7.6)
+    ..lineTo(-2.9, -20)
+    ..quadraticBezierTo(0, -21.6, 2.9, -20)
+    ..lineTo(3.4, -7.6)
+    ..quadraticBezierTo(0, -6.8, -3.4, -7.6)
+    ..close();
+  canvas.drawPath(
+    hat,
+    Paint()
+      ..shader = ui.Gradient.linear(
+        const Offset(-3.4, 0),
+        const Offset(3.4, 0),
+        [
+          a(const Color(0xFF7A5A3A)),
+          a(const Color(0xFFB08A5E)),
+          a(const Color(0xFF6A4C30)),
+        ],
+        const [0, 0.45, 1],
+      ),
+  );
+  canvas.restore();
 }
 
 // ============================================================== Avize
