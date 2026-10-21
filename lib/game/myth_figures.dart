@@ -569,6 +569,12 @@ class MythFigures {
 
   /// Ağacın kendisi (yaprak yaprak binlerce eğri): bir kez resme dökülür,
   /// sonra her karede yalnız resim çizilir.
+  /// Ağacın dal yapısı: bir kez, sabit tohumla kurulur. Yaşlı, hafif eğik
+  /// bir kayın; ana dallar asimetrik yayılır, uçları sarkar (salkım kayın).
+  static _TreeShape? _shapeCache;
+
+  static _TreeShape get _treeShape => _shapeCache ??= _TreeShape.build();
+
   static ui.Image _tree(bool lit) {
     final i = lit ? 1 : 0;
     final cached = _treeImg[i];
@@ -578,182 +584,102 @@ class MythFigures {
     c.scale(_treePx);
     c.translate(-_treeBox.left, -_treeBox.top);
     // Buradan sonra gövdenin toprağa girdiği yer orijin; kökler y > 0.
-    final shape = MythShapes.umayTree;
-    // Siluetin taç kısmı (tek bir yaprak öbeği): [at] noktasına, [sx]/[sy]
-    // ölçeğiyle yerleştirilir. Birkaç öbek üst üste tacı doldurur.
-    void crown(Offset at, double sx, double sy, Paint paint) {
-      c.save();
-      c.translate(at.dx, at.dy);
-      c.scale(sx, sy);
-      c.translate(0, 76);
-      c.clipRect(const Rect.fromLTRB(-60, -200, 60, -52));
-      c.drawPath(shape, paint);
-      c.restore();
+    final tree = _treeShape;
+    final rnd = math.Random(17);
+    // Kökler toprağın altında, yüzeye yakın yayılır.
+    final root = Paint()
+      ..color = (lit ? const Color(0xFFC8A070) : const Color(0xFF5A4A3A))
+          .withValues(alpha: lit ? 0.5 : 0.35)
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+    for (var k = 0; k < 6; k++) {
+      final dir = k.isEven ? 1.0 : -1.0;
+      final len = 10.0 + rnd.nextDouble() * 10;
+      root.strokeWidth = 1.6 - k * 0.15;
+      c.drawPath(
+        Path()
+          ..moveTo(dir * 2, 0.5)
+          ..quadraticBezierTo(
+            dir * len * 0.6,
+            2 + rnd.nextDouble() * 2,
+            dir * len,
+            5 + rnd.nextDouble() * 8,
+          ),
+        root,
+      );
+    }
+    // Yaprak öbekleri: arkada koyu, önde açık; aralarından dallar görünür.
+    void leaves(double shade, double alpha, int seed) {
+      final paint = Paint();
+      final r = math.Random(seed);
+      for (final (pt, size) in tree.leaves) {
+        if (r.nextDouble() > 0.62) continue;
+        final tone = (shade + (r.nextDouble() - 0.5) * 0.25).clamp(0.0, 1.0);
+        paint.color = Color.lerp(
+          lit ? const Color(0xFF34502A) : const Color(0xFF26301F),
+          lit ? const Color(0xFF94AA68) : const Color(0xFF586650),
+          tone,
+        )!.withValues(alpha: alpha);
+        c.save();
+        c.translate(
+          pt.dx + (r.nextDouble() - 0.5) * 3,
+          pt.dy + (r.nextDouble() - 0.5) * 2,
+        );
+        c.rotate((r.nextDouble() - 0.5) * 1.2);
+        c.drawOval(
+          Rect.fromCenter(
+            center: Offset.zero,
+            width: size * (0.9 + r.nextDouble() * 0.6),
+            height: size * 0.6,
+          ),
+          paint,
+        );
+        c.restore();
+      }
     }
 
-    // Kökler: toprağın altında, gövde kalınlaştığı için daha geniş.
-    c.save();
-    c.clipRect(const Rect.fromLTRB(-60, 0, 60, 40));
-    c.scale(1.9, 1.1);
-    c.translate(0, 30);
-    c.drawPath(
-      shape,
-      Paint()
-        ..color = (lit ? const Color(0xFFF2C878) : const Color(0xFF6A5A48))
-            .withValues(alpha: lit ? 0.55 : 0.3),
-    );
-    c.restore();
-    const back = [(Offset(0, -50), -1.8, 1.4)];
-    const mid = [
-      (Offset(-19, -38), -1.05, 0.95),
-      (Offset(19, -40), 1.05, 0.95),
-      (Offset(-10, -60), 0.95, 0.9),
-      (Offset(12, -62), -0.9, 0.9),
-    ];
-    const front = [(Offset(0, -44), 1.0, 1.0), (Offset(1, -68), -0.85, 0.8)];
-    // Hâle: bütün tacın bulanık kopyası.
-    final glow = Paint()
-      ..color = (lit ? const Color(0xFFFFF0C0) : const Color(0xFF8A9A88))
-          .withValues(alpha: lit ? 0.6 : 0.2)
-      ..maskFilter = MaskFilter.blur(BlurStyle.normal, lit ? 8 : 4);
-    for (final (at, sx, sy) in [...back, ...mid]) {
-      crown(at, sx, sy, glow);
-    }
-    for (final (at, sx, sy) in back) {
-      crown(
-        at,
-        sx,
-        sy,
-        Paint()
-          ..color = lit ? const Color(0xFFA8BC80) : const Color(0xFF3A4638),
-      );
-    }
-    for (final (at, sx, sy) in mid) {
-      crown(
-        at,
-        sx,
-        sy,
-        Paint()
-          ..color = lit ? const Color(0xFFCCDCA0) : const Color(0xFF4E5C4A),
-      );
-    }
-    // Gövde ve dallar: kalın, ak kayın; dibi toprağa yayılır.
+    leaves(0.15, 0.85, 5);
+    // Gövde ve dallar: ak kayın kabuğu, kara çizgiler.
     final bark = Paint()
-      ..shader = ui.Gradient.linear(
-        const Offset(-5, 0),
-        const Offset(5, 0),
-        lit
-            ? const [Color(0xFFE8E4DA), Color(0xFFFFFFFF), Color(0xFFD8D2C4)]
-            : const [Color(0xFF9A9C94), Color(0xFFC4C6BC), Color(0xFF8A8C84)],
-        const [0, 0.45, 1],
-      );
-    final limbs = <Path>[
-      _strip(
-        const [
-          Offset(0, 1),
-          Offset(-0.3, -10),
-          Offset(-0.6, -20),
-          Offset(-0.2, -30),
-          Offset(0.4, -38),
-        ],
-        4.4,
-        2.4,
-      ),
-      // Toprağa yayılan dip.
-      Path()
-        ..moveTo(-9, 1)
-        ..quadraticBezierTo(-4.5, -1, -4, -8)
-        ..lineTo(4, -8)
-        ..quadraticBezierTo(4.5, -1, 9.5, 1)
-        ..close(),
-      _strip(
-        const [
-          Offset(-0.5, -24),
-          Offset(-6, -31),
-          Offset(-13, -37),
-          Offset(-21, -41),
-        ],
-        2.0,
-        0.6,
-      ),
-      _strip(
-        const [
-          Offset(0.3, -28),
-          Offset(6, -34),
-          Offset(13, -40),
-          Offset(21, -44),
-        ],
-        1.9,
-        0.6,
-      ),
-      _strip(
-        const [
-          Offset(0.4, -36),
-          Offset(-2, -46),
-          Offset(-6, -55),
-          Offset(-10, -62),
-        ],
-        1.7,
-        0.5,
-      ),
-      _strip(
-        const [
-          Offset(0.4, -37),
-          Offset(3, -47),
-          Offset(7, -57),
-          Offset(11, -64),
-        ],
-        1.6,
-        0.5,
-      ),
-    ];
-    final edge = Paint()
+      ..color = lit ? const Color(0xFFEDE8DC) : const Color(0xFFA8A89E);
+    final barkEdge = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 0.35
-      ..color = const Color(0xFF3A3028).withValues(alpha: 0.6);
-    for (final l in limbs) {
-      c.drawPath(l, bark);
-      c.drawPath(l, edge);
-    }
-    // Kayın kabuğunun kara çizgileri.
+      ..color = const Color(0xFF2E2620).withValues(alpha: 0.7);
     final mark = Paint()
       ..color = const Color(0xFF1A140E).withValues(alpha: 0.75)
-      ..strokeWidth = 0.75
       ..strokeCap = StrokeCap.round;
-    for (final (y, x0, x1) in const [
-      (-4.0, -3.6, -0.5),
-      (-8.5, 0.6, 3.6),
-      (-13.0, -3.4, -1.0),
-      (-17.0, -0.2, 3.0),
-      (-21.5, -3.0, 0.2),
-      (-26.0, 0.0, 2.6),
-      (-31.0, -2.2, 0.0),
-    ]) {
-      c.drawLine(Offset(x0, y), Offset(x1, y + 0.5), mark);
+    for (final br in tree.branches) {
+      final path = _strip(br.pts, br.w0, br.w1);
+      c.drawPath(path, bark);
+      c.drawPath(path, barkEdge);
+      // Kayın kabuğunun yatay kara izleri (kalın dallarda).
+      if (br.w0 > 1.2) {
+        for (var j = 1; j < br.pts.length - 1; j++) {
+          if (rnd.nextDouble() < 0.45) continue;
+          final p0 = br.pts[j];
+          final d = br.pts[j + 1] - br.pts[j - 1];
+          final n = Offset(-d.dy, d.dx) / (d.distance + 1e-6);
+          final w = br.w0 + (br.w1 - br.w0) * j / (br.pts.length - 1);
+          mark.strokeWidth = 0.5 + w * 0.12;
+          c.drawLine(p0 - n * w * 0.7, p0 + n * w * 0.15, mark);
+        }
+      }
     }
-    for (final (a, b) in const [
-      (Offset(-8, -31), Offset(-6.5, -30)),
-      (Offset(9, -36), Offset(10.6, -37)),
-      (Offset(-3.6, -50), Offset(-2.4, -49.4)),
-    ]) {
-      c.drawLine(a, b, mark);
+    // İnce sarkık dallar (salkım).
+    final twig = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeWidth = 0.35
+      ..color = lit ? const Color(0xFF6A5A48) : const Color(0xFF3A3630);
+    for (final tw in tree.twigs) {
+      final path = Path()..moveTo(tw.first.dx, tw.first.dy);
+      for (final q in tw.skip(1)) {
+        path.lineTo(q.dx, q.dy);
+      }
+      c.drawPath(path, twig);
     }
-    // Ön taç: en açık öbekler, dalların bir kısmını örter.
-    for (final (at, sx, sy) in front) {
-      crown(
-        at,
-        sx,
-        sy,
-        Paint()
-          ..shader = ui.Gradient.linear(
-            Offset(0, at.dy - 26),
-            Offset(0, at.dy + 24),
-            lit
-                ? const [Color(0xFFFFF8DE), Color(0xFFDCE8B8)]
-                : const [Color(0xFF7E8C78), Color(0xFF5E6A5A)],
-          ),
-      );
-    }
+    leaves(0.75, 0.9, 11);
     final pic = rec.endRecording();
     final img = pic.toImageSync(
       (_treeBox.width * _treePx).ceil(),
@@ -762,26 +688,6 @@ class MythFigures {
     pic.dispose();
     return _treeImg[i] = img;
   }
-
-  // Çaputların bağlandığı dallar (gövdenin toprağa girdiği yer orijin).
-  static const _knots = [
-    (Offset(-28, -24), Color(0xFFF5F0E6)),
-    (Offset(-22, -20), Color(0xFFC8282A)),
-    (Offset(-15, -18), Color(0xFF3A7CC8)),
-    (Offset(-8, -17.5), Color(0xFFF5F0E6)),
-    (Offset(6, -18), Color(0xFFC8282A)),
-    (Offset(12.5, -17.5), Color(0xFFE8C040)),
-    (Offset(19, -20), Color(0xFFF5F0E6)),
-    (Offset(26, -24), Color(0xFFC8282A)),
-    (Offset(-24, -38), Color(0xFFE8C040)),
-    (Offset(-12, -30), Color(0xFFC8282A)),
-    (Offset(10, -31), Color(0xFFF5F0E6)),
-    (Offset(23, -40), Color(0xFF3A7CC8)),
-    (Offset(-6, -46), Color(0xFFF5F0E6)),
-    (Offset(8, -50), Color(0xFFC8282A)),
-    (Offset(-18, -55), Color(0xFFF5F0E6)),
-    (Offset(17, -58), Color(0xFFE8C040)),
-  ];
 
   /// Bir orta çizgiden, kökten uca incelen şerit.
   static Path _strip(List<Offset> pts, double w0, double w1) {
@@ -844,10 +750,11 @@ class MythFigures {
     c.drawCircle(k, 0.9, Paint()..color = const Color(0xFF2A1A10));
   }
 
-  /// Umay ağacı (kontrol noktası): köklü ak kayın; dallarında ak, al, gök
-  /// ve sarı çaputlar, dallar arasında çaput ipi, daldan sarkan beşik,
-  /// dibinde dilek taşları. [lit] 0: uyuyan (soluk, çaputlar sarkık), 1:
-  /// uyanmış (ışıyan taç, rüzgârda kalkan çaputlar, altın yapraklar).
+  /// Umay ağacı (kontrol noktası): yaşlı, salkım dallı ak kayın; dal
+  /// uçlarına bağlanmış uzun, ince çaputlar (çoğu ak, biraz gök mavisi, az
+  /// al: Altay ve Anadolu dilek ağaçlarındaki gibi), dibinde dilek taşları.
+  /// [lit] 0: uyuyan (soluk, çaputlar sarkık), 1: uyanmış (tacın içinden
+  /// yumuşak ışık, rüzgârda kalkan çaputlar).
   /// Gövdenin toprağa girdiği yer orijindedir; kökler toprağın altındadır.
   static void umayTree(
     Canvas c,
@@ -856,13 +763,13 @@ class MythFigures {
     bool bloom = false,
   }) {
     if (lit > 0) {
-      c.drawCircle(
-        const Offset(0, -48),
-        66,
+      // Işık tacın içinden: küçük, yumuşak; ağacı çevreleyen bir hâle değil.
+      c.drawOval(
+        Rect.fromCenter(center: const Offset(-4, -58), width: 90, height: 60),
         Paint()
-          ..shader = ui.Gradient.radial(const Offset(0, -48), 66, [
+          ..shader = ui.Gradient.radial(const Offset(-4, -58), 45, [
             const Color(0xFFFFE8B0)
-                .withValues(alpha: (0.38 + 0.06 * math.sin(t * 1.3)) * lit),
+                .withValues(alpha: (0.22 + 0.04 * math.sin(t * 1.3)) * lit),
             const Color(0x00FFE8B0),
           ]),
       );
@@ -886,27 +793,17 @@ class MythFigures {
           ..filterQuality = FilterQuality.medium,
       );
     }
-    // Dibinde taş yığını (oba): dilekle bırakılmış taşlar.
+    // Dibinde birkaç dilek taşı.
     final stone = Paint();
     final stoneRim = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 0.4
-      ..color = Color.lerp(
-        const Color(0xFF2A221C),
-        const Color(0xFFFFE0A0),
-        lit * 0.8,
-      )!;
+      ..color = const Color(0xFF2A221C);
     for (final (x, y, w, h, tone) in const [
-      (-13.0, -1.8, 9.0, 4.4, 0.0),
-      (-5.0, -2.0, 8.5, 4.8, 0.4),
-      (4.5, -1.9, 9.5, 4.4, 0.2),
-      (13.0, -1.6, 8.0, 3.8, 0.6),
-      (-9.0, -5.6, 7.0, 4.0, 0.7),
-      (0.5, -6.2, 7.5, 4.2, 0.1),
-      (9.0, -5.4, 6.5, 3.8, 0.5),
-      (-4.0, -9.6, 6.0, 3.6, 0.3),
-      (4.5, -9.8, 5.4, 3.4, 0.8),
-      (0.5, -12.8, 4.4, 3.0, 0.2),
+      (7.0, -1.6, 7.0, 3.4, 0.2),
+      (13.0, -1.4, 5.5, 2.8, 0.6),
+      (10.0, -4.2, 5.0, 2.8, 0.4),
+      (-9.0, -1.4, 5.0, 2.6, 0.5),
     ]) {
       final r = Rect.fromCenter(center: Offset(x, y), width: w, height: h);
       stone.color = Color.lerp(
@@ -917,93 +814,46 @@ class MythFigures {
       c.drawOval(r, stone);
       c.drawOval(r, stoneRim);
     }
-    // Dallar arasına gerilmiş çaput ipi.
-    const ropeA = Offset(-26, -32);
-    const ropeB = Offset(24, -34);
-    final sway = math.sin(t * 1.2) * (0.4 + 0.8 * lit);
-    Offset rope(double u) =>
-        Offset.lerp(ropeA, ropeB, u)! +
-        Offset(0, math.sin(u * math.pi) * (7 + sway));
-    final ropePath = Path()..moveTo(ropeA.dx, ropeA.dy);
-    for (var j = 1; j <= 12; j++) {
-      final p = rope(j / 12);
-      ropePath.lineTo(p.dx, p.dy);
-    }
-    c.drawPath(
-      ropePath,
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 0.45
-        ..color = const Color(0xFF3A2A1A),
-    );
-    for (var j = 1; j <= 9; j++) {
-      final cols = [
-        const Color(0xFFC8282A),
-        const Color(0xFFF5F0E6),
-        const Color(0xFF3A7CC8),
-        const Color(0xFFE8C040),
-      ];
-      _caput(c, rope(j / 10), cols[j % 4], 6, t, lit, j + 20, width: 0.85);
-    }
-    for (var i = 0; i < _knots.length; i++) {
-      final (k, col) = _knots[i];
-      _caput(c, k, col, 9.0 + (i * 5 % 4) * 1.5, t, lit, i);
-    }
-    // Daldan sarkan beşik: Umay çocukları korur.
-    const hook = Offset(-31, -27);
-    final swing = math.sin(t * 1.1) * (0.08 + 0.12 * lit);
-    c.save();
-    c.translate(hook.dx, hook.dy);
-    c.rotate(swing);
-    final cord = Paint()
-      ..color = const Color(0xFF3A2A1A)
-      ..strokeWidth = 0.4;
-    c.drawLine(Offset.zero, const Offset(-2.6, 9), cord);
-    c.drawLine(Offset.zero, const Offset(2.6, 9), cord);
-    final cradle = Path()
-      ..moveTo(-4.2, 9)
-      ..quadraticBezierTo(0, 15, 4.2, 9)
-      ..lineTo(3.4, 9)
-      ..quadraticBezierTo(0, 12.6, -3.4, 9)
-      ..close();
-    c.drawPath(
-      Path()
-        ..moveTo(-4.2, 9)
-        ..quadraticBezierTo(0, 15, 4.2, 9)
-        ..close(),
-      Paint()..color = const Color(0xFF6A4228),
-    );
-    c.drawPath(cradle, Paint()..color = const Color(0xFF3A2414));
-    // Beşik örtüsü: al.
-    c.drawPath(
-      Path()
-        ..moveTo(-3.6, 9)
-        ..quadraticBezierTo(0, 7.4, 3.6, 9)
-        ..close(),
-      Paint()..color = const Color(0xFFB8282A),
-    );
-    if (lit > 0) {
-      c.drawCircle(
-        const Offset(0, 10),
-        5,
-        Paint()
-          ..shader = ui.Gradient.radial(const Offset(0, 10), 5, [
-            const Color(0xFFFFF0C0).withValues(alpha: 0.5 * lit),
-            const Color(0x00FFF0C0),
-          ]),
+    // Çaputlar: dal uçlarından sarkan uzun, ince bezler.
+    const white = Color(0xFFF2EEE4);
+    const blue = Color(0xFF8AB0D8);
+    const red = Color(0xFFB0382E);
+    final knots = _treeShape.knots;
+    for (var i = 0; i < knots.length; i++) {
+      final col = i % 7 == 3 ? red : (i % 3 == 1 ? blue : white);
+      _caput(
+        c,
+        knots[i],
+        col,
+        12.0 + (i * 7 % 5) * 1.6,
+        t,
+        lit,
+        i,
+        width: 0.75,
       );
     }
-    c.restore();
-    // Uyanınca tacından süzülen altın yapraklar.
+    // Son ağaç: uyanınca çiçek açar.
+    if (bloom && lit > 0) {
+      final petal = Paint();
+      final r = math.Random(9);
+      for (final (pt, _) in _treeShape.leaves) {
+        if (r.nextDouble() > 0.35) continue;
+        petal.color =
+            (r.nextBool() ? const Color(0xFFFFF6F4) : const Color(0xFFF6C8D0))
+                .withValues(alpha: lit * 0.9);
+        c.drawCircle(pt, 1.2 + r.nextDouble(), petal);
+      }
+    }
+    // Uyanınca birkaç yaprak savrulur.
     if (lit > 0) {
       final leaf = Paint();
-      for (var i = 0; i < 9; i++) {
-        final u = (t * 0.09 + _hash(i + 70)) % 1;
+      for (var i = 0; i < 6; i++) {
+        final u = (t * 0.08 + _hash(i + 70)) % 1;
         final x =
-            (_hash(i + 80) - 0.5) * 60 + math.sin(t * 1.3 + i * 2) * 4 * u;
-        final y = -72 + u * 72;
-        leaf.color = const Color(0xFFF2D070)
-            .withValues(alpha: lit * math.sin(u * math.pi) * 0.9);
+            (_hash(i + 80) - 0.5) * 70 + math.sin(t * 1.3 + i * 2) * 5 * u;
+        final y = -70 + u * 70;
+        leaf.color = const Color(0xFFC8C478)
+            .withValues(alpha: lit * math.sin(u * math.pi) * 0.8);
         c.save();
         c.translate(x, y);
         c.rotate(t * 2 + i);
@@ -1012,43 +862,6 @@ class MythFigures {
           leaf,
         );
         c.restore();
-      }
-    }
-    // Son ağaç: uyanınca çiçek açar; ak ve pembe çiçekler, uçuşan yapraklar.
-    if (bloom && lit > 0) {
-      final petal = Paint();
-      for (var i = 0; i < 46; i++) {
-        final a = _hash(i + 300) * math.pi * 2;
-        final r = math.sqrt(_hash(i + 400));
-        final p = Offset(math.cos(a) * r * 34, -48 + math.sin(a) * r * 26);
-        petal.color =
-            (i.isEven ? const Color(0xFFFFF6F4) : const Color(0xFFF6C8D0))
-                .withValues(alpha: lit * (0.75 + 0.25 * math.sin(t * 2 + i)));
-        c.drawCircle(p, 1.4 + _hash(i + 500) * 1.2, petal);
-      }
-      for (var i = 0; i < 8; i++) {
-        final u = (t * 0.12 + _hash(i + 600)) % 1;
-        petal.color = const Color(0xFFF6C8D0)
-            .withValues(alpha: lit * math.sin(u * math.pi));
-        c.drawCircle(
-          Offset(
-            (_hash(i + 700) - 0.5) * 70 + math.sin(t + i) * 8 * u,
-            -60 + u * 60,
-          ),
-          1.3,
-          petal,
-        );
-      }
-    }
-    // Uyanınca gövdeden yükselen ışık zerreleri.
-    if (lit > 0) {
-      final mote = Paint();
-      for (var i = 0; i < 10; i++) {
-        final u = (t * 0.16 + _hash(i + 11)) % 1;
-        final x = (_hash(i + 3) - 0.5) * 50 + math.sin(t + i) * 3;
-        mote.color = const Color(0xFFFFF4C8)
-            .withValues(alpha: lit * math.sin(u * math.pi) * 0.85);
-        c.drawCircle(Offset(x, -8 - u * 80), 0.8, mote);
       }
     }
   }
@@ -1943,14 +1756,137 @@ class MythFigures {
         ..strokeCap = StrokeCap.round,
     );
     const cols = [
-      Color(0xFFF5F0E6),
-      Color(0xFFC8282A),
-      Color(0xFF3A7CC8),
-      Color(0xFFE8C040),
+      Color(0xFFF2EEE4),
+      Color(0xFF8AB0D8),
+      Color(0xFFF2EEE4),
+      Color(0xFFB0382E),
     ];
     for (var i = 0; i < 4; i++) {
       final k = Offset.lerp(const Offset(0, -12), top, 0.45 + i * 0.17)!;
       _caput(c, k, cols[i], 7.5 - i * 0.6, t, lit, i + 40, width: 0.9);
     }
+  }
+}
+
+class _Branch {
+  _Branch(this.pts, this.w0, this.w1);
+  final List<Offset> pts;
+  final double w0;
+  final double w1;
+}
+
+/// Kayının dal yapısı: dallar, sarkık ince dallar, yaprak yerleri ve çaput
+/// düğümleri (bir kez, sabit tohumla).
+class _TreeShape {
+  _TreeShape(this.branches, this.twigs, this.leaves, this.knots);
+
+  final List<_Branch> branches;
+  final List<List<Offset>> twigs;
+  final List<(Offset, double)> leaves;
+  final List<Offset> knots;
+
+  static _TreeShape build() {
+    final rnd = math.Random(1453);
+    final branches = <_Branch>[];
+    final twigs = <List<Offset>>[];
+    final leaves = <(Offset, double)>[];
+    final ends = <Offset>[];
+
+    // Bir dal: [angle] yönünde, uca doğru sarkarak büyür.
+    void grow(Offset start, double angle, double len, double w, int depth) {
+      final pts = <Offset>[start];
+      var a = angle;
+      const steps = 8;
+      for (var j = 1; j <= steps; j++) {
+        // Uca doğru yerçekimi: dal aşağı kıvrılır (derin dallarda daha çok).
+        final droop = depth <= 1 ? 0.012 : 0.03 + (depth - 2) * 0.05;
+        a +=
+            (math.pi / 2 - a) * droop * (j / steps) +
+            (rnd.nextDouble() - 0.5) * 0.18;
+        pts.add(pts.last + Offset(math.cos(a), math.sin(a)) * (len / steps));
+      }
+      final wEnd = math.max(0.3, w * 0.45);
+      branches.add(_Branch(pts, w, wEnd));
+      final end = pts.last;
+      if (depth >= 3 || len < 7) {
+        ends.add(end);
+        // Sarkık ince dallar ve yaprakları.
+        final n = 2 + rnd.nextInt(3);
+        for (var k = 0; k < n; k++) {
+          final from = Offset.lerp(pts[2], end, 0.4 + rnd.nextDouble() * 0.6)!;
+          final hang = 9 + rnd.nextDouble() * 12;
+          final sway = (rnd.nextDouble() - 0.5) * 6;
+          final tw = <Offset>[from];
+          for (var j = 1; j <= 5; j++) {
+            final u = j / 5;
+            tw.add(from + Offset(sway * u + math.sin(u * 3) * 1.2, hang * u));
+          }
+          twigs.add(tw);
+          for (var j = 1; j < tw.length; j++) {
+            leaves.add((tw[j], 2.6 + rnd.nextDouble() * 1.4));
+            if (rnd.nextBool()) {
+              leaves.add((tw[j] + const Offset(1.4, 0.6), 2.4));
+            }
+          }
+        }
+        for (var j = 2; j < pts.length; j++) {
+          leaves.add((pts[j], 3.0 + rnd.nextDouble() * 1.6));
+        }
+        return;
+      }
+      // İkinci kat dallarda da yaprak: tac dolgun ama seyrek kalsın.
+      if (depth >= 2) {
+        for (var j = 3; j < pts.length; j += 2) {
+          leaves.add((pts[j] + Offset(0, -1.5), 3.2 + rnd.nextDouble() * 1.4));
+        }
+      }
+      final kids = depth == 0 ? 3 : 2 + rnd.nextInt(2);
+      for (var k = 0; k < kids; k++) {
+        final spread = depth == 1 ? 0.7 : 0.5;
+        final da =
+            (k - (kids - 1) / 2) * spread + (rnd.nextDouble() - 0.5) * 0.3;
+        final from = Offset.lerp(pts[3], end, 0.5 + rnd.nextDouble() * 0.5)!;
+        grow(
+          from,
+          a + da - 0.15,
+          len * (0.72 + rnd.nextDouble() * 0.12),
+          w * 0.62,
+          depth + 1,
+        );
+      }
+    }
+
+    // Gövde: hafif eğik, kalın; üstte dallara ayrılır.
+    const trunk = <Offset>[
+      Offset(0, 0),
+      Offset(-0.8, -8),
+      Offset(-2.2, -16),
+      Offset(-2.6, -24),
+      Offset(-1.8, -31),
+    ];
+    branches.add(_Branch(trunk, 4.2, 2.6));
+    // Toprağa yayılan dip.
+    branches.add(
+      _Branch(
+        const [Offset(-9, 1), Offset(-4.6, -1), Offset(-4, -6)],
+        1.4,
+        2.0,
+      ),
+    );
+    // Ana dallar: iki yana dengeli, biri yukarı.
+    grow(trunk.last, -math.pi / 2 - 0.85, 25, 2.0, 1);
+    grow(trunk.last, -math.pi / 2 - 0.1, 26, 2.0, 1);
+    grow(trunk.last, -math.pi / 2 + 0.7, 25, 1.9, 1);
+    grow(const Offset(-2.4, -21), -math.pi / 2 - 1.25, 18, 1.4, 2);
+    grow(const Offset(-2.2, -18), -math.pi / 2 + 1.15, 18, 1.4, 2);
+
+    // Çaput düğümleri: dal uçlarından, tacın her yanına yayılmış ~14 tane.
+    ends.sort((a, b) => a.dx.compareTo(b.dx));
+    final knots = <Offset>[];
+    final step = math.max(1, ends.length ~/ 14);
+    for (var i = 0; i < ends.length; i += step) {
+      knots.add(ends[i]);
+    }
+    return _TreeShape(branches, twigs, leaves, knots);
   }
 }

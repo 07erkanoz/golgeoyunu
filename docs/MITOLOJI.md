@@ -49,6 +49,12 @@ bereketin koruyucu ana tanrıçasıdır; Anadolu'da dilek ağaçlarına çaput b
 geleneği bugün de yaşar.
 
 ### Görünüş ve davranış
+- **Biçim (2026-10-21 yenilendi):** Yaşlı, hafif eğik, salkım dallı ak kayın;
+  dallar görünür, taç seyrek ve asimetrik. Çaputlar dal uçlarına bağlı, uzun
+  ve ince; çoğu ak, biraz gök mavisi, az al (Altay ve Anadolu dilek
+  ağaçlarındaki gibi). Çaput ipi, beşik, sarı/renkli süs ve büyük hâle yok:
+  yılbaşı ağacına benzememeli. Aynı ekrana düşen ikinci kayıt noktasında
+  ağaç yerine çaputlu değnekli bir taş yığını (oba) durur.
 - **Dokunulmamış:** Çaputlar sarkık ve soluk; ağaç hafifçe karanlıkta.
 - **Dokunulunca:** Rüzgâr çaputları kaldırır, ağacın gövdesinden ak bir
   ışık yükselir, birkaç yaprak savrulur; yumuşak bir nefes ya da çan sesi.
