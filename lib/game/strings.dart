@@ -26,7 +26,7 @@ class S {
     'chapters': 'Bölümler',
     'chaptersHint': 'Açtığın bir bölümü baştan oyna',
     'allUnlocked': 'Bütün bölümler açıldı',
-    'cameo_suIyesi': 'Sudan, saçları suya yayılmış bir kadın yükseldi: Su İyesi. Eski inanışta her suyun bir sahibi vardır; saygıyla bekleyene yolu gösterir. Eli vanayı işaret etti.',
+    'cameo_suIyesi': 'Sudan, ak giysili, başında kanat gibi boynuzları olan bir kadın yükseldi; çevresinde ışıltılı mavi balıklar yüzüyordu: Su İyesi. Eski inanışta her suyun bir sahibi vardır; saygıyla bekleyene yolu gösterir. Balıklarından biri vanaya yüzdü.',
     'cameo_tulpar':
         'Bulutların ardında kanatlı bir at: Tulpar, yiğidin yoldaşı.',
     'cameo_ayazAta': 'Tipinin içinde ak sakallı bir ihtiyar: Ayaz Ata geçti.',
@@ -162,7 +162,7 @@ class S {
     'chapters': 'Chapters',
     'chaptersHint': 'Replay a chapter you have reached',
     'allUnlocked': 'All chapters unlocked',
-    'cameo_suIyesi': 'A woman rose from the water, her hair spread across its surface: the Su İyesi, the water\'s keeper. In old belief every water has its owner; to one who waits with respect, it shows the way. Her hand pointed to the valve.',
+    'cameo_suIyesi': 'A woman in white rose from the water, wing-like horns on her head, glowing blue fish swimming around her: the Su İyesi, the water\'s keeper. In old belief every water has its owner; to one who waits with respect, it shows the way. One of her fish swam to the valve.',
     'cameo_tulpar':
         'A winged horse beyond the clouds: Tulpar, the hero\'s companion.',
     'cameo_ayazAta':

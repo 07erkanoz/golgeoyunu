@@ -124,7 +124,7 @@ bazıları bir sırrı ya da hatırayı gösterir.
 | Bölüm | Varlık | Görünüş |
 |---|---|---|
 | I · Yerebatan | **Umay** | İlk Umay ağacı (yukarıda). |
-| I · Yerebatan | **Su İyesi** | Su haznesinin başında sessizce bekleyen Sâye'ye su yüzünde bir yüz belirir, vananın yerini gösterir. ("Saygı gösterene su yol verir.") |
+| I · Yerebatan | **Su İyesi** | Su haznesinin başında sessizce bekleyen Sâye'ye Su İyesi sudan yükselir: ak giysili, başında kanat biçimli boynuzlar, belden aşağısı balık kuyruğu, çevresinde ışıltılı mavi balıklar (Hakas/Altay tasviri). Eliyle vanayı gösterir, balıklarından biri vanaya yüzer. ("Saygı gösterene su yol verir.") |
 | III · Gökyolu | **Tulpar** | Fırtınalı bulutların ardında kanatlı bir at dörtnala geçer (önsezi). |
 | V · Ağrı | **Ayaz Ata** | Tipinin ortasında ak sakallı bir soğuk ruhunun gölgesi; donmuş çanın yanında. |
 | VI · Nuh'un Gemisi | **Ak Ana** | Tufan suyu yükselirken suyun içinden ak bir ışık yükselir, kaçış yolunu aydınlatır. Fısıltı: *"İlk su da böyle kıpırdadı: Ak Ana yükseldi, 'yarat' dedi."* |
@@ -240,7 +240,7 @@ satır), yeni perdede kopuz motifi müzikte duyulur.
 | Ülgen | Göğün katlarında oturan iyiliğin ve aydınlığın temsilcisi. |
 | Erlik | Yerin altının, ölümün ve kötülüğün efendisi. |
 | Kut | Gökten verilen kutsal güç ve can ışığı. |
-| Su İyesi | Suları koruyan ruh; iyeler doğanın her parçasını korur. |
+| Su İyesi | Suları koruyan ruh; Hakas inancında dişi, ak giysili, ışık saçan; kimi anlatıda balık kuyruklu, boynuzlu, mavi balıklarla. |
 | Yer-Sub | Kutsal yer ve su; yurdu koruyan güç. |
 | Ayaz Ata | Soğuğun ve ayazın ruhu. |
 | Albastı (Al Karısı) | Halk inancında kızıl bir kötü ruh; demirden korktuğuna inanılır. |

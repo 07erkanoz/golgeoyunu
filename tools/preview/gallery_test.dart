@@ -76,6 +76,11 @@ void main() {
       for (var t = 0.0; t < double.parse(p[5]); t += 1 / 60) {
         game.update(1 / 60);
       }
+      // İsteğe bağlı kamera kaydırma (karo): PANX/PANY.
+      game.camera.viewfinder.position += Vector2(
+        double.parse(const String.fromEnvironment('PANX', defaultValue: '0')),
+        double.parse(const String.fromEnvironment('PANY', defaultValue: '0')),
+      )..scale(kTile);
       await _shot(game, p[0]);
       game.debugCloseUp = 1;
     }

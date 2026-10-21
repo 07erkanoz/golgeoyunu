@@ -92,24 +92,41 @@ class MythCard {
       id: 'suIyesi',
       nameTr: 'Su İyesi',
       nameEn: 'Su İyesi (Water Spirit)',
-      whoTr: 'Suları koruyan ruh; eski inançta doğanın her parçasının bir iyesi vardır.',
-      whoEn: 'The spirit that guards the waters; in old belief every part of nature has its iye, its keeper.',
+      whoTr:
+          'Suların koruyucu ruhu; Hakas, Altay ve Tatar anlatılarında ak '
+          'giysili, ışık saçan bir kadın.',
+      whoEn:
+          'The guardian spirit of the waters; in Khakas, Altai and Tatar '
+          'tales a woman in white who sheds light.',
       storyTr:
           'Eski Türk inancında dağın, ormanın, ocağın ve suyun iyesi vardır. '
-          'Su İyesi\'ne saygı gösterilir: suya kirli şey atılmaz, sudan '
-          'geçerken izin istenir. Anlatılara göre saygısızlık edenin yolunu '
-          'şaşırtır. Kazan Tatarlarında Su Anası, suyun kıyısında altın '
-          'tarağıyla uzun saçlarını tarayan bir kadın olarak anlatılır '
-          '(Tukay\'ın "Su Anası" şiiri).',
+          'Hakas inancına göre Su İyesi dişidir: su bereketin kaynağıdır, '
+          'ama taşkının ve yıkımın da. Ak giysiler içinde, bulunduğu yere '
+          'ışık saçarak görünür; maviye çalan rengi ve çevresinde yüzen '
+          'ışıltılı mavi balıklarıyla anlatılır. Kimi anlatıda balık '
+          'kuyrukludur, kimi zaman boynuzlu betimlenir; kuş ya da yılan '
+          'kılığına da girebilir. Suyun derinliğinde, büyük bir kayanın '
+          'altındaki geçitten girilen sarayında yaşar. Ona saygı gösterilir: '
+          'suya kirli şey atılmaz, sudan geçerken izin istenir; görene uğur '
+          'getirdiği söylenir. Kazan Tatarlarında Su Anası, kıyıda altın '
+          'tarağıyla saçlarını tarayan bir kadındır (Tukay\'ın "Su Anası" '
+          'şiiri).',
       storyEn:
           'In old Turkic belief mountains, forests, hearths and waters each '
-          'have their iye. The Water Spirit is shown respect: nothing foul is '
-          'thrown into water, and one asks leave before crossing it. The '
-          'stories say it leads the disrespectful astray. Among the Kazan '
-          'Tatars, Su Anası (Water Mother) is a woman who combs her long hair '
-          'with a golden comb by the water (Tukay\'s poem "Su Anası").',
-      sourceTr: 'Türk halk inançları (iye inancı); Tukay, Su Anası',
-      sourceEn: 'Turkic folk belief (the iye spirits); Tukay, Su Anası',
+          'have their iye. In Khakas belief the Water Spirit is female: water '
+          'is the source of plenty, but also of flood and ruin. She appears '
+          'in white garments, shedding light wherever she is; she is told of '
+          'with a bluish hue and glowing blue fish swimming around her. In '
+          'some tales she has a fish\'s tail, at times she is shown horned, '
+          'and she can take the shape of a bird or a snake. She lives deep in '
+          'the water, in a palace entered through a passage beneath a great '
+          'rock. She is shown respect: nothing foul is thrown into water, and '
+          'one asks leave before crossing it; to see her is said to bring '
+          'luck. Among the Kazan Tatars, Su Anası (Water Mother) is a woman '
+          'who combs her hair with a golden comb by the shore (Tukay\'s poem '
+          '"Su Anası").',
+      sourceTr: 'Türk halk inançları (iye inancı); Hakas ve Altay anlatıları; Tukay, Su Anası',
+      sourceEn: 'Turkic folk belief (the iye spirits); Khakas and Altai tales; Tukay, Su Anası',
     ),
     MythCard(
       id: 'medusa',
