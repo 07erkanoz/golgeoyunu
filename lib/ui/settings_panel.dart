@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../game/audio.dart';
 import '../game/golge_game.dart';
+import '../game/hints.dart';
 import '../game/strings.dart';
 import '../settings.dart';
 import 'info_pages.dart';
@@ -200,11 +201,53 @@ class _SettingsPanelState extends State<SettingsPanel> {
                           setState(() {});
                         },
                       ),
+                      if (!Settings.touchGestures) ...[
+                        _label(S.of('touchScale'), Settings.touchScale),
+                        Slider(
+                          value: Settings.touchScale,
+                          min: 0.75,
+                          max: 1.4,
+                          onChanged: (v) {
+                            Settings.touchScale = v;
+                            Settings.save();
+                            widget.onTouchChanged?.call();
+                            setState(() {});
+                          },
+                        ),
+                      ],
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              S.of('leftHanded'),
+                              style: const TextStyle(
+                                color: _text,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                          Switch(
+                            value: Settings.leftHanded,
+                            activeThumbColor: _accent,
+                            inactiveThumbColor: _text.withValues(alpha: 0.6),
+                            inactiveTrackColor: const Color(0x22EBDDCB),
+                            trackOutlineColor: const WidgetStatePropertyAll(
+                              Color(0x55EBDDCB),
+                            ),
+                            onChanged: (v) {
+                              Settings.leftHanded = v;
+                              Settings.save();
+                              widget.onTouchChanged?.call();
+                              setState(() {});
+                            },
+                          ),
+                        ],
+                      ),
                       if (Settings.touchGestures)
                         Padding(
                           padding: const EdgeInsets.only(bottom: 8),
                           child: Text(
-                            S.of('touchHelpGestures'),
+                            Hints.sides(S.of('touchHelpGestures')),
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               color: _text.withValues(alpha: 0.55),
@@ -338,6 +381,9 @@ class _SettingsPanelState extends State<SettingsPanel> {
                               ),
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: _accent,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                ),
                                 side: const BorderSide(
                                   color: Color(0x55E0A15F),
                                 ),

@@ -1388,20 +1388,38 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     Set<LogicalKeyboardKey> keysPressed,
   ) {
     bool any(List<LogicalKeyboardKey> ks) => ks.any(keysPressed.contains);
+    // Klavye ve oyun kumandası (Android'de kumanda tuşları buradan gelir:
+    // yön tuşları ok, A zıpla, Y tırman, X ateşböceği, B ya da omuz tuşları
+    // parmak ucu, Start ayarlar).
     controls.keyboard
       ..left = any([LogicalKeyboardKey.arrowLeft, LogicalKeyboardKey.keyA])
       ..right = any([LogicalKeyboardKey.arrowRight, LogicalKeyboardKey.keyD])
-      ..up = any([LogicalKeyboardKey.arrowUp, LogicalKeyboardKey.keyW])
+      ..up = any([
+        LogicalKeyboardKey.arrowUp,
+        LogicalKeyboardKey.keyW,
+        LogicalKeyboardKey.gameButtonY,
+      ])
       ..down = any([LogicalKeyboardKey.arrowDown, LogicalKeyboardKey.keyS])
-      ..jump = any([LogicalKeyboardKey.space, LogicalKeyboardKey.keyZ])
+      ..jump = any([
+        LogicalKeyboardKey.space,
+        LogicalKeyboardKey.keyZ,
+        LogicalKeyboardKey.gameButtonA,
+      ])
       ..sneak = any([
         LogicalKeyboardKey.shiftLeft,
         LogicalKeyboardKey.shiftRight,
         LogicalKeyboardKey.keyQ,
+        LogicalKeyboardKey.gameButtonB,
+        LogicalKeyboardKey.gameButtonLeft1,
+        LogicalKeyboardKey.gameButtonRight1,
       ]);
+    // Kumandanın Start/Select tuşu Esc gibidir.
+    final esc =
+        event.logicalKey == LogicalKeyboardKey.escape ||
+        event.logicalKey == LogicalKeyboardKey.gameButtonStart ||
+        event.logicalKey == LogicalKeyboardKey.gameButtonSelect;
     if (menuMode.value) {
-      if (event is KeyDownEvent &&
-          event.logicalKey == LogicalKeyboardKey.escape) {
+      if (event is KeyDownEvent && esc) {
         if (overlays.isActive(settingsOverlay)) {
           toggleSettings();
         } else if (SaveGame.current != null) {
@@ -1414,13 +1432,11 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     }
     if (event is KeyDownEvent) {
       // Sahne sürerken Esc perdeyi atlar (ayarlar dişli simgesinden açılır).
-      if (event.logicalKey == LogicalKeyboardKey.escape &&
-          narration.inCinematic &&
-          !overlays.isActive(settingsOverlay)) {
+      if (esc && narration.inCinematic && !overlays.isActive(settingsOverlay)) {
         narration.skipAll();
         return KeyEventResult.handled;
       }
-      if (event.logicalKey == LogicalKeyboardKey.escape) {
+      if (esc) {
         toggleSettings();
         return KeyEventResult.handled;
       }
@@ -1430,7 +1446,8 @@ class GolgeGame extends FlameGame with KeyboardEvents {
       }
       if (paused) return KeyEventResult.handled;
       if (event.logicalKey == LogicalKeyboardKey.keyF ||
-          event.logicalKey == LogicalKeyboardKey.keyX) {
+          event.logicalKey == LogicalKeyboardKey.keyX ||
+          event.logicalKey == LogicalKeyboardKey.gameButtonX) {
         controls.queueLure();
       }
       if (event.logicalKey == LogicalKeyboardKey.enter &&

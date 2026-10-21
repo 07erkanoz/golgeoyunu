@@ -40,39 +40,53 @@ class _TouchControlsState extends State<TouchControls> {
   Widget _buttons(BuildContext context) {
     final t = widget.controls.touch;
     final tr = !S.en;
+    // Boyut ayarı bütün düğmeleri ve aralarını büyütür; sol elle oynamada
+    // yönler sağa, eylemler sola geçer.
+    final k = Settings.touchScale;
+    final swap = Settings.leftHanded;
+    Positioned at({
+      required bool start,
+      required double side,
+      required double bottom,
+      required Widget child,
+    }) => start != swap
+        ? Positioned(left: side * k, bottom: bottom * k, child: child)
+        : Positioned(right: side * k, bottom: bottom * k, child: child);
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(22, 0, 22, 18),
         child: Stack(
           children: [
-            // Sol: yön.
-            Positioned(
-              left: 0,
+            // Yön.
+            at(
+              start: true,
+              side: 0,
               bottom: 0,
               child: Row(
                 children: [
                   _Pad(
                     icon: Icons.chevron_left_rounded,
-                    size: 84,
+                    size: 84 * k,
                     onChanged: (v) => t.left = v,
                   ),
-                  const SizedBox(width: 16),
+                  SizedBox(width: 16 * k),
                   _Pad(
                     icon: Icons.chevron_right_rounded,
-                    size: 84,
+                    size: 84 * k,
                     onChanged: (v) => t.right = v,
                   ),
                 ],
               ),
             ),
             // Yönlerin üstünde: parmak ucu anahtarı.
-            Positioned(
-              left: 4,
+            at(
+              start: true,
+              side: 4,
               bottom: 104,
               child: _Pad(
                 icon: Icons.do_not_step,
                 label: tr ? 'parmak ucu' : 'tiptoe',
-                size: 52,
+                size: 52 * k,
                 active: _sneak,
                 onChanged: (v) {
                   if (!v) return;
@@ -80,52 +94,57 @@ class _TouchControlsState extends State<TouchControls> {
                 },
               ),
             ),
-            // Sağ: zıpla, tırman, çömel, ateşböceği.
-            Positioned(
-              right: 0,
+            // Eylemler: zıpla, tırman, çömel, ateşböceği.
+            at(
+              start: false,
+              side: 0,
               bottom: 0,
               child: SizedBox(
-                width: 210,
-                height: 200,
+                width: 210 * k,
+                height: 200 * k,
                 child: Stack(
                   children: [
-                    Positioned(
-                      right: 0,
+                    at(
+                      start: false,
+                      side: 0,
                       bottom: 0,
                       child: _Pad(
                         icon: Icons.arrow_upward_rounded,
                         label: tr ? 'zıpla' : 'jump',
-                        size: 96,
+                        size: 96 * k,
                         onChanged: (v) => t.jump = v,
                       ),
                     ),
-                    Positioned(
-                      right: 22,
+                    at(
+                      start: false,
+                      side: 22,
                       bottom: 118,
                       child: _Pad(
                         icon: Icons.keyboard_double_arrow_up_rounded,
                         label: tr ? 'tırman' : 'climb',
-                        size: 56,
+                        size: 56 * k,
                         onChanged: (v) => t.up = v,
                       ),
                     ),
-                    Positioned(
-                      right: 112,
+                    at(
+                      start: false,
+                      side: 112,
                       bottom: 8,
                       child: _Pad(
                         icon: Icons.keyboard_double_arrow_down_rounded,
                         label: tr ? 'çömel' : 'crouch',
-                        size: 56,
+                        size: 56 * k,
                         onChanged: (v) => t.down = v,
                       ),
                     ),
-                    Positioned(
-                      right: 112,
+                    at(
+                      start: false,
+                      side: 112,
                       bottom: 100,
                       child: _Pad(
                         icon: Icons.auto_awesome,
                         label: tr ? 'ateşböceği' : 'firefly',
-                        size: 56,
+                        size: 56 * k,
                         onChanged: (v) {
                           if (v) widget.controls.queueLure();
                         },
@@ -255,7 +274,8 @@ class _GestureControlsState extends State<_GestureControls> {
   }
 
   void _down(PointerDownEvent e, double width) {
-    final left = e.localPosition.dx < width / 2;
+    // Sol elle oynamada yürüme sağ yarıda, zıplama sol yarıda.
+    final left = (e.localPosition.dx < width / 2) != Settings.leftHanded;
     if (left && _stickPointer == null) {
       _stickPointer = e.pointer;
       _origin = _knob = e.localPosition;
@@ -331,7 +351,8 @@ class _GestureControlsState extends State<_GestureControls> {
             ),
             // İlk dokunuşa kadar görünen küçük ipuçları.
             Positioned(
-              left: 28,
+              left: Settings.leftHanded ? null : 28,
+              right: Settings.leftHanded ? 28 : null,
               bottom: 22,
               child: AnimatedOpacity(
                 opacity: _hintAlpha * alpha,
@@ -340,7 +361,8 @@ class _GestureControlsState extends State<_GestureControls> {
               ),
             ),
             Positioned(
-              right: 28,
+              right: Settings.leftHanded ? null : 28,
+              left: Settings.leftHanded ? 28 : null,
               bottom: 22,
               child: AnimatedOpacity(
                 opacity: _hintAlpha * alpha,

@@ -1,9 +1,12 @@
 import 'package:flame/components.dart';
 import 'package:flame_test/flame_test.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:golge/game/creatures.dart';
 import 'package:golge/game/entities.dart';
 import 'package:golge/game/golge_game.dart';
+import 'package:golge/game/hints.dart';
+import 'package:golge/settings.dart';
 import 'package:golge/game/level.dart';
 import 'package:golge/game/levels.dart';
 import 'package:golge/game/winter.dart';
@@ -224,6 +227,52 @@ void main() {
       game.debugLoadLevel(0);
       run(game, 0.2);
       expect(game.world.children.whereType<EchoSteps>(), isEmpty);
+    },
+  );
+
+  test(
+    'sol elle oynamada dokunmatik ipuçlarında sağ ve sol yer değiştirir',
+    () {
+      Settings.leftHanded = true;
+      expect(Hints.sides('sağ yarıya dokun'), 'sol yarıya dokun');
+      expect(
+        Hints.sides('Sol yarı: yürü · Sağ yarı: zıpla'),
+        'Sağ yarı: yürü · Sol yarı: zıpla',
+      );
+      Settings.leftHanded = false;
+      expect(Hints.sides('sağ yarıya dokun'), 'sağ yarıya dokun');
+    },
+  );
+
+  testWithGame<GolgeGame>(
+    'oyun kumandası: A zıplar, Y tırmanır, X ateşböceği',
+    GolgeGame.new,
+    (game) async {
+      await _load(game, const [
+        '##########',
+        '#........#',
+        '#P.......#',
+        '##########',
+      ]);
+      game.onKeyEvent(
+        const KeyDownEvent(
+          physicalKey: PhysicalKeyboardKey.gameButtonA,
+          logicalKey: LogicalKeyboardKey.gameButtonA,
+          timeStamp: Duration.zero,
+        ),
+        {LogicalKeyboardKey.gameButtonA, LogicalKeyboardKey.gameButtonY},
+      );
+      expect(game.controls.jump, isTrue);
+      expect(game.controls.up, isTrue);
+      game.onKeyEvent(
+        const KeyDownEvent(
+          physicalKey: PhysicalKeyboardKey.gameButtonX,
+          logicalKey: LogicalKeyboardKey.gameButtonX,
+          timeStamp: Duration.zero,
+        ),
+        {LogicalKeyboardKey.gameButtonX},
+      );
+      expect(game.controls.takeLure(), isTrue);
     },
   );
 }

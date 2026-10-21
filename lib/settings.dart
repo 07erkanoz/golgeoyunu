@@ -33,6 +33,12 @@ class Settings {
   /// Dokunmatik düğmelerin görünürlüğü (0.1 – 1).
   static double touchOpacity = 0.7;
 
+  /// Dokunmatik düğmelerin boyutu (0.75 – 1.4).
+  static double touchScale = 1.0;
+
+  /// Sol elle oynama: yürüme sağda, zıplama ve eylemler solda.
+  static bool leftHanded = false;
+
   /// Erişilebilirlik: ekran sarsıntısı ve ani beyaz parlamalar (şimşek,
   /// korku anı, yakalanma) büyük ölçüde azaltılır.
   static bool calmEffects = false;
@@ -87,11 +93,13 @@ class Settings {
     effects = num('effects', effects, 0, 1);
     touchOpacity = num('touch_opacity', touchOpacity, 0.1, 1);
     brightness = num('brightness', brightness, 0.6, 1.6);
+    touchScale = num('touch_scale', touchScale, 0.75, 1.4);
     if (p != null) {
       fullscreen = _read(() => p.getBool('fullscreen')) ?? fullscreen;
       lowGraphics = _read(() => p.getBool('low_graphics')) ?? lowGraphics;
       touchGestures = _read(() => p.getBool('touch_gestures')) ?? touchGestures;
       calmEffects = _read(() => p.getBool('calm_effects')) ?? calmEffects;
+      leftHanded = _read(() => p.getBool('left_handed')) ?? leftHanded;
       // Kayıtlı bir tercih yoksa cihazın dili: Türkçe değilse İngilizce.
       final lang = _read(() => p.getString('lang'));
       S.lang = switch (lang) {
@@ -124,6 +132,8 @@ class Settings {
       await p.setBool('low_graphics', lowGraphics);
       await p.setBool('touch_gestures', touchGestures);
       await p.setBool('calm_effects', calmEffects);
+      await p.setBool('left_handed', leftHanded);
+      await p.setDouble('touch_scale', touchScale);
       await p.setDouble('touch_opacity', touchOpacity);
       await p.setDouble('brightness', brightness);
       await p.setString('lang', S.en ? 'en' : 'tr');

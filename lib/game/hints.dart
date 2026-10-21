@@ -97,6 +97,22 @@ class Hints {
     for (final e in _controls.entries) {
       s = s.replaceAll('{${e.key}}', e.value);
     }
+    return sides(s);
+  }
+
+  /// Sol elle oynamada dokunmatik metinlerdeki sağ ve sol yer değiştirir.
+  static String sides(String s) {
+    if (!Settings.leftHanded) return s;
+    const pairs = [
+      ('Sol yarı', 'Sağ yarı'),
+      ('sol yarı', 'sağ yarı'),
+      ('Left half', 'Right half'),
+      ('left half', 'right half'),
+      ('left side', 'right side'),
+    ];
+    for (final (a, b) in pairs) {
+      s = s.replaceAll(a, '\u0000').replaceAll(b, a).replaceAll('\u0000', b);
+    }
     return s;
   }
 
