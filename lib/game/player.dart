@@ -857,6 +857,13 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
   /// İpteki açısal hız (sağa salınım artı).
   double get ropeOmega => _ropeOmega;
 
+  /// Bağlantıdan ellere uzaklık (ipin hangi boğumunda tutunulduğu).
+  double get ropeDistance => _ropeD;
+
+  /// İpte beden ellerin altında asılı: ipin açısına bir yayla, geç uyar
+  /// (yön değişiminde bacaklar bir an geride kalır).
+  final _swingBody = Spring(stiffness: 55, damping: 6.5);
+
   /// Ellerin dünyadaki yeri (ipe tutunurken).
   Vector2 get hand => Vector2(center.x, position.y + 6);
 
@@ -866,14 +873,13 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       final d = hand - r.anchor;
       final len = d.length;
       if (len < 30 || len > r.length + 6 || d.y < 0) continue;
-      // İpin o anki çizgisine uzaklık.
-      final dir = Vector2(math.sin(r.angle), math.cos(r.angle));
-      final along = d.dot(dir);
-      final perp = (d - dir * along).length;
-      if (perp > 16) continue;
+      // İpin o anki biçimine (boğumlarına) uzaklık.
+      final along = r.grabAt(hand);
+      if (along == null || along < 26) continue;
       rope = r;
       r.holder = this;
       ropeAngle = math.atan2(d.x, d.y);
+      _swingBody.reset(ropeAngle);
       _ropeD = len.clamp(36.0, r.length);
       final tangent = Vector2(math.cos(ropeAngle), -math.sin(ropeAngle));
       _ropeOmega = velocity.dot(tangent) / _ropeD;
@@ -900,7 +906,12 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     final h = dt / steps;
     for (var i = 0; i < steps; i++) {
       var alpha = -(g / _ropeD) * math.sin(ropeAngle);
-      alpha += dir * 2.6;
+      // Sallanmayı büyütmek: bacaklarla pompalamak gibi. Aşağıda ve gidiş
+      // yönünde etkili, uçlarda etkisiz (ip uçta kendiliğinden hızlanmaz).
+      if (dir != 0) {
+        final along = dir * _ropeOmega >= -0.05 ? 1.0 : 0.35;
+        alpha += dir * 2.9 * math.max(0.0, math.cos(ropeAngle * 1.25)) * along;
+      }
       _ropeOmega += alpha * h;
       _ropeOmega *= 1 - 0.18 * h;
       if (up) {
@@ -911,8 +922,12 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
         // Yukarıdan yakalayan ipte biraz aşağı kayar: salınım uzar.
         _ropeD = math.min(r.length * 0.65, _ropeD + 110 * h);
       }
-      ropeAngle = (ropeAngle + _ropeOmega * h).clamp(-1.4, 1.4);
-      if (ropeAngle.abs() >= 1.4) _ropeOmega *= -0.2;
+      ropeAngle += _ropeOmega * h;
+      // Tepede ip gevşer: salınım orada yumuşakça durup geri döner.
+      if (ropeAngle.abs() > 1.3 && ropeAngle * _ropeOmega > 0) {
+        _ropeOmega *= 1 - math.min(1.0, (ropeAngle.abs() - 1.3) * 40 * h * 60);
+      }
+      ropeAngle = ropeAngle.clamp(-1.45, 1.45);
     }
     _placeOnRope(r);
     // Kayaya çarparsa geri sekip durur.
@@ -921,7 +936,7 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       _ropeOmega *= -0.3;
       _placeOnRope(r);
     }
-    if (_ropeOmega.abs() > 0.2) facing = _ropeOmega > 0 ? 1 : -1;
+    // Yalnızca oyuncu yön verince döner (her salınım ucunda titremesin).
     if (dir != 0) facing = dir;
     _runPhase += _ropeOmega.abs() * dt;
     if (jumpPressed) {
@@ -1144,6 +1159,7 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     );
     final run = onGround ? (velocity.x.abs() / runSpeed).clamp(0.0, 1.0) : 0.0;
     _leanS = approach(_leanS, run * 0.2, dt, 0.12);
+    if (state == PlayerState.swing) _swingBody.update(ropeAngle, dt);
     // İleri doğru ivme (+ hızlanma, - frenleme).
     final ax = (velocity.x - _prevVx) / dt * facing;
     _prevVx = velocity.x;
@@ -1471,10 +1487,10 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       canvas.scale(-1, 1);
     }
     if (state == PlayerState.swing) {
-      // Gövde ipin doğrultusunda: eller dönme noktası.
+      // Beden ellerin altında asılı; ipin açısına geç uyar.
       const pivot = Offset(cx, 2);
       canvas.translate(pivot.dx, pivot.dy);
-      canvas.rotate(-ropeAngle * facing);
+      canvas.rotate(-_swingBody.value * facing);
       canvas.translate(-pivot.dx, -pivot.dy);
     }
     if (isDead && !_fell) {
@@ -1586,9 +1602,19 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
         }
       case PlayerState.swing:
         // İpte: eller başın üstünde, bacaklar salınımla savrulur.
-        final kick = (_ropeOmega * 0.25).clamp(-0.6, 0.6);
-        foot1 = Offset(cx + 2 + kick * 6, _artH - 2);
-        foot2 = Offset(cx - 1 + kick * 4, _artH - 1);
+        // İleri salınımda bacaklar öne uzanır, geri salınımda dizler toplanır
+        // (salıncakta pompalamak gibi).
+        final kick = (_ropeOmega * facing * 0.3).clamp(-0.7, 0.7);
+        final fwd = math.max(0.0, kick);
+        final tuck = math.max(0.0, -kick);
+        foot1 = Offset(
+          cx + 2 + fwd * 8 - tuck * 2,
+          _artH - 2 - fwd * 4 - tuck * 5,
+        );
+        foot2 = Offset(
+          cx - 1 + fwd * 6 - tuck * 3,
+          _artH - 1 - fwd * 2 - tuck * 6,
+        );
         arm2 = math.pi - 0.15;
         jarAtHip = true;
         onRope = true;

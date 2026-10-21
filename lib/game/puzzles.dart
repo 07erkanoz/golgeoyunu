@@ -1213,69 +1213,137 @@ class SwingRope extends Component with HasGameReference<GolgeGame> {
     : anchor = Vector2((col + 0.5) * kTile, row * kTile.toDouble()),
       length = tiles * kTile.toDouble(),
       _t = col * 0.37,
-      super(priority: 19);
+      super(priority: 19) {
+    // İp boğum boğum bir zincir: her boğum bir öncekine bağlı, kendi
+    // ağırlığıyla sarkar. Tutulan yerin altındaki kısım serbestçe sallanır.
+    final n = math.max(6, (length / 12).round());
+    _seg = length / n;
+    for (var i = 0; i <= n; i++) {
+      final p = Offset(anchor.x, anchor.y + _seg * i);
+      _pts.add(p);
+      _prev.add(p);
+    }
+  }
 
   final Vector2 anchor;
   final double length;
   Player? holder;
-  double angle = 0;
-  double _omega = 0;
   double _t;
+  late final double _seg;
+  final _pts = <Offset>[];
+  final _prev = <Offset>[];
+  double _acc = 0;
 
-  void release(double a, double omega) {
-    holder = null;
-    angle = a;
-    _omega = omega;
+  /// İpin dikeyle yaptığı açı (bağlantıdan ucuna).
+  double get angle {
+    final e = _pts.last;
+    return math.atan2(e.dx - anchor.x, e.dy - anchor.y);
   }
+
+  /// İpe [p] noktasında tutunulabilir mi: ipin herhangi bir boğumuna
+  /// yeterince yakınsa bağlantıdan o noktaya uzaklık, değilse null.
+  double? grabAt(Vector2 p, {double reach = 16}) {
+    final q = p.toOffset();
+    var along = 0.0;
+    double? best;
+    var bestD = reach;
+    for (var i = 0; i < _pts.length - 1; i++) {
+      final a = _pts[i];
+      final b = _pts[i + 1];
+      final ab = b - a;
+      final len2 = ab.distanceSquared;
+      final t = len2 == 0
+          ? 0.0
+          : (((q - a).dx * ab.dx + (q - a).dy * ab.dy) / len2).clamp(0.0, 1.0);
+      final d = (a + ab * t - q).distance;
+      if (d < bestD) {
+        bestD = d;
+        best = along + _seg * t;
+      }
+      along += _seg;
+    }
+    return best;
+  }
+
+  /// Bırakıldı: zincir elin son hızıyla salınmayı sürdürür.
+  void release(double a, double omega) => holder = null;
 
   @override
   void update(double dt) {
     _t += dt;
     final p = holder;
-    if (p != null) {
-      if (p.state != PlayerState.swing || p.rope != this) {
-        holder = null;
-      } else {
-        angle = p.ropeAngle;
-        return;
-      }
+    if (p != null && (p.state != PlayerState.swing || p.rope != this)) {
+      holder = null;
     }
-    // Boş ip: kendi sarkaç salınımı, yavaşça durulur; rüzgâr hafif iter.
-    _omega +=
-        (-(1100 / length) * math.sin(angle) + math.sin(_t * 0.7) * 0.15) * dt;
-    _omega *= 1 - 0.6 * dt;
-    angle += _omega * dt;
+    // Sabit adımlı (1/120 sn) zincir: kare hızından bağımsız.
+    _acc = math.min(_acc + dt, 0.1);
+    const h = 1 / 120;
+    while (_acc >= h) {
+      _acc -= h;
+      _step(h);
+    }
+  }
+
+  void _step(double h) {
+    final p = holder;
+    // Hafif bir hava akımı boş ipi kıpırdatır.
+    final wind = p == null
+        ? math.sin(_t * 0.7) * 18 + math.sin(_t * 1.9) * 6
+        : 0.0;
+    for (var i = 1; i < _pts.length; i++) {
+      final v = (_pts[i] - _prev[i]) * 0.995;
+      _prev[i] = _pts[i];
+      _pts[i] = _pts[i] + v + Offset(wind, 900) * (h * h);
+    }
+    // Tutulan boğum elin yerinde; üstü gergin, altı serbest.
+    int? held;
+    if (p != null) {
+      held = (p.ropeDistance / _seg).round().clamp(1, _pts.length - 1);
+      _pts[held] = p.hand.toOffset();
+    }
+    for (var k = 0; k < 8; k++) {
+      _pts[0] = anchor.toOffset();
+      for (var i = 0; i < _pts.length - 1; i++) {
+        final a = _pts[i];
+        final b = _pts[i + 1];
+        final d = b - a;
+        final dist = d.distance;
+        // İp gerilir ama sıkışmaz: yalnızca boyu aşınca çekilir.
+        if (dist <= _seg || dist == 0) continue;
+        final fix = d * ((dist - _seg) / dist);
+        final aPinned = i == 0 || i == held;
+        final bPinned = i + 1 == held;
+        if (aPinned && !bPinned) {
+          _pts[i + 1] = b - fix;
+        } else if (bPinned && !aPinned) {
+          _pts[i] = a + fix;
+        } else if (!aPinned && !bPinned) {
+          _pts[i] = a + fix * 0.5;
+          _pts[i + 1] = b - fix * 0.5;
+        }
+      }
+      if (held != null) _pts[held] = p!.hand.toOffset();
+    }
   }
 
   @override
   void render(Canvas canvas) {
-    final p = holder;
-    final end = p != null
-        ? p.hand
-        : anchor + Vector2(math.sin(angle), math.cos(angle)) * length;
     final rope = Paint()
       ..color = const Color(0xFF2A1C14)
       ..strokeWidth = 2.2
-      ..strokeCap = StrokeCap.round;
-    // Hafif sarkık: ortası biraz bükük çizilir.
-    final mid =
-        (anchor + end) / 2 +
-        Vector2(math.cos(angle), -math.sin(angle)) * (p == null ? 3 : 1.5);
-    canvas.drawPath(
-      Path()
-        ..moveTo(anchor.x, anchor.y)
-        ..quadraticBezierTo(mid.x, mid.y, end.x, end.y),
-      rope..style = PaintingStyle.stroke,
-    );
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke;
+    // Boğumlardan geçen yumuşak bir eğri.
+    final path = Path()..moveTo(_pts[0].dx, _pts[0].dy);
+    for (var i = 1; i < _pts.length - 1; i++) {
+      final m = (_pts[i] + _pts[i + 1]) / 2;
+      path.quadraticBezierTo(_pts[i].dx, _pts[i].dy, m.dx, m.dy);
+    }
+    path.lineTo(_pts.last.dx, _pts.last.dy);
+    canvas.drawPath(path, rope);
     // Bağlantı halkası ve uçtaki düğüm.
     canvas.drawCircle(anchor.toOffset(), 3.5, Paint()..color = kInk);
-    if (p == null) {
-      canvas.drawCircle(
-        end.toOffset(),
-        3,
-        Paint()..color = const Color(0xFF2A1C14),
-      );
-    }
+    canvas.drawCircle(_pts.last, 3, Paint()..color = const Color(0xFF2A1C14));
   }
 }
 
@@ -1308,20 +1376,23 @@ class AnimalCrate extends Crate {
           const Color(0xFFE0A15F).withValues(alpha: 0),
         ]),
     );
-    // Kaide: üstü aydınlık tahta.
+    // Kaide: üstü aydınlık tahta, heykelin boyunca.
+    const scale = 0.56;
+    final b = _animalPath(kind).getBounds();
+    final l = math.min(-1.0, s / 2 + b.left * scale - 2);
+    final r = math.max(s + 1.0, s / 2 + b.right * scale + 2);
     canvas.drawRect(
-      const Rect.fromLTWH(-1, s - 7, s + 2, 7),
+      Rect.fromLTRB(l, s - 7, r, s),
       Paint()..color = const Color(0xFF4A2C17),
     );
     canvas.drawLine(
-      const Offset(-1, s - 6.5),
-      const Offset(s + 1, s - 6.5),
+      Offset(l, s - 6.5),
+      Offset(r, s - 6.5),
       Paint()
         ..color = const Color(0xFFE0A15F).withValues(alpha: 0.7)
         ..strokeWidth = 1.4,
     );
     // Oyma figür: açık ahşap, ışığı yakalayan kenar çizgisiyle.
-    const scale = 0.56;
     canvas.save();
     canvas.translate(s / 2, s - 7);
     _animal(
@@ -1352,75 +1423,178 @@ class AnimalCrate extends Crate {
 void _animal(Canvas canvas, AnimalKind kind, Paint p, double scale) {
   canvas.save();
   canvas.scale(scale);
+  canvas.drawPath(_animalPath(kind), p);
+  canvas.restore();
+}
+
+/// Hayvanların tek parça siluetleri (parçalar birleştirilir: kontur yalnızca
+/// dış hatta düşer, içte çizgi kalmaz). Bir kez kurulur.
+final _animalPaths = <AnimalKind, Path>{};
+
+Path _animalPath(AnimalKind kind) => _animalPaths[kind] ??= _buildAnimal(kind);
+
+/// [a]dan [b]ye, kalınlığı [w0]'dan [w1]'e incelen bir parça (bacak, boyun,
+/// kuyruk, boynuz).
+Path _rib(Offset a, Offset b, double w0, double w1) {
+  final d = b - a;
+  final len = d.distance;
+  final n = Offset(-d.dy, d.dx) / (len == 0 ? 1 : len);
+  return Path()
+    ..moveTo((a + n * w0 / 2).dx, (a + n * w0 / 2).dy)
+    ..lineTo((b + n * w1 / 2).dx, (b + n * w1 / 2).dy)
+    ..lineTo((b - n * w1 / 2).dx, (b - n * w1 / 2).dy)
+    ..lineTo((a - n * w0 / 2).dx, (a - n * w0 / 2).dy)
+    ..close()
+    ..addOval(Rect.fromCircle(center: b, radius: w1 / 2))
+    ..addOval(Rect.fromCircle(center: a, radius: w0 / 2));
+}
+
+/// Dizli bacak: üstte kalın, dizde kırılır, toynak/pençeyle biter.
+Path _leg(double x, double top, double w, {double knee = 0, double foot = 1}) {
+  final k = Offset(x + knee, top + (0 - top) * 0.55);
+  final f = Offset(x + knee * 0.2, -1.5);
+  return Path()
+    ..addPath(_rib(Offset(x, top), k, w, w * 0.7), Offset.zero)
+    ..addPath(_rib(k, f, w * 0.7, w * 0.55), Offset.zero)
+    ..addOval(
+      Rect.fromCenter(
+        center: Offset(f.dx + 1, -1.2),
+        width: w * 1.2 * foot,
+        height: 2.6,
+      ),
+    );
+}
+
+Path _union(List<Path> parts) {
+  var out = parts.first;
+  for (final p in parts.skip(1)) {
+    out = Path.combine(PathOperation.union, out, p);
+  }
+  return out;
+}
+
+Path _buildAnimal(AnimalKind kind) {
   switch (kind) {
     case AnimalKind.lion:
-      canvas.drawOval(const Rect.fromLTWH(-26, -34, 52, 22), p);
-      canvas.drawCircle(const Offset(26, -32), 13, p);
-      for (final x in [-20.0, -8.0, 10.0, 18.0]) {
-        canvas.drawRect(Rect.fromLTWH(x, -16, 5, 16), p);
+      // Uzun, alçak gövde; kabarık yele; püsküllü kuyruk.
+      final mane = Path();
+      for (var i = 0; i <= 16; i++) {
+        final a = i / 16 * 2 * math.pi;
+        final r = i.isEven ? 14.5 : 11.0;
+        final pt = Offset(22 + math.cos(a) * r, -35 + math.sin(a) * r);
+        i == 0 ? mane.moveTo(pt.dx, pt.dy) : mane.lineTo(pt.dx, pt.dy);
       }
-      canvas.drawPath(
+      return _union([
         Path()
-          ..moveTo(-26, -28)
-          ..quadraticBezierTo(-42, -34, -44, -18)
-          ..lineTo(-40, -18)
-          ..quadraticBezierTo(-38, -28, -26, -24)
+          ..moveTo(-24, -31)
+          ..cubicTo(-10, -37, 6, -37, 18, -33)
+          ..lineTo(21, -21)
+          ..cubicTo(8, -17, -10, -17, -22, -19)
+          ..cubicTo(-30, -21, -30, -28, -24, -31)
           ..close(),
-        p,
-      );
+        mane..close(),
+        Path()
+          ..addOval(Rect.fromCircle(center: const Offset(27, -33), radius: 8)),
+        Path()..addOval(
+          Rect.fromCenter(
+            center: const Offset(33, -29.5),
+            width: 11,
+            height: 7,
+          ),
+        ),
+        _leg(-19, -22, 7, knee: -1.5),
+        _leg(-12, -21, 6.5, knee: 1),
+        _leg(12, -22, 6.5, knee: 1),
+        _leg(18, -22, 7, knee: -1),
+        _rib(const Offset(-26, -27), const Offset(-36, -34), 3, 2.4),
+        _rib(const Offset(-36, -34), const Offset(-42, -24), 2.4, 2),
+        Path()..addOval(
+          Rect.fromCircle(center: const Offset(-42, -23), radius: 3.4),
+        ),
+      ]);
     case AnimalKind.elephant:
-      canvas.drawOval(const Rect.fromLTWH(-30, -46, 60, 36), p);
-      canvas.drawCircle(const Offset(30, -38), 13, p);
-      canvas.drawRect(const Rect.fromLTWH(38, -34, 6, 30), p);
-      for (final x in [-24.0, -10.0, 8.0, 20.0]) {
-        canvas.drawRect(Rect.fromLTWH(x, -14, 8, 14), p);
-      }
+      // Kubbe sırt, yaprak kulak, incelen kıvrık hortum, sütun bacaklar.
+      return _union([
+        Path()
+          ..moveTo(-27, -22)
+          ..cubicTo(-31, -44, -12, -53, 8, -51)
+          ..cubicTo(22, -50, 29, -42, 28, -28)
+          ..lineTo(24, -17)
+          ..cubicTo(6, -14, -12, -14, -24, -16)
+          ..close(),
+        Path()
+          ..addOval(Rect.fromCircle(center: const Offset(30, -38), radius: 12)),
+        Path()
+          ..moveTo(20, -48)
+          ..cubicTo(12, -44, 12, -28, 21, -24)
+          ..cubicTo(26, -30, 27, -42, 20, -48)
+          ..close(),
+        _rib(const Offset(37, -36), const Offset(43, -22), 8, 5.5),
+        _rib(const Offset(43, -22), const Offset(43, -10), 5.5, 3.6),
+        _rib(const Offset(43, -10), const Offset(39, -6), 3.6, 3),
+        _rib(const Offset(36, -28), const Offset(42, -27), 3, 1.6),
+        _leg(-20, -18, 10, foot: 0.9),
+        _leg(-9, -16, 9.5, foot: 0.9),
+        _leg(10, -16, 9.5, foot: 0.9),
+        _leg(20, -18, 10, foot: 0.9),
+        _rib(const Offset(-27, -30), const Offset(-32, -18), 2.2, 1.6),
+      ]);
     case AnimalKind.giraffe:
-      canvas.drawOval(const Rect.fromLTWH(-20, -46, 40, 22), p);
-      canvas.drawPath(
+      // Arkaya eğik gövde, uzun boyun, küçük baş ve boynuzcuklar.
+      return _union([
         Path()
-          ..moveTo(12, -42)
-          ..lineTo(26, -92)
-          ..lineTo(33, -90)
-          ..lineTo(21, -38)
+          ..moveTo(-18, -42)
+          ..cubicTo(-8, -47, 8, -52, 18, -50)
+          ..lineTo(19, -37)
+          ..cubicTo(6, -33, -8, -33, -18, -35)
           ..close(),
-        p,
-      );
-      canvas.drawOval(const Rect.fromLTWH(24, -100, 16, 8), p);
-      for (final x in [-15.0, -6.0, 7.0, 14.0]) {
-        canvas.drawRect(Rect.fromLTWH(x, -28, 4, 28), p);
-      }
+        _rib(const Offset(13, -47), const Offset(27, -86), 11, 5.5),
+        Path()
+          ..moveTo(23, -90)
+          ..cubicTo(28, -95, 38, -94, 41, -89)
+          ..cubicTo(38, -85, 30, -85, 24, -86)
+          ..close(),
+        _rib(const Offset(26, -91), const Offset(25, -98), 1.8, 1.6),
+        _rib(const Offset(29, -91), const Offset(29.5, -98), 1.8, 1.6),
+        _rib(const Offset(24, -89), const Offset(19, -92), 2.6, 1.4),
+        _leg(-14, -37, 4.6, knee: -1),
+        _leg(-8, -36, 4.4, knee: 1),
+        _leg(9, -37, 4.4, knee: 1),
+        _leg(15, -38, 4.6, knee: -1),
+        _rib(const Offset(-18, -40), const Offset(-22, -24), 1.8, 1.4),
+        Path()..addOval(
+          Rect.fromCircle(center: const Offset(-22, -23), radius: 2.2),
+        ),
+      ]);
     case AnimalKind.deer:
-      canvas.drawOval(const Rect.fromLTWH(-20, -36, 40, 18), p);
-      canvas.drawPath(
+      // İnce gövde, kavisli boyun, dallı boynuzlar.
+      return _union([
         Path()
-          ..moveTo(14, -32)
-          ..lineTo(22, -52)
-          ..lineTo(28, -50)
-          ..lineTo(20, -30)
+          ..moveTo(-18, -35)
+          ..cubicTo(-6, -40, 8, -40, 16, -36)
+          ..lineTo(18, -27)
+          ..cubicTo(6, -24, -8, -24, -18, -26)
+          ..cubicTo(-22, -28, -22, -33, -18, -35)
           ..close(),
-        p,
-      );
-      canvas.drawCircle(const Offset(26, -52), 6, p);
-      final antler = Paint()
-        ..color = p.color
-        ..strokeWidth = 2
-        ..style = PaintingStyle.stroke;
-      canvas.drawPath(
+        _rib(const Offset(12, -34), const Offset(22, -50), 8, 5),
         Path()
-          ..moveTo(26, -56)
-          ..lineTo(22, -70)
-          ..moveTo(23, -64)
-          ..lineTo(16, -68)
-          ..moveTo(28, -56)
-          ..lineTo(34, -68),
-        antler,
-      );
-      for (final x in [-15.0, -6.0, 7.0, 14.0]) {
-        canvas.drawRect(Rect.fromLTWH(x, -20, 3, 20), p);
-      }
+          ..moveTo(19, -54)
+          ..cubicTo(24, -57, 31, -55, 34, -50)
+          ..cubicTo(30, -48, 24, -48, 20, -49)
+          ..close(),
+        _rib(const Offset(20, -53), const Offset(15, -56), 3, 1.4),
+        _rib(const Offset(23, -55), const Offset(20, -66), 2.2, 1.6),
+        _rib(const Offset(20, -66), const Offset(14, -71), 1.6, 1.2),
+        _rib(const Offset(21, -62), const Offset(26, -69), 1.5, 1.1),
+        _rib(const Offset(25, -55), const Offset(30, -64), 2.2, 1.6),
+        _rib(const Offset(30, -64), const Offset(36, -68), 1.6, 1.2),
+        _leg(-14, -27, 4, knee: -1.2),
+        _leg(-9, -26, 3.8, knee: 1),
+        _leg(9, -27, 3.8, knee: 1.2),
+        _leg(14, -28, 4, knee: -0.8),
+        _rib(const Offset(-19, -33), const Offset(-23, -37), 3, 2),
+      ]);
   }
-  canvas.restore();
 }
 
 /// Duvarda eşini bekleyen bir hayvan gölgesi. Aynı türden oyma hayvan

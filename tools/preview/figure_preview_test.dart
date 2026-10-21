@@ -13,6 +13,7 @@ import 'package:golge/game/golge_game.dart';
 import 'package:golge/game/legends.dart';
 import 'package:golge/game/levels.dart';
 import 'package:golge/game/nemrut.dart';
+import 'package:golge/game/puzzles.dart';
 import 'package:golge/game/winter.dart';
 
 Future<void> _fonts() async {
@@ -31,7 +32,7 @@ class _Spec {
       {this.count = 16, this.act});
   final List<String> map;
   final LevelTheme theme;
-  final PositionComponent Function(GolgeGame) find;
+  final Component Function(GolgeGame) find;
   final double view;
   final double step;
   final int count;
@@ -90,6 +91,38 @@ final _specs = <String, _Spec>{
       }
     },
   ),
+  'rope': _Spec(
+    const [
+      '##############################',
+      '#.............S..............#',
+      '#.............S..............#',
+      '#.............S..............#',
+      '#.............S..............#',
+      '#.............S..............#',
+      '#.............S..............#',
+      '#............................#',
+      '#............................#',
+      '#P...........................#',
+      '##############################',
+    ],
+    LevelTheme.snow,
+    (g) => g.world.children.whereType<SwingRope>().first,
+    260,
+    0.12,
+    count: 40,
+    act: (g, i) {
+      final p = g.player!;
+      final k = g.controls.keyboard;
+      if (i == 0) {
+        // İpin ucuna doğru zıplar.
+        p.position.setValues(14 * 32.0 + 16 - 8, 172);
+        p.velocity.setValues(90, 10);
+      }
+      k.right = i > 1 && i < 14;
+      k.left = i >= 14 && i < 22;
+      k.jump = i == 26;
+    },
+  ),
   'wolf': _Spec(
     const [
       '##################################################',
@@ -128,7 +161,9 @@ void main() {
     game.player!.hidden = fig != 'wolf';
     game.update(1 / 60);
     final target = spec.find(game);
-    final anchor = target.absoluteCenter.clone();
+    final anchor = target is SwingRope
+        ? target.anchor + Vector2(0, 110)
+        : (target as PositionComponent).absoluteCenter.clone();
 
     const cell = 240.0;
     final frames = <ui.Image>[];
@@ -148,7 +183,7 @@ void main() {
       c.translate(-anchor.x, -anchor.y);
       for (final comp in game.world.children.toList()
         ..sort((a, b) => a.priority.compareTo(b.priority))) {
-        if (comp is PositionComponent) comp.renderTree(c);
+        if (comp is PositionComponent || comp is SwingRope) comp.renderTree(c);
       }
       frames.add(await rec.endRecording().toImage(cell.toInt(), cell.toInt()));
     }
