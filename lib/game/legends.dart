@@ -1212,33 +1212,91 @@ class FeatherAltar extends PositionComponent
 
   @override
   void render(Canvas canvas) {
-    final ink = Paint()..color = kInk;
-    canvas.drawRect(const Rect.fromLTWH(-12, -18, 24, 18), ink);
-    canvas.drawRect(const Rect.fromLTWH(-16, -22, 32, 5), ink);
     if (_glow > 0) {
       glowDot(
         canvas,
-        const Offset(0, -30),
-        50,
+        const Offset(0, -26),
+        56,
         const Color(0xFFE8D58A),
         0.5 * _glow,
       );
     }
-    // Kanat oyması.
+    // Taş sunak: iki basamak, yivli gövde, üstte iki yana açılmış kanat
+    // kabartmalı başlık ve sığ bir çanak. Tüyler gelince oymalar ışır.
+    Paint stone(Rect r) => Paint()
+      ..shader = ui.Gradient.linear(r.topLeft, r.bottomRight, const [
+        Color(0xFF5A6A5E),
+        Color(0xFF1E2622),
+      ]);
+    final edge = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.7
+      ..color = const Color(0xFF0E1210);
+    for (final r in const [
+      Rect.fromLTWH(-15, -4, 30, 4),
+      Rect.fromLTWH(-12, -7, 24, 3),
+    ]) {
+      canvas.drawRect(r, stone(r));
+      canvas.drawRect(r, edge);
+      canvas.drawLine(
+        r.topLeft,
+        r.topRight,
+        Paint()
+          ..color = const Color(0xFFB8C8B0).withValues(alpha: 0.45)
+          ..strokeWidth = 0.8,
+      );
+    }
+    final body = Path()
+      ..moveTo(-8, -7)
+      ..lineTo(-6.6, -20)
+      ..lineTo(6.6, -20)
+      ..lineTo(8, -7)
+      ..close();
+    canvas.drawPath(body, stone(const Rect.fromLTWH(-8, -20, 16, 13)));
+    canvas.drawPath(body, edge);
+    final flute = Paint()
+      ..strokeWidth = 0.7
+      ..color = const Color(0xFF141A16);
+    for (final x in [-4.0, 0.0, 4.0]) {
+      canvas.drawLine(Offset(x * 1.05, -8), Offset(x * 0.9, -19), flute);
+    }
+    // Başlık ve çanak.
+    final cap = const Rect.fromLTWH(-11, -24, 22, 4);
+    canvas.drawRect(cap, stone(cap));
+    canvas.drawRect(cap, edge);
+    canvas.drawPath(
+      Path()
+        ..moveTo(-7, -24)
+        ..quadraticBezierTo(0, -29, 7, -24)
+        ..close(),
+      stone(const Rect.fromLTWH(-7, -29, 14, 5)),
+    );
+    // Kanat kabartması: iki yana açılmış tüy sıraları.
     final carve = Paint()
       ..color = Color.lerp(
-        const Color(0xFF3A3020),
+        const Color(0xFF2A3428),
         const Color(0xFFF2E2A0),
         _glow,
       )!
-      ..strokeWidth = 1.4
-      ..style = PaintingStyle.stroke;
-    canvas.drawPath(
-      Path()
-        ..moveTo(-8, -6)
-        ..quadraticBezierTo(0, -16, 8, -6),
-      carve,
-    );
+      ..strokeWidth = 1.1
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+    for (final sgn in [-1.0, 1.0]) {
+      for (var k = 0; k < 4; k++) {
+        canvas.drawPath(
+          Path()
+            ..moveTo(sgn * 1.5, -13)
+            ..quadraticBezierTo(
+              sgn * (4 + k * 1.2),
+              -17 + k * 0.6,
+              sgn * (6.6 + k * 0.9),
+              -15 + k * 2.2,
+            ),
+          carve,
+        );
+      }
+    }
+    canvas.drawCircle(const Offset(0, -13), 1.4, Paint()..color = carve.color);
   }
 }
 
