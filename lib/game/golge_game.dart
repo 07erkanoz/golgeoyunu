@@ -560,7 +560,12 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         for (final c in level.altarCells) FeatherAltar(c),
         for (final c in level.bellCells) WindBell(c),
         for (final c in level.ruinCells) MonasteryRuin(c),
-        for (final c in level.perdeCells) GiantPerde(c),
+        for (final c in level.perdeCells) ...[
+          GiantPerde(c, puzzle: level.eyeStoneCells.isNotEmpty),
+          // Bulmacalı perdenin ipi sol kenarında.
+          if (level.eyeStoneCells.isNotEmpty) PerdeCord(c - Vector2(kTile, 0)),
+        ],
+        for (final c in level.eyeStoneCells) EyeStone(c),
         for (final (c, r, n) in level.glowRuns)
           PhasePlank(Vector2(c * kTile, r * kTile.toDouble()), n, shade: false),
         // Gölge köprüsü ikişer karelik parçalardan: ışık yalnızca değdiği
@@ -582,15 +587,11 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         for (final c in level.beamCells) SunBeam(c),
         for (final (c, r, n) in level.ropes) SwingRope(c, r, n),
         for (var i = 0; i < level.animalCells.length; i++)
-          AnimalCrate(
-            level.animalCells[i],
-            AnimalKind.values[i % AnimalKind.values.length],
-          ),
+          AnimalCrate(level.animalCells[i], _kind(level.def.animalKinds, i)),
+        // Kefenin üstündeki gölgeler terazinin parçasıdır (_lifts kurar).
         for (var i = 0; i < level.pedestalCells.length; i++)
-          Pedestal(
-            level.pedestalCells[i],
-            AnimalKind.values[i % AnimalKind.values.length],
-          ),
+          if (_panBelow(level.pedestalCells[i]) == null)
+            Pedestal(level.pedestalCells[i], _kind(level.def.shadowKinds, i)),
         if (level.chaseStart != null && level.chaseEnd != null)
           if (skiSurface != null)
             Avalanche(level.chaseStart!, level.chaseEnd!)
@@ -707,7 +708,35 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     return false;
   }
 
-  /// Asansör kefeleri soldan sağa eşleşir: her A, sıradaki Y ile.
+  AnimalKind _kind(List<int> kinds, int i) {
+    final k = i < kinds.length ? kinds[i] : i;
+    return AnimalKind.values[k % AnimalKind.values.length];
+  }
+
+  /// Gölge hücresinin hemen altındaki kefe hücresi (terazi), yoksa null.
+  Vector2? _panBelow(Vector2 shadow) {
+    for (final p in [...level.liftA, ...level.liftB]) {
+      if ((p.x - shadow.x).abs() < 1 && (p.y - shadow.y - kTile).abs() < 1) {
+        return p;
+      }
+    }
+    return null;
+  }
+
+  /// Kefenin üstündeki gölgenin türü (terazi değilse null).
+  AnimalKind? _panShadow(Vector2 pan) {
+    for (var i = 0; i < level.pedestalCells.length; i++) {
+      final s = level.pedestalCells[i];
+      if ((pan.x - s.x).abs() < 1 && (pan.y - s.y - kTile).abs() < 1) {
+        return _kind(level.def.shadowKinds, i);
+      }
+    }
+    return null;
+  }
+
+  /// Asansör kefeleri soldan sağa eşleşir: her A, sıradaki Y ile. İki
+  /// kefesinin üstünde de hayvan gölgesi olan çift terazidir: kefeler
+  /// altlarındaki çukur kadar iner, eşit yükte hizalanır.
   Iterable<Component> _lifts() sync* {
     final count = math.min(level.liftA.length, level.liftB.length);
     for (var i = 0; i < count; i++) {
@@ -715,6 +744,31 @@ class GolgeGame extends FlameGame with KeyboardEvents {
       final b = LiftPan(level.liftB[i]);
       yield a;
       yield b;
+      final kindA = _panShadow(level.liftA[i]);
+      final kindB = _panShadow(level.liftB[i]);
+      if (kindA != null && kindB != null) {
+        var travel = 4;
+        for (final pan in [level.liftA[i], level.liftB[i]]) {
+          final c = (pan.x / kTile).floor();
+          final r0 = (pan.y / kTile).floor();
+          for (var r = r0 + 1; r <= r0 + 4 && r < level.height; r++) {
+            if (level.solid(c, r) || level.solid(c + 1, r)) {
+              travel = math.min(travel, r - r0 - 1);
+              break;
+            }
+          }
+        }
+        final lift = BalanceLift(a, b, travel: travel * kTile, levelling: true);
+        final scale = ArkScale(lift, kindA, kindB);
+        yield lift;
+        yield scale;
+        // Kol: sol kefenin solundaki rafın üstünde.
+        yield ScaleCrank(
+          scale,
+          Vector2(a.base.x - kTile / 2, a.base.y - 2 * kTile),
+        );
+        continue;
+      }
       // İnen kefe suya gömülmesin: suyun bir kare üstünde durur.
       var travel = 4;
       for (final pan in [level.liftA[i], level.liftB[i]]) {
@@ -1100,6 +1154,9 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         Crate k when near(k, 3, 2) => 'crate',
         Lever l when near(l, 4, 4) => 'lever',
         Valve v when near(v, 4, 3) => 'valve',
+        PerdeCord k when near(k, 4, 3) => 'cord',
+        ArkScale s when near(s.lift.a, 6, 4) || near(s.lift.b, 6, 4) => 'scale',
+        EyeStone e when near(e, 5, 3) => 'eyeStone',
         Mirror m when near(m, 5, 4) => 'mirror',
         LiftPan l when near(l, 4, 3) => 'lift',
         RottenPlank k when near(k, 4, 3) => 'rotten',

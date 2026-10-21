@@ -67,6 +67,11 @@ y.put(93,13,'K'); y.put(94,13,'6')
 # 6) Dev perde, ışık ve gölge tahtaları, çürük köprü, su haznesi
 y.fill(108,10,127,19,'#')
 y.put(108,9,'K'); y.put(110,9,'J'); y.put(112,9,'B'); y.put(125,9,'M')
+# Sarnıcın iki yüzü: perdenin ardındaki kandil iple kayar (ip perdenin
+# solunda); dev gölgenin başı perdedeki göze, kavanozun ışığı taştaki göze
+# ($) değince kapı açılır.
+y.put(115,8,'$')
+y.fill(126,2,126,9,'H')
 y.fill(128,18,135,19,'w')                    # ışık tahtasının altı: su
 y.fill(128,10,133,10,'l')                    # ışık tahtası
 y.fill(134,10,135,19,'#'); y.put(134,9,'F'); y.put(135,9,'B')
@@ -397,7 +402,19 @@ n.put(118,25,'F'); n.put(136,25,'F'); n.put(128,22,'e'); n.put(144,25,'4')
 n.fill(152,24,156,25,'#'); n.fill(157,22,161,25,'#')   # yük yığınları
 n.fill(165,26,175,29,'w'); n.fill(165,22,175,22,'=')   # sızan su, üstünde kiriş
 n.put(170,21,'M')
-n.put(178,25,'K'); n.put(180,25,'B'); n.put(185,25,'5')
+# 3b) Terazi: Nuh'un eşleri. İki kefenin üstünde geyik gölgesi; ortadaki
+# rafta geyik, fil, geyik. Eşler kefelere konunca kefeler hizalanır, kapı
+# açılır; fil ağırdır, dengelemez. Sol rafın üstündeki kol teraziyi boşaltır.
+n.put(176,25,'K'); n.put(178,22,'5')
+n.put(177,25,'#'); n.fill(178,24,178,25,'#'); n.fill(179,23,180,25,'#')
+n.put(179,22,'B')
+n.put(181,25,'A'); n.put(181,24,'d'); n.fill(181,26,182,27,'.')
+n.fill(183,23,188,25,'#')
+n.put(184,22,'a'); n.put(186,22,'a'); n.put(188,22,'a')
+n.put(189,25,'Y'); n.put(189,24,'d'); n.fill(189,26,190,27,'.')
+n.fill(191,23,191,29,'#')
+n.fill(192,3,192,18,'#'); n.fill(192,19,192,25,'H')
+n.put(193,25,'K')                            # kaçıştan önce kontrol noktası
 # 4) Ambar kuyusu: tufan geri döner, yukarı kaç
 n.fill(192,0,229,2,'#')
 n.put(193,3,'q'); n.put(229,25,'Q')
@@ -839,7 +856,8 @@ for name, rows in MAPS:
     widths = set(len(r) for r in rows)
     assert len(widths) == 1, (name, widths)
     out.append(f'const {name} = <String>[')
-    out += [f"  '{r}'," for r in rows]
+    # '$' Dart dizgisinde değişken eklemedir: kaçışla yazılır.
+    out += ["  '" + r.replace('$', '\\$') + "'," for r in rows]
     out += ['];', '']
     print(name, len(rows), 'x', widths.pop())
 SURFACES = [('kSkiPalandoken', pal_surface), ('kSkiCig', cig_surface)]

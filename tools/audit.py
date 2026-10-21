@@ -51,7 +51,7 @@ def load(name):
     for line in m.group(1).split('\n'):
         line = line.strip()
         if line.startswith("'"):
-            rows.append(line[1:-2].replace("\\'", "'"))
+            rows.append(line[1:-2].replace("\\'", "'").replace('\\$', '$'))
     return rows
 
 
@@ -402,11 +402,19 @@ def audit(idx):
         for c in cells(rows, '`'):
             if c in reach and ('`', c) not in used:
                 new.append((('`', c), nearest_gate(gs, opened_gates, c, right_only=True)))
+        # Sarnıcın iki yüzü: perde (ipi solunda) ve göz taşları
+        # erişilebilirse perdenin sağındaki kapı açılır.
+        eyes = cells(rows, '$')
+        for c in cells(rows, 'J') if eyes else []:
+            if c in reach and all(e in reach for e in eyes) and ('J', c) not in used:
+                new.append((('J', c), nearest_gate(gs, opened_gates, c, right_only=True)))
         if name == 'kMapGemi':
             # Hayvan kaideleri: ilerleyiş sırasıyla eşleşir; her kaideye
             # varılınca (sandık itilebilir sayılır) en yakın kapı açılır.
+            # Terazi kefelerinin gölgeleri kefenin hemen üstündedir: üstüne
+            # erişilen gölge sayılır.
             for c in cells(rows, 'd'):
-                if c in reach and ('d', c) not in used:
+                if (c in reach or (c[0], c[1] - 1) in reach) and ('d', c) not in used:
                     new.append((('d', c), nearest_gate(gs, opened_gates, c)))
         new = [(k, g) for k, g in new if g is not None]
         if not new:

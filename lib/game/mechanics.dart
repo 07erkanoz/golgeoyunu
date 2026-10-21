@@ -199,11 +199,11 @@ class LiftPan extends Deck {
 
   final Vector2 base;
 
-  /// Üstündeki ağırlık: oyuncu 1, her sandık 2.
+  /// Üstündeki ağırlık: oyuncu 1, sandık 2 (fil 3).
   int get load {
     var w = game.player?.riding == this ? 1 : 0;
     for (final c in game.world.children.whereType<Crate>()) {
-      if (c.riding == this) w += 2;
+      if (c.riding == this) w += c.weight;
     }
     return w;
   }
@@ -214,33 +214,37 @@ class LiftPan extends Deck {
   @override
   void render(Canvas canvas) {
     final wood = Paint()..color = const Color(0xFF241510);
+    final lit = Paint()
+      ..color = const Color(0xFFD08A5A).withValues(alpha: 0.45)
+      ..strokeWidth = 1.2;
     // Kenarlı bir sepet: terazinin kefesi olduğu ilk bakışta anlaşılsın.
-    canvas.drawRect(Rect.fromLTWH(0, 0, size.x, 7), wood);
-    canvas.drawRect(Rect.fromLTWH(0, -6, 4, 8), wood);
-    canvas.drawRect(Rect.fromLTWH(size.x - 4, -6, 4, 8), wood);
+    // Çizim basılan yerden biraz içerde: yan yana iki kefe birbirine
+    // yapışık tek tahta gibi görünmesin.
+    const m = 3.0;
+    final r = size.x - m;
+    canvas.drawRect(Rect.fromLTRB(m, 0, r, 7), wood);
+    canvas.drawRect(Rect.fromLTRB(m, -6, m + 4, 2), wood);
+    canvas.drawRect(Rect.fromLTRB(r - 4, -6, r, 2), wood);
     canvas.drawPath(
       Path()
-        ..moveTo(4, 7)
-        ..lineTo(size.x - 4, 7)
-        ..lineTo(size.x - 10, 13)
-        ..lineTo(10, 13)
+        ..moveTo(m + 4, 7)
+        ..lineTo(r - 4, 7)
+        ..lineTo(r - 10, 13)
+        ..lineTo(m + 10, 13)
         ..close(),
       wood,
     );
-    canvas.drawLine(
-      const Offset(0, 0.8),
-      Offset(size.x, 0.8),
-      Paint()
-        ..color = const Color(0xFFD08A5A).withValues(alpha: 0.45)
-        ..strokeWidth = 1.2,
-    );
+    canvas.drawLine(Offset(m, 0.8), Offset(r, 0.8), lit);
+    // Sepetin dış kenarları da ışık alır: iki kefenin arası seçilir.
+    canvas.drawLine(Offset(m + 0.6, -6), Offset(m + 0.6, 7), lit);
+    canvas.drawLine(Offset(r - 0.6, -6), Offset(r - 0.6, 7), lit);
     // Halatlar: makaraya kadar.
     final rope = Paint()
       ..color = kInk
       ..strokeWidth = 1.3;
     final top = -(position.y - base.y) - BalanceLift.ropeTop;
-    canvas.drawLine(const Offset(2, -6), Offset(size.x / 2, top), rope);
-    canvas.drawLine(Offset(size.x - 2, -6), Offset(size.x / 2, top), rope);
+    canvas.drawLine(Offset(m + 2, -6), Offset(size.x / 2, top), rope);
+    canvas.drawLine(Offset(r - 2, -6), Offset(size.x / 2, top), rope);
   }
 }
 
@@ -250,7 +254,12 @@ class BalanceLift extends Component
     with HasGameReference<GolgeGame>, Persistent {
   // Kefelerden (14) sonra, sandık (17) ve oyuncudan (20) önce güncellenir:
   // böylece kefelerin bu karedeki hareketi binenlere aktarılır.
-  BalanceLift(this.a, this.b, {this.travel = kTile * 4}) : super(priority: 15);
+  BalanceLift(this.a, this.b, {this.travel = kTile * 4, this.levelling = false})
+    : super(priority: 15);
+
+  /// Terazi: iki kefe de yüklü ve ağırlıklar eşitse kefeler yavaşça aynı
+  /// hizaya döner (asansörde eşit yük olduğu yerde kalır).
+  final bool levelling;
 
   /// Bir kefenin inip çıkabildiği yol (en çok 4 kare).
   final double travel;
@@ -260,6 +269,16 @@ class BalanceLift extends Component
   final LiftPan a;
   final LiftPan b;
   double _offset = 0;
+
+  /// Kefeler aynı hizada mı?
+  bool get level => _offset.abs() < 1;
+
+  /// Kefeleri hizaya getirir (terazi boşaltılınca).
+  void reset() {
+    _offset = 0;
+    a.position.setFrom(a.base);
+    b.position.setFrom(b.base);
+  }
 
   @override
   String get persistKind => 'lift';
@@ -282,7 +301,11 @@ class BalanceLift extends Component
   void update(double dt) {
     dt = math.min(dt, 1 / 30);
     final diff = a.load - b.load;
-    if (diff != 0) {
+    if (diff == 0 && levelling && a.load > 0 && _offset != 0) {
+      final step = speed * 0.5 * dt;
+      _offset = _offset.abs() <= step ? 0 : _offset - _offset.sign * step;
+      GameAudio.instance.play('creak', volume: 0.4, minGapMs: 900);
+    } else if (diff != 0) {
       final before = _offset;
       _offset = (_offset + diff.sign * speed * dt).clamp(-travel, travel);
       if (_offset != before) {

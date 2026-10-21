@@ -885,7 +885,7 @@ void main() {
       'ışık tahtası açık kavanozla geçilir',
       GolgeGame.new,
       (game) async {
-        final p = await place(game, 0, 126, 9);
+        final p = await place(game, 0, 127, 9);
         keys(game).right = true;
         for (var i = 0; i < _hz * 3 && p.position.x < 134 * kTile; i++) {
           game.update(_dt);
@@ -1596,7 +1596,11 @@ void main() {
         expect(plain.position.x, closeTo(84 * kTile, 6));
         expect(plain.position.y, greaterThan(25 * kTile));
         // Zürafayı (öndeki) ve sonra fili eşlerine it.
-        final animals = game.world.children.whereType<AnimalCrate>().toList();
+        // Yalnızca ikinci ambarın hayvanları (terazideki fil ayrı).
+        final animals = game.world.children
+            .whereType<AnimalCrate>()
+            .where((a) => a.home.x < 108 * kTile)
+            .toList();
         final giraffe = animals.firstWhere((a) => a.kind == AnimalKind.giraffe);
         final elephant = animals.firstWhere(
           (a) => a.kind == AnimalKind.elephant,
@@ -2282,6 +2286,8 @@ void main() {
           expect(found, isTrue, reason: 'atlayış ${stage + 1}: $plan');
         }
       },
+      // Kaba kuvvetle atlayış anı arar: onlarca kez bölüm kurar.
+      timeout: const Timeout(Duration(minutes: 3)),
     );
 
     testWithGame<GolgeGame>(

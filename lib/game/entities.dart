@@ -1168,15 +1168,29 @@ class FireflyLure extends PositionComponent with HasGameReference<GolgeGame> {
 class Crate extends PositionComponent
     with HasGameReference<GolgeGame>, Persistent {
   Crate(Vector2 cell)
-    : super(
+    : home = Vector2(cell.x + 1, cell.y + kTile - side),
+      super(
         position: Vector2(cell.x + 1, cell.y + kTile - side),
         size: Vector2.all(side),
         priority: 17,
       );
 
+  /// Başladığı yer (terazi boşaltılınca hayvanlar buraya döner).
+  final Vector2 home;
+
+  /// Sandığı başladığı yere geri koyar.
+  void sendHome() {
+    position.setFrom(home);
+    _vy = 0;
+    _riding = null;
+  }
+
   static const double side = 30;
   double _vy = 0;
   Deck? _riding;
+
+  /// Kefedeki ağırlığı (oyuncu 1).
+  int get weight => 2;
 
   @override
   String get persistKind => 'crate';
@@ -1262,8 +1276,39 @@ class Crate extends PositionComponent
     double? best;
     Deck? bestDeck;
     final r = ((bottom - 0.001) / kTile).floor();
-    final c0 = ((position.x + 1) / kTile).floor();
-    final c1 = ((position.x + side - 1) / kTile).floor();
+    bool rests(int c) {
+      final ch = level.cell(c, r);
+      return ch == '#' || (ch == '=' && prevBottom <= r * kTile + 0.5);
+    }
+
+    // Kenardan taşan sandık devrilir: ağırlık merkezi boşluğa geçtiyse
+    // kenardan kayıp düşer (birkaç piksellik dayanakta asılı kalmaz).
+    var c0 = ((position.x + 1) / kTile).floor();
+    var c1 = ((position.x + side - 1) / kTile).floor();
+    final mid = ((position.x + side / 2) / kTile).floor();
+    // Ortasının altında başka bir sandık ya da tahta varsa devrilmez
+    // (çukuru dolduran sandık köprüdür).
+    final cx = position.x + side / 2;
+    bool held(Rect s) =>
+        s.left <= cx && s.right >= cx && (s.top - bottom).abs() < 3;
+    bool propped() =>
+        game.world.children.whereType<Crate>().any(
+          (c) => c != this && held(c.toRect()),
+        ) ||
+        game.world.children.whereType<Deck>().any(
+          (d) => d.active && held(d.toRect()),
+        );
+    // Pahalı arama yalnızca sandık gerçekten kenardan taşıyorsa.
+    if (c0 != c1 && !rests(mid) && (rests(c0) != rests(c1)) && !propped()) {
+      final slide = 140 * dt;
+      if (rests(c0) && !rests(c1)) {
+        position.x = math.min(position.x + slide, (c0 + 1) * kTile + 0.5);
+      } else if (rests(c1) && !rests(c0)) {
+        position.x = math.max(position.x - slide, c1 * kTile - side - 0.5);
+      }
+      c0 = ((position.x + 1) / kTile).floor();
+      c1 = ((position.x + side - 1) / kTile).floor();
+    }
     for (var c = c0; c <= c1; c++) {
       final ch = level.cell(c, r);
       if (ch == '#' || (ch == '=' && prevBottom <= r * kTile + 0.5)) {

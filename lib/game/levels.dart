@@ -53,6 +53,8 @@ class LevelDef {
     this.skiSurface,
     this.magnet = const [],
     this.echoes = const [],
+    this.animalKinds = const [],
+    this.shadowKinds = const [],
     this.titleEn = '',
     this.subtitleEn = '',
     this.whispersEn = const [],
@@ -111,6 +113,12 @@ class LevelDef {
   /// Geciken ayak sesi olaylarının sütun aralıkları (sırayla yükselir: ilki
   /// yalnızca ses, ikincisi gölgeyle birlikte). Kayıt başına bir kez.
   final List<(int, int)> echoes;
+
+  /// Hayvan sandıklarının (`a`) ve gölgelerinin (`d`) türleri, ilerleyiş
+  /// sırasıyla (AnimalKind sırası: aslan, fil, zürafa, geyik). Boşsa türler
+  /// sırayla dönerek verilir.
+  final List<int> animalKinds;
+  final List<int> shadowKinds;
 
   /// Ara ara deprem olur: yer sarsılır, gevşek kayalar düşer.
   final bool quakes;
@@ -792,6 +800,9 @@ const levels = <LevelDef>[
       'Memory · "You do not need a lamp to keep a light," he said one night. "A heart is enough."',
     ],
     map: kMapGemi,
+    // Aslan, fil, zürafa eşlerinin gölgelerine; terazide iki geyik (fil tuzak).
+    animalKinds: [0, 1, 2, 3, 1, 3],
+    shadowKinds: [0, 1, 2, 3, 3],
   ),
   LevelDef(
     title: 'VII · NEMRUT',

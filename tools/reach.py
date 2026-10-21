@@ -37,7 +37,7 @@ TARGETS = set('KMEB123456789()[]{}pLvyWTs*tm')
 def load(name):
     src = open('lib/game/maps.dart', encoding='utf-8').read()
     m = re.search(r"const %s = <String>\[(.*?)\];" % name, src, re.S)
-    rows = [l.strip()[1:-2].replace("\\'", "'") for l in m.group(1).strip().split('\n')]
+    rows = [l.strip()[1:-2].replace("\\'", "'").replace('\\$', '$') for l in m.group(1).strip().split('\n')]
     return rows
 
 

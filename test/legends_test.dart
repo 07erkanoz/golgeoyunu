@@ -3,12 +3,13 @@ import 'package:flame_test/flame_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:golge/game/entities.dart';
 import 'package:golge/game/golge_game.dart';
+import 'package:golge/game/puzzles.dart';
 import 'package:golge/game/legends.dart';
 import 'package:golge/game/level.dart';
 import 'package:golge/game/levels.dart';
 import 'package:golge/game/player.dart';
 
-import 'physics_test.dart' show keys, run;
+import 'physics_test.dart' show keys, place, run;
 
 /// Küçük bir deneme haritası yükler, oyuncuyu (col,row) hücresine koyar.
 Future<Player> trial(
@@ -264,6 +265,159 @@ void main() {
         final gate = game.world.children.whereType<Gate>().first;
         run(game, 3);
         expect(gate.solid, isFalse);
+      },
+    );
+  });
+
+  group('Sarnıcın iki yüzü', () {
+    Future<(GiantPerde, Gate)> load(GolgeGame game) async {
+      final p = await place(game, 0, 112, 9);
+      p.hidden = false;
+      final perde = game.world.children.whereType<GiantPerde>().first;
+      final gate = game.world.children
+          .whereType<Gate>()
+          .where((g) => g.position.x > perde.position.x)
+          .reduce((a, b) => a.position.x < b.position.x ? a : b);
+      for (final g in game.world.children.whereType<Guard>().toList()) {
+        g.removeFromParent();
+      }
+      run(game, 0.2);
+      return (perde, gate);
+    }
+
+    void standAt(GolgeGame game, double x) {
+      final p = game.player!;
+      p.position.x = x - Player.w / 2;
+      p.velocity.setZero();
+      run(game, 0.15);
+    }
+
+    testWithGame<GolgeGame>(
+      'kandil yanlış duraktayken gölge göze düşse de kapı açılmaz',
+      GolgeGame.new,
+      (game) async {
+        final (perde, gate) = await load(game);
+        expect(perde.puzzle, isTrue);
+        expect(perde.stop, 2);
+        // Başlangıç durağı (sağ): gölge göze düşer, ama ışık taşa yetmez.
+        standAt(game, perde.standFor(2));
+        run(game, 1.5);
+        expect(perde.shadowOnMark, isTrue);
+        expect(perde.solved, isFalse);
+        expect(gate.solid, isTrue);
+        // Orta durak da olmaz.
+        perde.pull();
+        run(game, 1.5);
+        standAt(game, perde.standFor(1));
+        run(game, 1.5);
+        expect(perde.solved, isFalse);
+      },
+    );
+
+    testWithGame<GolgeGame>(
+      'ip iki kez çekilip kandil sola alınınca: gölge göze, ışık taşa, kapı açılır',
+      GolgeGame.new,
+      (game) async {
+        final (perde, gate) = await load(game);
+        final cord = game.world.children.whereType<PerdeCord>().first;
+        cord.use();
+        cord.use();
+        expect(perde.stop, 0);
+        run(game, 1.5);
+        standAt(game, perde.standFor(0));
+        // Çömelip ışığı saklarsa olmaz.
+        game.controls.keyboard.down = true;
+        run(game, 1.2);
+        expect(perde.solved, isFalse);
+        game.controls.keyboard.down = false;
+        run(game, 1.6);
+        expect(game.world.children.whereType<EyeStone>().first.lit, isTrue);
+        expect(perde.solved, isTrue);
+        run(game, 3);
+        expect(gate.solid, isFalse);
+      },
+    );
+  });
+
+  group('Gemide terazi', () {
+    Future<(ArkScale, Gate)> load(GolgeGame game, int col) async {
+      await place(game, 5, col, 22);
+      for (final g in game.world.children.whereType<Guard>().toList()) {
+        g.removeFromParent();
+      }
+      run(game, 0.3);
+      final scale = game.world.children.whereType<ArkScale>().first;
+      final gate = game.world.children
+          .whereType<Gate>()
+          .where((g) => g.position.x > scale.lift.b.position.x)
+          .reduce((a, b) => a.position.x < b.position.x ? a : b);
+      return (scale, gate);
+    }
+
+    AnimalCrate crateAt(GolgeGame game, int col) => game.world.children
+        .whereType<AnimalCrate>()
+        .firstWhere((c) => (c.home.x / kTile).floor() == col);
+
+    void push(GolgeGame game, {required bool right, double seconds = 1.2}) {
+      final k = keys(game);
+      if (right) {
+        k.right = true;
+      } else {
+        k.left = true;
+      }
+      run(game, seconds);
+      k
+        ..left = false
+        ..right = false;
+      run(game, 1.5);
+    }
+
+    testWithGame<GolgeGame>(
+      'iki geyik iki kefeye: terazi hizalanır, kapı açılır',
+      GolgeGame.new,
+      (game) async {
+        final (scale, gate) = await load(game, 185);
+        expect(scale.kindA, AnimalKind.deer);
+        expect(scale.kindB, AnimalKind.deer);
+        // Soldaki geyiği sola, sol kefeye.
+        push(game, right: false);
+        expect(crateAt(game, 184).riding, scale.lift.a);
+        // Sağdaki geyiğe git (filin üstünden atla), sağa, sağ kefeye.
+        game.player!.position.x = 187 * kTile + 8;
+        run(game, 0.3);
+        push(game, right: true, seconds: 1.0);
+        expect(crateAt(game, 188).riding, scale.lift.b);
+        // Sâye kefede durursa ağırlığı dengeyi bozar: rafa geri çekilir.
+        game.player!.position.x = 186 * kTile + 20;
+        game.player!.position.y = 22 * kTile + kTile - 28;
+        run(game, 4);
+        expect(scale.lift.level, isTrue);
+        expect(scale.solved, isTrue);
+        run(game, 3);
+        expect(gate.solid, isFalse);
+      },
+    );
+
+    testWithGame<GolgeGame>(
+      'fil ağırdır: geyikle dengelenmez; kol teraziyi boşaltır',
+      GolgeGame.new,
+      (game) async {
+        final (scale, gate) = await load(game, 187);
+        // Fili sola iter: önündeki geyiği de iter, ikisi de sol kefeye
+        // düşer ya da fil düşer; terazi dengelenmez.
+        push(game, right: false, seconds: 2.5);
+        game.player!.position.x = 189 * kTile - 20;
+        run(game, 0.5);
+        run(game, 4);
+        expect(scale.solved, isFalse);
+        expect(gate.solid, isTrue);
+        // Kol: hayvanlar yerine döner, kefeler hizalanır.
+        final crank = game.world.children.whereType<ScaleCrank>().first;
+        crank.use();
+        run(game, 1);
+        expect(crateAt(game, 184).position, crateAt(game, 184).home);
+        expect(crateAt(game, 186).position, crateAt(game, 186).home);
+        expect(scale.lift.level, isTrue);
       },
     );
   });

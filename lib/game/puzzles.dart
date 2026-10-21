@@ -14,6 +14,7 @@ import 'palette.dart';
 import 'perde.dart';
 import 'persist.dart';
 import 'player.dart';
+import 'rig.dart';
 import 'strings.dart';
 
 /// Yanına gelinip ↑ ile kullanılan düzenekler (vana, ayna).
@@ -736,8 +737,9 @@ class SunBeam extends Component with HasGameReference<GolgeGame> {
 /// Yerebatan'da sütunlar arasına gerilmiş, yırtık, arkadan aydınlanan dev
 /// perde. Önünden geçen Sâye'nin gölgesi perdeye dev gibi düşer. Bir kez,
 /// Sâye perdenin ortasında durunca gölge geç kalır ve başını çevirip ona bakar.
-class GiantPerde extends PositionComponent with HasGameReference<GolgeGame> {
-  GiantPerde(Vector2 cell)
+class GiantPerde extends PositionComponent
+    with HasGameReference<GolgeGame>, Persistent {
+  GiantPerde(Vector2 cell, {this.puzzle = false})
     : super(
         position: Vector2(cell.x, cell.y + kTile),
         size: Vector2(widthTiles * kTile, heightTiles * kTile),
@@ -746,6 +748,152 @@ class GiantPerde extends PositionComponent with HasGameReference<GolgeGame> {
 
   static const widthTiles = 14;
   static const heightTiles = 6;
+
+  // ------------------------------------------------ Sarnıcın iki yüzü
+  // Perdenin ardındaki kandil bir iple üç durak arasında kayar. Gölge
+  // kandilden uzaklaştıkça büyüyerek perdeye düşer. Kapı, aynı anda iki
+  // koşul tutunca açılır: dev gölgenin başı perdedeki göze değer, kavanozun
+  // gerçek ışığı taştaki göze. İkisi ancak tek bir kandil durağında birlikte
+  // sağlanır.
+
+  /// Bu perde bulmaca mı (yanında ip var)?
+  final bool puzzle;
+
+  /// Kandilin durakları (perde genişliğine oranla) ve şimdiki durak.
+  static const stops = [0.15, 0.5, 0.85];
+  int stop = 2;
+  double _lampX = 0.85;
+
+  /// Gölgenin perdedeki işareti (genişliğe oranla) ve gölge başının yüksekliği.
+  static const markAt = 0.9;
+  static const _markY = 72.0;
+
+  /// Kandilden uzaklaşan gölge bu kadar büyür (izdüşüm katsayısı).
+  static const project = 1.6;
+
+  bool solved = false;
+  double _hold = 0;
+  double _turnT = 0;
+  double _markGlow = 0;
+  bool _shadowOnMark = false;
+
+  /// Bulmacada kandil (ışık) perdenin neresinde (dünya x).
+  double get lampX => position.x + size.x * (puzzle ? _lampX : 0.55);
+
+  /// Sâye [px]'teyken gölgesinin perdedeki yeri (dünya x).
+  double shadowX(double px) {
+    if (!puzzle) {
+      return position.x + size.x * 0.5 + (px - position.x - size.x * 0.5) * 1.1;
+    }
+    return lampX + (px - lampX) * project;
+  }
+
+  /// Gölgenin göze düşmesi için Sâye'nin durması gereken yer (testler için).
+  double standFor(int s) {
+    final l = position.x + size.x * stops[s];
+    return l + (position.x + size.x * markAt - l) / project;
+  }
+
+  /// Kandili bir durak sola çeker (en soldan sonra yeniden sağa döner).
+  void pull() {
+    stop = (stop + stops.length - 1) % stops.length;
+    GameAudio.instance.play('creak', volume: 0.6);
+    GameAudio.instance.play('chain', volume: 0.25);
+  }
+
+  @override
+  String get persistKind => 'perde';
+
+  @override
+  Object? captureState() => puzzle ? [stop, solved ? 1 : 0] : null;
+
+  @override
+  Iterable<Component> restoreState(Object? state, {required bool present}) {
+    final s = numbers(state, 2);
+    if (s != null) {
+      stop = s[0].round().clamp(0, stops.length - 1);
+      _lampX = stops[stop];
+      solved = s[1] == 1;
+      if (solved) _markGlow = 1;
+    }
+    return [this];
+  }
+
+  void _solve() {
+    solved = true;
+    GameAudio.instance.play('memory', volume: 0.7);
+    GameAudio.instance.play('gate', volume: 0.7);
+    game.once('perdeSolved', S.of('perdeSolved'));
+    Gate? best;
+    var bestD = double.infinity;
+    for (final g in game.world.children.whereType<Gate>()) {
+      final d = (g.position - position).length;
+      if (g.position.x > position.x && d < bestD && !g.opening) {
+        bestD = d;
+        best = g;
+      }
+    }
+    best?.opening = true;
+  }
+
+  void _updatePuzzle(double dt, Player p, bool inFront) {
+    _lampX = approach(_lampX, stops[stop], dt, 0.35);
+    _turnT = math.max(0, _turnT - dt);
+    final settled = (_lampX - stops[stop]).abs() < 0.01;
+    final s = _shadow();
+    final on =
+        s != null &&
+        inFront &&
+        settled &&
+        !p.crouching &&
+        (shadowX(s.$1) - (position.x + size.x * markAt)).abs() < 20;
+    _shadowOnMark = on;
+    _markGlow = approach(_markGlow, on || solved ? 1 : 0, dt, 0.2);
+    if (solved) return;
+    // İlk kez göze değince gölge kendi başına döner (bulmacayı bozmaz).
+    final key = 'perdeTurn:${game.levelIndex}';
+    if (on && !game.eventSeen(key)) {
+      game.markEvent(key);
+      _turnT = 1.3;
+      GameAudio.instance.play('breath', volume: 0.45);
+    }
+    final lit = game.world.children.whereType<EyeStone>().any((e) => e.lit);
+    _hold = on && lit ? _hold + dt : 0;
+    if (_hold > 0.6) _solve();
+  }
+
+  /// Perdeye boyanmış göz: gölgenin başı değince ve bulmaca çözülünce
+  /// içinden ışır.
+  void _drawMark(Canvas canvas, double w) {
+    final c = Offset(w * markAt, _markY);
+    final g = _markGlow;
+    if (g > 0.02) glowDot(canvas, c, 26, kWarmLight, 0.6 * g);
+    final eye = Path()
+      ..moveTo(c.dx - 13, c.dy)
+      ..quadraticBezierTo(c.dx, c.dy - 10, c.dx + 13, c.dy)
+      ..quadraticBezierTo(c.dx, c.dy + 10, c.dx - 13, c.dy)
+      ..close();
+    canvas.drawPath(
+      eye,
+      Paint()
+        ..color = const Color(0xFF2A1208).withValues(alpha: 0.75)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2,
+    );
+    canvas.drawCircle(
+      c,
+      3.6,
+      Paint()
+        ..color = Color.lerp(
+          const Color(0xFF2A1208),
+          const Color(0xFFFFF0C8),
+          g,
+        )!.withValues(alpha: 0.85),
+    );
+  }
+
+  /// Gölge göze değiyor mu (testler ve ipucu için).
+  bool get shadowOnMark => _shadowOnMark;
 
   double _t = 0;
   final _trail = <(double, double, int)>[];
@@ -767,8 +915,7 @@ class GiantPerde extends PositionComponent with HasGameReference<GolgeGame> {
   double _frozenX = 0;
   int _frozenFacing = 1;
 
-  Offset get glowCenter =>
-      Offset(position.x + size.x * 0.55, position.y - size.y * 0.45);
+  Offset get glowCenter => Offset(lampX, position.y - size.y * 0.45);
   double get glowRadius => size.x * 0.5;
 
   @override
@@ -784,6 +931,7 @@ class GiantPerde extends PositionComponent with HasGameReference<GolgeGame> {
     final rel = (p.center.x - position.x) / size.x;
     final inFront =
         rel > 0 && rel < 1 && (p.position.y + Player.h - position.y).abs() < 12;
+    if (puzzle) _updatePuzzle(dt, p, inFront);
     if (lagT < 0) {
       // Ortada durup beklerse: bir kez.
       if (inFront && rel > 0.35 && rel < 0.65 && p.velocity.x.abs() < 5) {
@@ -829,6 +977,8 @@ class GiantPerde extends PositionComponent with HasGameReference<GolgeGame> {
       if (!looks) facing = _frozenFacing;
       if (catchUp > 0) facing = p.facing;
     }
+    // Bulmacada gölge bir kez kendi başına döner.
+    if (_turnT > 0.2) facing = -facing;
     return (x, facing);
   }
 
@@ -852,7 +1002,7 @@ class GiantPerde extends PositionComponent with HasGameReference<GolgeGame> {
     torn
       ..lineTo(0, h - 10)
       ..close();
-    final c = Offset(w * 0.55, h * 0.55);
+    final c = Offset(lampX - position.x, h * 0.55);
     final flick = 0.9 + 0.06 * math.sin(_t * 7.3) + 0.04 * math.sin(_t * 13.1);
     canvas.save();
     canvas.clipPath(torn);
@@ -891,7 +1041,7 @@ class GiantPerde extends PositionComponent with HasGameReference<GolgeGame> {
       final lx = sx - position.x;
       if (lx > -80 && lx < w + 80) {
         canvas.save();
-        canvas.translate(w * 0.5 + (lx - w * 0.5) * 1.1, h - 4);
+        canvas.translate(shadowX(sx) - position.x, h - 4);
         canvas.scale(facing * 1.75, 1.75);
         final ink = Paint()
           ..color = const Color(0xFF1A0A04).withValues(alpha: 0.8);
@@ -905,6 +1055,7 @@ class GiantPerde extends PositionComponent with HasGameReference<GolgeGame> {
         canvas.restore();
       }
     }
+    if (puzzle) _drawMark(canvas, w);
     canvas.restore();
 
     // Yırtıklardan sızan ışık ve üst kalas.
@@ -933,6 +1084,123 @@ class GiantPerde extends PositionComponent with HasGameReference<GolgeGame> {
       );
     }
     canvas.restore();
+  }
+}
+
+// ============================================================ Perde ipi
+
+/// Dev perdenin yanındaki ip: çekince perdenin ardındaki kandil bir sonraki
+/// durağa kayar.
+class PerdeCord extends PositionComponent
+    with HasGameReference<GolgeGame>, Usable {
+  PerdeCord(Vector2 cell)
+    : super(
+        position: Vector2(cell.x + kTile / 2, cell.y + kTile),
+        priority: 18,
+      );
+
+  double _tug = 0;
+  double _t = 0;
+
+  @override
+  bool canUse(Vector2 p) =>
+      (p - position).x.abs() < 24 && (p - position).y.abs() < 44;
+
+  @override
+  void use() {
+    GiantPerde? best;
+    var bestD = double.infinity;
+    for (final g in game.world.children.whereType<GiantPerde>()) {
+      final d = (g.position - position).length;
+      if (d < bestD) {
+        bestD = d;
+        best = g;
+      }
+    }
+    best?.pull();
+    _tug = 1;
+  }
+
+  @override
+  void update(double dt) {
+    super.update(dt);
+    _t += dt;
+    _tug = math.max(0, _tug - dt * 3);
+  }
+
+  @override
+  void render(Canvas canvas) {
+    // Tavandaki kalastan sarkan ip; çekilince aşağı iner, püskülü sallanır.
+    final pull = math.sin(_tug * math.pi) * 8;
+    final sway = math.sin(_t * 1.4) * 1.2;
+    final end = Offset(sway, -14 + pull);
+    final rope = Paint()
+      ..color = kInk
+      ..strokeWidth = 1.6;
+    canvas.drawLine(const Offset(0, -6 * kTile), end, rope);
+    canvas.drawPath(
+      Path()
+        ..moveTo(end.dx - 1.5, end.dy)
+        ..lineTo(end.dx + 1.5, end.dy)
+        ..lineTo(end.dx + 3.5, end.dy + 9)
+        ..lineTo(end.dx - 3.5, end.dy + 9)
+        ..close(),
+      Paint()..color = const Color(0xFF6A3A1E),
+    );
+    canvas.drawCircle(end, 2.4, Paint()..color = kInk);
+  }
+}
+
+/// Göz taşı: duvara oyulmuş bir göz. Kavanozun gerçek ışığı değince uyanır
+/// (çömelip kavanozu örtmek, saklanmak ya da duvar ardından tutmak olmaz).
+class EyeStone extends PositionComponent with HasGameReference<GolgeGame> {
+  EyeStone(Vector2 cell)
+    : super(position: cell + Vector2.all(kTile / 2), priority: 4);
+
+  bool lit = false;
+  double _glow = 0;
+
+  @override
+  void update(double dt) {
+    super.update(dt);
+    final p = game.player;
+    lit = false;
+    if (p != null && !p.isDead && !p.crouching && !p.hidden) {
+      final (from, r) = p.light;
+      lit =
+          (from - position).length < r * 0.7 &&
+          game.level.lineOfSight(from, position);
+    }
+    _glow = approach(_glow, lit ? 1 : 0, dt, 0.15);
+  }
+
+  @override
+  void render(Canvas canvas) {
+    // Taş levha ve oyulmuş göz.
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        const Rect.fromLTWH(-13, -11, 26, 22),
+        const Radius.circular(3),
+      ),
+      Paint()..color = const Color(0xFF2C1C14),
+    );
+    final eye = Path()
+      ..moveTo(-9, 0)
+      ..quadraticBezierTo(0, -7, 9, 0)
+      ..quadraticBezierTo(0, 7, -9, 0)
+      ..close();
+    canvas.drawPath(eye, Paint()..color = const Color(0xFF120A06));
+    if (_glow > 0.02) glowDot(canvas, Offset.zero, 22, kWarmLight, 0.6 * _glow);
+    canvas.drawCircle(
+      Offset.zero,
+      2.6,
+      Paint()
+        ..color = Color.lerp(
+          const Color(0xFF3A2418),
+          const Color(0xFFFFF0C8),
+          _glow,
+        )!,
+    );
   }
 }
 
@@ -1022,6 +1290,10 @@ class AnimalCrate extends Crate {
   AnimalCrate(super.cell, this.kind);
 
   final AnimalKind kind;
+
+  /// Fil öteki hayvanlardan ağırdır: terazide eşini bulamaz.
+  @override
+  int get weight => kind == AnimalKind.elephant ? 3 : 2;
 
   @override
   void render(Canvas canvas) {
@@ -1247,6 +1519,157 @@ class Pedestal extends PositionComponent
         ..color = const Color(0xFFD08A5A).withValues(alpha: 0.4 + 0.4 * _glow)
         ..strokeWidth = 2,
     );
+  }
+}
+
+// ============================================================ Terazi
+
+/// Nuh'un Gemisi'nin terazisi: iki kefenin üstünde aynı hayvanın gölgesi
+/// asılı. Eşler (aynı tür, aynı ağırlık) iki kefeye konunca kefeler aynı
+/// hizaya gelir ve ileriki kapı açılır. Fil ağırdır: hiçbir kefeyi dengelemez.
+class ArkScale extends Component with HasGameReference<GolgeGame>, Persistent {
+  ArkScale(this.lift, this.kindA, this.kindB) : super(priority: 13);
+
+  final BalanceLift lift;
+  final AnimalKind kindA;
+  final AnimalKind kindB;
+  bool solved = false;
+  double _hold = 0;
+  double _glow = 0;
+
+  @override
+  String get persistKind => 'scale';
+
+  @override
+  Object? captureState() => solved ? 1 : null;
+
+  @override
+  Iterable<Component> restoreState(Object? state, {required bool present}) {
+    if (state == 1) {
+      solved = true;
+      _glow = 1;
+    }
+    return [this];
+  }
+
+  bool _carries(LiftPan pan, AnimalKind kind) => game.world.children
+      .whereType<AnimalCrate>()
+      .any((c) => c.riding == pan && c.kind == kind);
+
+  /// Kefeler eşini taşıyor ve aynı hizada mı?
+  bool get balanced =>
+      lift.a.load == lift.b.load &&
+      lift.level &&
+      _carries(lift.a, kindA) &&
+      _carries(lift.b, kindB);
+
+  @override
+  void update(double dt) {
+    super.update(dt);
+    final ok = solved || balanced;
+    _glow = approach(_glow, ok ? 1 : 0, dt, 0.3);
+    if (solved) return;
+    _hold = ok ? _hold + dt : 0;
+    if (_hold < 0.8) return;
+    solved = true;
+    GameAudio.instance.play('memory', volume: 0.7);
+    GameAudio.instance.play('gate', volume: 0.7);
+    game.once('scaleSolved', S.of('scaleSolved'));
+    Gate? best;
+    var bestD = double.infinity;
+    for (final g in game.world.children.whereType<Gate>()) {
+      final d = (g.position - lift.b.position).length;
+      if (g.position.x > lift.b.position.x && d < bestD && !g.opening) {
+        bestD = d;
+        best = g;
+      }
+    }
+    best?.opening = true;
+  }
+
+  @override
+  void render(Canvas canvas) {
+    // Kefenin ipinde asılı tahta: üstünde beklenen hayvanın gölgesi.
+    for (final (pan, kind) in [(lift.a, kindA), (lift.b, kindB)]) {
+      final c = Offset(pan.position.x + pan.size.x / 2, pan.position.y - 46);
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromCenter(center: c, width: 40, height: 30),
+          const Radius.circular(3),
+        ),
+        Paint()..color = const Color(0xFF2A1A10),
+      );
+      if (_glow > 0.02) glowDot(canvas, c, 40, kWarmLight, 0.45 * _glow);
+      canvas.save();
+      canvas.translate(c.dx, c.dy + 12);
+      _animal(
+        canvas,
+        kind,
+        Paint()
+          ..color = Color.lerp(
+            const Color(0xFF0A0604),
+            const Color(0xFFE8C890),
+            _glow * 0.7,
+          )!,
+        0.42,
+      );
+      canvas.restore();
+    }
+  }
+}
+
+/// Terazinin kolu: çekilince kefeler boşalır, gemideki hayvanlar
+/// yerlerine döner (yanlış sandık itilince bulmaca kilitlenmesin).
+class ScaleCrank extends PositionComponent
+    with HasGameReference<GolgeGame>, Usable {
+  ScaleCrank(this.arkScale, Vector2 at) : super(position: at, priority: 18);
+
+  final ArkScale arkScale;
+  double _turn = 0;
+
+  @override
+  bool canUse(Vector2 p) =>
+      !arkScale.solved &&
+      (p - position).x.abs() < 24 &&
+      (p - position).y.abs() < 40;
+
+  @override
+  void use() {
+    if (arkScale.solved) return;
+    _turn = 1;
+    GameAudio.instance.play('creak', volume: 0.7);
+    GameAudio.instance.play('chain', volume: 0.4);
+    final left = arkScale.lift.a.base.x - 8 * kTile;
+    final right = arkScale.lift.b.base.x + 8 * kTile;
+    for (final c in game.world.children.whereType<AnimalCrate>()) {
+      if (c.home.x > left && c.home.x < right) c.sendHome();
+    }
+    arkScale.lift.reset();
+  }
+
+  @override
+  void update(double dt) {
+    super.update(dt);
+    _turn = math.max(0, _turn - dt * 1.5);
+  }
+
+  @override
+  void render(Canvas canvas) {
+    // Direğe bağlı tekerlek: çevrilince döner.
+    final ink = Paint()..color = kInk;
+    canvas.drawRect(const Rect.fromLTWH(-2, -22, 4, 22), ink);
+    canvas.save();
+    canvas.translate(0, -22);
+    canvas.rotate(_turn * math.pi * 2);
+    canvas.drawCircle(Offset.zero, 7, ink);
+    final spoke = Paint()
+      ..color = const Color(0xFFD08A5A).withValues(alpha: 0.6)
+      ..strokeWidth = 1.2;
+    for (var k = 0; k < 3; k++) {
+      canvas.rotate(math.pi / 3);
+      canvas.drawLine(const Offset(-6, 0), const Offset(6, 0), spoke);
+    }
+    canvas.restore();
   }
 }
 

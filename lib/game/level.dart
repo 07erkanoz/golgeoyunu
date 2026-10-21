@@ -97,6 +97,10 @@ class Level {
   final lockCells = <Vector2>[];
   final perdeCells = <Vector2>[];
 
+  /// Kavanoz ışığını bekleyen göz taşları (`$`): yakınındaki dev perde
+  /// "Sarnıcın iki yüzü" bulmacasıdır (ipi perdenin solunda kendiliğinden).
+  final eyeStoneCells = <Vector2>[];
+
   final starCells = <Vector2>[];
   final reliefCells = <Vector2>[];
   final boulderCells = <Vector2>[];
@@ -274,6 +278,8 @@ class Level {
             lockCells.add(cell);
           case 'J':
             perdeCells.add(cell);
+          case r'$':
+            eyeStoneCells.add(cell);
           case 'p':
             placeCells.add(cell);
           case '*':
