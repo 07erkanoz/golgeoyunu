@@ -7,6 +7,7 @@ import 'audio.dart';
 import 'golge_game.dart';
 import 'level.dart';
 import 'myth_figures.dart';
+import 'ski.dart';
 import 'winter.dart';
 
 /// İnce buz hücreleri (haritada boş görünür, ince buz bileşeni taşır).
@@ -411,5 +412,86 @@ class GokboruWarden extends Component with HasGameReference<GolgeGame> {
         },
       ),
     );
+  }
+}
+
+/// Çığ bölümünde Gökbörü: çığ uyanınca kayan Sâye'nin önünde yamaçta koşar;
+/// uçurumların üstünden önce o sıçrar, kayaların üstünden önce o atlar:
+/// güvenli hattı gösterir. Oynanışa dokunmaz; çığ dağılınca söner.
+class SkiGuide extends PositionComponent with HasGameReference<GolgeGame> {
+  SkiGuide() : super(anchor: Anchor.bottomCenter, priority: 17);
+
+  /// Sâye'nin ne kadar önünde koşar.
+  static const double lead = 6 * kTile;
+  static const double drawScale = 0.4;
+
+  double _t = 0;
+  double alpha = 0;
+  bool _shown = false;
+
+  /// Zemin (uçurumda null): o x'te kurt nerede durur.
+  double? _ground(double x) => game.skiSurface?.at(x);
+
+  /// Uçurumun üstünde: kenarlar arasında bir sıçrayış yayı.
+  double _arc(double x) {
+    var a = x;
+    var b = x;
+    for (var i = 0; i < 40 && _ground(a) == null; i++) {
+      a -= kTile / 2;
+    }
+    for (var i = 0; i < 40 && _ground(b) == null; i++) {
+      b += kTile / 2;
+    }
+    final ya = _ground(a) ?? position.y;
+    final yb = _ground(b) ?? ya;
+    final u = b > a ? ((x - a) / (b - a)).clamp(0.0, 1.0) : 0.0;
+    final span = b - a;
+    return ya + (yb - ya) * u - math.sin(u * math.pi) * (span * 0.35 + 30);
+  }
+
+  @override
+  void update(double dt) {
+    super.update(dt);
+    _t += dt;
+    final p = game.player;
+    Avalanche? av;
+    for (final c in game.world.children) {
+      if (c is Avalanche) av = c;
+    }
+    final running = av != null && av.awake && p != null && !p.isDead;
+    if (running && !_shown) {
+      _shown = true;
+      position.setValues(
+        p.center.x + lead,
+        _ground(p.center.x + lead) ?? p.center.y,
+      );
+      game.meetMyth('gokboru');
+      GameAudio.instance.play('howl', volume: 0.5, minGapMs: 4000);
+    }
+    alpha = running
+        ? math.min(1, alpha + dt * 1.5)
+        : math.max(0, alpha - dt * 0.8);
+    if (!running) return;
+    // Önde koşar; çok açılırsa ya da geride kalırsa yumuşakça yetişir.
+    final want = p.center.x + lead;
+    position.x += (want - position.x) * math.min(1, dt * 12);
+    final g = _ground(position.x);
+    var y = g ?? _arc(position.x);
+    // Kayanın üstünden atlar.
+    for (final r in game.world.children.whereType<SkiRock>()) {
+      final d = position.x - (r.position.x + r.size.x / 2);
+      if (d.abs() < 40) y -= math.cos(d / 40 * math.pi / 2) * 34;
+    }
+    position.y = y;
+  }
+
+  @override
+  void render(Canvas canvas) {
+    if (alpha <= 0) return;
+    canvas.save();
+    canvas.translate(0, math.sin(_t * 14) * 1.2);
+    canvas.scale(drawScale);
+    MythFigures.gokboru(canvas, _t, pose: WolfPose.walk, alpha: alpha);
+    canvas.restore();
   }
 }

@@ -661,6 +661,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
             leadTo: level.def.gokboruLead,
           ),
         if (level.def.cameos.isNotEmpty) CameoWarden(level.def.cameos),
+        if (level.def.gokboruRun) SkiGuide(),
         for (final g in level.guardCells) Guard(g),
         for (final c in level.crateCells) Crate(c),
         for (final l in level.leverCells) Lever(l),

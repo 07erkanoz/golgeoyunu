@@ -270,7 +270,8 @@ satır), yeni perdede kopuz motifi müzikte duyulur.
    *(Yapıldı: lib/game/gokboru.dart. Kar Yolu: kurtlara karşı araya girer,
    göl kıyısına yürür, izler sağlam buzu gösterir; Ağrı: tepede bir an
    belirir; Derinkuyu: karanlıkta izler, takılınca uluma; Konya: kurtlara
-   karşı bir kez. Çığ'daki koşu henüz yok.)*
+   karşı bir kez. Çığ: çığ uyanınca önde koşar, uçurumdan ve kayadan önce o
+   sıçrar (SkiGuide).)*
 4. **Ak Ana** (Gemi tufanı), **Su İyesi** (Yerebatan), **Tulpar** (Gökyolu
    önsezisi), **Ayaz Ata** (Ağrı), **Albastı** (Peri), **Basat** dizesi
    (Gün Doğumu), Derinkuyu'nun kuyusu.

@@ -9,6 +9,7 @@ import 'package:golge/game/creatures.dart';
 import 'package:golge/game/legends.dart';
 import 'package:golge/game/levels.dart';
 import 'package:golge/game/entities.dart';
+import 'package:golge/game/gokboru.dart';
 import 'package:golge/game/golge_game.dart';
 import 'package:golge/game/hints.dart';
 import 'package:golge/game/konya.dart';
@@ -1930,6 +1931,41 @@ void main() {
       expect(game.player!.center.x, greaterThan(end - kTile * 2));
       expect(deaths, lessThanOrEqualTo(4));
     });
+
+    testWithGame<GolgeGame>(
+      'çığ uyanınca Gökbörü önde koşar, yamaca oturur, çığ dağılınca söner',
+      GolgeGame.new,
+      (game) async {
+        await place(game, 10, 4, 7);
+        final guide = game.world.children.whereType<SkiGuide>().single;
+        expect(guide.alpha, 0);
+        keys(game).right = true;
+        var seen = false;
+        var maxOff = 0.0;
+        var ahead = 0;
+        var samples = 0;
+        for (var i = 0; i < _hz * 12; i++) {
+          game.update(_dt);
+          final p = game.player!;
+          if (p.isDead) break;
+          if (guide.alpha > 0.9) {
+            seen = true;
+            samples++;
+            if (guide.position.x > p.center.x) ahead++;
+            final g = game.skiSurface!.at(guide.position.x);
+            if (g != null) {
+              maxOff = math.max(maxOff, (g - guide.position.y).abs());
+            }
+          }
+        }
+        keys(game).right = false;
+        expect(seen, isTrue, reason: 'çığ uyanınca belirmeli');
+        expect(ahead / samples, greaterThan(0.9), reason: 'Sâye\'nin önünde');
+        // Kayanın üstünden atlarken en çok bir sıçrayış kadar yükselir.
+        expect(maxOff, lessThan(40), reason: 'yamaçta koşmalı');
+        expect(game.mythsSeen, contains('gokboru'));
+      },
+    );
 
     testWithGame<GolgeGame>('takla atıp ters inen düşer', GolgeGame.new, (
       game,

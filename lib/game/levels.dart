@@ -88,7 +88,11 @@ class LevelDef {
     this.mists = const [],
     this.scorch = const [],
     this.legends = const [],
+    this.gokboruRun = false,
   });
+
+  /// Kayak bölümünde çığ uyanınca Gökbörü önde koşup güvenli hattı gösterir.
+  final bool gokboruRun;
 
   /// Bölüm başında (ozan dizesinden sonra) Defter'e yazılan efsaneler.
   final List<String> legends;
@@ -1243,6 +1247,7 @@ const levels = <LevelDef>[
   ),
   LevelDef(
     title: 'XI · ÇIĞ',
+    gokboruRun: true,
     bard: 'Ozan der ki: Ak dağ yürür, yer titrer; koşan, önündeki ışığa bakar.',
     bardEn: 'The bard says: the white mountain walks, the earth shakes; the runner looks to the light ahead.',
     subtitle: 'Ejder uyandı. Beyaz bir nefes peşinde.',
