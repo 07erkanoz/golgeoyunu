@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -80,6 +82,32 @@ class MemoryBookPage extends StatelessWidget {
         _Heading(S.of('bookTitle')),
         const SizedBox(height: 14),
         Text(S.of('bookIntro'), style: _body),
+        const SizedBox(height: 10),
+        // Özet: bütün yolda bulunanlar.
+        Text(
+          S
+              .of('bookTally')
+              .replaceAll(
+                '{m}',
+                '${[for (var l = 0; l < levels.length; l++)
+                  for (var i = 0; i < levels[l].memoryTexts.length; i++)
+                    if (memories.contains('$l:$i')) 1].length}',
+              )
+              .replaceAll(
+                '{mt}',
+                '${levels.fold(0, (n, l) => n + l.memoryTexts.length)}',
+              )
+              .replaceAll(
+                '{e}',
+                '${MythCard.all.where((c) => myths.contains(c.id)).length}',
+              )
+              .replaceAll('{et}', '${MythCard.all.length}'),
+          style: const TextStyle(
+            color: _accent,
+            fontSize: 12,
+            letterSpacing: 1,
+          ),
+        ),
         for (final l in open)
           if (levels[l].memoryTexts.isNotEmpty) ...[
             const SizedBox(height: 16),
@@ -131,9 +159,9 @@ class MemoryBookPage extends StatelessWidget {
         _Heading(S.of('legendsTitle')),
         const SizedBox(height: 14),
         Text(S.of('legendsIntro'), style: _body),
-        for (final card in MythCard.all) ...[
-          const SizedBox(height: 16),
+        for (final card in MythCard.all)
           if (myths.contains(card.id)) ...[
+            const SizedBox(height: 16),
             Text(
               S.upper(card.name),
               style: const TextStyle(
@@ -154,14 +182,22 @@ class MemoryBookPage extends StatelessWidget {
                 fontSize: 11,
               ),
             ),
-          ] else
-            Text(
-              '· · ·',
-              style: TextStyle(
-                color: _text.withValues(alpha: 0.25),
-                letterSpacing: 4,
-              ),
+          ],
+        if (MythCard.all.any((c) => !myths.contains(c.id))) ...[
+          const SizedBox(height: 18),
+          Text(
+            S
+                .of('legendsWaiting')
+                .replaceAll(
+                  '{n}',
+                  '${MythCard.all.where((c) => !myths.contains(c.id)).length}',
+                ),
+            style: TextStyle(
+              color: _text.withValues(alpha: 0.4),
+              fontStyle: FontStyle.italic,
+              fontSize: 12,
             ),
+          ),
         ],
       ],
     );
@@ -174,24 +210,29 @@ class MemoryBookPage extends StatelessWidget {
 class StoryPage extends StatelessWidget {
   const StoryPage({super.key});
 
-  /// Her perdenin ilk bölümü (0 tabanlı).
-  static const _actStarts = [0, 4, 8, 11, 13];
+  /// Perdeler oynanış sırasıyla: (metin numarası, perdenin ilk bölümünün
+  /// kimliği). Yer, `levelOrder`'daki sıradan bulunur (bölüm kimliği değil).
+  static const _acts = [(0, 0), (1, 4), (2, 8), (3, 11), (5, 14), (4, 13)];
 
   @override
   Widget build(BuildContext context) {
-    final reached = SaveGame.current?.level ?? 0;
+    // Oynanan en ileri yer: kayıttaki bölümün sırası ya da açılan en ileri.
+    final reached = math.max(
+      orderOf(SaveGame.current?.level ?? 0),
+      Settings.unlocked,
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _Heading(S.of('storyTitle')),
         const SizedBox(height: 18),
         Text(S.of('storyIntro'), style: _body),
-        for (var i = 0; i < _actStarts.length; i++) ...[
+        for (final (i, start) in _acts) ...[
           const SizedBox(height: 18),
           Text(
             S.upper(S.of('storyAct$i')),
             style: TextStyle(
-              color: reached >= _actStarts[i]
+              color: reached >= orderOf(start)
                   ? _accent
                   : _accent.withValues(alpha: 0.35),
               fontSize: 11,
@@ -200,10 +241,10 @@ class StoryPage extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            reached >= _actStarts[i]
+            reached >= orderOf(start)
                 ? S.of('storyAct${i}Text')
                 : S.of('storyLocked'),
-            style: reached >= _actStarts[i]
+            style: reached >= orderOf(start)
                 ? _body
                 : _body.copyWith(
                     color: _text.withValues(alpha: 0.35),

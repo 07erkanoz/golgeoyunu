@@ -35,14 +35,14 @@ void main() {
       'defter',
       const MemoryBookPage(
         memories: {'0:0', '0:2', '1:0', '2:1'},
-        myths: {'umay'},
+        myths: {'hayal', 'hudhud', 'umay', 'medusa'},
       ),
     ),
   ]) {
     testWidgets('$name önizleme', (tester) async {
       await tester.runAsync(_font);
       Settings.unlocked = 2;
-      tester.view.physicalSize = Size(460, name == 'defter' ? 1700 : 1100);
+      tester.view.physicalSize = Size(460, name == 'defter' ? 2600 : 1300);
       tester.view.devicePixelRatio = 1;
       final key = GlobalKey();
       await tester.pumpWidget(

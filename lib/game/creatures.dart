@@ -527,6 +527,7 @@ class Karabasan extends PositionComponent with HasGameReference<GolgeGame> {
         _speed = 60;
         game.once('chase${game.levelIndex}', S.of('chase'));
         game.scare(1.0, slow: true);
+        game.meetMyth('karabasan');
       }
       return;
     }

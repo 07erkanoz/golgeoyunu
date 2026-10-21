@@ -576,12 +576,26 @@ class GolgeGame extends FlameGame with KeyboardEvents {
   double _bardIn = -1;
   int _bardLevel = -1;
 
+  /// İpucu gösterilince Defter'e yazılan efsaneler.
+  static const _hintLegends = {
+    'medusa': 'medusa',
+    'shield': 'medusa',
+    'wings': 'hezarfen',
+    'feather': 'simurg',
+    'ring': 'peri',
+    'semazen': 'sebiArus',
+  };
+
   void _updateBard(double dt) {
     if (_bardIn < 0) return;
     _bardIn -= dt;
     if (_bardIn >= 0) return;
     if (_bardLevel == levelIndex && !menuMode.value) {
       once('bard:$levelIndex', level.def.bardText);
+      // Bölümün kendi efsaneleri (yerin ve hikâyenin) Defter'e yazılır.
+      for (final id in level.def.legends) {
+        meetMyth(id);
+      }
     }
   }
 
@@ -1384,6 +1398,9 @@ class GolgeGame extends FlameGame with KeyboardEvents {
       // Bazı düzeneklerin kuralı bir de şiirle, hikâyenin içinde anlatılır.
       final poem = Hints.poem(key);
       if (poem.isNotEmpty) once('poem:$key', poem);
+      // Düzeneğin ardındaki efsane Defter'e yazılır.
+      final legend = _hintLegends[key];
+      if (legend != null) meetMyth(legend);
     }
 
     bool near(PositionComponent c, double dx, [double? dy]) {

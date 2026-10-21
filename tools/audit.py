@@ -399,6 +399,26 @@ def nearest_gate(gs, opened_gates, at, right_only=False):
     return best
 
 
+def _stuck(seen, edges, escapes, goal_cells):
+    """Hedef hücrelere (1 kare yakınına) ya da bir ölüme bağlanmayan duruş
+    noktaları."""
+    goal = {n for n in seen
+            if any(abs(n[1] - c) <= 1 and abs(n[2] - r) <= 1 for c, r in goal_cells)}
+    rev = defaultdict(set)
+    for a, bs in edges.items():
+        for b in bs:
+            rev[b].add(a)
+    ok = set(goal) | (escapes & seen)
+    stack = list(ok)
+    while stack:
+        n = stack.pop()
+        for q in rev[n]:
+            if q not in ok:
+                ok.add(q)
+                stack.append(q)
+    return {(c, r) for (k, c, r) in seen - ok if k != 'vine'}
+
+
 def audit(idx):
     name, wings, hw = LEVELS[idx]
     if wings is None:
@@ -410,6 +430,7 @@ def audit(idx):
     gs = gates(rows)
     opened_gates = []
     used = set()
+    stage_traps = set()
     under = name in UNDERWORLD
     horse = False
     while True:
@@ -460,6 +481,12 @@ def audit(idx):
                 if (c in reach or (c[0], c[1] - 1) in reach) and ('d', c) not in used:
                     new.append((('d', c), nearest_gate(gs, opened_gates, c)))
         new = [(k, g) for k, g in new if g is not None]
+        # Aşama tuzağı: kapılar henüz kapalıyken girilip ne kapıyı açan
+        # düzeneğe, ne çıkışa, ne bir ölüme (yeniden doğuş) varılabilen yer.
+        if new:
+            stage_goals = {k[1] for k, _ in new}
+            stage_goals |= set(cells(rows, 'E'))
+            stage_traps |= _stuck(seen, edges, escapes, stage_goals)
         if name in VEINS:
             veins = [g for g in gs if g not in opened_gates]
             groups = defaultdict(list)
@@ -498,7 +525,7 @@ def audit(idx):
             if p not in ok:
                 ok.add(p)
                 stack.append(p)
-    traps = sorted({(c, r) for (k, c, r) in seen - ok if k != 'vine'})
+    traps = sorted({(c, r) for (k, c, r) in seen - ok if k != 'vine'} | stage_traps)
     # Hatıra, tüy ve fısıltılar havada geçerken de alınır.
     airborne = set('MT123456789()[]{}B')
     missing = [(ch, c, r) for r, row in enumerate(rows) for c, ch in enumerate(row)

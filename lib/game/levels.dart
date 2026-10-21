@@ -87,7 +87,11 @@ class LevelDef {
     this.bellows = const [],
     this.mists = const [],
     this.scorch = const [],
+    this.legends = const [],
   });
+
+  /// Bölüm başında (ozan dizesinden sonra) Defter'e yazılan efsaneler.
+  final List<String> legends;
 
   /// Gün katı: yakıcı ışık alanları (sol, üst, sağ, alt); Umay kuşunun
   /// gölgesinde yürünür.
@@ -583,6 +587,7 @@ List<String> interludeText(int level) {
 const levels = <LevelDef>[
   LevelDef(
     title: 'I · YEREBATAN',
+    legends: ['hayal', 'hudhud'],
     bard: 'Ozan der ki: Suyun altında şehir uyur; uyanık kalanı Umay korur.',
     bardEn: 'The bard says: a city sleeps beneath the water; Umay guards the one who stays awake.',
     cameos: [('suIyesi', 0, 0)],
@@ -808,6 +813,7 @@ const levels = <LevelDef>[
   ),
   LevelDef(
     title: 'IV · KAF',
+    legends: ['kaf'],
     bard: 'Ozan der ki: Dünyanın kıyısında zümrüt bir dağ; büyük kuşun gölgesi orada dinlenir.',
     bardEn: "The bard says: an emerald mountain at the edge of the world; the great bird's shadow rests there.",
     subtitle: 'Dünyanın kıyısında zümrüt bir dağ.',
@@ -936,6 +942,7 @@ const levels = <LevelDef>[
   ),
   LevelDef(
     title: 'VI · NUH\'UN GEMİSİ',
+    legends: ['nuh'],
     bard:
         'Ozan der ki: Su yükselir, gemi kalkar; ilk suyun anası da bunu bilir.',
     bardEn: 'The bard says: the water rises, the ark lifts; the mother of the first water knows this too.',
@@ -996,6 +1003,7 @@ const levels = <LevelDef>[
   ),
   LevelDef(
     title: 'VII · NEMRUT',
+    legends: ['nemrut'],
     bard: 'Ozan der ki: Tanrılarla oturmak isteyen kralın başı, taşın dibinde yatar.',
     bardEn: 'The bard says: the king who would sit with gods lies with his head at the foot of the stone.',
     subtitle: 'Tanrılarla yan yana oturmak isteyen bir kralın dağı.',
@@ -1175,6 +1183,7 @@ const levels = <LevelDef>[
   ),
   LevelDef(
     title: 'X · PALANDÖKEN',
+    legends: ['ejder'],
     bard: 'Ozan der ki: Dağdan inen rüzgârı geçemezsin; rüzgârla inersin.',
     bardEn: 'The bard says: you cannot outrun the wind from the mountain; you ride down with it.',
     subtitle: 'Ejderlerin uyuduğu dağdan aşağı.',
@@ -1350,6 +1359,7 @@ const levels = <LevelDef>[
   ),
   LevelDef(
     title: 'XIII · DERİNKUYU',
+    legends: ['derinkuyu'],
     bard: 'Ozan der ki: Yerin altı kat kattır; en dipte bir ses seni adınla çağırır.',
     bardEn: 'The bard says: the underworld lies layer upon layer; at the bottom a voice calls you by name.',
     cameos: [('erlik', 266, 43)],
@@ -1414,6 +1424,7 @@ const levels = <LevelDef>[
   ),
   LevelDef(
     title: 'XVII · ŞEB-İ ARÛS',
+    legends: ['sebiArus'],
     bard: 'Ozan der ki: Dönen döner, gölge düşer; kim dönerse yolunu bulur.',
     bardEn: 'The bard says: the whirling turn, the shadows fall; whoever turns finds the way.',
     gokboruGuard: true,

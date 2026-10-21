@@ -377,6 +377,9 @@ a.fill(159+AO,12,165+AO,25,'#'); a.put(160+AO,11,'K')
 a.put(168+AO,10,'O'); a.put(172+AO,9,'O')
 a.fill(176+AO,8,180+AO,25,'#'); a.put(177+AO,7,'5')
 a.fill(183+AO,7,189+AO,25,'#'); a.put(184+AO,6,'M'); a.put(185+AO,6,'B'); a.put(187+AO,6,'E')
+# Kolun rafının sağ yüzünde zincir: kolu çekmeden sağa inen (oradaki Umay
+# ağacına dokunsa bile) rafa geri tırmanabilsin.
+a.fill(250,8,250,16,'|')
 lvl5=a.rows()
 
 # ------------------------------------------------------------ VI · NUH'UN GEMİSİ
@@ -564,6 +567,8 @@ k9.fill(275,F-6,278,25,'#'); k9.put(280,F-7,'O'); k9.put(283,F-8,'O')
 k9.fill(286,F-9,296,25,'#'); k9.put(292,F-10,'K'); k9.fill(293,2,296,3,'#'); k9.put(294,4,'%')
 k9.fill(297,F-11,302,25,'#'); k9.fill(303,F-13,319,25,'#')
 k9.put(306,F-14,'8'); k9.put(310,F-14,'B'); k9.put(315,F-14,'E')
+# Kolun rafının sağ yüzünde zincir: kapı ile raf arasında kalınmasın.
+k9.fill(247,16,247,19,'|')
 lvl9=k9.rows()
 
 # ------------------------------------------------------------ kayak pisti
@@ -925,6 +930,8 @@ for i,r in enumerate((25,20,15,10,5)):
     else: er.fill(263,r+1,268,r+1,'#')
 ec(278,3,298,5)
 er.put(270,8,'Z'); er.put(280,5,'9'); er.put(286,5,'K'); er.put(290,5,'M'); er.put(296,5,'E')
+# Son kafesin odası: aşağı düşen basamaklara geri tırmanabilsin.
+er.fill(204,F0-4,204,F0,'|')
 lvl_erlik=er.rows()
 
 # ------------------------------------------------------------ XV · ERGENEKON (Ötüken)
