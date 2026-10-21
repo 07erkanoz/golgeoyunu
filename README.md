@@ -72,8 +72,9 @@ Ayarlar → **Dokunmatik** ile iki düzen arasında seçim yapılır:
 - **Düğmeler:** Solda ◀ ▶, sağda büyük zıpla, ↑ tırman, ↓ çömel, ateşböceği;
   parmak ucu açılıp kapanır. **Düğme görünürlüğü** ile saydamlaştırılabilir.
 - **Hareket (düğmesiz):** Sol yarıda sürükle → yürü (yukarı: tırman/kol, aşağı:
-  çömel). Sağ yarıya dokun → zıpla (basılı tut: süzül). İki parmak →
-  ateşböceği. Köşelerde yalnızca parmak ucu ve ateşböceği simgeleri kalır.
+  çömel). Sağ yarıya dokun → zıpla (basılı tut: süzül). Ateşböceği köşedeki
+  ✨ simgesiyle salınır. Köşelerde yalnızca parmak ucu ve ateşböceği simgeleri
+  kalır.
 
 Telefonda kamera biraz daha yakındır ve grafik varsayılan olarak Düşük'tür.
 

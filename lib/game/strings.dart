@@ -42,7 +42,7 @@ class S {
     'touchOpacity': 'Düğme görünürlüğü',
     'touchHelpGestures':
         'Sol yarı: sürükle → yürü, yukarı → tırman/kol, aşağı → çömel\n'
-        'Sağ yarı: dokun → zıpla (basılı tut: süzül) · iki parmak → ateşböceği',
+        'Sağ yarı: dokun → zıpla (basılı tut: süzül) · ✨ → ateşböceği',
     'hintMove': 'sürükle: yürü',
     'hintJump': 'dokun: zıpla',
     'retry': 'Yeniden dene',
@@ -66,7 +66,9 @@ class S {
     'feather': 'Simurg\'un tüyü',
     'feathersAll': 'Tüyler tamam. Sunak seni bekliyor.',
     'horoscope': 'Gök, aslanın sırtındaki gibi dizildi. Taşlar yol veriyor.',
-    'giantFell': 'Bir sivrisinek bir kralı yıktı; bir ateşböceği de bir devi.',
+    'giantFell': 'Bir sivrisinek bir kralı yıktı; üç ateşböceği de bir devi.',
+    'giantHit1': 'Dev sendeledi · iki ışık daha',
+    'giantHit2': 'Taş çatırdıyor · son bir ışık',
     'chase': 'Arkanda bir şey nefes alıyor. KOŞ.',
     'wings': 'Hezarfen\'in kanatları. Rüzgâra güvenen düşmez.',
     'memoriesFound': 'Toplanan hatıralar',
@@ -133,7 +135,7 @@ class S {
     'touchOpacity': 'Button visibility',
     'touchHelpGestures':
         'Left half: drag → walk, up → climb/lever, down → crouch\n'
-        'Right half: tap → jump (hold: glide) · two fingers → firefly',
+        'Right half: tap → jump (hold: glide) · ✨ → firefly',
     'hintMove': 'drag: walk',
     'hintJump': 'tap: jump',
     'retry': 'Retry',
@@ -158,7 +160,9 @@ class S {
     'feathersAll': 'The feathers are whole. The altar is waiting.',
     'horoscope':
         'The sky is arranged as on the lion\'s back. The stones give way.',
-    'giantFell': 'A gnat brought down a king; a firefly, a giant.',
+    'giantFell': 'A gnat brought down a king; three fireflies, a giant.',
+    'giantHit1': 'The giant staggers · two more lights',
+    'giantHit2': 'The stone cracks · one last light',
     'chase': 'Something breathes behind you. RUN.',
     'wings': 'Hezarfen\'s wings. Whoever trusts the wind does not fall.',
     'memoriesFound': 'Memories found',

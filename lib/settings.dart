@@ -69,31 +69,40 @@ class Settings {
     lowGraphics = lowGraphicsByDefault;
     S.lang = deviceLang();
     final p = await _open();
-    if (p == null) return;
-    ambience = _read(() => p.getDouble('ambience')) ?? ambience;
-    music = _read(() => p.getDouble('music')) ?? music;
-    effects = _read(() => p.getDouble('effects')) ?? effects;
-    fullscreen = _read(() => p.getBool('fullscreen')) ?? fullscreen;
-    lowGraphics = _read(() => p.getBool('low_graphics')) ?? lowGraphics;
-    touchGestures = _read(() => p.getBool('touch_gestures')) ?? touchGestures;
-    touchOpacity = _read(() => p.getDouble('touch_opacity')) ?? touchOpacity;
-    brightness = (_read(() => p.getDouble('brightness')) ?? brightness).clamp(
-      0.6,
-      1.6,
-    );
-    // Kayıtlı bir tercih yoksa cihazın dili: Türkçe değilse İngilizce.
-    final lang = _read(() => p.getString('lang'));
-    S.lang = switch (lang) {
-      'en' => Lang.en,
-      'tr' => Lang.tr,
-      _ => deviceLang(),
-    };
-    // Kayıt iki yerde tutulur (ayar deposu ve uygulamanın kendi dosyası):
-    // biri kaybolursa ya da bozulursa öteki; ikisi de varsa en yenisi.
-    final fromPrefs = SaveData.decode(_read(() => p.getString('save')));
+    // Sayı değeri: sonlu ve aralıkta değilse varsayılan kalır.
+    double num(String key, double fallback, double lo, double hi) {
+      final v = p == null ? null : _read(() => p.getDouble(key));
+      if (v == null || !v.isFinite) return fallback;
+      return v.clamp(lo, hi);
+    }
+
+    ambience = num('ambience', ambience, 0, 1);
+    music = num('music', music, 0, 1);
+    effects = num('effects', effects, 0, 1);
+    touchOpacity = num('touch_opacity', touchOpacity, 0.1, 1);
+    brightness = num('brightness', brightness, 0.6, 1.6);
+    if (p != null) {
+      fullscreen = _read(() => p.getBool('fullscreen')) ?? fullscreen;
+      lowGraphics = _read(() => p.getBool('low_graphics')) ?? lowGraphics;
+      touchGestures =
+          _read(() => p.getBool('touch_gestures')) ?? touchGestures;
+      // Kayıtlı bir tercih yoksa cihazın dili: Türkçe değilse İngilizce.
+      final lang = _read(() => p.getString('lang'));
+      S.lang = switch (lang) {
+        'en' => Lang.en,
+        'tr' => Lang.tr,
+        _ => deviceLang(),
+      };
+    }
+    // Kayıt iki yerde tutulur (ayar deposu ve uygulamanın kendi dosyası).
+    // Ayar deposu açılamasa da dosya mutlaka okunur; ikisi de varsa en yenisi.
+    final fromPrefs = p == null
+        ? null
+        : SaveData.decode(_read(() => p.getString('save')));
     final fromFile = SaveData.decode(await SaveGame._readFile());
     SaveGame.current = SaveData.newer(fromPrefs, fromFile);
-    unlocked = _read(() => p.getInt('unlocked')) ?? 0;
+    final u = p == null ? null : _read(() => p.getInt('unlocked'));
+    unlocked = (u ?? 0).clamp(0, 99);
     final reached = SaveGame.current?.level ?? 0;
     if (reached > unlocked) unlocked = reached;
   }
@@ -142,6 +151,16 @@ class SaveData {
   /// Yazıldığı an: iki kopyadan yenisini seçmek için.
   final int time;
 
+  /// Bozuk ya da anlamsız değerli kayıt yok sayılır (oyun açılabilsin).
+  SaveData? _valid() {
+    if (level < 0 || level > 99) return null;
+    if (!x.isFinite || !y.isFinite || x.abs() > 1e6 || y.abs() > 1e6) {
+      return null;
+    }
+    if (fireflies < 0 || fireflies > 99) return null;
+    return this;
+  }
+
   static SaveData? newer(SaveData? a, SaveData? b) {
     if (a == null) return b;
     if (b == null) return a;
@@ -172,7 +191,7 @@ class SaveData {
         fireflies: m['fireflies'] as int,
         wings: m['wings'] as bool,
         time: (m['time'] as num?)?.toInt() ?? 0,
-      );
+      )._valid();
     } catch (_) {
       return null;
     }
@@ -184,11 +203,29 @@ class SaveGame {
 
   static SaveData? current;
 
-  static Future<void> write(SaveData data) async {
+  /// Bütün kayıt işlemleri (yazma ve silme) tek sırada, geldiği düzende
+  /// çalışır: "Yeni oyun"un eski kaydı silmesi yeni kaydı silemez; iki
+  /// yazma aynı geçici dosyayı aynı anda kullanamaz.
+  static Future<void> _queue = Future.value();
+
+  static Future<void> _enqueue(Future<void> Function() op) {
+    final next = _queue.then((_) => op()).catchError((_) {});
+    _queue = next;
+    return next;
+  }
+
+  /// Sıradaki bütün işlemler bitene kadar bekler (kapanışta).
+  static Future<void> flush() => _queue;
+
+  static Future<void> write(SaveData data) {
     // Sayı olmayan bir konum kaydın tamamını düşürmesin.
-    if (!data.x.isFinite || !data.y.isFinite) return;
+    if (!data.x.isFinite || !data.y.isFinite) return _queue;
     current = data;
     final json = data.encode();
+    return _enqueue(() => _write(json));
+  }
+
+  static Future<void> _write(String json) async {
     try {
       await (await Settings._open())?.setString('save', json);
     } catch (_) {
@@ -206,8 +243,12 @@ class SaveGame {
     } catch (_) {}
   }
 
-  static Future<void> clear() async {
+  static Future<void> clear() {
     current = null;
+    return _enqueue(_clear);
+  }
+
+  static Future<void> _clear() async {
     try {
       await (await Settings._open())?.remove('save');
     } catch (_) {}

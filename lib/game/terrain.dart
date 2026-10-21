@@ -78,6 +78,15 @@ class TerrainComponent extends Component with HasGameReference<GolgeGame> {
   static final _ink = Paint()..color = kInk;
 
   @override
+  void onRemove() {
+    // Bölüm kaldırılınca önceden çizilmiş dilimlerin yerel belleği bırakılır.
+    for (final c in _chunks) {
+      c.picture.dispose();
+    }
+    super.onRemove();
+  }
+
+  @override
   void render(Canvas canvas) {
     final lv = _level;
     final theme = lv.def.theme;
@@ -105,6 +114,14 @@ class ForegroundComponent extends Component with HasGameReference<GolgeGame> {
       super(priority: 30);
 
   final List<_Chunk> _chunks;
+
+  @override
+  void onRemove() {
+    for (final c in _chunks) {
+      c.picture.dispose();
+    }
+    super.onRemove();
+  }
 
   @override
   void render(Canvas canvas) =>

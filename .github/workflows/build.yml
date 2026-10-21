@@ -8,6 +8,12 @@ on:
 permissions:
   contents: write
 
+# Ardışık gönderimlerde eski çalışma iptal edilir: eski bir sürüm daha geç
+# bitip "son sürüm" olarak yayımlanamaz.
+concurrency:
+  group: derleme-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   FLUTTER_VERSION: 3.47.7
 

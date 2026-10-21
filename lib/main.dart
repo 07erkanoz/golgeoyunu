@@ -76,7 +76,7 @@ class GolgeApp extends StatefulWidget {
   State<GolgeApp> createState() => _GolgeAppState();
 }
 
-class _GolgeAppState extends State<GolgeApp> {
+class _GolgeAppState extends State<GolgeApp> with WindowListener {
   final _game = GolgeGame();
   final _gameFocus = FocusNode(debugLabel: 'oyun');
   late final AppLifecycleListener _lifecycle;
@@ -85,14 +85,24 @@ class _GolgeAppState extends State<GolgeApp> {
   void initState() {
     super.initState();
     _game.onToggleFullscreen = () => _setFullscreen(!Settings.fullscreen);
+    if (_isDesktop) {
+      windowManager.addListener(this);
+      windowManager.setPreventClose(true);
+    }
     // Menü ya da ayarlar kapanınca klavye yeniden oyuna gider.
     _game.onFocusGame = () => WidgetsBinding.instance.addPostFrameCallback(
       (_) => _gameFocus.requestFocus(),
     );
     // Telefon oyunu arka plana alınca (ya da kapatılırken) ilerleme ve
     // ayarlar hemen yazılır; sistem uygulamayı öldürse de kaybolmaz.
+    // Pencere/uygulama odağını kaybedince tuş bırakma olayları gelmeyebilir:
+    // basılı kalan girdi temizlenir.
+    _gameFocus.addListener(() {
+      if (!_gameFocus.hasFocus) _game.controls.resetAll();
+    });
     _lifecycle = AppLifecycleListener(
       onStateChange: (state) {
+        if (state != AppLifecycleState.resumed) _game.controls.resetAll();
         if (state == AppLifecycleState.paused ||
             state == AppLifecycleState.hidden ||
             state == AppLifecycleState.detached) {
@@ -107,8 +117,21 @@ class _GolgeAppState extends State<GolgeApp> {
     );
   }
 
+  /// Masaüstünde pencere kapatılırken önce ilerleme ve ayarlar diske yazılır,
+  /// sonra pencere kapanır (yalnız yaşam döngüsü bildirimine güvenilmez).
+  @override
+  void onWindowClose() async {
+    try {
+      await _game.saveNow();
+      await Settings.save();
+      await SaveGame.flush().timeout(const Duration(seconds: 2));
+    } catch (_) {}
+    await windowManager.destroy();
+  }
+
   @override
   void dispose() {
+    if (_isDesktop) windowManager.removeListener(this);
     _gameFocus.dispose();
     _lifecycle.dispose();
     super.dispose();

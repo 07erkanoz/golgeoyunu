@@ -875,7 +875,7 @@ const levels = <LevelDef>[
       'Kandilcilerin fenerleri şafakta soluklaşır. Güneşten korkarlar.',
       'Tanrının omzundaki kolu çek. Kapı taşın sözünü dinler.',
       'Kandilciler taşa can vermiş: Nemrud gibi göğe başkaldıran bir dev.',
-      'Nemrud\'u bir sivrisinek yendi. Senin de küçük bir ışığın var. Yoluna bırak, kulağı ona değsin.',
+      'Nemrud\'u bir sivrisinek yendi; başına yıllarca tokmak indi. Taş devi de üç küçük ışık yıkar: kulağına üç kez bırak.',
       'Işık orada, güneşin doğduğu yerde. Sâye, ona dokun.',
     ],
     whispersEn: [
@@ -883,7 +883,7 @@ const levels = <LevelDef>[
       'At dawn the Lamplighters\' lanterns grow pale. They fear the sun.',
       'Pull the lever on the god\'s shoulder. The gate listens to the stone.',
       'The Lamplighters have breathed life into stone: a giant who rebels against the sky, like Nemrud.',
-      'Nemrud was beaten by a gnat. You too have a small light. Leave it in his path; let his ear touch it.',
+      'Nemrud was beaten by a gnat; for years a mallet struck his head. Three small lights will fell the stone giant too: leave one at his ear three times.',
       'The light is there, where the sun rises. Saye, touch it.',
     ],
     memories: [

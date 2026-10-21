@@ -118,38 +118,61 @@ class GameAudio {
   double _duck = 0;
   final _lastPlayed = <String, int>{};
 
+  /// Yüklenemeyen ses dosyaları (tanı için).
+  final failed = <String>[];
+
+  /// Her dosya ayrı korunur: biri yüklenemese de müzik ve öteki sesler çalar.
   Future<void> init() async {
-    try {
-      // Android'de her oynatıcı varsayılan olarak ses odağını kendine alır;
-      // oyunun kendi sesleri (müzik, ortam, efektler) birbirinin odağını
-      // çalınca müzik duraklayıp baştan başlıyordu. Hepsi odak istemeden
-      // birlikte çalar.
-      await AudioPlayer.global.setAudioContext(
+    Future<void> guard(String what, Future<void> Function() f) async {
+      try {
+        await f();
+      } catch (e) {
+        failed.add(what);
+        _log('yüklenemedi $what: $e');
+      }
+    }
+
+    // Android'de her oynatıcı varsayılan olarak ses odağını kendine alır;
+    // oyunun kendi sesleri (müzik, ortam, efektler) birbirinin odağını
+    // çalınca müzik duraklayıp baştan başlıyordu. Hepsi odak istemeden
+    // birlikte çalar.
+    await guard(
+      'ses bağlamı',
+      () => AudioPlayer.global.setAudioContext(
         AudioContextConfig(focus: AudioContextConfigFocus.mixWithOthers)
             .build(),
-      );
-      // Menü müziği her şeyden önce: efektler yüklenirken bekletmesin.
+      ),
+    );
+    // Menü müziği her şeyden önce: efektler yüklenirken bekletmesin.
+    await guard('menu_theme.mp3', () async {
       await FlameAudio.audioCache.load('menu_theme.mp3');
       _musicReady = true;
       if (_musicWanted) menuMusic(true);
-      await FlameAudio.audioCache.loadAll([
-        for (final e in _effects) '$e.wav',
-        'amb_cistern.wav',
-        'amb_wind.wav',
-        'amb_sky.wav',
-        'amb_snow.wav',
-        'amb_ark.wav',
-        'amb_konya.wav',
-        'amb_cave.wav',
-        'karabasan.wav',
-        'heartbeat.wav',
-        'murmur.wav',
-        'perde_ney.wav',
-      ]);
-      for (final e in _effects) {
+    });
+    for (final f in [
+      for (final e in _effects) '$e.wav',
+      'amb_cistern.wav',
+      'amb_wind.wav',
+      'amb_sky.wav',
+      'amb_snow.wav',
+      'amb_ark.wav',
+      'amb_konya.wav',
+      'amb_cave.wav',
+      'karabasan.wav',
+      'heartbeat.wav',
+      'murmur.wav',
+      'perde_ney.wav',
+    ]) {
+      await guard(f, () => FlameAudio.audioCache.load(f));
+    }
+    for (final e in _effects) {
+      if (failed.contains('$e.wav')) continue;
+      await guard(e, () async {
         _sfx[e] = await _Sfx.create('$e.wav', _frequent.contains(e) ? 3 : 1);
-      }
-      _ready = true;
+      });
+    }
+    _ready = true;
+    await guard('başlangıç döngüsü', () async {
       if (_neyWanted) {
         perde(true);
       } else if (_musicWanted) {
@@ -158,9 +181,7 @@ class GameAudio {
         final wanted = _wantedAmbient;
         if (wanted != null) await _startAmbient(wanted);
       }
-    } catch (_) {
-      _ready = false;
-    }
+    });
   }
 
   /// Bir efekt çalar; aynı efekt [minGapMs] içinde tekrar çalınmaz.

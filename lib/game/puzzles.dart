@@ -706,6 +706,15 @@ class GiantPerde extends PositionComponent with HasGameReference<GolgeGame> {
 
   /// Gölgenin geç kaldığı an: -1 olmadı, 0..lagLength sürüyor, sonra bitti.
   double lagT = -1;
+
+  String get _eventKey => 'perde:${game.levelIndex}:${position.x.round()}';
+
+  @override
+  void onMount() {
+    super.onMount();
+    // Bir kez oynar: yeniden doğunca gölge yine geç kalmaz.
+    if (game.eventSeen(_eventKey)) lagT = lagLength;
+  }
   static const lagLength = 3.2;
   double _frozenX = 0;
   int _frozenFacing = 1;
@@ -733,6 +742,7 @@ class GiantPerde extends PositionComponent with HasGameReference<GolgeGame> {
         _stillT += dt;
         if (_stillT > 0.5) {
           lagT = 0;
+          game.markEvent(_eventKey);
           _frozenX = p.center.x;
           _frozenFacing = p.facing;
         }

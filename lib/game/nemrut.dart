@@ -439,6 +439,10 @@ class StoneGiant extends PositionComponent with HasGameReference<GolgeGame> {
       super(
         position: Vector2(cell.x, cell.y + kTile),
         size: Vector2(5 * kTile, 9 * kTile),
+        // Konum ayakların yeridir (kulak, ezme alanı ve köprü buna göre):
+        // çizim de oradan yukarı uzanır. Önceden sol üst köşe sayıldığı için
+        // dev toprağın içine çiziliyordu.
+        anchor: Anchor.bottomLeft,
         priority: 16,
       );
 
@@ -500,13 +504,24 @@ class StoneGiant extends PositionComponent with HasGameReference<GolgeGame> {
         hits++;
         _stagger = 2.4;
         GameAudio.instance.play('grind');
-        game.shake(6);
+        GameAudio.instance.play('growl', volume: 0.7);
+        game.shake(6 + hits * 2.0);
+        if (hits < hitsToFall) {
+          // Kaç ışık kaldığını söyler (sol üstte kısa bir not).
+          game.narration.hint(
+            S.of(hits == 1 ? 'giantHit1' : 'giantHit2'),
+            queue: true,
+          );
+        }
         if (hits >= hitsToFall) {
           fallen = true;
           GameAudio.instance.play('crumble');
           game.once('giantFell', S.of('giantFell'));
+          // Yatan gövdenin üstü köprü olur (gövde sağa, ayaklarından uzanır).
           game.world.add(
-            GiantBridge(Vector2(position.x - kTile, position.y - kTile * 1.2)),
+            GiantBridge(
+              Vector2(position.x + size.x / 2, position.y - kTile * 1.2),
+            ),
           );
           // Devin düşüşü ilerideki (çıkışa doğru) kapıyı kırar.
           Gate? best;
@@ -531,9 +546,13 @@ class StoneGiant extends PositionComponent with HasGameReference<GolgeGame> {
     final h = size.y;
     canvas.save();
     if (fallen) {
-      canvas.translate(w / 2, 0);
-      canvas.rotate(-_fallT * math.pi / 2 * _dir);
-      canvas.translate(-w / 2, 0);
+      // Çıkışa doğru (sağa) ayaklarının üstünde devrilir; yere boylu boyunca,
+      // basık bir taş yığını olarak yatar (üstü köprüyle aynı hizada).
+      final k = 1 - 0.68 * _fallT;
+      canvas.translate(w / 2, h - w * k / 2 * _fallT);
+      canvas.rotate(_fallT * math.pi / 2);
+      canvas.scale(k, 1);
+      canvas.translate(-w / 2, -h);
     } else if (_stagger > 0) {
       canvas.translate(math.sin(_t * 40) * 3, 0);
     }
@@ -547,20 +566,31 @@ class StoneGiant extends PositionComponent with HasGameReference<GolgeGame> {
       Rect.fromLTWH(w * 0.6 - step, h - h * 0.32, w * 0.22, h * 0.32),
       stone,
     );
+    // Sendelerken (ateşböceği kulağında): baş yana eğilir, kulak tarafındaki
+    // kol sivrisineği kovar gibi başına savrulur.
+    final stung = !fallen && _stagger > 0 ? (_stagger / 2.4) : 0.0;
+    final swat = stung > 0 ? math.sin(stung * math.pi) : 0.0;
     // Gövde, omuzlar, kollar.
     canvas.drawRect(
       Rect.fromLTWH(w * 0.12, h * 0.32, w * 0.76, h * 0.38),
       stone,
     );
     canvas.drawRect(Rect.fromLTWH(0, h * 0.3, w, h * 0.08), stone);
-    canvas.drawRect(
-      Rect.fromLTWH(-w * 0.06, h * 0.34, w * 0.14, h * 0.32),
-      stone,
-    );
-    canvas.drawRect(
-      Rect.fromLTWH(w * 0.92, h * 0.34, w * 0.14, h * 0.32),
-      stone,
-    );
+    for (final side in [-1, 1]) {
+      final earSide = side == _dir;
+      final armX = side < 0 ? -w * 0.06 : w * 0.92;
+      canvas.save();
+      // Omuzdan döner: kulak tarafındaki kol yukarı kalkar.
+      canvas.translate(armX + w * 0.07, h * 0.34);
+      if (earSide && swat > 0) canvas.rotate(-side * swat * 2.3);
+      canvas.drawRect(Rect.fromLTWH(-w * 0.07, 0, w * 0.14, h * 0.32), stone);
+      canvas.restore();
+    }
+    canvas.save();
+    // Baş: sendelerken kulağın ters tarafına eğilir.
+    canvas.translate(w * 0.5, h * 0.3);
+    canvas.rotate(-_dir * swat * 0.18);
+    canvas.translate(-w * 0.5, -h * 0.3);
     // Baş ve sivri külah.
     canvas.drawOval(Rect.fromLTWH(w * 0.3, h * 0.12, w * 0.4, h * 0.2), stone);
     canvas.drawPath(
@@ -572,11 +602,17 @@ class StoneGiant extends PositionComponent with HasGameReference<GolgeGame> {
         ..close(),
       stone,
     );
-    // Gözler: soluk ateş.
+    // Gözler: soluk ateş; her temasta söner, sendelerken titrer.
+    final flicker = stung > 0 ? (0.5 + 0.5 * math.sin(_t * 30)) : 1.0;
     final eye = Paint()
-      ..color = const Color(0xFFFFB070).withValues(alpha: fallen ? 0 : 0.8);
+      ..color = const Color(0xFFFFB070).withValues(
+        alpha: fallen ? 0 : (0.8 - hits * 0.22).clamp(0.0, 1.0) * flicker,
+      );
     canvas.drawOval(Rect.fromLTWH(w * 0.4, h * 0.2, 7, 3), eye);
     canvas.drawOval(Rect.fromLTWH(w * 0.54, h * 0.2, 7, 3), eye);
+    canvas.restore();
+    // Çatlaklar: her temasta yenisi açılır, içinden kor gibi ışık sızar.
+    if (hits > 0) _cracks(canvas, w, h);
     canvas.restore();
     if (!fallen) {
       // Kulak: ateşböceğinin girmesi gereken yer, hafifçe parlar.
@@ -588,6 +624,49 @@ class StoneGiant extends PositionComponent with HasGameReference<GolgeGame> {
         kWarmLight,
         0.25 + 0.15 * math.sin(_t * 4),
       );
+    }
+  }
+}
+
+/// Temas sayısına göre devin çatlakları (yerel koordinatta, oranla).
+const _crackLines = [
+  // 1. temas: başta ve omuzda
+  [
+    Offset(0.46, 0.14),
+    Offset(0.5, 0.2),
+    Offset(0.47, 0.26),
+    Offset(0.52, 0.31),
+  ],
+  [Offset(0.2, 0.31), Offset(0.27, 0.38), Offset(0.24, 0.45)],
+  // 2. temas: gövde boyunca
+  [Offset(0.62, 0.33), Offset(0.56, 0.42), Offset(0.6, 0.5), Offset(0.54, 0.6)],
+  [Offset(0.3, 0.45), Offset(0.38, 0.52), Offset(0.34, 0.62)],
+  // 3. temas (yıkılırken): bacaklara iner
+  [Offset(0.5, 0.6), Offset(0.45, 0.7), Offset(0.5, 0.8), Offset(0.46, 0.92)],
+];
+
+extension on StoneGiant {
+  void _cracks(Canvas canvas, double w, double h) {
+    final n = math.min(_crackLines.length, hits * 2 + (fallen ? 1 : 0));
+    final glow = Paint()
+      ..color = const Color(0xFFFF9A40).withValues(alpha: fallen ? 0.25 : 0.55)
+      ..strokeWidth = 3
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+    final core = Paint()
+      ..color = const Color(0xFFFFE0A0).withValues(alpha: fallen ? 0.3 : 0.85)
+      ..strokeWidth = 1.2
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+    for (var i = 0; i < n; i++) {
+      final pts = _crackLines[i];
+      final path = Path()..moveTo(pts.first.dx * w, pts.first.dy * h);
+      for (final p in pts.skip(1)) {
+        path.lineTo(p.dx * w, p.dy * h);
+      }
+      canvas.drawPath(path, glow);
+      canvas.drawPath(path, core);
     }
   }
 }

@@ -22,7 +22,8 @@ class SkiSurface {
     final f = x / kTile - 0.5;
     final i = f.floor();
     if (i < 0) return rows.first < 0 ? null : rows.first * kTile;
-    if (i + 1 >= rows.length) return rows.last < 0 ? null : rows.last * kTile;
+    // Pistin sonunun ötesi boşluk: harita dışında sonsuz yamaç uzamasın.
+    if (i + 1 >= rows.length) return null;
     final a = rows[i];
     final b = rows[i + 1];
     if (a < 0 || b < 0) return null;

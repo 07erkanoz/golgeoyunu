@@ -58,6 +58,60 @@ T nearest<T extends PositionComponent>(GolgeGame g, double x) {
 }
 
 void main() {
+  group('güvenilirlik', () {
+    test('bozuk ya da anlamsız kayıt yok sayılır', () {
+      String raw(Object level, Object x) =>
+          '{"level":$level,"x":$x,"y":10,"memories":[],"whispers":[],'
+          '"fireflies":2,"wings":false}';
+      expect(SaveData.decode(raw(3, 10)), isNotNull);
+      expect(SaveData.decode(raw(-1, 10)), isNull);
+      expect(SaveData.decode(raw(999, 10)), isNull);
+      expect(SaveData.decode(raw(3, 1e9)), isNull);
+      expect(SaveData.decode('{bozuk'), isNull);
+      expect(SaveData.decode('{"level":2}'), isNull);
+    });
+
+    test('bütün girdi birlikte sıfırlanır; dokunmatik parmak ucu korunur', () {
+      final c = Controls();
+      c.keyboard
+        ..right = true
+        ..sneak = true;
+      c.touch
+        ..left = true
+        ..jump = true
+        ..sneak = true;
+      c.queueLure();
+      c.resetAll();
+      expect(c.left || c.right || c.jump, isFalse);
+      expect(c.keyboard.sneak, isFalse);
+      expect(c.touch.sneak, isTrue);
+      expect(c.takeLure(), isFalse);
+    });
+
+    testWithGame<GolgeGame>(
+      'erken bölüm kanatsız; bölüm değişince bekleyen metinler atılır',
+      GolgeGame.new,
+      (game) async {
+        await game.ready();
+        Settings.unlocked = 5;
+        SaveGame.current = SaveData(
+          level: 5,
+          x: 100,
+          y: 100,
+          memories: const [],
+          whispers: const [],
+          fireflies: 2,
+          wings: true,
+        );
+        game.narration.whisper('eski bölümün fısıltısı');
+        game.startChapter(0);
+        expect(game.wingsCollected, isFalse);
+        expect(game.narration.debugWhisper, isNull);
+        Settings.unlocked = 0;
+      },
+    );
+  });
+
   group('bölüm seçme', () {
     testWithGame<GolgeGame>(
       'açılmış bölüm baştan başlar; hatıralar korunur, kanatlar hazır',

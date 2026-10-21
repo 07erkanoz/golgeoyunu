@@ -532,6 +532,15 @@ class KarabasanGlimpse extends PositionComponent
 
   double _t = -1;
 
+  String get _key => 'glimpse:${game.levelIndex}:${position.x.round()}';
+
+  @override
+  void onMount() {
+    super.onMount();
+    // Bir kez görülür: ölüp yeniden doğunca tekrar belirmez.
+    if (game.eventSeen(_key)) removeFromParent();
+  }
+
   bool get seen => _t >= 0;
 
   @override
@@ -543,6 +552,7 @@ class KarabasanGlimpse extends PositionComponent
       final d = p.center - position;
       if (d.x.abs() < triggerDistance && d.y.abs() < 220) {
         _t = 0;
+        game.markEvent(_key);
         GameAudio.instance.play('growl', volume: 0.8);
         game.scare(0.45, sting: false);
       }

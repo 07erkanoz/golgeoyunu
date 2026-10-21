@@ -39,6 +39,15 @@ class Buttons {
   bool down = false;
   bool jump = false;
   bool sneak = false;
+
+  /// Basılı tutulan yön ve zıplama bırakılır.
+  void release() {
+    left = false;
+    right = false;
+    up = false;
+    down = false;
+    jump = false;
+  }
 }
 
 /// Klavye ve dokunmatik girişin birleşimi.
@@ -57,6 +66,18 @@ class Controls {
   /// oyuncu bir sonraki karede tüketir.
   bool _lureQueued = false;
   void queueLure() => _lureQueued = true;
+
+  /// Bütün girdi kaynakları birlikte temizlenir: menü/ayar açılışı, odak
+  /// kaybı, uygulamanın arka plana alınması, kontrol modunun değişmesi.
+  /// Klavyede parmak ucu basılı tutulur, o da bırakılır; dokunmatikte bir
+  /// anahtardır ve korunur (simgesi de aynı durumu gösterir).
+  void resetAll() {
+    keyboard
+      ..release()
+      ..sneak = false;
+    touch.release();
+    _lureQueued = false;
+  }
   bool takeLure() {
     final queued = _lureQueued;
     _lureQueued = false;
@@ -171,7 +192,11 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     _menuT = 0;
     narration.playCinematic(const [], () {});
     final saved = SaveGame.current;
-    _buildLevel(saved?.level ?? 0, withPlayer: false);
+    // Bozuk bir kayıt menünün kurulmasını engellemesin.
+    _buildLevel(
+      (saved?.level ?? 0).clamp(0, levels.length - 1),
+      withPlayer: false,
+    );
     effects.setFade(1, kInk);
     effects.fadeTo(0, 1.6);
     GameAudio.instance.menuMusic(true);
@@ -207,7 +232,9 @@ class GolgeGame extends FlameGame with KeyboardEvents {
   /// korunur; o bölümün fısıltıları ve yer adları yeniden anlatılır.
   void startChapter(int index) {
     if (!isLoaded || !menuMode.value) return;
-    if (index < 0 || index > Settings.unlocked) return;
+    if (index < 0 || index >= levels.length || index > Settings.unlocked) {
+      return;
+    }
     final save = SaveGame.current;
     _memories
       ..clear()
@@ -215,11 +242,16 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     _whispersShown
       ..clear()
       ..addAll(
-        (save?.whispers ?? const []).where((w) => !w.startsWith('$index:')),
+        (save?.whispers ?? const []).where(
+          (w) =>
+              !w.startsWith('$index:') &&
+              !(w.startsWith('event:') && w.split(':')[2] == '$index'),
+        ),
       );
     fireflies = startFireflies;
-    // Kanatlar Kule'de (2. bölüm) bulunur; sonraki bölümler onlarla oynanır.
-    wingsCollected = (save?.wings ?? false) || index >= 2;
+    // Kanatlar Kule'de (2. bölüm) bulunur: ondan önceki bölümler kanatsız,
+    // sonrakiler kanatla oynanır (öğretim dengesi bozulmasın).
+    wingsCollected = index >= 2;
     _respawn = null;
     _leaveMenu();
     _buildLevel(index);
@@ -249,6 +281,15 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     _respawn = Vector2(save.x, save.y);
     _leaveMenu();
     _buildLevel(save.level.clamp(0, levels.length - 1), respawn: true);
+    // Kayıttaki konum bu bölümün içinde değilse bölüm başından.
+    final r = _respawn!;
+    if (r.x < 0 ||
+        r.y < 0 ||
+        r.x > level.pixelWidth ||
+        r.y > level.pixelHeight) {
+      _respawn = Level.standOn(level.playerStart, Player.w, Player.h);
+      player?.position.setFrom(_respawn!);
+    }
     cinematic = false;
     effects.setFade(1, kInk);
     effects.fadeTo(0, 1.4);
@@ -264,12 +305,12 @@ class GolgeGame extends FlameGame with KeyboardEvents {
   }
 
   /// Uygulama arka plana alınırken: son kontrol noktası kaydedilir.
-  void saveNow() => _saveProgress();
+  Future<void> saveNow() => _saveProgress();
 
-  void _saveProgress() {
+  Future<void> _saveProgress() {
     final r = _respawn;
-    if (menuMode.value || r == null) return;
-    SaveGame.write(
+    if (menuMode.value || r == null) return SaveGame.flush();
+    return SaveGame.write(
       SaveData(
         level: levelIndex,
         x: r.x,
@@ -357,14 +398,8 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         GameAudio.instance.resumeAll();
       }
     } else {
-      // Basılı kalan tuşlar menü kapanınca oyuncuyu yürütmesin.
-      controls.keyboard
-        ..left = false
-        ..right = false
-        ..up = false
-        ..down = false
-        ..jump = false
-        ..sneak = false;
+      // Basılı kalan tuş ya da parmak menü kapanınca oyuncuyu yürütmesin.
+      controls.resetAll();
       _showOverlay(settingsOverlay);
       settingsOpen.value = true;
       if (!menuMode.value) {
@@ -385,6 +420,9 @@ class GolgeGame extends FlameGame with KeyboardEvents {
 
   void _buildLevel(int index, {bool respawn = false, bool withPlayer = true}) {
     world.removeAll(world.children.toList());
+    // Yeni bir bölüme geçerken (ölüp yeniden doğmada değil) eski bölümün
+    // bekleyen metinleri atılır.
+    if (!respawn || index != levelIndex) narration.resetScene();
     levelIndex = index;
     // Oynanan en ileri bölüm açılır (bölüm listesi için).
     if (withPlayer && index > Settings.unlocked) {
@@ -884,6 +922,12 @@ class GolgeGame extends FlameGame with KeyboardEvents {
 
   /// Olay mesajı: kayıt başına bir kez gösterilir; ölüp yeniden denerken
   /// tekrarlanmaz. [hint] ise üstte ipucu olarak sıraya girer.
+  /// Bir kez görülmesi gereken sahne olayları (dev perde, karanlıktaki
+  /// gözler): kayda yazılır, ölüp yeniden doğunca ya da devam edince
+  /// yeniden oynamaz.
+  bool eventSeen(String key) => _whispersShown.contains('event:$key');
+  void markEvent(String key) => _whispersShown.add('event:$key');
+
   void once(String key, String text, {bool hint = false}) {
     final id = 'once:$key';
     if (_whispersShown.contains(id)) return;

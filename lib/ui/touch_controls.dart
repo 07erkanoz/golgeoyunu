@@ -19,7 +19,15 @@ class TouchControls extends StatefulWidget {
 }
 
 class _TouchControlsState extends State<TouchControls> {
-  bool _sneak = false;
+  // Parmak ucu durumu tek yerde, oyunun girdisinde tutulur.
+  bool get _sneak => widget.controls.touch.sneak;
+
+  @override
+  void dispose() {
+    // Kontroller kaldırılırken basılı kalan bir düğme oyuncuyu yürütmesin.
+    widget.controls.touch.release();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -68,8 +76,7 @@ class _TouchControlsState extends State<TouchControls> {
                 active: _sneak,
                 onChanged: (v) {
                   if (!v) return;
-                  setState(() => _sneak = !_sneak);
-                  t.sneak = _sneak;
+                  setState(() => t.sneak = !t.sneak);
                 },
               ),
             ),
@@ -217,8 +224,8 @@ class _PadState extends State<_Pad> {
 
 /// Düğmesiz kontrol (Limbo'nun mobil sürümü gibi): sol yarıda parmağı
 /// sürükleyerek yürü (yukarı: tırman/kol, aşağı: çömel), sağ yarıya dokunarak
-/// zıpla (basılı tut: yüksek zıplama, kanatla süzülme). İki parmakla dokunuş
-/// ateşböceği salar. Köşelerde yalnızca iki küçük silik simge kalır.
+/// zıpla (basılı tut: yüksek zıplama, kanatla süzülme). Ateşböceği
+/// köşedeki ✨ simgesiyle salınır. Köşelerde yalnızca iki küçük silik simge kalır.
 class _GestureControls extends StatefulWidget {
   const _GestureControls({required this.controls});
 
@@ -236,10 +243,16 @@ class _GestureControlsState extends State<_GestureControls> {
   Offset _origin = Offset.zero;
   Offset _knob = Offset.zero;
   final _jumpPointers = <int>{};
-  bool _sneak = false;
   double _hintAlpha = 1;
 
   Buttons get _t => widget.controls.touch;
+  bool get _sneak => _t.sneak;
+
+  @override
+  void dispose() {
+    _t.release();
+    super.dispose();
+  }
 
   void _down(PointerDownEvent e, double width) {
     final left = e.localPosition.dx < width / 2;
@@ -247,11 +260,9 @@ class _GestureControlsState extends State<_GestureControls> {
       _stickPointer = e.pointer;
       _origin = _knob = e.localPosition;
     } else if (!left) {
+      // Ateşböceği köşedeki simgeyle salınır: ikinci parmak (yürürken sağa
+      // dokunmak gibi) yanlışlıkla ateşböceği harcamasın.
       _jumpPointers.add(e.pointer);
-      if (_jumpPointers.length >= 2) {
-        // İki parmak: ateşböceği.
-        widget.controls.queueLure();
-      }
       _t.jump = true;
     }
     _fadeHints();
@@ -346,8 +357,7 @@ class _GestureControlsState extends State<_GestureControls> {
                 active: _sneak,
                 alpha: alpha,
                 onTap: () {
-                  setState(() => _sneak = !_sneak);
-                  _t.sneak = _sneak;
+                  setState(() => _t.sneak = !_t.sneak);
                 },
               ),
             ),

@@ -105,6 +105,16 @@ class Narration extends Component with HasGameReference<GolgeGame> {
 
   void whisper(String text) => _whispers.add(text);
 
+  /// Sahne değişince (yeni bölüm, menü) eski bölümün bekleyen fısıltıları
+  /// ve ipuçları atılır; yeni bölümde bağlamsız belirmesinler.
+  void resetScene() {
+    _whispers.clear();
+    _whisper = null;
+    _hints.clear();
+    _hint = null;
+    _area = null;
+  }
+
   /// Kullanım istemi: Sâye'nin başının üstünde küçük bir etiket; hikâye
   /// fısıltısıyla yarışmaz.
   /// Yer ipuçları sıraya girmez: ekran boşsa hemen gösterilir ve `true`
@@ -227,7 +237,7 @@ class Narration extends Component with HasGameReference<GolgeGame> {
         '$s|$fontSize|$italic|$spacing|$maxWidth|${color.toARGB32()}|$a|$shadow';
     var tp = _cache[key];
     if (tp == null) {
-      if (_cache.length > 120) _cache.clear();
+      if (_cache.length > 120) _clearCache();
       tp = _cache[key] = _layout(
         s,
         fontSize,
@@ -243,6 +253,14 @@ class Narration extends Component with HasGameReference<GolgeGame> {
   }
 
   final _cache = <String, TextPainter>{};
+
+  /// Önbellek boşaltılırken dizilmiş metinlerin yerel kaynakları da bırakılır.
+  void _clearCache() {
+    for (final tp in _cache.values) {
+      tp.dispose();
+    }
+    _cache.clear();
+  }
 
   /// İstem etiketi: sol üst köşede, koyu zemin, ılık kenar.
   void _prompt(
