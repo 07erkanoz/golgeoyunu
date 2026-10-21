@@ -14,6 +14,7 @@ import 'palette.dart';
 import 'puzzles.dart';
 import 'umay.dart';
 import 'gokboru.dart';
+import 'cameos.dart';
 import '../settings.dart';
 import 'golge_game.dart';
 import 'level.dart';
@@ -155,6 +156,10 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
           );
         case MemoryShard m:
           _light(canvas, m.position.toOffset(), 80, 0.8);
+        case Apparition a:
+          _light(canvas, a.glowCenter, a.glowRadius, 0.7 * a.alpha);
+        case AkAnaRise a:
+          _light(canvas, a.glowCenter, 150, 0.85 * a.alpha);
         case GokboruSpirit g:
           _light(canvas, g.glowCenter, 90, 0.75 * g.alpha);
         case UmayTree u:

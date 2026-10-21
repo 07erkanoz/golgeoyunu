@@ -274,6 +274,9 @@ satır), yeni perdede kopuz motifi müzikte duyulur.
 4. **Ak Ana** (Gemi tufanı), **Su İyesi** (Yerebatan), **Tulpar** (Gökyolu
    önsezisi), **Ayaz Ata** (Ağrı), **Albastı** (Peri), **Basat** dizesi
    (Gün Doğumu), Derinkuyu'nun kuyusu.
+   *(Yapıldı: lib/game/cameos.dart. Peri'de su olmadığından Albastı
+   mağarada, uzun kıpırdamayanın ardında belirir; girişteki demir nalın
+   yanına yaklaşamaz.)*
 5. **Bölüm kimlikleri:** Yeni bölümler araya girince sıra numaraları kayar;
    eski kayıtlar yanlış bölüme açılmasın diye bölümlere kalıcı kimlik
    verilir ve kayıt bu kimlikle tutulur (inceleme raporu B03). *Yeni

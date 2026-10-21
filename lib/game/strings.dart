@@ -26,6 +26,16 @@ class S {
     'chapters': 'Bölümler',
     'chaptersHint': 'Açtığın bir bölümü baştan oyna',
     'allUnlocked': 'Bütün bölümler açıldı',
+    'cameo_suIyesi':
+        'Suyun altından bir yüz baktı. Saygı gösterene su yol verir.',
+    'cameo_tulpar':
+        'Bulutların ardında kanatlı bir at: Tulpar, yiğidin yoldaşı.',
+    'cameo_ayazAta': 'Tipinin içinde ak sakallı bir ihtiyar: Ayaz Ata geçti.',
+    'cameo_akAna': 'İlk su da böyle kıpırdadı: Ak Ana yükseldi, "yarat" dedi.',
+    'cameo_basat': 'Ozan der ki: Tepegöz de böyle yıkıldı, aslanlar arasında büyüyen Basat\'ın elinde.',
+    'cameo_albasti':
+        'Işığın neden çekiliyor? Ardında kızıl bir gölge. Kıpırda.',
+    'cameo_erlik': 'Yerin dibinden boğuk bir ses: "Aşağı gel..." Erlik\'in katı daha da aşağıda.',
     'quit': 'Çıkış',
     'settingsTitle': 'AYARLAR',
     'ambience': 'Ortam sesi',
@@ -130,6 +140,16 @@ class S {
     'chapters': 'Chapters',
     'chaptersHint': 'Replay a chapter you have reached',
     'allUnlocked': 'All chapters unlocked',
+    'cameo_suIyesi': 'A face looked up from under the water. Water makes way for one who shows respect.',
+    'cameo_tulpar':
+        'A winged horse beyond the clouds: Tulpar, the hero\'s companion.',
+    'cameo_ayazAta':
+        'A white-bearded old man in the blizzard: Ayaz Ata passed by.',
+    'cameo_akAna':
+        'The first water stirred like this: Ak Ana rose and said, "Create."',
+    'cameo_basat': 'The bard says: so fell Tepegöz too, at the hand of Basat, who grew up among lions.',
+    'cameo_albasti': 'Why is your light fading? A red shadow behind you. Move.',
+    'cameo_erlik': 'A muffled voice from deep below: "Come down..." Erlik\'s realm lies deeper still.',
     'quit': 'Quit',
     'settingsTitle': 'SETTINGS',
     'ambience': 'Ambience',

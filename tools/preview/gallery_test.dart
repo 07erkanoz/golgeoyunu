@@ -7,6 +7,7 @@ import 'package:flame/components.dart';
 import 'package:flame_test/flame_test.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:golge/game/entities.dart';
 import 'package:golge/game/golge_game.dart';
 import 'package:golge/game/level.dart';
 import 'package:golge/game/player.dart';
@@ -46,6 +47,11 @@ void main() {
       game.debugLoadLevel(int.parse(p[1]));
       await game.ready();
       game.cinematic = false;
+      if (const bool.fromEnvironment('NOGUARD')) {
+        for (final g in game.world.children.whereType<Guard>().toList()) {
+          g.removeFromParent();
+        }
+      }
       if (p[2] != '-') {
         game.player!.position.setFrom(Level.standOn(
             Vector2(int.parse(p[2]) * kTile, int.parse(p[3]) * kTile), Player.w, Player.h));

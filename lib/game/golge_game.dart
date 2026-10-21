@@ -26,6 +26,7 @@ import 'hints.dart';
 import 'legends.dart';
 import 'umay.dart';
 import 'gokboru.dart';
+import 'cameos.dart';
 import 'myth_cards.dart';
 import 'nemrut.dart';
 import 'ski.dart';
@@ -147,6 +148,9 @@ class GolgeGame extends FlameGame with KeyboardEvents {
 
   /// Kavanozun ışık gücü: karanlık bölgede ateşböcekleri azaldıkça söner.
   double jarStrength = 1;
+
+  /// Albastı kavanozun ışığını çekiyor (0-1).
+  double jarSteal = 0;
 
   /// Karanlık bölgede bir ateşböceğinin sönme süresi.
   static const darkDrain = 6.5;
@@ -577,6 +581,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
             watch: level.def.gokboruWatch,
             leadTo: level.def.gokboruLead,
           ),
+        if (level.def.cameos.isNotEmpty) CameoWarden(level.def.cameos),
         for (final g in level.guardCells) Guard(g),
         for (final c in level.crateCells) Crate(c),
         for (final l in level.leverCells) Lever(l),
@@ -694,6 +699,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     quake = 0;
     _stormT = 0;
     jarStrength = 1;
+    jarSteal = 0;
     _darkT = 0;
     if (withPlayer) {
       player = Player(_respawn!.clone());
@@ -1398,7 +1404,9 @@ class GolgeGame extends FlameGame with KeyboardEvents {
   /// kalmayınca karanlık Sâye'yi yutar.
   void _updateDarkZone(Player p, double dt) {
     final dark = level.inDarkZone(p.center);
-    final target = dark ? 0.3 + 0.7 * (fireflies / maxFireflies) : 1.0;
+    final target =
+        (dark ? 0.3 + 0.7 * (fireflies / maxFireflies) : 1.0) *
+        (1 - 0.6 * jarSteal);
     jarStrength += (target - jarStrength) * (1 - math.exp(-dt * 2));
     if (!dark) {
       _darkT = 0;

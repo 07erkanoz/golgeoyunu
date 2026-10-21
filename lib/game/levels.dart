@@ -68,7 +68,12 @@ class LevelDef {
     this.gokboruGuard = false,
     this.gokboruHelp = false,
     this.gokboruLead,
+    this.cameos = const [],
   });
+
+  /// Bölüme serpiştirilen kısa efsane görünüşleri: (tür, sütun, satır).
+  /// Türler lib/game/cameos.dart'ta.
+  final List<(String, int, int)> cameos;
 
   /// Gökbörü'nün pençe izleri: (ilk sütun, son sütun, satır). Yalnızca
   /// kavanoz örtülüyken ya da karanlıkta parlar; ince buza ve dikene iz
@@ -433,6 +438,7 @@ List<String> interludeText(int level) {
 const levels = <LevelDef>[
   LevelDef(
     title: 'I · YEREBATAN',
+    cameos: [('suIyesi', 0, 0)],
     subtitle: 'Suyun altında bir şehir uyur.',
     theme: LevelTheme.cistern,
     titleEn: 'I · THE CISTERN',
@@ -582,6 +588,7 @@ const levels = <LevelDef>[
   ),
   LevelDef(
     title: 'III · GÖKYOLU',
+    cameos: [('tulpar', 140, 8)],
     subtitle: 'Kaf\'a giden yol buluttandır.',
     theme: LevelTheme.sky,
     wings: true,
@@ -709,6 +716,7 @@ const levels = <LevelDef>[
   ),
   LevelDef(
     title: 'V · AĞRI',
+    cameos: [('ayazAta', 243, 15)],
     gokboruWatch: [(218, 10)],
     subtitle: 'Tufandan beri karla örtülü bir sır.',
     theme: LevelTheme.snow,
@@ -773,6 +781,7 @@ const levels = <LevelDef>[
   ),
   LevelDef(
     title: 'VI · NUH\'UN GEMİSİ',
+    cameos: [('akAna', 200, 25)],
     subtitle: 'Kırk gün kırk gece. Sonra bir dal, bir güvercin.',
     theme: LevelTheme.ark,
     wings: true,
@@ -889,6 +898,7 @@ const levels = <LevelDef>[
   ),
   LevelDef(
     title: 'VIII · GÜN DOĞUMU',
+    cameos: [('basat', 0, 0)],
     subtitle: 'Güneş doğarken taşlar da gölge düşürür.',
     theme: LevelTheme.nemrut,
     variant: 1,
@@ -1107,6 +1117,7 @@ const levels = <LevelDef>[
   ),
   LevelDef(
     title: 'XII · PERİ BACALARI',
+    cameos: [('albasti', 207, 25)],
     subtitle: 'İnsanlar aşağıda, periler yukarıda yaşardı.',
     theme: LevelTheme.peri,
     wings: true,
@@ -1168,6 +1179,7 @@ const levels = <LevelDef>[
   ),
   LevelDef(
     title: 'XIII · DERİNKUYU',
+    cameos: [('erlik', 266, 43)],
     pawTrails: [(262, 318, 43)],
     gokboruHelp: true,
     subtitle: 'Yerin altında, unutulmuş bir şehir.',
