@@ -11,6 +11,16 @@ Kaynaklar:
   süzgeçle bastırılır.
 - Yarasalar: OpenGameArt "Bat Screeches" (polymorpheva / freesound 104205),
   CC0. Üç çığlık üst üste bindirilip bir sürü yapılır.
+- Kam'ın davulu: Wikimedia Commons "Bęben obręczowy uderzenia pojedyncze"
+  (çerçeve davulu, tek vuruşlar), CC0. En güçlü vuruş, biraz pesleştirilir.
+- Hırlama: OpenGameArt "Bear Growls" (ABD Balık ve Yaban Hayatı Servisi),
+  CC0. İki hırıltı pesleştirilip art arda.
+- Zincir: OpenGameArt "Chain winch sounds", CC0.
+- Taş sürtünmesi: OpenGameArt "Stone Door", CC0.
+- Nefes: Wikimedia Commons "Breathing man", kamu malı. Bir çekiş, bir veriş.
+- Karlı rüzgâr: Wikimedia Commons "Howling wind", CC0. 24 sn dikişsiz döngü.
+- Mağara: OpenGameArt "Dripping water loop" (atmosbasement), CC0. Ani
+  vuruşlar bastırılır, dikişsiz döngü.
 
 Her ses, değiştirdiği yapay sesin ortalama düzeyine (RMS) getirilir.
 Kullanım: python3 -I tools/import_nature.py <kaynak_klasörü> <assets/audio>
@@ -35,7 +45,7 @@ def find(name):
     raise SystemExit(f'bulunamadı: {name}')
 
 
-def load(name, start=0.0, dur=None, slow=1.0, lowpass=None):
+def load(name, start=0.0, dur=None, slow=1.0, lowpass=None, extra=None):
     """Mono, 44,1 kHz kayan noktalı örnekler. [slow] < 1: daha yavaş, pes."""
     path = find(name)
     rate = int(subprocess.run(
@@ -45,6 +55,8 @@ def load(name, start=0.0, dur=None, slow=1.0, lowpass=None):
     af = [f'asetrate={int(rate * slow)}', f'aresample={SR}']
     if lowpass:
         af.append(f'lowpass=f={lowpass}')
+    if extra:
+        af.append(extra)
     cmd = ['ffmpeg', '-v', 'error', '-ss', str(start)]
     if dur:
         cmd += ['-t', str(dur)]
@@ -67,6 +79,16 @@ def trim(x, thr=0.03):
     i = next(i for i, v in enumerate(x) if abs(v) > peak * thr)
     j = len(x) - next(i for i, v in enumerate(reversed(x)) if abs(v) > peak * thr)
     return x[max(0, i - 100):j]
+
+
+def loop(x, xf=2.0):
+    """Sonun [xf] saniyesi başa bindirilir: dikişsiz döngü."""
+    n = int(xf * SR)
+    body = x[:len(x) - n]
+    for k in range(n):
+        a = k / n
+        body[k] = body[k] * a + x[len(x) - n + k] * (1 - a)
+    return body
 
 
 def rms(x):
@@ -129,3 +151,29 @@ b1 = load('bat_01.ogg')
 b2 = load('bat_02.ogg')
 b3 = load('bat_03.ogg')
 save('bats', fade(mix((b1, 0, 1), (b3, 0.22, 0.8), (b2, 0.5, 0.6)), 0.005, 0.4))
+
+# Kam'ın davulu: en güçlü tek vuruş, biraz daha pes ve derin.
+save('drum', fade(load('frame_drum.flac', 0.42, 0.95, slow=0.88), 0.002, 0.3))
+
+# Hırlama: iki ayı hırıltısı, pes; biri öbürünün sönüşüne biner.
+g1 = load('bear_02.ogg', slow=0.82)
+g2 = load('bear_01.ogg', slow=0.78)
+save('growl', fade(mix((g1, 0, 1), (g2, 1.15, 0.85)), 0.01, 0.4))
+
+# Zincir: vinç zinciri şıkırtısı.
+save('chain', fade(load('winch - Marker #9.wav', 0, 2.6), 0.01, 0.3))
+
+# Taş taşa sürtünür.
+save('grind', fade(trim(load('stone_door.ogg')), 0.01, 0.25))
+
+# Nefes: karanlıkta bir içe çekiş, ağır bir veriş.
+save('breath', fade(load('breathing_man.ogg', 6.5, 2.9, lowpass=6000),
+                    0.3, 0.5))
+
+# Karlı rüzgâr: uğuldayan, kesintisiz.
+save('amb_snow', loop(load('howling_wind.ogg', 64, 26), 2.0))
+
+# Mağara: damlalar; ani vuruşlar sıkıştırılır.
+save('amb_cave', loop(load(
+    'atmosbasement.mp3_.flac', 0, 20,
+    extra='acompressor=threshold=-24dB:ratio=8:attack=3:release=250'), 2.0))
