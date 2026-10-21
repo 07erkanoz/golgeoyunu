@@ -735,47 +735,93 @@ class Raft extends Deck {
 
   @override
   void render(Canvas canvas) {
-    final log = Paint()..color = const Color(0xFF22140C);
-    for (var i = 0; i < 3; i++) {
-      canvas.drawRRect(
-        RRect.fromRectAndRadius(
-          Rect.fromLTWH(i * kTile + 1, 0, kTile - 2, 10),
-          const Radius.circular(5),
-        ),
-        log,
-      );
-    }
-    // Karanlık suda seçilsin: kütüklerin üstüne vuran ılık ışık.
-    canvas.drawLine(
-      const Offset(3, 1),
-      Offset(size.x - 3, 1),
-      Paint()
-        ..color = kWarmLight.withValues(alpha: 0.45)
-        ..strokeWidth = 1.6,
+    final w = size.x;
+    // Sal: yan yana bağlanmış kütükler; yandan bakınca öndeki kütüğün kabuğu
+    // ve iki ucunda yıllık halkalar, üstünde enine çakılı tahtalar, iple
+    // sarılı bağlar. Suyun içinde kalan altı koyu.
+    final log = RRect.fromRectAndRadius(
+      Rect.fromLTWH(1, 0, w - 2, 10),
+      const Radius.circular(5),
     );
-    final rope = Paint()
-      ..color = const Color(0xFFA07A52)
-      ..strokeWidth = 1.6;
-    canvas.drawLine(const Offset(8, 1), const Offset(8, 9), rope);
-    canvas.drawLine(Offset(size.x - 8, 1), Offset(size.x - 8, 9), rope);
-    // Sırık: binilmeden önce salın üstüne yatırılmış durur.
-    if (!carrying) {
+    canvas.drawRRect(
+      log,
+      Paint()
+        ..shader = ui.Gradient.linear(
+          Offset.zero,
+          const Offset(0, 10),
+          const [Color(0xFF6A4428), Color(0xFF3A2414), Color(0xFF140A06)],
+          const [0, 0.5, 1],
+        ),
+    );
+    // Kabuk çizgileri.
+    final bark = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.6
+      ..color = const Color(0xFF1A0E06).withValues(alpha: 0.7);
+    for (var k = 0; k < 3; k++) {
+      final y = 2.4 + k * 2.4;
+      final path = Path()..moveTo(6, y);
+      for (var x = 6.0; x <= w - 6; x += 7) {
+        path.lineTo(x, y + math.sin(x * 0.4 + k * 2) * 0.6);
+      }
+      canvas.drawPath(path, bark);
+    }
+    // Uçlarda yıllık halkalar.
+    for (final x in [5.0, w - 5]) {
+      canvas.drawOval(
+        Rect.fromCenter(center: Offset(x, 5), width: 7, height: 9.4),
+        Paint()..color = const Color(0xFFB08458),
+      );
+      for (final r in [2.6, 1.4]) {
+        canvas.drawOval(
+          Rect.fromCenter(center: Offset(x, 5), width: r * 2, height: r * 2.6),
+          Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 0.5
+            ..color = const Color(0xFF6A4428),
+        );
+      }
+    }
+    // Üstteki enine tahtalar.
+    for (var x = 9.0; x < w - 12; x += 13) {
+      canvas.drawRect(
+        Rect.fromLTWH(x, -2.4, 10, 3),
+        Paint()..color = const Color(0xFF7A5232),
+      );
       canvas.drawLine(
-        const Offset(4, -3),
-        Offset(size.x - 2, -6),
+        Offset(x, -2.2),
+        Offset(x + 10, -2.2),
         Paint()
-          ..color = kInk
-          ..strokeWidth = 2,
+          ..color = kWarmLight.withValues(alpha: 0.5)
+          ..strokeWidth = 0.9,
       );
     }
-    if (carrying) {
+    // İp bağları.
+    final rope = Paint()
+      ..color = const Color(0xFFC09A68)
+      ..strokeWidth = 1.1;
+    for (final x in [12.0, w / 2, w - 12]) {
+      for (var k = 0; k < 3; k++) {
+        canvas.drawLine(
+          Offset(x - 2 + k * 1.6, -1),
+          Offset(x - 3 + k * 1.6, 10),
+          rope,
+        );
+      }
+    }
+    // Sırık: ahşap, binilmeden önce salın üstüne yatırılmış durur.
+    final pole = Paint()
+      ..color = const Color(0xFF5A3A20)
+      ..strokeWidth = 2.2
+      ..strokeCap = StrokeCap.round;
+    if (!carrying) {
+      canvas.drawLine(const Offset(4, -5), Offset(w - 2, -8), pole);
+    } else {
       final sway = math.sin(_t * 3) * 6;
       canvas.drawLine(
-        Offset(size.x / 2 + sway, -40),
-        Offset(size.x / 2 - sway - 10, 30),
-        Paint()
-          ..color = kInk
-          ..strokeWidth = 2,
+        Offset(w / 2 + sway, -40),
+        Offset(w / 2 - sway - 10, 30),
+        pole,
       );
     }
   }

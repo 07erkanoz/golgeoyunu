@@ -110,17 +110,45 @@ class PhasePlank extends Deck {
         }
       }
       if (_show > 0.02) {
-        canvas.drawRRect(
-          RRect.fromRectAndRadius(
-            Rect.fromLTWH(0, 0, w, 8),
-            const Radius.circular(3),
-          ),
-          Paint()
-            ..shader = ui.Gradient.linear(Offset.zero, const Offset(0, 8), [
-              const Color(0xFFFFE6B0).withValues(alpha: 0.85 * _show),
-              const Color(0xFFE0A15F).withValues(alpha: 0.5 * _show),
-            ]),
+        // Işıktan dökülmüş tahta: içi akkor, kenarları yanar, altına ve
+        // üstüne yumuşak ışık taşar.
+        final body = RRect.fromRectAndRadius(
+          Rect.fromLTWH(0, 0, w, 8),
+          const Radius.circular(3),
         );
+        canvas.drawRRect(
+          body.inflate(5),
+          Paint()
+            ..color = const Color(0xFFFFD08A).withValues(alpha: 0.28 * _show)
+            ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6),
+        );
+        canvas.drawRRect(
+          body,
+          Paint()
+            ..shader = ui.Gradient.linear(
+              Offset.zero,
+              const Offset(0, 8),
+              [
+                const Color(0xFFFFF6DC).withValues(alpha: 0.95 * _show),
+                const Color(0xFFFFC870).withValues(alpha: 0.8 * _show),
+                const Color(0xFFE08A40).withValues(alpha: 0.6 * _show),
+              ],
+              const [0, 0.45, 1],
+            ),
+        );
+        // İçinde akan ışık damarları.
+        final vein = Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 0.8
+          ..color = const Color(0xFFFFFFFF).withValues(alpha: 0.5 * _show);
+        for (var k = 0; k < 2; k++) {
+          final y = 2.6 + k * 3;
+          final path = Path()..moveTo(2, y);
+          for (var x = 2.0; x <= w - 2; x += 6) {
+            path.lineTo(x, y + math.sin(x * 0.2 + _t * 2 + k) * 0.9);
+          }
+          canvas.drawPath(path, vein);
+        }
         for (var x = 10.0; x < w; x += 22) {
           final mote = math.sin(_t * 2 + x) * 3;
           canvas.drawCircle(
@@ -196,24 +224,20 @@ class RottenPlank extends Deck {
 
   @override
   void render(Canvas canvas) {
-    final wood = Paint()..color = const Color(0xFF1A0F0A);
-    final crack = Paint()
-      ..color = kInk
-      ..strokeWidth = 1.2;
     if (!broken) {
       for (var i = 0; i < tiles; i++) {
-        final x = i * kTile.toDouble();
-        canvas.drawRect(Rect.fromLTWH(x + 1, 0, kTile - 3, 7), wood);
-        canvas.drawLine(Offset(x + 8, 0), Offset(x + 13, 7), crack);
-        canvas.drawLine(Offset(x + 21, 1), Offset(x + 18, 6), crack);
+        _board(canvas, i * kTile.toDouble(), i);
       }
-      // Sarkan kopuk ip.
-      canvas.drawLine(
-        const Offset(2, 7),
-        const Offset(-2, 20),
-        Paint()
-          ..color = const Color(0xFF1A0F0A)
-          ..strokeWidth = 1,
+      // İki uçta paslı çivi ve sarkan kopuk ip.
+      final rope = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.2
+        ..color = const Color(0xFF5A4A34);
+      canvas.drawPath(
+        Path()
+          ..moveTo(2, 7)
+          ..quadraticBezierTo(-2, 13, 0, 20),
+        rope,
       );
       return;
     }
@@ -228,10 +252,75 @@ class RottenPlank extends Deck {
       canvas.rotate(side * _fall * 2.2);
       canvas.drawRect(
         Rect.fromCenter(center: Offset.zero, width: size.x / 2 - 2, height: 7),
-        Paint()..color = const Color(0xFF1A0F0A).withValues(alpha: a),
+        Paint()..color = const Color(0xFF3A3024).withValues(alpha: a),
       );
       canvas.restore();
     }
+  }
+
+  /// Çürümüş tahta: gri-yeşile dönmüş, uçları kırık, delikli, yosunlu;
+  /// ortası hafifçe çökmüş.
+  void _board(Canvas canvas, double x, int i) {
+    const w = kTile - 2.0;
+    final sag = 1.2;
+    final top = Path()
+      ..moveTo(x + 1, 0.6)
+      ..quadraticBezierTo(x + w / 2, sag, x + w, 0.4)
+      ..lineTo(x + w - 1, 3)
+      ..lineTo(x + w, 6.6)
+      ..quadraticBezierTo(x + w / 2, 7 + sag, x + 2, 6.8)
+      ..lineTo(x + 1, 4)
+      ..close();
+    canvas.drawPath(
+      top,
+      Paint()
+        ..shader = ui.Gradient.linear(Offset(x, 0), Offset(x, 7), const [
+          Color(0xFF4E4434),
+          Color(0xFF1E1A12),
+        ]),
+    );
+    canvas.drawLine(
+      Offset(x + 2, 1),
+      Offset(x + w - 2, 0.9),
+      Paint()
+        ..color = const Color(0xFF9A8A6A).withValues(alpha: 0.35)
+        ..strokeWidth = 0.8,
+    );
+    // Çatlaklar ve delikler.
+    final crack = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.9
+      ..color = const Color(0xFF0E0A06);
+    final h = (i * 2654435761) & 0xff;
+    canvas.drawPath(
+      Path()
+        ..moveTo(x + 6 + h % 5, 0.8)
+        ..lineTo(x + 10 + h % 4, 3.4)
+        ..lineTo(x + 8 + h % 6, 6.6),
+      crack,
+    );
+    canvas.drawPath(
+      Path()
+        ..moveTo(x + 20, 1)
+        ..lineTo(x + 17, 4)
+        ..lineTo(x + 22, 6.4),
+      crack,
+    );
+    canvas.drawOval(
+      Rect.fromCenter(center: Offset(x + 14 + h % 6, 3.8), width: 3, height: 2),
+      Paint()..color = const Color(0xFF0A0806),
+    );
+    // Yosun.
+    canvas.drawOval(
+      Rect.fromLTWH(x + 3 + h % 9, -0.6, 7, 2.2),
+      Paint()..color = const Color(0xFF3A5A2A).withValues(alpha: 0.6),
+    );
+    // Paslı çivi.
+    canvas.drawCircle(
+      Offset(x + 3, 3.6),
+      0.8,
+      Paint()..color = const Color(0xFF8A4A26),
+    );
   }
 }
 
