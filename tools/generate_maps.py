@@ -977,7 +977,41 @@ eg.put(305,8,'Z')
 eg.put(313,5,'8'); eg.put(318,5,'K'); eg.put(322,4,'M'); eg.put(328,5,'E')
 lvl_ergenekon=eg.rows()
 
-MAPS = [('kMapYerebatan', lvl1), ('kMapKule', lvl2), ('kMapGokyolu', lvl3), ('kMapKaf', lvl4), ('kMapAgri', lvl5), ('kMapGemi', lvl6), ('kMapNemrut', lvl7), ('kMapGunDogumu', lvl8), ('kMapKarYolu', lvl9), ('kMapPalandoken', lvl10), ('kMapCig', lvl11), ('kMapPeri', lvl12), ('kMapDerinkuyu', lvl13), ('kMapKonya', lvl14), ('kMapErlik', lvl_erlik), ('kMapErgenekon', lvl_ergenekon)]
+# ------------------------------------------------------------ XVI · GÖĞÜN KATLARI (Ötüken)
+# Bulut adaları; `u` davul bulutu (sütunu 4'e bölününce çift/tek takım),
+# `l`/`n` ay katında ışık ve gölge tahtaları, `W` Tulpar, `z`/`Z` Erlik'in
+# fırtınası (Tulpar'a binince soldan gelir, Z'nin sütununda dağılır).
+# Yakıcı ışık (gün katı) LevelDef.scorch.
+W,H=332,40
+gk=G(W,H)
+F=30
+def island(c0,c1,top=F+1,bottom=F+2): gk.fill(c0,top,c1,bottom,'#')
+# A) Bulut kapısı: Kam ve ilk davul bulutları
+island(0,20)
+gk.put(2,F,'P'); gk.put(3,F,'p'); gk.put(5,F,'1')
+for c in (22,26,30): gk.fill(c,F+1,c+2,F+1,'u')
+island(34,50); gk.put(36,F,'2'); gk.put(42,F,'K')
+# B) Ay katı: davul merdiveni, ışık ve gölge tahtaları
+island(51,60); gk.put(52,F,'p')
+for i,(c,r) in enumerate(((62,F-1),(66,F-3),(70,F-5),(74,F-7))): gk.fill(c,r+1,c+2,r+1,'u')
+island(78,90,F-7,F-6); gk.put(80,F-8,'M'); gk.put(84,F-8,'3')
+gk.fill(91,F-7,93,F-7,'l'); gk.fill(94,F-7,97,F-7,'n'); gk.fill(98,F-7,100,F-7,'l'); gk.fill(101,F-7,104,F-7,'n')
+island(105,120,F-7,F-6); gk.put(110,F-8,'K'); gk.put(112,F-8,'4')
+# C) Gün katı: yakıcı ışık, Umay kuşunun gölgesi; çukurlar ve davul bulutları
+island(121,139); island(142,157); island(161,175); island(178,185); island(196,200)
+for c in (186,190): gk.fill(c,F+1,c+2,F+1,'u')
+gk.put(122,F,'p'); gk.put(123,F,'5')
+# D) Ülgen'in kapısı
+island(201,236); gk.put(203,F,'6'); gk.put(206,F,'K'); gk.put(230,F,'M'); gk.put(233,F,'p')
+# E) Tulpar: fırtınadan kaçış, bulut sütunları arasından uçuş
+island(237,246); gk.put(240,F,'W'); gk.put(242,F,'z'); gk.put(238,F,'7')
+for c,(t,b) in ((254,(0,18)),(264,(22,39)),(274,(0,15)),(284,(20,39)),(294,(0,19)),(304,(24,39))):
+    gk.fill(c,t,c+2,b,'#')
+island(266,268,F-11,F-10); island(288,290,12,12); gk.put(289,11,'M')
+island(310,331); gk.put(316,F,'Z'); gk.put(318,F,'8'); gk.put(320,F,'K'); gk.put(328,F,'E')
+lvl_gok=gk.rows()
+
+MAPS = [('kMapYerebatan', lvl1), ('kMapKule', lvl2), ('kMapGokyolu', lvl3), ('kMapKaf', lvl4), ('kMapAgri', lvl5), ('kMapGemi', lvl6), ('kMapNemrut', lvl7), ('kMapGunDogumu', lvl8), ('kMapKarYolu', lvl9), ('kMapPalandoken', lvl10), ('kMapCig', lvl11), ('kMapPeri', lvl12), ('kMapDerinkuyu', lvl13), ('kMapKonya', lvl14), ('kMapErlik', lvl_erlik), ('kMapErgenekon', lvl_ergenekon), ('kMapGok', lvl_gok)]
 
 out = ['// Bu dosya tools/generate_maps.py ile üretilir; elle düzenleme.',
        '// Gösterim: lib/game/level.dart başındaki açıklamaya bakın.', '']

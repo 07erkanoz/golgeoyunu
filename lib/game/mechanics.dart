@@ -75,9 +75,7 @@ abstract class Deck extends PositionComponent with HasGameReference<GolgeGame> {
         ..color = const Color(0xFFD08A5A).withValues(alpha: 0.35 * alpha)
         ..strokeWidth = 1.2,
     );
-    if (theme == LevelTheme.sky ||
-        theme == LevelTheme.cliffs ||
-        theme == LevelTheme.kaf) {
+    if (theme.airy || theme == LevelTheme.cliffs) {
       final root = Paint()
         ..color = kInk.withValues(alpha: alpha)
         ..strokeWidth = 1

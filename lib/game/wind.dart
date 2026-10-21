@@ -5,7 +5,6 @@ import 'package:flame/components.dart';
 
 import 'golge_game.dart';
 import 'level.dart';
-import 'levels.dart';
 import 'palette.dart';
 
 /// Rüzgâr akımları (`r`) ve süzülme izleri: görünmeyen havayı görünür kılar.
@@ -72,7 +71,7 @@ class WindCurrents extends Component with HasGameReference<GolgeGame> {
   /// akım beyaz ve daha belirgin çizilir.
   bool get _bright {
     final t = game.level.def.theme;
-    return t == LevelTheme.kaf || t == LevelTheme.sky;
+    return t.airy;
   }
 
   void _zone(Canvas canvas, Rect z) {

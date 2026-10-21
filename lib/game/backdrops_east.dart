@@ -1278,4 +1278,83 @@ extension _EastBackdrops on Backdrop {
       color: const Color(0xFF16261A),
     );
   }
+
+  // ------------------------------------------------------ Göğün katları
+
+  /// Göğün katları: önce ay katı (soğuk, yumuşak, büyük ay: Ay Ata), sonra
+  /// gün katı (sıcak, yakıcı: Gün Ana), Ülgen'in kapısında kırık güneşin
+  /// parçası; en sonda Erlik'in fırtınası.
+  void _heavens(Canvas canvas, double w, double h, Vector2 cam) {
+    final lv = game.level;
+    final u = (cam.x / lv.pixelWidth).clamp(0.0, 1.0);
+    final day = ((u - 0.3) / 0.15).clamp(0.0, 1.0);
+    final storm = ((u - 0.74) / 0.08).clamp(0.0, 1.0);
+    final top = Color.lerp(
+      Color.lerp(const Color(0xFF101A3A), const Color(0xFF6AA0E0), day)!,
+      const Color(0xFF1A1028),
+      storm,
+    )!;
+    final mid = Color.lerp(
+      Color.lerp(const Color(0xFF2A3A6A), const Color(0xFFE8C890), day)!,
+      const Color(0xFF3A2440),
+      storm,
+    )!;
+    final low = Color.lerp(
+      Color.lerp(const Color(0xFF4A5A8A), const Color(0xFFF0D8A8), day)!,
+      const Color(0xFF4A3048),
+      storm,
+    )!;
+    _gradient(canvas, Rect.fromLTWH(0, 0, w, h), [top, mid, low]);
+    if (day < 1) {
+      _stars(canvas, w, h, (70 * (1 - day)).round(), cam.x);
+      _moon(
+        canvas,
+        Offset(w * 0.3, h * 0.26),
+        h * 0.12,
+        const Color(0xFFCFE0FF),
+      );
+    }
+    if (day > 0 && storm < 1) {
+      final a = day * (1 - storm);
+      final c = Offset(w * 0.68, h * 0.24);
+      _lightLeak(canvas, c, h * 1.2, 0.5 * a, const Color(0xFFFFE8B0));
+      if (u > 0.58 && u < 0.76) {
+        _brokenSun(canvas, c, h * 0.11);
+      } else {
+        canvas.drawCircle(
+          c,
+          h * 0.1,
+          Paint()..color = const Color(0xFFFFF6DA).withValues(alpha: a),
+        );
+      }
+    }
+    // Bulut katları: üst üste, ağır ağır kayan.
+    for (var k = 0; k < 3; k++) {
+      final c = Color.lerp(
+        Color.lerp(const Color(0xFF34406E), const Color(0xFFFFF4E4), day)!,
+        const Color(0xFF2A1C34),
+        storm,
+      )!.withValues(alpha: 0.5 + k * 0.15);
+      _ridge(
+        canvas,
+        w,
+        h,
+        offset: cam.x * (0.08 + k * 0.1) + _t * (3 + k * 3),
+        base: h * (0.55 + k * 0.14),
+        amp: 30 - k * 4,
+        freq: 0.012 + k * 0.002,
+        seed: 31 + k,
+        color: c,
+        bumpy: true,
+      );
+    }
+    // Fırtınada şimşek.
+    if (storm > 0 && (_t * 0.7) % 1 < 0.04) {
+      canvas.drawRect(
+        Rect.fromLTWH(0, 0, w, h),
+        Paint()
+          ..color = const Color(0xFFE8E0FF).withValues(alpha: 0.25 * storm),
+      );
+    }
+  }
 }

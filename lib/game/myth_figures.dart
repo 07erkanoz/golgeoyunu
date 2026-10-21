@@ -1806,4 +1806,37 @@ class MythFigures {
     }
     _eyeGlow(c, const Offset(-0.8, -94), fire, 0.5);
   }
+
+  /// Ülgen'in ışığı: biçimi olmayan, kendini anlatan bir aydınlık; dönen
+  /// ışınlar ve ağır ağır atan bir öz.
+  static void ulgenLight(Canvas c, double t) {
+    const at = Offset(0, -70);
+    c.drawCircle(
+      at,
+      90,
+      Paint()
+        ..shader = ui.Gradient.radial(at, 90, [
+          const Color(0xFFFFFBEA).withValues(alpha: 0.9),
+          const Color(0x00FFE8B0),
+        ]),
+    );
+    final ray = Paint()
+      ..strokeCap = StrokeCap.round
+      ..color = const Color(0xFFFFF4D0).withValues(alpha: 0.55);
+    for (var i = 0; i < 16; i++) {
+      final a = i / 16 * math.pi * 2 + t * 0.15;
+      final len = 50 + 18 * math.sin(t * 1.3 + i * 1.7);
+      ray.strokeWidth = i.isEven ? 2.2 : 1.2;
+      c.drawLine(
+        at + Offset(math.cos(a), math.sin(a)) * 22,
+        at + Offset(math.cos(a), math.sin(a)) * len,
+        ray,
+      );
+    }
+    c.drawCircle(
+      at,
+      14 + 2 * math.sin(t * 2),
+      Paint()..color = const Color(0xFFFFFFFF),
+    );
+  }
 }

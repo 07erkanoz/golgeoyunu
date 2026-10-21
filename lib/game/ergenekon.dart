@@ -410,12 +410,7 @@ class MistZone extends Component with HasGameReference<GolgeGame> {
             Color(0xF0DCE4DC),
             Color(0x00DCE4DC),
           ],
-          [
-            0,
-            0.5,
-            (area.bottom - r.top) / r.height,
-            1,
-          ],
+          [0, 0.5, (area.bottom - r.top) / r.height, 1],
         ),
     );
     // Ağır ağır sürüklenen yoğun tutamlar (yumuşak kenarlı).

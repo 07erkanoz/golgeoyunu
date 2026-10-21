@@ -29,6 +29,7 @@ import 'gokboru.dart';
 import 'cameos.dart';
 import 'erlik.dart';
 import 'ergenekon.dart';
+import 'heavens.dart';
 import 'myth_cards.dart';
 import 'nemrut.dart';
 import 'ski.dart';
@@ -163,14 +164,23 @@ class GolgeGame extends FlameGame with KeyboardEvents {
       1 +
       0.3 * world.children.whereType<KutCage>().where((k) => k.freed).length;
 
-  /// Çalkuyruk Sâye'yi sırtına alır.
-  void mountHorse() {
+  /// Tulpar'ın sırtında: havada zıplayınca kanat çırpılır.
+  bool flying = false;
+
+  /// Çalkuyruk (ya da kanatlı Tulpar) Sâye'yi sırtına alır.
+  void mountHorse({bool winged = false}) {
     if (onHorse) return;
     onHorse = true;
+    flying = winged;
     GameAudio.instance.play('land', volume: 0.7);
     GameAudio.instance.play('gust', volume: 0.6);
-    once('calkuyruk', S.of('calkuyrukMount'));
-    meetMyth('erTostuk');
+    if (winged) {
+      once('tulparMount', S.of('tulparMount'));
+      meetMyth('tulpar');
+    } else {
+      once('calkuyruk', S.of('calkuyrukMount'));
+      meetMyth('erTostuk');
+    }
   }
 
   /// Karanlık bölgede bir ateşböceğinin sönme süresi.
@@ -648,7 +658,9 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         for (final c in level.thinIceCells) ThinIce(c),
         for (final c in level.crowCells) Crow(c),
         for (final c in level.watcherCells) Watcher(c),
-        if (level.def.theme == LevelTheme.underworld)
+        if (level.def.theme == LevelTheme.heavens)
+          for (final c in level.wingsCells) TulparMount(c)
+        else if (level.def.theme == LevelTheme.underworld)
           for (final c in level.wingsCells) Calkuyruk(c)
         else if (!wingsCollected)
           for (final c in level.wingsCells) WingsPickup(c),
@@ -697,8 +709,16 @@ class GolgeGame extends FlameGame with KeyboardEvents {
               math.min(2, n - k),
               shade: true,
             ),
+        if (level.def.theme == LevelTheme.heavens) KamDrum(),
         for (final (c, r, n) in level.rottenRuns)
-          if (level.def.theme == LevelTheme.ergenekon)
+          if (level.def.theme == LevelTheme.heavens)
+            DrumCloud(
+              Vector2(c * kTile.toDouble(), r * kTile.toDouble()),
+              n,
+              // Dört sütun arayla dizilen bulutlar sırayla belirir.
+              group: (c ~/ 4) % 2,
+            )
+          else if (level.def.theme == LevelTheme.ergenekon)
             MoltenChannel(
               Vector2(c * kTile.toDouble(), r * kTile.toDouble()),
               n,
@@ -707,6 +727,15 @@ class GolgeGame extends FlameGame with KeyboardEvents {
           else
             RottenPlank(c, r, n),
         ..._forges(),
+        for (final (c0, r0, c1, r1) in level.def.scorch)
+          ScorchZone(
+            Rect.fromLTRB(
+              c0 * kTile.toDouble(),
+              r0 * kTile.toDouble(),
+              (c1 + 1) * kTile.toDouble(),
+              (r1 + 1) * kTile.toDouble(),
+            ),
+          ),
         for (final (c0, r0, c1, r1) in level.def.mists)
           MistZone(
             Rect.fromLTRB(
@@ -734,6 +763,9 @@ class GolgeGame extends FlameGame with KeyboardEvents {
             Avalanche(level.chaseStart!, level.chaseEnd!)
           else if (level.def.theme == LevelTheme.konya)
             LightFlood(level.chaseStart!, level.chaseTop!)
+          else if (level.def.theme == LevelTheme.heavens)
+            // Erlik'in fırtınası: Sâye Tulpar'a binince soldan gelir.
+            StormWall(level.chaseStart!, level.chaseEnd!)
           else if (level.def.theme == LevelTheme.ergenekon)
             // Dağ erir: akkor demir aşağıdan yükselir.
             LightFlood(level.chaseStart!, level.chaseTop!, molten: true)
@@ -783,6 +815,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     jarStrength = 1;
     jarSteal = 0;
     onHorse = false;
+    flying = false;
     _darkT = 0;
     if (withPlayer) {
       player = Player(_respawn!.clone());
@@ -1384,6 +1417,13 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         IronVein v when near(v, 6, 4) && !v.lit => 'forge',
         Bellows b when near(b, 4, 3) && b.order > 0 => 'bellows',
         MoltenChannel m when near(m, 4, 3) => 'molten',
+        DrumCloud d when near(d, 4, 3) => 'drum',
+        ScorchZone z
+            when z.area
+                .inflate(2 * kTile)
+                .contains(Offset(p.center.x, p.center.y)) =>
+          'scorch',
+        TulparMount t when near(t, 5, 4) && !onHorse => 'tulpar',
         Valve v when near(v, 4, 3) => 'valve',
         PerdeCord k when near(k, 4, 3) => 'cord',
         ArkScale s when near(s.lift.a, 6, 4) || near(s.lift.b, 6, 4) => 'scale',

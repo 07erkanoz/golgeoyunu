@@ -34,11 +34,17 @@ enum LevelTheme {
   underworld,
 
   /// Ergenekon: dört yanı aşılmaz dağlarla çevrili yeşil vadi, demir dağ.
-  ergenekon;
+  ergenekon,
+
+  /// Göğün katları: ay katı, gün katı, Ülgen'in kapısı; bulutlar.
+  heavens;
 
   /// Kapalı mekân: tavanın üstü kaya, uzaktan zincir sesleri.
   bool get indoor =>
       this == cistern || this == cave || this == ark || this == underworld;
+
+  /// Gökte: haritanın dışı boşluk, tahtalar bulut, rüzgâr akımları parlak.
+  bool get airy => this == sky || this == kaf || this == heavens;
 
   /// Kar yağar, kayaların üstü karla örtülü.
   bool get snowy => this == snow || this == nemrut || this == konya;
@@ -80,7 +86,12 @@ class LevelDef {
     this.bardEn = '',
     this.bellows = const [],
     this.mists = const [],
+    this.scorch = const [],
   });
+
+  /// Gün katı: yakıcı ışık alanları (sol, üst, sağ, alt); Umay kuşunun
+  /// gölgesinde yürünür.
+  final List<(int, int, int, int)> scorch;
 
   /// Ergenekon: deri körükler (sütun, satır, sıra); her biri en yakın demir
   /// damarına bağlanır, sırası üstündeki çentiklerle gösterilir.
@@ -358,7 +369,7 @@ const interludes = <List<String>>[
     'Yerin en dibinden boğuk bir ses gelir. Derler ki Erlik\'in katı oradan da aşağıdadır.',
   ],
   [
-    'Yerin altından çıktığında gökte ay vardı; önünde uçsuz bucaksız, karlı bir ova.',
+    'Tulpar onu bulutların arasından indirdiğinde gökte ay vardı; önünde uçsuz bucaksız, karlı bir ova.',
     'Batıda bir şehrin kubbeleri parlıyordu. Kandilciler ustayı oraya götürmüştü: Konya\'ya, Selçukluların başkentine, Mevlânâ\'nın şehrine.',
     'O gece on yedi Aralık\'tı. Konya\'da bu geceye Şeb-i Arûs derler: düğün gecesi.',
     'Neredeyse dört yüz yıl önce bu gece Mevlânâ ölmüştü. "Ağlamayın," demişti, "bu benim düğünümdür."',
@@ -384,6 +395,13 @@ const interludes = <List<String>>[
     'Dağ eridi; yüklü bir devenin geçeceği kadar yol açıldı. Kimi anlatılar, yolu bir boz kurdun gösterdiğini söyler.',
     'O gün kutsal sayıldı: her yıl o gün bir parça demir ateşte kızdırılır, örsün üstünde dövülürdü.',
     'Kandilciler vadinin ocağındaki ateşi de toplamıştı. Ocak sönük, Sâye; körükler bekliyor.',
+  ],
+  [
+    'Ozan der ki: Altay\'da kamlar davullarını çalınca canları göğe yükselirmiş. Göğün kat kat olduğunu onlar anlatır.',
+    'En yüksek katta Ülgen oturur: iyiliğin ve aydınlığın kaynağı. Erlik onun karşıtıdır.',
+    'Bir katında ay soğuk ve yumuşak yanar; bir katında güneş yakar.',
+    'Derler ki Hüma\'nın gölgesi kimin başına düşerse ona kut getirir. Tulpar ise yiğidi göğün katları arasında taşır.',
+    'Kandilciler kırık güneşin bir parçasını göğün en yüksek katına götürmüştü. Bir kam davulunu çaldı; Sâye bulutların üstüne yükseldi.',
   ],
 ];
 
@@ -483,7 +501,7 @@ const interludesEn = <List<String>>[
     'A muffled voice comes from the very bottom of the earth. They say Erlik\'s realm lies deeper still.',
   ],
   [
-    'When he climbed up out of the underworld, the moon was in the sky, and before him lay an endless snowy plain.',
+    'When Tulpar brought him down through the clouds, the moon was in the sky, and before him lay an endless snowy plain.',
     'In the west the domes of a city were shining. The Lamplighters had taken the master there: to Konya, capital of the Seljuks, city of Mevlana.',
     'That night was the seventeenth of December. In Konya they call this night Sheb-i Arus: the wedding night.',
     'Almost four hundred years before, on this night, Mevlana had died. "Do not weep," he had said, "this is my wedding."',
@@ -510,18 +528,25 @@ const interludesEn = <List<String>>[
     'That day was held sacred: every year on that day a piece of iron was heated in the fire and struck upon the anvil.',
     'The Lamplighters had taken the fire from the valley\'s forge as well. The forge is cold, Saye; the bellows are waiting.',
   ],
+  [
+    'The bard says: in the Altai, when shamans beat their drums their souls rose into the sky. It is they who tell that the sky has many layers.',
+    'In the highest layer dwells Ülgen: the source of goodness and light. Erlik is his opposite.',
+    'In one layer the moon burns cold and soft; in another the sun scorches.',
+    'They say the shadow of the Huma brings kut to whomever it falls on. And Tulpar carries the hero between the layers of the sky.',
+    'The Lamplighters had carried a piece of the broken sun to the highest layer of the sky. A shaman beat his drum, and Saye rose above the clouds.',
+  ],
 ];
 
 /// Oynanış sırası. Bölümün kimliği `levels` listesindeki yeridir ve hiç
 /// değişmez (kayıt, hatıralar, görülen olaylar bu kimlikle tutulur); yeni
 /// bölümler listenin sonuna eklenir, oynanıştaki yerlerine bu sırada girer.
 const levelOrder = <int>[
-  0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 13, //
+  0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 16, 13, //
 ];
 
 /// Sıra değişince artar: kayıttaki "açılan en ileri bölüm" (sıradaki yer)
 /// eski sıradan yenisine çevrilir.
-const levelOrderVersion = 3;
+const levelOrderVersion = 4;
 
 /// Eski sıra sürümlerinde her yerdeki bölüm kimliği (1. sürüm: kimlik =
 /// yer).
@@ -529,6 +554,7 @@ const _levelOrderHistory = <int, List<int>>{
   1: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13],
   2: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 13],
   3: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 13],
+  4: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 16, 13],
 };
 
 /// Bölümün oynanış sırasındaki yeri (yoksa -1).
@@ -1387,14 +1413,14 @@ const levels = <LevelDef>[
     map: kMapDerinkuyu,
   ),
   LevelDef(
-    title: 'XVI · ŞEB-İ ARÛS',
+    title: 'XVII · ŞEB-İ ARÛS',
     bard: 'Ozan der ki: Dönen döner, gölge düşer; kim dönerse yolunu bulur.',
     bardEn: 'The bard says: the whirling turn, the shadows fall; whoever turns finds the way.',
     gokboruGuard: true,
     subtitle: 'Bu gece ölüm bir düğündür.',
     theme: LevelTheme.konya,
     wings: true,
-    titleEn: 'XVI · SHEB-I ARUS',
+    titleEn: 'XVII · SHEB-I ARUS',
     subtitleEn: 'Tonight, death is a wedding.',
     place: 'Konya · 17 Aralık 1660, Şeb-i Arûs gecesi',
     placeEn: 'Konya · 17 December 1660, the night of Sheb-i Arus',
@@ -1607,5 +1633,56 @@ const levels = <LevelDef>[
       'Memory · "What happens if the forge goes out, master?" "Someone lights it again, Saye. Fire always comes from someone\'s hand."',
     ],
     map: kMapErgenekon,
+  ),
+  LevelDef(
+    title: 'XVI · GÖĞÜN KATLARI',
+    subtitle: 'Her kat bir öncekinden aydınlık.',
+    titleEn: 'XVI · THE LAYERS OF THE SKY',
+    subtitleEn: 'Each layer brighter than the last.',
+    theme: LevelTheme.heavens,
+    bard: 'Ozan der ki: Gök kat kattır; davul vurdukça basamak olur, kanat çırptıkça yol.',
+    bardEn: 'The bard says: the sky is layer upon layer; each drumbeat a step, each wingbeat a road.',
+    place: 'Ötüken · Göğün katları',
+    placeEn: 'Ötüken · The layers of the sky',
+    scorch: [(121, 18, 199, 31)],
+    cameos: [('kam', 12, 30), ('gokKat', 84, 22), ('ulgen', 222, 30)],
+    areas: ['Bulut Kapısı', 'Ay Katı', 'Gün Katı', 'Ülgen\'in Kapısı'],
+    areasEn: [
+      'The Cloud Gate',
+      'The Moon Layer',
+      'The Sun Layer',
+      'Ülgen\'s Gate',
+    ],
+    whispers: [
+      'Kam\'ın davulu seni göğe taşıdı. Göğün katları üst üste; her biri bir öncekinden aydınlık.',
+      'Davulun her vuruşunda bir bulut belirir, öbürü söner. Vuruşu say.',
+      'Ay katı: ışık soğuk ve yumuşak. Burada hem ışık hem gölge yol olur.',
+      'Yukarısı gün katı: ışık yakar. Biri gölgesini sana uzatacak.',
+      'Hüma! Gölgesi kimin başına düşerse... Gölgesinden çıkma.',
+      'Ülgen\'in kapısı. Işık burada konuşmaz; görünür.',
+      'Fırtına! Erlik göğe de uzandı. Tulpar seni bekliyor.',
+      'Tulpar seni bulutların arasından aşağı, karlı bir ovaya indirdi. Uzakta bir şehrin kubbeleri.',
+    ],
+    whispersEn: [
+      'The shaman\'s drum carried you into the sky. The layers of the sky lie one above another, each brighter than the last.',
+      'With every drumbeat one cloud appears and the other fades. Count the beat.',
+      'The moon layer: the light is cold and soft. Here both light and shadow become a road.',
+      'Above is the sun layer: its light burns. Someone will lend you their shadow.',
+      'The Huma! Whoever its shadow falls on... Do not leave its shadow.',
+      'Ülgen\'s gate. Here light does not speak; it shows itself.',
+      'A storm! Erlik has reached into the sky as well. Tulpar is waiting for you.',
+      'Tulpar brought you down through the clouds to a snowy plain. In the distance, the domes of a city.',
+    ],
+    memories: [
+      'Hatıra · "Bir gün gökte de bir perde açacağım," derdi ustam. "Bulutlar tasvir olacak."',
+      'Hatıra · Ay ışığında perde başka türlü yanar. "Soğuk ışık da ışıktır," demişti ustam.',
+      'Hatıra · "Usta, güneşi kim kırdı?" "Ona tek başına sahip olmak isteyen, Sâye."',
+    ],
+    memoriesEn: [
+      'Memory · "One day I will open a screen in the sky too," my master used to say. "The clouds will be the puppets."',
+      'Memory · In moonlight the screen glows differently. "Cold light is light as well," my master had said.',
+      'Memory · "Master, who broke the sun?" "Someone who wanted it all to himself, Saye."',
+    ],
+    map: kMapGok,
   ),
 ];

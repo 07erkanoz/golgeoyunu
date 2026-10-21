@@ -47,6 +47,10 @@ enum PerdeScene {
   /// yolu gösteren kurt, örste dövülen kızgın demir.
   ergenekon,
 
+  /// Göğün katları: kam davulu, Ülgen'in ışığı, ay ve güneş, Hüma ve
+  /// Tulpar, kırık güneşin parçası.
+  gok,
+
   /// Konya: düğün gecesi, semâzenler, neyzen.
   sema,
 
@@ -69,6 +73,7 @@ PerdeScene? interludeScene(int level) => switch (level) {
   13 => PerdeScene.sema,
   14 => PerdeScene.akAna,
   15 => PerdeScene.ergenekon,
+  16 => PerdeScene.gok,
   _ => null,
 };
 
@@ -192,6 +197,8 @@ class PerdePainter {
         _akAnaScene(canvas, time, progress);
       case PerdeScene.ergenekon:
         _ergenekonScene(canvas, time, progress);
+      case PerdeScene.gok:
+        _gokScene(canvas, time, progress);
       case PerdeScene.sema:
         _semaScene(canvas, time, progress);
       case PerdeScene.epilogue:

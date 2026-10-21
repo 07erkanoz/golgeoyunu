@@ -93,6 +93,11 @@ class S {
     'legendsTitle': 'EFSANELER',
     'legendsIntro': 'Yolda karşılaştığın varlıklar ve onların eski hikâyeleri.',
     'mythNoted': 'Defter\'e yazıldı · Efsaneler',
+    'tulparMount':
+        'Tulpar diz çöktü: "Bin, çocuk. Erlik\'in fırtınası geliyor; uç!"',
+    'cameo_kam': 'Bulutun üstünde bir kam davulunu çalıyor: "Davul benim atımdır; her vuruşta göğe bir basamak."',
+    'cameo_gokKat': 'Ay katı: ışık soğuk ve yumuşak. Kimi anlatılarda Ay Ata\'dır, Güneş ise Gün Ana.',
+    'cameo_ulgen': 'Ülgen\'in kapısı. Kimse konuşmuyor; ışık kendini anlatıyor: "Işık bölünmeye razı olur, sahiplenilmeye razı olmaz."',
     'forgeCold': 'Ocak sönük. Kandilciler buradaki ateşi de toplamış; bir ateşböceği onu yeniden yakar.',
     'forgeLit': 'Közler tutuştu. Şimdi körükler: çentik sayısı sırasıyla.',
     'cameo_demirci': 'Demirci örsün başında: "Körükleri sırayla bas, çocuk. Dağın demiri sabırla erir."',
@@ -214,6 +219,11 @@ class S {
     'legendsTitle': 'LEGENDS',
     'legendsIntro': 'The beings you met on the road, and their old stories.',
     'mythNoted': 'Written in the journal · Legends',
+    'tulparMount':
+        'Tulpar knelt: "Climb on, child. Erlik\'s storm is coming; fly!"',
+    'cameo_kam': 'Above the cloud a shaman beats his drum: "The drum is my horse; each beat is a step into the sky."',
+    'cameo_gokKat': 'The moon layer: the light is cold and soft. In some tellings the Moon is Ay Ata, and the Sun is Gün Ana.',
+    'cameo_ulgen': 'Ülgen\'s gate. No one speaks; the light speaks for itself: "Light agrees to be shared; it never agrees to be owned."',
     'forgeCold': 'The forge is cold. The Lamplighters took this fire too; a firefly will light it again.',
     'forgeLit':
         'The coals caught. Now the bellows: in the order of their notches.',

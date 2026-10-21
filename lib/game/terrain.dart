@@ -106,7 +106,7 @@ class TerrainComponent extends Component with HasGameReference<GolgeGame> {
     final lv = _level;
     final theme = lv.def.theme;
     // Haritanın dışı: yanlar (ve kapalı mekânlarda tavanın üstü) dolu kaya.
-    if (theme != LevelTheme.sky && theme != LevelTheme.kaf) {
+    if (!theme.airy) {
       const m = 3000.0;
       canvas.drawRect(Rect.fromLTRB(-m, -m, 0, lv.pixelHeight + m), _ink);
       canvas.drawRect(
@@ -242,7 +242,7 @@ Picture _buildTerrain(Level lv, int c0, int c1, int r0, int r1) {
               ),
               Paint()..color = _snowCap,
             );
-          } else if (theme == LevelTheme.sky) {
+          } else if (theme == LevelTheme.sky || theme == LevelTheme.heavens) {
             for (var i = 0; i < 4; i++) {
               canvas.drawCircle(
                 Offset(

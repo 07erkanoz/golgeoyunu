@@ -17,6 +17,7 @@ import 'gokboru.dart';
 import 'cameos.dart';
 import 'erlik.dart';
 import 'ergenekon.dart';
+import 'heavens.dart';
 import '../settings.dart';
 import 'golge_game.dart';
 import 'level.dart';
@@ -47,6 +48,7 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
     LevelTheme.konya => 0.38,
     LevelTheme.underworld => 0.42,
     LevelTheme.ergenekon => 0.2,
+    LevelTheme.heavens => 0.12,
   };
 
   final _cut = Paint()..blendMode = BlendMode.dstOut;
@@ -162,6 +164,8 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
           _light(canvas, m.position.toOffset(), 80, 0.8);
         case IronVein v when v.lit || v.melt > 0:
           _light(canvas, v.forge, 90 + 60 * v.melt, 0.7);
+        case TulparMount t:
+          _light(canvas, t.glowCenter, 80, 0.6);
         case KutCage k when !k.freed:
           _light(canvas, k.glowCenter, 70, 0.6);
         case Calkuyruk c:

@@ -294,7 +294,12 @@ satır), yeni perdede kopuz motifi müzikte duyulur.
    LevelDef.mists, sonda akkor demir seli. Anlatı Reşidüddin ve Ebulgazi'ye
    göre: yeşil vadi, Kıyan ile Nüküz, yetmiş deri körük, örste dövülen
    demir; Asena (Göktürk efsanesi) mağarada sığınak. Kimlik 15, sıra
-   sürümü 3. XVI bekliyor; Konya şimdilik XVI.)*
+   sürümü 3.
+   XVI Göğün Katları — lib/game/heavens.dart: Kam'ın davulu (KamDrum),
+   davul bulutları `u` (sütun/4 çift-tek), yakıcı ışık LevelDef.scorch ve
+   Hüma'nın gölgesi, Tulpar `W` (havada zıplayınca kanat çırpar), Erlik'in
+   fırtınası `z`/`Z`; ay katı → gün katı → fırtına gökyüzü. Kimlik 16, sıra
+   sürümü 4. Konya artık XVII.)*
 7. Konya eklemeleri (Gökbörü, çiçek açan ağaç, çaputlar).
 
 ---

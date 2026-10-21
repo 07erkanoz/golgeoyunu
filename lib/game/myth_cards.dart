@@ -341,5 +341,81 @@ class MythCard {
       sourceTr: 'Göktürk türeyiş efsanesi (Çin kaynakları, Zhoushu)',
       sourceEn: 'Göktürk origin legend (Chinese sources, Zhoushu)',
     ),
+    MythCard(
+      id: 'kam',
+      nameTr: 'Kam',
+      nameEn: 'Kam (Shaman)',
+      whoTr: 'Göğün ve yerin katları arasında yolculuk eden şaman; davulu yol açar.',
+      whoEn: 'The shaman who journeys between the layers of sky and earth; his drum opens the way.',
+      storyTr:
+          'Altay ve Sibirya Türklerinde kam, ayin sırasında ruhunu göğün '
+          'katlarına ya da yerin altına gönderir. Davulu onun bineği '
+          'sayılır; davulun derisine göğün, yerin ve hayat ağacının '
+          'resimleri çizilir.',
+      storyEn:
+          'Among the Altai and Siberian Turks, the kam sends his soul to the '
+          'layers of the sky or beneath the earth during the rite. His drum '
+          'is said to be his mount; pictures of the sky, the earth and the '
+          'tree of life are painted on its hide.',
+      sourceTr: 'Altay şamanlığı (Radloff, Anohin derlemeleri)',
+      sourceEn: 'Altai shamanism (collected by Radloff, Anokhin)',
+    ),
+    MythCard(
+      id: 'ayAtaGunAna',
+      nameTr: 'Ay Ata ve Gün Ana',
+      nameEn: 'Ay Ata and Gün Ana',
+      whoTr:
+          'Kimi Türk anlatılarında Ay erkek ata, Güneş dişi ana olarak anılır.',
+      whoEn:
+          'In some Turkic tellings the Moon is a father and the Sun a mother.',
+      storyTr:
+          'Eski Türk inancında gök cisimleri kutsal sayılır. Kimi '
+          'anlatılarda Ay, Ay Ata; Güneş, Gün Ana diye anılır. Oğuz Kağan '
+          'Destanı\'nda Oğuz\'un oğullarından ikisinin adı Gün ve Ay\'dır.',
+      storyEn:
+          'In old Turkic belief the heavenly bodies were held sacred. In some '
+          'tellings the Moon is called Ay Ata and the Sun Gün Ana. In the '
+          'Oghuz Khagan epic two of Oghuz\'s sons are named Gün (Sun) and Ay '
+          '(Moon).',
+      sourceTr: 'Türk halk inançları; Oğuz Kağan Destanı',
+      sourceEn: 'Turkic folk belief; Oghuz Khagan epic',
+    ),
+    MythCard(
+      id: 'umayKusu',
+      nameTr: 'Umay kuşu (Hüma)',
+      nameEn: 'The Umay bird (Huma)',
+      whoTr: 'Gölgesi kime düşerse ona talih ve kut getirdiğine inanılan kuş.',
+      whoEn: 'The bird whose shadow is believed to bring fortune and kut to whomever it falls on.',
+      storyTr:
+          'Türk ve İran anlatılarında Hüma, hiç konmadan uçan efsanevi bir '
+          'kuştur; gölgesinin düştüğü kişinin hükümdar olacağına inanılır. '
+          'Anadolu\'da "devlet kuşu" da denir; Umay\'la birlikte anılır.',
+      storyEn:
+          'In Turkic and Persian tales the Huma is a legendary bird that flies '
+          'without ever landing; whoever its shadow falls on is said to '
+          'become a ruler. In Anatolia it is also called the "bird of '
+          'fortune", and it is spoken of together with Umay.',
+      sourceTr: 'Türk ve İran halk anlatıları',
+      sourceEn: 'Turkic and Persian folk tales',
+    ),
+    MythCard(
+      id: 'ulgen',
+      nameTr: 'Ülgen',
+      nameEn: 'Ülgen',
+      whoTr: 'Göğün katlarında oturan iyiliğin ve aydınlığın temsilcisi.',
+      whoEn: 'The one who dwells in the layers of the sky; the source of goodness and light.',
+      storyTr:
+          'Altay inancında Ülgen, göğün yüksek katlarında oturan, iyiliğin '
+          've aydınlığın kaynağı olan yaratıcı güçtür; Erlik onun '
+          'karşıtıdır. Kamlar en yüksek katlara ancak uzun bir yolculukla '
+          'ulaşır.',
+      storyEn:
+          'In Altai belief Ülgen is the creative power who dwells in the high '
+          'layers of the sky, the source of goodness and light; Erlik is his '
+          'opposite. Shamans reach the highest layers only after a long '
+          'journey.',
+      sourceTr: 'Altay yaratılış destanı (W. Radloff derlemesi)',
+      sourceEn: 'Altai creation epic (collected by W. Radloff)',
+    ),
   ];
 }

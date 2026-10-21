@@ -88,6 +88,9 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
   double _jumpBuffer = 0;
   double _grabCooldown = 0;
   double _dropThrough = 0;
+
+  /// Kanat çırpışları arasındaki bekleme (Tulpar'ın sırtında).
+  double _flapCd = 0;
   double _stateTime = 0;
   double _anim = 0;
   double _runPhase = 0;
@@ -284,6 +287,19 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     if (onGround) _gait += velocity.x.abs() * dt / (16 + 26 * speedFactor);
 
     _coyote = onGround ? 0.1 : _coyote - dt;
+    _flapCd -= dt;
+    // Tulpar'ın sırtında: havada zıplamak kanat çırpmaktır.
+    if (game.flying &&
+        _jumpBuffer > 0 &&
+        _coyote <= 0 &&
+        _flapCd <= 0 &&
+        !onGround) {
+      _jumpBuffer = 0;
+      _flapCd = 0.22;
+      velocity.y = -jumpVelocity * 0.85;
+      _jumpCut = true;
+      GameAudio.instance.play('glide', volume: 0.5, minGapMs: 120);
+    }
     if (_jumpBuffer > 0 && _coyote > 0) {
       _jumpBuffer = 0;
       _coyote = 0;

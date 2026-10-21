@@ -1486,3 +1486,127 @@ void _ergenekonScene(Canvas canvas, double time, double u) {
     }, scale: 0.5);
   }
 }
+
+void _gokScene(Canvas canvas, double time, double u) {
+  _P._c = canvas;
+  const g = PerdePainter._ground;
+  // Üst üste bulut katları.
+  for (var k = 0; k < 3; k++) {
+    final y = 300.0 - k * 95;
+    final band = Path()..moveTo(0, y + 30);
+    for (var x = 0.0; x <= 780; x += 20) {
+      band.lineTo(x, y + math.sin(x / 40 + k + time * 0.3) * 6);
+    }
+    band
+      ..lineTo(780, y + 30)
+      ..close();
+    canvas.drawPath(band, _ink(0.25 + k * 0.08));
+  }
+  canvas.drawRect(Rect.fromLTWH(0, g, 780, 50), _ink(1));
+  // Kam davulunu çalar; canlar göğe yükselir.
+  final kam = _span(u, 0.05, 0.4) * (1 - _span(u, 4.6, 5.0));
+  if (kam > 0) {
+    _shape(canvas, MythFigures.kamSilhouette, Offset(120, g), 110, _ink(kam));
+    final beat = (time * 1.4) % 1;
+    canvas.drawOval(
+      Rect.fromCenter(center: const Offset(84, g - 58), width: 26, height: 36),
+      _ink(kam),
+    );
+    canvas.drawOval(
+      Rect.fromCenter(center: const Offset(84, g - 58), width: 14, height: 22),
+      _hole(kam * (0.3 + 0.6 * (1 - beat))),
+    );
+    for (var i = 0; i < 5; i++) {
+      final k = ((time * 0.25 + i / 5) % 1);
+      canvas.drawCircle(
+        Offset(120 + math.sin(i * 2.1 + time) * 20, g - 120 - k * 200),
+        3,
+        _hole(kam * (1 - k)),
+      );
+    }
+  }
+  // Ülgen'in ışığı en yüksek katta.
+  final ulgen = _span(u, 1.05, 1.5);
+  if (ulgen > 0) {
+    const at = Offset(390, 40);
+    canvas.drawCircle(at, 26 + 3 * math.sin(time * 2), _hole(0.9 * ulgen));
+    final ray = _hole(0.5 * ulgen)
+      ..strokeWidth = 3
+      ..strokeCap = StrokeCap.round;
+    for (var i = 0; i < 12; i++) {
+      final a = i / 12 * math.pi * 2 + time * 0.1;
+      canvas.drawLine(
+        at + Offset(math.cos(a), math.sin(a)) * 32,
+        at + Offset(math.cos(a), math.sin(a)) * (52 + 8 * math.sin(time + i)),
+        ray,
+      );
+    }
+  }
+  // Ay ve güneş: bir katta soğuk, bir katta yakıcı.
+  final sky = _span(u, 2.05, 2.5);
+  if (sky > 0) {
+    canvas.drawCircle(const Offset(180, 120), 24, _hole(0.6 * sky));
+    canvas.drawCircle(const Offset(192, 114), 22, _ink(sky));
+    canvas.drawCircle(const Offset(600, 110), 30, _hole(0.85 * sky));
+  }
+  // Hüma geçer; Tulpar uçar.
+  final fly = _line(u, 3);
+  if (fly > 0) {
+    final k = _span(u, 3, 4);
+    _shape(
+      canvas,
+      MythShapes.birdGlide,
+      Offset(100 + k * 600, 170),
+      34,
+      _ink(fly),
+    );
+    final tx = 700 - k * 560;
+    _shape(
+      canvas,
+      MythShapes.horse,
+      Offset(tx, 240),
+      60,
+      _ink(fly),
+      flip: true,
+    );
+    canvas.save();
+    canvas.translate(tx - 4, 240 - 42);
+    canvas.rotate(math.sin(time * 3) * 0.3);
+    canvas.scale(-0.6, 0.6);
+    canvas.drawPath(MythFigures.wingSilhouette, _ink(fly));
+    canvas.restore();
+  }
+  // Kırık güneşin parçası en yüksek katta; Sâye davul vuruşlarıyla yükselir.
+  final rise = _span(u, 4.0, 4.9);
+  if (rise > 0) {
+    canvas.drawPath(
+      Path()
+        ..moveTo(560, 50)
+        ..lineTo(600, 40)
+        ..lineTo(590, 80)
+        ..close(),
+      _hole(rise),
+    );
+    for (var i = 0; i < 4; i++) {
+      final on = ((time * 1.4).floor() + i) % 2 == 0;
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromLTWH(330 + i * 40.0, g - 40 - i * 50, 44, 8),
+          const Radius.circular(4),
+        ),
+        _hole(rise * (on ? 0.8 : 0.2)),
+      );
+    }
+    _P._puppet(
+      canvas,
+      Offset(350 + rise * 120, g - 40 - rise * 150),
+      time,
+      2,
+      rise,
+      (ink, hole) {
+        _P._saye(ink, hole, time);
+      },
+      scale: 0.45,
+    );
+  }
+}

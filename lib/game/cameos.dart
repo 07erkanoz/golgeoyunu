@@ -131,6 +131,29 @@ class CameoWarden extends Component with HasGameReference<GolgeGame> {
           game.world.add(AlbastiShade());
           _say(kind);
           game.meetMyth(kind);
+        case 'kam' || 'ulgen':
+          if (d.x.abs() > 9 * kTile || d.y.abs() > 5 * kTile) break;
+          game.markEvent(_key(kind));
+          final row = standRow(game.level, c, r) ?? r;
+          game.world.add(
+            Apparition(
+              Vector2((c + 0.5) * kTile, (row + 1) * kTile.toDouble()),
+              draw: kind == 'kam' ? MythFigures.kam : MythFigures.ulgenLight,
+              drawScale: kind == 'kam' ? 0.36 : 1,
+              facing: p.center.x < cell.x ? -1 : 1,
+              glow: kind == 'kam'
+                  ? const Color(0xFFFF9A3A)
+                  : const Color(0xFFFFF4D0),
+              hold: kind == 'kam' ? 600 : 12,
+            ),
+          );
+          _say(kind);
+          game.meetMyth(kind);
+        case 'gokKat':
+          if (d.x.abs() > 6 * kTile || d.y.abs() > 6 * kTile) break;
+          game.markEvent(_key(kind));
+          _say(kind);
+          game.meetMyth('ayAtaGunAna');
         case 'demirci' || 'asena':
           if (d.x.abs() > 9 * kTile || d.y.abs() > 4 * kTile) break;
           game.markEvent(_key(kind));

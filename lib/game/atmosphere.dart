@@ -123,6 +123,8 @@ class Backdrop extends Component with HasGameReference<GolgeGame> {
         );
       case LevelTheme.ergenekon:
         _ergenekon(canvas, w, h, cam);
+      case LevelTheme.heavens:
+        _heavens(canvas, w, h, cam);
       case LevelTheme.underworld:
         // Erlik'in katı: mor-kara derinlik; aşağıda yeraltı ırmağının soğuk
         // ışığı, tavandan sarkan kayalar, uzakta hapsedilmiş kut ışıkları.
@@ -848,6 +850,7 @@ class ScreenEffects extends Component with HasGameReference<GolgeGame> {
       LevelTheme.konya => (const Color(0xFFC8D8F0), 0.07),
       LevelTheme.underworld => (const Color(0xFF8A6AC8), 0.06),
       LevelTheme.ergenekon => (const Color(0xFFDCE8DC), 0.1),
+      LevelTheme.heavens => (const Color(0xFFF0F0FF), 0.08),
     };
     if (!Settings.lowGraphics) {
       for (var i = 0; i < 5; i++) {

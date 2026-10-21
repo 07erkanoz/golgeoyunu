@@ -37,8 +37,13 @@ LEVELS = [
     ('kMapNemrut', True, 80), ('kMapGunDogumu', True, 0), ('kMapKarYolu', True, 120),
     ('kMapPalandoken', None, 0), ('kMapCig', None, 0), ('kMapPeri', True, 0),
     ('kMapDerinkuyu', True, 0), ('kMapKonya', True, 0),
-    ('kMapErlik', False, 0), ('kMapErgenekon', True, 0),
+    ('kMapErlik', False, 0), ('kMapErgenekon', True, 0), ('kMapGok', True, 0),
 ]
+
+# Göğün katları: `W` Tulpar'dır (kanat değil). Ona varılınca Tulpar'la uçulur;
+# uçuş benzetilmez: Tulpar'ın sağındaki hedefler varılmış sayılır (yaklaşık,
+# oyun içi sınamayla doğrulanır).
+FLYING = {'kMapGok'}
 
 # Ergenekon: `d` demir damarı kapı gibi kapalıdır; ona bağlı bütün körüklere
 # (LevelDef.bellows, sırası > 0, en yakın damara bağlı) varılınca erir.
@@ -88,6 +93,7 @@ class Map:
         self.jump_k = jump_k
         self.run_k = 1.4 if jump_k > 1 else 1.0          # atın koşusu
         self.wings = (wings or any('W' in r for r in rows)) and not underworld
+        self.mount = False                       # W Tulpar ise kanat sayılmaz
         self.glide_x = max(40.0, GLIDE_X - headwind)
         self.opened = opened                     # açılmış kapı hücreleri
         self.konya = konya
@@ -408,8 +414,10 @@ def audit(idx):
     horse = False
     while True:
         opened = {(g[0], r) for g in opened_gates for r in range(g[1], g[2] + 1)}
-        m = Map(rows, wings, hw, opened, konya=name == 'kMapKonya',
-                underworld=under, jump_k=HORSE_JUMP if horse else 1.0)
+        m = Map(rows, wings and name not in FLYING, hw, opened,
+                konya=name == 'kMapKonya',
+                underworld=under or name in FLYING,
+                jump_k=HORSE_JUMP if horse else 1.0)
         AIR.clear()
         seen, edges, escapes = search(m, start)
         reach = near_cells(seen)
@@ -496,6 +504,10 @@ def audit(idx):
     missing = [(ch, c, r) for r, row in enumerate(rows) for c, ch in enumerate(row)
                if ch in TARGETS and (c, r) not in reach
                and not (ch in airborne and (c, r) in AIR)]
+    if name in FLYING:
+        ws = cells(rows, 'W')
+        if ws and ws[0] in reach:
+            missing = [x for x in missing if x[1] < ws[0][0]]
     return m, seen, missing, traps, opened_gates, gs
 
 

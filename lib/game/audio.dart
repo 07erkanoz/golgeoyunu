@@ -61,6 +61,7 @@ class GameAudio {
     'sting',
     'growl',
     'howl',
+    'drum',
     'thunder',
   ];
 
@@ -214,7 +215,7 @@ class GameAudio {
       LevelTheme.cliffs ||
       LevelTheme.peri ||
       LevelTheme.ergenekon => 'amb_wind',
-      LevelTheme.sky || LevelTheme.kaf => 'amb_sky',
+      LevelTheme.sky || LevelTheme.kaf || LevelTheme.heavens => 'amb_sky',
       LevelTheme.snow || LevelTheme.nemrut => 'amb_snow',
       LevelTheme.konya => 'amb_konya',
     };

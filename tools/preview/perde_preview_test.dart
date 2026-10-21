@@ -55,6 +55,11 @@ void main() {
       'erg_kurt': (PerdeScene.ergenekon, 4.7),
       'erg_ors': (PerdeScene.ergenekon, 5.5),
       'erg_ocak': (PerdeScene.ergenekon, 6.5),
+      'gok_kam': (PerdeScene.gok, 0.6),
+      'gok_ulgen': (PerdeScene.gok, 1.6),
+      'gok_ay_gun': (PerdeScene.gok, 2.6),
+      'gok_huma': (PerdeScene.gok, 3.5),
+      'gok_yukselis': (PerdeScene.gok, 4.6),
     };
     for (final e in shots.entries) {
       final rec = ui.PictureRecorder();

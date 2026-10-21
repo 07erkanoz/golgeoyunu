@@ -53,8 +53,9 @@ void _press(GolgeGame game) {
   run(game, 0.1);
 }
 
-Bellows _bellows(GolgeGame game, int order) =>
-    game.world.children.whereType<Bellows>().firstWhere((b) => b.order == order);
+Bellows _bellows(GolgeGame game, int order) => game.world.children
+    .whereType<Bellows>()
+    .firstWhere((b) => b.order == order);
 
 void main() {
   tearDown(() => GolgeGame.debugLevels = null);
