@@ -201,7 +201,11 @@ class Narration extends Component with HasGameReference<GolgeGame> {
       if (_areaT > 5) _area = null;
     }
     if (_myth == null) {
-      if (_myths.isNotEmpty && _title == null && !inCinematic) {
+      // Fısıltı sürerken beklenir: ikisi aynı yere düşmesin.
+      if (_myths.isNotEmpty &&
+          _title == null &&
+          _whisper == null &&
+          !inCinematic) {
         _myth = _myths.removeAt(0);
         _mythT = 0;
       }
@@ -210,7 +214,8 @@ class Narration extends Component with HasGameReference<GolgeGame> {
       if (_mythT > 6.5) _myth = null;
     }
     if (_whisper == null) {
-      if (_whispers.isNotEmpty && !inCinematic) {
+      // Efsane kartı ekrandayken fısıltı bekler.
+      if (_whispers.isNotEmpty && _myth == null && !inCinematic) {
         _whisper = _whispers.removeAt(0);
         _whisperT = 0;
         _whisperTop = _playerLow();
@@ -291,43 +296,47 @@ class Narration extends Component with HasGameReference<GolgeGame> {
     double w,
     double h,
     double unit,
-    double alpha,
-  ) {
+    double alpha, {
+    required bool top,
+  }) {
     if (alpha <= 0) return;
     final a = (alpha * 20).round() / 20;
-    final size = math.max(12.0, unit * 0.018);
+    // Küçük ve sakin: hikâyenin önüne geçmez.
+    final size = math.max(10.5, unit * 0.019);
     final key = 'istem|$s|$size|$a';
     final tp = _cache[key] ??= _layout(
       s,
       size,
       a,
       false,
-      0.5,
-      w * 0.5,
+      0.4,
+      w * 0.56,
       const Color(0xFFFFE9C4),
       false,
     );
-    // Sol üstte, ateşböceklerinin altında: sabit ve sakin bir yer.
-    final bw = tp.width + 24;
-    final bh = tp.height + 12;
-    const left = 22.0;
-    const top = 54.0;
+    // Ortada, iki başparmağın arasında (dokunmatikte sol yarı yürüme, sağ
+    // yarı zıplama); fısıltının karşı tarafında: fısıltı üstteyse altta,
+    // alttaysa üstte (yer adının altında).
+    final bw = tp.width + 20;
+    final bh = tp.height + 8;
+    final left = (w - bw) / 2;
+    final y = top ? h * 0.115 : h - bh - math.max(12.0, h * 0.035);
     final box = RRect.fromRectAndRadius(
-      Rect.fromLTWH(left, top, bw, bh),
-      Radius.circular(bh / 2),
+      Rect.fromLTWH(left, y, bw, bh),
+      Radius.circular(math.min(bh / 2, 14)),
     );
     canvas.drawRRect(
       box,
-      Paint()..color = const Color(0xFF140C09).withValues(alpha: 0.82 * a),
+      Paint()..color = const Color(0xFF140C09).withValues(alpha: 0.7 * a),
     );
     canvas.drawRRect(
       box,
       Paint()
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 1
-        ..color = const Color(0xFFE0A15F).withValues(alpha: 0.55 * a),
+        ..strokeWidth = 0.8
+        ..color = const Color(0xFFE0A15F).withValues(alpha: 0.4 * a),
     );
-    tp.paint(canvas, Offset(left + 12, top + 6));
+    tp.paint(canvas, Offset(left + 10, y + 4));
   }
 
   TextPainter _layout(
@@ -576,7 +585,14 @@ class Narration extends Component with HasGameReference<GolgeGame> {
 
     if (_hint != null && !inCinematic) {
       final a = _envelope(_hintT, 0.3, _hintDuration(_hint!) - 0.9, 0.6);
-      _prompt(canvas, _hint!, w, h, unit, a);
+      // Fısıltı varsa onun karşı tarafında; yoksa Sâye'nin olmadığı yarıda.
+      // Efsane kartı üstteyken ipucu altta.
+      final top = _whisper != null
+          ? !_whisperTop
+          : _myth != null
+          ? false
+          : _playerLow();
+      _prompt(canvas, _hint!, w, h, unit, a, top: top);
     }
 
     // Kavanozdaki ateşböcekleri: sol üstte küçük ışıklar.
