@@ -1,9 +1,11 @@
 import 'dart:math' as math;
+import 'dart:typed_data';
 import 'dart:ui';
 import 'dart:ui' as ui;
 
 import 'package:flame/components.dart';
 
+import 'ark_animals.dart';
 import 'audio.dart';
 import 'creatures.dart';
 import 'entities.dart';
@@ -1387,236 +1389,69 @@ class AnimalCrate extends Crate {
   @override
   void render(Canvas canvas) {
     const s = Crate.side;
-    // Arkasında fenerin vurduğu hafif bir hale: karanlık ambarda seçilsin.
+    const scale = 0.56;
+    final art = ArkAnimal.of(arkKind(kind));
+    final b = art.silhouette.getBounds();
+    // Fenerin vurduğu ılık ışık.
     canvas.drawCircle(
       const Offset(s / 2, s - 18),
-      34,
+      40,
       Paint()
-        ..shader = Gradient.radial(const Offset(s / 2, s - 18), 34, [
-          const Color(0xFFE0A15F).withValues(alpha: 0.16),
+        ..shader = Gradient.radial(const Offset(s / 2, s - 18), 40, [
+          const Color(0xFFE0A15F).withValues(alpha: 0.18),
           const Color(0xFFE0A15F).withValues(alpha: 0),
         ]),
     );
-    // Kaide: üstü aydınlık tahta, heykelin boyunca.
-    const scale = 0.56;
-    final b = _animalPath(kind).getBounds();
-    final l = math.min(-1.0, s / 2 + b.left * scale - 2);
-    final r = math.max(s + 1.0, s / 2 + b.right * scale + 2);
-    canvas.drawRect(
-      Rect.fromLTRB(l, s - 7, r, s),
-      Paint()..color = const Color(0xFF4A2C17),
+    // Kaide: oyma kenarlı, üstü fenerle aydınlık tahta blok.
+    final l = math.min(-1.0, s / 2 + b.left * scale - 3);
+    final r = math.max(s + 1.0, s / 2 + b.right * scale + 3);
+    final base = Rect.fromLTRB(l, s - 7, r, s);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(base, const Radius.circular(1.5)),
+      Paint()
+        ..shader = Gradient.linear(base.topCenter, base.bottomCenter, [
+          const Color(0xFF7A4A28),
+          const Color(0xFF2E1A0E),
+        ]),
     );
     canvas.drawLine(
-      Offset(l, s - 6.5),
-      Offset(r, s - 6.5),
+      Offset(l + 1, s - 6.4),
+      Offset(r - 1, s - 6.4),
       Paint()
-        ..color = const Color(0xFFE0A15F).withValues(alpha: 0.7)
-        ..strokeWidth = 1.4,
+        ..color = const Color(0xFFF0C080).withValues(alpha: 0.75)
+        ..strokeWidth = 1.2,
     );
-    // Oyma figür: açık ahşap, ışığı yakalayan kenar çizgisiyle.
+    canvas.drawLine(
+      Offset(l + 2, s - 3),
+      Offset(r - 2, s - 3),
+      Paint()
+        ..color = const Color(0xFF1A0E06).withValues(alpha: 0.6)
+        ..strokeWidth = 0.8,
+    );
+    // Gövdenin kaideye düşen gölgesi.
+    canvas.drawOval(
+      Rect.fromCenter(
+        center: Offset(s / 2 + b.center.dx * scale, s - 7),
+        width: b.width * scale * 0.9,
+        height: 3,
+      ),
+      Paint()..color = const Color(0xFF000000).withValues(alpha: 0.35),
+    );
     canvas.save();
     canvas.translate(s / 2, s - 7);
-    _animal(
-      canvas,
-      kind,
-      Paint()
-        ..color = const Color(0xFFE6B07A).withValues(alpha: 0.85)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2.6 / scale
-        ..strokeJoin = StrokeJoin.round,
-      scale,
-    );
-    _animal(
-      canvas,
-      kind,
-      Paint()
-        ..shader = Gradient.linear(const Offset(0, -60), const Offset(0, 0), [
-          const Color(0xFF8A5832),
-          const Color(0xFF5A361C),
-        ]),
-      scale,
-    );
+    canvas.scale(scale);
+    drawCarvedAnimal(canvas, arkKind(kind));
     canvas.restore();
   }
 }
 
-/// Hayvanın gölge tasviri (ayakları orijinde, boyu ~60*scale).
-void _animal(Canvas canvas, AnimalKind kind, Paint p, double scale) {
-  canvas.save();
-  canvas.scale(scale);
-  canvas.drawPath(_animalPath(kind), p);
-  canvas.restore();
-}
-
-/// Hayvanların tek parça siluetleri (parçalar birleştirilir: kontur yalnızca
-/// dış hatta düşer, içte çizgi kalmaz). Bir kez kurulur.
-final _animalPaths = <AnimalKind, Path>{};
-
-Path _animalPath(AnimalKind kind) => _animalPaths[kind] ??= _buildAnimal(kind);
-
-/// [a]dan [b]ye, kalınlığı [w0]'dan [w1]'e incelen bir parça (bacak, boyun,
-/// kuyruk, boynuz).
-Path _rib(Offset a, Offset b, double w0, double w1) {
-  final d = b - a;
-  final len = d.distance;
-  final n = Offset(-d.dy, d.dx) / (len == 0 ? 1 : len);
-  return Path()
-    ..moveTo((a + n * w0 / 2).dx, (a + n * w0 / 2).dy)
-    ..lineTo((b + n * w1 / 2).dx, (b + n * w1 / 2).dy)
-    ..lineTo((b - n * w1 / 2).dx, (b - n * w1 / 2).dy)
-    ..lineTo((a - n * w0 / 2).dx, (a - n * w0 / 2).dy)
-    ..close()
-    ..addOval(Rect.fromCircle(center: b, radius: w1 / 2))
-    ..addOval(Rect.fromCircle(center: a, radius: w0 / 2));
-}
-
-/// Dizli bacak: üstte kalın, dizde kırılır, toynak/pençeyle biter.
-Path _leg(double x, double top, double w, {double knee = 0, double foot = 1}) {
-  final k = Offset(x + knee, top + (0 - top) * 0.55);
-  final f = Offset(x + knee * 0.2, -1.5);
-  return Path()
-    ..addPath(_rib(Offset(x, top), k, w, w * 0.7), Offset.zero)
-    ..addPath(_rib(k, f, w * 0.7, w * 0.55), Offset.zero)
-    ..addOval(
-      Rect.fromCenter(
-        center: Offset(f.dx + 1, -1.2),
-        width: w * 1.2 * foot,
-        height: 2.6,
-      ),
-    );
-}
-
-Path _union(List<Path> parts) {
-  var out = parts.first;
-  for (final p in parts.skip(1)) {
-    out = Path.combine(PathOperation.union, out, p);
-  }
-  return out;
-}
-
-Path _buildAnimal(AnimalKind kind) {
-  switch (kind) {
-    case AnimalKind.lion:
-      // Uzun, alçak gövde; kabarık yele; püsküllü kuyruk.
-      final mane = Path();
-      for (var i = 0; i <= 16; i++) {
-        final a = i / 16 * 2 * math.pi;
-        final r = i.isEven ? 14.5 : 11.0;
-        final pt = Offset(22 + math.cos(a) * r, -35 + math.sin(a) * r);
-        i == 0 ? mane.moveTo(pt.dx, pt.dy) : mane.lineTo(pt.dx, pt.dy);
-      }
-      return _union([
-        Path()
-          ..moveTo(-24, -31)
-          ..cubicTo(-10, -37, 6, -37, 18, -33)
-          ..lineTo(21, -21)
-          ..cubicTo(8, -17, -10, -17, -22, -19)
-          ..cubicTo(-30, -21, -30, -28, -24, -31)
-          ..close(),
-        mane..close(),
-        Path()
-          ..addOval(Rect.fromCircle(center: const Offset(27, -33), radius: 8)),
-        Path()..addOval(
-          Rect.fromCenter(
-            center: const Offset(33, -29.5),
-            width: 11,
-            height: 7,
-          ),
-        ),
-        _leg(-19, -22, 7, knee: -1.5),
-        _leg(-12, -21, 6.5, knee: 1),
-        _leg(12, -22, 6.5, knee: 1),
-        _leg(18, -22, 7, knee: -1),
-        _rib(const Offset(-26, -27), const Offset(-36, -34), 3, 2.4),
-        _rib(const Offset(-36, -34), const Offset(-42, -24), 2.4, 2),
-        Path()..addOval(
-          Rect.fromCircle(center: const Offset(-42, -23), radius: 3.4),
-        ),
-      ]);
-    case AnimalKind.elephant:
-      // Kubbe sırt, yaprak kulak, incelen kıvrık hortum, sütun bacaklar.
-      return _union([
-        Path()
-          ..moveTo(-27, -22)
-          ..cubicTo(-31, -44, -12, -53, 8, -51)
-          ..cubicTo(22, -50, 29, -42, 28, -28)
-          ..lineTo(24, -17)
-          ..cubicTo(6, -14, -12, -14, -24, -16)
-          ..close(),
-        Path()
-          ..addOval(Rect.fromCircle(center: const Offset(30, -38), radius: 12)),
-        Path()
-          ..moveTo(20, -48)
-          ..cubicTo(12, -44, 12, -28, 21, -24)
-          ..cubicTo(26, -30, 27, -42, 20, -48)
-          ..close(),
-        _rib(const Offset(37, -36), const Offset(43, -22), 8, 5.5),
-        _rib(const Offset(43, -22), const Offset(43, -10), 5.5, 3.6),
-        _rib(const Offset(43, -10), const Offset(39, -6), 3.6, 3),
-        _rib(const Offset(36, -28), const Offset(42, -27), 3, 1.6),
-        _leg(-20, -18, 10, foot: 0.9),
-        _leg(-9, -16, 9.5, foot: 0.9),
-        _leg(10, -16, 9.5, foot: 0.9),
-        _leg(20, -18, 10, foot: 0.9),
-        _rib(const Offset(-27, -30), const Offset(-32, -18), 2.2, 1.6),
-      ]);
-    case AnimalKind.giraffe:
-      // Arkaya eğik gövde, uzun boyun, küçük baş ve boynuzcuklar.
-      return _union([
-        Path()
-          ..moveTo(-18, -42)
-          ..cubicTo(-8, -47, 8, -52, 18, -50)
-          ..lineTo(19, -37)
-          ..cubicTo(6, -33, -8, -33, -18, -35)
-          ..close(),
-        _rib(const Offset(13, -47), const Offset(27, -86), 11, 5.5),
-        Path()
-          ..moveTo(23, -90)
-          ..cubicTo(28, -95, 38, -94, 41, -89)
-          ..cubicTo(38, -85, 30, -85, 24, -86)
-          ..close(),
-        _rib(const Offset(26, -91), const Offset(25, -98), 1.8, 1.6),
-        _rib(const Offset(29, -91), const Offset(29.5, -98), 1.8, 1.6),
-        _rib(const Offset(24, -89), const Offset(19, -92), 2.6, 1.4),
-        _leg(-14, -37, 4.6, knee: -1),
-        _leg(-8, -36, 4.4, knee: 1),
-        _leg(9, -37, 4.4, knee: 1),
-        _leg(15, -38, 4.6, knee: -1),
-        _rib(const Offset(-18, -40), const Offset(-22, -24), 1.8, 1.4),
-        Path()..addOval(
-          Rect.fromCircle(center: const Offset(-22, -23), radius: 2.2),
-        ),
-      ]);
-    case AnimalKind.deer:
-      // İnce gövde, kavisli boyun, dallı boynuzlar.
-      return _union([
-        Path()
-          ..moveTo(-18, -35)
-          ..cubicTo(-6, -40, 8, -40, 16, -36)
-          ..lineTo(18, -27)
-          ..cubicTo(6, -24, -8, -24, -18, -26)
-          ..cubicTo(-22, -28, -22, -33, -18, -35)
-          ..close(),
-        _rib(const Offset(12, -34), const Offset(22, -50), 8, 5),
-        Path()
-          ..moveTo(19, -54)
-          ..cubicTo(24, -57, 31, -55, 34, -50)
-          ..cubicTo(30, -48, 24, -48, 20, -49)
-          ..close(),
-        _rib(const Offset(20, -53), const Offset(15, -56), 3, 1.4),
-        _rib(const Offset(23, -55), const Offset(20, -66), 2.2, 1.6),
-        _rib(const Offset(20, -66), const Offset(14, -71), 1.6, 1.2),
-        _rib(const Offset(21, -62), const Offset(26, -69), 1.5, 1.1),
-        _rib(const Offset(25, -55), const Offset(30, -64), 2.2, 1.6),
-        _rib(const Offset(30, -64), const Offset(36, -68), 1.6, 1.2),
-        _leg(-14, -27, 4, knee: -1.2),
-        _leg(-9, -26, 3.8, knee: 1),
-        _leg(9, -27, 3.8, knee: 1.2),
-        _leg(14, -28, 4, knee: -0.8),
-        _rib(const Offset(-19, -33), const Offset(-23, -37), 3, 2),
-      ]);
-  }
-}
+/// Oyun türünün çizimdeki adı.
+String arkKind(AnimalKind k) => switch (k) {
+  AnimalKind.lion => 'lion',
+  AnimalKind.elephant => 'elephant',
+  AnimalKind.giraffe => 'giraffe',
+  AnimalKind.deer => 'deer',
+};
 
 /// Duvarda eşini bekleyen bir hayvan gölgesi. Aynı türden oyma hayvan
 /// önüne itilince gölgeler birleşir, en yakın kapı açılır.
@@ -1700,8 +1535,18 @@ class Pedestal extends PositionComponent
           .withValues(alpha: 0.55 + 0.1 * math.sin(_t));
     canvas.save();
     // Oyma hayvanla aynı yöne bakar: önüne gelince ikisi üst üste oturur.
+    // Fener titredikçe gölge biraz büyüyüp küçülür, yana yatar.
+    final flick = 1 + 0.03 * math.sin(_t * 3.1) + 0.02 * math.sin(_t * 7.3);
     canvas.translate(0, -kTile * 0.4);
-    _animal(canvas, kind, shade, 1.1);
+    canvas.transform(
+      Float64List.fromList([
+        flick, 0, 0, 0, //
+        -0.08 * math.sin(_t * 0.8), flick, 0, 0, //
+        0, 0, 1, 0, //
+        0, 0, 0, 1,
+      ]),
+    );
+    drawAnimalShadow(canvas, arkKind(kind), shade.color, blur: 2.2);
     canvas.restore();
     if (_glow > 0) {
       glowDot(canvas, Offset(0, -kTile), 70, kWarmLight, 0.4 * _glow);
@@ -1797,16 +1642,16 @@ class ArkScale extends Component with HasGameReference<GolgeGame>, Persistent {
       if (_glow > 0.02) glowDot(canvas, c, 40, kWarmLight, 0.45 * _glow);
       canvas.save();
       canvas.translate(c.dx, c.dy + 12);
-      _animal(
+      canvas.scale(0.42);
+      drawAnimalShadow(
         canvas,
-        kind,
-        Paint()
-          ..color = Color.lerp(
-            const Color(0xFF0A0604),
-            const Color(0xFFE8C890),
-            _glow * 0.7,
-          )!,
-        0.42,
+        arkKind(kind),
+        Color.lerp(
+          const Color(0xFF0A0604),
+          const Color(0xFFE8C890),
+          _glow * 0.7,
+        )!,
+        blur: 1,
       );
       canvas.restore();
     }

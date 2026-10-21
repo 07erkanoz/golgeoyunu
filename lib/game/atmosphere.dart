@@ -5,6 +5,7 @@ import 'dart:ui' as ui;
 
 import 'package:flame/components.dart';
 
+import 'ark_animals.dart';
 import 'golge_game.dart';
 import 'levels.dart';
 import 'myth_shapes.dart';

@@ -576,17 +576,34 @@ void _beam(
 /// kenarlar fenerin ışığını hafifçe yakalar.
 void _hullPlanks(Canvas canvas, Level lv, int c, int r, double x, double y) {
   const plank = kTile / 4;
-  final wood = Paint()..color = const Color(0xFF140B07);
+  // Derinde koyulaşan ahşap: yüzeye yakın kalaslar sıcak, aşağısı karanlık.
+  var depth = 0;
+  while (depth < 4 && r - depth - 1 >= 0 && lv.solid(c, r - depth - 1)) {
+    depth++;
+  }
+  final k = depth / 4;
+  final wood = Paint()
+    ..color = Color.lerp(const Color(0xFF3A2212), const Color(0xFF140B07), k)!;
   final seam = Paint()
-    ..color = const Color(0xFF050302)
+    ..color = const Color(0xFF080402)
     ..strokeWidth = 1;
   final grain = Paint()
-    ..color = const Color(0xFF1C110A)
+    ..color = Color.lerp(const Color(0xFF241409), const Color(0xFF0E0704), k)!
     ..strokeWidth = 0.6;
   canvas.drawRect(Rect.fromLTWH(x, y, kTile, kTile), wood);
   for (var i = 0; i < 4; i++) {
     final row = r * 4 + i;
     final py = y + i * plank;
+    // Her kalas kendi tonunda.
+    final t = ((row * 2654435761) >> 7) % 3;
+    if (t != 1) {
+      canvas.drawRect(
+        Rect.fromLTWH(x, py, kTile, plank),
+        Paint()
+          ..color = (t == 0 ? const Color(0xFF000000) : const Color(0xFF6A4226))
+              .withValues(alpha: 0.12 * (1 - k)),
+      );
+    }
     canvas.drawLine(Offset(x, py), Offset(x + kTile, py), seam);
     canvas.drawLine(
       Offset(x, py + plank * 0.55),
@@ -604,10 +621,15 @@ void _hullPlanks(Canvas canvas, Level lv, int c, int r, double x, double y) {
   }
   // Havaya bakan kenar: ince ışık çizgisi.
   final lit = Paint()
-    ..color = const Color(0xFF5A3A22).withValues(alpha: 0.55)
-    ..strokeWidth = 1.2;
+    ..color = const Color(0xFFB07A48).withValues(alpha: 0.7)
+    ..strokeWidth = 1.6;
   if (!lv.solid(c, r - 1) && r > 0) {
-    canvas.drawLine(Offset(x, y + 0.6), Offset(x + kTile, y + 0.6), lit);
+    // Güverte kalası: üstü fenerle aydınlık.
+    canvas.drawRect(
+      Rect.fromLTWH(x, y, kTile, plank),
+      Paint()..color = const Color(0xFF5A3820),
+    );
+    canvas.drawLine(Offset(x, y + 0.8), Offset(x + kTile, y + 0.8), lit);
   }
   if (!lv.solid(c, r + 1) && r + 1 < lv.height) {
     // Güverte altı: kalın bir kiriş payı.

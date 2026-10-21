@@ -42,7 +42,7 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
     LevelTheme.sky => 0.18,
     LevelTheme.kaf => 0.3,
     LevelTheme.snow => 0.3,
-    LevelTheme.ark => 0.42,
+    LevelTheme.ark => 0.34,
     LevelTheme.nemrut => 0.24,
     LevelTheme.peri => 0.26,
     LevelTheme.konya => 0.38,
