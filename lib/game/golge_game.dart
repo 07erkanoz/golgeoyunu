@@ -25,6 +25,7 @@ import 'konya.dart';
 import 'hints.dart';
 import 'legends.dart';
 import 'umay.dart';
+import 'myth_cards.dart';
 import 'nemrut.dart';
 import 'ski.dart';
 import 'wind.dart';
@@ -180,6 +181,27 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     ...?SaveGame.current?.memories,
     ..._memories,
   };
+
+  /// Defter > Efsaneler: karşılaşılan mitolojik varlıklar (kayıttakiler ve
+  /// bu oturumda görülenler).
+  Set<String> get mythsSeen => {
+    for (final w in [...?SaveGame.current?.whispers, ..._whispersShown])
+      if (w.startsWith('myth:')) w.substring(5),
+  };
+
+  /// Bir varlıkla ilk karşılaşma: Defter'de kartı açılır, oyuncuya söylenir.
+  void meetMyth(String id) {
+    final key = 'myth:$id';
+    if (_whispersShown.contains(key)) return;
+    final card = MythCard.byId(id);
+    if (card == null) return;
+    _whispersShown.add(key);
+    narration.hint(
+      S.of('mythFound').replaceAll('{name}', card.name),
+      queue: true,
+    );
+  }
+
   int get memoryTotal => levels.fold(0, (sum, l) => sum + l.memories.length);
 
   @override
@@ -366,7 +388,12 @@ class GolgeGame extends FlameGame with KeyboardEvents {
   void _reachCheckpoint(Vector2 cell) {
     // Umay ağacı uyanır (bulmaca durumuyla birlikte uyanık saklanır).
     for (final t in world.children.whereType<UmayTree>()) {
-      if (t.cell.x == cell.x && t.cell.y == cell.y) t.wake();
+      if (t.cell.x == cell.x && t.cell.y == cell.y) {
+        t.wake();
+        // Önce ağacın ne olduğu, sonra Defter'e yazıldığı söylenir.
+        _queueHint('umay');
+        meetMyth('umay');
+      }
     }
     _respawn = Level.standOn(cell, Player.w, Player.h);
     _puzzle = capturePuzzle(world.children);
@@ -1146,6 +1173,17 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     } else {
       narration.whisper(text);
     }
+  }
+
+  /// İpucunu (gösterilmediyse) sıraya koyar: tarama beklenmeden, başka bir
+  /// söz araya girmeden önce söylenmesi gerekenler için.
+  void _queueHint(String key) {
+    final id = 'hint:$key';
+    if (_whispersShown.contains(id)) return;
+    _whispersShown.add(id);
+    narration.hint(Hints.text(key), queue: true);
+    final poem = Hints.poem(key);
+    if (poem.isNotEmpty) once('poem:$key', poem);
   }
 
   /// Bu ipucu gösterildi mi (testler için)?

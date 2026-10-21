@@ -31,12 +31,12 @@ void main() {
   for (final (name, page) in [
     ('hikaye', const StoryPage()),
     ('hakkinda', const AboutPage()),
-    ('defter', const MemoryBookPage(memories: {'0:0', '0:2', '1:0', '2:1'})),
+    ('defter', const MemoryBookPage(memories: {'0:0', '0:2', '1:0', '2:1'}, myths: {'umay'})),
   ]) {
     testWidgets('$name önizleme', (tester) async {
       await tester.runAsync(_font);
       Settings.unlocked = 2;
-      tester.view.physicalSize = const Size(460, 1100);
+      tester.view.physicalSize = Size(460, name == 'defter' ? 1700 : 1100);
       tester.view.devicePixelRatio = 1;
       final key = GlobalKey();
       await tester.pumpWidget(

@@ -67,6 +67,7 @@ void main() {
       expect(tree.awake, isTrue);
       expect(tree.lit, closeTo(1, 0.01));
       expect(game.hintShown('umay'), isTrue);
+      expect(game.mythsSeen, contains('umay'), reason: 'Defter\'de Umay kartı');
       _standAt(game, 26);
       run(game, 0.2);
       game.player!.die();

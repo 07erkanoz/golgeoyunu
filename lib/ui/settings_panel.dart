@@ -98,7 +98,10 @@ class _SettingsPanelState extends State<SettingsPanel> {
               child: switch (_page) {
                 _Page.story => _subPage(const StoryPage()),
                 _Page.book => _subPage(
-                  MemoryBookPage(memories: widget.game.collectedMemories),
+                  MemoryBookPage(
+                    memories: widget.game.collectedMemories,
+                    myths: widget.game.mythsSeen,
+                  ),
                 ),
                 _Page.about => _subPage(const AboutPage()),
                 _Page.settings => Column(

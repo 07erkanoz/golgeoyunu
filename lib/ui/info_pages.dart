@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../game/levels.dart';
+import '../game/myth_cards.dart';
 import '../game/strings.dart';
 import '../settings.dart';
 
@@ -58,10 +59,17 @@ TextStyle get _body =>
 /// Bulunan hatıraların defteri: açılmış her bölümün hatıraları sırayla;
 /// bulunmayanların yerinde boş bir satır.
 class MemoryBookPage extends StatelessWidget {
-  const MemoryBookPage({super.key, required this.memories});
+  const MemoryBookPage({
+    super.key,
+    required this.memories,
+    this.myths = const {},
+  });
 
   /// "bölüm:sıra" anahtarları.
   final Set<String> memories;
+
+  /// Karşılaşılan mitolojik varlıklar (Efsaneler).
+  final Set<String> myths;
 
   @override
   Widget build(BuildContext context) {
@@ -119,6 +127,42 @@ class MemoryBookPage extends StatelessWidget {
                       ),
               ),
           ],
+        const SizedBox(height: 30),
+        _Heading(S.of('legendsTitle')),
+        const SizedBox(height: 14),
+        Text(S.of('legendsIntro'), style: _body),
+        for (final card in MythCard.all) ...[
+          const SizedBox(height: 16),
+          if (myths.contains(card.id)) ...[
+            Text(
+              S.upper(card.name),
+              style: const TextStyle(
+                color: _accent,
+                fontSize: 12,
+                letterSpacing: 2,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(card.who, style: _body.copyWith(fontStyle: FontStyle.italic)),
+            const SizedBox(height: 6),
+            Text(card.story, style: _body),
+            const SizedBox(height: 4),
+            Text(
+              card.source,
+              style: TextStyle(
+                color: _text.withValues(alpha: 0.45),
+                fontSize: 11,
+              ),
+            ),
+          ] else
+            Text(
+              '· · ·',
+              style: TextStyle(
+                color: _text.withValues(alpha: 0.25),
+                letterSpacing: 4,
+              ),
+            ),
+        ],
       ],
     );
   }
