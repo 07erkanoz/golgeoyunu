@@ -836,7 +836,28 @@ class GiantPerde extends PositionComponent
     best?.opening = true;
   }
 
+  /// Çözülünce açılacak kapı (sağdaki en yakın): göz levhası taşır.
+  Gate? _myGate;
+
+  Gate? get _targetGate {
+    Gate? best;
+    var bestD = double.infinity;
+    for (final g in game.world.children.whereType<Gate>()) {
+      final d = (g.position - position).length;
+      if (g.position.x > position.x && d < bestD) {
+        bestD = d;
+        best = g;
+      }
+    }
+    return best;
+  }
+
   void _updatePuzzle(double dt, Player p, bool inFront) {
+    final gate = _myGate ??= _targetGate;
+    if (gate != null) {
+      gate.emblem = true;
+      gate.emblemGlow = solved ? 1 : _markGlow * 0.7;
+    }
     _lampX = approach(_lampX, stops[stop], dt, 0.35);
     _turnT = math.max(0, _turnT - dt);
     final settled = (_lampX - stops[stop]).abs() < 0.01;

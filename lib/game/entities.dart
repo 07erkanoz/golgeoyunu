@@ -1398,6 +1398,11 @@ class Gate extends PositionComponent
   bool opening = false;
   double _lift = 0;
 
+  /// Bir bulmacaya bağlı kapı (ör. Yerebatan'ın dev perdesi): ortasında oyma
+  /// bir göz levhası taşır; bulmaca ilerledikçe göz ışır ([emblemGlow] 0-1).
+  bool emblem = false;
+  double emblemGlow = 0;
+
   bool get solid => _lift < _height * 0.75;
 
   @override
@@ -1427,6 +1432,13 @@ class Gate extends PositionComponent
 
   @override
   void render(Canvas canvas) {
+    // Taş lento: kapının üstünde, yerinde kalır (kapı onun içine kalkar).
+    final stone = Paint()..color = const Color(0xFF241510);
+    canvas.drawRect(const Rect.fromLTWH(-9, -9, 34, 9), stone);
+    canvas.drawRect(
+      const Rect.fromLTWH(-9, -9, 34, 1.5),
+      Paint()..color = const Color(0xFF8A4A2A).withValues(alpha: 0.45),
+    );
     canvas.save();
     canvas.translate(0, -_lift);
     final bar = Paint()..color = const Color(0xFF0E0806);
@@ -1452,7 +1464,57 @@ class Gate extends PositionComponent
         bar,
       );
     }
+    if (emblem) _eyePlate(canvas, Offset(8, _height * 0.42));
     canvas.restore();
+  }
+
+  /// Kapının ortasındaki oyma göz: perdedeki gözün eşi. Bulmaca ilerledikçe
+  /// kızarır, çözülünce yanar.
+  void _eyePlate(Canvas canvas, Offset c) {
+    final g = emblemGlow.clamp(0.0, 1.0);
+    if (g > 0) {
+      canvas.drawCircle(
+        c,
+        26,
+        Paint()
+          ..shader = ui.Gradient.radial(c, 26, [
+            const Color(0xFFFFC870).withValues(alpha: 0.55 * g),
+            const Color(0x00FFC870),
+          ]),
+      );
+    }
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromCenter(center: c, width: 24, height: 17),
+        const Radius.circular(4),
+      ),
+      Paint()..color = const Color(0xFF2A1A12),
+    );
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromCenter(center: c, width: 24, height: 17),
+        const Radius.circular(4),
+      ),
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1
+        ..color = const Color(0xFF8A5A30),
+    );
+    final eye = Path()
+      ..moveTo(c.dx - 9, c.dy)
+      ..quadraticBezierTo(c.dx, c.dy - 7, c.dx + 9, c.dy)
+      ..quadraticBezierTo(c.dx, c.dy + 7, c.dx - 9, c.dy)
+      ..close();
+    canvas.drawPath(
+      eye,
+      Paint()
+        ..color = Color.lerp(
+          const Color(0xFF6A4A30),
+          const Color(0xFFFFE0A0),
+          g,
+        )!,
+    );
+    canvas.drawCircle(c, 2.6, Paint()..color = const Color(0xFF1A0E08));
   }
 }
 
