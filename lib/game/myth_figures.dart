@@ -1517,4 +1517,183 @@ class MythFigures {
       Paint()..color = const Color(0xFFFFD0B0).withValues(alpha: glow),
     );
   }
+
+  // ---------------------------------------------------------- Erlik'in katı
+
+  /// Körmös: Erlik'in gölge hizmetkârı. Kolları ışığa uzanmış koyu bir
+  /// gölge; belden aşağısı dumana karışır, gözleri kor gibi yanar.
+  /// [reach] 0-1: ışığa ne kadar uzandığı (kollar öne eğilir).
+  static void kormos(Canvas c, double t, {double reach = 0, double alpha = 1}) {
+    c.save();
+    // Işığa doğru öne eğilir.
+    c.translate(0, -2);
+    c.rotate(0.18 * reach);
+    final shape = MythShapes.kam;
+    final b = shape.getBounds();
+    // Dış duman hâlesi.
+    c.drawPath(
+      shape,
+      Paint()
+        ..color = const Color(0xFF1A0E1E).withValues(alpha: 0.55 * alpha)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6),
+    );
+    // Beden ve duman tek katmanda çizilir; belden aşağısı yumuşakça erir.
+    final layer = Rect.fromLTRB(b.left - 30, b.top - 30, b.right + 30, 20);
+    c.saveLayer(layer, Paint());
+    _inkBody(c, shape, t, rim: const Color(0xFFB27AE8), alpha: alpha);
+    // Duman tutamları: bedenin altından aşağı dalgalanır.
+    final smoke = Paint();
+    for (var i = 0; i < 7; i++) {
+      final u = i / 6;
+      final x = -12 + u * 24 + math.sin(t * 2.1 + i) * 2.5;
+      final len = 26 + 14 * math.sin(i * 1.7 + 0.3).abs();
+      smoke.color = const Color(0xFF2A1838).withValues(alpha: 0.9 * alpha);
+      c.drawPath(
+        Path()
+          ..moveTo(x - 4, -56)
+          ..quadraticBezierTo(
+            x + math.sin(t * 3 + i) * 4,
+            -56 + len * 0.5,
+            x + math.sin(t * 2.4 + i * 2) * 5,
+            -56 + len,
+          )
+          ..quadraticBezierTo(x + 2, -56 + len * 0.5, x + 4, -56)
+          ..close(),
+        smoke,
+      );
+    }
+    c.drawRect(
+      layer,
+      Paint()
+        ..blendMode = BlendMode.dstIn
+        ..shader = ui.Gradient.linear(
+          const Offset(0, -62),
+          const Offset(0, -22),
+          const [Color(0xFFFFFFFF), Color(0x00FFFFFF)],
+        ),
+    );
+    c.restore();
+    // Kor gözler.
+    for (final x in [-2.6, 2.2]) {
+      final at = Offset(x, -92);
+      c.drawCircle(
+        at,
+        4,
+        Paint()
+          ..shader = ui.Gradient.radial(at, 4, [
+            const Color(0xFFFF6A3A).withValues(alpha: 0.9 * alpha),
+            const Color(0x00FF6A3A),
+          ]),
+      );
+      c.drawCircle(
+        at,
+        0.8,
+        Paint()..color = const Color(0xFFFFD8B0).withValues(alpha: alpha),
+      );
+    }
+    c.restore();
+  }
+
+  /// Çalkuyruk: Er Töştük'ün konuşan atı. Koyu doru beden, yerin altının
+  /// soğuk mavi ışığıyla çevrili kenar; yelesi rüzgârda.
+  static void calkuyruk(Canvas c, double t, {double alpha = 1}) {
+    _inkBody(
+      c,
+      MythShapes.horse,
+      t,
+      rim: const Color(0xFF7AB8FF),
+      alpha: alpha,
+    );
+    const crest = [
+      Offset(18, -78),
+      Offset(28, -86),
+      Offset(37, -94),
+      Offset(45, -99),
+    ];
+    final strand = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeWidth = 1.3
+      ..color = const Color(0xFF9CCBFF).withValues(alpha: 0.5 * alpha);
+    for (var i = 0; i < 10; i++) {
+      final s = i / 9;
+      final f = (s * 3).floor().clamp(0, 2);
+      final a = Offset.lerp(crest[f], crest[f + 1], s * 3 - f)!;
+      final w = math.sin(t * 3.2 + i * 0.8);
+      c.drawPath(
+        Path()
+          ..moveTo(a.dx, a.dy)
+          ..cubicTo(
+            a.dx - 6,
+            a.dy - 4 + w * 2,
+            a.dx - 12,
+            a.dy + 2 - w * 2,
+            a.dx - 18 - s * 4,
+            a.dy - 1 + w * 3,
+          ),
+        strand,
+      );
+    }
+    _eyeGlow(c, const Offset(50, -88), const Color(0xFFB8DCFF), alpha);
+  }
+
+  /// Hapsedilmiş kut: kara demir kafeste çırpınan bir can ışığı. [open]
+  /// 0-1 kafesin açılışı (ışık kavanoza uçmuş olur).
+  static void kutCage(Canvas c, double t, {double open = 0}) {
+    const w = 22.0;
+    const h = 30.0;
+    final light = 1 - open;
+    if (light > 0) {
+      final pulse = 0.8 + 0.2 * math.sin(t * 3.1);
+      final at = Offset(
+        math.sin(t * 1.7) * 2.5,
+        -h / 2 + math.cos(t * 2.3) * 2,
+      );
+      c.drawCircle(
+        at,
+        20,
+        Paint()
+          ..shader = ui.Gradient.radial(at, 20, [
+            const Color(0xFFFFF2C8).withValues(alpha: 0.75 * light * pulse),
+            const Color(0x00FFE0A0),
+          ]),
+      );
+      c.drawCircle(
+        at,
+        3.4,
+        Paint()..color = const Color(0xFFFFFBEA).withValues(alpha: light),
+      );
+    }
+    // Kafes: kara demir çubuklar, üstte kubbe ve halka.
+    final iron = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.4
+      ..color = const Color(0xFF16100E);
+    final rim = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.5
+      ..color = const Color(0xFF8A6A50).withValues(alpha: 0.6);
+    final doorSwing = open * 0.55;
+    for (var i = 0; i <= 4; i++) {
+      final x = -w / 2 + i * w / 4;
+      final bar = Path()
+        ..moveTo(x, 0)
+        ..lineTo(x, -h + 6)
+        ..quadraticBezierTo(x * 0.6, -h - 2, 0, -h - 3);
+      if (i == 4 && open > 0) {
+        // Kapı (sağ çubuk) açılır.
+        c.save();
+        c.translate(w / 2, 0);
+        c.rotate(-doorSwing);
+        c.translate(-w / 2, 0);
+        c.drawPath(bar, iron);
+        c.restore();
+        continue;
+      }
+      c.drawPath(bar, iron);
+      c.drawPath(bar, rim);
+    }
+    c.drawLine(const Offset(-w / 2 - 2, 0), const Offset(w / 2 + 2, 0), iron);
+    c.drawCircle(const Offset(0, -h - 6), 3, iron);
+  }
 }
