@@ -14,6 +14,8 @@ import 'puzzles.dart';
 import 'rig.dart';
 import 'strings.dart';
 
+part 'nemrut_art.dart';
+
 // ======================================================== Aslan Horoskobu
 
 /// Gökteki işaretler: Aslan Horoskobu'ndaki hilal, üç gezegen ve yıldız.
@@ -461,147 +463,81 @@ class Colossus extends PositionComponent with HasGameReference<GolgeGame> {
         // Oturan tanrının işareti omuzlarının üstündedir; çizim 9 kare
         // aşağıdaki zemine oturur.
         position: Vector2(cell.x, cell.y + kTile + (kind <= 1 ? 9 * kTile : 0)),
-        priority: -1,
+        // Oturan tanrının tırmanılan kareleri arazidir: heykel arazinin
+        // önünde çizilir (yoksa kaya onu örter).
+        priority: kind <= 1 ? 1 : -1,
       );
 
   /// 0: oturan tanrı (başı yok), 1: oturan tanrı (başı yerinde),
   /// 2: düşmüş baş, 3: kartal, 4: aslan.
   final int kind;
 
-  static final _stone = Paint()..color = const Color(0xFF1E1A26);
-  static final _snow = Paint()..color = const Color(0xFFB8C2D4);
+  /// Düşmüş başın kimliği: sütuna göre değişir (terasta her baş başka bir
+  /// tanrı).
+  NemrutHead get _headKind {
+    // Çoğu uzun tiaralı (Nemrut'un tanınan başları), arada Apollon ve
+    // Herakles.
+    const order = [
+      NemrutHead.zeus,
+      NemrutHead.antiochos,
+      NemrutHead.apollo,
+      NemrutHead.antiochos,
+      NemrutHead.herakles,
+    ];
+    return order[((position.x / kTile).round() ~/ 8) % order.length];
+  }
 
   @override
   void render(Canvas canvas) {
+    const t = kTile;
     switch (kind) {
-      case 0 || 1:
-        _god(canvas, headOn: kind == 1);
+      case 0:
+        NemrutArt.seated(canvas);
+      case 1:
+        NemrutArt.seated(canvas, head: NemrutHead.antiochos);
       case 2:
-        _head(canvas, const Offset(48, 0), 1.0, tilt: -0.15);
+        // Yere dikilmiş duran dev baş (gövdesinden kopup düşmüş); dibinde
+        // moloz.
+        canvas.save();
+        // Dikili taşın (sağdaki saklanma yeri) yanında durur.
+        canvas.translate(-0.7 * t, 0);
+        canvas.rotate(-0.04);
+        NemrutArt.head(canvas, _headKind, 5 * t);
+        canvas.restore();
+        final rubble = Paint()..color = const Color(0xFF2A2432);
+        for (final (x, w) in const [(0.2, 0.7), (1.0, 0.5), (2.2, 0.8)]) {
+          canvas.drawOval(
+            Rect.fromLTWH(x * t, -0.3 * t, w * t, 0.4 * t),
+            rubble,
+          );
+        }
       case 3:
-        _bird(canvas);
+        canvas.save();
+        canvas.translate(1.25 * t, 0);
+        NemrutArt.eagle(canvas, 4.6 * t);
+        canvas.restore();
       default:
-        _lion(canvas);
+        // Aslan: alçak bir kaidenin üstünde, horoskobun aslanı gibi.
+        NemrutArt._masonry(canvas, const Rect.fromLTRB(0, -0.8 * t, 3 * t, 0));
+        canvas.save();
+        canvas.translate(-0.15 * t, -0.8 * t);
+        canvas.scale(0.6);
+        final lion = HoroscopeRelief._lion;
+        canvas.drawPath(
+          lion.shift(const Offset(3, 2)),
+          Paint()..color = const Color(0xFF07050A).withValues(alpha: 0.55),
+        );
+        canvas.drawPath(
+          lion,
+          Paint()
+            ..shader = Gradient.linear(
+              const Offset(0, -90),
+              const Offset(0, 0),
+              [_nStoneLit, _nStoneDark],
+            ),
+        );
+        canvas.restore();
     }
-  }
-
-  // Oturan tanrı: taht 4×4, gövde, omuzlar (toplam ~9 kare yüksek).
-  void _god(Canvas canvas, {required bool headOn}) {
-    const t = kTile;
-    canvas.drawRect(const Rect.fromLTWH(0, -4 * t, 6 * t, 4 * t), _stone);
-    // Dizler öne çıkar.
-    canvas.drawRect(const Rect.fromLTWH(4 * t, -3 * t, 3 * t, t), _stone);
-    canvas.drawPath(
-      Path()
-        ..moveTo(1 * t, -4 * t)
-        ..lineTo(1.3 * t, -7.6 * t)
-        ..quadraticBezierTo(3 * t, -8.2 * t, 4.7 * t, -7.6 * t)
-        ..lineTo(5 * t, -4 * t)
-        ..close(),
-      _stone,
-    );
-    canvas.drawRect(
-      const Rect.fromLTWH(0.6 * t, -7.8 * t, 4.8 * t, 0.6 * t),
-      _stone,
-    );
-    canvas.drawRect(
-      const Rect.fromLTWH(0.6 * t, -7.9 * t, 4.8 * t, 0.14 * t),
-      _snow,
-    );
-    canvas.drawRect(
-      const Rect.fromLTWH(4 * t, -3.1 * t, 3 * t, 0.12 * t),
-      _snow,
-    );
-    if (headOn) {
-      _head(canvas, const Offset(3 * t, -7.8 * t), 1.0);
-    } else {
-      canvas.drawRect(
-        const Rect.fromLTWH(2.6 * t, -8.4 * t, 0.8 * t, 0.6 * t),
-        _stone,
-      );
-    }
-    // Tahtın arkasındaki nomos yazısından satırlar.
-    final line = Paint()
-      ..color = const Color(0xFF3A3446)
-      ..strokeWidth = 1;
-    for (var i = 0; i < 9; i++) {
-      canvas.drawLine(
-        Offset(0.3 * t, -3.6 * t + i * 10),
-        Offset(1.6 * t, -3.6 * t + i * 10),
-        line,
-      );
-    }
-  }
-
-  void _head(Canvas canvas, Offset at, double s, {double tilt = 0}) {
-    const t = kTile;
-    canvas.save();
-    canvas.translate(at.dx, at.dy);
-    canvas.rotate(tilt);
-    canvas.scale(s);
-    canvas.drawOval(
-      const Rect.fromLTWH(-1.1 * t, -2.8 * t, 2.2 * t, 2.6 * t),
-      _stone,
-    );
-    canvas.drawPath(
-      Path()
-        ..moveTo(-0.9 * t, -1.2 * t)
-        ..quadraticBezierTo(-0.8 * t, 0.1 * t, 0, 0.15 * t)
-        ..quadraticBezierTo(0.8 * t, 0.1 * t, 0.9 * t, -1.2 * t)
-        ..close(),
-      _stone,
-    );
-    canvas.drawPath(
-      Path()
-        ..moveTo(-1.15 * t, -2.4 * t)
-        ..quadraticBezierTo(-1.0 * t, -4.6 * t, 0.2 * t, -5.4 * t)
-        ..quadraticBezierTo(0.6 * t, -5.2 * t, 0.45 * t, -4.8 * t)
-        ..quadraticBezierTo(1.0 * t, -3.6 * t, 1.15 * t, -2.4 * t)
-        ..close(),
-      _stone,
-    );
-    canvas.drawOval(
-      Rect.fromLTWH(-0.6 * t, -5.1 * t, 0.9 * t, 0.22 * t),
-      _snow,
-    );
-    canvas.restore();
-  }
-
-  void _bird(Canvas canvas) {
-    const t = kTile;
-    canvas.drawRect(const Rect.fromLTWH(0, -2 * t, 2.5 * t, 2 * t), _stone);
-    canvas.drawPath(
-      Path()
-        ..moveTo(0.4 * t, -2 * t)
-        ..quadraticBezierTo(0.2 * t, -4.6 * t, 1.3 * t, -5.3 * t)
-        ..lineTo(1.9 * t, -5 * t)
-        ..lineTo(1.5 * t, -4.6 * t)
-        ..quadraticBezierTo(2.3 * t, -3.4 * t, 2.1 * t, -2 * t)
-        ..close(),
-      _stone,
-    );
-    canvas.drawRect(
-      const Rect.fromLTWH(0, -2.05 * t, 2.5 * t, 0.12 * t),
-      _snow,
-    );
-  }
-
-  void _lion(Canvas canvas) {
-    const t = kTile;
-    canvas.drawRect(const Rect.fromLTWH(0, -2 * t, 2.5 * t, 2 * t), _stone);
-    canvas.drawPath(
-      Path()
-        ..moveTo(0.2 * t, -2 * t)
-        ..lineTo(0.3 * t, -4.3 * t)
-        ..quadraticBezierTo(1.4 * t, -5.4 * t, 2.3 * t, -4.3 * t)
-        ..lineTo(2.3 * t, -2 * t)
-        ..close(),
-      _stone,
-    );
-    canvas.drawRect(
-      const Rect.fromLTWH(0, -2.05 * t, 2.5 * t, 0.12 * t),
-      _snow,
-    );
   }
 }
 
@@ -985,64 +921,29 @@ class StoneGiant extends PositionComponent
     canvas.translate(-headC.dx, -headC.dy - h * 0.08);
     final hx = headC.dx;
     final hy = headC.dy;
-    canvas.drawPath(
-      Path()
-        ..moveTo(hx - w * 0.17, hy - h * 0.05)
-        ..lineTo(hx - w * 0.19, hy + h * 0.03)
-        ..lineTo(hx - w * 0.12, hy + h * 0.1)
-        ..lineTo(hx + w * 0.12, hy + h * 0.1)
-        ..lineTo(hx + w * 0.19, hy + h * 0.03)
-        ..lineTo(hx + w * 0.17, hy - h * 0.05)
-        ..close(),
-      _stone,
-    );
-    // Külah: öne kıvrık uç.
-    canvas.drawPath(
-      Path()
-        ..moveTo(hx - w * 0.19, hy - h * 0.04)
-        ..quadraticBezierTo(
-          hx - w * 0.15,
-          hy - h * 0.2,
-          hx + w * 0.06,
-          hy - h * 0.25,
-        )
-        ..lineTo(hx + w * 0.12, hy - h * 0.21)
-        ..quadraticBezierTo(
-          hx + w * 0.2,
-          hy - h * 0.1,
-          hx + w * 0.19,
-          hy - h * 0.04,
-        )
-        ..close(),
-      _stone,
-    );
-    canvas.drawLine(
-      Offset(hx - w * 0.19, hy - h * 0.045),
-      Offset(hx + w * 0.19, hy - h * 0.045),
-      _edge,
-    );
-    // Gözler: soluk ateş; her temasta söner, sendelerken titrer.
+    // Nemrut'un dev başı: Antiochos'un uzun tiarası; çenesi boynun üstünde.
+    final hh = h * 0.38;
+    final chin = Offset(hx, hy + h * 0.1);
+    canvas.save();
+    canvas.translate(chin.dx, chin.dy);
+    NemrutArt.head(canvas, NemrutHead.antiochos, hh);
+    canvas.restore();
+    // Gözler: kandil ateşi; her temasta söner, sendelerken titrer.
     final flicker = stung > 0 ? (0.5 + 0.5 * math.sin(_t * 30)) : 1.0;
-    final eye = Paint()
-      ..color = const Color(0xFFFFB070).withValues(
-        alpha: fallen ? 0 : (0.8 - hits * 0.22).clamp(0.0, 1.0) * flicker,
+    final glowA = fallen ? 0.0 : (0.85 - hits * 0.22).clamp(0.0, 1.0) * flicker;
+    for (final sx in const [-1.0, 1.0]) {
+      final e = chin + Offset(sx * 10 * hh / 100, -34 * hh / 100);
+      canvas.drawOval(
+        Rect.fromCenter(center: e, width: 16, height: 9),
+        Paint()
+          ..color = const Color(0xFFFF9A40).withValues(alpha: 0.35 * glowA)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
       );
-    canvas.drawOval(
-      Rect.fromCenter(
-        center: Offset(hx - w * 0.07, hy + h * 0.005),
-        width: 9,
-        height: 3.4,
-      ),
-      eye,
-    );
-    canvas.drawOval(
-      Rect.fromCenter(
-        center: Offset(hx + w * 0.07, hy + h * 0.005),
-        width: 9,
-        height: 3.4,
-      ),
-      eye,
-    );
+      canvas.drawOval(
+        Rect.fromCenter(center: e, width: 8, height: 3.2),
+        Paint()..color = const Color(0xFFFFC080).withValues(alpha: glowA),
+      );
+    }
     canvas.restore();
     // Çatlaklar: her temasta yenisi açılır, içinden kor gibi ışık sızar.
     if (hits > 0) _cracks(canvas, w, h);

@@ -499,11 +499,23 @@ W,H=212,26
 F=20
 d=G(W,H)
 d.fill(0,F,211,25,'#')
-# 1) Tören yolu: şafakta Kandilciler, dikili taşlar, düşmüş başlar
+# 1) Tören yolu: şafakta Kandilciler, dikili taşlar, düşmüş başlar. Deprem
+# yarıkları (üstünde çöken taşlar), sarkan kayanın altında bekçi ve
+# depremde düşen taşlar, yolu kesen oturan tanrının omzunda Gözcü.
 d.put(2,F-1,'P'); d.put(3,F-1,'p'); d.put(4,F-1,'1'); d.put(6,F-1,'B'); d.put(8,F-1,'F')
-d.put(14,F-1,';'); d.put(15,F-1,'I'); d.put(20,F-1,'G'); d.put(25,F-1,'I')
-d.put(30,F-1,';'); d.put(31,F-1,'I'); d.put(36,F-1,'G'); d.put(41,F-1,'I')
-d.put(28,F-9,'N'); d.put(34,F-1,'2'); d.put(44,F-1,'K'); d.put(46,F-1,'B')
+d.fill(11,F,15,25,'.'); d.put(13,F,'O')          # 1. yarık
+d.put(17,F-1,';'); d.put(19,F-1,'I')
+d.fill(21,F-7,29,F-6,'#')                                    # sarkan kaya
+for c in (22,25,28):
+    d.put(c,F-5,'%')
+d.put(26,F-1,'G'); d.put(28,F-9,'N')
+d.put(30,F-1,'2')
+d.fill(32,F,35,25,'.'); d.put(33,F,'O')          # 2. yarık
+d.put(37,F-1,';'); d.put(38,F-1,'I')
+x=41                                                         # yolu kesen tanrı
+d.put(x,F-10,'?'); d.fill(x,F-4,x+5,F-1,'#'); d.fill(x-1,F-2,x-1,F-1,'#'); d.fill(x+6,F-3,x+6,F-1,'#')
+d.put(x+5,F-6,'#'); d.fill(x+1,F-8,x+4,F-8,'#'); d.put(x+2,F-9,'g')
+d.put(48,F-1,'K'); d.put(49,F-1,'B'); d.put(50,F-1,'G')
 # 2) Terasın kapısı: kol bir tanrının omzunda
 d.put(51,F-1,'p'); d.put(52,F-1,'3')
 x=55
@@ -512,8 +524,10 @@ d.put(x+5,F-6,'#'); d.fill(x+1,F-8,x+4,F-8,'#'); d.put(x+2,F-9,'L'); d.put(x+3,F
 d.fill(66,2,66,F-7,'#'); d.fill(66,F-6,66,F-1,'H')
 # 3) Doğu Terası: taş dev Nemrud. Kulak hizasında raflar, ateşböcekleri
 d.put(68,F-1,'K'); d.put(69,F-1,'p'); d.put(71,F-1,'4'); d.put(73,F-1,'B')
-d.fill(76,F-5,79,F-5,'#'); d.fill(76,F-4,76,F-1,'|')     # sol raf ve sarmaşık
-d.fill(100,F-5,103,F-5,'#'); d.fill(103,F-4,103,F-1,'|')  # sağ raf ve sarmaşık
+# Sarmaşıklar rafların dış yüzünde, raf hizasından yere iner: tırmanan
+# rafın üstüne çıkar (rafın altına sarkınca kaya başını kesiyordu).
+d.fill(76,F-5,79,F-5,'#'); d.fill(75,F-5,75,F-1,'|')     # sol raf ve sarmaşık
+d.fill(100,F-5,103,F-5,'#'); d.fill(104,F-5,104,F-1,'|')  # sağ raf ve sarmaşık
 d.put(74,F-1,'5')
 d.put(78,F-6,'F'); d.put(101,F-6,'F'); d.put(112,F-1,'F')
 d.put(82,F-1,'`')

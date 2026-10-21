@@ -8,6 +8,7 @@ import 'package:flame/components.dart';
 import 'golge_game.dart';
 import 'levels.dart';
 import 'myth_shapes.dart';
+import 'nemrut.dart' show NemrutArt, NemrutHead;
 import 'palette.dart';
 import '../settings.dart';
 

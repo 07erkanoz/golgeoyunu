@@ -731,6 +731,88 @@ double _floorTop(Level lv, int c, int fromRow) {
   return lv.pixelHeight;
 }
 
+/// Nemrut'un dikili taşı (dexiosis steli): Antiochos'un bir tanrıyla
+/// tokalaştığı kabartma. Oyuncunun önünde durur; ardında saklanılır.
+void _stele(Canvas canvas, double x, double floor) {
+  const w = 1.7 * kTile;
+  const h = 3.6 * kTile;
+  final top = floor - h;
+  final slab = Path()
+    ..moveTo(x - w / 2, floor)
+    ..lineTo(x - w / 2, top + 14)
+    ..lineTo(x, top)
+    ..lineTo(x + w / 2, top + 14)
+    ..lineTo(x + w / 2, floor)
+    ..close();
+  canvas.drawPath(slab, Paint()..color = const Color(0xFF14111A));
+  // Kabartmanın çerçevesi.
+  final relief = Paint()
+    ..color = const Color(0xFF2A2433)
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 1.4;
+  canvas.drawRect(
+    Rect.fromLTRB(x - w / 2 + 6, top + 20, x + w / 2 - 6, floor - 8),
+    relief,
+  );
+  // Tokalaşan iki figür: solda tiaralı kral, sağda tanrı.
+  final fig = Paint()..color = const Color(0xFF2A2433);
+  for (final side in const [-1.0, 1.0]) {
+    final fx = x + side * 11;
+    canvas.drawPath(
+      Path()
+        ..moveTo(fx - 6, floor - 10)
+        ..lineTo(fx - 5, top + 52)
+        ..quadraticBezierTo(fx, top + 46, fx + 5, top + 52)
+        ..lineTo(fx + 6, floor - 10)
+        ..close(),
+      fig,
+    );
+    canvas.drawCircle(Offset(fx, top + 40), 5, fig);
+    // Kralın uzun tiarası, tanrının ışınlı tacı.
+    if (side < 0) {
+      canvas.drawPath(
+        Path()
+          ..moveTo(fx - 5, top + 38)
+          ..lineTo(fx - 1, top + 22)
+          ..lineTo(fx + 5, top + 38)
+          ..close(),
+        fig,
+      );
+    } else {
+      for (var k = -2; k <= 2; k++) {
+        canvas.drawLine(
+          Offset(fx + k * 2.0, top + 36),
+          Offset(fx + k * 3.0, top + 29),
+          Paint()
+            ..color = const Color(0xFF2A2433)
+            ..strokeWidth = 1.2,
+        );
+      }
+    }
+  }
+  // Uzanan eller ortada buluşur.
+  canvas.drawLine(
+    Offset(x - 6, top + 60),
+    Offset(x + 6, top + 60),
+    Paint()
+      ..color = const Color(0xFF2A2433)
+      ..strokeWidth = 3
+      ..strokeCap = StrokeCap.round,
+  );
+  // Tepesinde kar.
+  canvas.drawPath(
+    Path()
+      ..moveTo(x - w / 2 - 1, top + 15)
+      ..lineTo(x, top - 1)
+      ..lineTo(x + w / 2 + 1, top + 15)
+      ..lineTo(x + w / 2 - 3, top + 17)
+      ..lineTo(x, top + 4)
+      ..lineTo(x - w / 2 + 3, top + 17)
+      ..close(),
+    Paint()..color = const Color(0xFFB8C2D4),
+  );
+}
+
 void _column(
   Canvas canvas,
   double cx,
@@ -891,6 +973,11 @@ Picture _buildForeground(Level lv, int c0, int c1, int r0, int r1) {
           _ceilingBottom(lv, c),
           _floorTop(lv, c, r + 1),
         );
+        continue;
+      }
+      if (lv.cell(c, r) == 'I' && lv.def.theme == LevelTheme.nemrut) {
+        if (r > 0 && lv.cell(c, r - 1) == 'I') continue;
+        _stele(canvas, c * kTile + kTile / 2, _floorTop(lv, c, r + 1));
         continue;
       }
       if (lv.cell(c, r) == 'I') {

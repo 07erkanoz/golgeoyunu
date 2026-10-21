@@ -181,7 +181,11 @@ class Level {
           bottom++;
         }
         final cx = c * kTile + kTile / 2;
-        out.add(Rect.fromLTRB(cx - 12, top * kTile, cx + 12, bottom * kTile));
+        // Nemrut'ta sütun değil, yerden yükselen bir dikili taştır.
+        final topY = def.theme == LevelTheme.nemrut
+            ? math.max(top * kTile, bottom * kTile - 3.6 * kTile)
+            : top * kTile;
+        out.add(Rect.fromLTRB(cx - 12, topY, cx + 12, bottom * kTile));
       }
     }
     return out;

@@ -791,8 +791,9 @@ extension _EastBackdrops on Backdrop {
       _statueBird(canvas, gx, base, s, stone, eagle: true);
       gx += 120 * s;
       for (var i = 0; i < 5; i++) {
-        final headOn = i == 2 && variant == 1;
-        _seatedGod(canvas, gx, base, s, stone, headOn: headOn, tiara: i.isEven);
+        // Bir kısmının başı yerinde, ötekilerin başı ayaklarının dibinde.
+        final headOn = i.isOdd || (i == 2 && variant == 1);
+        _seatedGod(canvas, gx, base, s, stone, headOn: headOn, tiara: i != 3);
         if (!headOn) {
           _fallenHead(
             canvas,
@@ -820,46 +821,97 @@ extension _EastBackdrops on Backdrop {
     required bool tiara,
   }) {
     final p = Paint()..color = color;
-    // Taht, gövde, dizler.
+    final seam = Paint()
+      ..color = Color.lerp(color, const Color(0xFF000000), 0.45)!
+      ..strokeWidth = 1.2 * s;
+    // Taht.
     canvas.drawRect(
       Rect.fromLTWH(x - 60 * s, base - 120 * s, 120 * s, 120 * s),
       p,
     );
+    // Gövde (taş sıralarından), omuzlar.
     canvas.drawPath(
       Path()
-        ..moveTo(x - 46 * s, base - 120 * s)
-        ..lineTo(x - 40 * s, base - 250 * s)
-        ..quadraticBezierTo(x, base - 270 * s, x + 40 * s, base - 250 * s)
-        ..lineTo(x + 46 * s, base - 120 * s)
+        ..moveTo(x - 34 * s, base - 120 * s)
+        ..quadraticBezierTo(
+          x - 30 * s,
+          base - 180 * s,
+          x - 44 * s,
+          base - 236 * s,
+        )
+        ..quadraticBezierTo(
+          x - 44 * s,
+          base - 252 * s,
+          x - 26 * s,
+          base - 254 * s,
+        )
+        ..lineTo(x + 26 * s, base - 254 * s)
+        ..quadraticBezierTo(
+          x + 44 * s,
+          base - 252 * s,
+          x + 44 * s,
+          base - 236 * s,
+        )
+        ..quadraticBezierTo(
+          x + 30 * s,
+          base - 180 * s,
+          x + 34 * s,
+          base - 120 * s,
+        )
         ..close(),
       p,
     );
-    canvas.drawRect(
-      Rect.fromLTWH(x - 54 * s, base - 140 * s, 108 * s, 34 * s),
-      p,
-    );
+    // Kollar yanlarda, eller dizlerde; dizler tahtın önüne taşar.
+    for (final side in const [-1.0, 1.0]) {
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromLTRB(
+            x + side * 40 * s - (side < 0 ? 16 * s : 0),
+            base - 244 * s,
+            x + side * 40 * s + (side > 0 ? 16 * s : 0),
+            base - 136 * s,
+          ),
+          Radius.circular(6 * s),
+        ),
+        p,
+      );
+      canvas.drawRect(
+        Rect.fromLTRB(
+          x + side * 6 * s - (side < 0 ? 46 * s : 0),
+          base - 140 * s,
+          x + side * 6 * s + (side > 0 ? 46 * s : 0),
+          base - 112 * s,
+        ),
+        p,
+      );
+    }
+    // Taş sıralarının derzleri.
+    for (var y = base - 26 * s; y > base - 250 * s; y -= 26 * s) {
+      final half = y < base - 120 * s ? 40 * s : 60 * s;
+      canvas.drawLine(Offset(x - half, y), Offset(x + half, y), seam);
+    }
+    canvas.drawLine(Offset(x, base - 112 * s), Offset(x, base - 140 * s), seam);
     // Karla örtülü omuzlar ve dizler.
     final snow = Paint()
       ..color = const Color(0xFFDCE2EE).withValues(alpha: 0.85);
     canvas.drawRect(
-      Rect.fromLTWH(x - 54 * s, base - 142 * s, 108 * s, 5 * s),
+      Rect.fromLTWH(x - 52 * s, base - 142 * s, 104 * s, 4 * s),
       snow,
     );
-    canvas.drawOval(
-      Rect.fromLTWH(x - 42 * s, base - 262 * s, 84 * s, 10 * s),
+    canvas.drawRect(
+      Rect.fromLTWH(x - 30 * s, base - 256 * s, 60 * s, 4 * s),
       snow,
     );
     if (headOn) {
       canvas.save();
-      canvas.translate(x, base - 262 * s);
-      _headShape(canvas, s, p, tiara: tiara);
-      canvas.restore();
-    } else {
-      // Kırık boyun.
-      canvas.drawRect(
-        Rect.fromLTWH(x - 14 * s, base - 276 * s, 28 * s, 16 * s),
-        p,
+      canvas.translate(x, base - 254 * s);
+      NemrutArt.head(
+        canvas,
+        tiara ? NemrutHead.antiochos : NemrutHead.zeus,
+        150 * s,
+        flat: color,
       );
+      canvas.restore();
     }
   }
 
@@ -875,42 +927,18 @@ extension _EastBackdrops on Backdrop {
     canvas.save();
     canvas.translate(x, base);
     canvas.rotate(tilt);
-    _headShape(canvas, s, Paint()..color = color, tiara: tiara);
+    // Sıradaki yerine göre (eğimden) sabit bir tanrı.
+    final i = (tilt / 0.12).round() + 2;
+    const kinds = [
+      NemrutHead.zeus,
+      NemrutHead.herakles,
+      NemrutHead.antiochos,
+      NemrutHead.tyche,
+      NemrutHead.apollo,
+    ];
+    final kind = kinds[i.clamp(0, kinds.length - 1)];
+    NemrutArt.head(canvas, kind, 150 * s, flat: color);
     canvas.restore();
-  }
-
-  /// Dev baş: kıvırcık sakal, iri yüz, sivri Pers külahı ya da taç.
-  void _headShape(Canvas canvas, double s, Paint p, {required bool tiara}) {
-    canvas.drawOval(Rect.fromLTWH(-34 * s, -92 * s, 68 * s, 84 * s), p);
-    // Sakal.
-    canvas.drawPath(
-      Path()
-        ..moveTo(-28 * s, -40 * s)
-        ..quadraticBezierTo(-24 * s, 4 * s, 0, 6 * s)
-        ..quadraticBezierTo(24 * s, 4 * s, 28 * s, -40 * s)
-        ..close(),
-      p,
-    );
-    if (tiara) {
-      // Sivri, öne kıvrık külah.
-      canvas.drawPath(
-        Path()
-          ..moveTo(-36 * s, -78 * s)
-          ..quadraticBezierTo(-30 * s, -150 * s, 6 * s, -176 * s)
-          ..quadraticBezierTo(18 * s, -170 * s, 14 * s, -156 * s)
-          ..quadraticBezierTo(30 * s, -120 * s, 36 * s, -78 * s)
-          ..close(),
-        p,
-      );
-    } else {
-      // Kısa taç.
-      canvas.drawRect(Rect.fromLTWH(-30 * s, -108 * s, 60 * s, 24 * s), p);
-    }
-    // Karlı tepe ve sabah ışığında bir yanak.
-    canvas.drawOval(
-      Rect.fromLTWH(-20 * s, (tiara ? -168 : -112) * s, 30 * s, 8 * s),
-      Paint()..color = const Color(0xFFDCE2EE).withValues(alpha: 0.8),
-    );
   }
 
   void _statueBird(
