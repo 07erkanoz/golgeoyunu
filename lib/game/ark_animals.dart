@@ -50,6 +50,8 @@ class ArkAnimal {
 }
 
 /// Kapalı Catmull-Rom eğrisi: noktalardan yumuşak bir dış hat.
+Path smoothClosed(List<Offset> p) => _smooth(p);
+
 Path _smooth(List<Offset> p) {
   final n = p.length;
   final path = Path()..moveTo(p[0].dx, p[0].dy);

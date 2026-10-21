@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 
 import 'package:flame/components.dart';
 
+import 'ark_animals.dart';
 import 'audio.dart';
 import 'entities.dart';
 import 'golge_game.dart';
@@ -80,26 +81,54 @@ class BatRoost extends PositionComponent with HasGameReference<GolgeGame> {
   @override
   void render(Canvas canvas) {
     final ink = Paint()..color = const Color(0xFF0C0706);
+    final rim = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.5
+      ..color = const Color(0xFF8A5A3A).withValues(alpha: 0.5);
     for (final b in _bats) {
       if (!flown || _t - _flownAt < b.delay) {
-        // Baş aşağı asılı, hafifçe sallanan damla gövdeler.
-        final sway = math.sin(_t * 1.5 + b.phase) * 0.8;
-        canvas.drawOval(
-          Rect.fromCenter(
-            center: b.pos.translate(sway, 6),
-            width: 5,
-            height: 9,
-          ),
-          ink,
-        );
+        // Baş aşağı asılı yarasa: pençeler tavanda, kanatlar gövdeye sarılı,
+        // aşağıda iki sivri kulak. Hafifçe sallanır, arada kanadını kıpırdatır.
+        final sway = math.sin(_t * 1.5 + b.phase) * 0.06;
+        final stir =
+            math.max(0.0, math.sin(_t * 0.7 + b.phase * 3) - 0.92) * 12;
+        canvas.save();
+        canvas.translate(b.pos.dx, b.pos.dy);
+        canvas.rotate(sway);
+        final body = smoothClosed([
+          const Offset(0, 0.4),
+          Offset(-2.2 - stir * 0.2, 2.4),
+          Offset(-3.6 - stir * 0.3, 5.6),
+          const Offset(-3.0, 8.6),
+          const Offset(-2.0, 10.0),
+          const Offset(-2.6, 12.0),
+          const Offset(-0.9, 10.8),
+          const Offset(0, 11.2),
+          const Offset(0.9, 10.8),
+          const Offset(2.6, 12.0),
+          const Offset(2.0, 10.0),
+          const Offset(3.0, 8.6),
+          Offset(3.6 + stir * 0.3, 5.6),
+          Offset(2.2 + stir * 0.2, 2.4),
+        ]);
+        canvas.drawPath(body, ink);
+        canvas.drawPath(body, rim);
+        // Katlı kanadın kemik çizgileri.
+        final fold = Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 0.4
+          ..color = const Color(0xFF3A2418);
+        canvas.drawLine(const Offset(-1.6, 2), const Offset(-2.4, 8), fold);
+        canvas.drawLine(const Offset(1.6, 2), const Offset(2.4, 8), fold);
         canvas.drawLine(
-          b.pos.translate(sway, 1.5),
-          b.pos.translate(0, -1),
+          const Offset(-0.6, -0.4),
+          const Offset(0.6, -0.4),
           ink..strokeWidth = 1,
         );
+        canvas.restore();
       } else {
-        // Kanat: omuz, dirsek, uç. Uç dirsekten gecikerek iner (zar kanat
-        // kırbaç gibi çırpar).
+        // Uçan yarasa: zar kanat dirsekten kırılır, uç gecikerek iner; arka
+        // kenarı parmaklar arasında içe kıvrık (tarak gibi).
         final ph = _t * 30 + b.phase;
         final elbow = math.sin(ph) * 3;
         final tip = math.sin(ph - 0.7) * 5;
@@ -107,17 +136,44 @@ class BatRoost extends PositionComponent with HasGameReference<GolgeGame> {
         final wing = Path()..moveTo(c.dx, c.dy);
         for (final s in [-1.0, 1.0]) {
           wing
-            ..lineTo(c.dx + s * 3.5, c.dy - elbow)
-            ..lineTo(c.dx + s * 8, c.dy - tip)
-            ..lineTo(c.dx + s * 5.5, c.dy + 1 - elbow * 0.4)
-            ..lineTo(c.dx + s * 3, c.dy + 0.5)
-            ..lineTo(c.dx, c.dy);
+            ..lineTo(c.dx + s * 3.5, c.dy - 0.6 - elbow)
+            ..lineTo(c.dx + s * 9, c.dy - tip)
+            ..quadraticBezierTo(
+              c.dx + s * 7.4,
+              c.dy,
+              c.dx + s * 7.2,
+              c.dy + 1.6 - elbow * 0.3,
+            )
+            ..quadraticBezierTo(
+              c.dx + s * 6,
+              c.dy + 0.6,
+              c.dx + s * 5,
+              c.dy + 2.2 - elbow * 0.3,
+            )
+            ..quadraticBezierTo(
+              c.dx + s * 3.6,
+              c.dy + 1,
+              c.dx + s * 2.6,
+              c.dy + 2,
+            )
+            ..lineTo(c.dx, c.dy + 1);
         }
         canvas.drawPath(wing..close(), ink);
         canvas.drawOval(
-          Rect.fromCenter(center: c.translate(0, 0.8), width: 3, height: 4.4),
+          Rect.fromCenter(center: c.translate(0, 1), width: 3, height: 4.6),
           ink,
         );
+        // Kulaklar.
+        for (final s in [-1.0, 1.0]) {
+          canvas.drawPath(
+            Path()
+              ..moveTo(c.dx + s * 0.4, c.dy - 1)
+              ..lineTo(c.dx + s * 1.4, c.dy - 3.2)
+              ..lineTo(c.dx + s * 1.5, c.dy - 0.6)
+              ..close(),
+            ink,
+          );
+        }
       }
     }
   }
@@ -192,35 +248,58 @@ class Crow extends PositionComponent with HasGameReference<GolgeGame> {
     if (_look < 0) canvas.scale(-1, 1);
     if (!_flying) {
       final peck = math.max(0.0, math.sin(_t * 1.1)) > 0.9 ? 2.0 : 0.0;
-      canvas.drawOval(const Rect.fromLTWH(-6, -9, 12, 7), ink);
-      canvas.drawCircle(Offset(5, -10 + peck), 2.8, ink);
+      // Karga: kalın gaga, yuvarlak kafa, kanadı sırtına katlı, uzun kuyruk;
+      // gagalarken baş öne iner.
+      canvas.save();
+      canvas.translate(4, -9);
+      canvas.rotate(peck * 0.12);
+      canvas.translate(-4, 9);
+      final crow = smoothClosed(const [
+        Offset(-12, -5.4),
+        Offset(-8, -6.4),
+        Offset(-3, -9),
+        Offset(2, -10.4),
+        Offset(5, -12.2),
+        Offset(7.4, -13.4),
+        Offset(9.4, -12.8),
+        Offset(12, -11.8),
+        Offset(14.6, -10.8),
+        Offset(11.6, -10.2),
+        Offset(9, -9.6),
+        Offset(7, -7.8),
+        Offset(3, -4.6),
+        Offset(-1, -4),
+        Offset(-4, -4.8),
+        Offset(-9, -3.6),
+        Offset(-12.4, -4.2),
+      ]);
+      canvas.drawPath(crow, ink);
+      // Katlı kanadın kenarı ve göz.
       canvas.drawPath(
         Path()
-          ..moveTo(7, -11 + peck)
-          ..lineTo(11, -9.5 + peck)
-          ..lineTo(7, -9 + peck)
-          ..close(),
-        ink,
+          ..moveTo(5, -9.6)
+          ..quadraticBezierTo(0, -6.6, -7, -6.2),
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 0.5
+          ..color = const Color(0xFF6A5A6A).withValues(alpha: 0.6),
       );
-      canvas.drawPath(
-        Path()
-          ..moveTo(-5, -7)
-          ..lineTo(-11, -4)
-          ..lineTo(-5, -4)
-          ..close(),
-        ink,
-      );
-      canvas.drawLine(
-        const Offset(-1, -2.5),
-        const Offset(-1, 0),
-        ink..strokeWidth = 1,
-      );
-      canvas.drawLine(const Offset(2, -2.5), const Offset(2, 0), ink);
       canvas.drawCircle(
-        Offset(5.8, -10.8 + peck),
-        0.6,
+        const Offset(8.6, -11.8),
+        0.7,
         Paint()..color = const Color(0xFFD08A5A),
       );
+      canvas.restore();
+      // Bacaklar ve parmaklar.
+      final leg = Paint()
+        ..color = ink.color
+        ..strokeWidth = 0.9
+        ..strokeCap = StrokeCap.round;
+      for (final x in [-0.5, 2.4]) {
+        canvas.drawLine(Offset(x, -4.4), Offset(x - 0.4, 0), leg);
+        canvas.drawLine(Offset(x - 0.4, 0), Offset(x + 1.8, 0), leg);
+        canvas.drawLine(Offset(x - 0.4, 0), Offset(x - 2, 0.2), leg);
+      }
     } else {
       // Kalkışta ilk vuruşlar sık ve derin; aşağı vuruşta kanat açık ve
       // geniş, yukarı kalkarken dirsekten katlanır. Arada kısa süzülmeler.
@@ -408,16 +487,44 @@ class Watcher extends PositionComponent with HasGameReference<GolgeGame> {
     }
     final ink = Paint()..color = kInk;
     final dazed = dazzled > 0 ? math.min(1.0, dazzled) : 0.0;
-    // Uzun cüppe, geniş omuzlar.
+    // Uzun, ağır cüppe: geniş omuzlar, kemer, yırtık etek; kenarı
+    // projektörün soğuk ışığını yakalar.
+    final robe = smoothClosed([
+      const Offset(4, 21),
+      const Offset(8, 17.5),
+      const Offset(14, 17.5),
+      const Offset(18.5, 20),
+      const Offset(19.5, 32),
+      Offset(21 + math.sin(_t * 1.3) * 0.6, 44),
+      const Offset(21.5, 52),
+      const Offset(18, 50.2),
+      const Offset(15.6, 52),
+      const Offset(12.6, 50),
+      const Offset(9.6, 52),
+      const Offset(6.6, 50.4),
+      Offset(2 - math.sin(_t * 1.3) * 0.6, 52),
+      const Offset(3, 40),
+      const Offset(3.6, 30),
+    ]);
+    canvas.drawPath(robe, ink);
     canvas.drawPath(
-      Path()
-        ..moveTo(3, 52)
-        ..lineTo(5, 20)
-        ..quadraticBezierTo(11, 14, 18, 20)
-        ..lineTo(20, 52)
-        ..close(),
-      ink,
+      robe,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 0.7
+        ..color = kCold.withValues(alpha: 0.25 + 0.2 * suspicion),
     );
+    canvas.drawRect(
+      const Rect.fromLTWH(4.2, 31, 15, 1.8),
+      Paint()..color = const Color(0xFF1C1418),
+    );
+    final fold = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.6
+      ..color = const Color(0xFF241C20);
+    for (final x in [8.0, 12.0, 16.0]) {
+      canvas.drawLine(Offset(x, 34), Offset(x + 0.6, 49), fold);
+    }
     // Baş ve sivri miğfer bakışın yarısı kadar döner; gözü kamaşınca başını
     // çevirir.
     final look = (_eye - 0.6) * 0.5 - dazed * 0.5;
@@ -425,15 +532,26 @@ class Watcher extends PositionComponent with HasGameReference<GolgeGame> {
     canvas.translate(11, 15);
     canvas.rotate(look);
     canvas.translate(-11, -15);
+    // Sivri, arkaya kıvrık kukuleta; yüz karanlıkta.
+    final hood = smoothClosed(const [
+      Offset(5.4, 18),
+      Offset(5.2, 10),
+      Offset(7.6, 3),
+      Offset(9.6, -3.4),
+      Offset(8.4, -7),
+      Offset(12.4, -2),
+      Offset(16, 6),
+      Offset(17.4, 13),
+      Offset(16.4, 18),
+    ]);
+    canvas.drawPath(hood, ink);
     canvas.drawPath(
-      Path()
-        ..moveTo(6, 16)
-        ..lineTo(11, -2)
-        ..lineTo(16, 16)
-        ..close(),
-      ink,
+      hood,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 0.6
+        ..color = kCold.withValues(alpha: 0.3 + 0.2 * suspicion),
     );
-    canvas.drawCircle(const Offset(11, 12), 5.5, ink);
     canvas.drawOval(
       Rect.fromCenter(
         center: Offset(13.5, 12 + (_eye - _angle).clamp(-0.4, 0.4) * 3),
