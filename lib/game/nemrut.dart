@@ -870,6 +870,29 @@ class StoneGiant extends PositionComponent
       }
       return;
     }
+    _renderDark(
+      canvas,
+      buckle: buckle,
+      stung: stung,
+      walking: walking,
+      swingA: swingA,
+      half: half,
+      lift: lift,
+    );
+    if (hits > 0) _cracks(canvas, w, h);
+    canvas.restore();
+    if (!fallen) {
+      final e = ear - position;
+      glowDot(
+        canvas,
+        e.toOffset(),
+        16,
+        kWarmLight,
+        0.25 + 0.15 * math.sin(_t * 4),
+      );
+    }
+    return;
+    // ignore: dead_code
     const reach = 15.0;
     // Kalça: basan ayağın üstüne kayar, basışta çöker.
     final sway = (swingA ? 1 : -1) * 5.0 * lift;
@@ -1055,6 +1078,267 @@ const _crackLines = [
 ];
 
 extension on StoneGiant {
+  /// Karanlıkta yürüyen dev heykel: Antiochos tiaralı başı, kuşaklı Pers
+  /// tuniği, kıvrımlı geniş pantolon, arkada pelerin. Gövde gecenin kendisi
+  /// kadar koyu; yalnız arkasından vuran şafak kenarını çizer, gözleri kor.
+  void _renderDark(
+    Canvas canvas, {
+    required double buckle,
+    required double stung,
+    required bool walking,
+    required bool swingA,
+    required double half,
+    required double lift,
+  }) {
+    final w = size.x;
+    final h = size.y;
+    canvas.save();
+    // Çizim sağa bakar; sola yürürken aynalanır.
+    if (_dir < 0) {
+      canvas.translate(w, 0);
+      canvas.scale(-1, 1);
+    }
+    const body = Color(0xFF0B0910);
+    const rimCol = Color(0xFFD89A6E);
+    final fill = Paint()..color = body;
+    final rim = Paint()
+      ..color = rimCol.withValues(alpha: 0.75)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1.5);
+    final fold = Paint()
+      ..color = const Color(0xFF1E1826)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.6
+      ..strokeCap = StrokeCap.round;
+    // Parça: önce arkadan vuran ışığın kenarı (sola-yukarı kaydırılmış
+    // kopya), üstüne koyu gövde.
+    Path solid(List<Path> ps) {
+      var out = ps.first;
+      for (final q in ps.skip(1)) {
+        out = Path.combine(PathOperation.union, out, q);
+      }
+      return out;
+    }
+
+    void part(Path p) {
+      canvas.drawPath(p.shift(const Offset(-2.2, -1.6)), rim);
+      canvas.drawPath(p, fill);
+    }
+
+    // Ayak dibinde sis.
+    canvas.drawOval(
+      Rect.fromCenter(center: Offset(w / 2, h - 2), width: w * 1.6, height: 26),
+      Paint()
+        ..color = const Color(0xFFB8A8C0).withValues(alpha: 0.12)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10),
+    );
+    // Yürüyüş: ağırlık basan bacağa geçer, öbürü kalkıp öne gelir.
+    const reach = 16.0;
+    double planted(double t) => reach * (1 - 2 * t);
+    double swung(double t) =>
+        reach * (-1 + 2 * (0.5 - math.cos(t * math.pi) / 2));
+    final bob = -4 * lift + buckle * h * 0.14;
+    final hipY = h * 0.6 + bob;
+    final cx = w * 0.5;
+    final sway = (swingA ? 1 : -1) * 3.0 * lift;
+    // Bacak: geniş Pers pantolonu, dizde bükülür; ayakkabı kalın.
+    Path leg(Offset hip, Offset foot) {
+      final (knee, end) = solveLimb(hip, foot, h * 0.2, h * 0.2, bend: 1);
+      Path tube(Offset a, Offset b, double w0, double w1) {
+        final d = b - a;
+        final n = Offset(-d.dy, d.dx) / (d.distance + 1e-6);
+        return solid([
+          Path()
+            ..moveTo((a + n * w0).dx, (a + n * w0).dy)
+            ..lineTo((b + n * w1).dx, (b + n * w1).dy)
+            ..lineTo((b - n * w1).dx, (b - n * w1).dy)
+            ..lineTo((a - n * w0).dx, (a - n * w0).dy)
+            ..close(),
+          Path()..addOval(Rect.fromCircle(center: b, radius: w1)),
+        ]);
+      }
+
+      return solid([
+        tube(hip, knee, w * 0.13, w * 0.11),
+        tube(knee, end.translate(0, -h * 0.04), w * 0.11, w * 0.085),
+        Path()..addRRect(
+          RRect.fromRectAndRadius(
+            Rect.fromLTRB(
+              end.dx - w * 0.1,
+              end.dy - h * 0.05,
+              end.dx + w * 0.17,
+              end.dy,
+            ),
+            Radius.circular(w * 0.04),
+          ),
+        ),
+      ]);
+    }
+
+    Offset foot(bool swingLeg, double baseX) => Offset(
+      baseX +
+          (walking ? (swingLeg ? swung(half) : planted(half)) : 0) +
+          (swingLeg ? 0 : 0),
+      h - (walking && swingLeg ? lift * 16 : 0),
+    );
+    final backHip = Offset(cx - w * 0.08 + sway, hipY);
+    final frontHip = Offset(cx + w * 0.08 + sway, hipY);
+    // Arka bacak ve arka kol önce (koyu ama hafif soluk: derinlik).
+    final backLeg = leg(
+      backHip,
+      foot(!swingA, cx - w * 0.12) - Offset(buckle * 10, 0),
+    );
+    canvas.drawPath(backLeg, Paint()..color = const Color(0xFF15121B));
+    // Pelerin: omuzlardan arkaya, dizlere dek; yürürken dalgalanır.
+    final chestY = h * 0.3 + bob * 0.8;
+    final flap = math.sin(_t * 1.6) * 6 + (walking ? lift * 6 : 0);
+    part(
+      Path()
+        ..moveTo(cx - w * 0.2 + sway, chestY)
+        ..cubicTo(
+          cx - w * 0.42,
+          h * 0.45,
+          cx - w * 0.46 - flap,
+          h * 0.66,
+          cx - w * 0.36 - flap,
+          h * 0.8,
+        )
+        ..lineTo(cx - w * 0.1, h * 0.72)
+        ..lineTo(cx - w * 0.05 + sway, chestY)
+        ..close(),
+    );
+    final frontLeg = leg(
+      frontHip,
+      foot(swingA, cx + w * 0.12) + Offset(buckle * 10, 0),
+    );
+    part(frontLeg);
+    // Pantolonun kıvrımları.
+    for (final y in [0.68, 0.74, 0.8]) {
+      canvas.drawLine(
+        Offset(frontHip.dx - w * 0.06, h * y + bob * 0.5),
+        Offset(frontHip.dx + w * 0.05, h * y + 4 + bob * 0.5),
+        fold,
+      );
+    }
+    // Tunik: omuzlar geniş, belde kuşak, eteği uyluğu örter ve açılır.
+    final hem = h * 0.66 + bob;
+    final tunic = Path()
+      ..moveTo(cx - w * 0.22 + sway, chestY)
+      ..quadraticBezierTo(
+        cx + sway * 0.6,
+        chestY - h * 0.03,
+        cx + w * 0.24 + sway,
+        chestY,
+      )
+      ..lineTo(cx + w * 0.2 + sway, h * 0.5 + bob)
+      ..lineTo(cx + w * 0.3 + sway * 1.3, hem)
+      ..quadraticBezierTo(
+        cx + sway,
+        hem + h * 0.025,
+        cx - w * 0.3 + sway * 1.3,
+        hem,
+      )
+      ..lineTo(cx - w * 0.2 + sway, h * 0.5 + bob)
+      ..close();
+    part(tunic);
+    // Kuşak ve eteğin kıvrımları.
+    canvas.drawLine(
+      Offset(cx - w * 0.21 + sway, h * 0.5 + bob),
+      Offset(cx + w * 0.21 + sway, h * 0.5 + bob),
+      Paint()
+        ..color = const Color(0xFF2A2030)
+        ..strokeWidth = 4,
+    );
+    for (var i = -2; i <= 2; i++) {
+      canvas.drawLine(
+        Offset(cx + i * w * 0.08 + sway, h * 0.52 + bob),
+        Offset(cx + i * w * 0.11 + sway * 1.2, hem - 2),
+        fold,
+      );
+    }
+    // Kollar: omuzdan sarkan geniş kollu giysi; yürürken sallanır, temasta
+    // öndeki el kulağa gider.
+    final swat = stung > 0
+        ? math.sin(math.min(1, (1 - stung) * 3) * math.pi / 2)
+        : 0.0;
+    final headC = Offset(
+      cx + _flinch.value * 0.6 + sway * 0.6,
+      h * 0.17 + bob * 0.7,
+    );
+    for (final side in [-1.0, 1.0]) {
+      final sh = Offset(cx + side * w * 0.22 + sway, chestY + h * 0.02);
+      final swing = walking ? (swingA ? 1 : -1) * side * lift * 10 : 0.0;
+      var hand = Offset(sh.dx + side * 4 + swing, h * 0.58 + bob * 0.5);
+      if (side > 0 && swat > 0) {
+        hand = Offset.lerp(hand, headC + Offset(w * 0.2, 4), swat)!;
+      } else if (stung > 0) {
+        hand = hand.translate(side * 12 * stung, -10 * stung);
+      }
+      if (buckle > 0) {
+        hand = hand.translate(side * 10 * buckle, -h * 0.05 * buckle);
+      }
+      final (elbow, end) = solveLimb(sh, hand, h * 0.16, h * 0.15, bend: side);
+      Path seg(Offset a, Offset b, double r0, double r1) {
+        final d = b - a;
+        final n = Offset(-d.dy, d.dx) / (d.distance + 1e-6);
+        return solid([
+          Path()
+            ..moveTo((a + n * r0).dx, (a + n * r0).dy)
+            ..lineTo((b + n * r1).dx, (b + n * r1).dy)
+            ..lineTo((b - n * r1).dx, (b - n * r1).dy)
+            ..lineTo((a - n * r0).dx, (a - n * r0).dy)
+            ..close(),
+          Path()..addOval(Rect.fromCircle(center: a, radius: r0)),
+          Path()..addOval(Rect.fromCircle(center: b, radius: r1)),
+        ]);
+      }
+
+      final arm = solid([
+        seg(sh, elbow, w * 0.085, w * 0.07),
+        seg(elbow, end, w * 0.07, w * 0.055),
+        Path()..addOval(Rect.fromCircle(center: end, radius: w * 0.065)),
+      ]);
+      if (side < 0) {
+        canvas.drawPath(arm, Paint()..color = const Color(0xFF15121B));
+      } else {
+        part(arm);
+      }
+    }
+    // Baş: Nemrut tiarası; yüz koyu, kenarı şafakla çizilir.
+    canvas.save();
+    final chin = Offset(headC.dx, headC.dy + h * 0.1);
+    canvas.translate(chin.dx, chin.dy);
+    canvas.rotate(_flinch.value * 0.012 - swat * 0.12);
+    final hh = h * 0.3;
+    canvas.save();
+    canvas.translate(-2.2, -1.6);
+    NemrutArt.head(
+      canvas,
+      NemrutHead.antiochos,
+      hh,
+      flat: rimCol.withValues(alpha: 0.7),
+    );
+    canvas.restore();
+    NemrutArt.head(canvas, NemrutHead.antiochos, hh, flat: body);
+    // Gözler: kor; her temasta söner, sendelerken titrer.
+    final flicker = stung > 0 ? (0.5 + 0.5 * math.sin(_t * 30)) : 1.0;
+    final glowA = fallen ? 0.0 : (0.9 - hits * 0.22).clamp(0.0, 1.0) * flicker;
+    for (final sx in const [-1.0, 1.0]) {
+      final e = Offset(sx * 10 * hh / 100, -34 * hh / 100);
+      canvas.drawOval(
+        Rect.fromCenter(center: e, width: 18, height: 10),
+        Paint()
+          ..color = const Color(0xFFFF8A30).withValues(alpha: 0.45 * glowA)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5),
+      );
+      canvas.drawOval(
+        Rect.fromCenter(center: e, width: 8, height: 3),
+        Paint()..color = const Color(0xFFFFC080).withValues(alpha: glowA),
+      );
+    }
+    canvas.restore();
+    canvas.restore();
+  }
+
   /// Kullanıcının çizdiği taş dev (tools/import_nemrut_svg.py): her uzuv
   /// rig.json'daki dönüş noktası etrafında çevrilir. Yürüyüş eski çizimle
   /// aynı evreden çıkar: basan ayak yerde kalır, öbürü kalkıp öne gelir,
