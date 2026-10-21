@@ -24,7 +24,7 @@ jobs:
       - name: Paketleri indir
         run: flutter pub get
       - name: Windows için derle
-        run: flutter build windows --release
+        run: flutter build windows --release --build-number=${{ github.run_number }}
       - name: Zip olarak paketle
         shell: pwsh
         run: Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath GolgeOyunu-windows.zip
@@ -67,7 +67,18 @@ jobs:
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-        run: flutter build apk --release --target-platform android-arm64
+        # Sürüm kodu her derlemede artar: bazı üreticilerin yükleyicileri aynı
+        # sürüm kodunun üstüne kurmayı reddedip kaldır-kur dayatıyordu (kayıt
+        # ve ayarlar silinir).
+        run: flutter build apk --release --target-platform android-arm64 --build-number=${{ github.run_number }}
+      - name: İmza doğrulama (kalıcı anahtar)
+        # Yalnızca kalıcı anahtarla imzalanmış APK yayımlanır: farklı imzalı
+        # bir sürüm güncelleme olarak kurulamaz, kaldır-kur verileri siler.
+        run: |
+          APKSIGNER=$(ls -d "$ANDROID_HOME"/build-tools/*/ | sort -V | tail -1)apksigner
+          "$APKSIGNER" verify --print-certs build/app/outputs/flutter-apk/app-release.apk | tee imza.txt
+          grep -q "SHA-256 digest: 04f4b8b4248a8c4a526c067f9bc947c3f1222a7aec00972197af6e028d66061f" imza.txt \
+            || { echo "::error::APK kalıcı anahtarla imzalanmamış"; exit 1; }
       - name: Yeniden adlandır
         run: cp build/app/outputs/flutter-apk/app-release.apk GolgeOyunu-android-arm64.apk
       - uses: actions/upload-artifact@v4
@@ -100,7 +111,7 @@ jobs:
           flutter test test/physics_test.dart --dart-define=HZ=120
           flutter test test/physics_test.dart --dart-define=HZ=144
       - name: Linux için derle
-        run: flutter build linux --release
+        run: flutter build linux --release --build-number=${{ github.run_number }}
       - name: tar.gz olarak paketle
         run: |
           mkdir -p GolgeOyunu
