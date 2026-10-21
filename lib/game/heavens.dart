@@ -183,32 +183,116 @@ class ScorchZone extends PositionComponent with HasGameReference<GolgeGame> {
   @override
   void render(Canvas canvas) {
     final view = game.camera.visibleWorldRect;
-    if (!view.overlaps(area)) return;
-    // Yakıcı ışık: zonun içi beyaz-altın bir pırıltı.
-    canvas.drawRect(
-      area,
-      Paint()
-        ..shader = ui.Gradient.linear(area.topCenter, area.bottomCenter, [
-          const Color(0x55FFF4D0),
-          const Color(0x22FFE8A0),
-        ]),
-    );
-    // Kuşun gölgesi: yukarıdan aşağı serin bir sütun, yerde koyu bir leke.
+    final soft = area.inflate(3 * kTile);
+    if (!view.overlaps(soft)) return;
     final x = birdX;
+    // Zonun dibi zeminin içindedir; ışık zeminin yüzüne düşer.
+    final ground = area.bottom - kTile;
+    final top = math.max(soft.top, view.top - 40);
+    final layer = Rect.fromLTRB(soft.left, top, soft.right, ground + 8);
+    // Gün katının ışığı: gökten eğik inen altın huzmeler; kenarlarda erir,
+    // içinde ısı tozu yükselir. Kuşun gölgesi huzmeleri keser.
+    canvas.saveLayer(layer, Paint());
+    final ray = Paint()..blendMode = BlendMode.plus;
+    for (var i = 0; i < 9; i++) {
+      final h = (i * 2654435761) & 0xffff;
+      final cx = area.left + (i + 0.5) / 9 * area.width + (h % 40) - 20;
+      final w0 = 18.0 + h % 26;
+      final w1 = w0 * 2.4;
+      final sway = math.sin(_t * 0.4 + i) * 10;
+      final a = 0.10 + 0.06 * math.sin(_t * (0.7 + i * 0.13) + i);
+      final skew = (layer.bottom - top) * 0.28;
+      final beam = Path()
+        ..moveTo(cx - w0 + sway - skew, top)
+        ..lineTo(cx + w0 + sway - skew, top)
+        ..lineTo(cx + w1, layer.bottom)
+        ..lineTo(cx - w1, layer.bottom)
+        ..close();
+      ray.shader = ui.Gradient.linear(Offset(0, top), Offset(0, layer.bottom), [
+        const Color(0xFFFFE8A8).withValues(alpha: a * 0.6),
+        const Color(0xFFFFD27A).withValues(alpha: a),
+      ]);
+      canvas.drawPath(beam, ray);
+    }
+    // Zeminde ışığın yaktığı parlak şerit.
     canvas.drawRect(
-      Rect.fromLTRB(x - shade, area.top, x + shade, area.bottom),
+      Rect.fromLTRB(area.left, ground - 30, area.right, ground + 8),
+      Paint()
+        ..shader = ui.Gradient.linear(
+          Offset(0, ground - 30),
+          Offset(0, ground + 8),
+          const [Color(0x00FFE0A0), Color(0x55FFE0A0)],
+        ),
+    );
+    // Isı tozu.
+    final mote = Paint()
+      ..color = const Color(0xFFFFF0C8).withValues(alpha: 0.7);
+    for (var i = 0; i < 40; i++) {
+      final h = (i * 40503) & 0xffff;
+      final mx = area.left + (h % 1000) / 1000 * area.width;
+      final u = (_t * (0.08 + (h % 7) * 0.01) + (h % 97) / 97) % 1.0;
+      final my = ground - u * area.height;
+      canvas.drawCircle(Offset(mx + math.sin(_t + i) * 6, my), 1.2, mote);
+    }
+    // Kuşun gölgesi: huzmeleri silen serin bir sütun.
+    canvas.drawRect(
+      Rect.fromLTRB(x - shade * 1.3, top, x + shade * 1.3, layer.bottom),
+      Paint()
+        ..blendMode = BlendMode.dstOut
+        ..shader = ui.Gradient.linear(
+          Offset(x - shade * 1.3, 0),
+          Offset(x + shade * 1.3, 0),
+          const [
+            Color(0x00000000),
+            Color(0xFF000000),
+            Color(0xFF000000),
+            Color(0x00000000),
+          ],
+          const [0, 0.25, 0.75, 1],
+        ),
+    );
+    // Kenarlarda eriyen maske (dikdörtgen görünmesin).
+    canvas.drawRect(
+      layer,
+      Paint()
+        ..blendMode = BlendMode.dstIn
+        ..shader = ui.Gradient.linear(
+          layer.centerLeft,
+          layer.centerRight,
+          const [
+            Color(0x00000000),
+            Color(0xFF000000),
+            Color(0xFF000000),
+            Color(0x00000000),
+          ],
+          const [0, 0.14, 0.86, 1],
+        ),
+    );
+    canvas.restore();
+    // Gölgenin içi serin ve mavimsi; yerde koyu bir leke.
+    canvas.drawRect(
+      Rect.fromLTRB(x - shade, ground - 6.5 * kTile, x + shade, ground),
       Paint()
         ..shader = ui.Gradient.linear(
           Offset(x - shade, 0),
           Offset(x + shade, 0),
-          const [Color(0x00102040), Color(0x40102040), Color(0x00102040)],
+          const [Color(0x00203048), Color(0x66203048), Color(0x00203048)],
           const [0, 0.5, 1],
         ),
     );
+    canvas.drawOval(
+      Rect.fromCenter(
+        center: Offset(x, ground - 2),
+        width: shade * 1.8,
+        height: 10,
+      ),
+      Paint()..color = const Color(0x88101828),
+    );
     // Kuş.
     canvas.save();
-    canvas.translate(x, area.top + 40 + math.sin(_t * 1.6) * 6);
-    canvas.scale(_facing * 0.9, 0.9);
+    // Kuş zeminin birkaç kat üstünde uçar: gölgesiyle birlikte görünür.
+    canvas.translate(x, ground - 6.5 * kTile + math.sin(_t * 1.6) * 6);
+    canvas.scale(_facing * 1.1, 1.1);
     MythFigures.umayBird(canvas, _t);
     canvas.restore();
     // Yanma: Sâye güneşte kaldıkça ekran beyazlaşır.

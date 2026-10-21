@@ -138,6 +138,9 @@ class GolgeGame extends FlameGame with KeyboardEvents {
   /// gider.
   double _camFloor = double.nan;
 
+  /// Kayakta havada geçen yükseliş (takla ipucu için).
+  double _skiAirHint = 0;
+
   /// Kayak kamerasının açılması (0 yakın) ve dikey izleyişi.
   double _skiOpen = 0;
   double _skiCamY = double.nan;
@@ -351,6 +354,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         (save?.whispers ?? const []).where(
           (w) =>
               !w.startsWith('$index:') &&
+              !w.startsWith('hint:$index:') &&
               !(w.startsWith('event:') && w.split(':')[2] == '$index'),
         ),
       );
@@ -1446,7 +1450,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
   /// İpucunu (gösterilmediyse) sıraya koyar: tarama beklenmeden, başka bir
   /// söz araya girmeden önce söylenmesi gerekenler için.
   void _queueHint(String key) {
-    final id = 'hint:$key';
+    final id = 'hint:$levelIndex:$key';
     if (_whispersShown.contains(id)) return;
     _whispersShown.add(id);
     narration.hint(Hints.text(key), queue: true);
@@ -1458,7 +1462,8 @@ class GolgeGame extends FlameGame with KeyboardEvents {
   bool onceShown(String key) => _whispersShown.contains('once:$key');
 
   /// Bu ipucu gösterildi mi (testler için)?
-  bool hintShown(String key) => _whispersShown.contains('hint:$key');
+  bool hintShown(String key) =>
+      _whispersShown.contains('hint:$levelIndex:$key');
 
   /// İlk karşılaşmada düzeneğin nasıl kullanıldığını söyler (bir kez;
   /// kayıtla hatırlanır).
@@ -1466,8 +1471,10 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     _hintScan += dt;
     if (_hintScan < 0.3) return;
     _hintScan = 0;
+    // İpucu her bölümde, o bölümdeki ilk karşılaşmada bir kez söylenir
+    // (önceden bütün oyunda bir kezdi: ileriki bölümlerde hiç çıkmıyordu).
     void show(String key) {
-      final id = 'hint:$key';
+      final id = 'hint:$levelIndex:$key';
       if (_whispersShown.contains(id)) return;
       // Ekran doluysa gösterilmiş sayılmaz; oyuncu hâlâ yakındaysa sonraki
       // taramada yeniden denenir (geçip gittiyse sonra çıkmaz).
@@ -1488,7 +1495,12 @@ class GolgeGame extends FlameGame with KeyboardEvents {
           d.dy.abs() < (dy ?? dx) * kTile + r.height / 2;
     }
 
-    if (skiSurface != null) show('ski');
+    if (skiSurface != null) {
+      show('ski');
+      // Uzunca bir uçuşta takla öğütlenir.
+      if (!p.onGround && p.velocity.y < -60) _skiAirHint += 0.3;
+      if (_skiAirHint > 0.6) show('flip');
+    }
     if (p.hasWings && !p.onGround && p.velocity.y > 60) show('glide');
     final pc = (p.center.x / kTile).floor();
     final pr = (p.center.y / kTile).floor();
@@ -1563,6 +1575,15 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         Chandelier c when near(c, 9, 7) => 'chandelier',
         GreatLamp l when near(l, 16, 22) => 'lamp',
         LightFlood f when f.awake => 'flood',
+        StormWall w when w.awake => 'storm',
+        Avalanche a when a.awake => 'avalanche',
+        LooseBoulder b when near(b, 3, 6) => 'boulder',
+        MistZone m
+            when m.area
+                .inflate(2 * kTile)
+                .contains(Offset(p.center.x, p.center.y)) =>
+          'mist',
+        MagnetZone m when m.covers(p.center.x + 4 * kTile) => 'magnet',
         _ => null,
       };
       if (key != null) show(key);

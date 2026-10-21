@@ -175,6 +175,11 @@ class Hints {
     'chandelier': 'Mum tablasına zıpla · avize seni taşır',
     'lamp': 'Gölgede bekle · huzme geçince koş',
     'flood': 'Tırman!',
+    'storm': 'Fırtına arkandan geliyor · durma, Tulpar\'la ileri uç',
+    'mist': 'Sis çukurları gizler · {down} kavanozunu ört, Gökbörü\'nün izleri yolu gösterir',
+    'avalanche': 'Çığ geliyor · {right} hızlan, yavaşlama',
+    'magnet': 'Manyetik Tepe · kar yokuş yukarı akar, bırak taşısın',
+    'flip': 'Havadayken {jump} basılı tut · takla at, hızlan · geniş uçurumlar ancak takla hızıyla aşılır',
   };
 
   static const _en = {
@@ -236,6 +241,11 @@ class Hints {
     'chandelier': 'Jump onto a candle tray · the chandelier carries you',
     'lamp': 'Wait in shadow · run when the beam has passed',
     'flood': 'Climb!',
+    'storm': 'The storm is behind you · don\'t stop, fly on with Tulpar',
+    'mist': 'The mist hides the pits · {down} cover your jar, Gökbörü\'s prints show the way',
+    'avalanche': 'An avalanche is coming · {right} speed up, don\'t slow down',
+    'magnet': 'The Magnetic Hill · the snow flows uphill, let it carry you',
+    'flip': 'Hold {jump} in the air · flip to gain speed · wide chasms are crossed only at flip speed',
   };
 
   /// Hikâyeye karışan şiirsel bilmeceler (alttaki fısıltıyla anlatılır).
