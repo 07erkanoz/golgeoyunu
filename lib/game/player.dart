@@ -15,6 +15,7 @@ import 'palette.dart';
 import 'konya.dart';
 import 'legends.dart';
 import 'ski.dart';
+import 'strings.dart';
 import 'puzzles.dart';
 import 'rig.dart';
 import '../settings.dart';
@@ -685,6 +686,19 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
   /// Kayarken gövdenin (ve tahtanın) açısı.
   double skiAngle = 0;
   double _skiSpeed = 0;
+
+  /// Havada geçen süre (takla adı için).
+  double _airTime = 0;
+
+  /// Kayarken hız. Ak Kurt'un izi ve taklalar dışarıdan iter.
+  double get skiSpeed => _skiSpeed;
+
+  /// Kayan Sâye'ye ileri itiş (Ak Kurt'un izi, takla ödülü).
+  void skiKick(double dv) {
+    if (game.skiSurface == null) return;
+    _skiSpeed = math.min(_skiSpeed + dv, 720);
+  }
+
   bool _skiAir = false;
   double _airSpin = 0;
   SkiRail? _grind;
@@ -747,11 +761,15 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       if (jumpPressed) {
         _grind = null;
         _skiAir = true;
+        _airTime = 0;
+        game.skiFx?.trick(S.of('trickRail'));
         velocity.setValues(_skiSpeed, -430);
         GameAudio.instance.play('jump', volume: 0.6);
       } else if (center.x > rail.position.x + rail.size.x) {
         _grind = null;
         _skiAir = true;
+        _airTime = 0;
+        game.skiFx?.trick(S.of('trickRail'));
       }
       _gait += _skiSpeed * dt / 40;
       return;
@@ -774,7 +792,10 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
         if (dir > 0 && _skiSpeed < 300) a += _skiSpeed < 140 ? 760 : 280;
         if (dir < 0) a -= 460 * (_skiSpeed >= 0 ? 1 : -1);
         if (game.inMagnet(x)) a -= 180;
-        _skiSpeed = (_skiSpeed + a * dt).clamp(-180.0, 640.0);
+        // Takladan sonra kut: kısa bir süre daha hızlı kayılır.
+        final kut = (game.skiFx?.kut ?? 0) > 0;
+        if (kut) a += 120;
+        _skiSpeed = (_skiSpeed + a * dt).clamp(-180.0, kut ? 720.0 : 640.0);
         final nx = x + _skiSpeed * math.cos(th) * dt;
         // Kar hizasındaki kütüğe kayarak çıkar.
         for (final r in game.world.children.whereType<SkiRail>()) {
@@ -793,6 +814,7 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
           // Sırttan havalanır.
           _skiAir = true;
           _airSpin = 0;
+          _airTime = 0;
           velocity.setValues(_skiSpeed * math.cos(th), vy);
         } else {
           position.setValues(nx - w / 2, ny - h);
@@ -803,6 +825,7 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
           if (jumpPressed) {
             _skiAir = true;
             _airSpin = 0;
+            _airTime = 0;
             velocity.setValues(
               _skiSpeed * math.cos(th) + math.sin(th) * 60,
               vy - 440,
@@ -813,6 +836,7 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       }
     }
     if (_skiAir) {
+      _airTime += dt;
       velocity.y = math.min(velocity.y + g * dt, 900);
       position.add(velocity * dt);
       if (jump) {
@@ -851,10 +875,21 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
         if (diff.abs() < 1.1) {
           _skiSpeed = velocity.x * math.cos(th) + velocity.y * math.sin(th);
           final flips = (_airSpin / (2 * math.pi) + 0.15).floor();
+          final fx = game.skiFx;
           if (flips > 0) {
             _skiSpeed += 60.0 * flips;
-            GameAudio.instance.play('firefly', volume: 0.6);
+            fx?.trick(
+              flips == 1
+                  ? S.of('trickFlip')
+                  : flips == 2
+                  ? S.of('trickFlip2')
+                  : S.of('trickFlipN').replaceAll('{n}', '$flips'),
+              weight: flips,
+            );
+          } else if (_airTime > 1.1) {
+            fx?.trick(S.of('trickAir'));
           }
+          _airTime = 0;
           _airSpin = 0;
           _skiAir = false;
           skiAngle = th;

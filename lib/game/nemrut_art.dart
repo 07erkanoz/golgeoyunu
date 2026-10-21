@@ -588,6 +588,9 @@ abstract final class NemrutImages {
 
   static bool get ready => _cache.length == nemrutSprites.length;
 
+  /// Taş devin parçaları yüklü mü (şu an kullanılmıyor: dev kodla çizilir).
+  static bool get giantReady => _cache.containsKey('giant_torso');
+
   /// Son yükleme hatası (tanı için).
   static String? lastError;
 

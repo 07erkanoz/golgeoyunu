@@ -649,7 +649,7 @@ class StoneGiant extends PositionComponent
       Vector2(position.x + size.x / 2, position.y - kTile * 1.2);
 
   /// Kulağın dünyadaki yeri.
-  Vector2 get ear => NemrutImages.ready
+  Vector2 get ear => NemrutImages.giantReady
       // Çizimdeki kulak (SVG 390,183): baş yürüyüş yönünün tersine bakan
       // yanda görünür.
       ? Vector2(
@@ -846,7 +846,7 @@ class StoneGiant extends PositionComponent
     final swingA = s < math.pi;
     final half = (s % math.pi) / math.pi; // salınımın ne kadarı
     final lift = math.sin(half * math.pi);
-    if (NemrutImages.ready) {
+    if (NemrutImages.giantReady) {
       _renderSprites(
         canvas,
         buckle: buckle,

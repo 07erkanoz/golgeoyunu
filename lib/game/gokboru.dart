@@ -415,9 +415,11 @@ class GokboruWarden extends Component with HasGameReference<GolgeGame> {
   }
 }
 
-/// Çığ bölümünde Gökbörü: çığ uyanınca kayan Sâye'nin önünde yamaçta koşar;
-/// uçurumların üstünden önce o sıçrar, kayaların üstünden önce o atlar:
-/// güvenli hattı gösterir. Oynanışa dokunmaz; çığ dağılınca söner.
+/// Kayak yamaçlarında Ak Kurt (Gökbörü): Sâye'nin önünde dörtnala koşar.
+/// Uçurumlardan ve kayaların üstünden önce o sıçrar (zamanlamayı gösterir);
+/// basıp geçtiği karda ışıldayan pençe izleri kalır, izin üstünden kayan
+/// hızlanır. Çığ'da çığ uyanınca, Palandöken'de ilk tepeden sonra görünür;
+/// pistin sonunda söner.
 class SkiGuide extends PositionComponent with HasGameReference<GolgeGame> {
   SkiGuide() : super(anchor: Anchor.bottomCenter, priority: 17);
 
@@ -425,9 +427,19 @@ class SkiGuide extends PositionComponent with HasGameReference<GolgeGame> {
   static const double lead = 6 * kTile;
   static const double drawScale = 0.4;
 
+  /// Bir dörtnala döngüsünde alınan yol (dünya pikseli).
+  static const double stride = 58;
+
   double _t = 0;
   double alpha = 0;
   bool _shown = false;
+  double _phase = 0;
+  double _leap = 0;
+  double _lastX = 0;
+
+  /// Karda kalan pençe izleri: (x, yaş).
+  final _prints = <(double, double)>[];
+  int _step = 0;
 
   /// Zemin (uçurumda null): o x'te kurt nerede durur.
   double? _ground(double x) => game.skiSurface?.at(x);
@@ -449,49 +461,115 @@ class SkiGuide extends PositionComponent with HasGameReference<GolgeGame> {
     return ya + (yb - ya) * u - math.sin(u * math.pi) * (span * 0.35 + 30);
   }
 
-  @override
-  void update(double dt) {
-    super.update(dt);
-    _t += dt;
+  bool get _running {
     final p = game.player;
+    if (p == null || p.isDead) return false;
     Avalanche? av;
     for (final c in game.world.children) {
       if (c is Avalanche) av = c;
     }
-    final running = av != null && av.awake && p != null && !p.isDead;
-    if (running && !_shown) {
+    final end = game.level.exitCell.x - 6 * kTile;
+    if (p.center.x > end) return false;
+    if (av != null) return av.awake;
+    // Çığ yoksa: ilk tepeyi aşınca katılır.
+    return p.center.x > 40 * kTile;
+  }
+
+  @override
+  void update(double dt) {
+    super.update(dt);
+    _t += dt;
+    for (var i = _prints.length - 1; i >= 0; i--) {
+      final (x, age) = _prints[i];
+      if (age + dt > 4) {
+        _prints.removeAt(i);
+      } else {
+        _prints[i] = (x, age + dt);
+      }
+    }
+    final p = game.player;
+    final running = _running;
+    if (running && !_shown && p != null) {
       _shown = true;
       position.setValues(
         p.center.x + lead,
         _ground(p.center.x + lead) ?? p.center.y,
       );
+      _lastX = position.x;
       game.meetMyth('gokboru');
       GameAudio.instance.play('howl', volume: 0.5, minGapMs: 4000);
     }
     alpha = running
         ? math.min(1, alpha + dt * 1.5)
         : math.max(0, alpha - dt * 0.8);
-    if (!running) return;
+    if (!running || p == null) return;
     // Önde koşar; çok açılırsa ya da geride kalırsa yumuşakça yetişir.
     final want = p.center.x + lead;
     position.x += (want - position.x) * math.min(1, dt * 12);
     final g = _ground(position.x);
     var y = g ?? _arc(position.x);
+    var air = g == null;
     // Kayanın üstünden atlar.
     for (final r in game.world.children.whereType<SkiRock>()) {
       final d = position.x - (r.position.x + r.size.x / 2);
-      if (d.abs() < 40) y -= math.cos(d / 40 * math.pi / 2) * 34;
+      if (d.abs() < 46) {
+        y -= math.cos(d / 46 * math.pi / 2) * 38;
+        air = true;
+      }
     }
     position.y = y;
+    _leap += ((air ? 1.0 : 0.0) - _leap) * math.min(1, dt * 10);
+    final moved = (position.x - _lastX).abs();
+    _lastX = position.x;
+    if (!air) {
+      _phase = (_phase + moved / stride) % 1.0;
+      // Her yarım döngüde bir pençe izi.
+      final n = (_phase * 2).floor();
+      if (n != _step && g != null) {
+        _step = n;
+        _prints.add((position.x, 0));
+      }
+    }
+    // İzin üstünden kayan hızlanır (her iz bir kez).
+    if (p.onGround) {
+      for (var i = 0; i < _prints.length; i++) {
+        final (x, age) = _prints[i];
+        if (age < 3 && (p.center.x - x).abs() < 10) {
+          p.skiKick(14);
+          _prints[i] = (x, 3.0);
+        }
+      }
+    }
   }
 
   @override
   void render(Canvas canvas) {
+    if (alpha <= 0 && _prints.isEmpty) return;
+    // Pençe izleri (dünyada; bileşen kurdun ayağında durduğu için geri
+    // çevrilir).
+    final s = game.skiSurface;
+    if (s != null) {
+      final glow = Paint()
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2);
+      for (final (x, age) in _prints) {
+        final gy = s.at(x);
+        if (gy == null) continue;
+        final a = (1 - age / 4).clamp(0.0, 1.0) * 0.8;
+        glow.color = const Color(0xFFBFE0FF).withValues(alpha: a);
+        canvas.drawOval(
+          Rect.fromCenter(
+            center: Offset(x - position.x, gy - position.y + 2),
+            width: 6,
+            height: 2.6,
+          ),
+          glow,
+        );
+      }
+    }
     if (alpha <= 0) return;
     canvas.save();
-    canvas.translate(0, math.sin(_t * 14) * 1.2);
     canvas.scale(drawScale);
-    MythFigures.gokboru(canvas, _t, pose: WolfPose.walk, alpha: alpha);
+    MythFigures.gokboruRun(canvas, _t, _phase, leap: _leap, alpha: alpha);
     canvas.restore();
   }
 }

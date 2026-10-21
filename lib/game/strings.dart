@@ -26,6 +26,11 @@ class S {
     'chapters': 'Bölümler',
     'chaptersHint': 'Açtığın bir bölümü baştan oyna',
     'allUnlocked': 'Bütün bölümler açıldı',
+    'trickFlip': 'Takla',
+    'trickFlip2': 'Çifte takla',
+    'trickFlipN': '{n} kat takla',
+    'trickAir': 'Uzun uçuş',
+    'trickRail': 'Kütük',
     'cameo_suIyesi': 'Sudan, ak giysili, başında kanat gibi boynuzları olan bir kadın yükseldi; çevresinde ışıltılı mavi balıklar yüzüyordu: Su İyesi. Eski inanışta her suyun bir sahibi vardır; saygıyla bekleyene yolu gösterir. Balıklarından biri vanaya yüzdü.',
     'cameo_tulpar':
         'Bulutların ardında kanatlı bir at: Tulpar, yiğidin yoldaşı.',
@@ -163,6 +168,11 @@ class S {
     'chapters': 'Chapters',
     'chaptersHint': 'Replay a chapter you have reached',
     'allUnlocked': 'All chapters unlocked',
+    'trickFlip': 'Flip',
+    'trickFlip2': 'Double flip',
+    'trickFlipN': '{n}× flip',
+    'trickAir': 'Big air',
+    'trickRail': 'Grind',
     'cameo_suIyesi': 'A woman in white rose from the water, wing-like horns on her head, glowing blue fish swimming around her: the Su İyesi, the water\'s keeper. In old belief every water has its owner; to one who waits with respect, it shows the way. One of her fish swam to the valve.',
     'cameo_tulpar':
         'A winged horse beyond the clouds: Tulpar, the hero\'s companion.',

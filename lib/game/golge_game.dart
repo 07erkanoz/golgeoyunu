@@ -15,6 +15,8 @@ import 'entities.dart';
 import 'level.dart';
 import 'lighting.dart';
 import 'shafts.dart';
+import 'ski_fx.dart';
+import 'ski_light.dart';
 import 'levels.dart';
 import 'narration.dart';
 import 'perde.dart';
@@ -133,6 +135,10 @@ class GolgeGame extends FlameGame with KeyboardEvents {
   /// oyuncu bir bandın dışına çıkınca (yüksek kat, derin düşüş) peşinden
   /// gider.
   double _camFloor = double.nan;
+
+  /// Kayak kamerasının açılması (0 yakın) ve dikey izleyişi.
+  double _skiOpen = 0;
+  double _skiCamY = double.nan;
   final _rnd = math.Random();
   int _devStop = 0;
 
@@ -194,6 +200,21 @@ class GolgeGame extends FlameGame with KeyboardEvents {
 
   /// Kayak bölümünün yamacı (kayak bölümü değilse yok).
   SkiSurface? skiSurface;
+
+  /// Kayak efektleri (kar tozu, takla yazıları, kut hızı).
+  SkiFx? skiFx;
+
+  /// Kayak pistinde ilerleyiş (0 baş, 1 son): göğün ve karın ışığı buna
+  /// göre döner.
+  double get skiProgress {
+    final w = level.pixelWidth;
+    if (w <= 0) return 0;
+    return (camera.viewfinder.position.x / w).clamp(0.0, 1.0);
+  }
+
+  /// Kayak pistinin o anki ışığı.
+  SkiLight get skiLight =>
+      SkiLight.at(skiProgress, avalanche: level.def.variant == 2);
 
   bool inMagnet(double x) =>
       world.children.whereType<MagnetZone>().any((m) => m.covers(x));
@@ -668,6 +689,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     level = Level((debugLevels ?? levels)[index]);
     final ski = level.def.skiSurface;
     skiSurface = ski == null ? null : SkiSurface(ski);
+    skiFx = null;
     if (!respawn || _respawn == null) {
       _respawn = Level.standOn(level.playerStart, Player.w, Player.h);
       _darkWarned = false;
@@ -867,6 +889,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
             ),
           ),
         if (skiSurface != null) SkiTerrain(skiSurface!),
+        if (skiSurface != null) skiFx = SkiFx(),
         if (skiSurface != null)
           for (final c in level.skiRocks) SkiRock(c, skiSurface!),
         for (final (c, r, n) in level.skiRails) SkiRail(c, r, n),
@@ -1673,11 +1696,22 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     final view = camera.viewport.size;
     if (view.x == 0 || view.y == 0) return;
     // Limbo gibi uzak bir kamera: ekranda yaklaşık 20 kare yükseklik.
+    // Kayakta hız ve havada kalış görüşü açar (Alto gibi): yamaç önünde
+    // uzar, atlayışın inişi görünür.
+    final ski = skiSurface;
+    if (ski != null) {
+      final sp = (p.velocity.x.abs() / 640).clamp(0.0, 1.0);
+      final air = p.onGround ? 0.0 : 1.0;
+      _skiOpen = approach(_skiOpen, sp * 0.35 + air * 0.25, dt, 0.6);
+    } else {
+      _skiOpen = 0;
+    }
     final want =
         view.y /
         (kTile * math.min(tilesTall, level.height.toDouble())) *
         _closeUp *
-        (1 + 0.05 * threat);
+        (1 + 0.05 * threat) /
+        (1 + _skiOpen);
     _zoomS = _snapCamera || _zoomS <= 0
         ? want
         : approach(_zoomS, want, dt, 0.3);
@@ -1703,6 +1737,19 @@ class GolgeGame extends FlameGame with KeyboardEvents {
       _camFloor = y - band * 0.5;
     }
     final target = Vector2(p.center.x + _lookAhead, _camFloor - 20);
+    if (ski != null) {
+      // Kayakta: önündeki yamaca bakar; Sâye ekranın sol üst üçte birinde,
+      // gideceği iniş görünür.
+      final aheadX = p.center.x + _lookAhead * 1.6;
+      final ahead = ski.at(aheadX) ?? p.center.y;
+      final mid = p.center.y * 0.55 + ahead * 0.45;
+      _skiCamY = _skiCamY.isNaN || _snapCamera
+          ? mid
+          : approach(_skiCamY, mid, dt, 0.25);
+      target
+        ..x = p.center.x + _lookAhead * 1.6
+        ..y = _skiCamY;
+    }
     target.x = level.pixelWidth <= halfW * 2
         ? level.pixelWidth / 2
         : target.x.clamp(halfW, level.pixelWidth - halfW);

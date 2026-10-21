@@ -66,7 +66,15 @@ void main() {
           g.removeFromParent();
         }
       }
-      if (p[2] != '-') {
+      final ski = game.skiSurface;
+      if (p[2] != '-' && ski != null) {
+        // Kayak: kar yüzeyine konur.
+        final x = int.parse(p[2]) * kTile + kTile / 2;
+        game.player!.position.setValues(
+          x - Player.w / 2,
+          (ski.at(x) ?? 0) - Player.h,
+        );
+      } else if (p[2] != '-') {
         game.player!.position.setFrom(
           Level.standOn(
             Vector2(int.parse(p[2]) * kTile, int.parse(p[3]) * kTile),

@@ -1882,6 +1882,8 @@ void main() {
   });
 
   group('Palandöken', () {
+    // Son kayışın süresi (saniye).
+    var simT = 0.0;
     /// Kayakçı: hep sağa; kaya ya da (kütüksüz) uçurum yaklaşınca zıplar.
     int skiRun(GolgeGame game, double seconds, double goalX) {
       final s = game.skiSurface!;
@@ -1890,6 +1892,7 @@ void main() {
           rails.any((r) => xx > r.position.x && xx < r.position.x + r.size.x);
       var deaths = 0;
       var wasDead = false;
+      simT = 0;
       keys(game).right = true;
       for (var i = 0; i < _hz * seconds; i++) {
         final pl = game.player!;
@@ -1903,6 +1906,7 @@ void main() {
             (s.at(x + 90) == null && !railAt(x + 90));
         keys(game).jump = pl.onGround && (rock || gap);
         game.update(_dt);
+        simT += _dt;
         if (pl.isDead && !wasDead) deaths++;
         wasDead = pl.isDead;
       }
@@ -1919,6 +1923,8 @@ void main() {
       await place(game, 9, 3, 7);
       final end = game.level.exitCell.x;
       final deaths = skiRun(game, 150, end - kTile);
+      // ignore: avoid_print
+      print('palandöken süre ${simT.toStringAsFixed(1)} sn, ölüm $deaths');
       expect(game.player!.center.x, greaterThan(end - kTile * 2));
       expect(deaths, lessThanOrEqualTo(3));
     });
@@ -1930,6 +1936,8 @@ void main() {
       await place(game, 10, 4, 7);
       final end = game.level.exitCell.x;
       final deaths = skiRun(game, 150, end - kTile);
+      // ignore: avoid_print
+      print('çığ süre ${simT.toStringAsFixed(1)} sn, ölüm $deaths');
       expect(game.player!.center.x, greaterThan(end - kTile * 2));
       expect(deaths, lessThanOrEqualTo(4));
     });

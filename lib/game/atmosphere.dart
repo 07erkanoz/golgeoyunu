@@ -10,9 +10,11 @@ import 'levels.dart';
 import 'myth_shapes.dart';
 import 'nemrut.dart' show NemrutArt, NemrutHead;
 import 'palette.dart';
+import 'ski_light.dart';
 import '../settings.dart';
 
 part 'backdrops_east.dart';
+part 'backdrops_ski.dart';
 
 /// Dünyanın arkasında, ekran koordinatlarında çizilen gökyüzü ve paralaks
 /// siluet katmanları.
@@ -238,6 +240,8 @@ class Backdrop extends Component with HasGameReference<GolgeGame> {
         );
       case LevelTheme.kaf:
         _kaf(canvas, w, h, cam, height);
+      case LevelTheme.snow when game.skiSurface != null:
+        _skiSky(canvas, w, h, cam);
       case LevelTheme.snow:
         _snowPeaks(canvas, w, h, cam, height, lv.def.variant);
       case LevelTheme.ark:

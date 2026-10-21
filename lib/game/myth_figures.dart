@@ -162,6 +162,153 @@ class MythFigures {
     _eyeGlow(c, _eye(pose), const Color(0xFFDDEFFF), alpha);
   }
 
+  /// Koşan Gökbörü (Ak Kurt): eklemli beden, dörtnala. [phase] 0-1 adım
+  /// döngüsü; [leap] 0-1 havada uzanma (ön ayaklar ileri, arka ayaklar
+  /// geri, gövde gerilir). Ölçü yürüyen siluetle aynı: ~128 birim boy,
+  /// ayaklar 0'da, sağa bakar.
+  static void gokboruRun(
+    Canvas c,
+    double t,
+    double phase, {
+    double leap = 0,
+    double alpha = 1,
+  }) {
+    final th = phase * 2 * math.pi;
+    // Dörtnalada sırt iner kalkar, gövde öne arkaya yatar.
+    final bob = -math.sin(th * 2).abs() * 4 * (1 - leap) - leap * 8;
+    final pitch = math.sin(th) * 0.05 * (1 - leap) - leap * 0.06;
+    c.drawOval(
+      Rect.fromCenter(
+        center: const Offset(0, 0),
+        width: 120 - leap * 40,
+        height: 9,
+      ),
+      Paint()
+        ..color = const Color(0xFF9CC4E4)
+            .withValues(alpha: 0.35 * alpha * (1 - leap * 0.7))
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
+    );
+    c.save();
+    c.translate(0, bob);
+    c.rotate(pitch);
+    // Bacak: kalça/omuzdan, üst ve alt parça; [a] dikeyden açı. Diz ve
+    // pençe yuvarlak: parçaların eki görünmez.
+    Path leg(
+      Offset root,
+      double a,
+      double knee,
+      double up,
+      double lo,
+      double w0,
+      double w1,
+    ) {
+      final k = root + Offset(math.sin(a), math.cos(a)) * up;
+      final b = a + knee;
+      final f = k + Offset(math.sin(b), math.cos(b)) * lo;
+      final mid = w0 * 0.55;
+      var out = _strip([root, k], w0, mid);
+      for (final p in [
+        Path()..addOval(Rect.fromCircle(center: k, radius: mid / 2)),
+        _strip([k, f], mid, w1),
+        Path()..addOval(Rect.fromCircle(center: root, radius: w0 / 2)),
+        Path()..addOval(
+          Rect.fromCenter(
+            center: f + const Offset(1.5, 0),
+            width: w1 * 1.9,
+            height: w1 * 1.2,
+          ),
+        ),
+      ]) {
+        out = Path.combine(PathOperation.union, out, p);
+      }
+      return out;
+    }
+
+    // Dörtnala: arka iki bacak, sonra ön iki bacak (döner dörtnala).
+    double swing(double off) => math.sin(th + off * 2 * math.pi);
+    final parts = <Path>[];
+    for (final (root, off, front) in const [
+      (Offset(-36, -50), 0.0, false),
+      (Offset(-32, -50), 0.12, false),
+      (Offset(36, -50), 0.5, true),
+      (Offset(40, -50), 0.62, true),
+    ]) {
+      final sw = swing(off);
+      final lift = math.max(0.0, math.cos(th + off * 2 * math.pi));
+      var a = sw * 0.7;
+      var knee = front ? -(0.15 + 0.95 * lift) : (0.45 + 0.75 * lift);
+      if (leap > 0) {
+        // Havada: ön ayaklar ileri uzanır, arka ayaklar geri itilir.
+        a = a * (1 - leap) + (front ? -1.1 : 1.05) * leap;
+        knee = knee * (1 - leap) + (front ? 0.3 : -0.2) * leap;
+      }
+      parts.add(
+        leg(
+          root,
+          -a,
+          knee,
+          front ? 24 : 26,
+          front ? 27 : 26,
+          front ? 13 : 16,
+          4.2,
+        ),
+      );
+    }
+    // Gövde: derin göğüs, içe çekik karın, yuvarlak sağrı.
+    parts.add(
+      Path()
+        ..moveTo(-50, -58)
+        ..cubicTo(-46, -74, -16, -72, 12, -70)
+        ..cubicTo(34, -70, 50, -76, 56, -66)
+        ..cubicTo(62, -54, 54, -36, 40, -32)
+        ..cubicTo(26, -30, 12, -40, -4, -44)
+        ..cubicTo(-20, -44, -36, -38, -46, -44)
+        ..cubicTo(-54, -48, -54, -54, -50, -58)
+        ..close(),
+    );
+    // Yeleli kalın boyun ve baş: alın, uzun burun, kısa sivri kulaklar.
+    parts.add(
+      Path()
+        ..moveTo(36, -70)
+        ..cubicTo(42, -84, 54, -92, 64, -92)
+        ..lineTo(63, -101)
+        ..lineTo(69, -93)
+        ..lineTo(72, -100)
+        ..lineTo(74, -91)
+        ..cubicTo(80, -88, 84, -84, 94, -82)
+        ..cubicTo(99, -80, 99, -75, 94, -74)
+        ..cubicTo(86, -73, 80, -72, 74, -70)
+        ..cubicTo(70, -62, 60, -48, 50, -44)
+        ..cubicTo(46, -54, 40, -62, 36, -70)
+        ..close(),
+    );
+    // Kuyruk: sağrıdan çıkar, ortası gür, ucu incelir; koşarken dalgalanır.
+    final wag = math.sin(th * 2 + 1) * 3;
+    parts.add(
+      Path()
+        ..moveTo(-46, -66)
+        ..cubicTo(-60, -70, -76, -66 + wag, -94, -58 + wag)
+        ..cubicTo(-80, -52 + wag, -64, -50, -48, -54)
+        ..close(),
+    );
+    var shape = parts.first;
+    for (final p in parts.skip(1)) {
+      shape = Path.combine(PathOperation.union, shape, p);
+    }
+    _skyBody(
+      c,
+      shape,
+      t,
+      top: const Color(0xFFEAF4FC),
+      bottom: const Color(0xFF6E9CC8),
+      glow: const Color(0xFF9CC4E4),
+      star: const Color(0xFFFFFFFF),
+      alpha: alpha,
+    );
+    _eyeGlow(c, const Offset(80, -85), const Color(0xFFDDEFFF), alpha);
+    c.restore();
+  }
+
   /// Gökbörü'nün karanlıkta parlayan pençe izi (yalnız kavanoz örtülüyken
   /// görünür).
   static void pawPrint(Canvas c, double alpha) {

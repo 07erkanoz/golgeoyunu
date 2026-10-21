@@ -1187,6 +1187,7 @@ const levels = <LevelDef>[
   ),
   LevelDef(
     title: 'X · PALANDÖKEN',
+    gokboruRun: true,
     legends: ['ejder'],
     bard: 'Ozan der ki: Dağdan inen rüzgârı geçemezsin; rüzgârla inersin.',
     bardEn: 'The bard says: you cannot outrun the wind from the mountain; you ride down with it.',
@@ -1194,7 +1195,7 @@ const levels = <LevelDef>[
     theme: LevelTheme.snow,
     variant: 1,
     skiSurface: kSkiPalandoken,
-    magnet: [(203, 226)],
+    magnet: kSkiPalandokenMagnet,
     titleEn: 'X · PALANDÖKEN',
     subtitleEn: 'Down from the mountain where the dragons sleep.',
     place: 'Palandöken Dağı · Erzurum, Aralık 1660',

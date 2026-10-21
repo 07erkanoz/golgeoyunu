@@ -31,7 +31,8 @@ OUT = os.path.join(ROOT, 'assets/images/nemrut')
 os.makedirs(OUT, exist_ok=True)
 
 # Devin parçaları çizim sırasıyla (SVG belge sırası).
-GIANT_PARTS = [
+# Taş dev artık kodla çizilir (SVG hâli beğenilmedi); parçaları üretilmez.
+GIANT_PARTS_UNUSED = [
     'leg-back', 'shin-back', 'foot-back', 'arm-back', 'forearm-back',
     'hand-back', 'pelvis', 'leg-front', 'shin-front', 'foot-front', 'torso',
     'chest-carving', 'head', 'arm-front', 'shoulder-front', 'shoulder-back',
@@ -107,7 +108,7 @@ def find(name):
 boxes = {}
 giant = open(find('nemrut_stone_giant.svg')).read()
 groups = top_groups(giant)
-for part in GIANT_PARTS:
+for part in []:
     boxes['giant_' + part.replace('-', '_')] = render(
         only(giant, groups, {part}), GIANT_SCALE,
         'giant_' + part.replace('-', '_'))

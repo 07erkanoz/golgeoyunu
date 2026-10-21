@@ -8,6 +8,7 @@ import 'golge_game.dart';
 import 'level.dart';
 import 'palette.dart';
 import 'player.dart';
+import 'ski_light.dart';
 
 /// Kayak bölümlerinin pürüzsüz kar yamacı. Yükseklikler sütun başına (kare
 /// cinsinden) verilir; aralar doğrusal birleştirilir. Negatif yükseklik
@@ -17,7 +18,8 @@ class SkiSurface {
 
   final List<double> rows;
 
-  /// x'teki zemin yüksekliği (piksel), uçurumsa null.
+  /// x'teki zemin yüksekliği (piksel), uçurumsa null. Sütun yükseklikleri
+  /// arası Catmull-Rom eğrisiyle birleşir: yamaç köşesiz, yuvarlak akar.
   double? at(double x) {
     final f = x / kTile - 0.5;
     final i = f.floor();
@@ -28,7 +30,20 @@ class SkiSurface {
     final b = rows[i + 1];
     if (a < 0 || b < 0) return null;
     final t = f - i;
-    return (a + (b - a) * t) * kTile;
+    // Komşu yoksa (uçurum kenarı, pist başı) doğru çizgiyle uzatılır.
+    final p0 = i > 0 && rows[i - 1] >= 0 ? rows[i - 1] : 2 * a - b;
+    final p3 = i + 2 < rows.length && rows[i + 2] >= 0
+        ? rows[i + 2]
+        : 2 * b - a;
+    final t2 = t * t;
+    final t3 = t2 * t;
+    final v =
+        0.5 *
+        (2 * a +
+            (-p0 + b) * t +
+            (2 * p0 - 5 * a + 4 * b - p3) * t2 +
+            (-p0 + 3 * a - 3 * b + p3) * t3);
+    return v * kTile;
   }
 
   /// x'teki eğim açısı (aşağı inen yokuş artı).
@@ -40,90 +55,280 @@ class SkiSurface {
   }
 }
 
-/// Karlı yamacın çizimi: kar örtüsü, altında koyu kaya, yer yer çam.
+/// Karlı yamacın çizimi: arkada puslu çamlar, kalın kar örtüsü (üstü ışığı
+/// yakalar, içine doğru gölgelenir, derinde koyulaşır), kenarında parıltılar
+/// ve kayakların bıraktığı iz. Renkler günün ışığından gelir (SkiLight).
 class SkiTerrain extends Component with HasGameReference<GolgeGame> {
   SkiTerrain(this.surface) : super(priority: 1);
 
   final SkiSurface surface;
+  double _t = 0;
+
+  /// Kayakların izi: yere değdiği yerler (dünya x'i), sıralı.
+  final _track = <double>[];
+
+  @override
+  void update(double dt) {
+    _t += dt;
+    final p = game.player;
+    if (p == null || p.isDead || !p.onGround) return;
+    final x = p.center.x;
+    if (_track.isEmpty || (x - _track.last).abs() > 6) {
+      if (_track.isNotEmpty && x < _track.last) _track.clear();
+      _track.add(x);
+      if (_track.length > 1200) _track.removeRange(0, 200);
+    }
+  }
 
   @override
   void render(Canvas canvas) {
-    final view = game.camera.visibleWorldRect.inflate(64);
+    final lt = game.skiLight;
+    final view = game.camera.visibleWorldRect.inflate(80);
     final c0 = math.max(0, (view.left / kTile).floor() - 1);
     final c1 = math.min(
       surface.rows.length - 1,
       (view.right / kTile).ceil() + 1,
     );
-    final bottom = game.level.pixelHeight + 400;
-    final rock = Paint()..color = kInk;
-    final snow = Paint()..color = const Color(0xFFC8D2E2);
+    final bottom = view.bottom + 200;
+    _pines(canvas, c0, c1, lt);
     var c = c0;
     while (c <= c1) {
       if (surface.rows[c] < 0) {
         c++;
         continue;
       }
-      // Kesintisiz bir zemin parçası.
-      final path = Path();
-      final top = Path();
       final start = c;
       while (c <= c1 && surface.rows[c] >= 0) {
-        final x = (c + 0.5) * kTile;
-        final y = surface.rows[c] * kTile;
-        if (c == start) {
-          path.moveTo(x - kTile / 2, bottom);
-          path.lineTo(x - kTile / 2, y);
-          top.moveTo(x - kTile / 2, y);
-        }
-        path.lineTo(x, y);
-        top.lineTo(x, y);
         c++;
       }
-      final endX = (c - 0.5) * kTile;
-      final endY = surface.rows[c - 1] * kTile;
-      path
-        ..lineTo(endX + kTile / 2, endY)
-        ..lineTo(endX + kTile / 2, bottom)
-        ..close();
-      top.lineTo(endX + kTile / 2, endY);
-      canvas.drawPath(path, rock);
+      // Kesintisiz parça: [start, c) sütunları; kenarlar sütun kenarında.
+      final x0 = start * kTile.toDouble();
+      final x1 = c * kTile.toDouble();
+      final top = <Offset>[];
+      for (var x = x0; x <= x1 + 0.1; x += 8) {
+        final cx = x.clamp(x0 + kTile / 2, x1 - kTile / 2);
+        final col = (cx / kTile - 0.5).round().clamp(start, c - 1);
+        final y = surface.at(cx) ?? surface.rows[col] * kTile;
+        top.add(Offset(x, y));
+      }
+      // Uçurum kenarlarında kaya yüzü ve sarkan kar saçağı.
+      _snowBody(canvas, top, bottom, lt);
+      if (start > 0 && surface.rows[start - 1] < 0) {
+        _cliff(canvas, top.first, bottom, lt, -1);
+      }
+      if (c < surface.rows.length && surface.rows[c] < 0) {
+        _cliff(canvas, top.last, bottom, lt, 1);
+      }
+      if (start > 0 && surface.rows[start - 1] < 0) {
+        _cornice(canvas, top.first, lt, -1);
+      }
+      if (c < surface.rows.length && surface.rows[c] < 0) {
+        _cornice(canvas, top.last, lt, 1);
+      }
+    }
+    _drawTrack(canvas, lt);
+  }
+
+  /// Kar gövdesi: üstten derine katmanlar.
+  void _snowBody(Canvas canvas, List<Offset> top, double bottom, SkiLight lt) {
+    Path band(double d0, double d1) {
+      final p = Path()..moveTo(top.first.dx, top.first.dy + d0);
+      for (final q in top) {
+        p.lineTo(q.dx, q.dy + d0);
+      }
+      for (var i = top.length - 1; i >= 0; i--) {
+        p.lineTo(top[i].dx, math.min(bottom, top[i].dy + d1));
+      }
+      return p..close();
+    }
+
+    canvas.drawPath(band(170, bottom), Paint()..color = lt.deep);
+    // Üstten derine yumuşak geçiş: ince katmanlar, renk adım adım koyulaşır.
+    const n = 26;
+    for (var k = n - 1; k >= 0; k--) {
+      final u0 = k / n;
+      final u1 = (k + 1) / n;
+      final d0 = 170 * u0 * u0;
+      final d1 = 170 * u1 * u1;
+      final u = (u0 + u1) / 2;
+      final col = u < 0.25
+          ? Color.lerp(lt.snowLit, lt.snowShade, u / 0.25)!
+          : Color.lerp(lt.snowShade, lt.deep, (u - 0.25) / 0.75)!;
+      canvas.drawPath(band(d0, d1 + 0.8), Paint()..color = col);
+    }
+    // Katmanların arası yumuşasın: ince sis çizgileri.
+    final edge = Path()..moveTo(top.first.dx, top.first.dy);
+    for (final q in top) {
+      edge.lineTo(q.dx, q.dy);
+    }
+    canvas.drawPath(
+      edge,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 4
+        ..strokeJoin = StrokeJoin.round
+        ..color = lt.snowLit,
+    );
+    // Işığı yakalayan parıltılar: kenarda göz kırpan kristaller.
+    final glint = Paint();
+    for (var i = 0; i < top.length; i++) {
+      final q = top[i];
+      final seed = (q.dx / 8).round();
+      final h = (seed * 2654435761) & 0xffff;
+      if (h % 5 != 0) continue;
+      final tw = math.sin(_t * (1.5 + (h % 7) * 0.4) + h) * 0.5 + 0.5;
+      if (tw < 0.55) continue;
+      glint.color = Color.lerp(
+        lt.sun,
+        const Color(0xFFFFFFFF),
+        0.5,
+      )!.withValues(alpha: (tw - 0.55) * 2);
+      final d = 3.0 + (h % 11);
+      final c = Offset(q.dx, q.dy + d);
+      canvas.drawCircle(c, 0.9 + (tw - 0.55) * 2, glint);
+    }
+  }
+
+  /// Uçurumun kaya yüzü: kenardan aşağı, girintili çıkıntılı; derine doğru
+  /// koyulaşır. [side] -1 sol kenar (uçurum solda), 1 sağ kenar.
+  void _cliff(Canvas canvas, Offset lip, double bottom, SkiLight lt, int side) {
+    // Yamacın düz kesik kenarını örten, uçuruma doğru taşan kaya çıkıntıları.
+    final face = Path()..moveTo(lip.dx - side * 2, lip.dy + 4);
+    var k = 0;
+    for (var y = lip.dy + 10; y < bottom; y += 22, k++) {
+      final h = ((lip.dx.round() * 31 + k * 17) % 13).toDouble();
+      face.lineTo(lip.dx + side * (2 + h), y);
+      face.lineTo(lip.dx + side * (h * 0.4), y + 11);
+    }
+    face
+      ..lineTo(lip.dx - side * 2, bottom)
+      ..close();
+    canvas.drawPath(
+      face,
+      Paint()
+        ..shader = Gradient.linear(Offset(0, lip.dy), Offset(0, lip.dy + 360), [
+          Color.lerp(lt.snowShade, lt.deep, 0.45)!,
+          lt.deep,
+        ]),
+    );
+  }
+
+  /// Kenardan sarkan kar saçağı.
+  void _cornice(Canvas canvas, Offset lip, SkiLight lt, int side) {
+    final p = Path()
+      ..moveTo(lip.dx - side * 26, lip.dy - 1)
+      ..quadraticBezierTo(
+        lip.dx + side * 4,
+        lip.dy - 3,
+        lip.dx + side * 9,
+        lip.dy + 4,
+      )
+      ..quadraticBezierTo(
+        lip.dx + side * 6,
+        lip.dy + 14,
+        lip.dx - side * 4,
+        lip.dy + 10,
+      )
+      ..quadraticBezierTo(
+        lip.dx - side * 14,
+        lip.dy + 8,
+        lip.dx - side * 26,
+        lip.dy + 6,
+      )
+      ..close();
+    canvas.drawPath(
+      p,
+      Paint()..color = Color.lerp(lt.snowLit, lt.snowShade, 0.15)!,
+    );
+    // Saçaktan sarkan buz sarkıtları.
+    final ice = Paint()..color = lt.snowLit.withValues(alpha: 0.85);
+    for (var i = 0; i < 3; i++) {
+      final ix = lip.dx - side * (i * 6.0) + side * 3;
       canvas.drawPath(
-        top,
-        snow
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 7
-          ..strokeJoin = StrokeJoin.round,
+        Path()
+          ..moveTo(ix - 1.6, lip.dy + 9)
+          ..lineTo(ix + 1.6, lip.dy + 9)
+          ..lineTo(ix, lip.dy + 16 + i * 3)
+          ..close(),
+        ice,
       );
     }
-    // Yamaçtaki çamlar (belirlenimci).
-    final tree = Paint()..color = const Color(0xFF0E1420);
-    final cap = Paint()..color = const Color(0xFF8C9CB4);
+  }
+
+  /// Kayak izi: karın üst kenarının hemen altında iki ince çizgi.
+  void _drawTrack(Canvas canvas, SkiLight lt) {
+    if (_track.length < 2) return;
+    final view = game.camera.visibleWorldRect;
+    final path = Path();
+    var open = false;
+    for (final x in _track) {
+      if (x < view.left - 40 || x > view.right + 40) {
+        open = false;
+        continue;
+      }
+      final y = surface.at(x);
+      if (y == null) {
+        open = false;
+        continue;
+      }
+      if (!open) {
+        path.moveTo(x, y + 2.5);
+        open = true;
+      } else {
+        path.lineTo(x, y + 2.5);
+      }
+    }
+    canvas.drawPath(
+      path,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.6
+        ..color = lt.snowShade.withValues(alpha: 0.75),
+    );
+  }
+
+  /// Yamacın arkasındaki çamlar: kat kat dallar, üstlerinde kar; havanın
+  /// rengine karışır (kayalardan ayrı dursun diye soluk ve göğe yakın).
+  void _pines(Canvas canvas, int c0, int c1, SkiLight lt) {
+    final body = Color.lerp(lt.ridge, lt.deep, 0.35)!;
+    final tree = Paint()..color = body;
+    final snow = Paint()..color = Color.lerp(lt.snowLit, lt.skyLow, 0.3)!;
     for (var i = c0; i <= c1; i++) {
-      if (surface.rows[i] < 0 || (i * 7919) % 11 != 0) continue;
-      final x = (i + 0.5) * kTile;
-      final y = surface.rows[i] * kTile + 4;
-      final h = 40.0 + (i * 31) % 30;
-      canvas.drawPath(
-        Path()
-          ..moveTo(x, y - h)
-          ..lineTo(x + h * 0.28, y)
-          ..lineTo(x - h * 0.28, y)
-          ..close(),
-        tree,
-      );
-      canvas.drawPath(
-        Path()
-          ..moveTo(x, y - h)
-          ..lineTo(x + h * 0.12, y - h * 0.6)
-          ..lineTo(x - h * 0.12, y - h * 0.6)
-          ..close(),
-        cap,
-      );
+      if (surface.rows[i] < 0 || (i * 7919) % 7 != 0) continue;
+      final x = (i + 0.5) * kTile + ((i * 37) % 11 - 5);
+      final y = surface.at(x);
+      if (y == null) continue;
+      final h = 54.0 + (i * 31) % 40;
+      // Kökü karın içinde: yamacın biraz gerisinde, biraz yukarıda başlar.
+      final base = y + 14;
+      for (var k = 0; k < 4; k++) {
+        final ty = base - h + k * h * 0.2;
+        final half = h * (0.14 + k * 0.07);
+        canvas.drawPath(
+          Path()
+            ..moveTo(x, ty)
+            ..lineTo(x + half, ty + h * 0.32)
+            ..lineTo(x - half, ty + h * 0.32)
+            ..close(),
+          tree,
+        );
+        canvas.drawPath(
+          Path()
+            ..moveTo(x, ty + 1)
+            ..lineTo(x + half * 0.7, ty + h * 0.22)
+            ..lineTo(x + half * 0.2, ty + h * 0.18)
+            ..lineTo(x - half * 0.5, ty + h * 0.21)
+            ..close(),
+          snow,
+        );
+      }
     }
   }
 }
 
-/// Karın içinden çıkan kaya: kayarken üstünden atlanmalı.
+/// Karın içinden çıkan kaya: kayarken üstünden atlanmalı. Çamlardan ayrı
+/// dursun diye önde, iri, koyu ve sıcak tonlu; üstünde kar, ışık yanında
+/// parlak kenar, önünde karın kabardığı yer.
 class SkiRock extends PositionComponent with HasGameReference<GolgeGame> {
   SkiRock(this.col, this.surface)
     : super(
@@ -140,26 +345,78 @@ class SkiRock extends PositionComponent with HasGameReference<GolgeGame> {
 
   @override
   void render(Canvas canvas) {
-    final rock = Paint()..color = const Color(0xFF1A1E28);
+    final lt = game.skiLight;
+    // Çizim, çarpışma kutusundan biraz büyük ve yere gömülü.
+    final ground =
+        (surface.at(position.x + 14) ?? position.y + 22) - position.y;
+    canvas.save();
+    canvas.translate(14, ground);
+    final body = Path()
+      ..moveTo(-19, 2)
+      ..lineTo(-16, -12)
+      ..lineTo(-8, -24)
+      ..lineTo(3, -28)
+      ..lineTo(13, -21)
+      ..lineTo(19, -6)
+      ..lineTo(18, 2)
+      ..close();
     canvas.drawPath(
-      Path()
-        ..moveTo(0, 24)
-        ..lineTo(4, 8)
-        ..lineTo(12, 0)
-        ..lineTo(22, 4)
-        ..lineTo(28, 24)
-        ..close(),
-      rock,
+      body.shift(const Offset(3, 2)),
+      Paint()..color = const Color(0xFF000000).withValues(alpha: 0.3),
     );
     canvas.drawPath(
-      Path()
-        ..moveTo(6, 7)
-        ..lineTo(12, 1)
-        ..lineTo(21, 5)
-        ..lineTo(14, 6)
-        ..close(),
-      Paint()..color = const Color(0xFFDCE4F0),
+      body,
+      Paint()
+        ..shader = Gradient.linear(
+          const Offset(-18, -24),
+          const Offset(18, 2),
+          [const Color(0xFF5A4A44), const Color(0xFF221A1C)],
+        ),
     );
+    // Kırık yüzeyler.
+    final facet = Paint()
+      ..color = const Color(0xFF130E10).withValues(alpha: 0.7)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.2;
+    canvas.drawPath(
+      Path()
+        ..moveTo(-8, -24)
+        ..lineTo(-2, -10)
+        ..lineTo(10, -4)
+        ..moveTo(-2, -10)
+        ..lineTo(-12, -2),
+      facet,
+    );
+    // Işık tarafında kenar.
+    canvas.drawPath(
+      Path()
+        ..moveTo(-16, -12)
+        ..lineTo(-8, -24)
+        ..lineTo(3, -28),
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.6
+        ..color = lt.sun.withValues(alpha: 0.7),
+    );
+    // Üstünde kar.
+    canvas.drawPath(
+      Path()
+        ..moveTo(-12, -18)
+        ..lineTo(-8, -24)
+        ..lineTo(3, -28)
+        ..lineTo(13, -21)
+        ..lineTo(6, -20)
+        ..lineTo(-1, -23)
+        ..lineTo(-6, -18)
+        ..close(),
+      Paint()..color = lt.snowLit,
+    );
+    // Dibinde kabaran kar.
+    canvas.drawOval(
+      const Rect.fromLTRB(-24, -3, 24, 5),
+      Paint()..color = Color.lerp(lt.snowLit, lt.snowShade, 0.2)!,
+    );
+    canvas.restore();
   }
 }
 
@@ -284,21 +541,47 @@ class Avalanche extends PositionComponent with HasGameReference<GolgeGame> {
   void render(Canvas canvas) {
     if (!_awake) return;
     final a = _fade;
-    final snow = Paint()
-      ..color = const Color(0xFFE6EEF8).withValues(alpha: 0.92 * a);
-    final shade = Paint()
-      ..color = const Color(0xFF9AAAC0).withValues(alpha: 0.8 * a);
-    for (var i = 0; i < 16; i++) {
-      final ang = i / 16 * math.pi;
-      final r = 120 + 30 * math.sin(_t * 4 + i * 1.3);
-      final c = Offset(-math.cos(ang) * 80 - 60, -math.sin(ang) * r * 1.4);
+    final lt = game.skiLight;
+    // Kabaran toz kar dalgası: önü yuvarlanan, arkası yamaca karışan; içten
+    // dışa açık-koyu katmanlar, kıvrılan tepeler.
+    final back = Paint()
+      ..shader = Gradient.linear(const Offset(0, -260), const Offset(0, 40), [
+        lt.snowShade.withValues(alpha: 0.0),
+        lt.snowShade.withValues(alpha: 0.85 * a),
+      ]);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        const Rect.fromLTRB(-1100, -240, -60, 500),
+        const Radius.circular(140),
+      ),
+      back..maskFilter = const MaskFilter.blur(BlurStyle.normal, 24),
+    );
+    for (var layer = 0; layer < 3; layer++) {
+      final col = Color.lerp(lt.snowLit, lt.snowShade, 0.5 - layer * 0.22)!;
+      final paint = Paint()
+        ..color = col.withValues(alpha: (0.55 + layer * 0.15) * a)
+        ..maskFilter = MaskFilter.blur(BlurStyle.normal, 10.0 - layer * 3);
+      for (var i = 0; i < 9; i++) {
+        final k = i / 8;
+        // Önden geriye: öndekiler küçük ve alçak, ortadakiler en yüksek.
+        final x = -k * 520 + layer * 10;
+        final h = 60 + math.sin(k * math.pi) * 170 - layer * 18;
+        final churn = math.sin(_t * (2.4 + i * 0.3) + i * 1.7 + layer);
+        final r = 46 + 22 * math.sin(k * math.pi) + churn * 7;
+        canvas.drawCircle(Offset(x + churn * 6, -h + r * 0.6), r, paint);
+      }
+    }
+    // Ön kenardan savrulan toz.
+    final dust = Paint()..color = lt.snowLit.withValues(alpha: 0.6 * a);
+    for (var i = 0; i < 26; i++) {
+      final u = ((i * 0.37 + _t * 0.9) % 1.0);
+      final y = -20 - (i * 13 % 160);
       canvas.drawCircle(
-        c,
-        70 + 15 * math.sin(_t * 3 + i),
-        i.isEven ? snow : shade,
+        Offset(30 + u * 90, y + u * 30 + math.sin(_t * 3 + i) * 6),
+        1.2 + (1 - u) * 2.4,
+        dust,
       );
     }
-    canvas.drawRect(Rect.fromLTWH(-600, -60, 600, 400), snow);
   }
 }
 
