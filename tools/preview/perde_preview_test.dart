@@ -60,6 +60,8 @@ void main() {
       'gok_ay_gun': (PerdeScene.gok, 2.6),
       'gok_huma': (PerdeScene.gok, 3.5),
       'gok_yukselis': (PerdeScene.gok, 4.6),
+      'son_akana': (PerdeScene.epilogue, 9.5),
+      'son_caputlar': (PerdeScene.epilogue, 11.5),
     };
     for (final e in shots.entries) {
       final rec = ui.PictureRecorder();

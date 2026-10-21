@@ -28,8 +28,15 @@ Future<void> _fonts() async {
 /// Figür, haritası, kadraj (dünya merkezi ve genişliği), kare aralığı ve
 /// her karede yapılacak etki.
 class _Spec {
-  const _Spec(this.map, this.theme, this.find, this.view, this.step,
-      {this.count = 16, this.act});
+  const _Spec(
+    this.map,
+    this.theme,
+    this.find,
+    this.view,
+    this.step, {
+    this.count = 16,
+    this.act,
+  });
   final List<String> map;
   final LevelTheme theme;
   final Component Function(GolgeGame) find;
@@ -236,8 +243,9 @@ void main() {
       c.translate(cell / 2, cell / 2);
       c.scale(cell / spec.view);
       c.translate(-anchor.x, -anchor.y);
-      for (final comp in game.world.children.toList()
-        ..sort((a, b) => a.priority.compareTo(b.priority))) {
+      for (final comp
+          in game.world.children.toList()
+            ..sort((a, b) => a.priority.compareTo(b.priority))) {
         if (comp is PositionComponent || comp is SwingRope) comp.renderTree(c);
       }
       frames.add(await rec.endRecording().toImage(cell.toInt(), cell.toInt()));
@@ -251,12 +259,16 @@ void main() {
     for (var i = 0; i < frames.length; i++) {
       final o = ui.Offset((i % cols) * cell, (i ~/ cols) * cell);
       c.drawImage(frames[i], o, ui.Paint());
-      final pb = ui.ParagraphBuilder(
-        ui.ParagraphStyle(fontSize: 12, fontFamily: 'Roboto'),
-      )
-        ..pushStyle(ui.TextStyle(color: const ui.Color(0xFFE0D0B0)))
-        ..addText('${i + 1} · ${((i + 1) * spec.step).toStringAsFixed(1)} sn');
-      final para = pb.build()..layout(const ui.ParagraphConstraints(width: cell));
+      final pb =
+          ui.ParagraphBuilder(
+              ui.ParagraphStyle(fontSize: 12, fontFamily: 'Roboto'),
+            )
+            ..pushStyle(ui.TextStyle(color: const ui.Color(0xFFE0D0B0)))
+            ..addText(
+              '${i + 1} · ${((i + 1) * spec.step).toStringAsFixed(1)} sn',
+            );
+      final para = pb.build()
+        ..layout(const ui.ParagraphConstraints(width: cell));
       c.drawParagraph(para, o.translate(4, 3));
     }
     final out = await rec.endRecording().toImage(
@@ -265,6 +277,7 @@ void main() {
     );
     final png = await out.toByteData(format: ui.ImageByteFormat.png);
     Directory('build/gallery').createSync(recursive: true);
-    File('build/gallery/fig_$fig.png').writeAsBytesSync(png!.buffer.asUint8List());
+    File('build/gallery/fig_$fig.png')
+        .writeAsBytesSync(png!.buffer.asUint8List());
   });
 }

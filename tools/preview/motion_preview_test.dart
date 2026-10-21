@@ -20,7 +20,9 @@ Future<void> _fonts() async {
   for (final f in ['NotoSans-Regular.ttf']) {
     final file = File('/usr/share/fonts/noto/$f');
     if (file.existsSync()) {
-      loader.addFont(Future.value(ByteData.view(file.readAsBytesSync().buffer)));
+      loader.addFont(
+        Future.value(ByteData.view(file.readAsBytesSync().buffer)),
+      );
     }
   }
   await loader.load();
@@ -144,9 +146,12 @@ void main() {
         cell,
       );
       c.drawImage(img, dst.topLeft, ui.Paint());
-      final pb = ui.ParagraphBuilder(ui.ParagraphStyle(fontSize: 11, fontFamily: 'Roboto'))
-        ..pushStyle(ui.TextStyle(color: const ui.Color(0xFFE0D0B0)))
-        ..addText('${i + 1} $label');
+      final pb =
+          ui.ParagraphBuilder(
+              ui.ParagraphStyle(fontSize: 11, fontFamily: 'Roboto'),
+            )
+            ..pushStyle(ui.TextStyle(color: const ui.Color(0xFFE0D0B0)))
+            ..addText('${i + 1} $label');
       final para = pb.build()..layout(ui.ParagraphConstraints(width: cell));
       c.drawParagraph(para, dst.topLeft.translate(4, 3));
     }
@@ -156,6 +161,7 @@ void main() {
     );
     final png = await out.toByteData(format: ui.ImageByteFormat.png);
     Directory('build/gallery').createSync(recursive: true);
-    File('build/gallery/motion.png').writeAsBytesSync(png!.buffer.asUint8List());
+    File('build/gallery/motion.png')
+        .writeAsBytesSync(png!.buffer.asUint8List());
   });
 }

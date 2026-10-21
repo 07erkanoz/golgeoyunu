@@ -13,7 +13,7 @@ import 'persist.dart';
 /// ışır; Sâye öldüğünde en son uyandırdığı ağacın dibinden kalkar. Uyanmış
 /// ağaç kayıtta uyanık kalır.
 class UmayTree extends PositionComponent with Persistent {
-  UmayTree(this.cell, {required double headroom})
+  UmayTree(this.cell, {required double headroom, this.bloom = false})
     : scaleK = _fit(headroom),
       super(anchor: Anchor.bottomCenter, priority: 4) {
     position = Vector2(cell.x + kTile / 2, cell.y + kTile);
@@ -22,6 +22,9 @@ class UmayTree extends PositionComponent with Persistent {
 
   /// Ağacın durduğu kontrol noktası hücresi (sol üst köşe).
   final Vector2 cell;
+
+  /// Son ağaç (Konya): uyanınca çiçek açar.
+  final bool bloom;
 
   /// Çizim ölçeği: tavan alçaksa ağaç küçülür (dar sarnıçta fidan gibi).
   final double scaleK;
@@ -89,7 +92,7 @@ class UmayTree extends PositionComponent with Persistent {
     canvas.translate(size.x / 2, size.y);
     canvas.scale(scaleK);
     // Uyanırken ışık önce yükselir, ardından çaputlar kalkar.
-    MythFigures.umayTree(canvas, _t, lit: _ease(_lit));
+    MythFigures.umayTree(canvas, _t, lit: _ease(_lit), bloom: bloom);
     canvas.restore();
   }
 

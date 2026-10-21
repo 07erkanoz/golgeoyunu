@@ -31,7 +31,13 @@ void main() {
   for (final (name, page) in [
     ('hikaye', const StoryPage()),
     ('hakkinda', const AboutPage()),
-    ('defter', const MemoryBookPage(memories: {'0:0', '0:2', '1:0', '2:1'}, myths: {'umay'})),
+    (
+      'defter',
+      const MemoryBookPage(
+        memories: {'0:0', '0:2', '1:0', '2:1'},
+        myths: {'umay'},
+      ),
+    ),
   ]) {
     testWidgets('$name önizleme', (tester) async {
       await tester.runAsync(_font);

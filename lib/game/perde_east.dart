@@ -1310,6 +1310,56 @@ void _mythOverlay(Canvas canvas, PerdeScene scene, double time, double u) {
           }
         }
       }
+    case PerdeScene.epilogue:
+      // Perde karardı: ilk su bir an yankılanır; Ak Ana sudan ışık olarak
+      // yükselir.
+      final echo = _line(u, 9);
+      if (echo > 0) {
+        final rise = _span(u, 9.05, 9.7);
+        canvas.save();
+        canvas.clipRect(const Rect.fromLTWH(0, 0, 780, g - 10));
+        _shape(
+          canvas,
+          MythFigures.akAnaSilhouette,
+          Offset(390, g + 110 - 140 * rise),
+          140,
+          _hole(0.35 * echo),
+        );
+        canvas.restore();
+        for (var i = 0; i < 3; i++) {
+          final k = ((time * 0.4 + i / 3) % 1);
+          canvas.drawOval(
+            Rect.fromCenter(
+              center: Offset(390, g - 12),
+              width: 40 + k * 220,
+              height: 4 + k * 10,
+            ),
+            _hole(0.25 * echo * (1 - k))
+              ..style = PaintingStyle.stroke
+              ..strokeWidth = 1.5,
+          );
+        }
+      }
+      // Bütün ışık göğe yükselir; Umay ağaçlarının çaputları da savrulur.
+      final fly = _line(u, 11);
+      if (fly > 0) {
+        for (var i = 0; i < 26; i++) {
+          final k = ((time * 0.22 + i * 0.137) % 1);
+          final x = 40.0 + (i * 97 % 700) + math.sin(time * 1.3 + i) * 18;
+          final y = g - k * 360;
+          final strip = Path()..moveTo(x, y);
+          for (var j = 1; j <= 4; j++) {
+            strip.lineTo(x + math.sin(time * 3 + i + j) * 4, y + j * 5);
+          }
+          canvas.drawPath(
+            strip,
+            _hole(fly * 0.8 * (1 - k * 0.6))
+              ..style = PaintingStyle.stroke
+              ..strokeWidth = 2.5
+              ..strokeCap = StrokeCap.round,
+          );
+        }
+      }
     default:
       return;
   }

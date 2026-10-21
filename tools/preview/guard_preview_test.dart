@@ -117,12 +117,14 @@ void main() {
       final (img, label) = frames[i];
       final o = ui.Offset((i % cols) * cell, (i ~/ cols) * cell);
       c.drawImage(img, o, ui.Paint());
-      final pb = ui.ParagraphBuilder(
-        ui.ParagraphStyle(fontSize: 12, fontFamily: 'Roboto'),
-      )
-        ..pushStyle(ui.TextStyle(color: const ui.Color(0xFFE0D0B0)))
-        ..addText('${i + 1} $label');
-      final para = pb.build()..layout(const ui.ParagraphConstraints(width: cell));
+      final pb =
+          ui.ParagraphBuilder(
+              ui.ParagraphStyle(fontSize: 12, fontFamily: 'Roboto'),
+            )
+            ..pushStyle(ui.TextStyle(color: const ui.Color(0xFFE0D0B0)))
+            ..addText('${i + 1} $label');
+      final para = pb.build()
+        ..layout(const ui.ParagraphConstraints(width: cell));
       c.drawParagraph(para, o.translate(4, 3));
     }
     final out = await rec.endRecording().toImage(

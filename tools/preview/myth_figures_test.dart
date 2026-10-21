@@ -11,7 +11,8 @@ void main() {
   test('Gökbörü ve Tulpar', () async {
     final loader = FontLoader('Roboto');
     final f = File('/usr/share/fonts/noto/NotoSans-Regular.ttf');
-    if (f.existsSync()) loader.addFont(Future.value(ByteData.view(f.readAsBytesSync().buffer)));
+    if (f.existsSync())
+      loader.addFont(Future.value(ByteData.view(f.readAsBytesSync().buffer)));
     await loader.load();
     const w = 1800.0;
     const h = 1150.0;
@@ -21,23 +22,34 @@ void main() {
     c.drawRect(
       const ui.Rect.fromLTWH(0, 0, w, h),
       ui.Paint()
-        ..shader = ui.Gradient.linear(const ui.Offset(0, 0), const ui.Offset(0, h), [
-          const ui.Color(0xFF070A16),
-          const ui.Color(0xFF16203A),
-          const ui.Color(0xFF2A2A3A),
-        ], [0, 0.7, 1]),
+        ..shader = ui.Gradient.linear(
+          const ui.Offset(0, 0),
+          const ui.Offset(0, h),
+          [
+            const ui.Color(0xFF070A16),
+            const ui.Color(0xFF16203A),
+            const ui.Color(0xFF2A2A3A),
+          ],
+          [0, 0.7, 1],
+        ),
     );
     void ground(double y) => c.drawRect(
-          ui.Rect.fromLTWH(0, y, w, 6),
-          ui.Paint()..color = const ui.Color(0xFF05060C),
-        );
+      ui.Rect.fromLTWH(0, y, w, 6),
+      ui.Paint()..color = const ui.Color(0xFF05060C),
+    );
     void label(String s, double cx, double y) {
-      final pb = ui.ParagraphBuilder(
-        ui.ParagraphStyle(fontSize: 22, fontFamily: 'Roboto', textAlign: ui.TextAlign.center),
-      )
-        ..pushStyle(ui.TextStyle(color: const ui.Color(0xFFD8E2F0)))
-        ..addText(s);
-      final para = pb.build()..layout(const ui.ParagraphConstraints(width: 560));
+      final pb =
+          ui.ParagraphBuilder(
+              ui.ParagraphStyle(
+                fontSize: 22,
+                fontFamily: 'Roboto',
+                textAlign: ui.TextAlign.center,
+              ),
+            )
+            ..pushStyle(ui.TextStyle(color: const ui.Color(0xFFD8E2F0)))
+            ..addText(s);
+      final para = pb.build()
+        ..layout(const ui.ParagraphConstraints(width: 560));
       c.drawParagraph(para, ui.Offset(cx - 280, y));
     }
 
@@ -75,6 +87,7 @@ void main() {
     final img = await rec.endRecording().toImage(w.toInt(), h.toInt());
     final png = await img.toByteData(format: ui.ImageByteFormat.png);
     Directory('build/gallery').createSync(recursive: true);
-    File('build/gallery/gokboru_tulpar.png').writeAsBytesSync(png!.buffer.asUint8List());
+    File('build/gallery/gokboru_tulpar.png')
+        .writeAsBytesSync(png!.buffer.asUint8List());
   });
 }

@@ -32,7 +32,11 @@ void main() {
         ..shader = ui.Gradient.radial(
           const ui.Offset(w / 2, h / 2),
           w * 0.7,
-          [const ui.Color(0xFFE8B070), const ui.Color(0xFF8A4A22), const ui.Color(0xFF2A140A)],
+          [
+            const ui.Color(0xFFE8B070),
+            const ui.Color(0xFF8A4A22),
+            const ui.Color(0xFF2A140A),
+          ],
           [0, 0.55, 1],
         ),
     );
@@ -55,17 +59,24 @@ void main() {
       c.scale(scale);
       draw(c);
       c.restore();
-      final pb = ui.ParagraphBuilder(
-        ui.ParagraphStyle(fontSize: 18, fontFamily: 'Roboto', textAlign: ui.TextAlign.center),
-      )
-        ..pushStyle(ui.TextStyle(color: const ui.Color(0xFF1A0B05)))
-        ..addText(name);
-      final para = pb.build()..layout(const ui.ParagraphConstraints(width: w / 4));
+      final pb =
+          ui.ParagraphBuilder(
+              ui.ParagraphStyle(
+                fontSize: 18,
+                fontFamily: 'Roboto',
+                textAlign: ui.TextAlign.center,
+              ),
+            )
+            ..pushStyle(ui.TextStyle(color: const ui.Color(0xFF1A0B05)))
+            ..addText(name);
+      final para = pb.build()
+        ..layout(const ui.ParagraphConstraints(width: w / 4));
       c.drawParagraph(para, ui.Offset(cx - w / 8, base + 22));
     }
     final img = await rec.endRecording().toImage(w.toInt(), h.toInt());
     final png = await img.toByteData(format: ui.ImageByteFormat.png);
     Directory('build/gallery').createSync(recursive: true);
-    File('build/gallery/mitoloji.png').writeAsBytesSync(png!.buffer.asUint8List());
+    File('build/gallery/mitoloji.png')
+        .writeAsBytesSync(png!.buffer.asUint8List());
   });
 }

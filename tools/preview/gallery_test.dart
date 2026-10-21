@@ -16,9 +16,17 @@ import 'package:golge/settings.dart';
 
 Future<void> _fonts() async {
   final loader = FontLoader('Roboto');
-  for (final f in ['NotoSans-Regular.ttf', 'NotoSans-Italic.ttf', 'NotoSans-Light.ttf', 'NotoSans-LightItalic.ttf']) {
+  for (final f in [
+    'NotoSans-Regular.ttf',
+    'NotoSans-Italic.ttf',
+    'NotoSans-Light.ttf',
+    'NotoSans-LightItalic.ttf',
+  ]) {
     final file = File('/usr/share/fonts/noto/$f');
-    if (file.existsSync()) loader.addFont(Future.value(ByteData.view(file.readAsBytesSync().buffer)));
+    if (file.existsSync())
+      loader.addFont(
+        Future.value(ByteData.view(file.readAsBytesSync().buffer)),
+      );
   }
   await loader.load();
 }
@@ -37,8 +45,9 @@ void main() {
   testWithGame<GolgeGame>('galeri', GolgeGame.new, (game) async {
     await _fonts();
     S.lang = Lang.tr;
-    Settings.brightness =
-        double.parse(const String.fromEnvironment('BRIGHT', defaultValue: '1'));
+    Settings.brightness = double.parse(
+      const String.fromEnvironment('BRIGHT', defaultValue: '1'),
+    );
     Settings.lowGraphics = const bool.fromEnvironment('LOW');
     game.onGameResize(Vector2(1280, 720));
     // ad:bölüm:sütun:satır:yakınlık:saniye[:korku]
@@ -53,8 +62,13 @@ void main() {
         }
       }
       if (p[2] != '-') {
-        game.player!.position.setFrom(Level.standOn(
-            Vector2(int.parse(p[2]) * kTile, int.parse(p[3]) * kTile), Player.w, Player.h));
+        game.player!.position.setFrom(
+          Level.standOn(
+            Vector2(int.parse(p[2]) * kTile, int.parse(p[3]) * kTile),
+            Player.w,
+            Player.h,
+          ),
+        );
       }
       game.debugCloseUp = double.parse(p[4]);
       if (p.length > 6) game.scare(double.parse(p[6]), sting: false);

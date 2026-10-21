@@ -829,7 +829,12 @@ class MythFigures {
   /// dibinde dilek taşları. [lit] 0: uyuyan (soluk, çaputlar sarkık), 1:
   /// uyanmış (ışıyan taç, rüzgârda kalkan çaputlar, altın yapraklar).
   /// Gövdenin toprağa girdiği yer orijindedir; kökler toprağın altındadır.
-  static void umayTree(Canvas c, double t, {double lit = 1}) {
+  static void umayTree(
+    Canvas c,
+    double t, {
+    double lit = 1,
+    bool bloom = false,
+  }) {
     if (lit > 0) {
       c.drawCircle(
         const Offset(0, -48),
@@ -987,6 +992,32 @@ class MythFigures {
           leaf,
         );
         c.restore();
+      }
+    }
+    // Son ağaç: uyanınca çiçek açar; ak ve pembe çiçekler, uçuşan yapraklar.
+    if (bloom && lit > 0) {
+      final petal = Paint();
+      for (var i = 0; i < 46; i++) {
+        final a = _hash(i + 300) * math.pi * 2;
+        final r = math.sqrt(_hash(i + 400));
+        final p = Offset(math.cos(a) * r * 34, -48 + math.sin(a) * r * 26);
+        petal.color =
+            (i.isEven ? const Color(0xFFFFF6F4) : const Color(0xFFF6C8D0))
+                .withValues(alpha: lit * (0.75 + 0.25 * math.sin(t * 2 + i)));
+        c.drawCircle(p, 1.4 + _hash(i + 500) * 1.2, petal);
+      }
+      for (var i = 0; i < 8; i++) {
+        final u = (t * 0.12 + _hash(i + 600)) % 1;
+        petal.color = const Color(0xFFF6C8D0)
+            .withValues(alpha: lit * math.sin(u * math.pi));
+        c.drawCircle(
+          Offset(
+            (_hash(i + 700) - 0.5) * 70 + math.sin(t + i) * 8 * u,
+            -60 + u * 60,
+          ),
+          1.3,
+          petal,
+        );
       }
     }
     // Uyanınca gövdeden yükselen ışık zerreleri.

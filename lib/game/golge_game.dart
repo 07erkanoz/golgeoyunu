@@ -624,7 +624,17 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         WaterComponent(level),
         ExitPortal(level.exitCell),
         for (final k in level.checkpointCells)
-          UmayTree(k, headroom: _headroom(k)),
+          UmayTree(
+            k,
+            headroom: _headroom(k),
+            // Yolun son ağacı (Konya'da) çiçek açar.
+            bloom:
+                level.def.theme == LevelTheme.konya &&
+                level.progressOf(k) ==
+                    level.checkpointCells
+                        .map(level.progressOf)
+                        .reduce(math.max),
+          ),
         for (final (c0, c1, r) in level.def.pawTrails)
           ?PawTrail.build(level, c0, c1, r),
         if (level.def.gokboruGuard ||
