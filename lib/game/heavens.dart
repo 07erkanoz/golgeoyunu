@@ -158,11 +158,21 @@ class ScorchZone extends PositionComponent with HasGameReference<GolgeGame> {
 
   bool inShade(double x) => (x - birdX).abs() < shade;
 
+  /// Kuş, Sâye zona yaklaşana dek girişte bekler; uçuşu o an başlar.
+  /// (Eskiden bölüm açılınca başlıyordu: varınca kuş nerede olursa,
+  /// ona göre bazen uzun süre beklemek gerekiyordu.)
+  bool _awake = false;
+
   @override
   void update(double dt) {
     super.update(dt);
-    _t += dt;
     final p = game.player;
+    if (!_awake &&
+        p != null &&
+        area.inflate(3 * kTile).contains(Offset(p.center.x, p.center.y))) {
+      _awake = true;
+    }
+    if (_awake) _t += dt;
     if (p == null || p.isDead) {
       burn = 0;
       return;

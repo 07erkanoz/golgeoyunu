@@ -83,14 +83,31 @@ void main() {
       expect(died || z.burn > 0.3, isTrue);
       expect(game.mythsSeen, contains('umayKusu'));
       run(game, 3);
+      // Ölünce bölüm yeniden kurulur: yeni zonun kuşu.
+      final z2 = game.world.children.whereType<ScorchZone>().single;
       // Kuşun gölgesinde yürü: yanma birikmez.
       for (var i = 0; i < 120; i++) {
-        game.player!.position.x = z.birdX - Player.w / 2;
+        game.player!.position.x = z2.birdX - Player.w / 2;
         game.player!.position.y = 7 * kTile - Player.h;
         run(game, 1 / 60);
       }
       expect(game.player!.isDead, isFalse);
-      expect(z.burn, lessThan(0.05));
+      expect(z2.burn, lessThan(0.05));
+    },
+  );
+
+  testWithGame<GolgeGame>(
+    'Hüma, Sâye gün katına yaklaşana dek girişte bekler',
+    GolgeGame.new,
+    (game) async {
+      await _load(game);
+      final z = game.world.children.whereType<ScorchZone>().single;
+      final start = z.birdX;
+      run(game, 4);
+      expect(z.birdX, start, reason: 'uzaktayken uçmaz');
+      _standAt(game, 19);
+      run(game, 1);
+      expect(z.birdX, greaterThan(start));
     },
   );
 

@@ -378,8 +378,17 @@ class Watcher extends PositionComponent with HasGameReference<GolgeGame> {
   @override
   void onMount() {
     super.onMount();
-    // Bölümün ortasına bakar.
-    facing = position.x < game.level.pixelWidth / 2 ? 1 : -1;
+    // Yakında başka bir Gözcü varsa ona bakar: ikisi aradaki yolu sırayla
+    // süpürür (Kaf'ın gölge köprüsü). Yoksa bölümün ortasına bakar.
+    double? mate;
+    for (final c in game.level.watcherCells) {
+      final dx = c.x + kTile / 2 - position.x;
+      if (dx.abs() < kTile || dx.abs() > 25 * kTile) continue;
+      if (mate == null || dx.abs() < mate.abs()) mate = dx;
+    }
+    facing = mate != null
+        ? (mate > 0 ? 1 : -1)
+        : (position.x < game.level.pixelWidth / 2 ? 1 : -1);
   }
 
   @override

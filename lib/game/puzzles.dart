@@ -2035,6 +2035,9 @@ class WindBell extends PositionComponent
   double _ring = 0;
   double _rearm = 0;
 
+  /// Şu an çalıyor mu (yeni vurulmuş).
+  bool get ringing => _ring > 0;
+
   @override
   bool canUse(Vector2 p) =>
       (p - position).x.abs() < 30 && (p - position).y.abs() < 4 * kTile;

@@ -240,7 +240,9 @@ for a,b in [(152,156),(162,165),(172,175),(182,186),(194,199)]:
 s.put(153,9,'p'); s.put(154,9,'5'); s.put(155,9,'K'); s.put(163,9,'~'); s.put(164,9,'~')
 s.put(173,9,'B'); s.put(184,9,'~'); s.put(185,9,'~'); s.put(196,9,'M')
 s.put(166,3,'N'); s.put(186,2,'N')
-s.fill(178,14,179,20,'r'); s.fill(176,4,178,4,'='); s.put(177,3,'F')  # yan ada: ateşböceği
+# Yan raf: düşeni yukarı taşıyan akımdan sola, rafa süzülünür (raf eskiden 10
+# kare yukarıdaydı, akım oraya hiç ulaşmıyordu).
+s.fill(178,11,179,20,'r'); s.fill(176,12,177,12,'='); s.put(176,11,'F')
 # B) Gölgeden köprü: balonun ışığı değince kaybolur; süzülerek aşılamaz
 s.fill(200,10,203,11,'#'); s.put(201,9,'K'); s.put(202,9,'6'); s.put(200,9,'p')
 s.fill(204,10,209,10,'n'); s.fill(210,10,211,11,'#'); s.put(210,9,'~'); s.put(211,9,'~')
@@ -285,6 +287,9 @@ f.fill(62,10,70,12,'#'); f.put(63,9,'K'); f.put(64,9,'3'); f.put(66,9,'B')
 f.fill(71,10,84,10,'n')
 f.put(75,2,'j'); f.put(75,8,'m'); f.put(72,8,'#')     # kristal: sola kaçan ışığı tutar
 f.fill(85,10,93,23,'#'); f.put(89,9,'g')
+# Asılı kristal: aynanın ışığı bu Gözcü'de durur; ileride, tüylerin
+# Gözcülerini kör etmesin.
+f.put(92,8,'#')
 # 4) çöken kayalar, rüzgâr
 f.put(96,11,'O'); f.put(100,10,'O'); f.put(104,9,'R')
 f.fill(110,4,111,14,'r')
@@ -427,8 +432,13 @@ n.fill(192,0,229,2,'#')
 n.put(193,3,'q'); n.put(229,25,'Q')
 n.put(195,25,'o'); n.put(197,25,'p')
 for i,r in enumerate(range(24,9,-2)):
-    a = 199 if i % 2 == 0 else 205
-    n.fill(a,r,a+7,r,'=')
+    # Sıralar ortak sütun paylaşmaz: yoksa 205-206'da her satırda tahta
+    # olur, kuyu dümdüz zıplanarak çıkılırdı.
+    # Aralarında bir kare boşluk: her satıra yana sıçranır.
+    if i % 2 == 0:
+        n.fill(199,r,205,r,'=')
+    else:
+        n.fill(207,r,212,r,'=')
 n.fill(218,3,218,11,'S')                     # sallanılan ip
 n.fill(224,8,229,8,'=')
 n.fill(230,9,299,25,'#')                     # üst güverte (buzula gömülü)
@@ -565,13 +575,18 @@ k9.fill(130,F,133,25,'#'); k9.fill(134,F+1,190,25,'w')
 for x in range(134,191):
     k9.put(x,F,'/' if (x//4) % 3 != 0 else '-')
 k9.fill(150,F-2,151,F-1,'#'); k9.fill(170,F-2,171,F-1,'#')    # buzdan çıkan kayalar
-k9.put(123,F-1,'b'); k9.put(160,F-6,'F'); k9.fill(158,F-5,162,F-5,'=')
+# Buzun üstünde alçak bir sal: buzdan sıçranır (eskiden 5 kare
+# yukarıdaydı, ulaşılamıyordu).
+k9.put(123,F-1,'b'); k9.put(160,F-3,'F'); k9.fill(158,F-2,162,F-2,'=')
 k9.fill(191,F,199,25,'#'); k9.put(192,F-1,'K'); k9.put(194,F-1,'B')
 # 4) Terk edilmiş han: Kandilciler, çan, kapı
 k9.fill(200,F,262,25,'#'); k9.fill(203,F-9,252,F-8,'#')     # hanın çatısı
 k9.fill(203,F-7,203,F-2,'#'); k9.put(201,F-1,'p'); k9.put(205,F-1,'6')
 k9.put(212,F-1,'G'); k9.put(216,F-1,'I'); k9.put(222,F-1,'I'); k9.put(228,F-1,'G')
-k9.put(234,F-1,'~'); k9.put(235,F-1,'~'); k9.put(219,F-7,'c'); k9.fill(218,F-8,220,F-8,'#')
+# Çan çatıdan zincirle sarkar: altından koşan çalar, zincire tırmanan da
+# bilerek çalabilir (eskiden tavanda, yerden 6,5 kare yukarıdaydı; hiç
+# çalmıyordu).
+k9.put(234,F-1,'~'); k9.put(235,F-1,'~'); k9.fill(219,F-7,219,F-5,'|'); k9.put(219,F-4,'c')
 k9.put(240,F-1,'M'); k9.fill(244,F-4,246,F-1,'#'); k9.put(245,F-5,'L')
 k9.fill(242,F-2,243,F-1,'#')                     # kolun kayasına basamak
 k9.fill(252,F-7,252,F-1,'H'); k9.put(258,F-1,'K'); k9.put(260,F-1,'B')
@@ -993,7 +1008,9 @@ pb.fill(330+PO,26,383+PO,29,'#'); pb.put(331+PO,25,'p')
 pb.fill(338+PO,4,370+PO,25,'#')
 pb.fill(337+PO,4,337+PO,25,'|')
 for r in (21,16,11):
-    pb.fill(338,r,341,r,'.')                  # dinlenme oyukları
+    # Dinlenme oyukları kayanın içinde (eskiden PO unutulmuştu: oyuk
+    # yerine sarmaşık üç yerden kesiliyordu).
+    pb.fill(338+PO,r-1,341+PO,r,'.')
 pb.fill(338+PO,3,372+PO,3,'#')
 pb.put(345+PO,2,'9'); pb.put(352+PO,2,'K'); pb.put(360+PO,2,'B'); pb.put(366+PO,2,'E')
 pb.fill(373+PO,3,W-1,25,'#')                # çıkışın ötesi kaya: dibe düşülmez
@@ -1007,7 +1024,7 @@ def carve(c0,r0,c1,r1): dk.fill(c0,r0,c1,r1,'.')
 carve(1,10,22,15); dk.put(2,15,'P'); dk.put(3,15,'p'); dk.put(5,15,'1'); dk.put(7,15,'B'); dk.put(12,15,'F')
 # 2) Ahırlar ve şarap evi: alçak geçit, Kandilciler, sürgü taşı
 carve(22,12,94,15)
-carve(30,9,45,11); dk.fill(36,9,36,13,'#');   # alçak kemer: Sâye geçer, Kandilci geçemez
+carve(30,9,45,11); dk.fill(36,9,36,14,'#');   # alçak kemer (tek kare): Sâye geçer, Kandilci geçemez
 dk.put(34,15,'I'); dk.put(40,15,'K'); dk.put(42,15,'2')
 dk.put(50,15,'G'); carve(44,16,44,16); carve(44,17,57,17); carve(57,16,57,16)   # alçak geçit
 dk.put(52,17,'3'); dk.put(48,17,'M')
@@ -1111,7 +1128,6 @@ for c in (342,352,362): kn.put(c,33,'a')
 kn.put(346,33,'G'); kn.put(360,33,'G'); kn.put(370,33,'I')
 # 8) Semâhane: dönen avizeler, yerde semâ ve Kandilciler
 kn.fill(373,8,430,47,'#')
-kn.fill(372,8,372,25,'|')                         # avludan çatıya zincir
 kc(373,30,375,33); kn.put(373,33,'#',force=True)  # kapı eşiği
 kc(376,12,427,43)
 kn.fill(376,34,381,43,'#')                        # mutribhane
@@ -1156,7 +1172,9 @@ pillar(53,55); er.put(54,F0,'p'); er.put(55,F0,'3')
 er.fill(56,F0+1,60,F0+1,'n'); pillar(61,62); er.put(61,F0,'~'); er.put(62,F0,'~')
 er.fill(63,F0+1,67,F0+1,'n'); pillar(68,69); er.put(68,F0,'~'); er.put(69,F0,'~')
 er.fill(70,F0+1,74,F0+1,'n')
-er.put(65,F0-7,'N')
+# Fener tahtalara ve köprüdekine yetecek alçaklıkta (eskiden ışığı
+# köprüye inmiyordu); oyuklarda beklenip geçilir.
+er.put(61,F0-4,'N')
 pillar(75,77); er.put(76,F0,'4'); er.put(77,F0,'F')
 # 3. köprü: ışık ve gölge tahtaları sırayla (kenarda dur, sonra değiştir)
 er.fill(78,F0+1,81,F0+1,'l'); er.fill(82,F0+1,85,F0+1,'n')

@@ -408,7 +408,14 @@ class LooseBoulder extends PositionComponent with HasGameReference<GolgeGame> {
           !p.isDead &&
           (p.center.x - position.x).abs() < 30 &&
           p.center.y > position.y;
-      if (game.quake > 0.5 || under) _shake = 0;
+      // Deprem yalnızca oyuncunun yakınındaki kayaları düşürür: yoksa
+      // bölümün ilk depreminde haritanın bütün kayaları birden düşüyor,
+      // oyuncu oraya vardığında tepede taş kalmıyordu.
+      final near =
+          p != null &&
+          (p.center.x - position.x).abs() < 12 * kTile &&
+          (p.center.y - position.y).abs() < 10 * kTile;
+      if ((game.quake > 0.5 && near) || under) _shake = 0;
       return;
     }
     _shake += dt;
@@ -692,6 +699,11 @@ class StoneGiant extends PositionComponent
     }
     if (_stagger > 0) {
       _stagger -= dt;
+      // Sendelerken kulağını korur: yanına gelen ışıkları savurur. Yoksa
+      // bekleyen ışıklar sendeleme biter bitmez hep birden giriyordu.
+      for (final l in game.world.children.whereType<FireflyLure>().toList()) {
+        if (l.glowing && (l.position - ear).length < 46) l.removeFromParent();
+      }
       return;
     }
     // Ağır adımlar: iki nokta arasında gidip gelir.
@@ -722,7 +734,7 @@ class StoneGiant extends PositionComponent
       final feet = Rect.fromLTWH(position.x, position.y - 28, size.x, 28);
       if (p.toRect().overlaps(feet)) p.die();
     }
-    for (final l in game.world.children.whereType<FireflyLure>()) {
+    for (final l in game.world.children.whereType<FireflyLure>().toList()) {
       if (l.glowing && (l.position - ear).length < 46) {
         l.removeFromParent();
         hits++;
@@ -756,6 +768,9 @@ class StoneGiant extends PositionComponent
           }
           best?.opening = true;
         }
+        // Bir karede tek vuruş: aynı anda gelen ikinci ışık sayılmaz (çift
+        // köprü kurulmaz).
+        break;
       }
     }
   }

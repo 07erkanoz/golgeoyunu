@@ -9,6 +9,7 @@ import 'package:golge/game/creatures.dart';
 import 'package:golge/game/legends.dart';
 import 'package:golge/game/levels.dart';
 import 'package:golge/game/entities.dart';
+import 'package:golge/game/erlik.dart';
 import 'package:golge/game/gokboru.dart';
 import 'package:golge/game/golge_game.dart';
 import 'package:golge/game/hints.dart';
@@ -758,6 +759,32 @@ void main() {
   });
 
   group('Gökyolu', () {
+    testWithGame<GolgeGame>(
+      'balon geçidinde düşeni akım yan rafa, ateşböceğine taşır',
+      GolgeGame.new,
+      (game) async {
+        final p = await place(game, 2, 174, 9);
+        for (final g in game.world.children.whereType<Guard>().toList()) {
+          g.removeFromParent();
+        }
+        p.position.setValues(178.6 * kTile - Player.w / 2, 18 * kTile);
+        keys(game).jump = true;
+        for (var i = 0; i < _hz * 4; i++) {
+          // Akımın tepesinde sola, rafa doğru süzül.
+          keys(game).left = p.center.y < 11.6 * kTile;
+          game.update(_dt);
+          if (p.onGround) break;
+        }
+        keys(game)
+          ..jump = false
+          ..left = false;
+        run(game, 0.5);
+        expect(p.isDead, isFalse);
+        expect(p.position.y + Player.h, closeTo(12 * kTile, 2));
+        expect(p.center.x, lessThan(178 * kTile));
+      },
+    );
+
     testWithGame<GolgeGame>(
       'Gözcü\'nün ışığında kalan yakalanır',
       GolgeGame.new,
@@ -1647,19 +1674,27 @@ void main() {
         run(game, 0.6);
         final basin = game.world.children.whereType<WaterBasin>().first;
         expect(basin.flooding, isTrue);
-        // Tahtalara zikzak tırman.
+        // Tahtalara zikzak tırman: sıralar arasında bir kare boşluk var,
+        // her satıra tahtanın ucundan koşarak sıçranır.
         for (final r in [24, 22, 20, 18, 16, 14, 12, 10]) {
           final left = ((24 - r) ~/ 2).isEven;
-          final x = left ? 205.6 : 206.4;
+          final x = left ? 201.5 : 210.5;
+          final cx = p.center.x / kTile;
+          final first = r == 24;
           for (var i = 0; i < _hz * 3; i++) {
             final dx = x * kTile - p.center.x;
+            final at = p.center.x / kTile;
+            // Sıçrama yeri: ilk satırda tahtanın altından, sonra tahta ucu.
+            final edge = first
+                ? dx.abs() < 2 * kTile
+                : (cx < 206 ? at >= 205.5 : at <= 207.5);
             keys(game)
               ..right = dx > 6
               ..left = dx < -6
               ..jump =
                   (p.onGround &&
                       (p.position.y + Player.h) > r * kTile + 2 &&
-                      dx.abs() < 4.2 * kTile) ||
+                      edge) ||
                   (!p.onGround && p.velocity.y < 0);
             game.update(_dt);
             if (p.onGround && (p.position.y + Player.h - r * kTile).abs() < 2) {
@@ -1846,6 +1881,50 @@ void main() {
         expect(wolf.hunting, isTrue);
         expect(p.isDead, isFalse);
         expect(p.position.y, lessThan(16 * kTile));
+      },
+    );
+
+    testWithGame<GolgeGame>(
+      'göldeki ateşböceği salına buzdan sıçranır',
+      GolgeGame.new,
+      (game) async {
+        final p = await place(game, 8, 155, 19);
+        for (final w in game.world.children.whereType<Wolf>().toList()) {
+          w.removeFromParent();
+        }
+        keys(game).right = true;
+        for (var i = 0; i < _hz * 3; i++) {
+          keys(game).jump = p.center.x > 156.6 * kTile;
+          game.update(_dt);
+          if (p.onGround && p.center.y < 18.5 * kTile) break;
+        }
+        keys(game)
+          ..right = false
+          ..jump = false;
+        run(game, 1);
+        expect(p.isDead, isFalse);
+        expect(p.position.y + Player.h, closeTo(18 * kTile, 2));
+      },
+    );
+
+    testWithGame<GolgeGame>(
+      'handa çanın altından koşan onu çalar',
+      GolgeGame.new,
+      (game) async {
+        final p = await place(game, 8, 214, 19);
+        for (final g in game.world.children.whereType<Guard>().toList()) {
+          g.removeFromParent();
+        }
+        final bell = game.world.children.whereType<WindBell>().first;
+        keys(game).right = true;
+        var rang = false;
+        for (var i = 0; i < _hz * 2 && !rang; i++) {
+          game.update(_dt);
+          rang = bell.ringing;
+        }
+        keys(game).right = false;
+        expect(rang, isTrue);
+        expect(p.center.x, lessThan(222 * kTile));
       },
     );
 
@@ -2100,6 +2179,59 @@ void main() {
           expect(p.isDead, isFalse, reason: 'hedef $goal');
         }
         expect(p.position.x, greaterThan(192 * kTile));
+      },
+    );
+  });
+
+  group('Erlik\'in Katı', () {
+    testWithGame<GolgeGame>(
+      'fenerli köprü: oyukta bekle, fener uzaklaşınca çömelerek geç',
+      GolgeGame.new,
+      (game) async {
+        expect(levels[14].title, 'XIV · ERLİK\'İN KATI');
+        final p = await place(game, 14, 54, 29);
+        for (final k in game.world.children.whereType<Kormos>().toList()) {
+          k.removeFromParent();
+        }
+        final balloon = nearest<LanternBalloon>(game, 61 * kTile);
+        // Köprü parçaları (tahtanın ilk ve son karesi). Oyukta bekle; fener
+        // tahtanın ucunu geçip uzaklaşırken çömelerek karşıya yürü.
+        // Bekleme yerleri: sütunun ortası ve otlu oyuklar (fener görmez).
+        for (final (a, b, wait) in [
+          (56, 60, 54.0),
+          (63, 67, 61.5),
+          (70, 74, 68.5),
+        ]) {
+          var prev = balloon.position.x;
+          var go = false;
+          for (var i = 0; i < _hz * 40; i++) {
+            final bx = balloon.position.x / kTile;
+            final v = balloon.position.x - prev;
+            prev = balloon.position.x;
+            final waitAt = wait * kTile;
+            final ready = (p.center.x - waitAt).abs() < 6;
+            if (!go && ready) {
+              go =
+                  (v > 0 && bx >= b - 1.5 && bx <= b + 4) ||
+                  (v < 0 && bx <= a - 1.5 && bx >= a - 5.5);
+            }
+            keys(game)
+              ..down = true
+              ..right = go || p.center.x < waitAt - 6
+              ..left = !go && p.center.x > waitAt + 6;
+            game.update(_dt);
+            expect(
+              p.isDead,
+              isFalse,
+              reason: '${p.deathCause} ${p.center / kTile}',
+            );
+            if (go && p.center.x >= (b + 1.5) * kTile) break;
+          }
+          expect(p.center.x, greaterThanOrEqualTo((b + 1.5) * kTile));
+        }
+        keys(game)
+          ..down = false
+          ..right = false;
       },
     );
   });
