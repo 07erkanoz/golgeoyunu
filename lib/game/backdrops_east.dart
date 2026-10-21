@@ -110,35 +110,111 @@ extension _EastBackdrops on Backdrop {
     _stars(canvas, w, h, 70, cam.x);
     _moon(canvas, Offset(w * 0.78, h * 0.2), h * 0.07, const Color(0xFFBFF5DC));
     final rise = -cam.y * 0.04;
-    // Uzak ve yakın zümrüt sıradağlar: kırık, yontulmuş yüzler.
-    for (final (depth, color, facet, base) in [
-      (0.08, const Color(0xFF1C5A4C), const Color(0xFF3E9C80), 0.55),
-      (0.2, const Color(0xFF0F3A33), const Color(0xFF2A7A64), 0.7),
-    ]) {
-      final paint = Paint()..color = color;
-      final light = Paint()..color = facet.withValues(alpha: 0.5);
-      _repeat(w, cam.x * depth, 260, (x, rnd) {
-        final peak = h * (base - 0.25 - rnd.nextDouble() * 0.15) + rise;
-        final half = 90 + rnd.nextDouble() * 70;
-        final px = x + rnd.nextDouble() * 60;
-        final shard = Path()
-          ..moveTo(px - half, h)
-          ..lineTo(px - half * 0.3, peak + 40)
-          ..lineTo(px, peak)
-          ..lineTo(px + half * 0.25, peak + 60)
-          ..lineTo(px + half, h)
-          ..close();
-        canvas.drawPath(shard, paint);
-        canvas.drawPath(
-          Path()
-            ..moveTo(px, peak)
-            ..lineTo(px + half * 0.25, peak + 60)
-            ..lineTo(px + half * 0.05, peak + 140)
-            ..close(),
-          light,
+    // Kuzey ışığı gibi yeşil bir perde.
+    for (var k = 0; k < 3; k++) {
+      final path = Path()..moveTo(-20, h * 0.1);
+      for (var x = -20.0; x <= w + 20; x += 20) {
+        path.lineTo(
+          x,
+          h * (0.12 + k * 0.05) +
+              math.sin(x * 0.004 + _t * 0.15 + k * 2) * h * 0.05 -
+              cam.x * 0,
         );
-      }, salt: (depth * 100).round());
+      }
+      path
+        ..lineTo(w + 20, h * 0.45)
+        ..lineTo(-20, h * 0.45)
+        ..close();
+      canvas.drawPath(
+        path,
+        Paint()
+          ..shader = ui.Gradient.linear(
+            Offset(0, h * 0.1),
+            Offset(0, h * 0.45),
+            [
+              const Color(0xFF7FFFC8).withValues(alpha: 0.07 - k * 0.015),
+              const Color(0x007FFFC8),
+            ],
+          ),
+      );
     }
+    // Uzak zümrüt sıradağlar.
+    _rockyRange(
+      canvas,
+      w,
+      h,
+      offset: cam.x * 0.03,
+      base: h * 0.62 + rise,
+      height: h * 0.2,
+      seed: 41,
+      body: const Color(0xFF1E5248),
+      snow: const Color(0xFF8AD8B8),
+      snowline: 0.35,
+    );
+    // Kaf'ın dev doruğu: dünyanın kıyısında; belinde bulut kuşağı, tepesinde
+    // Simurg'un yuvasından sızan altın ışık.
+    final kx = w * 0.5 - cam.x * 0.02;
+    final kb = h * 0.75 + rise;
+    final glow = 0.6 + 0.4 * math.sin(_t * 0.8);
+    _lightLeak(
+      canvas,
+      Offset(kx, kb - h * 0.72),
+      h * 0.35,
+      0.25 * glow,
+      const Color(0xFFFFE6A0),
+    );
+    _volcano(
+      canvas,
+      kx,
+      kb,
+      h * 0.72,
+      w * 0.32,
+      7,
+      h,
+      body: const [Color(0xFF2A6A5A), Color(0xFF184A40), Color(0xFF0A2420)],
+      snowCols: const [Color(0xFFD8FFF0), Color(0xFF9AE0C4), Color(0xFF4A9A80)],
+    );
+    // Bulut kuşağı.
+    final belt = Paint();
+    for (var i = 0; i < 9; i++) {
+      final u = i / 8 * 2 - 1;
+      final x = kx + u * w * 0.34 + math.sin(_t * 0.2 + i) * 14;
+      final y = kb - h * 0.36 + math.sin(i * 1.7) * 8;
+      belt
+        ..color = const Color(0xFFCFF0E4).withValues(alpha: 0.2)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10);
+      canvas.drawOval(
+        Rect.fromCenter(
+          center: Offset(x, y),
+          width: w * 0.16,
+          height: h * 0.05,
+        ),
+        belt,
+      );
+    }
+    // Yakın sıradağlar ve sis.
+    canvas.drawRect(
+      Rect.fromLTWH(0, h * 0.62 + rise, w, h * 0.2),
+      Paint()
+        ..shader = ui.Gradient.linear(
+          Offset(0, h * 0.62 + rise),
+          Offset(0, h * 0.82 + rise),
+          const [Color(0x007FD8B8), Color(0x337FD8B8), Color(0x007FD8B8)],
+          const [0, 0.5, 1],
+        ),
+    );
+    _rockyRange(
+      canvas,
+      w,
+      h,
+      offset: cam.x * 0.18,
+      base: h * 0.86 + rise * 1.5,
+      height: h * 0.22,
+      seed: 43,
+      body: const Color(0xFF0C2A26),
+      snow: const Color(0xFF3E8A72),
+      snowline: 0.25,
+    );
     // Süzülen tüyler.
     final feather = Paint()
       ..color = const Color(0xFFE8D58A).withValues(alpha: 0.55);
@@ -157,7 +233,8 @@ extension _EastBackdrops on Backdrop {
   // --------------------------------------------------------------- kar
 
   /// Karlı dağlar: 0 Ağrı'nın iki tepesi, 1 Palandöken'in çamlı yamaçları,
-  /// 2 çığ: tipiyle kapanan gök.
+  /// 2 çığ: tipiyle kapanan gök. Ay soldan vurur: dağların sol yamaçları
+  /// aydınlık, sağları gölgede; kar yarıklardan aşağı iner.
   void _snowPeaks(
     Canvas canvas,
     double w,
@@ -166,95 +243,124 @@ extension _EastBackdrops on Backdrop {
     double height,
     int variant,
   ) {
+    final storm = variant == 2;
     _gradient(canvas, Rect.fromLTWH(0, 0, w, h), [
-      variant == 2 ? const Color(0xFF1A2230) : const Color(0xFF070C18),
-      lerpColor(0xFF1E2A44, 0xFF2C3E5C, height),
-      variant == 2 ? const Color(0xFF8A98A8) : const Color(0xFF5E7290),
+      storm ? const Color(0xFF1A2230) : const Color(0xFF050A18),
+      lerpColor(0xFF16223C, 0xFF243652, height),
+      storm ? const Color(0xFF8A98A8) : const Color(0xFF4A5E7E),
     ]);
-    if (variant != 2) _stars(canvas, w, h, 90, cam.x);
-    _moon(canvas, Offset(w * 0.2, h * 0.16), h * 0.05, const Color(0xFFDCE6FF));
-    final snowPaint = Paint()..color = const Color(0xFFE6EEF8);
-    if (variant == 0) {
-      // Büyük ve Küçük Ağrı: uzakta iki karlı koni.
-      final dx = -cam.x * 0.03;
-      final base = h * 0.78;
-      void cone(double cx, double top, double half, double capK) {
-        final body = Path()
-          ..moveTo(cx - half, base)
-          ..quadraticBezierTo(
-            cx - half * 0.35,
-            top + (base - top) * 0.2,
-            cx,
-            top,
-          )
-          ..quadraticBezierTo(
-            cx + half * 0.35,
-            top + (base - top) * 0.2,
-            cx + half,
-            base,
-          )
-          ..close();
-        canvas.drawPath(body, Paint()..color = const Color(0xFF2A3A55));
-        canvas.save();
-        canvas.clipPath(body);
-        final capY = top + (base - top) * capK;
-        final cap = Path()..moveTo(cx - half, capY);
-        for (var x = -half; x <= half; x += half / 8) {
-          cap.lineTo(
-            cx + x,
-            capY + math.sin(x * 0.08) * 10 + (x.abs() / half) * 18,
-          );
-        }
-        cap
-          ..lineTo(cx + half, top - 10)
-          ..lineTo(cx - half, top - 10)
-          ..close();
-        canvas.drawPath(cap, snowPaint);
-        canvas.restore();
-      }
-
-      cone(w * 0.62 + dx, h * 0.2, w * 0.42, 0.42);
-      cone(w * 0.95 + dx, h * 0.45, w * 0.18, 0.35);
+    if (!storm) {
+      _stars(canvas, w, h, 120, cam.x);
+      // Samanyolu.
+      canvas.save();
+      canvas.translate(w * 0.6 - cam.x * 0.004, h * 0.25);
+      canvas.rotate(-0.45);
+      canvas.drawOval(
+        Rect.fromCenter(center: Offset.zero, width: w * 1.3, height: h * 0.16),
+        Paint()
+          ..shader = ui.Gradient.radial(Offset.zero, w * 0.65, const [
+            Color(0x22CFD8FF),
+            Color(0x00CFD8FF),
+          ]),
+      );
+      canvas.restore();
     }
-    final rise = (game.level.pixelHeight - cam.y) * 0.06;
-    _ridge(
+    _moon(
+      canvas,
+      Offset(w * 0.18, h * 0.15),
+      h * 0.05,
+      const Color(0xFFDCE6FF),
+    );
+    final rise = (game.level.pixelHeight - cam.y) * 0.05;
+    // Uzak sıradağlar (pusa karışan).
+    _rockyRange(
+      canvas,
+      w,
+      h,
+      offset: cam.x * 0.03,
+      base: h * 0.7 + rise * 0.4,
+      height: h * 0.2,
+      seed: 3,
+      body: const Color(0xFF2E3E5A),
+      snow: const Color(0xFF9AAAC4),
+      snowline: 0.45,
+    );
+    if (variant == 0) {
+      // Büyük ve Küçük Ağrı: kayalık volkan koniler, zirvede buzul.
+      final dx = -cam.x * 0.035;
+      _volcano(
+        canvas,
+        w * 0.58 + dx,
+        h * 0.78 + rise * 0.5,
+        h * 0.62,
+        w * 0.38,
+        11,
+        h,
+      );
+      _volcano(
+        canvas,
+        w * 0.95 + dx,
+        h * 0.78 + rise * 0.5,
+        h * 0.36,
+        w * 0.17,
+        23,
+        h,
+      );
+    } else if (!storm) {
+      // Büyük ve Küçük Ejder: Palandöken'in iki doruğu.
+      final dx = -cam.x * 0.035;
+      _volcano(
+        canvas,
+        w * 0.42 + dx,
+        h * 0.8 + rise * 0.5,
+        h * 0.42,
+        w * 0.3,
+        5,
+        h,
+      );
+      _volcano(
+        canvas,
+        w * 0.78 + dx,
+        h * 0.8 + rise * 0.5,
+        h * 0.34,
+        w * 0.26,
+        17,
+        h,
+      );
+    }
+    // Pus: dağların eteğinde yatay sis bandı.
+    canvas.drawRect(
+      Rect.fromLTWH(0, h * 0.62 + rise * 0.6, w, h * 0.2),
+      Paint()
+        ..shader = ui.Gradient.linear(
+          Offset(0, h * 0.62 + rise * 0.6),
+          Offset(0, h * 0.82 + rise * 0.6),
+          const [Color(0x00AAB8D0), Color(0x40AAB8D0), Color(0x00AAB8D0)],
+          const [0, 0.5, 1],
+        ),
+    );
+    _rockyRange(
       canvas,
       w,
       h,
       offset: cam.x * 0.12,
-      base: h * 0.72 + rise,
-      amp: 50,
-      freq: 0.007,
+      base: h * 0.8 + rise,
+      height: h * 0.14,
       seed: 21,
-      color: const Color(0xFF3A4A66),
+      body: const Color(0xFF1C2638),
+      snow: const Color(0xFF6E7E98),
+      snowline: 0.3,
     );
     _pines(
       canvas,
       w,
       offset: cam.x * 0.25,
-      base: h * 0.8 + rise * 1.3,
+      base: h * 0.86 + rise * 1.3,
       size: 0.7,
-      color: const Color(0xFF16202E),
-      snow: const Color(0xFF8C9CB4),
+      color: const Color(0xFF101824),
+      snow: const Color(0xFF7A8AA4),
       salt: 3,
     );
-    if (variant == 1) {
-      // Sisin içinde Ejder: zirvenin çevresine dolanmış, belli belirsiz.
-      final dragon = Paint()
-        ..color = const Color(0xFFDCE6F2).withValues(alpha: 0.06);
-      final ox = w * 0.65 - cam.x * 0.03;
-      for (var i = 0; i < 40; i++) {
-        final k = i / 40;
-        final x =
-            ox +
-            math.cos(k * math.pi * 2.2 + _t * 0.05) * w * 0.18 * (1 - k * 0.4);
-        final y =
-            h * 0.42 +
-            math.sin(k * math.pi * 3 + _t * 0.07) * h * 0.08 -
-            k * h * 0.12;
-        canvas.drawCircle(Offset(x, y), (1 - k) * 22 + 4, dragon);
-      }
-    }
     if (variant == 1) {
       // Uzakta Erzurum: kalenin ve medrese minarelerinin ışıkları.
       final city = Paint()
@@ -274,13 +380,13 @@ extension _EastBackdrops on Backdrop {
       w,
       h,
       offset: cam.x * 0.4,
-      base: h * 0.9 + rise * 1.6,
-      amp: 30,
+      base: h * 0.92 + rise * 1.6,
+      amp: 26,
       freq: 0.012,
       seed: 22,
       color: const Color(0xFFB8C6D8),
     );
-    if (variant == 2) {
+    if (storm) {
       // Tipi: gökyüzü beyaza boğulur.
       canvas.drawRect(
         Rect.fromLTWH(0, 0, w, h),
@@ -289,6 +395,225 @@ extension _EastBackdrops on Backdrop {
               .withValues(alpha: 0.12 + 0.06 * math.sin(_t * 0.7)),
       );
     }
+  }
+
+  /// Kayalık sıradağ: sivri, kırıklı tepeler; ay soldan vurduğu için her
+  /// tepenin sol yamacı açık, sağı koyu; zirvelerde kar, yarıklardan iner.
+  void _rockyRange(
+    Canvas canvas,
+    double w,
+    double h, {
+    required double offset,
+    required double base,
+    required double height,
+    required int seed,
+    required Color body,
+    required Color snow,
+    required double snowline,
+  }) {
+    // Tepe noktaları: düzensiz aralık ve yükseklik.
+    const span = 140.0;
+    final first = ((offset - span) / span).floor();
+    final peaks = <Offset>[];
+    for (var i = first; i * span - offset < w + span * 2; i++) {
+      final r = math.Random(i * 7919 + seed);
+      peaks.add(
+        Offset(
+          i * span - offset + r.nextDouble() * 60,
+          base - height * (0.45 + r.nextDouble() * 0.55),
+        ),
+      );
+    }
+    final outline = <Offset>[Offset(-20, base)];
+    for (var k = 0; k < peaks.length; k++) {
+      final p = peaks[k];
+      outline.add(p);
+      if (k + 1 < peaks.length) {
+        final q = peaks[k + 1];
+        final r = math.Random(k * 31 + seed);
+        // İki tepe arasında kırıklı bir boyun.
+        final mid = Offset.lerp(p, q, 0.45 + r.nextDouble() * 0.1)!;
+        outline.add(
+          Offset(
+            Offset.lerp(p, mid, 0.5)!.dx,
+            Offset.lerp(p, mid, 0.5)!.dy + height * 0.1 * r.nextDouble(),
+          ),
+        );
+        outline.add(
+          Offset(
+            mid.dx,
+            math.max(p.dy, q.dy) + height * (0.25 + 0.2 * r.nextDouble()),
+          ),
+        );
+      }
+    }
+    outline.add(Offset(w + 20, base));
+    final path = Path()..moveTo(outline.first.dx, outline.first.dy);
+    for (final p in outline.skip(1)) {
+      path.lineTo(p.dx, p.dy);
+    }
+    path
+      ..lineTo(w + 20, h)
+      ..lineTo(-20, h)
+      ..close();
+    canvas.drawPath(path, Paint()..color = body);
+    canvas.save();
+    canvas.clipPath(path);
+    // Gölgeli yamaçlar: her tepeden sağa aşağı inen koyu üçgen.
+    final dark = Paint()
+      ..color = Color.lerp(body, const Color(0xFF000000), 0.35)!;
+    final lit = Paint()..color = Color.lerp(body, snow, 0.18)!;
+    for (final p in peaks) {
+      canvas.drawPath(
+        Path()
+          ..moveTo(p.dx, p.dy)
+          ..lineTo(p.dx + height * 1.1, base + 4)
+          ..lineTo(p.dx + height * 0.15, base + 4)
+          ..close(),
+        dark,
+      );
+      canvas.drawPath(
+        Path()
+          ..moveTo(p.dx, p.dy)
+          ..lineTo(p.dx - height * 0.2, base)
+          ..lineTo(p.dx - height * 0.6, base)
+          ..close(),
+        lit,
+      );
+      // Kar: zirveden yarıklara dalga dalga iner.
+      final sl = p.dy + (base - p.dy) * snowline;
+      final r = math.Random(p.dx.round());
+      final half = (sl - p.dy) * 1.3;
+      final cpts = <Offset>[Offset(p.dx, p.dy - 2)];
+      for (var k = 0; k <= 8; k++) {
+        final u = k / 8;
+        final x = p.dx + half * (u * 2 - 1) * 0.9;
+        final down =
+            (k.isEven ? 1.0 : 0.55) *
+            (sl - p.dy) *
+            (0.7 + r.nextDouble() * 0.6);
+        cpts.add(Offset(x, p.dy + down * (1 - (u * 2 - 1).abs() * 0.5)));
+      }
+      final cap = smoothClosed(cpts);
+      canvas.drawPath(cap, Paint()..color = snow);
+      // Gölgedeki kar daha koyu.
+      canvas.save();
+      canvas.clipPath(cap);
+      canvas.drawPath(
+        Path()
+          ..moveTo(p.dx, p.dy - 4)
+          ..lineTo(p.dx + half * 1.2, p.dy + (sl - p.dy) * 1.4)
+          ..lineTo(p.dx + half * 0.05, p.dy + (sl - p.dy) * 1.6)
+          ..close(),
+        Paint()..color = Color.lerp(snow, body, 0.45)!,
+      );
+      canvas.restore();
+    }
+    canvas.restore();
+  }
+
+  /// Kayalık volkan koni (Ağrı): pürüzlü dış hat, sol yamaç ay ışığında,
+  /// zirvede buzul ve aşağı inen kar dilleri, eteğinde kaya şeritleri.
+  void _volcano(
+    Canvas canvas,
+    double cx,
+    double base,
+    double tall,
+    double half,
+    int seed,
+    double h, {
+    List<Color> body = const [
+      Color(0xFF34445E),
+      Color(0xFF222E46),
+      Color(0xFF101828),
+    ],
+    List<Color> snowCols = const [
+      Color(0xFFF2F6FF),
+      Color(0xFFD0DAEA),
+      Color(0xFF7E8EAC),
+    ],
+  }) {
+    final top = base - tall;
+    final r = math.Random(seed);
+    final outline = <Offset>[];
+    const n = 28;
+    for (var k = 0; k <= n; k++) {
+      final u = k / n * 2 - 1; // -1 sol etek, 1 sağ etek
+      // Konkav koni: zirveye doğru dikleşir, tepesi hafif kesik.
+      final y = top + tall * math.pow(u.abs(), 0.62) + (u.abs() < 0.08 ? 4 : 0);
+      final jag = (r.nextDouble() - 0.5) * tall * 0.035 * (0.3 + u.abs());
+      outline.add(Offset(cx + u * half, y + jag));
+    }
+    final path = Path()..moveTo(outline.first.dx, outline.first.dy);
+    for (final p in outline.skip(1)) {
+      path.lineTo(p.dx, p.dy);
+    }
+    path
+      ..lineTo(cx + half, h)
+      ..lineTo(cx - half, h)
+      ..close();
+    canvas.drawPath(
+      path,
+      Paint()
+        ..shader = ui.Gradient.linear(
+          Offset(cx - half, 0),
+          Offset(cx + half, 0),
+          body,
+          const [0, 0.48, 1],
+        ),
+    );
+    canvas.save();
+    canvas.clipPath(path);
+    // Kar örtüsü: zirvede kalın buzul, yamaçlarda düzensiz, yumuşak
+    // diller (yarıklarda uzun, sırtlarda kısa).
+    final pts = <Offset>[Offset(cx - half * 1.1, top - 20)];
+    const tongues = 30;
+    for (var k = 0; k <= tongues; k++) {
+      final u = k / tongues * 2 - 1;
+      final rr = math.Random(seed * 97 + k);
+      final along = 0.24 + 0.12 * rr.nextDouble() + (k % 3 == 0 ? 0.08 : 0);
+      final y =
+          top + tall * along * (1 - u.abs() * 0.55) + tall * 0.06 * u.abs();
+      pts.add(Offset(cx + u * half * 0.9, y));
+    }
+    pts.add(Offset(cx + half * 1.1, top - 20));
+    final snow = smoothClosed(pts);
+    canvas.drawPath(
+      snow,
+      Paint()
+        ..shader = ui.Gradient.linear(
+          Offset(cx - half * 0.5, 0),
+          Offset(cx + half * 0.5, 0),
+          snowCols,
+          const [0, 0.5, 1],
+        ),
+    );
+    // Yarıklar: zirveden aşağı kıvrılan ince gölgeler (karın ve kayanın
+    // üstünde).
+    final crev = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.1
+      ..strokeCap = StrokeCap.round
+      ..color = const Color(0xFF0E1420).withValues(alpha: 0.35);
+    for (var k = 0; k < 7; k++) {
+      final rr = math.Random(seed * 13 + k);
+      final u = (rr.nextDouble() * 2 - 1) * 0.8;
+      final x0 = cx + u * half * 0.25;
+      final y0 = top + tall * (0.08 + rr.nextDouble() * 0.1);
+      final len = tall * (0.25 + rr.nextDouble() * 0.35);
+      canvas.drawPath(
+        Path()
+          ..moveTo(x0, y0)
+          ..quadraticBezierTo(
+            x0 + u * half * 0.3 + (rr.nextDouble() - 0.5) * 20,
+            y0 + len * 0.5,
+            x0 + u * half * 0.55,
+            y0 + len,
+          ),
+        crev,
+      );
+    }
+    canvas.restore();
   }
 
   // --------------------------------------------------------- Nuh'un Gemisi
@@ -1125,32 +1450,115 @@ extension _EastBackdrops on Backdrop {
       h * 0.04,
       const Color(0xFFDCE6FF),
     );
-    final dark = Paint()..color = const Color(0xFF0A0E18);
-    final base = h * 0.82;
-    // Uzaktaki kubbeler ve minareler.
+    final dark = Paint()..color = const Color(0xFF0C1020);
+    // Ufuk: oynanan zeminin biraz üstü (şehir zeminin arkasında kalmasın).
+    final base =
+        h * 0.58 +
+        (game.level.pixelHeight - game.camera.viewfinder.position.y) * 0.02;
+    // Ufkun üstünde şehrin ışığıyla açılan gök: siluet ona karşı seçilir.
+    canvas.drawRect(
+      Rect.fromLTWH(0, base - h * 0.32, w, h * 0.32 + 4),
+      Paint()
+        ..shader = ui.Gradient.linear(
+          Offset(0, base - h * 0.32),
+          Offset(0, base),
+          const [Color(0x003A4A70), Color(0xCC3A4A70), Color(0xFF52587A)],
+          const [0, 0.7, 1],
+        ),
+    );
+    final moonRim = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.4
+      ..color = const Color(0xFF8A9CC0).withValues(alpha: 0.55);
+    final window = Paint()
+      ..color = const Color(0xFFFFC27A).withValues(alpha: 0.7);
+    // Uzakta şehir: kubbeli camiler, şerefeli minareler, düz damlı evler;
+    // kubbelerin üstü ay ışığını yakalar, pencerelerde kandil.
+    _repeat(w, cam.x * 0.06, 140, (x, rnd) {
+      final hh = 18 + rnd.nextDouble() * 22;
+      final ww = 50 + rnd.nextDouble() * 50;
+      canvas.drawRect(Rect.fromLTWH(x, base - hh, ww, hh + 20), dark);
+      for (var k = 0; k < 3; k++) {
+        if (rnd.nextDouble() < 0.5) {
+          canvas.drawRect(
+            Rect.fromLTWH(x + 6 + k * ww / 3, base - hh + 6, 3, 4),
+            window,
+          );
+        }
+      }
+    }, salt: 7);
     _repeat(w, cam.x * 0.1, 360, (x, rnd) {
       final r = 40 + rnd.nextDouble() * 30;
       canvas.drawRect(
         Rect.fromLTWH(x - r, base - r * 0.8, r * 2, r * 0.8 + 10),
         dark,
       );
-      canvas.drawCircle(Offset(x, base - r * 0.8), r, dark);
+      final dome = Rect.fromCircle(
+        center: Offset(x, base - r * 0.8),
+        radius: r,
+      );
+      canvas.drawArc(dome, math.pi, math.pi, true, dark);
+      canvas.drawArc(dome, math.pi * 1.1, math.pi * 0.45, false, moonRim);
+      // Kubbe alemi.
+      canvas.drawLine(
+        Offset(x, base - r * 1.8),
+        Offset(x, base - r * 1.8 - 12),
+        Paint()
+          ..color = const Color(0xFFB8A060)
+          ..strokeWidth = 1.6,
+      );
+      // Yan kubbecikler ve pencere sırası.
       for (final side in [-1.0, 1.0]) {
-        final mx = x + side * (r + 24);
-        canvas.drawRect(
-          Rect.fromLTWH(mx - 5, base - r * 3.2, 10, r * 3.2),
-          dark,
-        );
-        canvas.drawPath(
-          Path()
-            ..moveTo(mx - 6, base - r * 3.2)
-            ..lineTo(mx, base - r * 3.8)
-            ..lineTo(mx + 6, base - r * 3.2)
-            ..close(),
+        final sc = Offset(x + side * r * 0.75, base - r * 0.8);
+        canvas.drawArc(
+          Rect.fromCircle(center: sc, radius: r * 0.32),
+          math.pi,
+          math.pi,
+          true,
           dark,
         );
       }
+      for (var k = -2; k <= 2; k++) {
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(
+            Rect.fromLTWH(x + k * r * 0.32 - 2.5, base - r * 0.55, 5, 9),
+            const Radius.circular(2.5),
+          ),
+          window,
+        );
+      }
+      for (final side in [-1.0, 1.0]) {
+        final mx = x + side * (r + 24);
+        final mh = r * 3.2;
+        canvas.drawRect(Rect.fromLTWH(mx - 5, base - mh, 10, mh), dark);
+        // Şerefe.
+        canvas.drawRect(Rect.fromLTWH(mx - 8, base - mh * 0.72, 16, 3), dark);
+        canvas.drawPath(
+          Path()
+            ..moveTo(mx - 6, base - mh)
+            ..lineTo(mx, base - mh - r * 0.7)
+            ..lineTo(mx + 6, base - mh)
+            ..close(),
+          dark,
+        );
+        canvas.drawLine(
+          Offset(mx - 5, base - mh),
+          Offset(mx - 5, base - mh * 0.3),
+          moonRim,
+        );
+        canvas.drawCircle(Offset(mx, base - mh * 0.72 - 3), 1.6, window);
+      }
     }, salt: 2);
+    // Şehrin üstünde ince bir ışık pusu.
+    canvas.drawRect(
+      Rect.fromLTWH(0, base - 60, w, 80),
+      Paint()
+        ..shader = ui.Gradient.linear(
+          Offset(0, base - 60),
+          Offset(0, base + 20),
+          const [Color(0x00FFC27A), Color(0x22FFC27A)],
+        ),
+    );
     // Yeşil Kubbe: dilimli, sivri, külah biçimli kubbe ve gövdesi. Uzakta
     // belirir, bölümün sonuna doğru yaklaşır ve büyür.
     final goal = game.level.pixelWidth - 960;
@@ -1251,42 +1659,59 @@ extension _EastBackdrops on Backdrop {
       );
     }
     final dy = -cam.y * 0.04;
-    // Aşılmaz dağlar: dik, yüksek, mavi-gri.
-    _ridge(
+    // Aşılmaz dağlar: dört yanı çeviren dik, kayalık, karlı sıradağlar.
+    _rockyRange(
       canvas,
       w,
       h,
-      offset: cam.x * 0.08,
-      base: h * 0.42 + dy,
-      amp: h * 0.3,
-      freq: 0.009,
-      seed: 21,
-      color: Color.lerp(const Color(0xFF3E4A5E), const Color(0xFF6A5A5A), sun)!,
-      bumpy: true,
+      offset: cam.x * 0.05,
+      base: h * 0.66 + dy,
+      height: h * 0.42,
+      seed: 61,
+      body: Color.lerp(const Color(0xFF34405A), const Color(0xFF5A4A52), sun)!,
+      snow: Color.lerp(const Color(0xFFB8C4D8), const Color(0xFFF2D8C0), sun)!,
+      snowline: 0.3,
     );
-    // Demir dağ: pas renkli gövde, içinde kızıl damarlar.
-    final ironX = w * 0.55 - cam.x * 0.16 % (w * 2.2);
-    final iron = Path()
-      ..moveTo(ironX - w * 0.35, h * 0.78)
-      ..lineTo(ironX - w * 0.12, h * 0.3 + dy)
-      ..lineTo(ironX, h * 0.24 + dy)
-      ..lineTo(ironX + w * 0.1, h * 0.32 + dy)
-      ..lineTo(ironX + w * 0.38, h * 0.78)
-      ..close();
-    canvas.drawPath(iron, Paint()..color = const Color(0xFF3A2A26));
+    // Demir dağ: pürüzlü, pas renkli kütle; tepesi çıplak demir, içinden
+    // kızıl damarlar yanar (eritilecek dağ).
+    final ironX = w * 0.55 - cam.x * 0.12 % (w * 2.2);
+    final ironBase = h * 0.8 + dy;
+    _volcano(
+      canvas,
+      ironX,
+      ironBase,
+      h * 0.5,
+      w * 0.34,
+      19,
+      h,
+      body: const [Color(0xFF7A4A36), Color(0xFF4A2A20), Color(0xFF1E100C)],
+      snowCols: const [Color(0xFF8A8890), Color(0xFF55545C), Color(0xFF2A282E)],
+    );
+    final pulse = 0.35 + 0.2 * math.sin(_t * 0.7);
     final vein = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2
-      ..color = const Color(0xFFE0603A)
-          .withValues(alpha: 0.35 + 0.15 * math.sin(_t * 0.7));
-    for (var i = 0; i < 5; i++) {
-      final x0 = ironX - w * 0.2 + i * w * 0.09;
-      canvas.drawPath(
-        Path()
-          ..moveTo(x0, h * 0.75)
-          ..quadraticBezierTo(x0 + 18, h * 0.55, x0 - 6 + i * 4, h * 0.36 + dy),
-        vein,
-      );
+      ..strokeCap = StrokeCap.round
+      ..strokeWidth = 2.2
+      ..color = const Color(0xFFE0603A).withValues(alpha: pulse);
+    final veinGlow = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeWidth = 7
+      ..color = const Color(0xFFFF8A40).withValues(alpha: pulse * 0.35)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
+    for (var i = 0; i < 6; i++) {
+      final x0 = ironX - w * 0.2 + i * w * 0.08;
+      final top = ironBase - h * (0.18 + (i % 3) * 0.06);
+      final path = Path()
+        ..moveTo(x0, ironBase - 6)
+        ..quadraticBezierTo(
+          x0 + 16 - i * 4,
+          (ironBase + top) / 2,
+          (x0 + ironX) / 2 + (i - 2.5) * 6,
+          top,
+        );
+      canvas.drawPath(path, veinGlow);
+      canvas.drawPath(path, vein);
     }
     // Vadi: çayırlar, ırmak, meyve ağaçları, otlayan atlar.
     _ridge(
@@ -1361,6 +1786,47 @@ extension _EastBackdrops on Backdrop {
     );
   }
 
+  /// Yumuşak bulut kümesi: tepesi ışık alan, altı gölgeli yuvarlak öbekler.
+  void _cloudBank(
+    Canvas canvas,
+    double w,
+    double h, {
+    required double offset,
+    required double base,
+    required double size,
+    required Color body,
+    required Color lit,
+    required int seed,
+  }) {
+    final blur = Paint()
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
+    canvas.drawRect(Rect.fromLTRB(0, base, w, h), Paint()..color = body);
+    // Önce aydınlık tepeler, sonra aşağı kaydırılmış gövde: ışık yalnız
+    // üstte ince bir kenar olarak kalır. Öbekler düzensiz boyda ve aralıkta.
+    final puffs = <(Offset, double)>[];
+    _repeat(w, offset, size * 0.9, (x, rnd) {
+      if (rnd.nextDouble() < 0.25) return;
+      final r = size * (0.35 + rnd.nextDouble() * 0.85);
+      puffs.add((
+        Offset(
+          x + (rnd.nextDouble() - 0.5) * size,
+          base - r * (0.2 + rnd.nextDouble() * 0.3),
+        ),
+        r,
+      ));
+    }, salt: seed);
+    for (final (c, r) in puffs) {
+      canvas.drawCircle(c, r, blur..color = lit);
+    }
+    for (final (c, r) in puffs) {
+      canvas.drawCircle(
+        c.translate(r * 0.1, r * 0.22),
+        r * 0.98,
+        blur..color = body,
+      );
+    }
+  }
+
   // ------------------------------------------------------ Göğün katları
 
   /// Göğün katları: önce ay katı (soğuk, yumuşak, büyük ay: Ay Ata), sonra
@@ -1410,24 +1876,29 @@ extension _EastBackdrops on Backdrop {
         );
       }
     }
-    // Bulut katları: üst üste, ağır ağır kayan.
+    // Bulut katları: üst üste, ağır ağır kayan, tepeleri ışığı yakalayan
+    // yumuşak kümeler.
     for (var k = 0; k < 3; k++) {
-      final c = Color.lerp(
-        Color.lerp(const Color(0xFF34406E), const Color(0xFFFFF4E4), day)!,
+      final body = Color.lerp(
+        Color.lerp(const Color(0xFF2A3460), const Color(0xFFE8D8C8), day)!,
         const Color(0xFF2A1C34),
         storm,
-      )!.withValues(alpha: 0.5 + k * 0.15);
-      _ridge(
+      )!;
+      final lit = Color.lerp(
+        Color.lerp(const Color(0xFFB8C8F0), const Color(0xFFFFF8EC), day)!,
+        const Color(0xFF6A4A80),
+        storm,
+      )!;
+      _cloudBank(
         canvas,
         w,
         h,
         offset: cam.x * (0.08 + k * 0.1) + _t * (3 + k * 3),
-        base: h * (0.55 + k * 0.14),
-        amp: 30 - k * 4,
-        freq: 0.012 + k * 0.002,
+        base: h * (0.58 + k * 0.14),
+        size: 70.0 - k * 10,
+        body: body.withValues(alpha: 0.75 + k * 0.08),
+        lit: lit.withValues(alpha: 0.8),
         seed: 31 + k,
-        color: c,
-        bumpy: true,
       );
     }
     // Fırtınada şimşek.
