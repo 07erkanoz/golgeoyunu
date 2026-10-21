@@ -1,0 +1,38 @@
+{
+  "_comment": "App Store ve TestFlight metinleri (ios/app_store.py okur). Sınırlar: ad ve alt başlık 30, anahtar sözcükler 100, tanıtım metni 170, açıklama 4000 karakter.",
+  "copyright": "2026 Erkan ÖZ",
+  "primaryCategory": "GAMES",
+  "subcategories": [
+    "GAMES_ADVENTURE",
+    "GAMES_PUZZLE"
+  ],
+  "supportUrl": "https://github.com/07erkanoz/golgeoyunu/issues",
+  "marketingUrl": "https://github.com/07erkanoz/golgeoyunu",
+  "privacyPolicyUrl": "https://github.com/07erkanoz/golgeoyunu/blob/main/docs/GIZLILIK.md",
+  "reviewContact": {
+    "firstName": "Erkan",
+    "lastName": "ÖZ"
+  },
+  "reviewNotes": "Gölge Oyunu (Shadow Play) is a free, offline 2D story platformer set in 1660 Istanbul and in Anatolian legends. No account, login, ads, purchases or data collection. Tap \"New game\" on the main menu to start; the chapter list opens chapters already reached. Touch controls: left half drag to walk/climb/crouch, right half tap to jump (hold to glide), the ✨ button releases a firefly. The gear button opens the settings (sound, brightness, graphics, language, reduce shake and flashes). No network requests; the only links, on the About page, open the developer's GitHub page in Safari. Music, sound and graphics were made for this game; the Noto fonts are under the SIL Open Font License.",
+  "publicGroup": "Herkese açık test",
+  "locales": {
+    "tr": {
+      "name": "Gölge Oyunu",
+      "subtitle": "Hayal perdesinde bir yolculuk",
+      "keywords": "gölge,karagöz,hayal perdesi,platform,bulmaca,macera,istanbul,efsane,simurg,hüdhüd,karanlık,hikâye",
+      "promotionalText": "İstanbul, 1660. Şehrin ışığı toplandı, gölge ustası kaçırıldı. Kavanozundaki ateşböcekleriyle çırak Sâye ustasını aramaya çıkıyor.",
+      "description": "İstanbul, 1660. Şehir üç gündür yanıyor. Kandilciler Loncası şehrin bütün ışığını topluyor ve hayal perdesinin ustası Hayali Usta'yı kaçırıyor. Elinde ateşböceği kavanozu taşıyan küçük çırağı Sâye, ak kuş Hüdhüd'ün peşinden ustasını aramaya çıkıyor.\n\nGölge Oyunu, hayal perdesinin (Karagöz) siluetleriyle çizilmiş, hikâyeli bir 2D platform ve bulmaca oyunu.\n\nYOLCULUK\n• On dört bölüm: Yerebatan Sarnıcı, Galata Kulesi, bulutların üstü, Kaf Dağı, Ağrı, Nuh'un Gemisi, Nemrut, Kapadokya, Derinkuyu ve Konya'nın semâhanesi\n• Simurg'un tüyleri, Medusa'nın bakışı, Nemrut'un taş devleri ve Karabasan\n• Yol boyunca bulunan hatıralar Hatıra Defteri'ne yazılır\n\nOYNANIŞ\n• Kandilcilerin fener ışığından gölgelerde saklan, parmak ucunda geç\n• Ateşböceği salıp bekçilerin dikkatini dağıt, karanlığı ar\n• Sandık it, kol çek, aynayla güneşi çevir, su seviyesini ayarla\n• Hezarfen'in kanatlarıyla süzül, iplerle salın, karda kay\n\nATMOSFER\n• Mürekkep siluetler, kandil ışığı ve kayada kesilen gölgeler\n• Ney ve perde müziği, tedirgin edici sesler: korku değil, gerilim\n\nTürkçe ve İngilizce. Dokunmatik ve klavye kontrolleri. Sarsıntı ve parlamayı azaltma seçeneği.\n\nReklam yok, satın alma yok, hesap yok, veri toplama yok. İnternet olmadan oynanır.",
+      "betaDescription": "Gölge Oyunu'nun test sürümü. Bölümleri oyna; takıldığın, bozuk gördüğün ya da çok beğendiğin her şeyi TestFlight'tan ekran görüntüsüyle bildir.",
+      "whatToTest": "Bütün bölümler; kontrol noktasından devam, ölünce bulmacaların korunması, dokunmatik kontroller, ses ve ısınma. Takılma, yanlış görünen ekran ya da ses sorunlarını bildir."
+    },
+    "en-US": {
+      "name": "Shadow Play: Gölge",
+      "subtitle": "A journey behind the screen",
+      "keywords": "shadow,puppet,karagoz,platformer,puzzle,adventure,istanbul,legend,simurgh,hoopoe,dark,story",
+      "promotionalText": "Istanbul, 1660. The city's light has been gathered and the shadow master taken. With a jar of fireflies, young Saye sets out to find him.",
+      "description": "Istanbul, 1660. The city has been burning for three days. The Lamplighters' Guild gathers all the light of the city and takes Hayali Usta, master of the shadow screen. Carrying a jar of fireflies, his young apprentice Saye follows the white bird Hoopoe to find him.\n\nShadow Play is a story-driven 2D platformer and puzzle game drawn in the silhouettes of the Turkish shadow theatre (Karagöz).\n\nTHE JOURNEY\n• Fourteen chapters: the Basilica Cistern, Galata Tower, above the clouds, Mount Qaf, Ararat, Noah's Ark, Nemrut, Cappadocia, Derinkuyu and the semahane of Konya\n• Simurgh's feathers, Medusa's gaze, the stone giants of Nemrut and the Karabasan\n• Memories found on the road are written into the Book of Memories\n\nPLAY\n• Hide in the shadows from the lamplighters' lanterns, tiptoe past\n• Release fireflies to draw the guards away and part the dark\n• Push crates, pull levers, turn the sun with mirrors, raise and lower the water\n• Glide on Hezarfen's wings, swing on ropes, ski the snow\n\nATMOSPHERE\n• Ink silhouettes, lamplight and shadows cut by stone\n• Ney and shadow-theatre music, unsettling sounds: tension, not gore\n\nTurkish and English. Touch and keyboard controls. An option to reduce shake and flashes.\n\nNo ads, no purchases, no account, no data collection. Plays offline.",
+      "betaDescription": "A test build of Shadow Play. Play the chapters and report anything that sticks, looks wrong or delights you from TestFlight with a screenshot.",
+      "whatToTest": "All chapters; continuing from a checkpoint, puzzles kept after dying, touch controls, sound and heat. Report freezes, screens that look wrong or sound problems."
+    }
+  }
+}

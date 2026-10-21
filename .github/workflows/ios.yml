@@ -1,0 +1,151 @@
+name: iOS TestFlight
+
+# macOS dakikaları pahalı: her gönderimde iOS derlenmez. Elle (Actions → iOS
+# TestFlight → Run workflow) ya da main'de ios/testflight.txt değişince
+# (içindeki sayıyı artırınca) yeni bir derleme TestFlight'a gider.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['ios/testflight.txt']
+
+concurrency:
+  group: ios-testflight
+  cancel-in-progress: false
+
+env:
+  FLUTTER_VERSION: '3.47.7'
+
+jobs:
+  # Sırlar girilmeden pahalı macOS koşucusu hiç açılmaz: eksikse uyarı verip
+  # iOS derlemesini atlar (docs/IOS.md).
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      ready: ${{ steps.secrets.outputs.ready }}
+    steps:
+      - name: App Store Connect sırları
+        id: secrets
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
+        run: |
+          ready=true
+          for name in ASC_KEY_ID ASC_ISSUER_ID ASC_PRIVATE_KEY; do
+            if [ -z "${!name}" ]; then echo "::warning::$name sırrı eksik; iOS derlemesi atlandı (docs/IOS.md)"; ready=false; fi
+          done
+          echo "ready=$ready" >> "$GITHUB_OUTPUT"
+
+  testflight:
+    needs: check
+    if: needs.check.outputs.ready == 'true'
+    runs-on: macos-latest
+    timeout-minutes: 60
+    env:
+      ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+      ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # App Store yüklemeleri yeni bir SDK ile derlenmeli: koşucudaki en yeni
+      # Xcode seçilir.
+      - name: En yeni Xcode
+        run: |
+          xcode=$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)
+          sudo xcode-select -s "$xcode"
+          xcodebuild -version
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - run: flutter pub get
+
+      - name: Testler
+        run: flutter test
+
+      - name: API anahtarı
+        env:
+          ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/keys"
+          printf '%s\n' "$ASC_PRIVATE_KEY" > "$RUNNER_TEMP/keys/AuthKey_$ASC_KEY_ID.p8"
+          echo "ASC_KEY_PATH=$RUNNER_TEMP/keys/AuthKey_$ASC_KEY_ID.p8" >> "$GITHUB_ENV"
+
+      # Her yükleme yeni, daha büyük bir derleme numarası ister.
+      - name: Xcode projesini hazırla
+        run: flutter build ios --release --config-only --build-number=$(( ${{ github.run_number }} * 10 + ${{ github.run_attempt }} ))
+
+      # Tek bir dağıtım sertifikası bütün derlemeleri imzalar: çalıştırmalar
+      # arasında önbellekte, API anahtarından türeyen parolayla şifreli durur;
+      # asla iptal edilmez (iptal, onunla imzalanan derlemeleri geçersiz
+      # kılar: ITMS-90035).
+      - name: İmza sertifikasını geri yükle
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/ios-signing
+          key: ios-signing-${{ github.run_id }}
+          restore-keys: ios-signing-
+
+      - name: İmzayı kur
+        id: signing
+        run: python3 ios/ci_signing.py setup
+
+      - name: İmza sertifikasını sakla
+        if: steps.signing.outcome == 'success'
+        uses: actions/cache/save@v4
+        with:
+          path: ~/ios-signing
+          key: ios-signing-${{ github.run_id }}-${{ github.run_attempt }}
+
+      - name: Arşivle
+        run: |
+          xcodebuild -workspace ios/Runner.xcworkspace -scheme Runner -configuration Release \
+            -destination 'generic/platform=iOS' -archivePath "$RUNNER_TEMP/Runner.xcarchive" \
+            archive
+
+      - name: TestFlight'a yükle
+        run: |
+          xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/Runner.xcarchive" \
+            -exportOptionsPlist "$EXPORT_OPTIONS" -exportPath "$RUNNER_TEMP/export" \
+            -authenticationKeyPath "$ASC_KEY_PATH" -authenticationKeyID "$ASC_KEY_ID" -authenticationKeyIssuerID "$ASC_ISSUER_ID"
+
+      - name: İmzayı koşucudan sil
+        if: always()
+        run: python3 ios/ci_signing.py cleanup
+
+      - name: API anahtarını sil
+        if: always()
+        run: rm -rf "$RUNNER_TEMP/keys"
+
+  # Apple yüklemeyi işleyince derleme herkese açık TestFlight grubuna
+  # eklenir (ucuz Linux koşucusunda: bekleme uzun sürebilir).
+  public-link:
+    needs: testflight
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+      ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+      ASC_CONTACT_EMAIL: ${{ secrets.ASC_CONTACT_EMAIL }}
+      ASC_CONTACT_PHONE: ${{ secrets.ASC_CONTACT_PHONE }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: API anahtarı
+        env:
+          ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/keys"
+          printf '%s\n' "$ASC_PRIVATE_KEY" > "$RUNNER_TEMP/keys/AuthKey_$ASC_KEY_ID.p8"
+          echo "ASC_KEY_PATH=$RUNNER_TEMP/keys/AuthKey_$ASC_KEY_ID.p8" >> "$GITHUB_ENV"
+
+      - name: Derlemeyi herkese açık TestFlight grubuna ekle
+        run: python3 ios/app_store.py testflight --build $(( ${{ github.run_number }} * 10 + ${{ github.run_attempt }} ))
+
+      - name: API anahtarını sil
+        if: always()
+        run: rm -rf "$RUNNER_TEMP/keys"
