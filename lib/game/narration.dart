@@ -56,6 +56,7 @@ class Narration extends Component with HasGameReference<GolgeGame> {
   String? get debugMyth => _myth?.$1;
 
   void showArea(String name) {
+    _remember(RecentKind.place, name);
     _area = name;
     _areaT = 0;
   }
@@ -105,7 +106,24 @@ class Narration extends Component with HasGameReference<GolgeGame> {
         : fadeOutStart + _lineOut + 0.001;
   }
 
+  /// Az önce ekrana gelenler (en yenisi sonda): okumayı kaçıran "i"
+  /// düğmesinden yeniden okur. Bölüm değişince temizlenir.
+  final recent = <RecentLine>[];
+
+  void _remember(RecentKind kind, String text) {
+    if (text.trim().isEmpty) return;
+    if (recent.isNotEmpty &&
+        recent.last.text == text &&
+        recent.last.kind == kind) {
+      return;
+    }
+    recent.add(RecentLine(kind, text));
+    if (recent.length > 24) recent.removeAt(0);
+  }
+
   void showTitle(String title, String subtitle, [String place = '']) {
+    recent.clear();
+    _remember(RecentKind.title, '$title\n$subtitle');
     _title = title;
     _subtitle = subtitle;
     _place = place;
@@ -119,6 +137,7 @@ class Narration extends Component with HasGameReference<GolgeGame> {
   /// Sahne değişince (yeni bölüm, menü) eski bölümün bekleyen fısıltıları
   /// ve ipuçları atılır; yeni bölümde bağlamsız belirmesinler.
   void resetScene() {
+    recent.clear();
     _myths.clear();
     _myth = null;
     _whispers.clear();
@@ -140,6 +159,7 @@ class Narration extends Component with HasGameReference<GolgeGame> {
     }
     if (!canHint) return false;
     _hint = text;
+    _remember(RecentKind.hint, text);
     _hintT = 0;
     return true;
   }
@@ -207,6 +227,7 @@ class Narration extends Component with HasGameReference<GolgeGame> {
           _whisper == null &&
           !inCinematic) {
         _myth = _myths.removeAt(0);
+        _remember(RecentKind.legend, '${_myth!.$1}\n${_myth!.$2}');
         _mythT = 0;
       }
     } else {
@@ -217,6 +238,7 @@ class Narration extends Component with HasGameReference<GolgeGame> {
       // Efsane kartı ekrandayken fısıltı bekler.
       if (_whispers.isNotEmpty && _myth == null && !inCinematic) {
         _whisper = _whispers.removeAt(0);
+        _remember(RecentKind.story, _whisper!);
         _whisperT = 0;
         _whisperTop = _playerLow();
       }
@@ -227,6 +249,7 @@ class Narration extends Component with HasGameReference<GolgeGame> {
     if (_hint == null) {
       if (_hints.isNotEmpty && !inCinematic && !game.menuMode.value) {
         _hint = _hints.removeAt(0);
+        _remember(RecentKind.hint, _hint!);
         _hintT = 0;
       }
     } else {
@@ -625,4 +648,13 @@ class Narration extends Component with HasGameReference<GolgeGame> {
       );
     }
   }
+}
+
+/// Az önce ekrana gelen bir yazının türü.
+enum RecentKind { title, place, story, hint, legend }
+
+class RecentLine {
+  const RecentLine(this.kind, this.text);
+  final RecentKind kind;
+  final String text;
 }

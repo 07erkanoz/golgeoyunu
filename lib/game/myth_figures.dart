@@ -527,6 +527,26 @@ class MythFigures {
     ],
   );
 
+  /// Kavuklu, cübbeli bir İstanbullu erkek (perde kalabalığı için).
+  static Path get manSilhouette => _union(
+    'man',
+    MythShapes.kam,
+    () => [
+      Path()
+        ..moveTo(-5, -89)
+        ..lineTo(4, -89)
+        ..cubicTo(9, -87, 13, -85, 14, -80)
+        ..cubicTo(15, -60, 16, -30, 17, -2)
+        ..lineTo(-18, -2)
+        ..cubicTo(-17, -30, -16, -60, -15, -80)
+        ..cubicTo(-14, -85, -10, -87, -5, -89)
+        ..close(),
+      Path()..addOval(
+        Rect.fromCenter(center: const Offset(0, -104), width: 16, height: 16),
+      ),
+    ],
+  );
+
   /// Tulpar'ın kanadının dış silueti (perde için).
   static Path get wingSilhouette => _wingRows()[0];
 
@@ -1869,5 +1889,68 @@ class MythFigures {
       14 + 2 * math.sin(t * 2),
       Paint()..color = const Color(0xFFFFFFFF),
     );
+  }
+
+  /// Küçük Umay yeri (oba): dilek taşlarından bir yığın, tepesine dikili bir
+  /// değnek ve ona bağlı çaputlar. Ağaca yakın kayıt noktalarında ağacın
+  /// yerine durur. [lit] 0: uyuyan, 1: uyanmış.
+  static void umayCairn(Canvas c, double t, {double lit = 1}) {
+    if (lit > 0) {
+      c.drawCircle(
+        const Offset(0, -16),
+        30,
+        Paint()
+          ..shader = ui.Gradient.radial(const Offset(0, -16), 30, [
+            const Color(0xFFFFE8B0).withValues(alpha: 0.35 * lit),
+            const Color(0x00FFE8B0),
+          ]),
+      );
+    }
+    final stone = Paint();
+    final rim = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.4
+      ..color = Color.lerp(
+        const Color(0xFF2A221C),
+        const Color(0xFFFFE0A0),
+        lit * 0.8,
+      )!;
+    for (final (x, y, w, h, tone) in const [
+      (-7.0, -1.8, 7.5, 3.8, 0.1),
+      (0.5, -2.0, 8.0, 4.2, 0.5),
+      (7.5, -1.6, 6.5, 3.4, 0.3),
+      (-3.5, -5.6, 6.5, 3.6, 0.7),
+      (3.5, -5.8, 6.0, 3.4, 0.2),
+      (0.0, -9.0, 5.0, 3.0, 0.6),
+    ]) {
+      final r = Rect.fromCenter(center: Offset(x, y), width: w, height: h);
+      stone.color = Color.lerp(
+        const Color(0xFF4A423A),
+        const Color(0xFF8A8074),
+        tone,
+      )!;
+      c.drawOval(r, stone);
+      c.drawOval(r, rim);
+    }
+    // Değnek: yığının tepesinden hafif eğik.
+    const top = Offset(2, -34);
+    c.drawLine(
+      const Offset(0, -9),
+      top,
+      Paint()
+        ..color = const Color(0xFF3A2414)
+        ..strokeWidth = 1.4
+        ..strokeCap = StrokeCap.round,
+    );
+    const cols = [
+      Color(0xFFF5F0E6),
+      Color(0xFFC8282A),
+      Color(0xFF3A7CC8),
+      Color(0xFFE8C040),
+    ];
+    for (var i = 0; i < 4; i++) {
+      final k = Offset.lerp(const Offset(0, -12), top, 0.45 + i * 0.17)!;
+      _caput(c, k, cols[i], 7.5 - i * 0.6, t, lit, i + 40, width: 0.9);
+    }
   }
 }

@@ -7,7 +7,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:golge/game/narration.dart';
 import 'package:golge/settings.dart';
+import 'package:golge/ui/recent_panel.dart';
 import 'package:golge/ui/info_pages.dart';
 
 Future<void> _font() async {
@@ -30,6 +32,30 @@ Future<void> _font() async {
 void main() {
   for (final (name, page) in [
     ('hikaye', const StoryPage()),
+    (
+      'az_once',
+      const RecentPanel(
+        preview: [
+          RecentLine(
+            RecentKind.title,
+            'I · YEREBATAN\nSuyun altında bir şehir uyur.',
+          ),
+          RecentLine(RecentKind.place, 'Karanlık Kanallar'),
+          RecentLine(
+            RecentKind.story,
+            'Perseus ona hiç doğrudan bakmadı.\nCilalı kalkanın ardında yürü: önündeki göz seni görmez.',
+          ),
+          RecentLine(
+            RecentKind.legend,
+            'Medusa\nYunan mitinin bakışı taşa çeviren Gorgon\'u.',
+          ),
+          RecentLine(
+            RecentKind.hint,
+            'sola ya da sağa sürükle Salı it · karşı kıyıda sağ yarıya dokun ile in',
+          ),
+        ],
+      ),
+    ),
     ('hakkinda', const AboutPage()),
     (
       'defter',

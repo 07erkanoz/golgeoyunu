@@ -436,6 +436,26 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     _saveProgress();
   }
 
+  /// Ağaç yerine oba konan kontrol noktaları: ilerleyiş sırasıyla, daha önce
+  /// dikilmiş bir ağaçla aynı ekrana düşenler (ağaçlar yan yana dizilmesin).
+  Set<Vector2> get _cairns {
+    final ks = [...level.checkpointCells]
+      ..sort((a, b) => level.progressOf(a).compareTo(level.progressOf(b)));
+    final trees = <Vector2>[];
+    final out = <Vector2>{};
+    for (final k in ks) {
+      final near = trees.any(
+        (t) => (t.x - k.x).abs() < 28 * kTile && (t.y - k.y).abs() < 16 * kTile,
+      );
+      if (near) {
+        out.add(k);
+      } else {
+        trees.add(k);
+      }
+    }
+    return out;
+  }
+
   /// Kontrol noktası hücresinin üstündeki boşluk (piksel): ağaç tavana
   /// sığacak kadar büyür.
   double _headroom(Vector2 cell) {
@@ -522,6 +542,31 @@ class GolgeGame extends FlameGame with KeyboardEvents {
   // ---------------------------------------------------------------- ayarlar
 
   static const settingsOverlay = 'settings';
+  static const recentOverlay = 'recent';
+
+  /// "Az önce" paneli: kaçırılan hikâye ve ipucu yeniden okunur; açıkken
+  /// oyun bekler.
+  bool recentOpen = false;
+
+  void toggleRecent() {
+    if (menuMode.value) return;
+    if (recentOpen) {
+      recentOpen = false;
+      overlays.remove(recentOverlay);
+      settingsOpen.value = false;
+      onFocusGame?.call();
+      resumeEngine();
+      GameAudio.instance.resumeAll();
+    } else {
+      if (overlays.isActive(settingsOverlay)) return;
+      recentOpen = true;
+      controls.resetAll();
+      _showOverlay(recentOverlay);
+      settingsOpen.value = true;
+      pauseEngine();
+      GameAudio.instance.pauseAll();
+    }
+  }
 
   /// Ayarlar açık mı (dokunmatik düğmeler bu sırada gizlenir).
   final settingsOpen = ValueNotifier<bool>(false);
@@ -641,6 +686,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
           UmayTree(
             k,
             headroom: _headroom(k),
+            small: _cairns.contains(k),
             // Yolun son ağacı (Konya'da) çiçek açar.
             bloom:
                 level.def.theme == LevelTheme.konya &&
@@ -1733,6 +1779,15 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     }
     if (event is KeyDownEvent) {
       // Sahne sürerken Esc perdeyi atlar (ayarlar dişli simgesinden açılır).
+      if (recentOpen) {
+        if (esc || event.logicalKey == LogicalKeyboardKey.keyI) toggleRecent();
+        return KeyEventResult.handled;
+      }
+      if (event.logicalKey == LogicalKeyboardKey.keyI &&
+          !narration.inCinematic) {
+        toggleRecent();
+        return KeyEventResult.handled;
+      }
       if (esc && narration.inCinematic && !overlays.isActive(settingsOverlay)) {
         narration.skipAll();
         return KeyEventResult.handled;

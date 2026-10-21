@@ -956,21 +956,95 @@ class PerdePainter {
       canvas.restore();
     }
 
-    // Kalabalık: alkışlar, korkar, dağılır.
-    final ca = _shown(u, 3.3, 5.0, 0.35);
+    // Kalabalık: tepenin yamacında toplanmış İstanbullular. Hezarfen
+    // süzülürken başlarını kaldırıp onu gösterirler; sultanın sözünden sonra
+    // ağır ağır dağılırlar.
+    final ca = _shown(u, 2.6, 5.0, 0.35);
     if (ca > 0) {
-      final cp = _inkPaint(ca);
-      for (var i = 0; i < 11; i++) {
-        final x = 60.0 + i * 38 + (i.isEven ? 6 : -4);
-        final cheer = u < 4.2 ? math.max(0.0, math.sin(time * 6 + i)) * 6 : 0.0;
-        final shrink = u > 4.2 ? _span(u, 4.2, 4.6) * 5 : 0.0;
-        canvas.drawCircle(Offset(x, 336 - cheer + shrink), 9, cp);
-        canvas.drawRect(Rect.fromLTWH(x - 9, 340 - cheer + shrink, 18, 30), cp);
-        if (cheer > 3) {
+      // Yamaç: (0,352) → (520,300) ikinci dereceden eğri.
+      double groundAt(double x) {
+        var lo = 0.0, hi = 1.0;
+        for (var k = 0; k < 18; k++) {
+          final t = (lo + hi) / 2;
+          final bx = 2 * (1 - t) * t * 300 + t * t * 520;
+          if (bx < x) {
+            lo = t;
+          } else {
+            hi = t;
+          }
+        }
+        final t = lo;
+        return (1 - t) * (1 - t) * 352 + 2 * (1 - t) * t * 320 + t * t * 300;
+      }
+
+      final hzX = tx - glide * 720;
+      final scatter = _span(u, 4.3, 4.95);
+      // (x, boy, tür: 0 erkek, 1 kadın, 2 çocuk, ters mi)
+      const people = [
+        (58.0, 70.0, 0, false),
+        (84.0, 62.0, 1, false),
+        (103.0, 40.0, 2, false),
+        (138.0, 72.0, 0, true),
+        (166.0, 60.0, 1, false),
+        (205.0, 68.0, 0, false),
+        (228.0, 38.0, 2, true),
+        (262.0, 64.0, 1, true),
+        (296.0, 74.0, 0, false),
+        (330.0, 61.0, 1, false),
+        (352.0, 66.0, 0, true),
+      ];
+      for (var i = 0; i < people.length; i++) {
+        final (x0, hgt, kind, flipped) = people[i];
+        // Dağılırken iki yana yürürler, sönerler.
+        final dir = i.isEven ? -1.0 : 1.0;
+        final x = x0 + dir * scatter * (40 + i * 6);
+        final a = ca * (1 - scatter * 0.9);
+        if (a <= 0.02) continue;
+        final g = groundAt(x) + 2;
+        final sway = math.sin(time * 1.3 + i * 1.7) * 0.03;
+        final look = hzX < x ? 1.0 : -1.0;
+        final facesRight = scatter > 0.05
+            ? dir > 0
+            : (flipped ? look < 0 : look > 0);
+        final ink = _inkPaint(a);
+        canvas.save();
+        canvas.translate(x, g);
+        canvas.rotate(sway);
+        final sx = (facesRight ? 1.0 : -1.0) * hgt / 100;
+        canvas.scale(sx, hgt / 100);
+        if (kind == 1) {
+          canvas.drawPath(MythFigures.akAnaSilhouette, ink);
+          // Başörtüsü: başı ve omuzları saran yumuşak örtü.
+          canvas.drawPath(
+            Path()
+              ..moveTo(-8, -86)
+              ..cubicTo(-9, -104, 9, -104, 8, -86)
+              ..cubicTo(10, -80, 11, -76, 12, -72)
+              ..lineTo(-12, -72)
+              ..cubicTo(-11, -76, -10, -80, -8, -86)
+              ..close(),
+            ink,
+          );
+        } else if (kind == 0) {
+          canvas.drawPath(MythFigures.manSilhouette, ink);
+        } else {
+          canvas.drawPath(MythShapes.kam, ink);
+        }
+        canvas.restore();
+        // Hezarfen süzülürken gösteren kol: omuzdan ona doğru.
+        if (glide > 0.05 && scatter < 0.3 && i % 3 != 1) {
+          final shoulder = Offset(
+            x + (facesRight ? 4 : -4) * hgt / 70,
+            g - hgt * 0.78,
+          );
+          final toward = Offset(hzX, 118 + glide * 150) - shoulder;
+          final arm = toward / toward.distance * hgt * 0.42;
           canvas.drawLine(
-            Offset(x + 6, 342 - cheer),
-            Offset(x + 12, 322 - cheer * 1.5),
-            cp..strokeWidth = 3,
+            shoulder,
+            shoulder + arm,
+            ink
+              ..strokeWidth = math.max(2.0, hgt * 0.06)
+              ..strokeCap = StrokeCap.round,
           );
         }
       }

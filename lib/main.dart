@@ -9,6 +9,7 @@ import 'display.dart';
 import 'game/golge_game.dart';
 import 'settings.dart';
 import 'ui/main_menu.dart';
+import 'ui/recent_panel.dart';
 import 'ui/settings_panel.dart';
 import 'ui/touch_controls.dart';
 
@@ -167,6 +168,10 @@ class _GolgeAppState extends State<GolgeApp> with WindowListener {
         canPop: false,
         onPopInvokedWithResult: (didPop, _) {
           if (didPop || _game.menuMode.value) return;
+          if (_game.recentOpen) {
+            _game.toggleRecent();
+            return;
+          }
           _game.toggleSettings();
         },
         child: Scaffold(
@@ -182,6 +187,8 @@ class _GolgeAppState extends State<GolgeApp> with WindowListener {
                     game: game,
                     onQuit: _isDesktop ? () => windowManager.close() : null,
                   ),
+                  GolgeGame.recentOverlay: (context, GolgeGame game) =>
+                      RecentPanel(game: game),
                   GolgeGame.settingsOverlay: (context, GolgeGame game) =>
                       SettingsPanel(
                         game: game,
@@ -206,6 +213,22 @@ class _GolgeAppState extends State<GolgeApp> with WindowListener {
                               ? const SizedBox.shrink()
                               : TouchControls(controls: _game.controls),
                         ),
+                      // "i": az önceki hikâye ve ipucu (okumayı kaçıranlar
+                      // için); dokunmatikte ateşböceği simgesinin solunda.
+                      Positioned(
+                        top: 8,
+                        right: _isTouch ? 116 : 56,
+                        child: SafeArea(
+                          child: IconButton(
+                            tooltip: 'I',
+                            onPressed: _game.toggleRecent,
+                            icon: Icon(
+                              Icons.info_outline,
+                              color: Colors.white.withValues(alpha: 0.35),
+                            ),
+                          ),
+                        ),
+                      ),
                       Positioned(
                         top: 8,
                         right: 8,

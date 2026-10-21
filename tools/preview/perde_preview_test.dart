@@ -15,6 +15,8 @@ void main() {
       'prolog_umay': (PerdeScene.prologue, 4.5),
       'galata_hezarfen': (PerdeScene.galata, 3.5),
       'galata_saye': (PerdeScene.galata, 5.5),
+      'galata_kalabalik': (PerdeScene.galata, 3.5),
+      'galata_dagilir': (PerdeScene.galata, 4.6),
       'kaf_kuslar': (PerdeScene.kaf, 1.5),
       'kaf_kirik_gunes': (PerdeScene.kaf, 3.5),
       'tufan_guvercin': (PerdeScene.flood, 2.7),
