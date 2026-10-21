@@ -48,6 +48,22 @@ void main() {
   );
 
   testWithGame<GolgeGame>(
+    'Yerebatan: boşaltılmış haznenin dibinden Su İyesi yükselmez',
+    GolgeGame.new,
+    (game) async {
+      await _level(game, 0);
+      final basin = game.world.children.whereType<WaterBasin>().first;
+      basin
+        ..target = basin.area.bottom - 6
+        ..surface = basin.area.bottom - 6;
+      _standAt(game, 157, 9);
+      run(game, 4);
+      expect(game.world.children.whereType<WaterFace>(), isEmpty);
+      expect(game.mythsSeen, isNot(contains('suIyesi')));
+    },
+  );
+
+  testWithGame<GolgeGame>(
     'Gökyolu: sütun geçilince Tulpar gökte geçer',
     GolgeGame.new,
     (game) async {

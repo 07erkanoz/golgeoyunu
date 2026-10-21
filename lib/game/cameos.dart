@@ -69,6 +69,13 @@ class CameoWarden extends Component with HasGameReference<GolgeGame> {
           if (basin == null || _still < 2.5) break;
           final zone = basin.area.inflate(5 * kTile);
           if (!zone.contains(Offset(p.center.x, p.center.y))) break;
+          // Boş haznenin dibinden ya da ekranın dışından yükselmez: su
+          // olmalı ve su yüzü görünmeli (yoksa yalnızca yazı çıkıyordu).
+          if (basin.surface > basin.area.bottom - 2 * kTile) break;
+          final face = Offset(basin.area.center.dx, basin.surface - 30);
+          if (!game.camera.visibleWorldRect.deflate(kTile).contains(face)) {
+            break;
+          }
           game.markEvent(_key(kind));
           game.world.add(WaterFace(basin));
           _say(kind);
