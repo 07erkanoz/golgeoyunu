@@ -9,7 +9,6 @@ import 'gokboru.dart' show standRow;
 import 'golge_game.dart';
 import 'level.dart';
 import 'myth_figures.dart';
-import 'myth_shapes.dart';
 import 'nemrut.dart';
 import 'puzzles.dart';
 import 'strings.dart';
@@ -269,95 +268,174 @@ class Apparition extends PositionComponent with HasGameReference<GolgeGame> {
   }
 }
 
-/// Su İyesi: haznenin yüzünde, suyun altından bakan soluk bir yüz; ışığı
-/// suyun içinden vanalara doğru akar.
+/// Su İyesi: haznenin ortasında sudan beline kadar yükselen, sudan
+/// yapılmış gibi yeşil-mavi ışıklı bir kadın. Uzun saçları su yüzüne
+/// yayılır; eliyle vanayı gösterir, ışığı suyun içinden vanaya akar; sonra
+/// yeniden suya çekilir.
 class WaterFace extends Component with HasGameReference<GolgeGame> {
   WaterFace(this.basin) : super(priority: 27);
 
   final WaterBasin basin;
   double _t = 0;
 
-  double get alpha => _t < 1.6
-      ? _t / 1.6
-      : _t < 7
-      ? 1
-      : math.max(0, 1 - (_t - 7) / 2);
+  static const double rise = 1.6;
+  static const double stay = 7.5;
+  static const double sink = 1.8;
+  static const double drawScale = 0.72;
 
-  Offset get face =>
-      Offset(basin.area.center.dx, basin.surface + 22 + math.sin(_t) * 1.5);
+  /// Sudan çıkış (0: suyun altında, 1: belden yukarısı dışarıda).
+  double get _up {
+    if (_t < rise) {
+      final u = _t / rise;
+      return u * u * (3 - 2 * u);
+    }
+    if (_t < rise + stay) return 1;
+    final u = ((_t - rise - stay) / sink).clamp(0.0, 1.0);
+    return 1 - u * u * (3 - 2 * u);
+  }
+
+  double get alpha => _up;
+
+  Offset get _at => Offset(basin.area.center.dx, basin.surface);
+
+  /// Gösterdiği vana: önce boşaltan (bulmaca onunla başlar), en yakını.
+  Valve? get _valve {
+    Valve? best;
+    var bestD = double.infinity;
+    for (final v in game.world.children.whereType<Valve>()) {
+      final d = (v.position.x - _at.dx).abs() + (v.fill ? 2000 : 0);
+      if (d < bestD) {
+        bestD = d;
+        best = v;
+      }
+    }
+    return best;
+  }
 
   @override
   void update(double dt) {
     super.update(dt);
     _t += dt;
-    if (_t > 9) removeFromParent();
+    if (_t > rise + stay + sink) removeFromParent();
   }
 
   @override
   void render(Canvas canvas) {
-    final a = alpha;
-    if (a <= 0) return;
-    final c = face;
+    final up = _up;
+    if (up <= 0) return;
+    final s = basin.surface;
+    final x = _at.dx;
+    const sc = drawScale;
+    // Bel (silüette -50) su yüzünde; çıkarken aşağıdan yükselir.
+    final feetY = s + 50 * sc + (1 - up) * 60 * sc;
+    const water = Color(0xFF9EE8DC);
+    // Suyun içinden gelen yeşil-mavi ışık.
+    canvas.drawOval(
+      Rect.fromCenter(center: Offset(x, s - 10), width: 120, height: 70),
+      Paint()
+        ..shader = ui.Gradient.radial(Offset(x, s - 10), 60, [
+          water.withValues(alpha: 0.35 * up),
+          water.withValues(alpha: 0),
+        ]),
+    );
+    // Su yüzüne yayılan uzun saçlar.
+    final hair = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeWidth = 1.4
+      ..color = const Color(0xFFCFF4EE).withValues(alpha: 0.6 * up);
+    for (var i = 0; i < 8; i++) {
+      final side = i.isEven ? -1.0 : 1.0;
+      final k = (i ~/ 2) + 1;
+      final len = (18 + k * 9) * up;
+      final path = Path()..moveTo(x + side * 4, s);
+      for (var j = 1; j <= 8; j++) {
+        final u = j / 8;
+        path.lineTo(
+          x + side * (4 + len * u),
+          s + 1.5 + math.sin(_t * 2 + u * 6 + i) * 1.6 * u,
+        );
+      }
+      canvas.drawPath(path, hair);
+    }
+    // Beden: belden yukarısı suyun üstünde.
+    final body = MythFigures.akAnaSilhouette;
+    canvas.save();
+    canvas.clipRect(Rect.fromLTRB(x - 80, s - 120, x + 80, s + 0.5));
+    canvas.translate(x, feetY);
+    canvas.scale(sc);
+    canvas.drawPath(
+      body,
+      Paint()
+        ..color = water.withValues(alpha: 0.55 * up)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6),
+    );
+    canvas.drawPath(
+      body,
+      Paint()
+        ..shader = ui.Gradient.linear(
+          const Offset(0, -100),
+          const Offset(0, -50),
+          [
+            const Color(0xFFE8FFFA).withValues(alpha: 0.92 * up),
+            water.withValues(alpha: 0.7 * up),
+          ],
+        ),
+    );
+    // Başından omuzlarına dökülen saç.
+    canvas.drawPath(
+      Path()
+        ..moveTo(-6, -98)
+        ..cubicTo(-9, -104, 9, -104, 6, -98)
+        ..cubicTo(10, -86, 12, -70, 9, -54)
+        ..lineTo(-9, -54)
+        ..cubicTo(-12, -70, -10, -86, -6, -98)
+        ..close(),
+      Paint()..color = const Color(0xFFB8EDE4).withValues(alpha: 0.75 * up),
+    );
+    canvas.restore();
+    // Suyun altındaki yansıma.
+    canvas.drawOval(
+      Rect.fromCenter(center: Offset(x, s + 8), width: 26, height: 10),
+      Paint()..color = water.withValues(alpha: 0.25 * up),
+    );
     // Halkalar.
     for (var i = 0; i < 3; i++) {
       final u = (_t * 0.35 + i / 3) % 1;
       canvas.drawOval(
         Rect.fromCenter(
-          center: Offset(c.dx, basin.surface),
-          width: 20 + u * 90,
-          height: 3 + u * 5,
+          center: Offset(x, s),
+          width: 24 + u * 100,
+          height: 3 + u * 6,
         ),
         Paint()
           ..style = PaintingStyle.stroke
           ..strokeWidth = 0.8
           ..color = const Color(0xFFCFF4F0)
-              .withValues(alpha: 0.6 * a * (1 - u)),
+              .withValues(alpha: 0.6 * up * (1 - u)),
       );
     }
-    // Yüz: Ak Ana çiziminin başı, suyun altında yatay, dalgalı.
-    canvas.save();
-    canvas.translate(c.dx, c.dy);
-    canvas.scale(1.5 + math.sin(_t * 2.3) * 0.04, 1.05);
-    canvas.translate(0, 92);
-    canvas.clipRect(const Rect.fromLTRB(-20, -104, 20, -82));
-    canvas.drawPath(
-      MythShapes.akAna,
-      Paint()
-        ..color = const Color(0xFF9EE6DC).withValues(alpha: 0.6 * a)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5),
-    );
-    canvas.drawPath(
-      MythShapes.akAna,
-      Paint()..color = const Color(0xFFDFFAF6).withValues(alpha: 0.75 * a),
-    );
-    final eye = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 0.7
-      ..strokeCap = StrokeCap.round
-      ..color = const Color(0xFF2A6A66).withValues(alpha: 0.8 * a);
-    for (final x in [-2.1, 2.1]) {
-      canvas.drawArc(
-        Rect.fromCenter(center: Offset(x, -92.6), width: 2, height: 1.4),
-        0.2,
-        math.pi - 0.4,
-        false,
-        eye,
-      );
-    }
-    canvas.restore();
-    // Işık suyun içinden vanalara akar.
-    for (final v in game.world.children.whereType<Valve>()) {
+    // Vanayı gösteren kol ve vanaya akan ışık.
+    final v = _valve;
+    if (v != null && _t > rise * 0.7) {
+      final shoulder = Offset(x, feetY - 80 * sc);
       final to = Offset(v.position.x, v.position.y - 8);
-      if ((to.dx - c.dx).abs() > basin.area.width + 6 * kTile) continue;
-      final u = ((_t - 1.6) / 2.4).clamp(0.0, 1.0);
-      final head = Offset.lerp(c, to, u)!;
+      final dir = (to - shoulder) / (to - shoulder).distance;
+      final arm = Paint()
+        ..color = const Color(0xFFE8FFFA).withValues(alpha: 0.85 * up)
+        ..strokeWidth = 3.2
+        ..strokeCap = StrokeCap.round;
+      canvas.drawLine(shoulder, shoulder + dir * 22, arm);
+      final u = ((_t - rise) / 2.2).clamp(0.0, 1.0);
+      final from = shoulder + dir * 22;
+      final head = Offset.lerp(from, to, u)!;
       canvas.drawLine(
-        c,
+        from,
         head,
         Paint()
-          ..shader = ui.Gradient.linear(c, head, [
+          ..shader = ui.Gradient.linear(from, head, [
             const Color(0x00CFF4F0),
-            const Color(0xFFCFF4F0).withValues(alpha: 0.7 * a),
+            const Color(0xFFCFF4F0).withValues(alpha: 0.7 * up),
           ])
           ..strokeWidth = 1.6,
       );
@@ -370,7 +448,7 @@ class WaterFace extends Component with HasGameReference<GolgeGame> {
             ..style = PaintingStyle.stroke
             ..strokeWidth = 1.4
             ..color = const Color(0xFFCFF4F0)
-                .withValues(alpha: 0.8 * a * pulse),
+                .withValues(alpha: 0.8 * up * pulse),
         );
       }
     }

@@ -98,14 +98,18 @@ class MythCard {
           'Eski Türk inancında dağın, ormanın, ocağın ve suyun iyesi vardır. '
           'Su İyesi\'ne saygı gösterilir: suya kirli şey atılmaz, sudan '
           'geçerken izin istenir. Anlatılara göre saygısızlık edenin yolunu '
-          'şaşırtır.',
+          'şaşırtır. Kazan Tatarlarında Su Anası, suyun kıyısında altın '
+          'tarağıyla uzun saçlarını tarayan bir kadın olarak anlatılır '
+          '(Tukay\'ın "Su Anası" şiiri).',
       storyEn:
           'In old Turkic belief mountains, forests, hearths and waters each '
           'have their iye. The Water Spirit is shown respect: nothing foul is '
           'thrown into water, and one asks leave before crossing it. The '
-          'stories say it leads the disrespectful astray.',
-      sourceTr: 'Türk halk inançları (iye inancı)',
-      sourceEn: 'Turkic folk belief (the iye spirits)',
+          'stories say it leads the disrespectful astray. Among the Kazan '
+          'Tatars, Su Anası (Water Mother) is a woman who combs her long hair '
+          'with a golden comb by the water (Tukay\'s poem "Su Anası").',
+      sourceTr: 'Türk halk inançları (iye inancı); Tukay, Su Anası',
+      sourceEn: 'Turkic folk belief (the iye spirits); Tukay, Su Anası',
     ),
     MythCard(
       id: 'medusa',
