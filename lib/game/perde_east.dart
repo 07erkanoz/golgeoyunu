@@ -1131,3 +1131,186 @@ void _akAnaScene(Canvas canvas, double time, double u) {
     }, scale: 0.4);
   }
 }
+
+/// Satır [k] okunurken (u: k..k+1) beliren, sonunda sönen görünürlük.
+double _line(double u, double k) =>
+    _span(u, k + 0.05, k + 0.35) * (1 - _span(u, k + 0.85, k + 1.0));
+
+/// Perdelere serpiştirilen efsane varlıkları (docs/MITOLOJI.md §4): her biri
+/// bölümün perde metnindeki kendi satırında görünür.
+void _mythOverlay(Canvas canvas, PerdeScene scene, double time, double u) {
+  _P._c = canvas;
+  const g = PerdePainter._ground;
+  switch (scene) {
+    case PerdeScene.kaf:
+      // Gökyolu: bulutların ardında kanatlı at.
+      final a = _line(u, 5);
+      if (a <= 0) return;
+      final k = _span(u, 5, 6);
+      final x = 760 - k * 760;
+      final y = 120 + math.sin(k * math.pi * 3) * 10;
+      _shape(canvas, MythShapes.horse, Offset(x, y), 70, _ink(a), flip: true);
+      canvas.save();
+      canvas.translate(x - 4, y - 50);
+      canvas.rotate(math.sin(time * 2.4) * 0.25);
+      canvas.scale(-0.7, 0.7);
+      canvas.drawPath(MythFigures.wingSilhouette, _ink(a));
+      canvas.restore();
+    case PerdeScene.mirror:
+      final a = _line(u, 5);
+      if (a <= 0) return;
+      _shape(
+        canvas,
+        MythFigures.ayazAtaSilhouette,
+        Offset(610, g),
+        125,
+        _ink(a),
+        flip: true,
+      );
+    case PerdeScene.flood:
+      final a = _line(u, 5);
+      if (a <= 0) return;
+      final rise = _span(u, 5.05, 5.6);
+      canvas.save();
+      canvas.clipRect(const Rect.fromLTWH(0, 0, 780, g - 10));
+      _shape(
+        canvas,
+        MythFigures.akAnaSilhouette,
+        Offset(390, g + 120 - 150 * rise),
+        150,
+        _ink(a),
+      );
+      canvas.drawCircle(
+        Offset(390, g + 120 - 150 * rise - 138),
+        22,
+        _hole(0.5 * a * rise),
+      );
+      canvas.restore();
+    case PerdeScene.dawn:
+      final a = _line(u, 5);
+      if (a <= 0) return;
+      // Tepegöz: dev, tek gözü perdede delik.
+      _shape(canvas, MythShapes.kam, Offset(570, g), 230, _ink(a), flip: true);
+      canvas.drawCircle(const Offset(569, g - 215), 7, _hole(0.9 * a));
+      // Basat: elinde kızgın şiş.
+      final step = _span(u, 5.1, 5.7);
+      final bx = 200 + step * 120;
+      _shape(canvas, MythShapes.kam, Offset(bx, g), 95, _ink(a));
+      canvas.drawLine(
+        Offset(bx + 22, g - 48),
+        Offset(bx + 58, g - 72),
+        _ink(a)..strokeWidth = 3,
+      );
+      canvas.drawCircle(Offset(bx + 58, g - 72), 3, _hole(0.9 * a));
+    case PerdeScene.caravan:
+      final a = _line(u, 5);
+      if (a <= 0) return;
+      // Kervan yamacının üstünde (sahnedeki yamaç: 230'dan 360'a iner).
+      final x = 60 + _span(u, 5, 6) * 300;
+      _shape(
+        canvas,
+        MythShapes.wolfWalk,
+        Offset(x, 230 + x * (130 / 780)),
+        62,
+        _ink(a),
+      );
+    case PerdeScene.avalanche:
+      final a = _line(u, 4);
+      if (a <= 0) return;
+      final x = 760 - _span(u, 4, 5) * 700;
+      _shape(
+        canvas,
+        MythShapes.wolfWalk,
+        Offset(x, 230 + x * (130 / 780) + math.sin(time * 14) * 2),
+        58,
+        _ink(a),
+        flip: true,
+      );
+    case PerdeScene.fairies:
+      final a = _line(u, 4);
+      if (a <= 0) return;
+      _shape(
+        canvas,
+        MythFigures.albastiSilhouette,
+        Offset(640, g),
+        120,
+        _ink(a),
+        flip: true,
+      );
+      for (final dx in [-3.0, 3.0]) {
+        canvas.drawCircle(Offset(640 + dx - 1, g - 111), 1.8, _hole(a));
+      }
+    case PerdeScene.underground:
+      final a = _line(u, 4);
+      if (a <= 0) return;
+      // Dipte iki göz açılır kapanır.
+      final blink = (math.sin(time * 1.3) > -0.85) ? 1.0 : 0.0;
+      for (final dx in [-14.0, 14.0]) {
+        canvas.drawOval(
+          Rect.fromCenter(center: Offset(390 + dx, 384), width: 12, height: 4),
+          _hole(0.8 * a * blink),
+        );
+      }
+    case PerdeScene.sema:
+      final a = _line(u, 5);
+      if (a <= 0) return;
+      canvas.drawPath(
+        Path()
+          ..moveTo(20, g)
+          ..quadraticBezierTo(120, g - 60, 230, g)
+          ..close(),
+        _ink(a),
+      );
+      _shape(canvas, MythShapes.wolfStand, Offset(125, g - 44), 48, _ink(a));
+    case PerdeScene.akAna:
+      // Er Töştük, Çalkuyruk'un sırtında yerin altına iner.
+      final r = _line(u, 5);
+      if (r > 0) {
+        final k = _span(u, 5, 6);
+        final at = Offset(720 - k * 520, 160 + k * 160);
+        _shape(canvas, MythShapes.horse, at, 90, _ink(r), flip: true);
+        canvas.save();
+        canvas.translate(at.dx - 4, at.dy - 90 * 0.31);
+        canvas.scale(-0.9 * 0.55, 0.9 * 0.55);
+        canvas.clipRect(const Rect.fromLTRB(-80, -130, 80, -55));
+        canvas.drawPath(MythShapes.kam, _ink(r));
+        canvas.restore();
+      }
+      // Körmösler kafesteki kut ışığına uzanır.
+      final c = _line(u, 6);
+      if (c > 0) {
+        const cage = Offset(390, 300);
+        canvas.drawCircle(cage, 9 + math.sin(time * 3) * 1.5, _hole(c));
+        final bars = _ink(c)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2.5;
+        for (var i = -2; i <= 2; i++) {
+          canvas.drawLine(
+            Offset(cage.dx + i * 9, cage.dy + 22),
+            Offset(cage.dx + i * 7, cage.dy - 24),
+            bars,
+          );
+        }
+        for (var i = 0; i < 3; i++) {
+          final x = 170.0 + i * 220 + math.sin(time * 0.8 + i) * 12;
+          final pull = _span(u, 6.1, 6.9) * (cage.dx - x) * 0.35;
+          canvas.save();
+          canvas.clipRect(Rect.fromLTWH(0, 0, 780, 300));
+          _shape(
+            canvas,
+            MythShapes.kam,
+            Offset(x + pull, 330),
+            105,
+            _ink(c * 0.9),
+            flip: x > cage.dx,
+          );
+          canvas.restore();
+          for (final dx in [-3.0, 3.0]) {
+            canvas.drawCircle(Offset(x + pull + dx, 330 - 96), 1.8, _hole(c));
+          }
+        }
+      }
+    default:
+      return;
+  }
+}

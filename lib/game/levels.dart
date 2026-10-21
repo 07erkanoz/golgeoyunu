@@ -183,6 +183,7 @@ const prologue = [
   'Kandilciler Loncası küllerin arasında dolaştı; her kandili, her mumu, her gözdeki ışığı topladı.',
   'Son olarak Hayali Usta\'nın perdesine geldiler. Kandili söndürdüler, ustayı götürdüler.',
   'Perde karardı. Ama bir gölge, ışık sönmeden önce perdeden düştü.',
+  'Düştüğü yerde, külün içinden bir kayın fidanı yükselmişti; dalında tek bir ak çaput. Umay, düşen her çocuğun yanındadır.',
   'GÖLGE OYUNU',
   'Sâye gözlerini suyun altındaki bir şehirde açtı: Yerebatan Sarnıcı.',
   'Bin yılı aşkın zaman önce Bizans imparatoru Justinianus, şehir susuz kalmasın diye yerin altına bir saray kazdırmıştı. Üç yüz otuz altı sütun karanlığa bir orman gibi dikildi.',
@@ -196,6 +197,7 @@ const prologueEn = [
   'The Lamplighters\' Guild walked among the ashes, gathering every lamp, every candle, every light in every eye.',
   'Last, they came to Master Hayali\'s screen. They snuffed his lamp and took him away.',
   'The screen went dark. But one shadow fell from it before the light died.',
+  'Where it fell, a birch sapling had risen from the ashes, a single white strip of cloth tied to its branch. Umay stands beside every child who falls.',
   'SHADOW PLAY',
   'Saye opened his eyes in a city beneath the water: the Basilica Cistern.',
   'More than a thousand years ago the Byzantine emperor Justinian had a palace dug beneath the earth so the city would never go thirsty. Three hundred and thirty-six columns rose into the dark like a forest.',
@@ -264,6 +266,7 @@ const interludes = <List<String>>[
     'Ateş bitince denize düştü, yüzerek padişahın önüne çıktı ve güldü: "İsa Peygamber sana selam söyledi."',
     'Eskiler bu yolun yalnızca kuşlara ve ölülere görünen bir köprü olduğunu söyler. Ucunda dünyanın kıyısı vardır: Kaf Dağı.',
     'Hüdhüd fısıldadı: "Kandilciler topladıkları ışığı göğe astı; güneşi onlar kırdı. Ustanın kandilini de bu yoldan götürdüler."',
+    'Bulutların ardında kanatlı bir at dörtnala geçti: Tulpar, yiğidin yoldaşı. Gökyolu onun da yoludur.',
   ],
   [
     'Bulutların bittiği yerde dünyanın kıyısı göründü: zümrüt kayalardan bir dağ, Kaf.',
@@ -278,6 +281,7 @@ const interludes = <List<String>>[
     'Ustanın kandili Kaf\'ta değildi. Kandilciler onu doğuya, tufandan beri sönmeyen ışığın yattığı dağa götürmüştü: Ağrı\'ya.',
     'Ermeniler bu dağa Masis der, dünyanın anası; Kürt çobanlar Çiyayê Agirî, ateşli dağ. Tufandan sonra gemi onun omzuna oturmuş, insanlık orada yeniden doğmuş.',
     'Zirvesine çıkılmaz. Bir keşiş, Aziz Hakob, gemiyi görmek için yıllarca tırmandı; her gece uyuyunca dağın eteğinde uyandı. Sonunda bir melek ona gemiden bir tahta parçası getirdi: "Zirve sana yasak, ama arayışın karşılıksız kalmayacak."',
+    'Tipinin içinde ak sakallı bir ihtiyar yürüyordu: Ayaz Ata. Kışın ağırlığı onunla gelir.',
     'İKİNCİ PERDE · DAĞ',
   ],
   [
@@ -286,6 +290,7 @@ const interludes = <List<String>>[
     'Nuh önce bir kuzgun salmış; kuzgun dönmemiş. Sonra bir güvercin salmış; güvercin gagasında bir zeytin dalıyla dönmüş: dünya yeniden yeşeriyordu.',
     'Gemide her canlıdan bir çift varmış, bir de hiç sönmeyen bir ışık. Kandilciler o ışığı almak için gövdeye girdi; hayvanların gölgelerini eşlerinden ayırıp ambarlara kilitlediler.',
     'Gölgeler birbirini arıyor, Sâye. Onları kavuştur.',
+    'Tufan suyunun içinden ak bir ışık yükseldi: Ak Ana. İlk su da böyle kıpırdamıştı.',
   ],
   [
     'Gemideki ışık çoktan götürülmüştü. Sâye güneye, Fırat\'ın ötesine uçtu: Nemrut Dağı, eski Kommagene krallığının zirvesi.',
@@ -300,6 +305,7 @@ const interludes = <List<String>>[
     'Göğe bir ok attı; ok kanlı döndü. "Tanrı\'yı vurdum," dedi. İbrahim\'i ateşe attırdı; ateş bir gül bahçesine döndü.',
     'Sonunda ona bir sivrisinek gönderildi. Burnundan girdi, beynine ulaştı. Göğe meydan okuyan kral, yıllarca başına tokmak vurdurarak öldü.',
     'Doğu terasında taştan bir dev uyanıyor. Şafaktan önce yetiş, Sâye: küçük bir ışık, büyük bir kibri yıkabilir.',
+    'Ozan der ki: Tek gözlü dev Tepegöz de taştan bir dev kadar korkunçtu; onu aslanlar arasında büyüyen Basat yendi.',
   ],
   [
     'Sâye ışığa dokunduğunda bir an ustasını gördü.',
@@ -307,6 +313,7 @@ const interludes = <List<String>>[
     'Kandilciler kırık güneşin ışıklarını topladıkça ustanın kandilinden çekiyorlardı. Kervan kuzeye, Erzurum\'a gidiyordu.',
     'Erzurum: Romalıların Theodosiopolis\'i, Selçukluların Erzen-i Rum\'u, doğunun kalesi. Kışı öyle sert gelir ki yolcular ona "kışın kapısı" der.',
     'Şehrin güneyinde dik yokuşlu bir dağ yükselir. Kervancılar ona Palandöken der: yokuşlarında hayvanların sırtındaki palanlar kayar, yükler uçuruma dökülürmüş.',
+    'Kervanın önünde, karda gök yeleli bir kurt yürüyordu: Gökbörü. Oğuz\'un ordusuna da böyle yol göstermişti.',
     'ÜÇÜNCÜ PERDE · KAR',
   ],
   [
@@ -321,12 +328,14 @@ const interludes = <List<String>>[
     'Uyuyan ejder ışığı sevmez. Erzurum\'un yaşlıları der ki Ejder uyurken dağ susar; uyandığında kar akar.',
     'Dağ derin bir nefes aldı.',
     'Ve kar aktı.',
+    'Çığın önünde gök yeleli kurt koşuyordu; güvenli yolu o biliyordu.',
   ],
   [
     'Çığ dindiğinde kervan batıya dönmüştü. Sâye karların ardından Kapadokya\'ya indi; Muşkara köyünün üstünde ay doğuyordu.',
     'Eskiler bu ülkeye Katpatuka derdi: güzel atlar ülkesi. Erciyes\'in ve Hasan Dağı\'nın küllerini rüzgâr bin yıl oydu; kayalar başlıklı devler gibi göğe yükseldi.',
     'Muşkara\'nın çobanları geceleri tepelerde ışıklar görürdü. Periler, derlerdi: bacaların tepesinde yaşayan, devlerle savaşmış periler.',
     'Peri halkı gölge bırakmaz, Sâye. Ama gölgeyi tanır.',
+    'Ama bacaların gölgesinde kızıl bir gölge de dolaşır: Albastı. Işığı çalar; demirden korkar.',
     'DÖRDÜNCÜ PERDE · PERİLER',
   ],
   [
@@ -334,6 +343,7 @@ const interludes = <List<String>>[
     'Yerin altında sekiz kat inen bir şehir: ahırları, şaraphaneleri, şapelleri, kuyuları, nefes alan bacalarıyla. Derler ki yirmi bin can, düşman geçene dek orada saklanırmış.',
     'Peri Padişahı ateşli devleri yerin altına sürmüştü. Derinkuyu\'yu kazanlar, devlerin uykusunun üstüne bir şehir kurmuş.',
     'Yuvarlak taş kapılar yalnızca içeriden açılır. İçeride olan yaşar. Aşağı in, Sâye; ama uyuyanı uyandırma.',
+    'Yerin en dibinden boğuk bir ses gelir. Derler ki Erlik\'in katı oradan da aşağıdadır.',
   ],
   [
     'Yerin altından çıktığında gökte ay vardı; önünde uçsuz bucaksız, karlı bir ova.',
@@ -341,6 +351,7 @@ const interludes = <List<String>>[
     'O gece on yedi Aralık\'tı. Konya\'da bu geceye Şeb-i Arûs derler: düğün gecesi.',
     'Neredeyse dört yüz yıl önce bu gece Mevlânâ ölmüştü. "Ağlamayın," demişti, "bu benim düğünümdür."',
     'Kandilciler sanıyordu ki düğün gecesinde ışık ölmez. Ustanın kandilini sonsuza dek yakmak için bu geceyi bekliyorlardı.',
+    'Ovada, bir tepenin üstünde gök yeleli bir kurt şehre bakıyordu.',
     'SON PERDE · DÜĞÜN',
   ],
   [
@@ -349,6 +360,8 @@ const interludes = <List<String>>[
     'Sudan ak bir ana yükseldi: Ak Ana. "Yarat," dedi, ve yeniden suya döndü.',
     'Kayra Han yarattı. Ama yarattıklarından biri, Erlik, kendini ondan büyük sandı; yerin altına sürüldü.',
     'Kandilcilerin çaldığı ışıklar yerin altına, Erlik\'in katına akıyordu. Usta da o yoldan geçirilmişti.',
+    'Ozan der ki: Bir zaman Er Töştük adında bir yiğit de yerin altına düşmüştü. Konuşan atı Çalkuyruk ona yol gösterdi.',
+    'Yerin altında Erlik\'in gölgeleri dolaşır: Körmösler. Işığa gelirler; çalınan canları, kutları kafeslerde tutarlar.',
     'BEŞİNCİ PERDE · ÖTÜKEN',
   ],
 ];
@@ -369,6 +382,7 @@ const interludesEn = <List<String>>[
     'When the fire ran out he fell into the sea, swam to the sultan, and laughed: "The Prophet Jesus sends you his greetings."',
     'The ancients say this road is a bridge seen only by birds and by the dead. At its end lies the edge of the world: Mount Qaf.',
     'The Hoopoe whispered: "The Lamplighters hung their stolen light in the sky; it was they who broke the sun. They carried your master\'s lamp along this road too."',
+    'Beyond the clouds a winged horse galloped past: Tulpar, the hero\'s companion. The Sky Road is his road too.',
   ],
   [
     'Where the clouds ended, the edge of the world appeared: a mountain of emerald rock, Qaf.',
@@ -383,6 +397,7 @@ const interludesEn = <List<String>>[
     'The master\'s lamp was not on Qaf. The Lamplighters had carried it east, to the mountain where a light has slept since the Flood: Ararat.',
     'The Armenians call this mountain Masis, mother of the world; the Kurdish shepherds call it Ciyaye Agiri, the fiery mountain. After the Flood the ark came to rest on its shoulder, and humankind was born again there.',
     'No one climbs to its summit. A monk, Saint Hakob, climbed for years to see the ark; every night he fell asleep and woke at the foot of the mountain. At last an angel brought him a plank from the ark: "The summit is forbidden to you, but your seeking will not go unanswered."',
+    'An old man with a white beard walked through the blizzard: Ayaz Ata. The weight of winter comes with him.',
     'THE SECOND VEIL · THE MOUNTAIN',
   ],
   [
@@ -391,6 +406,7 @@ const interludesEn = <List<String>>[
     'Noah first sent out a raven; the raven did not return. Then he sent a dove; the dove came back with an olive branch in its beak: the world was turning green again.',
     'Aboard were two of every creature, and a light that never went out. The Lamplighters went into the hull to take that light; they tore the animals\' shadows from their mates and locked them in the holds.',
     'The shadows are searching for each other, Saye. Bring them together.',
+    'A white light rose from the flood water: Ak Ana. The first water had stirred just like this.',
   ],
   [
     'The light from the ark had long since been taken. Saye flew south, beyond the Euphrates: Mount Nemrut, the summit of the old kingdom of Commagene.',
@@ -405,6 +421,7 @@ const interludesEn = <List<String>>[
     'He shot an arrow at the sky; it came back bloody. "I have struck God," he said. He had Abraham thrown into the fire; the fire turned into a rose garden.',
     'At last a gnat was sent to him. It entered his nose and reached his brain. The king who challenged heaven died after years of having his head struck with a mallet.',
     'On the eastern terrace a giant of stone is waking. Reach it before dawn, Saye: a small light can bring down a great pride.',
+    'The bard says: the one-eyed giant Tepegöz was as fearsome as a giant of stone; Basat, who grew up among lions, defeated him.',
   ],
   [
     'When Saye touched the light, for a moment he saw his master.',
@@ -412,6 +429,7 @@ const interludesEn = <List<String>>[
     'With every light of the broken sun they gathered, the Lamplighters drew on the master\'s lamp. The caravan was heading north, to Erzurum.',
     'Erzurum: the Theodosiopolis of the Romans, the Erzen-i Rum of the Seljuks, the fortress of the east. Its winters are so harsh that travelers call it "the gate of winter".',
     'South of the city rises a mountain of steep slopes. Caravan drivers call it Palandoken: on its slopes, they say, pack saddles slid from the animals\' backs and loads spilled into the abyss.',
+    'Ahead of the caravan a sky-maned wolf walked through the snow: Gökbörü. So had he led the army of Oghuz.',
     'THE THIRD VEIL · SNOW',
   ],
   [
@@ -426,12 +444,14 @@ const interludesEn = <List<String>>[
     'A sleeping dragon does not love light. The elders of Erzurum say that while the Dragon sleeps, the mountain is silent; when it wakes, the snow flows.',
     'The mountain drew a deep breath.',
     'And the snow flowed.',
+    'Before the avalanche ran the sky-maned wolf; he knew the safe way.',
   ],
   [
     'When the avalanche stilled, the caravan had turned west. Saye followed the snows down into Cappadocia; above the village of Muskara the moon was rising.',
     'The ancients called this land Katpatuka: the land of beautiful horses. For a thousand years the wind carved the ashes of Erciyes and Hasan Dagi; the rocks rose to the sky like hooded giants.',
     'The shepherds of Muskara saw lights on the hilltops at night. Fairies, they said: fairies who live atop the chimneys, who once made war on the giants.',
     'The fairy folk leave no shadow, Saye. But they know a shadow when they see one.',
+    'But in the shadow of the chimneys a red shade roams as well: Albastı. She steals light, and fears iron.',
     'THE FOURTH VEIL · THE FAIRIES',
   ],
   [
@@ -439,6 +459,7 @@ const interludesEn = <List<String>>[
     'A city going eight floors down beneath the earth, with its stables, wine cellars, chapels, wells and breathing shafts. They say twenty thousand souls once hid there until the enemy passed.',
     'The Fairy King had driven the fiery giants underground. Those who dug Derinkuyu built a city on top of the giants\' sleep.',
     'The round stone doors open only from within. Whoever is inside lives. Go down, Saye; but do not wake the sleeper.',
+    'A muffled voice comes from the very bottom of the earth. They say Erlik\'s realm lies deeper still.',
   ],
   [
     'When he climbed up out of the underworld, the moon was in the sky, and before him lay an endless snowy plain.',
@@ -446,6 +467,7 @@ const interludesEn = <List<String>>[
     'That night was the seventeenth of December. In Konya they call this night Sheb-i Arus: the wedding night.',
     'Almost four hundred years before, on this night, Mevlana had died. "Do not weep," he had said, "this is my wedding."',
     'The Lamplighters believed that on the wedding night, light cannot die. They had waited for this night to make the master\'s lamp burn forever.',
+    'On the plain, upon a hill, a sky-maned wolf was looking at the city.',
     'THE LAST VEIL · THE WEDDING',
   ],
   [
@@ -454,6 +476,8 @@ const interludesEn = <List<String>>[
     'A white mother rose from the water: Ak Ana. "Create," she said, and went back into the water.',
     'Kayra Khan created. But one of his creatures, Erlik, thought himself greater; he was cast beneath the earth.',
     'The light the Lamplighters stole was flowing beneath the earth, to Erlik\'s realm. The master had been taken that way too.',
+    'The bard says: once a hero named Er Töştük had fallen beneath the earth too. His talking horse Çalkuyruk showed him the way.',
+    'Erlik\'s shades roam beneath the earth: the Körmös. They come to the light, and keep stolen lives, the kuts, in cages.',
     'THE FIFTH VEIL · ÖTÜKEN',
   ],
 ];

@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/painting.dart';
 
+import 'myth_figures.dart';
 import 'myth_shapes.dart';
 import 'palette.dart';
 
@@ -189,6 +190,8 @@ class PerdePainter {
       case PerdeScene.epilogue:
         _endingScene(canvas, time, progress);
     }
+    // Bölümün efsane kahramanları ve varlıkları, kendi satırlarında.
+    _mythOverlay(canvas, scene, time, progress);
     canvas.restore();
 
     // Kandil kısıldıkça perde kararır; kenarlar hep biraz gölgede.
@@ -784,6 +787,11 @@ class PerdePainter {
     final ma = _shown(u, 1.8, 3.0);
     _puppet(canvas, Offset(390 + march, _ground), time, 2.9, ma, _master);
 
+    // Gölgenin düşeceği yerde külden bir kayın fidanı yükselir: Umay ağacı,
+    // dalında tek bir ak çaput.
+    final grow = _span(u, 3.5, 4.3);
+    if (grow > 0) _umaySapling(canvas, time, const Offset(470, _ground), grow);
+
     // Perde karardı: bir gölge düşer.
     final fall = _span(u, 3.15, 3.55);
     if (u > 3.1) {
@@ -798,6 +806,43 @@ class PerdePainter {
         rod: fall >= 1,
       );
     }
+  }
+
+  /// Umay ağacı fidanı: perdede kara bir kayın silueti (gerçek ağaç
+  /// çiziminden), dalında rüzgârda dalgalanan tek bir ak çaput (perdede
+  /// ışık sızan bir yarık gibi).
+  static void _umaySapling(
+    Canvas canvas,
+    double time,
+    Offset ground,
+    double grow,
+  ) {
+    const s = 1.7;
+    canvas.save();
+    canvas.clipRect(Rect.fromLTWH(ground.dx - 120, 0, 240, ground.dy));
+    canvas.translate(ground.dx, ground.dy + (30 + (1 - grow) * 70) * s);
+    canvas.scale(s);
+    canvas.drawPath(MythShapes.umayTree, _inkPaint(grow));
+    canvas.restore();
+    if (grow < 0.6) return;
+    // Çaput: alt dallardan sarkan ince bir şerit.
+    final a = (grow - 0.6) / 0.4;
+    final knot = Offset(ground.dx - 16, ground.dy - 44);
+    final cloth = Path()..moveTo(knot.dx, knot.dy);
+    for (var i = 1; i <= 6; i++) {
+      final k = i / 6;
+      cloth.lineTo(
+        knot.dx - k * 6 + math.sin(time * 2.4 - k * 3) * 3 * k,
+        knot.dy + k * 22,
+      );
+    }
+    canvas.drawPath(
+      cloth,
+      _holePaint(a)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 3
+        ..strokeCap = StrokeCap.round,
+    );
   }
 
   static void _galata(Canvas canvas, double time, double u) {

@@ -12,6 +12,7 @@ void main() {
     const shots = {
       'prolog_kandilciler': (PerdeScene.prologue, 2.4),
       'prolog_golge_duser': (PerdeScene.prologue, 3.45),
+      'prolog_umay': (PerdeScene.prologue, 4.5),
       'galata_hezarfen': (PerdeScene.galata, 3.5),
       'galata_saye': (PerdeScene.galata, 5.5),
       'kaf_kuslar': (PerdeScene.kaf, 1.5),
@@ -37,6 +38,17 @@ void main() {
       'akana_yukselir': (PerdeScene.akAna, 2.6),
       'akana_dunya': (PerdeScene.akAna, 3.7),
       'akana_isiklar': (PerdeScene.akAna, 4.7),
+      'efs_tulpar': (PerdeScene.kaf, 5.5),
+      'efs_ayaz': (PerdeScene.mirror, 5.5),
+      'efs_akana': (PerdeScene.flood, 5.6),
+      'efs_basat': (PerdeScene.dawn, 5.6),
+      'efs_gokboru': (PerdeScene.caravan, 5.5),
+      'efs_cig': (PerdeScene.avalanche, 4.5),
+      'efs_albasti': (PerdeScene.fairies, 4.5),
+      'efs_erlik': (PerdeScene.underground, 4.5),
+      'efs_konya': (PerdeScene.sema, 5.5),
+      'efs_ertostuk': (PerdeScene.akAna, 5.5),
+      'efs_kormos': (PerdeScene.akAna, 6.5),
     };
     for (final e in shots.entries) {
       final rec = ui.PictureRecorder();

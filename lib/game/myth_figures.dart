@@ -479,6 +479,57 @@ class MythFigures {
 
   static final Map<String, Path> _unions = {};
 
+  // Perde için tam siluetler (kalpak, sakal, cübbe, entari, saç dahil).
+  static Path get akAnaSilhouette =>
+      _union('akana', MythShapes.akAna, () => [_akDress]);
+  static Path get ayazAtaSilhouette =>
+      _union('ayaz', MythShapes.ayazAta, () => [_kalpak, _kalpakBrim, _beard]);
+  static Path get kamSilhouette => _union(
+    'kam',
+    MythShapes.kam,
+    () => [
+      // Cübbe: omuzlardan dize genişler.
+      Path()
+        ..moveTo(-14, -84)
+        ..lineTo(13, -84)
+        ..lineTo(20, -31)
+        ..lineTo(-21, -31)
+        ..close(),
+      // Başlık: alın bağı ve yukarı uzanan tüyler.
+      Path()..addRRect(
+        RRect.fromLTRBR(-6.5, -102, 5, -97.5, const Radius.circular(1.5)),
+      ),
+      for (var i = 0; i < 5; i++)
+        Path()
+          ..moveTo(-5 + i * 2.4, -100)
+          ..quadraticBezierTo(
+            -9 + i * 4.2,
+            -110,
+            -12 + i * 6 + (i - 2) * 1.0,
+            -116 + (i - 2).abs() * 2.5,
+          )
+          ..quadraticBezierTo(-6 + i * 3.6, -108, -3 + i * 2.4, -100)
+          ..close(),
+    ],
+  );
+  static Path get albastiSilhouette => _union(
+    'albasti',
+    MythShapes.albasti,
+    () => [
+      // Başın ardından bele dökülen saç kütlesi.
+      Path()
+        ..moveTo(-1, -102)
+        ..cubicTo(-14, -104, -20, -93, -19, -80)
+        ..cubicTo(-20, -68, -24, -60, -27, -51)
+        ..cubicTo(-21, -57, -16, -66, -13, -74)
+        ..cubicTo(-9, -84, -5, -91, 0, -95)
+        ..close(),
+    ],
+  );
+
+  /// Tulpar'ın kanadının dış silueti (perde için).
+  static Path get wingSilhouette => _wingRows()[0];
+
   /// Siluete eklenen sabit parçalar (kalpak, sakal, cübbe...) bir kez
   /// birleştirilir.
   static Path _union(String key, Path base, List<Path> Function() parts) =>
@@ -1082,7 +1133,7 @@ class MythFigures {
         ..close(),
       Paint()..color = const Color(0xFFE2C694),
     );
-    final shape = _union('akana', MythShapes.akAna, () => [_akDress]);
+    final shape = akAnaSilhouette;
     c.save();
     c.clipRect(const Rect.fromLTRB(-80, -140, 80, water));
     _skyBody(
@@ -1240,11 +1291,7 @@ class MythFigures {
     ..close();
 
   static void ayazAta(Canvas c, double t) {
-    final shape = _union(
-      'ayaz',
-      MythShapes.ayazAta,
-      () => [_kalpak, _kalpakBrim, _beard],
-    );
+    final shape = ayazAtaSilhouette;
     _skyBody(
       c,
       shape,
@@ -1327,34 +1374,7 @@ class MythFigures {
   /// Kam: saçaklı cübbesi, tüylü başlığı, elinde resimli davulu ve tokmağıyla
   /// ateş başında. Tokmak vurdukça davulun üzerindeki resimler parlar.
   static void kam(Canvas c, double t) {
-    final shape = _union(
-      'kam',
-      MythShapes.kam,
-      () => [
-        // Cübbe: omuzlardan dize genişler.
-        Path()
-          ..moveTo(-14, -84)
-          ..lineTo(13, -84)
-          ..lineTo(20, -31)
-          ..lineTo(-21, -31)
-          ..close(),
-        // Başlık: alın bağı ve yukarı uzanan tüyler.
-        Path()..addRRect(
-          RRect.fromLTRBR(-6.5, -102, 5, -97.5, const Radius.circular(1.5)),
-        ),
-        for (var i = 0; i < 5; i++)
-          Path()
-            ..moveTo(-5 + i * 2.4, -100)
-            ..quadraticBezierTo(
-              -9 + i * 4.2,
-              -110,
-              -12 + i * 6 + (i - 2) * 1.0,
-              -116 + (i - 2).abs() * 2.5,
-            )
-            ..quadraticBezierTo(-6 + i * 3.6, -108, -3 + i * 2.4, -100)
-            ..close(),
-      ],
-    );
+    final shape = kamSilhouette;
     // Davul vuruşu: yaklaşık saniyede bir.
     final beat = (t * 1.1) % 1;
     final hit = math.pow(1 - beat, 4).toDouble();
@@ -1462,20 +1482,7 @@ class MythFigures {
   /// Albastı (Al Karısı): uzun, dağınık saçlı, kızıl ışıklı karanlık kadın;
   /// gözleri kor gibi yanar. Demirden korkar.
   static void albasti(Canvas c, double t) {
-    final shape = _union(
-      'albasti',
-      MythShapes.albasti,
-      () => [
-        // Başın ardından bele dökülen saç kütlesi.
-        Path()
-          ..moveTo(-1, -102)
-          ..cubicTo(-14, -104, -20, -93, -19, -80)
-          ..cubicTo(-20, -68, -24, -60, -27, -51)
-          ..cubicTo(-21, -57, -16, -66, -13, -74)
-          ..cubicTo(-9, -84, -5, -91, 0, -95)
-          ..close(),
-      ],
-    );
+    final shape = albastiSilhouette;
     const red = Color(0xFFD8302A);
     // Saç telleri: ağır ağır, suyun içindeymiş gibi dalgalanır.
     final strand = Paint()
