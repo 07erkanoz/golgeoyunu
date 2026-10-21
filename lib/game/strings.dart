@@ -147,7 +147,8 @@ class S {
     'musicLicense':
         'Menü müziği: "Turkish Maqam Soundscape", vjgalaxy (Pixabay). '
         'Pixabay İçerik Lisansı ile kullanılmaktadır.\n'
-        'Gerçek kayıtlı efektler ve ortam sesleri: Kenney (kenney.nl); OpenGameArt\'ta rubberduck, JaggedStone, AntumDeluge, SketchMan3, psychhead_, pauliuw, techiew ve congusbongus (CC0). '
+        'Gerçek kayıtlı efektler ve ortam sesleri: Kenney (kenney.nl); OpenGameArt\'ta rubberduck, JaggedStone, AntumDeluge, SketchMan3, psychhead_, pauliuw, techiew, congusbongus ve zeroisnotnull (karga) (CC0). '
+        'Efsane varlıklarının siluetleri PhyloPic\'teki kamu malı (CC0) çizimlerden uyarlanmıştır: Margot Michaud, François-Louis Pelissier, Tracy A. Heath, Andy Wilson, Mathieu Pélissié, Cagri Cevrim, Mali\'o Kodis. '
         'Diğer sesler bu oyun için sentezlenmiştir.',
   };
 
@@ -285,7 +286,8 @@ class S {
     'musicLicense':
         'Menu music: "Turkish Maqam Soundscape" by vjgalaxy (Pixabay), '
         'used under the Pixabay Content License.\n'
-        'Recorded effects and ambiences: Kenney (kenney.nl); rubberduck, JaggedStone, AntumDeluge, SketchMan3, psychhead_, pauliuw, techiew and congusbongus on OpenGameArt (CC0). '
+        'Recorded effects and ambiences: Kenney (kenney.nl); rubberduck, JaggedStone, AntumDeluge, SketchMan3, psychhead_, pauliuw, techiew, congusbongus and zeroisnotnull (crow) on OpenGameArt (CC0). '
+        'The silhouettes of the legendary beings are adapted from public-domain (CC0) drawings on PhyloPic: Margot Michaud, François-Louis Pelissier, Tracy A. Heath, Andy Wilson, Mathieu Pélissié, Cagri Cevrim, Mali\'o Kodis. '
         'Other sounds were synthesized for this game.',
   };
 }

@@ -78,7 +78,7 @@ class Wolf extends PositionComponent with HasGameReference<GolgeGame> {
       final d = p.center - center;
       if (!hunting && d.length < smell) {
         hunting = true;
-        GameAudio.instance.play('crow', volume: 0.6, minGapMs: 3000);
+        GameAudio.instance.play('growl', volume: 0.5, minGapMs: 3000);
       }
       if (hunting) {
         _pounceCd = math.max(0, _pounceCd - dt);
