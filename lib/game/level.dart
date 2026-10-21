@@ -1,5 +1,5 @@
 import 'dart:math' as math;
-import 'dart:ui' show Offset, Rect;
+import 'dart:ui' show Offset, Path, Rect;
 
 import 'package:flame/components.dart';
 
@@ -444,6 +444,45 @@ class Level {
 
   bool rectSolid(double left, double top, double right, double bottom) =>
       rectHits(left, top, right, bottom, (ch) => ch == '#');
+
+  /// Işığın kayada kesildiği görünür bölge: [c] merkezinden [from]..[to]
+  /// açıları arasında ışınlar taranır, her biri ilk kaya hücresinde durur.
+  /// Hiçbir ışın kayaya değmediyse null (düz şekil yeter).
+  Path? visibility(
+    Offset c,
+    double radius, {
+    double from = 0,
+    double to = 2 * math.pi,
+    int rays = 72,
+  }) {
+    const step = 5.0;
+    final full = (to - from) >= 2 * math.pi - 1e-6;
+    final shape = Path();
+    if (!full) shape.moveTo(c.dx, c.dy);
+    var blocked = false;
+    final n = full ? rays : rays + 1;
+    for (var i = 0; i < n; i++) {
+      final a = from + (to - from) * i / rays;
+      final dx = math.cos(a);
+      final dy = math.sin(a);
+      var d = step;
+      while (d < radius) {
+        if (cellAt(c.dx + dx * d, c.dy + dy * d) == '#') break;
+        d += step;
+      }
+      if (d < radius) blocked = true;
+      // Kayanın yüzüne kadar (biraz içeri: kenarı aydınlık görünsün).
+      final r = math.min(radius, d + step * 0.6);
+      final x = c.dx + dx * r;
+      final y = c.dy + dy * r;
+      if (full && i == 0) {
+        shape.moveTo(x, y);
+      } else {
+        shape.lineTo(x, y);
+      }
+    }
+    return blocked ? (shape..close()) : null;
+  }
 
   bool lineOfSight(Vector2 a, Vector2 b) {
     final d = b - a;

@@ -93,6 +93,33 @@ void main() {
       },
     );
 
+    testWithGame<GolgeGame>(
+      'bakışın içinde doğan taşa dönmez (sonsuz ölüm döngüsü yok)',
+      GolgeGame.new,
+      (game) async {
+        GolgeGame.debugLevels = [
+          const LevelDef(
+            title: 'M',
+            subtitle: '',
+            theme: LevelTheme.cistern,
+            map: [
+              '##############################',
+              '#............................#',
+              '#..............U.............#',
+              '#............................#',
+              '#P...........................#',
+              '##############################',
+            ],
+          ),
+        ];
+        game.debugLoadLevel(0);
+        await game.ready();
+        game.cinematic = false;
+        run(game, 1.5);
+        expect(game.player!.isDead, isFalse);
+      },
+    );
+
     testWithGame<GolgeGame>('kıpırdamadan duran kurtulur', GolgeGame.new, (
       game,
     ) async {

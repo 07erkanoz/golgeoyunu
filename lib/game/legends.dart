@@ -12,6 +12,7 @@ import 'mechanics.dart';
 import 'palette.dart';
 import 'persist.dart';
 import 'player.dart';
+import 'rig.dart';
 import 'strings.dart';
 
 // ================================================================ Medusa
@@ -70,6 +71,10 @@ class MedusaHead extends PositionComponent
   void onMount() {
     super.onMount();
     facing = position.x < game.level.pixelWidth / 2 ? 1 : -1;
+    // Sâye bakışın içinde doğduysa gözler kapalı başlar: doğar doğmaz taşa
+    // dönüp aynı anda yeniden doğmanın döngüsü olmasın.
+    final p = game.player;
+    if (p != null && inGaze(p.center)) _t = 0;
     // Başın önü hangi yanda boşsa oraya bakar.
     final c = (position.x / kTile).floor();
     final r = (position.y / kTile).floor();
@@ -212,37 +217,35 @@ class MedusaHead extends PositionComponent
         canvas.drawCircle(Offset(far * k, y), 1.3, dust);
       }
     }
-    // Yılan saçlı taş baş (kabartma).
-    final stone = Paint()..color = const Color(0xFF2A2420);
-    final hair = Paint()
-      ..color = const Color(0xFF2A2420)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 4
-      ..strokeCap = StrokeCap.round;
-    for (var i = 0; i < 9; i++) {
-      final a = -math.pi + i * math.pi / 8;
-      final wig = math.sin(_t * 2 + i) * (sealed ? 0 : 3);
-      canvas.drawPath(
-        Path()
-          ..moveTo(math.cos(a) * 14, math.sin(a) * 14)
-          ..quadraticBezierTo(
-            math.cos(a) * 24 + wig,
-            math.sin(a) * 24,
-            math.cos(a + 0.3) * 30,
-            math.sin(a + 0.3) * 30 + wig,
-          ),
-        hair,
-      );
-    }
-    canvas.drawOval(const Rect.fromLTWH(-16, -18, 32, 38), stone);
+    // Gözler açılmadan önce taş bir an titrer (uyarı).
+    final k = _t % period;
+    final tremble = !sealed && k > closed - 0.55 && k < closed
+        ? math.sin(_t * 58) * 0.7 * ((k - closed + 0.55) / 0.55)
+        : 0.0;
+    canvas.save();
+    canvas.translate(tremble, 0);
+    _snakes(canvas, e);
+    canvas.drawPicture(_face);
+    // Göz çukurlarında ışıyan gözler; kapaklar yukarıdan açılır.
     final eyeColor = sealed
         ? const Color(0xFF14100C)
         : Color.lerp(const Color(0xFF14100C), const Color(0xFFD8F0C8), e)!;
     for (final x in [-6.0, 6.0]) {
       canvas.drawOval(
-        Rect.fromCenter(center: Offset(x, -2), width: 7, height: 1 + 3 * e),
+        Rect.fromCenter(
+          center: Offset(x, -1.6),
+          width: 6.4,
+          height: 0.8 + 3.2 * e,
+        ),
         Paint()..color = eyeColor,
       );
+      if (e > 0.05) {
+        canvas.drawCircle(
+          Offset(x + facing * 0.9, -1.6),
+          0.9 * e,
+          Paint()..color = const Color(0xFF0C120A),
+        );
+      }
     }
     if (e > 0.2) {
       glowDot(
@@ -254,14 +257,203 @@ class MedusaHead extends PositionComponent
       );
     }
     if (sealed) {
-      // Taşlaşmış: çatlaklar.
+      // Kendi yansımasında taşlaştı: renk çekilir, çatlaklar yüzü yarar.
+      canvas.drawOval(
+        const Rect.fromLTWH(-16, -18, 32, 38),
+        Paint()..color = const Color(0xFF8A8078).withValues(alpha: 0.18),
+      );
       final crack = Paint()
-        ..color = const Color(0xFF8A7A6A).withValues(alpha: 0.6)
-        ..strokeWidth = 1.2;
-      canvas.drawLine(const Offset(-10, -14), const Offset(2, 6), crack);
-      canvas.drawLine(const Offset(2, 6), const Offset(-4, 18), crack);
+        ..color = const Color(0xFF9A8A7A).withValues(alpha: 0.7)
+        ..strokeWidth = 1.1
+        ..style = PaintingStyle.stroke;
+      canvas.drawPath(
+        Path()
+          ..moveTo(-10, -15)
+          ..lineTo(-4, -6)
+          ..lineTo(-6, 0)
+          ..lineTo(2, 6)
+          ..lineTo(-1, 12)
+          ..lineTo(-4, 19)
+          ..moveTo(-4, -6)
+          ..lineTo(3, -10)
+          ..moveTo(2, 6)
+          ..lineTo(9, 9),
+        crack,
+      );
+    }
+    canvas.restore();
+  }
+
+  /// Yılanlar: her biri ayrı boyda, kökten uca incelen bir gövde; dalga
+  /// kökten uca gecikerek yayılır, baş ayrı kıpırdar. Mühürlenince donar.
+  void _snakes(Canvas canvas, double e) {
+    final body = Paint()
+      ..color = sealed ? const Color(0xFF3A3430) : const Color(0xFF2A2420);
+    final t = sealed ? 0.0 : _t;
+    for (var i = 0; i < _snakeLen.length; i++) {
+      final base =
+          -math.pi - 0.35 + i * (math.pi + 0.7) / (_snakeLen.length - 1);
+      final len = _snakeLen[i];
+      final curl = (i.isEven ? 1 : -1) * 0.5;
+      final speed = 1.6 + (i * 0.37) % 1.1;
+      // Gözler açılınca yılanlar dikleşir, öne uzanır.
+      final rise = 0.3 + 0.7 * e;
+      const n = 9;
+      final pts = <Offset>[];
+      for (var j = 0; j <= n; j++) {
+        final q = j / n;
+        final wave =
+            math.sin(t * speed + i * 1.7 - q * 3.2) *
+            0.45 *
+            q *
+            (0.6 + rise * 0.6);
+        final a = base + curl * q + wave;
+        final r = 12 + len * q * (0.85 + 0.15 * rise);
+        pts.add(Offset(math.cos(a) * r, math.sin(a) * r * 1.08));
+      }
+      final top = <Offset>[];
+      final bot = <Offset>[];
+      for (var j = 0; j <= n; j++) {
+        final q = j / n;
+        final dir = j < n ? pts[j + 1] - pts[j] : pts[j] - pts[j - 1];
+        final nrm = Offset(-dir.dy, dir.dx) / math.max(dir.distance, 0.001);
+        final half = (2.6 - 1.9 * q) * (0.8 + 0.2 * (len / 25));
+        top.add(pts[j] + nrm * half);
+        bot.add(pts[j] - nrm * half);
+      }
+      canvas.drawPath(
+        Path()..addPolygon([...top, ...bot.reversed], true),
+        body,
+      );
+      // Baş: uçta, gövdeden biraz kalın; kendi küçük salınımıyla.
+      final tip = pts.last;
+      final dir = pts.last - pts[n - 2];
+      final ang =
+          math.atan2(dir.dy, dir.dx) + math.sin(t * 3.1 + i * 2.3) * 0.35;
+      canvas.save();
+      canvas.translate(tip.dx, tip.dy);
+      canvas.rotate(ang);
+      canvas.drawOval(const Rect.fromLTWH(-1.5, -1.9, 5.6, 3.8), body);
+      if (e > 0.2 && !sealed) {
+        canvas.drawCircle(
+          const Offset(2.4, -0.7),
+          0.55,
+          Paint()..color = const Color(0xFFD8F0C8).withValues(alpha: e),
+        );
+      }
+      canvas.restore();
     }
   }
+
+  static const _snakeLen = [
+    14.0,
+    21.0,
+    12.0,
+    18.0,
+    24.0,
+    16.0,
+    22.0,
+    13.0,
+    19.0,
+    15.0,
+  ];
+
+  /// Taş yüz kabartması: bir kez çizilir, her karede yalnızca basılır.
+  static final ui.Picture _face = () {
+    final rec = ui.PictureRecorder();
+    final c = Canvas(rec);
+    const stone = Color(0xFF2A2420);
+    const lit = Color(0xFF4A4036);
+    const deep = Color(0xFF120E0B);
+    // Yüz: geniş alın, şakaklarda daralan, sivri ama yumuşak çene.
+    final face = Path()
+      ..moveTo(0, -18)
+      ..cubicTo(10, -18, 16, -11, 15.5, -3)
+      ..cubicTo(15, 5, 11, 11, 7, 16)
+      ..quadraticBezierTo(3, 20.5, 0, 20.5)
+      ..quadraticBezierTo(-3, 20.5, -7, 16)
+      ..cubicTo(-11, 11, -15, 5, -15.5, -3)
+      ..cubicTo(-16, -11, -10, -18, 0, -18)
+      ..close();
+    c.drawPath(face, Paint()..color = stone);
+    // Üstten vuran soluk ışık: alın ve elmacıklar kabarık görünür.
+    c.drawPath(
+      face,
+      Paint()
+        ..shader = ui.Gradient.radial(const Offset(0, -12), 20, [
+          lit.withValues(alpha: 0.9),
+          lit.withValues(alpha: 0),
+        ]),
+    );
+    final light = Paint()..color = lit;
+    // Kaş kemeri.
+    c.drawPath(
+      Path()
+        ..moveTo(-12, -6)
+        ..quadraticBezierTo(-6, -9.5, -1, -6)
+        ..lineTo(1, -6)
+        ..quadraticBezierTo(6, -9.5, 12, -6)
+        ..lineTo(11, -4.6)
+        ..quadraticBezierTo(6, -7.4, 0, -4.8)
+        ..quadraticBezierTo(-6, -7.4, -11, -4.6)
+        ..close(),
+      light,
+    );
+    // Göz çukurları.
+    for (final x in [-6.0, 6.0]) {
+      c.drawOval(
+        Rect.fromCenter(center: Offset(x, -1.6), width: 8.6, height: 5.4),
+        Paint()..color = deep,
+      );
+    }
+    // Elmacık kemikleri.
+    for (final s in [-1.0, 1.0]) {
+      c.drawPath(
+        Path()
+          ..moveTo(s * 13, 2)
+          ..quadraticBezierTo(s * 9, 5.5, s * 4.5, 4.4)
+          ..quadraticBezierTo(s * 9, 3.6, s * 13, 2)
+          ..close(),
+        light,
+      );
+    }
+    // Burun: üstü aydınlık, altı gölge.
+    c.drawPath(
+      Path()
+        ..moveTo(-0.9, -4)
+        ..lineTo(0.9, -4)
+        ..lineTo(2.6, 7)
+        ..lineTo(-2.6, 7)
+        ..close(),
+      light,
+    );
+    c.drawOval(
+      Rect.fromCenter(center: const Offset(0, 8.2), width: 6, height: 2),
+      Paint()..color = deep,
+    );
+    // Ağız: ince, sert bir çizgi; altında dudağın gölgesi.
+    c.drawPath(
+      Path()
+        ..moveTo(-4.6, 12)
+        ..quadraticBezierTo(0, 10.6, 4.6, 12)
+        ..quadraticBezierTo(0, 12.8, -4.6, 12)
+        ..close(),
+      Paint()..color = deep,
+    );
+    c.drawLine(
+      const Offset(-2.4, 13.8),
+      const Offset(2.4, 13.8),
+      Paint()
+        ..color = lit
+        ..strokeWidth = 0.8,
+    );
+    // Çene ucunda ışık.
+    c.drawOval(
+      Rect.fromCenter(center: const Offset(0, 18), width: 6, height: 2.4),
+      light,
+    );
+    return rec.endRecording();
+  }();
 }
 
 /// Medusa'nın bakışıyla taşa dönmüş Kandilci: üstüne çıkılabilen heykel.
@@ -284,37 +476,95 @@ class StoneGuard extends Deck with Persistent {
   @override
   void step(double dt) {}
 
+  /// Kandilci'nin taşa döndüğü andaki duruşu: başlık, yırtık palto, asa ve
+  /// sönmüş fener; hepsi aynı gri taş. Üstü basılacak yer olarak ışık alır.
   @override
   void render(Canvas canvas) {
     final stone = Paint()..color = const Color(0xFF3A3430);
+    final lit = Paint()
+      ..color = const Color(0xFF8A8078).withValues(alpha: 0.55)
+      ..strokeWidth = 1.2
+      ..strokeCap = StrokeCap.round;
     canvas.save();
     if (facing < 0) {
       canvas.translate(size.x, 0);
       canvas.scale(-1, 1);
     }
+    // Bacaklar (adım ortasında donmuş).
+    final leg = Paint()
+      ..color = stone.color
+      ..strokeWidth = 3.2
+      ..strokeCap = StrokeCap.round;
+    canvas.drawLine(const Offset(11, 36), const Offset(16, 49), leg);
+    canvas.drawLine(const Offset(11, 36), const Offset(7, 49), leg);
+    // Palto.
     canvas.drawPath(
       Path()
-        ..moveTo(1, size.y)
-        ..lineTo(3, 18)
-        ..quadraticBezierTo(8, 6, 14, 2)
-        ..lineTo(18, 14)
-        ..lineTo(22, size.y)
+        ..moveTo(6, 17)
+        ..quadraticBezierTo(-1, 20, 1.5, 31)
+        ..lineTo(0.5, 44)
+        ..lineTo(4, 41)
+        ..lineTo(7, 45)
+        ..lineTo(10, 41)
+        ..lineTo(13, 45)
+        ..lineTo(16, 41)
+        ..lineTo(19, 45)
+        ..lineTo(22, 42)
+        ..lineTo(21, 27)
+        ..quadraticBezierTo(22, 18, 16, 15)
         ..close(),
       stone,
     );
+    // Başlık.
+    canvas.drawPath(
+      Path()
+        ..moveTo(8, 18)
+        ..quadraticBezierTo(5, 7, -1, -4)
+        ..quadraticBezierTo(11, -1, 18, 6)
+        ..quadraticBezierTo(22, 12, 17, 17)
+        ..close(),
+      stone,
+    );
+    // Asa, kol ve sönmüş fener.
     canvas.drawLine(
       const Offset(17, 46),
       const Offset(29, 2),
       Paint()
-        ..color = const Color(0xFF3A3430)
+        ..color = stone.color
         ..strokeWidth = 2,
     );
     canvas.drawLine(
-      const Offset(4, 1),
-      Offset(20, 1),
-      Paint()
-        ..color = const Color(0xFF8A8078).withValues(alpha: 0.6)
-        ..strokeWidth = 1.2,
+      const Offset(15, 19),
+      const Offset(23.5, 25),
+      leg..strokeWidth = 3,
+    );
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromCenter(center: const Offset(31, 14), width: 7, height: 9),
+        const Radius.circular(2),
+      ),
+      stone,
+    );
+    canvas.drawLine(
+      const Offset(31, 5),
+      const Offset(31, 9.5),
+      leg..strokeWidth = 1,
+    );
+    // Işık alan üst kenarlar ve çatlaklar.
+    canvas.drawLine(const Offset(-1, -4), const Offset(10, -1.5), lit);
+    canvas.drawLine(const Offset(4, 1), const Offset(20, 1), lit);
+    final crack = Paint()
+      ..color = const Color(0xFF1E1A18)
+      ..strokeWidth = 0.9
+      ..style = PaintingStyle.stroke;
+    canvas.drawPath(
+      Path()
+        ..moveTo(9, 6)
+        ..lineTo(12, 14)
+        ..lineTo(10, 22)
+        ..lineTo(14, 31)
+        ..lineTo(12, 40),
+      crack,
     );
     canvas.restore();
   }
@@ -583,8 +833,16 @@ class LanternBalloon extends PositionComponent
   double _t;
   double suspicion = 0;
 
+  /// Asılı fener balonun altında gecikmeli sallanır: balon yön
+  /// değiştirince geride kalır, sonra salınarak yerine gelir. Işık fenerden
+  /// çıkar.
+  final _lag = Spring(stiffness: 9, damping: 1.6);
+  double _prevVx = 0;
+
+  Vector2 get lanternAt => position + Vector2(_lag.value, 10);
+
   bool inBeam(Vector2 p) {
-    final d = p - position;
+    final d = p - position - Vector2(_lag.value, 0);
     if (d.y < 0 || d.y > beamLength) return false;
     return d.x.abs() < 10 + d.y * 0.32 &&
         game.level.lineOfSight(position + Vector2(0, 10), p);
@@ -594,10 +852,16 @@ class LanternBalloon extends PositionComponent
   void update(double dt) {
     super.update(dt);
     _t += dt;
+    final before = position.x;
     position.setValues(
       _home.x + math.sin(_t * 0.45) * span,
       _home.y + math.sin(_t * 1.3) * 6,
     );
+    if (dt > 0) {
+      final vx = (position.x - before) / dt;
+      _lag.update((-(vx - _prevVx) / dt * 0.18).clamp(-7.0, 7.0), dt);
+      _prevVx = vx;
+    }
     final p = game.player;
     if (p == null || p.isDead || game.cinematic) return;
     final sees = !p.hidden && inBeam(p.center);
@@ -615,7 +879,11 @@ class LanternBalloon extends PositionComponent
 
   @override
   void render(Canvas canvas) {
-    // Işık konisi.
+    final lx = _lag.value;
+    final tilt = math.atan2(lx, 14);
+    // Işık konisi: fenerle birlikte kayar.
+    canvas.save();
+    canvas.translate(lx, 0);
     canvas.drawPath(
       Path()
         ..moveTo(-6, 10)
@@ -637,24 +905,66 @@ class LanternBalloon extends PositionComponent
           ],
         ),
     );
-    // Kâğıt balon ve asılı fener.
-    canvas.drawOval(
-      const Rect.fromLTWH(-16, -34, 32, 34),
-      Paint()..color = const Color(0xFF1A1418),
+    canvas.restore();
+    // Kâğıt balon: armut biçimli gövde, boyuna dikişler, altta açık ağız;
+    // içteki ışık kâğıdı alttan aydınlatır.
+    final body = Path()
+      ..moveTo(0, -36)
+      ..cubicTo(13, -36, 18, -24, 15, -12)
+      ..cubicTo(13, -5, 8, -1, 6, 0)
+      ..lineTo(-6, 0)
+      ..cubicTo(-8, -1, -13, -5, -15, -12)
+      ..cubicTo(-18, -24, -13, -36, 0, -36)
+      ..close();
+    canvas.drawPath(body, Paint()..color = const Color(0xFF1A1418));
+    canvas.drawPath(
+      body,
+      Paint()
+        ..shader = ui.Gradient.linear(
+          const Offset(0, -2),
+          const Offset(0, -30),
+          [
+            kCold.withValues(alpha: 0.32 + 0.2 * suspicion),
+            kCold.withValues(alpha: 0.04),
+          ],
+        ),
     );
+    final seam = Paint()
+      ..color = kInk.withValues(alpha: 0.75)
+      ..strokeWidth = 0.8
+      ..style = PaintingStyle.stroke;
+    for (final k in [-0.62, -0.22, 0.22, 0.62]) {
+      canvas.drawPath(
+        Path()
+          ..moveTo(0, -36)
+          ..quadraticBezierTo(k * 26, -20, k * 9, 0),
+        seam,
+      );
+    }
+    // Ağız halkası.
     canvas.drawOval(
-      const Rect.fromLTWH(-10, -28, 20, 24),
-      Paint()..color = kCold.withValues(alpha: 0.25),
+      Rect.fromCenter(center: const Offset(0, 0), width: 13, height: 3),
+      Paint()..color = kInk,
     );
+    // İpler ve asılı fener (gecikmeli sallanır).
+    final lantern = Offset(lx, 10);
     final line = Paint()
       ..color = kInk
       ..strokeWidth = 1;
-    canvas.drawLine(const Offset(-8, -2), const Offset(-3, 8), line);
-    canvas.drawLine(const Offset(8, -2), const Offset(3, 8), line);
+    canvas.drawLine(const Offset(-6, 0), lantern.translate(-3, -3), line);
+    canvas.drawLine(const Offset(6, 0), lantern.translate(3, -3), line);
+    canvas.save();
+    canvas.translate(lantern.dx, lantern.dy);
+    canvas.rotate(-tilt * 0.6);
     canvas.drawRect(
-      const Rect.fromLTWH(-4, 6, 8, 8),
+      const Rect.fromLTWH(-4, -4, 8, 8),
       Paint()..color = kCold.withValues(alpha: 0.95),
     );
+    canvas.drawRect(
+      const Rect.fromLTWH(-4.6, -5, 9.2, 1.6),
+      Paint()..color = kInk,
+    );
+    canvas.restore();
   }
 }
 

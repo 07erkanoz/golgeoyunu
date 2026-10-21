@@ -88,14 +88,16 @@ void drawSemazen(Canvas canvas, double spin, {double alpha = 1, Color? ink}) {
   final body = Paint()..color = (ink ?? kInk).withValues(alpha: alpha);
   final pale = Paint()
     ..color = const Color(0xFFF2ECE0).withValues(alpha: 0.85 * alpha);
-  // Tennure: kefen. Dönerken çan gibi açılır.
+  // Tennure: kefen. Dönerken çan gibi açılır; etek ucu dönüşün gerisinde
+  // kalarak bir yana kabarır.
   final flare = 21 + 2.5 * math.sin(spin * 2);
+  final swirl = math.sin(spin - 0.9) * 3;
   final skirt = Path()
     ..moveTo(-6, -30)
     ..lineTo(6, -30)
-    ..quadraticBezierTo(14, -14, flare, -2)
-    ..quadraticBezierTo(0, 3, -flare, -2)
-    ..quadraticBezierTo(-14, -14, -6, -30)
+    ..quadraticBezierTo(14 + swirl, -14, flare + swirl, -2 - swirl * 0.3)
+    ..quadraticBezierTo(swirl, 3, -flare + swirl, -2 + swirl * 0.3)
+    ..quadraticBezierTo(-14 + swirl, -14, -6, -30)
     ..close();
   canvas.drawPath(skirt, pale);
   // Dönen kıvrımlar.
@@ -106,10 +108,12 @@ void drawSemazen(Canvas canvas, double spin, {double alpha = 1, Color? ink}) {
     final f = math.sin(spin + i * math.pi / 2);
     canvas.drawLine(Offset(f * 4, -29), Offset(f * flare * 0.9, -2), fold);
   }
-  // Gövde ve destegül.
+  // Gövde ve destegül: dönerken omuzlar yan gelince daralır.
+  final turn = math.cos(spin);
+  final half = 4 + 1.2 * turn.abs();
   canvas.drawRRect(
     RRect.fromRectAndRadius(
-      const Rect.fromLTWH(-5, -44, 10, 16),
+      Rect.fromLTWH(-half, -44, half * 2, 16),
       const Radius.circular(3),
     ),
     pale,
@@ -130,15 +134,17 @@ void drawSemazen(Canvas canvas, double spin, {double alpha = 1, Color? ink}) {
     ),
     body,
   );
-  // Kollar: sağ el göğe açık, sol el yere.
+  // Kollar: sağ el göğe açık, sol el yere. Beden döndükçe kollar da
+  // döner: yandan bakınca kısalır, karşıdan bakınca uzanır.
   final arm = Paint()
     ..color = body.color
     ..strokeWidth = 2.2
     ..strokeCap = StrokeCap.round;
-  canvas.drawLine(const Offset(4, -42), const Offset(14, -52), arm);
-  canvas.drawLine(const Offset(14, -52), const Offset(18, -55), arm);
-  canvas.drawLine(const Offset(-4, -42), const Offset(-15, -38), arm);
-  canvas.drawLine(const Offset(-15, -38), const Offset(-19, -34), arm);
+  final sh = 4 * turn;
+  canvas.drawLine(Offset(sh, -42), Offset(14 * turn, -52), arm);
+  canvas.drawLine(Offset(14 * turn, -52), Offset(18 * turn, -55), arm);
+  canvas.drawLine(Offset(-sh, -42), Offset(-15 * turn, -38), arm);
+  canvas.drawLine(Offset(-15 * turn, -38), Offset(-19 * turn, -34), arm);
 }
 
 // ============================================================== Avize

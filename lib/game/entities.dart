@@ -12,6 +12,7 @@ import 'mechanics.dart';
 import 'palette.dart';
 import 'persist.dart';
 import 'player.dart';
+import 'rig.dart';
 
 // ================================================================ Fenerci
 
@@ -41,7 +42,6 @@ class Guard extends PositionComponent
   int facing = -1;
   double suspicion = 0;
   double _t = 0;
-  double _anim = 0;
   double _lost = 0;
   double _lastSeenX = 0;
   double? _investigateX;
@@ -108,10 +108,49 @@ class Guard extends PositionComponent
     }
   }
 
+  // Bedenin çizimi için: yürünen yol, yumuşatılmış hız, gecikmeli fener,
+  // palto eteği, eğilme ve dönüş.
+  double _gaitDist = 0;
+  double _prevX = double.nan;
+  double _speedS = 0;
+  double _prevSpeed = 0;
+  final _swingS = Spring(stiffness: 38, damping: 3.2);
+  final _hemS = Spring(stiffness: 45, damping: 5);
+  double _leanS = 0;
+  double _turnT = 0;
+  int _drawnFacing = -1;
+  double _life = 0;
+
+  void _updateBody(double dt) {
+    if (dt <= 0) return;
+    if (_prevX.isNaN) _prevX = position.x;
+    final speed = (position.x - _prevX) / dt * facing;
+    _prevX = position.x;
+    _speedS = approach(_speedS, speed.abs(), dt, 0.08);
+    final accel = (speed - _prevSpeed) / dt;
+    _prevSpeed = speed;
+    if (facing != _drawnFacing) {
+      // Döner: fener ve etek savrulur, beden bir an yan döner.
+      _drawnFacing = facing;
+      _turnT = 0.2;
+      _swingS.kick(-28);
+      _hemS.kick(-14);
+    }
+    _turnT = math.max(0, _turnT - dt);
+    _life += dt;
+    final run = (_speedS / chaseSpeed).clamp(0.0, 1.0);
+    // Fener asanın ucunda geride kalır, durunca öne sallanır.
+    _swingS.update((-accel * 0.0016).clamp(-3.5, 3.5) - run * 1.2, dt);
+    _hemS.update(run * 2.2 + (-accel * 0.001).clamp(-1.5, 1.5), dt);
+    final chase = state == GuardState.chase;
+    _leanS = approach(_leanS, chase ? 0.13 : (_calm ? 0 : 0.04), dt, 0.15);
+  }
+
   @override
   void update(double dt) {
     super.update(dt);
     _t += dt;
+    _updateBody(dt);
     if (falling) {
       _updateFall(dt);
       return;
@@ -146,7 +185,6 @@ class Guard extends PositionComponent
     switch (state) {
       case GuardState.patrol:
         if (!staring) {
-          _anim += dt;
           if (!_walk(patrolSpeed * dt)) _setState(GuardState.pause);
         }
       case GuardState.pause:
@@ -165,7 +203,6 @@ class Guard extends PositionComponent
           if (dx.abs() > 3) facing = dx > 0 ? 1 : -1;
           if (dx.abs() > (lure != null ? 40 : 12) &&
               _walk(math.min(patrolSpeed * 1.4 * dt, dx.abs()))) {
-            _anim += dt * 1.3;
             _t = 0;
           } else if (lure == null || !lure.isMounted) {
             // Sesin geldiği yere vardı: bir süre bakınır.
@@ -197,7 +234,6 @@ class Guard extends PositionComponent
         final dx = _lastSeenX - center.x;
         if (dx.abs() > 4) facing = dx > 0 ? 1 : -1;
         if (dx.abs() > 6) {
-          _anim += dt * 2;
           _walk(math.min(chaseSpeed * dt, dx.abs()));
         }
         _lost = sees ? 0 : _lost + dt;
@@ -284,6 +320,7 @@ class Guard extends PositionComponent
     final rotten = below == 'u' && !_calmPatrol;
     if (below != '#' && below != '=' && !rotten) return false;
     position.x += facing * dist;
+    _gaitDist += dist;
     return true;
   }
 
@@ -298,7 +335,29 @@ class Guard extends PositionComponent
     position.y + 14,
   );
 
-  double get _lanternSway => math.sin(_anim * 3 + 1) * 1.2;
+  double get _lanternSway => _swingS.value + math.sin(_life * 1.9 + 1) * 0.6;
+
+  /// Fener konisinin kayada kesilmiş görünür bölgesi (dünya koordinatı);
+  /// koni hiçbir kayaya değmiyorsa null. Karede bir kez hesaplanır.
+  Path? get coneShape {
+    if (_coneAt != _life) {
+      _coneAt = _life;
+      final l = _lantern;
+      final range = coneRange * 1.05;
+      final mid = facing > 0 ? 0.0 : math.pi;
+      _cone = level.visibility(
+        Offset(l.x, l.y),
+        range,
+        from: mid - 0.8,
+        to: mid + 0.8,
+        rays: 28,
+      );
+    }
+    return _cone;
+  }
+
+  Path? _cone;
+  double _coneAt = -1;
 
   bool _canSee(Player p) {
     if (p.isDead || p.hidden) return false;
@@ -355,7 +414,23 @@ class Guard extends PositionComponent
     final beamAlpha =
         (alert ? 0.42 : (distracted ? 0.07 : 0.14 + doubt * 0.16)) * flicker;
 
-    // Işık konisi.
+    // Işık konisi: kayada kesilir.
+    final seen = coneShape;
+    if (seen != null) {
+      canvas.save();
+      // Kesme şekli dünya koordinatında; çizim yerel ve yöne çevrili.
+      if (facing < 0) {
+        canvas.scale(-1, 1);
+        canvas.translate(-gw, 0);
+      }
+      canvas.translate(-position.x, -position.y);
+      canvas.clipPath(seen);
+      canvas.translate(position.x, position.y);
+      if (facing < 0) {
+        canvas.translate(gw, 0);
+        canvas.scale(-1, 1);
+      }
+    }
     final range = state == GuardState.chase ? viewDistance * 1.4 : viewDistance;
     final cone = Path()
       ..moveTo(lantern.dx, lantern.dy - 3)
@@ -371,6 +446,7 @@ class Guard extends PositionComponent
           beam.withValues(alpha: 0),
         ]),
     );
+    if (seen != null) canvas.restore();
     final halo = 30 + doubt * 14 + (alert ? 22 : 0);
     canvas.drawCircle(
       lantern,
@@ -382,35 +458,99 @@ class Guard extends PositionComponent
         ]),
     );
 
-    // Bacaklar ve çizmeler: uzun paltonun altından görünür.
-    final step = math.sin(_anim * 7);
-    _stroke.strokeWidth = 3;
-    final f1 = Offset(9 + step * 3, gh);
-    final f2 = Offset(14 - step * 3, gh);
-    canvas.drawLine(const Offset(9, 40), f1, _stroke);
-    canvas.drawLine(const Offset(14, 40), f2, _stroke);
-    canvas.drawOval(
-      Rect.fromCenter(center: f1.translate(1.5, -1), width: 6, height: 3),
-      _ink,
-    );
-    canvas.drawOval(
-      Rect.fromCenter(center: f2.translate(1.5, -1), width: 6, height: 3),
-      _ink,
-    );
+    // Dönerken beden bir an yan döner (ince görünür), sonra yeni yöne açılır.
+    // Asa ve fener yerinde kalır (ışık oradan çıkar).
+    final squash = _turnT > 0
+        ? 1 - 0.55 * math.sin(math.pi * _turnT / 0.2)
+        : 1.0;
+    canvas.save();
+    canvas.translate(gw / 2, 0);
+    canvas.scale(squash, 1);
+    canvas.translate(-gw / 2, 0);
 
-    // Kambur sırtlı, etekleri yırtık uzun palto; yürürken etek salınır.
-    final hem = math.sin(_anim * 7) * 1.2;
+    // Bacaklar: adımlar yürünen yola bağlı; basan ayak yerde durur, kalkan
+    // ayak paltonun altından öne savrulur. Kovalarken adım uzar, beden
+    // öne eğilir.
+    final run = (_speedS / chaseSpeed).clamp(0.0, 1.0);
+    final amt = (_speedS / patrolSpeed).clamp(0.0, 1.0);
+    final cycleLen = 25 + 21 * run;
+    final strideH = (7 + 1.2 * run) * amt;
+    final stance = amt < 0.05 ? 0.5 : (2 * strideH / cycleLen).clamp(0.3, 0.72);
+    final ph = (_gaitDist / cycleLen) % 1.0;
+    const footX = 11.5;
+    Offset footAt(double p) {
+      p %= 1;
+      if (p < stance) {
+        final t = p / stance;
+        return Offset(footX + strideH - 2 * strideH * t, gh);
+      }
+      final t = (p - stance) / (1 - stance);
+      final e = 0.5 - math.cos(t * math.pi) / 2;
+      return Offset(
+        footX - strideH + 2 * strideH * e,
+        gh - math.sin(t * math.pi) * (2.5 + 3.5 * run) * amt,
+      );
+    }
+
+    var f1 = footAt(ph);
+    var f2 = footAt(ph + 0.5);
+    if (amt < 0.05) {
+      f1 = const Offset(footX + 3, gh);
+      f2 = const Offset(footX - 3, gh);
+    }
+    double load(double p) {
+      p %= 1;
+      return p < stance ? math.sin(p / stance * math.pi) : 0;
+    }
+
+    // Ağır adım: basan ayağın üstünde gövde hafifçe çöker.
+    var hipY = 34 + math.max(load(ph), load(ph + 0.5)) * (0.8 + run) * amt;
+    for (final f in [f1, f2]) {
+      if (f.dy >= gh - 0.5) hipY = lowerToReach(footX, hipY, f, 17.6);
+    }
+    final hip = Offset(footX, hipY);
+    final farInk = Paint()..color = const Color(0xFF241A1C);
+    void leg(Offset target, Paint paint) {
+      final (knee, foot) = solveLimb(hip, target, 9, 9);
+      _stroke
+        ..color = paint.color
+        ..strokeWidth = 3.4;
+      canvas.drawLine(hip, knee, _stroke);
+      _stroke.strokeWidth = 2.8;
+      canvas.drawLine(knee, foot, _stroke);
+      canvas.drawOval(
+        Rect.fromCenter(center: foot.translate(1.6, -1), width: 6.4, height: 3),
+        paint,
+      );
+      _stroke.color = kInk;
+    }
+
+    leg(f2, farInk);
+    leg(f1, _ink);
+
+    // Üst beden kalçadan öne eğilir (kovalarken); kalça adımla iner.
+    final sink = hipY - 34;
+    canvas.save();
+    canvas.translate(footX, 34 + sink);
+    canvas.rotate(_leanS);
+    canvas.translate(-footX, -34);
+
+    // Kambur sırtlı, etekleri yırtık uzun palto; etek uçları farklı
+    // gecikmeyle savrulur.
+    final hem = _hemS.value;
+    double tail(int i) =>
+        -hem * (0.5 + i * 0.25) + math.sin(ph * 4 * math.pi + i) * 0.5 * amt;
     canvas.drawPath(
       Path()
         ..moveTo(6, 17)
         ..quadraticBezierTo(-1, 20, 1.5, 31)
-        ..lineTo(0.5 - hem, 44)
+        ..lineTo(0.5 + tail(3), 44)
         ..lineTo(4, 41)
-        ..lineTo(7 - hem * 0.5, 45)
+        ..lineTo(7 + tail(2), 45)
         ..lineTo(10, 41)
-        ..lineTo(13 + hem * 0.5, 45)
+        ..lineTo(13 + tail(1), 45)
         ..lineTo(16, 41)
-        ..lineTo(19 + hem, 45)
+        ..lineTo(19 + tail(0), 45)
         ..lineTo(22, 42)
         ..lineTo(21, 27)
         ..quadraticBezierTo(22, 18, 16, 15)
@@ -423,10 +563,17 @@ class Guard extends PositionComponent
       Paint()..color = const Color(0xFF1C1418),
     );
     final keys = Paint()..color = const Color(0xFF4A4A52);
-    canvas.drawCircle(Offset(6 + step * 0.6, 33), 1.3, keys);
-    canvas.drawCircle(Offset(8 + step * 0.4, 34.2), 1.1, keys);
+    final jingle = math.sin(ph * 4 * math.pi) * amt - hem * 0.3;
+    canvas.drawCircle(Offset(6 + jingle * 0.6, 33), 1.3, keys);
+    canvas.drawCircle(Offset(8 + jingle * 0.4, 34.2), 1.1, keys);
 
     // Sivri, arkaya bükülen başlık; yüzün karanlığında iki soğuk göz.
+    // Şüphelenince önce baş kalkar ve öne uzanır (bakar), beden sonra gelir.
+    canvas.save();
+    const neck = Offset(12, 17);
+    canvas.translate(neck.dx, neck.dy);
+    canvas.rotate(-0.22 * doubt - (alert ? 0.12 : 0));
+    canvas.translate(-neck.dx + doubt * 1.2, -neck.dy);
     canvas.drawPath(
       Path()
         ..moveTo(8, 18)
@@ -448,6 +595,17 @@ class Guard extends PositionComponent
       Rect.fromCenter(center: const Offset(18.2, 10), width: 2.2, height: 1.1),
       eye,
     );
+    canvas.restore();
+    // Eğik gövdede omzun yeri (asayı tutan el sabit kalır).
+    const shoulder = Offset(15, 19);
+    canvas.restore();
+    canvas.restore();
+    final c = math.cos(_leanS), s = math.sin(_leanS);
+    final sx = footX + (shoulder.dx - footX) * c - (shoulder.dy - 34) * s;
+    final sh = Offset(
+      gw / 2 + (sx - gw / 2) * squash,
+      34 + sink + (shoulder.dx - footX) * s + (shoulder.dy - 34) * c,
+    );
 
     // Asa: ucundaki kancada fener sallanır.
     _stroke.strokeWidth = 1.8;
@@ -459,9 +617,14 @@ class Guard extends PositionComponent
       false,
       _stroke..strokeWidth = 1.4,
     );
-    _stroke.strokeWidth = 3;
-    canvas.drawLine(const Offset(15, 19), const Offset(23, 25), _stroke);
-    canvas.drawCircle(const Offset(23.5, 25), 2, _ink);
+    // Kol: omuzdan dirseğe, elden asaya.
+    const hand = Offset(23.5, 25);
+    final (elbow, _) = solveLimb(sh, hand, 5.6, 5.6, bend: -1);
+    _stroke.strokeWidth = 3.2;
+    canvas.drawLine(sh, elbow, _stroke);
+    _stroke.strokeWidth = 2.6;
+    canvas.drawLine(elbow, hand, _stroke);
+    canvas.drawCircle(hand, 2, _ink);
     canvas.drawLine(
       const Offset(32.5, 4),
       lantern.translate(0, -5),
@@ -668,13 +831,37 @@ class Bird extends PositionComponent with HasGameReference<GolgeGame> {
     canvas.drawCircle(head + const Offset(1.1, -0.6), 0.65, band);
 
     if (_flying) {
-      // Geniş, yuvarlak kanatlar; üstünde çizgili bantlar.
-      final flap = math.sin(_t * 12) * 9;
+      // Kalkışta sık ve güçlü çırpar, yolun ortasında kanatlarını açık tutup
+      // süzülür, inerken kanatlarını kaldırıp frenler ve ayaklarını uzatır.
+      final k = (_flyT / _flyDur).clamp(0.0, 1.0);
+      final takeoff = (1 - k / 0.18).clamp(0.0, 1.0);
+      final landing = ((k - 0.82) / 0.18).clamp(0.0, 1.0);
+      final glide = math.sin(k * math.pi) * (1 - takeoff) * (1 - landing);
+      final rate = 12 + 6 * takeoff - 5 * glide;
+      final amp = 9 * (1 - 0.65 * glide) * (1 - landing * 0.6);
+      final phase = _t * rate;
+      // Aşağı vuruşta kanat geniş açılır, yukarı kalkarken toplanır.
+      final down = math.cos(phase) < 0;
+      final chord = down ? 1.0 : 0.62;
+      final flap = math.sin(phase) * amp - landing * 6;
+      if (takeoff > 0 || landing > 0) {
+        final legs = Paint()
+          ..color = _pale.withValues(alpha: a * 0.8)
+          ..strokeWidth = 0.9;
+        final reach = 3 + 2.5 * math.max(takeoff, landing);
+        canvas.drawLine(const Offset(-1, -3), Offset(-1.6, -3 + reach), legs);
+        canvas.drawLine(const Offset(1, -3), Offset(0.8, -3 + reach), legs);
+      }
       for (final sc in [1.0, 0.7]) {
         final wing = Path()
           ..moveTo(-4, -7)
-          ..quadraticBezierTo(-6, -13 - flap * sc, -2, -18 - flap * sc)
-          ..quadraticBezierTo(4, -15 - flap * sc, 4, -7)
+          ..quadraticBezierTo(
+            -6 * chord,
+            -13 - flap * sc,
+            -2 * chord,
+            -18 - flap * sc,
+          )
+          ..quadraticBezierTo(4 * chord, -15 - flap * sc, 4, -7)
           ..close();
         canvas.drawPath(wing, pale);
         for (var k = 0; k < 3; k++) {

@@ -63,6 +63,25 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
     canvas.drawCircle(c, radius, _cut);
   }
 
+  /// Kaya duvarda kesilen ışık: ışık merkezden ışınlarla taranır, ilk kaya
+  /// hücresinde durur; karanlık yalnızca görünen bölgede yarılır. Oynanıştaki
+  /// ışık sorgusu da duvarda kesilir: tahtanın yanıp yanmadığı ekranda
+  /// görülenle aynıdır.
+  void _occluded(Canvas canvas, Offset c, double radius, [double s = 1]) {
+    if (radius <= 0 || s <= 0) return;
+    if (!_view.overlaps(Rect.fromCircle(center: c, radius: radius))) return;
+    final shape = game.level.visibility(c, radius);
+    if (shape == null) {
+      // Hiçbir yerde kaya yok: düz daire (daha ucuz).
+      _light(canvas, c, radius, s);
+      return;
+    }
+    canvas.save();
+    canvas.clipPath(shape);
+    _light(canvas, c, radius, s);
+    canvas.restore();
+  }
+
   /// Karanlık bölgeler örtünün altında daha da kararır; kenarları yumuşak.
   void _darkZones(Canvas canvas, Rect view) {
     for (final z in game.level.darkZones) {
@@ -118,7 +137,14 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
             Offset(lantern.x + f * range, lantern.y),
             const [Color(0xB0000000), Color(0x00000000)],
           );
+          // Koni kayada kesilir (fener duvarın ardını aydınlatmaz).
+          final seen = g.coneShape;
+          if (seen != null) {
+            canvas.save();
+            canvas.clipPath(seen);
+          }
           canvas.drawPath(cone, _cut);
+          if (seen != null) canvas.restore();
         case ExitPortal e:
           _light(
             canvas,
@@ -146,7 +172,7 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
         case FireVent v when v.burning:
           _light(canvas, v.position.toOffset().translate(0, -40), 120, 0.9);
         case LanternBalloon b:
-          _light(canvas, b.position.toOffset(), 60, 0.8);
+          _light(canvas, b.lanternAt.toOffset(), 60, 0.8);
         case MedusaHead m when m.eyes > 0.2:
           _light(canvas, m.position.toOffset(), 50, 0.6 * m.eyes);
         case SimurgFeather f when !f.taken:
@@ -202,7 +228,7 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
         case FireflySwarm f:
           _light(canvas, f.position.toOffset(), 70, 0.7 * f.strength);
         case FireflyLure l:
-          _light(
+          _occluded(
             canvas,
             l.position.toOffset(),
             130 * math.max(0.3, l.strength),
@@ -222,8 +248,9 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
     // Sâye'nin kendi ışığı en son: yanındaki sütunu o aydınlatır.
     final p = game.player;
     if (p != null && p.isMounted && !p.isDead) {
-      final (pos, radius) = p.light;
-      _light(canvas, pos.toOffset(), radius);
+      // Görünen ışık kavanozun çizildiği yerden çıkar (sallanırken de).
+      final (_, radius) = p.light;
+      _occluded(canvas, p.lightVisual.toOffset(), radius);
     }
     canvas.restore();
   }
@@ -246,8 +273,8 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
         );
       }
     }
-    final (pos, radius) = p.light;
-    final c = pos.toOffset();
+    final (_, radius) = p.light;
+    final c = p.lightVisual.toOffset();
     final r = radius * 1.4;
     canvas.drawRect(
       rect,
@@ -318,7 +345,7 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
           final b = path.getBounds();
           beam(path, o, b.center, cold, 0.14);
         case LanternBalloon b:
-          final o = b.position.toOffset();
+          final o = b.lanternAt.toOffset().translate(0, -10);
           glow(o, 50, kWarmLight, 0.2);
           const len = LanternBalloon.beamLength;
           beam(

@@ -11,6 +11,7 @@ import 'level.dart';
 import 'levels.dart';
 import 'palette.dart';
 import 'player.dart';
+import 'rig.dart';
 import 'strings.dart';
 
 // =============================================================== Yarasalar
@@ -31,14 +32,18 @@ class BatRoost extends PositionComponent with HasGameReference<GolgeGame> {
   });
   bool flown = false;
   double _t = 0;
+  double _flownAt = 0;
 
   void disturb() {
     if (flown) return;
     flown = true;
+    _flownAt = _t;
     GameAudio.instance.play('bats');
     for (final b in _bats) {
       final a = -math.pi / 2 + (_rnd.nextDouble() - 0.5) * 2.4;
       b.vel = Offset(math.cos(a), math.sin(a)) * (120 + _rnd.nextDouble() * 80);
+      // Sürü tek kütle değil: her yarasa biraz farklı anda bırakır.
+      b.delay = _rnd.nextDouble() * 0.45;
     }
     game.makeNoise(position + Vector2(0, 20), 380, source: this);
   }
@@ -63,6 +68,7 @@ class BatRoost extends PositionComponent with HasGameReference<GolgeGame> {
       return;
     }
     for (final b in _bats) {
+      if (_t - _flownAt < b.delay) continue;
       b.pos += b.vel * dt;
       b.vel =
           b.vel.scale(1, 0.985) +
@@ -75,7 +81,7 @@ class BatRoost extends PositionComponent with HasGameReference<GolgeGame> {
   void render(Canvas canvas) {
     final ink = Paint()..color = const Color(0xFF0C0706);
     for (final b in _bats) {
-      if (!flown) {
+      if (!flown || _t - _flownAt < b.delay) {
         // Baş aşağı asılı, hafifçe sallanan damla gövdeler.
         final sway = math.sin(_t * 1.5 + b.phase) * 0.8;
         canvas.drawOval(
@@ -92,15 +98,24 @@ class BatRoost extends PositionComponent with HasGameReference<GolgeGame> {
           ink..strokeWidth = 1,
         );
       } else {
-        final flap = math.sin(_t * 30 + b.phase) * 4;
+        // Kanat: omuz, dirsek, uç. Uç dirsekten gecikerek iner (zar kanat
+        // kırbaç gibi çırpar).
+        final ph = _t * 30 + b.phase;
+        final elbow = math.sin(ph) * 3;
+        final tip = math.sin(ph - 0.7) * 5;
         final c = b.pos;
-        canvas.drawPath(
-          Path()
-            ..moveTo(c.dx - 7, c.dy - flap)
-            ..quadraticBezierTo(c.dx - 3, c.dy + 1, c.dx, c.dy)
-            ..quadraticBezierTo(c.dx + 3, c.dy + 1, c.dx + 7, c.dy - flap)
-            ..lineTo(c.dx, c.dy + 2.5)
-            ..close(),
+        final wing = Path()..moveTo(c.dx, c.dy);
+        for (final s in [-1.0, 1.0]) {
+          wing
+            ..lineTo(c.dx + s * 3.5, c.dy - elbow)
+            ..lineTo(c.dx + s * 8, c.dy - tip)
+            ..lineTo(c.dx + s * 5.5, c.dy + 1 - elbow * 0.4)
+            ..lineTo(c.dx + s * 3, c.dy + 0.5)
+            ..lineTo(c.dx, c.dy);
+        }
+        canvas.drawPath(wing..close(), ink);
+        canvas.drawOval(
+          Rect.fromCenter(center: c.translate(0, 0.8), width: 3, height: 4.4),
           ink,
         );
       }
@@ -113,6 +128,7 @@ class _Bat {
   Offset pos;
   final double phase;
   Offset vel = Offset.zero;
+  double delay = 0;
 }
 
 // ================================================================= Karga
@@ -206,13 +222,31 @@ class Crow extends PositionComponent with HasGameReference<GolgeGame> {
         Paint()..color = const Color(0xFFD08A5A),
       );
     } else {
-      final flap = math.sin(_t * 22) * 7;
+      // Kalkışta ilk vuruşlar sık ve derin; aşağı vuruşta kanat açık ve
+      // geniş, yukarı kalkarken dirsekten katlanır. Arada kısa süzülmeler.
+      final rush = (1 - _flyT / 0.6).clamp(0.0, 1.0);
+      final glide = math.max(0.0, math.sin(_flyT * 2.2)) * (1 - rush) * 0.7;
+      final ph = _t * (22 + 10 * rush);
+      final flap = math.sin(ph) * 7 * (1 - glide);
+      final down = math.cos(ph) < 0;
+      final fold = down ? 1.0 : 0.6;
       canvas.drawOval(const Rect.fromLTWH(-6, -8, 12, 6), ink);
       canvas.drawCircle(const Offset(6, -6), 2.6, ink);
+      // Kuyruk tüyleri yelpaze.
+      canvas.drawPath(
+        Path()
+          ..moveTo(-5, -6)
+          ..lineTo(-11, -8 + rush * 2)
+          ..lineTo(-11, -3)
+          ..close(),
+        ink,
+      );
       canvas.drawPath(
         Path()
           ..moveTo(-3, -6)
-          ..quadraticBezierTo(-6, -14 - flap, -12, -12 - flap)
+          ..lineTo(-6 * fold, -11 - flap * 0.6)
+          ..quadraticBezierTo(-9 * fold, -15 - flap, -13 * fold, -12 - flap)
+          ..lineTo(-4 * fold, -8 - flap * 0.3)
           ..lineTo(3, -6)
           ..close(),
         ink,
@@ -242,6 +276,11 @@ class Watcher extends PositionComponent with HasGameReference<GolgeGame> {
   double suspicion = 0;
   double _t = 0;
   double _angle = 0.6;
+
+  /// Göz önce hedefe kayar; baş ve projektör ağır ağır yetişir (ışın
+  /// projektörün açısıdır).
+  double _eye = 0.6;
+  final _aim = Spring(stiffness: 20, damping: 7.5)..value = 0.6;
 
   Vector2 get lamp =>
       Vector2(position.x + size.x / 2 + facing * 10, position.y + 14);
@@ -275,13 +314,18 @@ class Watcher extends PositionComponent with HasGameReference<GolgeGame> {
     for (final l in game.world.children.whereType<FireflyLure>()) {
       if (l.glowing && (l.position - lamp).length < beamLength) lure = l;
     }
+    double target;
     if (lure != null) {
       final d = lure.position - lamp;
-      final target = math.atan2(d.y, d.x * facing);
-      _angle += (target - _angle) * math.min(1, dt * 4);
+      target = math.atan2(d.y, d.x * facing);
     } else {
-      _angle = 0.6 + 0.55 * math.sin(_t * 0.7);
+      // Tarama: uçlarda bir an bekler (sinüs düzleştirilir), sonra döner.
+      final s = math.sin(_t * 0.7);
+      target = 0.6 + 0.55 * s.sign * math.pow(s.abs(), 0.55);
     }
+    _eye = approach(_eye, target, dt, 0.08);
+    _aim.update(target, dt);
+    _angle = _aim.value;
 
     if (dazzled > 0) dazzled -= dt;
     if (p == null || p.isDead || game.cinematic || dazzled > 0) {
@@ -362,7 +406,8 @@ class Watcher extends PositionComponent with HasGameReference<GolgeGame> {
       canvas.scale(-1, 1);
     }
     final ink = Paint()..color = kInk;
-    // Uzun cüppe, geniş omuzlar, sivri miğfer.
+    final dazed = dazzled > 0 ? math.min(1.0, dazzled) : 0.0;
+    // Uzun cüppe, geniş omuzlar.
     canvas.drawPath(
       Path()
         ..moveTo(3, 52)
@@ -372,6 +417,13 @@ class Watcher extends PositionComponent with HasGameReference<GolgeGame> {
         ..close(),
       ink,
     );
+    // Baş ve sivri miğfer bakışın yarısı kadar döner; gözü kamaşınca başını
+    // çevirir.
+    final look = (_eye - 0.6) * 0.5 - dazed * 0.5;
+    canvas.save();
+    canvas.translate(11, 15);
+    canvas.rotate(look);
+    canvas.translate(-11, -15);
     canvas.drawPath(
       Path()
         ..moveTo(6, 16)
@@ -382,15 +434,52 @@ class Watcher extends PositionComponent with HasGameReference<GolgeGame> {
     );
     canvas.drawCircle(const Offset(11, 12), 5.5, ink);
     canvas.drawOval(
-      Rect.fromCenter(center: const Offset(13.5, 12), width: 3, height: 1.2),
+      Rect.fromCenter(
+        center: Offset(13.5, 12 + (_eye - _angle).clamp(-0.4, 0.4) * 3),
+        width: 3,
+        height: 1.2 * (1 - dazed * 0.8),
+      ),
       Paint()..color = kCold.withValues(alpha: 0.6 + 0.4 * suspicion),
     );
-    // Projektör: omuzda büyük bir fener.
-    canvas.drawRect(const Rect.fromLTWH(14, 10, 10, 8), ink);
-    canvas.drawRect(
-      const Rect.fromLTWH(22, 11, 3, 6),
-      Paint()..color = kCold.withValues(alpha: 0.95),
+    canvas.restore();
+    // Projektör: ışının çıktığı yerden döner (gövdesi arkada, camı önde).
+    const pivot = Offset(21, 14);
+    canvas.save();
+    canvas.translate(pivot.dx, pivot.dy);
+    canvas.rotate(_angle);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        const Rect.fromLTWH(-9, -4.5, 9, 9),
+        const Radius.circular(1.5),
+      ),
+      ink,
     );
+    canvas.drawRect(
+      const Rect.fromLTWH(-1, -3.5, 2.6, 7),
+      Paint()..color = kCold.withValues(alpha: dazed > 0 ? 0.3 : 0.95),
+    );
+    canvas.restore();
+    // Kol projektörün sapını tutar; gözü kamaşınca öbür el yüzünü siper eder.
+    final grip =
+        pivot + Offset(math.cos(_angle) * -6, math.sin(_angle) * -6 + 4);
+    final (elbow, _) = solveLimb(const Offset(15, 21), grip, 5, 5, bend: -1);
+    final arm = Paint()
+      ..color = kInk
+      ..strokeWidth = 3
+      ..strokeCap = StrokeCap.round;
+    canvas.drawLine(const Offset(15, 21), elbow, arm);
+    canvas.drawLine(elbow, grip, arm..strokeWidth = 2.4);
+    if (dazed > 0) {
+      final hand = Offset.lerp(
+        const Offset(9, 30),
+        const Offset(16, 11),
+        dazed,
+      )!;
+      final (e2, _) = solveLimb(const Offset(8, 21), hand, 5.5, 5.5, bend: -1);
+      canvas.drawLine(const Offset(8, 21), e2, arm..strokeWidth = 3);
+      canvas.drawLine(e2, hand, arm..strokeWidth = 2.4);
+      canvas.drawCircle(hand, 2, ink);
+    }
     canvas.restore();
   }
 }
@@ -411,6 +500,10 @@ class Karabasan extends PositionComponent with HasGameReference<GolgeGame> {
   double _recoil = 0;
   double _t = 0;
   double _fade = 0;
+
+  /// Uzantılar gövdenin hızına gecikerek uyar: hızlanınca geride savrulur,
+  /// geri tepince öne fırlar.
+  final _drag = Spring(stiffness: 14, damping: 4);
 
   bool get awake => _awake && !_gone;
 
@@ -454,6 +547,7 @@ class Karabasan extends PositionComponent with HasGameReference<GolgeGame> {
       _speed = math.min(128, _speed + dt * 90);
     }
     position.x += _speed * dt;
+    _drag.update(_speed * 0.35, dt);
     // Oyuncunun çok gerisinde kalmasın: gerilim sürsün.
     position.x = math.max(position.x, p.center.x - 420);
     position.y += (p.center.y - position.y) * math.min(1, dt * 1.5);
@@ -472,36 +566,59 @@ class Karabasan extends PositionComponent with HasGameReference<GolgeGame> {
     final a = _fade;
     final ink = Paint()
       ..color = const Color(0xFF020101).withValues(alpha: 0.96 * a);
-    // Kaynayan gövde: üst üste binen, nefes alan gölgeler.
-    for (var i = 0; i < 14; i++) {
-      final ang = i / 14 * math.pi * 2;
-      final r = 70 + 18 * math.sin(_t * 3 + i * 1.7);
-      canvas.drawCircle(
-        Offset(math.cos(ang) * r * 0.55 - 40, math.sin(ang) * r * 0.75),
-        48 + 10 * math.sin(_t * 2.3 + i),
-        ink,
+    // Kaynayan gövde: tek parça, kenarları nefes alan bir karanlık. Sırtı
+    // kambur, önü sarkık; kenar noktaları ayrı ritimlerle kabarır.
+    const n = 18;
+    final pts = <Offset>[];
+    for (var i = 0; i < n; i++) {
+      final ang = i / n * math.pi * 2;
+      final front = math.max(0.0, math.cos(ang));
+      final r =
+          88 +
+          16 * math.sin(_t * 2.6 + i * 1.9) +
+          10 * math.sin(_t * 4.1 - i * 0.8) -
+          front * 14;
+      pts.add(
+        Offset(
+          math.cos(ang) * r * 0.85 - 36,
+          math.sin(ang) * r * (ang > math.pi ? 0.95 : 0.78),
+        ),
       );
     }
+    final body = Path()
+      ..moveTo(
+        (pts.last.dx + pts.first.dx) / 2,
+        (pts.last.dy + pts.first.dy) / 2,
+      );
+    for (var i = 0; i < n; i++) {
+      final p = pts[i];
+      final q = pts[(i + 1) % n];
+      body.quadraticBezierTo(p.dx, p.dy, (p.dx + q.dx) / 2, (p.dy + q.dy) / 2);
+    }
+    canvas.drawPath(body..close(), ink);
     // Öne uzanan pençe gibi dokunaçlar.
     final arm = Paint()
       ..color = const Color(0xFF020101).withValues(alpha: 0.96 * a)
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
+    final drag = _drag.value;
     for (var i = 0; i < 6; i++) {
       final y0 = -60.0 + i * 24;
-      final reach = 60 + 25 * math.sin(_t * 4 + i * 1.3);
-      arm.strokeWidth = 7 - i % 3 * 1.5;
-      canvas.drawPath(
-        Path()
-          ..moveTo(10, y0 * 0.6)
-          ..quadraticBezierTo(
-            reach * 0.6,
-            y0 * 0.6 + 18 * math.sin(_t * 5 + i),
-            reach,
-            y0 + 10 * math.cos(_t * 3 + i),
-          ),
-        arm,
-      );
+      final reach =
+          60 + 25 * math.sin(_t * 4 + i * 1.3) - drag * (0.4 + i * 0.08);
+      // Kökte kalın, uca incelen; dalga kökten uca gecikir.
+      for (var seg = 0; seg < 3; seg++) {
+        final k0 = seg / 3;
+        final k1 = (seg + 1) / 3;
+        Offset at(double k) => Offset(
+          10 + reach * k,
+          y0 * (0.6 + 0.4 * k) +
+              14 * math.sin(_t * 5 + i - k * 2.4) * k -
+              drag * 0.2 * k * k,
+        );
+        arm.strokeWidth = (8 - i % 3 * 1.5) * (1 - k0 * 0.6);
+        canvas.drawLine(at(k0), at(k1), arm);
+      }
     }
     // Soluk, bakan iki göz.
     final eye = Paint()
