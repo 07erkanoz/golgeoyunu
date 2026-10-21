@@ -21,6 +21,24 @@ class MainMenu extends StatefulWidget {
 
 class _MainMenuState extends State<MainMenu>
     with SingleTickerProviderStateMixin {
+  int _taps = 0;
+  int _lastTap = 0;
+  bool _unlockedNote = false;
+
+  void _secretTap() {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    _taps = now - _lastTap < 700 ? _taps + 1 : 1;
+    _lastTap = now;
+    if (_taps < 7) return;
+    _taps = 0;
+    Settings.unlocked = levels.length - 1;
+    Settings.save();
+    setState(() => _unlockedNote = true);
+    Future.delayed(const Duration(seconds: 2), () {
+      if (mounted) setState(() => _unlockedNote = false);
+    });
+  }
+
   static const _text = Color(0xFFEBDDCB);
   static const _accent = Color(0xFFE0A15F);
 
@@ -175,14 +193,22 @@ class _MainMenuState extends State<MainMenu>
                         Row(
                           children: [
                             Flexible(
-                              child: Text(
-                                S.of('menuSubtitle'),
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  color: _accent.withValues(alpha: 0.7),
-                                  fontSize: 13,
-                                  fontStyle: FontStyle.italic,
-                                  letterSpacing: 2,
+                              // Gizli: yedi kez dokununca bütün bölümler
+                              // açılır (deneme için).
+                              child: GestureDetector(
+                                behavior: HitTestBehavior.opaque,
+                                onTap: _secretTap,
+                                child: Text(
+                                  _unlockedNote
+                                      ? S.of('allUnlocked')
+                                      : S.of('menuSubtitle'),
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    color: _accent.withValues(alpha: 0.7),
+                                    fontSize: 13,
+                                    fontStyle: FontStyle.italic,
+                                    letterSpacing: 2,
+                                  ),
                                 ),
                               ),
                             ),

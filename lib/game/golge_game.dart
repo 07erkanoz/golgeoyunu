@@ -687,6 +687,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     );
     GameAudio.instance.ambientFor(level.def.theme);
     GameAudio.instance.silenceLoops();
+    GameAudio.instance.prewarmLoops();
     threat = 0;
     hideAmount = 0;
     blizzard = 0;

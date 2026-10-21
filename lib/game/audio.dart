@@ -326,12 +326,20 @@ class GameAudio {
   void murmur(double level) => _set(_murmur, level * 0.6);
 
   /// Saklanırken ortam sesini kısar.
-  void duck(double amount) {
+  void duck(double amount, {bool force = false}) {
     amount = amount.clamp(0.0, 1.0);
-    if ((amount - _duck).abs() < 0.04) return;
+    if ((amount - _duck).abs() < 0.04 && !force) return;
+    // Yerel oynatıcıya en çok saniyede ~6 kez (saklanırken her karede
+    // çağrı yağması telefonda takılmaya yol açıyordu); uçlar hemen gider.
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final edge = amount <= 0.001 || amount >= 0.999;
+    if (!force && !edge && now - _duckAt < 160) return;
+    _duckAt = now;
     _duck = amount;
     _ambient?.setVolume(_ambientVolume);
   }
+
+  int _duckAt = 0;
 
   double get _ambientVolume => Settings.ambience * 0.8 * (1 - 0.65 * _duck);
 
@@ -368,9 +376,18 @@ class GameAudio {
   /// Sahne değişince bütün gerilim döngüleri susar.
   void silenceLoops() {
     for (final l in _loops) {
-      _set(l, 0);
+      l.hush();
     }
-    duck(0);
+    duck(0, force: true);
+  }
+
+  /// Gerilim döngülerini bölüm başında hazırlar (dosyalar yüklenir, sessiz
+  /// bekler).
+  void prewarmLoops() {
+    if (!_ready) return;
+    for (final l in _loops) {
+      l.prewarm();
+    }
   }
 }
 
@@ -429,41 +446,30 @@ class _LoopChannel {
   /// eder. (Her seferinde yenisini kurmak Android'de yerel oynatıcıları
   /// tüketip uygulamayı çökertiyordu.)
   void set(double level) {
-    if ((level - _level).abs() < 0.03 && (level > 0 || _level == 0)) return;
-    _level = level;
+    final now = DateTime.now().millisecondsSinceEpoch;
     final p = player;
     if (level <= 0) {
-      if (p != null && !_paused) {
+      // Sessizlik: önce yalnızca kısılır; ancak birkaç saniye sessiz kalırsa
+      // duraklar. (Saklanma otuna girip çıkarken her seferinde durdurup
+      // yeniden başlatmak Android'de oyunu takıltıyordu.)
+      if (_level > 0) {
+        _level = 0;
+        _silentAt = now;
+        if (p != null && !_paused) p.setVolume(0).catchError((_) {});
+      } else if (p != null && !_paused && now - _silentAt > 4000) {
         _paused = true;
         p.pause().catchError((_) {});
       }
       return;
     }
+    if ((level - _level).abs() < 0.03) return;
+    _level = level;
     if (p == null) {
-      if (_starting) return;
-      _starting = true;
-      GameAudio._log('döngü $file');
-      FlameAudio.loopLongAudio(file, volume: _volume)
-          .then((p) {
-            player = p;
-            _starting = false;
-            _paused = false;
-            // Başlarken seviye düştüyse duraklat.
-            if (_level <= 0) {
-              _paused = true;
-              p.pause().catchError((_) {});
-            } else {
-              p.setVolume(_volume).catchError((_) {});
-            }
-          })
-          .catchError((_) {
-            _starting = false;
-          });
+      _start();
       return;
     }
     // Ses düzeyi en çok saniyede ~12 kez gönderilir (120 Hz'de her karede
     // yerel oynatıcıya çağrı yağmasın).
-    final now = DateTime.now().millisecondsSinceEpoch;
     if (_paused || now - _lastVolume > 80) {
       _lastVolume = now;
       p.setVolume(_volume).catchError((_) {});
@@ -471,6 +477,50 @@ class _LoopChannel {
     if (_paused) {
       _paused = false;
       p.resume().catchError((_) {});
+    }
+  }
+
+  /// Sessizliğin başladığı an (ms).
+  int _silentAt = 0;
+
+  /// Oynatıcıyı kurar (dosya yüklenir); seviye sıfırsa kurulur kurulmaz
+  /// duraklar.
+  void _start() {
+    if (_starting || player != null) return;
+    _starting = true;
+    GameAudio._log('döngü $file');
+    FlameAudio.loopLongAudio(file, volume: _volume)
+        .then((p) {
+          player = p;
+          _starting = false;
+          _paused = false;
+          // Başlarken seviye düştüyse (ya da önceden hazırlanıyorsa) duraklar.
+          if (_level <= 0) {
+            _paused = true;
+            p.pause().catchError((_) {});
+          } else {
+            p.setVolume(_volume).catchError((_) {});
+          }
+        })
+        .catchError((_) {
+          _starting = false;
+        });
+  }
+
+  /// Önceden hazırlar: dosya bölüm başında yüklenir, ilk saklanışta oyun
+  /// takılmaz.
+  void prewarm() {
+    if (Settings.effects <= 0) return;
+    _start();
+  }
+
+  /// Hemen susar (sahne değişimi).
+  void hush() {
+    _level = 0;
+    final p = player;
+    if (p != null && !_paused) {
+      _paused = true;
+      p.pause().catchError((_) {});
     }
   }
 
