@@ -14,6 +14,7 @@ import 'palette.dart';
 import 'persist.dart';
 import 'player.dart';
 import 'rig.dart';
+import 'shadow_art.dart';
 import 'strings.dart';
 
 // ================================================================ Medusa
@@ -116,9 +117,13 @@ class MedusaHead extends PositionComponent
     return true;
   }
 
+  /// Paketteki Medusa çiziminin yılan durumu.
+  final _art = MedusaArtState();
+
   @override
   void update(double dt) {
     super.update(dt);
+    _art.update(dt, eyes: eyes, sealed: sealed);
     if (sealed) return;
     final before = eyes;
     _t += dt;
@@ -225,6 +230,27 @@ class MedusaHead extends PositionComponent
         : 0.0;
     canvas.save();
     canvas.translate(tremble, 0);
+    if (ShadowArt.ready) {
+      // Paketteki taş Medusa: canlı yılanlar, kapaklı gözler.
+      drawStoneMedusa(
+        canvas,
+        _art,
+        eyesAt: const Offset(0, -1.6),
+        eyes: e,
+        sealed: sealed,
+      );
+      if (e > 0.2) {
+        glowDot(
+          canvas,
+          const Offset(0, -2),
+          26,
+          const Color(0xFFD8F0C8),
+          0.35 * e,
+        );
+      }
+      canvas.restore();
+      return;
+    }
     _snakes(canvas, e);
     canvas.drawPicture(_face);
     // Göz çukurlarında ışıyan gözler; kapaklar yukarıdan açılır.

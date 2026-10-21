@@ -69,6 +69,7 @@ flutter:
     - assets/audio/
     - assets/icon/
     - assets/images/nemrut/
+    - assets/art/
 
   # To add assets to your application, add an assets section, like this:
   # assets:

@@ -499,7 +499,7 @@ class MythFigures {
 
   /// Tulpar: altın ışıklı kanatlı at. Kanatlar ağır ağır çırpar, yelesi
   /// ışıktan tellerle savrulur.
-  static void tulpar(Canvas c, double t, {double alpha = 1}) {
+  static void tulpar(Canvas c, double t, {double alpha = 1, Path? shape}) {
     // Kanat kökü sırtın içinde (sırt çizgisi burada y ≈ -72.5): gövde
     // kanatların dibini örter, kanat sırttan çıkıyor görünür.
     const root = Offset(5, -65);
@@ -532,7 +532,7 @@ class MythFigures {
     );
     _skyBody(
       c,
-      MythShapes.horse,
+      shape ?? MythShapes.horse,
       t,
       top: const Color(0xFFFFF6E0),
       bottom: const Color(0xFFD9A858),
@@ -1612,12 +1612,132 @@ class MythFigures {
     c.restore();
   }
 
+  /// Koşan at: eklemli beden, yürüyüşten dörtnalaya. [phase] 0-1 adım
+  /// döngüsü, [weight] 0 duruş · 1 tam dörtnala, [leap] havada uzanma (ön
+  /// ayaklar ileri kıvrılır, arka ayaklar geri itilir). Ölçü durağan at
+  /// siluetiyle (MythShapes.horse) aynı: ayaklar 0'da, sağa bakar.
+  static Path horseRun(double phase, {double weight = 1, double leap = 0}) {
+    final th = phase * 2 * math.pi;
+    final bob = -math.sin(th * 2).abs() * 3 * weight;
+    Path leg(
+      Offset root,
+      double a,
+      double knee,
+      double up,
+      double lo,
+      double w0,
+      bool hind,
+    ) {
+      final k = root + Offset(math.sin(a), math.cos(a)) * up;
+      final b = a + knee;
+      final f = k + Offset(math.sin(b), math.cos(b)) * lo;
+      var out = _strip([root, k], w0, w0 * 0.55);
+      for (final p in [
+        Path()..addOval(Rect.fromCircle(center: k, radius: w0 * 0.3)),
+        _strip([k, f], w0 * 0.45, w0 * 0.32),
+        // Toynak.
+        Path()..addRRect(
+          RRect.fromRectAndRadius(
+            Rect.fromCenter(
+              center: f + const Offset(1.5, -1.5),
+              width: w0 * 0.75,
+              height: 5,
+            ),
+            const Radius.circular(1.5),
+          ),
+        ),
+      ]) {
+        out = Path.combine(PathOperation.union, out, p);
+      }
+      return out;
+    }
+
+    final parts = <Path>[];
+    // Döner dörtnala: arka sol, arka sağ, ön sol, ön sağ. Kökler gövdenin
+    // içinde (uyluk ve omuz gövdeye karışır).
+    for (final (root, off, hind) in [
+      (Offset(-34, -60 + bob), 0.0, true),
+      (Offset(-29, -60 + bob), 0.1, true),
+      (Offset(27, -58 + bob), 0.45, false),
+      (Offset(32, -58 + bob), 0.55, false),
+    ]) {
+      final sw = math.sin(th + off * 2 * math.pi) * weight;
+      final lift = math.max(0.0, math.cos(th + off * 2 * math.pi)) * weight;
+      var a = sw * 0.55 + (hind ? -0.12 : 0.0);
+      // Arka bacakta topuk geriye, ön bacakta diz öne kırılır.
+      var knee = hind ? (0.45 + 0.7 * lift) : -(0.1 + 1.1 * lift);
+      if (leap > 0) {
+        a = a * (1 - leap) + (hind ? 0.9 : -1.0) * leap;
+        knee = knee * (1 - leap) + (hind ? 0.2 : -1.2) * leap;
+      }
+      parts.add(
+        leg(
+          root,
+          -a,
+          -knee,
+          hind ? 32 : 30,
+          hind ? 30 : 30,
+          hind ? 11 : 8.5,
+          hind,
+        ),
+      );
+    }
+    // Gövde: yuvarlak sağrı, derin göğüs.
+    parts.add(
+      Path()
+        ..moveTo(-48, -60 + bob)
+        ..cubicTo(-48, -78 + bob, -26, -75 + bob, 0, -73 + bob)
+        ..cubicTo(20, -73 + bob, 34, -76 + bob, 42, -64 + bob)
+        ..cubicTo(46, -54 + bob, 40, -46 + bob, 30, -44 + bob)
+        ..cubicTo(10, -42 + bob, -14, -45 + bob, -32, -46 + bob)
+        ..cubicTo(-44, -48 + bob, -50, -52 + bob, -48, -60 + bob)
+        ..close(),
+    );
+    // Kalın boyun ve uzun baş: koşarken boyun öne uzanır, adımla iner kalkar.
+    final nod = math.sin(th * 2 + 0.6) * 3 * weight + leap * 4;
+    final hx = nod * 0.5;
+    final hy = bob + nod;
+    parts.add(
+      Path()
+        ..moveTo(22, -70 + bob)
+        ..cubicTo(26, -84 + bob, 34 + hx, -94 + hy, 42 + hx, -100 + hy)
+        ..lineTo(44 + hx, -106 + hy)
+        ..lineTo(48 + hx, -100 + hy)
+        ..cubicTo(56 + hx, -96 + hy, 64 + hx, -86 + hy, 66 + hx, -80 + hy)
+        ..cubicTo(66 + hx, -74 + hy, 60 + hx, -73 + hy, 55 + hx, -76 + hy)
+        ..cubicTo(50 + hx, -78 + hy, 48, -70 + bob, 44, -58 + bob)
+        ..cubicTo(40, -52 + bob, 34, -50 + bob, 30, -52 + bob)
+        ..close(),
+    );
+    // Gür kuyruk: sağrıdan dalgalanarak geriye.
+    final swish = math.sin(th * 2 + 1.4) * 5 * weight + leap * 6;
+    parts.add(
+      Path()
+        ..moveTo(-46, -68 + bob)
+        ..cubicTo(
+          -58,
+          -70 + bob,
+          -64,
+          -60 + bob + swish * 0.4,
+          -66 - swish * 0.4,
+          -42 + bob + swish,
+        )
+        ..cubicTo(-60, -38 + bob + swish, -54, -46 + bob, -50, -56 + bob)
+        ..close(),
+    );
+    var shape = parts.first;
+    for (final p in parts.skip(1)) {
+      shape = Path.combine(PathOperation.union, shape, p);
+    }
+    return shape;
+  }
+
   /// Çalkuyruk: Er Töştük'ün konuşan atı. Koyu doru beden, yerin altının
   /// soğuk mavi ışığıyla çevrili kenar; yelesi rüzgârda.
-  static void calkuyruk(Canvas c, double t, {double alpha = 1}) {
+  static void calkuyruk(Canvas c, double t, {double alpha = 1, Path? shape}) {
     _inkBody(
       c,
-      MythShapes.horse,
+      shape ?? MythShapes.horse,
       t,
       rim: const Color(0xFF7AB8FF),
       alpha: alpha,

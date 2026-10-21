@@ -238,6 +238,11 @@ class Calkuyruk extends PositionComponent with HasGameReference<GolgeGame> {
 
   static const double drawScale = 0.38;
 
+  // Koşu: adım döngüsü, yürüyüş miktarı, havada uzanma.
+  double _phase = 0;
+  double _gait = 0;
+  double _leap = 0;
+
   /// Atın sırtı ayaklardan bu kadar yukarıda (Sâye burada oturur).
   static const double saddle = 21;
 
@@ -261,7 +266,13 @@ class Calkuyruk extends PositionComponent with HasGameReference<GolgeGame> {
       }
       return;
     }
-    position.setValues(p.position.x + Player.w / 2, p.position.y + Player.h);
+    final nx = p.position.x + Player.w / 2;
+    // Adım döngüsü yürünen yoldan (dörtnala ~70 piksel); havada uzanır.
+    _phase = (_phase + (nx - position.x).abs() / 70) % 1.0;
+    final speed = (p.velocity.x.abs() / 260).clamp(0.0, 1.0);
+    _gait += (speed - _gait) * math.min(1, dt * 6);
+    _leap += ((p.onGround ? 0.0 : 1.0) - _leap) * math.min(1, dt * 9);
+    position.setValues(nx, p.position.y + Player.h);
     facing = p.facing;
     final want = p.onGround ? 0.0 : (p.velocity.y / 900).clamp(-0.5, 0.5);
     _tilt += (want - _tilt) * math.min(1, dt * 8);
@@ -273,7 +284,11 @@ class Calkuyruk extends PositionComponent with HasGameReference<GolgeGame> {
     canvas.translate(size.x / 2, size.y);
     canvas.rotate(-_tilt * facing * 0.6);
     canvas.scale(facing * drawScale, drawScale);
-    MythFigures.calkuyruk(canvas, _t);
+    MythFigures.calkuyruk(
+      canvas,
+      _t,
+      shape: MythFigures.horseRun(_phase, weight: _gait, leap: _leap),
+    );
     canvas.restore();
   }
 }

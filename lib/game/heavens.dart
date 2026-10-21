@@ -233,6 +233,11 @@ class TulparMount extends PositionComponent with HasGameReference<GolgeGame> {
       );
 
   static const double drawScale = 0.38;
+
+  // Koşu: adım döngüsü, yürüyüş miktarı, havada uzanma.
+  double _phase = 0;
+  double _gait = 0;
+  double _leap = 0;
   double _t = 0;
   int facing = 1;
 
@@ -252,7 +257,13 @@ class TulparMount extends PositionComponent with HasGameReference<GolgeGame> {
       }
       return;
     }
-    position.setValues(p.position.x + Player.w / 2, p.position.y + Player.h);
+    final nx = p.position.x + Player.w / 2;
+    // Adım döngüsü yürünen yoldan (dörtnala ~70 piksel); havada uzanır.
+    _phase = (_phase + (nx - position.x).abs() / 70) % 1.0;
+    final speed = (p.velocity.x.abs() / 260).clamp(0.0, 1.0);
+    _gait += (speed - _gait) * math.min(1, dt * 6);
+    _leap += ((p.onGround ? 0.0 : 1.0) - _leap) * math.min(1, dt * 9);
+    position.setValues(nx, p.position.y + Player.h);
     facing = p.facing;
   }
 
@@ -264,7 +275,11 @@ class TulparMount extends PositionComponent with HasGameReference<GolgeGame> {
     // Uçarken kanatlar hızlı çırpar.
     final p = game.player;
     final fly = game.onHorse && p != null && !p.onGround;
-    MythFigures.tulpar(canvas, fly ? _t * 4 : _t);
+    MythFigures.tulpar(
+      canvas,
+      fly ? _t * 4 : _t,
+      shape: MythFigures.horseRun(_phase, weight: _gait, leap: _leap),
+    );
     canvas.restore();
   }
 }

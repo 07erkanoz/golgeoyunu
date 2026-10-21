@@ -14,6 +14,7 @@ import 'mechanics.dart';
 import 'entities.dart';
 import 'level.dart';
 import 'lighting.dart';
+import 'shadow_art.dart';
 import 'shafts.dart';
 import 'ski_decor.dart';
 import 'ski_fx.dart';
@@ -266,6 +267,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
   Future<void> onLoad() async {
     // Nemrut görselleri arka planda yüklenir; gelene dek kod çizimi kullanılır.
     NemrutImages.load();
+    ShadowArt.load();
     camera.viewfinder.anchor = Anchor.center;
     camera.backdrop = Backdrop();
     effects = ScreenEffects();

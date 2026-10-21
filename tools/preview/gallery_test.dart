@@ -11,6 +11,7 @@ import 'package:golge/game/entities.dart';
 import 'package:golge/game/golge_game.dart';
 import 'package:golge/game/level.dart';
 import 'package:golge/game/nemrut.dart';
+import 'package:golge/game/shadow_art.dart';
 import 'package:golge/game/player.dart';
 import 'package:golge/game/strings.dart';
 import 'package:golge/settings.dart';
@@ -47,6 +48,7 @@ void main() {
   testWithGame<GolgeGame>('galeri', GolgeGame.new, (game) async {
     await _fonts();
     await NemrutImages.load();
+    await ShadowArt.load();
     // ignore: avoid_print
     print('nemrut görselleri: ${NemrutImages.ready} ${NemrutImages.lastError}');
     S.lang = Lang.tr;

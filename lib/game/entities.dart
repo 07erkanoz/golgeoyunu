@@ -13,6 +13,7 @@ import 'palette.dart';
 import 'persist.dart';
 import 'player.dart';
 import 'rig.dart';
+import 'shadow_art.dart';
 
 // ================================================================ Fenerci
 
@@ -330,10 +331,27 @@ class Guard extends PositionComponent
 
   /// Asanın ucunda sallanan fener: ışık ve görüş, çizilen fenerin tam
   /// yerinden çıkar.
-  Vector2 get _lantern => Vector2(
-    position.x + gw / 2 + facing * (19 + _lanternSway),
-    position.y + 14,
-  );
+  Vector2 get _lantern {
+    final l = _lanternLocal;
+    return Vector2(
+      position.x + gw / 2 + facing * (l.dx - gw / 2),
+      position.y + l.dy,
+    );
+  }
+
+  /// Fenerin yeri (yöne çevrilmiş yerel çizimde, ayaklar (gw/2, gh)):
+  /// çizilen bedenin pozundan, asanın kancasında sallanarak.
+  Offset get _lanternLocal {
+    final a = guardLampArt(_phase, _amt, _run, _leanS, -_lanternSway / 9.5);
+    return Offset(
+      gw / 2 + (a.dx - guardArtFeet.dx) * guardArtScale,
+      gh + (a.dy - guardArtFeet.dy) * guardArtScale,
+    );
+  }
+
+  double get _run => (_speedS / chaseSpeed).clamp(0.0, 1.0);
+  double get _amt => (_speedS / patrolSpeed).clamp(0.0, 1.0);
+  double get _phase => (_gaitDist / (25 + 21 * _run)) % 1.0;
 
   double get _lanternSway => _swingS.value + math.sin(_life * 1.9 + 1) * 0.6;
 
@@ -398,7 +416,7 @@ class Guard extends PositionComponent
       canvas.translate(gw, 0);
       canvas.scale(-1, 1);
     }
-    final lantern = Offset(gw / 2 + 19 + _lanternSway, 14);
+    final lantern = _lanternLocal;
 
     // Fener konuşur: şüphe arttıkça ışık beyazlaşır ve sertleşir; görünce
     // titreşerek parlar. ("?" ve "!" işaretleri yok.)
@@ -458,6 +476,35 @@ class Guard extends PositionComponent
         ]),
     );
 
+    if (ShadowArt.ready) {
+      // Paketteki bekçi: karanlık siluet, kandil ışığıyla çizilen kenar.
+      final squash = _turnT > 0
+          ? 1 - 0.55 * math.sin(math.pi * _turnT / 0.2)
+          : 1.0;
+      canvas.save();
+      canvas.translate(gw / 2, 0);
+      canvas.scale(squash, 1);
+      canvas.translate(-gw / 2, 0);
+      drawShadowGuard(
+        canvas,
+        feet: const Offset(gw / 2, gh),
+        phase: _phase,
+        weight: _amt,
+        run: _run,
+        lean: _leanS,
+        lampAngle: -_lanternSway / 9.5,
+        doubt: doubt,
+        ink: kInk,
+        rim: beam.withValues(alpha: 0.35 + 0.25 * doubt),
+        eye: beam.withValues(
+          alpha: alert ? flicker : (distracted ? 0.35 : 0.6 + doubt * 0.4),
+        ),
+        lampGlass: beam.withValues(alpha: 0.95 * flicker),
+      );
+      canvas.restore();
+      canvas.restore();
+      return;
+    }
     // Dönerken beden bir an yan döner (ince görünür), sonra yeni yöne açılır.
     // Asa ve fener yerinde kalır (ışık oradan çıkar).
     final squash = _turnT > 0
