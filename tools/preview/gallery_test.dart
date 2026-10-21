@@ -38,6 +38,7 @@ void main() {
     S.lang = Lang.tr;
     Settings.brightness =
         double.parse(const String.fromEnvironment('BRIGHT', defaultValue: '1'));
+    Settings.lowGraphics = const bool.fromEnvironment('LOW');
     game.onGameResize(Vector2(1280, 720));
     // ad:bölüm:sütun:satır:yakınlık:saniye[:korku]
     for (final spec in shots.split(',')) {

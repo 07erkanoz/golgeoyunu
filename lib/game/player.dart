@@ -1049,11 +1049,16 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
         Offset.zero,
         width / 2,
         Paint()
-          ..shader = ui.Gradient.radial(Offset.zero, width / 2, [
-            const Color(0xFF000000).withValues(alpha: 0.62 * k),
-            const Color(0xFF000000).withValues(alpha: 0.3 * k),
-            const Color(0x00000000),
-          ], const [0, 0.55, 1]),
+          ..shader = ui.Gradient.radial(
+            Offset.zero,
+            width / 2,
+            [
+              const Color(0xFF000000).withValues(alpha: 0.62 * k),
+              const Color(0xFF000000).withValues(alpha: 0.3 * k),
+              const Color(0x00000000),
+            ],
+            const [0, 0.55, 1],
+          ),
       );
       canvas.restore();
     }

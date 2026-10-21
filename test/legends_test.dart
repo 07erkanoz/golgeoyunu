@@ -76,6 +76,23 @@ void main() {
       expect(p.deathCause, DeathCause.stone);
     });
 
+    testWithGame<GolgeGame>(
+      'ışının dışında, Medusa\'nın dibinde yürüyen taşa dönmez',
+      GolgeGame.new,
+      (game) async {
+        // Medusa 6. satırda; oyuncu iki satır aşağıda, burnunun dibinde.
+        final p = await trial(game, hall, col: 25, row: 8);
+        final m = game.world.children.whereType<MedusaHead>().first;
+        while (!m.gazing) {
+          game.update(1 / 60);
+        }
+        expect(m.inGaze(p.center), isFalse);
+        keys(game).right = true;
+        run(game, 0.3);
+        expect(p.isDead, isFalse);
+      },
+    );
+
     testWithGame<GolgeGame>('kıpırdamadan duran kurtulur', GolgeGame.new, (
       game,
     ) async {

@@ -6,9 +6,11 @@ import 'package:flame/components.dart';
 
 import 'audio.dart';
 import 'golge_game.dart';
+import 'legends.dart';
 import 'level.dart';
 import 'mechanics.dart';
 import 'palette.dart';
+import 'persist.dart';
 import 'player.dart';
 
 // ================================================================ Fenerci
@@ -20,7 +22,8 @@ enum GuardState { patrol, pause, alert, chase, investigate }
 /// Oyuncuyu ışık konisinde görünce hemen saldırmaz: önce şüphelenir ("?"),
 /// durup bakar. Şüphe dolarsa "!" ile kovalar. Ses ve ateşböceği ışığı onu
 /// o yöne çeker.
-class Guard extends PositionComponent with HasGameReference<GolgeGame> {
+class Guard extends PositionComponent
+    with HasGameReference<GolgeGame>, Persistent {
   Guard(Vector2 cell)
     : super(
         position: Level.standOn(cell, gw, gh),
@@ -45,6 +48,29 @@ class Guard extends PositionComponent with HasGameReference<GolgeGame> {
   FireflyLure? _lure;
 
   Level get level => game.level;
+
+  @override
+  String get persistKind => 'guard';
+
+  /// Devriyedeki Kandilci baştan kurulur; suya düşen bir daha dönmez.
+  @override
+  Object? captureState() => falling ? 'gone' : null;
+
+  @override
+  Iterable<Component> restoreState(Object? state, {required bool present}) {
+    if (!present || state == 'gone') return const [];
+    // Medusa'nın bakışıyla taşa dönmüş: yerinde heykel olarak durur.
+    if (state is Map) {
+      final s = numbers(state['stone'], 3);
+      if (s != null) {
+        return [
+          StoneGuard(Vector2(s[0], s[1]), s[2] < 0 ? -1 : 1)
+            ..persistId = persistId,
+        ];
+      }
+    }
+    return [this];
+  }
 
   void _setState(GuardState s) {
     state = s;
@@ -239,7 +265,8 @@ class Guard extends PositionComponent with HasGameReference<GolgeGame> {
     for (var r = r0; r <= r1; r++) {
       if (level.solid(c, r)) return false;
     }
-    // Sandıklar ve sürgü taşları geçişi keser.
+    // Sandıklar, sürgü taşları ve kapalı kapılar geçişi keser. Kapı
+    // parmaklıklıdır: ardındaki görülür ama geçilmez (oyuncu için de öyle).
     final ahead = Rect.fromLTWH(
       facing > 0 ? position.x + gw : position.x - dist,
       position.y + 4,
@@ -247,8 +274,9 @@ class Guard extends PositionComponent with HasGameReference<GolgeGame> {
       gh - 8,
     );
     if (game.world.children.whereType<Crate>().any(
-      (k) => k.toRect().overlaps(ahead),
-    )) {
+          (k) => k.toRect().overlaps(ahead),
+        ) ||
+        game.closedGateAt(ahead)) {
       return false;
     }
     final below = level.cell(c, ((position.y + gh + 1) / kTile).floor());
@@ -263,9 +291,14 @@ class Guard extends PositionComponent with HasGameReference<GolgeGame> {
   double get coneRange =>
       state == GuardState.chase ? viewDistance * 1.4 : viewDistance;
 
-  /// Asanın ucunda sallanan fener.
-  Vector2 get _lantern =>
-      Vector2(position.x + gw / 2 + facing * 19, position.y + 14);
+  /// Asanın ucunda sallanan fener: ışık ve görüş, çizilen fenerin tam
+  /// yerinden çıkar.
+  Vector2 get _lantern => Vector2(
+    position.x + gw / 2 + facing * (19 + _lanternSway),
+    position.y + 14,
+  );
+
+  double get _lanternSway => math.sin(_anim * 3 + 1) * 1.2;
 
   bool _canSee(Player p) {
     if (p.isDead || p.hidden) return false;
@@ -306,8 +339,7 @@ class Guard extends PositionComponent with HasGameReference<GolgeGame> {
       canvas.translate(gw, 0);
       canvas.scale(-1, 1);
     }
-    final sway = math.sin(_anim * 3 + 1) * 1.2;
-    final lantern = Offset(gw / 2 + 19 + sway, 14);
+    final lantern = Offset(gw / 2 + 19 + _lanternSway, 14);
 
     // Fener konuşur: şüphe arttıkça ışık beyazlaşır ve sertleşir; görünce
     // titreşerek parlar. ("?" ve "!" işaretleri yok.)
@@ -946,7 +978,8 @@ class FireflyLure extends PositionComponent with HasGameReference<GolgeGame> {
 // ================================================================== Sandık
 
 /// İtilebilir ahşap sandık: üstüne çıkılır, yüksek yerlere basamak olur.
-class Crate extends PositionComponent with HasGameReference<GolgeGame> {
+class Crate extends PositionComponent
+    with HasGameReference<GolgeGame>, Persistent {
   Crate(Vector2 cell)
     : super(
         position: Vector2(cell.x + 1, cell.y + kTile - side),
@@ -957,6 +990,26 @@ class Crate extends PositionComponent with HasGameReference<GolgeGame> {
   static const double side = 30;
   double _vy = 0;
   Deck? _riding;
+
+  @override
+  String get persistKind => 'crate';
+
+  /// Yalnızca durağan sandığın yeri saklanır; düşmekte olan ya da haritadan
+  /// çıkmış sandık başladığı yerde kurulur (sıkışma kalıcı olmasın).
+  @override
+  Object? captureState() =>
+      _vy.abs() < 1 &&
+          position.y < level.pixelHeight &&
+          level.cellAt(center.x, position.y + side - 2) != 'w'
+      ? [position.x, position.y]
+      : null;
+
+  @override
+  Iterable<Component> restoreState(Object? state, {required bool present}) {
+    final p = numbers(state, 2);
+    if (p != null) position.setValues(p[0], p[1]);
+    return [this];
+  }
 
   /// Üstünde durduğu hareketli zemin (asansör ağırlığı için).
   Deck? get riding => _riding;
@@ -1099,7 +1152,8 @@ class Crate extends PositionComponent with HasGameReference<GolgeGame> {
 // ==================================================================== Kapı
 
 /// Demir parmaklıklı kapı: kol çekilince yukarı kalkar.
-class Gate extends PositionComponent with HasGameReference<GolgeGame> {
+class Gate extends PositionComponent
+    with HasGameReference<GolgeGame>, Persistent {
   Gate(int col, int top, int bottom)
     : _height = (bottom - top + 1) * kTile,
       super(
@@ -1113,6 +1167,21 @@ class Gate extends PositionComponent with HasGameReference<GolgeGame> {
   double _lift = 0;
 
   bool get solid => _lift < _height * 0.75;
+
+  @override
+  String get persistKind => 'gate';
+
+  @override
+  Object? captureState() => opening ? 1 : null;
+
+  @override
+  Iterable<Component> restoreState(Object? state, {required bool present}) {
+    if (state == 1) {
+      opening = true;
+      _lift = _height;
+    }
+    return [this];
+  }
 
   @override
   Rect toRect() =>
@@ -1158,7 +1227,8 @@ class Gate extends PositionComponent with HasGameReference<GolgeGame> {
 // ===================================================================== Kol
 
 /// Duvardaki kol: oyuncu yanındayken ↑ ile çekilir, bölümdeki kapıları açar.
-class Lever extends PositionComponent with HasGameReference<GolgeGame> {
+class Lever extends PositionComponent
+    with HasGameReference<GolgeGame>, Persistent {
   Lever(Vector2 cell)
     : super(
         position: Vector2(cell.x + kTile / 2, cell.y + kTile),
@@ -1168,6 +1238,21 @@ class Lever extends PositionComponent with HasGameReference<GolgeGame> {
   bool pulled = false;
   double _swing = 0;
   double _t = 0;
+
+  @override
+  String get persistKind => 'lever';
+
+  @override
+  Object? captureState() => pulled ? 1 : null;
+
+  @override
+  Iterable<Component> restoreState(Object? state, {required bool present}) {
+    if (state == 1) {
+      pulled = true;
+      _swing = 1;
+    }
+    return [this];
+  }
 
   bool near(Vector2 p) =>
       (p - position).x.abs() < 22 && (p - position).y.abs() < 40;

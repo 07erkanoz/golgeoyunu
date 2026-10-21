@@ -10,6 +10,7 @@ import 'golge_game.dart';
 import 'level.dart';
 import 'levels.dart';
 import 'palette.dart';
+import 'persist.dart';
 
 /// Üstüne basılabilen hareketli zeminlerin ortak tabanı. Yalnızca üstten
 /// katıdır (tek yönlü platform gibi); üstünde duranı her karede kendi
@@ -245,11 +246,11 @@ class LiftPan extends Deck {
 
 /// Ağırlığa göre çalışan karşı ağırlıklı asansör: ağır kefe iner, öteki
 /// çıkar; ağırlıklar eşitse olduğu yerde kalır.
-class BalanceLift extends Component with HasGameReference<GolgeGame> {
+class BalanceLift extends Component
+    with HasGameReference<GolgeGame>, Persistent {
   // Kefelerden (14) sonra, sandık (17) ve oyuncudan (20) önce güncellenir:
   // böylece kefelerin bu karedeki hareketi binenlere aktarılır.
-  BalanceLift(this.a, this.b, {this.travel = kTile * 4})
-    : super(priority: 15);
+  BalanceLift(this.a, this.b, {this.travel = kTile * 4}) : super(priority: 15);
 
   /// Bir kefenin inip çıkabildiği yol (en çok 4 kare).
   final double travel;
@@ -259,6 +260,23 @@ class BalanceLift extends Component with HasGameReference<GolgeGame> {
   final LiftPan a;
   final LiftPan b;
   double _offset = 0;
+
+  @override
+  String get persistKind => 'lift';
+
+  @override
+  Object? captureState() => _offset == 0 ? null : [_offset];
+
+  @override
+  Iterable<Component> restoreState(Object? state, {required bool present}) {
+    final o = numbers(state, 1);
+    if (o != null) {
+      _offset = o[0].clamp(-travel, travel);
+      a.position.setFrom(a.base + Vector2(0, _offset));
+      b.position.setFrom(b.base - Vector2(0, _offset));
+    }
+    return [this];
+  }
 
   @override
   void update(double dt) {

@@ -61,6 +61,30 @@ List<_Chunk> _chunked(
   return out;
 }
 
+/// Son kurulan bölümün dilimleri. Arazi yalnızca haritaya bağlı: ölüp yeniden
+/// doğunca (aynı bölüm) yeniden çizilmez, bölüm değişince eskisi bırakılır.
+class _ChunkCache {
+  static LevelDef? _def;
+  static final _lists = <String, List<_Chunk>>{};
+
+  static List<_Chunk> of(
+    String kind,
+    Level lv,
+    Picture Function(Level, int c0, int c1, int r0, int r1) build,
+  ) {
+    if (!identical(_def, lv.def)) {
+      for (final list in _lists.values) {
+        for (final c in list) {
+          c.picture.dispose();
+        }
+      }
+      _lists.clear();
+      _def = lv.def;
+    }
+    return _lists[kind] ??= _chunked(lv, build);
+  }
+}
+
 void _drawVisible(Canvas canvas, List<_Chunk> chunks, Rect view) {
   for (final c in chunks) {
     if (c.bounds.overlaps(view)) canvas.drawPicture(c.picture);
@@ -70,21 +94,12 @@ void _drawVisible(Canvas canvas, List<_Chunk> chunks, Rect view) {
 /// Arazi dilim dilim önceden çizilir; her karede yalnızca görünenler basılır.
 class TerrainComponent extends Component with HasGameReference<GolgeGame> {
   TerrainComponent(this._level)
-    : _chunks = _chunked(_level, _buildTerrain),
+    : _chunks = _ChunkCache.of('terrain', _level, _buildTerrain),
       super(priority: 0);
 
   final Level _level;
   final List<_Chunk> _chunks;
   static final _ink = Paint()..color = kInk;
-
-  @override
-  void onRemove() {
-    // Bölüm kaldırılınca önceden çizilmiş dilimlerin yerel belleği bırakılır.
-    for (final c in _chunks) {
-      c.picture.dispose();
-    }
-    super.onRemove();
-  }
 
   @override
   void render(Canvas canvas) {
@@ -110,18 +125,10 @@ class TerrainComponent extends Component with HasGameReference<GolgeGame> {
 /// görsel olarak da örter.
 class ForegroundComponent extends Component with HasGameReference<GolgeGame> {
   ForegroundComponent(Level level)
-    : _chunks = _chunked(level, _buildForeground),
+    : _chunks = _ChunkCache.of('fore', level, _buildForeground),
       super(priority: 30);
 
   final List<_Chunk> _chunks;
-
-  @override
-  void onRemove() {
-    for (final c in _chunks) {
-      c.picture.dispose();
-    }
-    super.onRemove();
-  }
 
   @override
   void render(Canvas canvas) =>

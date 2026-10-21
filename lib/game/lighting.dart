@@ -10,6 +10,7 @@ import 'konya.dart';
 import 'legends.dart';
 import 'mechanics.dart';
 import 'nemrut.dart';
+import 'palette.dart';
 import 'puzzles.dart';
 import '../settings.dart';
 import 'golge_game.dart';
@@ -262,5 +263,128 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
           const [0, 0.45, 1],
         ),
     );
+    _cheapSignals(canvas);
   }
+
+  /// Düşük grafikte de oynanışı taşıyan ışıklar görünür kalır: Kandilci'nin
+  /// konisi, gözcü ve fener huzmeleri, çıkış, ateşböcekleri, güneş huzmesi,
+  /// kandil tablaları. Ara katman yerine karanlığın üstüne eklenen (plus)
+  /// yumuşak parıltı: ucuz, ama ışığın nereye vurduğu okunur.
+  void _cheapSignals(Canvas canvas) {
+    void glow(Offset c, double r, Color color, double a) {
+      if (a <= 0 || !_view.overlaps(Rect.fromCircle(center: c, radius: r))) {
+        return;
+      }
+      _glow.shader = ui.Gradient.radial(c, r, [
+        color.withValues(alpha: a),
+        color.withValues(alpha: 0),
+      ]);
+      canvas.drawCircle(c, r, _glow);
+    }
+
+    void beam(Path path, Offset from, Offset to, Color color, double a) {
+      if (!_view.overlaps(path.getBounds())) return;
+      _glow.shader = ui.Gradient.linear(from, to, [
+        color.withValues(alpha: a),
+        color.withValues(alpha: 0),
+      ]);
+      canvas.drawPath(path, _glow);
+    }
+
+    const cold = Color(0xFFBFEFE8);
+    for (final c in game.world.children) {
+      switch (c) {
+        case Guard g when !g.falling:
+          final l = g.lanternWorld.toOffset();
+          final range = g.coneRange;
+          final f = g.facing.toDouble();
+          glow(l, 70, cold, 0.22);
+          beam(
+            Path()
+              ..moveTo(l.dx, l.dy - 3)
+              ..lineTo(l.dx + f * range, l.dy - range * 0.5 - 34)
+              ..lineTo(l.dx + f * range, l.dy + range * 0.5 + 34)
+              ..lineTo(l.dx, l.dy + 3)
+              ..close(),
+            l,
+            l.translate(f * range, 0),
+            cold,
+            0.16,
+          );
+        case Watcher w when w.dazzled <= 0:
+          final o = w.lamp.toOffset();
+          glow(o, 50, cold, 0.2);
+          final path = w.beamPath();
+          final b = path.getBounds();
+          beam(path, o, b.center, cold, 0.14);
+        case LanternBalloon b:
+          final o = b.position.toOffset();
+          glow(o, 50, kWarmLight, 0.2);
+          const len = LanternBalloon.beamLength;
+          beam(
+            Path()
+              ..moveTo(o.dx - 10, o.dy + 10)
+              ..lineTo(o.dx + 10, o.dy + 10)
+              ..lineTo(o.dx + 10 + len * 0.32, o.dy + len)
+              ..lineTo(o.dx - 10 - len * 0.32, o.dy + len)
+              ..close(),
+            o,
+            o.translate(0, len),
+            kWarmLight,
+            0.14,
+          );
+        case GreatLamp g:
+          final o = g.position.toOffset();
+          glow(o, 70, kWarmLight, 0.22);
+          beam(
+            g.beamPath().shift(o),
+            o,
+            o.translate(0, GreatLamp.reach * 0.6),
+            kWarmLight,
+            0.12,
+          );
+        case ExitPortal e:
+          glow(
+            (e.position + Vector2(kTile / 2, kTile)).toOffset(),
+            150,
+            kWarmLight,
+            0.22,
+          );
+        case FireflyLure l:
+          glow(
+            l.position.toOffset(),
+            110 * math.max(0.3, l.strength),
+            kWarmLight,
+            0.26 * l.strength,
+          );
+        case FireflySwarm f:
+          glow(f.position.toOffset(), 50, kWarmLight, 0.16 * f.strength);
+        case MemoryShard m:
+          glow(m.position.toOffset(), 56, kWarmLight, 0.16);
+        case FireVent v when v.burning:
+          glow(v.position.toOffset().translate(0, -40), 90, kWarmLight, 0.2);
+        case CandleTray t:
+          glow(
+            (t.position + Vector2(kTile, -8)).toOffset(),
+            56,
+            kWarmLight,
+            0.16,
+          );
+        case SunBeam b:
+          for (final (a, z) in b.segments) {
+            _glowLine
+              ..color = kWarmLight.withValues(alpha: 0.12)
+              ..strokeWidth = 40;
+            canvas.drawLine(a, z, _glowLine);
+          }
+        case GiantPerde g:
+          glow(g.glowCenter, g.glowRadius, kWarmLight, 0.18);
+      }
+    }
+  }
+
+  final _glow = Paint()..blendMode = BlendMode.plus;
+  final _glowLine = Paint()
+    ..blendMode = BlendMode.plus
+    ..strokeCap = StrokeCap.round;
 }

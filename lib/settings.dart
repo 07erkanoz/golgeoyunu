@@ -33,7 +33,6 @@ class Settings {
   /// Dokunmatik düğmelerin görünürlüğü (0.1 – 1).
   static double touchOpacity = 0.7;
 
-
   static SharedPreferences? _prefs;
 
   /// Ayar deposu: açılamazsa bir sonraki kayıtta yeniden denenir.
@@ -84,8 +83,7 @@ class Settings {
     if (p != null) {
       fullscreen = _read(() => p.getBool('fullscreen')) ?? fullscreen;
       lowGraphics = _read(() => p.getBool('low_graphics')) ?? lowGraphics;
-      touchGestures =
-          _read(() => p.getBool('touch_gestures')) ?? touchGestures;
+      touchGestures = _read(() => p.getBool('touch_gestures')) ?? touchGestures;
       // Kayıtlı bir tercih yoksa cihazın dili: Türkçe değilse İngilizce.
       final lang = _read(() => p.getString('lang'));
       S.lang = switch (lang) {
@@ -137,6 +135,7 @@ class SaveData {
     required this.whispers,
     required this.fireflies,
     required this.wings,
+    this.puzzle = const {},
     int? time,
   }) : time = time ?? DateTime.now().millisecondsSinceEpoch;
 
@@ -147,6 +146,10 @@ class SaveData {
   final List<String> whispers;
   final int fireflies;
   final bool wings;
+
+  /// Kontrol noktasındaki bulmaca durumu (açılan kapılar, çekilen kollar,
+  /// alınan tüyler, sürülen sandıklar...): devam edince dünya böyle kurulur.
+  final Map<String, Object?> puzzle;
 
   /// Yazıldığı an: iki kopyadan yenisini seçmek için.
   final int time;
@@ -176,6 +179,7 @@ class SaveData {
     'whispers': whispers,
     'fireflies': fireflies,
     'wings': wings,
+    'puzzle': puzzle,
   });
 
   static SaveData? decode(String? raw) {
@@ -190,6 +194,10 @@ class SaveData {
         whispers: [...(m['whispers'] as List).cast<String>()],
         fireflies: m['fireflies'] as int,
         wings: m['wings'] as bool,
+        // Eski kayıtlarda yok; bozuksa bulmacalar baştan kurulur.
+        puzzle: m['puzzle'] is Map
+            ? Map<String, Object?>.from(m['puzzle'] as Map)
+            : const {},
         time: (m['time'] as num?)?.toInt() ?? 0,
       )._valid();
     } catch (_) {

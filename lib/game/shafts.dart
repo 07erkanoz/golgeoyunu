@@ -135,11 +135,16 @@ class LightShafts extends Component with HasGameReference<GolgeGame> {
     final add = Paint()..blendMode = BlendMode.plus;
     // Yumuşak kenar: dıştan içe üç saydam kat; en içteki çekirdek en parlak.
     for (final (grow, a) in const [(1.5, 0.05), (1.0, 0.07), (0.45, 0.08)]) {
-      add.shader = Gradient.linear(top, bottom, [
-        color.withValues(alpha: a * k),
-        color.withValues(alpha: a * k * 0.55),
-        color.withValues(alpha: 0),
-      ], const [0, 0.55, 1]);
+      add.shader = Gradient.linear(
+        top,
+        bottom,
+        [
+          color.withValues(alpha: a * k),
+          color.withValues(alpha: a * k * 0.55),
+          color.withValues(alpha: 0),
+        ],
+        const [0, 0.55, 1],
+      );
       canvas.drawPath(beam(grow), add);
     }
     add.shader = null;
@@ -181,7 +186,8 @@ class LightShafts extends Component with HasGameReference<GolgeGame> {
       final seed = (i * 0.618034 + s.phase) % 1.0;
       final speed = 0.012 + (i % 5) * 0.004;
       final u = (seed + _t * speed) % 1.0;
-      final across = math.sin(i * 12.9898 + s.phase) * 0.42 +
+      final across =
+          math.sin(i * 12.9898 + s.phase) * 0.42 +
           math.sin(_t * 0.6 + i * 1.7) * 0.06;
       final p = Offset.lerp(top, bottom, u)!;
       final width = w0 + (w1 - w0) * u;

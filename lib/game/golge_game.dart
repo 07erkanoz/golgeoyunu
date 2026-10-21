@@ -18,6 +18,7 @@ import 'shafts.dart';
 import 'levels.dart';
 import 'narration.dart';
 import 'perde.dart';
+import 'persist.dart';
 import 'palette.dart';
 import 'player.dart';
 import 'konya.dart';
@@ -78,6 +79,7 @@ class Controls {
     touch.release();
     _lureQueued = false;
   }
+
   bool takeLure() {
     final queued = _lureQueued;
     _lureQueued = false;
@@ -222,6 +224,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     fireflies = startFireflies;
     wingsCollected = false;
     _respawn = null;
+    _puzzle = null;
     _leaveMenu();
     _buildLevel(0);
     _saveProgress();
@@ -253,6 +256,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     // sonrakiler kanatla oynanır (öğretim dengesi bozulmasın).
     wingsCollected = index >= 2;
     _respawn = null;
+    _puzzle = null;
     _leaveMenu();
     _buildLevel(index);
     _saveProgress();
@@ -279,6 +283,8 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     fireflies = save.fireflies;
     wingsCollected = save.wings;
     _respawn = Vector2(save.x, save.y);
+    _puzzle = save.puzzle.isEmpty ? null : save.puzzle;
+    _checkpointFireflies = save.fireflies;
     _leaveMenu();
     _buildLevel(save.level.clamp(0, levels.length - 1), respawn: true);
     // Kayıttaki konum bu bölümün içinde değilse bölüm başından.
@@ -319,8 +325,46 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         whispers: _whispersShown.toList(),
         fireflies: fireflies,
         wings: wingsCollected,
+        puzzle: _puzzle ?? const {},
       ),
     );
+  }
+
+  /// Son kontrol noktasındaki bulmaca durumu (null: bölüm başı).
+  Map<String, Object?>? _puzzle;
+
+  /// Kontrol noktasına dokunulduğunda elde olan ateşböceği: ölünce bundan
+  /// azıyla dönülmez (karanlık geçiş kaynaksız kalmasın).
+  int _checkpointFireflies = 0;
+
+  /// Şu an üstünde durulan kontrol noktası (yanından geçerken her kare
+  /// yeniden kaydetmesin).
+  Vector2? _atCheckpoint;
+
+  /// Kontrol noktasına dokunuldu: konum, bulmaca durumu ve elde olanlar
+  /// saklanır.
+  void _reachCheckpoint(Vector2 cell) {
+    _respawn = Level.standOn(cell, Player.w, Player.h);
+    _puzzle = capturePuzzle(world.children);
+    _checkpointFireflies = fireflies;
+    _saveProgress();
+  }
+
+  /// Testler için: kontrol noktasına dokunulmuş gibi şimdiki düzeni saklar.
+  void debugCheckpoint() => _reachCheckpoint(
+    Vector2(player!.position.x, player!.position.y + Player.h - kTile),
+  );
+
+  /// Yeniden doğarken: kontrol noktasındaki kadar ateşböceği; karanlığın
+  /// içinde ya da kıyısında doğuluyorsa en az iki (yolu görecek kadar).
+  void _ensureFireflies() {
+    fireflies = math.max(fireflies, _checkpointFireflies);
+    final r = _respawn;
+    if (r == null) return;
+    final near = level.darkZones.any(
+      (z) => z.inflate(6 * kTile).contains(Offset(r.x, r.y)),
+    );
+    if (near) fireflies = math.max(fireflies, startFireflies);
   }
 
   void _updateMenuCamera(double dt) {
@@ -422,7 +466,12 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     world.removeAll(world.children.toList());
     // Yeni bir bölüme geçerken (ölüp yeniden doğmada değil) eski bölümün
     // bekleyen metinleri atılır.
-    if (!respawn || index != levelIndex) narration.resetScene();
+    if (!respawn || index != levelIndex) {
+      narration.resetScene();
+      // Başka bölüme geçerken önceki bölümün bulmaca durumu atılır.
+      _puzzle = null;
+    }
+    _atCheckpoint = null;
     levelIndex = index;
     // Oynanan en ileri bölüm açılır (bölüm listesi için).
     if (withPlayer && index > Settings.unlocked) {
@@ -435,119 +484,124 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     if (!respawn || _respawn == null) {
       _respawn = Level.standOn(level.playerStart, Player.w, Player.h);
       _darkWarned = false;
+      _checkpointFireflies = fireflies;
     }
+    if (respawn) _ensureFireflies();
 
-    world.addAll([
-      TerrainComponent(level),
-      LightingLayer(),
-      LightShafts(),
-      ForegroundComponent(level),
-      WindCurrents(),
-      WaterComponent(level),
-      ExitPortal(level.exitCell),
-      for (final g in level.guardCells) Guard(g),
-      for (final c in level.crateCells) Crate(c),
-      for (final l in level.leverCells) Lever(l),
-      for (final (col, top, bottom) in level.gates) Gate(col, top, bottom),
-      ?_guideBird(),
-      for (final f in level.fireflyCells) FireflySwarm(f),
-      for (final (c, vertical) in level.movingCells)
-        MovingRock(c, vertical: vertical),
-      for (final c in level.crumbleCells) CrumbleRock(c),
-      ..._lifts(),
-      for (final c in level.batCells)
-        if (level.def.theme.snowy) Wolf(c) else BatRoost(c),
-      for (final c in level.thinIceCells) ThinIce(c),
-      for (final c in level.crowCells) Crow(c),
-      for (final c in level.watcherCells) Watcher(c),
-      for (final c in level.wingsCells) WingsPickup(c),
-      for (final c in level.glimpseCells) KarabasanGlimpse(c),
-      for (final c in level.icicleCells) FallingIcicle(c),
-      for (final c in level.medusaCells) MedusaHead(c),
-      for (var i = 0; i < level.starCells.length; i++)
-        StarStone(level.starCells[i], i),
-      for (final c in level.reliefCells) HoroscopeRelief(c),
-      for (final c in level.boulderCells) LooseBoulder(c),
-      for (final (c, kind) in level.statueCells) Colossus(c, kind: kind),
-      for (final c in level.giantCells) StoneGiant(c),
-      if (level.def.quakes) QuakeClock(),
-      for (final z in level.rainZones) RainZone(z),
-      for (final c in level.shieldCells)
-        if (level.def.theme == LevelTheme.cave)
-          MillStone(c)
-        else
-          ShieldCrate(c),
-      for (final c in level.ringCells) FairyRing(c),
-      for (final c in level.raftCells) Raft(c),
-      for (var i = 0; i < level.ventCells.length; i++)
-        FireVent(level.ventCells[i], phase: i * 1.1),
-      for (final c in level.balloonCells) LanternBalloon(c),
-      for (final c in level.featherCells) SimurgFeather(c),
-      for (final c in level.altarCells) FeatherAltar(c),
-      for (final c in level.bellCells) WindBell(c),
-      for (final c in level.ruinCells) MonasteryRuin(c),
-      for (final c in level.perdeCells) GiantPerde(c),
-      for (final (c, r, n) in level.glowRuns)
-        PhasePlank(Vector2(c * kTile, r * kTile.toDouble()), n, shade: false),
-      // Gölge köprüsü ikişer karelik parçalardan: ışık yalnızca değdiği
-      // parçayı siler (tek parça olunca ışığın bir ucu bütün köprüyü
-      // siliyordu; iki gözcülü köprü hiç geçilemiyordu).
-      for (final (c, r, n) in level.shadeRuns)
-        for (var k = 0; k < n; k += 2)
-          PhasePlank(
-            Vector2((c + k) * kTile, r * kTile.toDouble()),
-            math.min(2, n - k),
-            shade: true,
+    world.addAll(
+      restorePuzzle([
+        TerrainComponent(level),
+        LightingLayer(),
+        LightShafts(),
+        ForegroundComponent(level),
+        WindCurrents(),
+        WaterComponent(level),
+        ExitPortal(level.exitCell),
+        for (final g in level.guardCells) Guard(g),
+        for (final c in level.crateCells) Crate(c),
+        for (final l in level.leverCells) Lever(l),
+        for (final (col, top, bottom) in level.gates) Gate(col, top, bottom),
+        ?_guideBird(),
+        for (final f in level.fireflyCells) FireflySwarm(f),
+        for (final (c, vertical) in level.movingCells)
+          MovingRock(c, vertical: vertical),
+        for (final c in level.crumbleCells) CrumbleRock(c),
+        ..._lifts(),
+        for (final c in level.batCells)
+          if (level.def.theme.snowy) Wolf(c) else BatRoost(c),
+        for (final c in level.thinIceCells) ThinIce(c),
+        for (final c in level.crowCells) Crow(c),
+        for (final c in level.watcherCells) Watcher(c),
+        if (!wingsCollected)
+          for (final c in level.wingsCells) WingsPickup(c),
+        for (final c in level.glimpseCells) KarabasanGlimpse(c),
+        for (final c in level.icicleCells) FallingIcicle(c),
+        for (final c in level.medusaCells) MedusaHead(c),
+        for (var i = 0; i < level.starCells.length; i++)
+          StarStone(level.starCells[i], i),
+        for (final c in level.reliefCells) HoroscopeRelief(c),
+        for (final c in level.boulderCells) LooseBoulder(c),
+        for (final (c, kind) in level.statueCells) Colossus(c, kind: kind),
+        for (final c in level.giantCells) StoneGiant(c),
+        if (level.def.quakes) QuakeClock(),
+        for (final z in level.rainZones) RainZone(z),
+        for (final c in level.shieldCells)
+          if (level.def.theme == LevelTheme.cave)
+            MillStone(c)
+          else
+            ShieldCrate(c),
+        for (final c in level.ringCells) FairyRing(c),
+        for (final c in level.raftCells) Raft(c),
+        for (var i = 0; i < level.ventCells.length; i++)
+          FireVent(level.ventCells[i], phase: i * 1.1),
+        for (final c in level.balloonCells) LanternBalloon(c),
+        for (final c in level.featherCells) SimurgFeather(c),
+        for (final c in level.altarCells) FeatherAltar(c),
+        for (final c in level.bellCells) WindBell(c),
+        for (final c in level.ruinCells) MonasteryRuin(c),
+        for (final c in level.perdeCells) GiantPerde(c),
+        for (final (c, r, n) in level.glowRuns)
+          PhasePlank(Vector2(c * kTile, r * kTile.toDouble()), n, shade: false),
+        // Gölge köprüsü ikişer karelik parçalardan: ışık yalnızca değdiği
+        // parçayı siler (tek parça olunca ışığın bir ucu bütün köprüyü
+        // siliyordu; iki gözcülü köprü hiç geçilemiyordu).
+        for (final (c, r, n) in level.shadeRuns)
+          for (var k = 0; k < n; k += 2)
+            PhasePlank(
+              Vector2((c + k) * kTile, r * kTile.toDouble()),
+              math.min(2, n - k),
+              shade: true,
+            ),
+        for (final (c, r, n) in level.rottenRuns) RottenPlank(c, r, n),
+        ..._basins(),
+        for (final c in level.drainValves) Valve(c, fill: false),
+        for (final c in level.fillValves) Valve(c, fill: true),
+        for (final (c, slash) in level.mirrorCells) Mirror(c, slash: slash),
+        for (final c in level.lockCells) SunLock(c),
+        for (final c in level.beamCells) SunBeam(c),
+        for (final (c, r, n) in level.ropes) SwingRope(c, r, n),
+        for (var i = 0; i < level.animalCells.length; i++)
+          AnimalCrate(
+            level.animalCells[i],
+            AnimalKind.values[i % AnimalKind.values.length],
           ),
-      for (final (c, r, n) in level.rottenRuns) RottenPlank(c, r, n),
-      ..._basins(),
-      for (final c in level.drainValves) Valve(c, fill: false),
-      for (final c in level.fillValves) Valve(c, fill: true),
-      for (final (c, slash) in level.mirrorCells) Mirror(c, slash: slash),
-      for (final c in level.lockCells) SunLock(c),
-      for (final c in level.beamCells) SunBeam(c),
-      for (final (c, r, n) in level.ropes) SwingRope(c, r, n),
-      for (var i = 0; i < level.animalCells.length; i++)
-        AnimalCrate(
-          level.animalCells[i],
-          AnimalKind.values[i % AnimalKind.values.length],
-        ),
-      for (var i = 0; i < level.pedestalCells.length; i++)
-        Pedestal(
-          level.pedestalCells[i],
-          AnimalKind.values[i % AnimalKind.values.length],
-        ),
-      if (level.chaseStart != null && level.chaseEnd != null)
+        for (var i = 0; i < level.pedestalCells.length; i++)
+          Pedestal(
+            level.pedestalCells[i],
+            AnimalKind.values[i % AnimalKind.values.length],
+          ),
+        if (level.chaseStart != null && level.chaseEnd != null)
+          if (skiSurface != null)
+            Avalanche(level.chaseStart!, level.chaseEnd!)
+          else if (level.def.theme == LevelTheme.konya)
+            LightFlood(level.chaseStart!, level.chaseTop!)
+          else
+            Karabasan(level.chaseStart!, level.chaseEnd!),
+        for (var i = 0; i < level.semazenCells.length; i++)
+          Semazen(level.semazenCells[i], index: i),
+        for (var i = 0; i < level.chandelierCells.length; i++)
+          ..._chandelier(level.chandelierCells[i], i),
+        for (var i = 0; i < level.lampCells.length; i++)
+          GreatLamp(level.lampCells[i], index: i),
+        // İki fener aynı şerefedeyse aralarında bir minare yükselir.
+        if (level.lampCells.length >= 2)
+          MinaretCap(
+            Vector2(
+              (level.lampCells[0].x + level.lampCells[1].x) / 2 + kTile / 2,
+              level.lampCells[0].y - kTile - 24,
+            ),
+          ),
+        if (skiSurface != null) SkiTerrain(skiSurface!),
         if (skiSurface != null)
-          Avalanche(level.chaseStart!, level.chaseEnd!)
-        else if (level.def.theme == LevelTheme.konya)
-          LightFlood(level.chaseStart!, level.chaseTop!)
-        else
-          Karabasan(level.chaseStart!, level.chaseEnd!),
-      for (var i = 0; i < level.semazenCells.length; i++)
-        Semazen(level.semazenCells[i], index: i),
-      for (var i = 0; i < level.chandelierCells.length; i++)
-        ..._chandelier(level.chandelierCells[i], i),
-      for (var i = 0; i < level.lampCells.length; i++)
-        GreatLamp(level.lampCells[i], index: i),
-      // İki fener aynı şerefedeyse aralarında bir minare yükselir.
-      if (level.lampCells.length >= 2)
-        MinaretCap(
-          Vector2(
-            (level.lampCells[0].x + level.lampCells[1].x) / 2 + kTile / 2,
-            level.lampCells[0].y - kTile - 24,
-          ),
-        ),
-      if (skiSurface != null) SkiTerrain(skiSurface!),
-      if (skiSurface != null)
-        for (final c in level.skiRocks) SkiRock(c, skiSurface!),
-      for (final (c, r, n) in level.skiRails) SkiRail(c, r, n),
-      for (final (a, b) in level.def.magnet)
-        MagnetZone(a * kTile.toDouble(), (b + 1) * kTile.toDouble()),
-      for (var i = 0; i < level.memoryCells.length; i++)
-        if (!_memories.contains('$index:$i'))
-          MemoryShard(level.memoryCells[i], i),
-    ]);
+          for (final c in level.skiRocks) SkiRock(c, skiSurface!),
+        for (final (c, r, n) in level.skiRails) SkiRail(c, r, n),
+        for (final (a, b) in level.def.magnet)
+          MagnetZone(a * kTile.toDouble(), (b + 1) * kTile.toDouble()),
+        for (var i = 0; i < level.memoryCells.length; i++)
+          if (!_memories.contains('$index:$i'))
+            MemoryShard(level.memoryCells[i], i),
+      ], _puzzle),
+    );
     GameAudio.instance.ambientFor(level.def.theme);
     GameAudio.instance.silenceLoops();
     threat = 0;
@@ -589,26 +643,36 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     }
   }
 
+  /// Kapalı bir kapı bu alanı kesiyor mu (Kandilci, kurt geçemez).
+  bool closedGateAt(Rect r) => world.children.whereType<Gate>().any(
+    (g) => g.solid && g.toRect().overlaps(r),
+  );
+
   /// Bir noktaya ışık değiyor mu: açık kavanoz (çömelmemiş, saklanmamış),
-  /// ateşböceği, Kandilci feneri ve konisi, güneş huzmesi.
+  /// ateşböceği, Kandilci feneri ve konisi, güneş huzmesi. Kaya duvar ışığı
+  /// keser: duvarın ardındaki tahta yanmaz (güneş huzmesi ve uçan fener kendi
+  /// ışınlarını zaten duvarda keser).
   bool litAt(Vector2 at) {
+    bool reaches(Vector2 from, double radius) =>
+        (from - at).length2 < radius * radius && level.lineOfSight(from, at);
     final p = player;
     if (p != null && p.isMounted && !p.isDead && !p.crouching && !p.hidden) {
       final (pos, r) = p.light;
-      if ((pos - at).length < r * 0.7) return true;
+      if (reaches(pos, r * 0.7)) return true;
     }
     for (final c in world.children) {
       switch (c) {
         case FireflyLure l when l.glowing:
-          if ((l.position - at).length < 110) return true;
+          if (reaches(l.position, 110)) return true;
         case Guard g when !g.falling:
           final lantern = g.lanternWorld;
           final d = at - lantern;
-          if (d.length < 70) return true;
+          if (reaches(lantern, 70)) return true;
           final ahead = d.x * g.facing;
           if (ahead > 0 &&
               ahead < g.coneRange &&
-              d.y.abs() < ahead * 0.5 + 34) {
+              d.y.abs() < ahead * 0.5 + 34 &&
+              level.lineOfSight(lantern, at)) {
             return true;
           }
         case SunBeam b:
@@ -616,7 +680,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         case LanternBalloon b:
           if (b.inBeam(at)) return true;
         case FireVent v when v.burning:
-          if ((v.position - at).length < 90) return true;
+          if (reaches(v.position, 90)) return true;
       }
     }
     return false;
@@ -876,27 +940,37 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         narration.whisper(level.def.whisperTexts[i]);
       }
     }
+    Vector2? touching;
     for (final cell in level.checkpointCells) {
-      if (near(cell, 40, 60)) {
-        final spot = Level.standOn(cell, Player.w, Player.h);
-        if (_respawn != spot) {
-          _respawn = spot;
-          _saveProgress();
-        }
-      }
+      if (near(cell, 40, 60)) touching = cell;
     }
+    // Her dokunuşta (yanına yeniden gelince de) yeniden saklanır: geri dönüp
+    // çözülen düzenekler de kayda girer.
+    if (touching != null && touching != _atCheckpoint) {
+      _reachCheckpoint(touching);
+    }
+    _atCheckpoint = touching;
   }
 
   // ---------------------------------------------------------------- döngü
 
   @override
   void update(double dt) {
+    // Tek oyun saati: bütün dünya (oyuncu, Kandilci, su, ışık seli) aynı
+    // adımla ilerler. Yavaş cihazdaki uzun kare en çok 1/30 saniyelik eşit
+    // parçalara bölünür; böylece düşük FPS'te Kandilci oyuncudan hızlı
+    // yaşamaz. Uygulama kesintisi gibi çok uzun boşluk telafi edilmez.
+    if (!dt.isFinite || dt < 0) dt = 0;
+    dt = math.min(dt, maxFrame);
     // Korku anında zaman kısa bir süre ağırlaşır.
     if (_slow > 0) {
       _slow -= dt;
       dt *= 0.35;
     }
-    super.update(dt);
+    final steps = math.max(1, (dt / maxStep - 1e-9).ceil());
+    for (var i = 0; i < steps; i++) {
+      super.update(dt / steps);
+    }
     if (menuMode.value) {
       _updateMenuCamera(dt);
       return;
@@ -919,6 +993,13 @@ class GolgeGame extends FlameGame with KeyboardEvents {
   }
 
   double _hintScan = 0;
+
+  /// Bir simülasyon adımının en uzun süresi.
+  static const double maxStep = 1 / 30;
+
+  /// Bir karede telafi edilen en uzun süre (bundan uzun kesinti duraklama
+  /// sayılır).
+  static const double maxFrame = 0.1;
 
   /// Olay mesajı: kayıt başına bir kez gösterilir; ölüp yeniden denerken
   /// tekrarlanmaz. [hint] ise üstte ipucu olarak sıraya girer.

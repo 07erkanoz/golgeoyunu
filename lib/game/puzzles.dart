@@ -12,6 +12,7 @@ import 'level.dart';
 import 'mechanics.dart';
 import 'palette.dart';
 import 'perde.dart';
+import 'persist.dart';
 import 'player.dart';
 import 'strings.dart';
 
@@ -235,7 +236,8 @@ class RottenPlank extends Deck {
 
 /// Vanalarla dolup boşalan su haznesi. Suyun içinde kalan boğulur; yüzen
 /// tahta suyun yüzünde durur ve üstündekini taşır.
-class WaterBasin extends Component with HasGameReference<GolgeGame> {
+class WaterBasin extends Component
+    with HasGameReference<GolgeGame>, Persistent {
   WaterBasin(this.area, {required double start})
     : surface = start,
       target = start,
@@ -252,6 +254,23 @@ class WaterBasin extends Component with HasGameReference<GolgeGame> {
 
   /// Tufan başladı mı (bir daha durmaz).
   bool flooding = false;
+
+  @override
+  String get persistKind => 'basin';
+
+  /// Vanayla ayarlanan seviye saklanır; tufan (kovalamaca) baştan başlar.
+  @override
+  Object? captureState() => flooding ? null : [target];
+
+  @override
+  Iterable<Component> restoreState(Object? state, {required bool present}) {
+    final t = numbers(state, 1);
+    if (t != null) {
+      target = t[0].clamp(high, area.bottom);
+      surface = target;
+    }
+    return [this];
+  }
 
   void startFlood({double rate = 30}) {
     if (flooding) return;
@@ -441,7 +460,7 @@ class Valve extends PositionComponent with HasGameReference<GolgeGame>, Usable {
 
 /// Döndürülebilen ayna: huzmeyi 90° kırar. ↑ ile `/` ve `\` arasında döner.
 class Mirror extends PositionComponent
-    with HasGameReference<GolgeGame>, Usable {
+    with HasGameReference<GolgeGame>, Usable, Persistent {
   Mirror(Vector2 cell, {this.slash = true})
     : col = (cell.x / kTile).round(),
       row = (cell.y / kTile).round(),
@@ -453,6 +472,18 @@ class Mirror extends PositionComponent
   /// true: `/` (aşağı gelen huzmeyi sola atar), false: `\`.
   bool slash;
   double _angle = 0;
+
+  @override
+  String get persistKind => 'mirror';
+
+  @override
+  Object? captureState() => slash ? 1 : 0;
+
+  @override
+  Iterable<Component> restoreState(Object? state, {required bool present}) {
+    if (state == 1 || state == 0) slash = state == 1;
+    return [this];
+  }
 
   @override
   bool canUse(Vector2 p) =>
@@ -499,7 +530,8 @@ class Mirror extends PositionComponent
 
 /// Işık kilidi: güneş oymalı taş. Huzme bir süre üstünde kalınca en yakın
 /// kapı açılır.
-class SunLock extends PositionComponent with HasGameReference<GolgeGame> {
+class SunLock extends PositionComponent
+    with HasGameReference<GolgeGame>, Persistent {
   SunLock(Vector2 cell)
     : col = (cell.x / kTile).round(),
       row = (cell.y / kTile).round(),
@@ -511,6 +543,21 @@ class SunLock extends PositionComponent with HasGameReference<GolgeGame> {
   bool open = false;
   bool lit = false;
   double _t = 0;
+
+  @override
+  String get persistKind => 'sunlock';
+
+  @override
+  Object? captureState() => open ? 1 : null;
+
+  @override
+  Iterable<Component> restoreState(Object? state, {required bool present}) {
+    if (state == 1) {
+      open = true;
+      charge = 1;
+    }
+    return [this];
+  }
 
   @override
   void update(double dt) {
@@ -715,6 +762,7 @@ class GiantPerde extends PositionComponent with HasGameReference<GolgeGame> {
     // Bir kez oynar: yeniden doğunca gölge yine geç kalmaz.
     if (game.eventSeen(_eventKey)) lagT = lagLength;
   }
+
   static const lagLength = 3.2;
   double _frozenX = 0;
   int _frozenFacing = 1;
@@ -1018,11 +1066,10 @@ class AnimalCrate extends Crate {
       canvas,
       kind,
       Paint()
-        ..shader = Gradient.linear(
-          const Offset(0, -60),
-          const Offset(0, 0),
-          [const Color(0xFF8A5832), const Color(0xFF5A361C)],
-        ),
+        ..shader = Gradient.linear(const Offset(0, -60), const Offset(0, 0), [
+          const Color(0xFF8A5832),
+          const Color(0xFF5A361C),
+        ]),
       scale,
     );
     canvas.restore();
@@ -1106,7 +1153,8 @@ void _animal(Canvas canvas, AnimalKind kind, Paint p, double scale) {
 
 /// Duvarda eşini bekleyen bir hayvan gölgesi. Aynı türden oyma hayvan
 /// önüne itilince gölgeler birleşir, en yakın kapı açılır.
-class Pedestal extends PositionComponent with HasGameReference<GolgeGame> {
+class Pedestal extends PositionComponent
+    with HasGameReference<GolgeGame>, Persistent {
   Pedestal(Vector2 cell, this.kind)
     : super(position: Vector2(cell.x + kTile / 2, cell.y + kTile), priority: 4);
 
@@ -1114,6 +1162,21 @@ class Pedestal extends PositionComponent with HasGameReference<GolgeGame> {
   bool matched = false;
   double _glow = 0;
   double _t = 0;
+
+  @override
+  String get persistKind => 'pedestal';
+
+  @override
+  Object? captureState() => matched ? 1 : null;
+
+  @override
+  Iterable<Component> restoreState(Object? state, {required bool present}) {
+    if (state == 1) {
+      matched = true;
+      _glow = 1;
+    }
+    return [this];
+  }
 
   @override
   void update(double dt) {

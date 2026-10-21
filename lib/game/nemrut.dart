@@ -9,6 +9,7 @@ import 'golge_game.dart';
 import 'level.dart';
 import 'mechanics.dart';
 import 'palette.dart';
+import 'persist.dart';
 import 'puzzles.dart';
 import 'strings.dart';
 
@@ -81,7 +82,7 @@ void _drawSign(Canvas canvas, Sign s, Offset c, double r, Paint p) {
 /// Döndürülebilen yıldız taşı: ↑ ile bir sonraki işarete döner. Bütün
 /// taşlar Aslan Horoskobu'ndaki sırayı gösterince en yakın kapı açılır.
 class StarStone extends PositionComponent
-    with HasGameReference<GolgeGame>, Usable {
+    with HasGameReference<GolgeGame>, Usable, Persistent {
   StarStone(Vector2 cell, this.index, {Sign start = Sign.star})
     : sign = start,
       super(
@@ -92,6 +93,20 @@ class StarStone extends PositionComponent
   final int index;
   Sign sign;
   double _turn = 0;
+
+  @override
+  String get persistKind => 'star';
+
+  @override
+  Object? captureState() => sign.index;
+
+  @override
+  Iterable<Component> restoreState(Object? state, {required bool present}) {
+    if (state is int && state >= 0 && state < Sign.values.length) {
+      sign = Sign.values[state];
+    }
+    return [this];
+  }
 
   bool get correct => index < horoscope.length && sign == horoscope[index];
 
@@ -433,7 +448,8 @@ class Colossus extends PositionComponent with HasGameReference<GolgeGame> {
 /// Nemrud'un taş devi: terasta ağır ağır yürür, adımları yeri sarsar,
 /// ayaklarının dibinde kalanı ezer. Kulağına bir ateşböceği (sivrisinek
 /// gibi) girerse sendeler; üçüncüsünde yıkılır ve gövdesi köprü olur.
-class StoneGiant extends PositionComponent with HasGameReference<GolgeGame> {
+class StoneGiant extends PositionComponent
+    with HasGameReference<GolgeGame>, Persistent {
   StoneGiant(Vector2 cell)
     : _home = cell.x,
       super(
@@ -456,7 +472,34 @@ class StoneGiant extends PositionComponent with HasGameReference<GolgeGame> {
   bool fallen = false;
   double _fallT = 0;
   int _dir = 1;
-  double _lastStep = 0;
+
+  /// Yürüyüş evresi: yalnızca yürürken ilerler. Bacaklar ve adım sesi aynı
+  /// evreden çıkar; ayak yere bastığı anda gümbürtü duyulur.
+  double _walk = 0;
+  int _stepN = 0;
+  static const double _stepRate = 2.9;
+
+  @override
+  String get persistKind => 'giant';
+
+  @override
+  Object? captureState() => hits == 0 ? null : [hits, fallen ? 1 : 0];
+
+  @override
+  Iterable<Component> restoreState(Object? state, {required bool present}) {
+    final s = numbers(state, 2);
+    if (s == null) return [this];
+    hits = s[0].round().clamp(0, hitsToFall);
+    if (s[1] != 1) return [this];
+    // Yıkılmış dev yatar; gövdesi köprüdür.
+    fallen = true;
+    hits = hitsToFall;
+    _fallT = 1;
+    return [this, GiantBridge(_bridgeAt)];
+  }
+
+  Vector2 get _bridgeAt =>
+      Vector2(position.x + size.x / 2, position.y - kTile * 1.2);
 
   /// Kulağın dünyadaki yeri.
   Vector2 get ear => Vector2(
@@ -478,11 +521,15 @@ class StoneGiant extends PositionComponent with HasGameReference<GolgeGame> {
     }
     // Ağır adımlar: iki nokta arasında gidip gelir.
     position.x += _dir * 26 * dt;
+    _walk += dt;
     if (position.x > _home + span) _dir = -1;
     if (position.x < _home) _dir = 1;
     final p = game.player;
-    if (_t - _lastStep > 1.1) {
-      _lastStep = _t;
+    // Bacak sin(evre) ile gidip gelir: uçlarda (her yarım dönüşte) ayak
+    // yere oturur.
+    final n = ((_walk * _stepRate + math.pi / 2) / math.pi).floor();
+    if (n != _stepN) {
+      _stepN = n;
       // Adımlar yakında duyulur ve sarsar; uzaktan yalnızca hafif bir gümbürtü.
       final near = p == null || p.isDead
           ? 0.0
@@ -518,11 +565,7 @@ class StoneGiant extends PositionComponent with HasGameReference<GolgeGame> {
           GameAudio.instance.play('crumble');
           game.once('giantFell', S.of('giantFell'));
           // Yatan gövdenin üstü köprü olur (gövde sağa, ayaklarından uzanır).
-          game.world.add(
-            GiantBridge(
-              Vector2(position.x + size.x / 2, position.y - kTile * 1.2),
-            ),
-          );
+          game.world.add(GiantBridge(_bridgeAt));
           // Devin düşüşü ilerideki (çıkışa doğru) kapıyı kırar.
           Gate? best;
           var bestD = double.infinity;
@@ -556,7 +599,7 @@ class StoneGiant extends PositionComponent with HasGameReference<GolgeGame> {
     } else if (_stagger > 0) {
       canvas.translate(math.sin(_t * 40) * 3, 0);
     }
-    final step = math.sin(_t * 2.9) * 6;
+    final step = math.sin(_walk * _stepRate) * 6;
     // Bacaklar.
     canvas.drawRect(
       Rect.fromLTWH(w * 0.18 + step, h - h * 0.32, w * 0.22, h * 0.32),

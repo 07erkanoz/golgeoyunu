@@ -10,6 +10,7 @@ import 'golge_game.dart';
 import 'level.dart';
 import 'mechanics.dart';
 import 'palette.dart';
+import 'persist.dart';
 import 'player.dart';
 import 'strings.dart';
 
@@ -19,7 +20,8 @@ import 'strings.dart';
 /// kıpırdayan taşa döner (Sâye de, Kandilci de). Saklanan ya da kıpırdamadan
 /// duran kurtulur. Bakışına bir ayna konursa kendi bakışıyla taşlaşır ve bir
 /// daha açılmaz (Perseus'un kalkanı gibi).
-class MedusaHead extends PositionComponent with HasGameReference<GolgeGame> {
+class MedusaHead extends PositionComponent
+    with HasGameReference<GolgeGame>, Persistent {
   MedusaHead(Vector2 cell)
     : _t = (cell.x / kTile * 1.37) % period,
       super(position: cell + Vector2.all(kTile / 2), priority: 6);
@@ -39,6 +41,18 @@ class MedusaHead extends PositionComponent with HasGameReference<GolgeGame> {
   double _t;
   bool sealed = false;
   final _lastPos = Vector2.zero();
+
+  @override
+  String get persistKind => 'medusa';
+
+  @override
+  Object? captureState() => sealed ? 1 : null;
+
+  @override
+  Iterable<Component> restoreState(Object? state, {required bool present}) {
+    if (state == 1) sealed = true;
+    return [this];
+  }
 
   /// 0 kapalı, 1 tamamen açık.
   double get eyes {
@@ -64,11 +78,23 @@ class MedusaHead extends PositionComponent with HasGameReference<GolgeGame> {
     }
   }
 
+  /// Işının gözlerden ne kadar uzakta tam genişliğe vardığı.
+  static const double flare = 5 * kTile;
+
+  /// Işının [ahead] uzaklıktaki yarı yüksekliği: gözlerin önünde daha dar
+  /// başlar, birkaç adımda tam genişliğe açılır.
+  static double gazeHalf(double ahead) =>
+      halfHeight * (0.45 + 0.55 * (ahead / flare).clamp(0.0, 1.0));
+
+  /// Bakış, çizilen ışının kendisidir. (Önceden yüzün dibinden itibaren tam
+  /// yükseklikte bir dikdörtgen sayılıyordu: ışının dışında, Medusa'nın
+  /// hemen altında duran taşa dönüyordu.)
   bool inGaze(Vector2 p) {
     if (sealed) return false;
     final d = p - position;
-    if (d.x * facing < 0 || d.x.abs() > range) return false;
-    if (d.y.abs() > halfHeight) return false;
+    final ahead = d.x * facing;
+    if (ahead < 0 || ahead > range) return false;
+    if (d.y.abs() > gazeHalf(ahead)) return false;
     if (!game.level.lineOfSight(position, p)) return false;
     // Kalkanın ardında kalan görünmez.
     for (final s in game.world.children.whereType<ShieldCrate>()) {
@@ -131,7 +157,9 @@ class MedusaHead extends PositionComponent with HasGameReference<GolgeGame> {
       if (g.falling) continue;
       if (inGaze(g.center)) {
         // Kandilci taşa döner: üstüne basılabilen bir heykel olur.
-        game.world.add(StoneGuard(g.position.clone(), g.facing));
+        game.world.add(
+          StoneGuard(g.position.clone(), g.facing)..persistId = g.persistId,
+        );
         g.removeFromParent();
         GameAudio.instance.play('grind', volume: 0.6);
         game.once('guardStone', S.of('guardStone'));
@@ -147,12 +175,17 @@ class MedusaHead extends PositionComponent with HasGameReference<GolgeGame> {
     if (e > 0) {
       final len = range * (0.25 + 0.75 * e);
       final far = facing * len;
-      final spread = halfHeight * (0.4 + 0.6 * e);
+      // Açıldıkça ışın tam biçimine (taşlaştırdığı alana) kabarır.
+      final open = 0.4 + 0.6 * e;
+      final spread = halfHeight * open;
+      final knee = math.min(flare, len);
       final beam = Path()
-        ..moveTo(facing * 6.0, -4)
-        ..lineTo(far, -spread)
-        ..lineTo(far, spread)
-        ..lineTo(facing * 6.0, 4)
+        ..moveTo(facing * 6.0, -gazeHalf(6) * open)
+        ..lineTo(facing * knee, -gazeHalf(knee) * open)
+        ..lineTo(far, -gazeHalf(len) * open)
+        ..lineTo(far, gazeHalf(len) * open)
+        ..lineTo(facing * knee, gazeHalf(knee) * open)
+        ..lineTo(facing * 6.0, gazeHalf(6) * open)
         ..close();
       final shimmer = 0.85 + 0.15 * math.sin(_t * 9);
       canvas.drawPath(
@@ -164,7 +197,8 @@ class MedusaHead extends PositionComponent with HasGameReference<GolgeGame> {
             [
               const Color(0xFFD8F0C8).withValues(alpha: 0.45 * e * shimmer),
               const Color(0xFFB8D8B0).withValues(alpha: 0.18 * e),
-              const Color(0xFFB8D8B0).withValues(alpha: 0),
+              // Ucu da seçilsin: taşlaştırdığı yerin sonu görünür.
+              const Color(0xFFB8D8B0).withValues(alpha: 0.07 * e),
             ],
             const [0, 0.35, 1],
           ),
@@ -231,11 +265,21 @@ class MedusaHead extends PositionComponent with HasGameReference<GolgeGame> {
 }
 
 /// Medusa'nın bakışıyla taşa dönmüş Kandilci: üstüne çıkılabilen heykel.
-class StoneGuard extends Deck {
+class StoneGuard extends Deck with Persistent {
   StoneGuard(Vector2 at, this.facing)
     : super(position: at + Vector2(0, 0), size: Vector2(Guard.gw, Guard.gh));
 
   final int facing;
+
+  // Taşa dönen Kandilci'nin kimliğini taşır: devam edince heykel olarak
+  // kurulur.
+  @override
+  String get persistKind => 'guard';
+
+  @override
+  Object? captureState() => {
+    'stone': [position.x, position.y, facing],
+  };
 
   @override
   void step(double dt) {}
@@ -617,13 +661,25 @@ class LanternBalloon extends PositionComponent
 // ============================================================ Simurg tüyü
 
 /// Kaf'ta dağılmış Simurg tüyleri. Hepsi toplanınca tüy sunağı açılır.
-class SimurgFeather extends PositionComponent with HasGameReference<GolgeGame> {
+class SimurgFeather extends PositionComponent
+    with HasGameReference<GolgeGame>, Persistent {
   SimurgFeather(Vector2 cell)
     : super(position: cell + Vector2.all(kTile / 2), priority: 19);
 
   bool taken = false;
   double _t = math.Random().nextDouble() * 5;
   double _gone = 0;
+
+  @override
+  String get persistKind => 'feather';
+
+  @override
+  Object? captureState() => taken ? 1 : null;
+
+  /// Alınmış tüy geri gelmez.
+  @override
+  Iterable<Component> restoreState(Object? state, {required bool present}) =>
+      present && state != 1 ? [this] : const [];
 
   @override
   void update(double dt) {
@@ -677,7 +733,8 @@ class SimurgFeather extends PositionComponent with HasGameReference<GolgeGame> {
 
 /// Tüy sunağı: bölümdeki bütün tüyler toplanınca parlar ve en yakın kapıyı
 /// açar.
-class FeatherAltar extends PositionComponent with HasGameReference<GolgeGame> {
+class FeatherAltar extends PositionComponent
+    with HasGameReference<GolgeGame>, Persistent {
   FeatherAltar(Vector2 cell)
     : super(
         position: Vector2(cell.x + kTile / 2, cell.y + kTile),
@@ -686,6 +743,23 @@ class FeatherAltar extends PositionComponent with HasGameReference<GolgeGame> {
 
   bool open = false;
   double _glow = 0;
+
+  // Açılmış sunak saklanır: yoksa kurulunca (kapısı zaten açık olduğu için)
+  // bir sonraki kapıyı açardı.
+  @override
+  String get persistKind => 'altar';
+
+  @override
+  Object? captureState() => open ? 1 : null;
+
+  @override
+  Iterable<Component> restoreState(Object? state, {required bool present}) {
+    if (state == 1) {
+      open = true;
+      _glow = 1;
+    }
+    return [this];
+  }
 
   @override
   void update(double dt) {

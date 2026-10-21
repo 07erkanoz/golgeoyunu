@@ -96,6 +96,11 @@ class Wolf extends PositionComponent with HasGameReference<GolgeGame> {
     if (vx != 0) facing = vx > 0 ? 1 : -1;
     _move(vx * dt);
     _fall(dt);
+    if (dt > 0) {
+      final pace = (_gait - _lastGait) / dt;
+      _pace += (pace - _pace) * math.min(1, dt * 10);
+    }
+    _lastGait = _gait;
   }
 
   void _move(double dx) {
@@ -114,8 +119,23 @@ class Wolf extends PositionComponent with HasGameReference<GolgeGame> {
       }
     }
     if (_solidAt(front, top)) return;
+    // Kapalı kapı geçilmez.
+    final ahead = Rect.fromLTWH(
+      dx > 0 ? position.x + size.x : position.x + dx,
+      top,
+      dx.abs(),
+      size.y - 4,
+    );
+    if (game.closedGateAt(ahead)) return;
     position.x += dx;
+    _gait += dx.abs();
   }
+
+  /// Gerçekten yürünen yol: bacaklar buna göre döner (duvara dayanmış kurt
+  /// yerinde koşmaz).
+  double _gait = 0;
+  double _lastGait = 0;
+  double _pace = 0;
 
   void _fall(double dt) {
     _vy = math.min(_vy + 1500 * dt, 800);
@@ -160,16 +180,17 @@ class Wolf extends PositionComponent with HasGameReference<GolgeGame> {
       canvas.scale(-1, 1);
     }
     final ink = Paint()..color = kInk;
-    final moving = hunting || (_home - position.x).abs() > 4;
-    // Dörtnala koşarken adım hızlı ve geniş, dolaşırken ağır.
-    final stride = hunting ? 16.0 : 7.0;
-    final amp = hunting ? 0.75 : (moving ? 0.4 : 0.06);
-    final ph = _t * stride;
-    final bob = hunting ? math.sin(ph * 2) * 0.8 : 0.0;
+    // Adımlar katedilen yola bağlı: dörtnala geniş, dolaşırken kısa.
+    final run = (_pace / runSpeed).clamp(0.0, 1.0);
+    final moving = _pace > 6;
+    final amp = moving ? 0.4 + 0.35 * run : 0.06;
+    final ph = _gait / (6 + 3.4 * run) + (moving ? 0 : _t * 1.5);
+    final bob = math.sin(ph * 2) * 0.8 * run;
     canvas.translate(0, bob);
 
     // Bacaklar: arkadaki çift biraz daha koyu, gövdenin ardında kalır.
-    final far = Paint()..color = Color.lerp(kInk, const Color(0xFF3A3A44), 0.25)!;
+    final far = Paint()
+      ..color = Color.lerp(kInk, const Color(0xFF3A3A44), 0.25)!;
     _leg(canvas, const Offset(7, 11), ph + math.pi, amp, true, far);
     _leg(canvas, const Offset(19, 11.5), ph + math.pi * 0.6, amp, false, far);
 
@@ -217,12 +238,7 @@ class Wolf extends PositionComponent with HasGameReference<GolgeGame> {
     canvas.drawPath(
       Path()
         ..moveTo(4, 7.4)
-        ..quadraticBezierTo(
-          -2,
-          8 - lift * 4 + wag,
-          -6.5,
-          14 - lift * 9 + wag,
-        )
+        ..quadraticBezierTo(-2, 8 - lift * 4 + wag, -6.5, 14 - lift * 9 + wag)
         ..quadraticBezierTo(-4.2, 15.5 - lift * 9, -1.6, 13.6 - lift * 5)
         ..quadraticBezierTo(1.2, 12, 4.6, 10.6)
         ..close(),
@@ -244,9 +260,8 @@ class Wolf extends PositionComponent with HasGameReference<GolgeGame> {
     final rate = hunting ? 2.2 : 0.8;
     for (var i = 0; i < 3; i++) {
       final k = (_t * rate + i / 3) % 1.0;
-      breath.color = const Color(0xFFE8EEF8).withValues(
-        alpha: 0.28 * (1 - k) * (k < 0.08 ? k / 0.08 : 1),
-      );
+      breath.color = const Color(0xFFE8EEF8)
+          .withValues(alpha: 0.28 * (1 - k) * (k < 0.08 ? k / 0.08 : 1));
       canvas.drawCircle(
         Offset(32 + k * 8, 8 - k * 4 + math.sin(_t * 3 + i)),
         1.2 + k * 2.6,
@@ -280,12 +295,16 @@ class Wolf extends PositionComponent with HasGameReference<GolgeGame> {
     final upper = hind ? 5.2 : 4.6;
     final lower = hind ? 4.6 : 4.4;
     final knee =
-        root + Offset(math.sin(swing + (hind ? 0.35 : -0.05)) * upper,
-            math.cos(swing) * upper - raise * 0.4);
+        root +
+        Offset(
+          math.sin(swing + (hind ? 0.35 : -0.05)) * upper,
+          math.cos(swing) * upper - raise * 0.4,
+        );
     final bend = hind ? -0.55 : 0.25;
     final foot = Offset(
       knee.dx + math.sin(swing * 0.6 + bend) * lower,
-      math.min(20.0, knee.dy + math.cos(swing * 0.6 + bend) * lower) - raise * 0.6,
+      math.min(20.0, knee.dy + math.cos(swing * 0.6 + bend) * lower) -
+          raise * 0.6,
     );
     final stroke = Paint()
       ..color = paint.color
