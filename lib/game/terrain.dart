@@ -1217,7 +1217,7 @@ class WaterComponent extends Component with HasGameReference<GolgeGame> {
       }
     }
     const depth = 72.0;
-    const strip = 6.0;
+    const strip = 9.0;
     for (final (x0, x1, top) in runs) {
       final area = Rect.fromLTRB(x0, top, x1, top + depth);
       final mirror = Rect.fromLTRB(x0 - 40, top - depth - 12, x1 + 40, top);

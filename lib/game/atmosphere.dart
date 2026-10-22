@@ -36,6 +36,9 @@ class Backdrop extends Component with HasGameReference<GolgeGame> {
   @override
   void update(double dt) => _t += dt;
 
+  static const double _farScale = 3;
+  static final _farPaint = Paint()..filterQuality = FilterQuality.medium;
+
   @override
   void render(Canvas canvas) {
     final size = game.camera.viewport.size;
@@ -53,11 +56,15 @@ class Backdrop extends Component with HasGameReference<GolgeGame> {
         Realism.on &&
         !Settings.lowGraphics &&
         lv.def.theme == LevelTheme.cistern;
+    // Bulanıklık ucuz yoldan: sahne ekranın üçte biri çözünürlükte bir
+    // resme çizilir, büyütülerek konur (tam ekran bulanıklaştırma
+    // telefonu ısıtıyordu).
+    final outer = canvas;
+    ui.PictureRecorder? rec;
     if (far) {
-      canvas.saveLayer(
-        rect,
-        Paint()..imageFilter = ImageFilter.blur(sigmaX: 2.2, sigmaY: 2.2),
-      );
+      rec = ui.PictureRecorder();
+      canvas = Canvas(rec);
+      canvas.scale(1 / _farScale);
     }
     switch (lv.def.theme) {
       case LevelTheme.cistern when Cartoon.on:
@@ -313,9 +320,19 @@ class Backdrop extends Component with HasGameReference<GolgeGame> {
           bumpy: true,
         );
     }
-    if (far) {
-      canvas.restore();
-      canvas.drawRect(
+    if (rec != null) {
+      final img = rec.endRecording().toImageSync(
+        (w / _farScale).ceil(),
+        (h / _farScale).ceil(),
+      );
+      outer.drawImageRect(
+        img,
+        Rect.fromLTWH(0, 0, img.width.toDouble(), img.height.toDouble()),
+        Rect.fromLTWH(0, 0, img.width * _farScale, img.height * _farScale),
+        _farPaint,
+      );
+      img.dispose();
+      outer.drawRect(
         rect,
         Paint()
           ..color = (Cartoon.on ? Cartoon.skyMid : const Color(0xFF3A1E14))

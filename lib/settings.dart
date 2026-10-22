@@ -27,6 +27,9 @@ class Settings {
   /// biter). Oyunun fiziği 120 ve 144 Hz'de de sınanır.
   static bool highRefresh = false;
 
+  /// Otomatik kalite: cihaz zorlanırsa ağır görseller kendiliğinden kapanır.
+  static bool autoQuality = true;
+
   /// Dokunmatik kontrol: düğmeler ya da hareket (sürükle / dokun).
   static bool touchGestures = true;
 
@@ -111,6 +114,7 @@ class Settings {
       calmEffects = _read(() => p.getBool('calm_effects')) ?? calmEffects;
       leftHanded = _read(() => p.getBool('left_handed')) ?? leftHanded;
       highRefresh = _read(() => p.getBool('high_refresh')) ?? highRefresh;
+      autoQuality = _read(() => p.getBool('auto_quality')) ?? autoQuality;
       finished = _read(() => p.getBool('finished')) ?? finished;
       // Kayıtlı bir tercih yoksa cihazın dili: Türkçe değilse İngilizce.
       final lang = _read(() => p.getString('lang'));
@@ -152,6 +156,7 @@ class Settings {
       await p.setBool('calm_effects', calmEffects);
       await p.setBool('left_handed', leftHanded);
       await p.setBool('high_refresh', highRefresh);
+      await p.setBool('auto_quality', autoQuality);
       await p.setDouble('touch_scale', touchScale);
       await p.setDouble('touch_opacity', touchOpacity);
       await p.setDouble('brightness', brightness);

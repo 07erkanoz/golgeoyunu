@@ -9,6 +9,7 @@ import 'package:flutter/widgets.dart' show KeyEventResult;
 
 import 'atmosphere.dart';
 import 'audio.dart';
+import 'auto_quality.dart';
 import 'creatures.dart';
 import 'mechanics.dart';
 import 'entities.dart';
@@ -111,6 +112,9 @@ class GolgeGame extends FlameGame with KeyboardEvents {
 
   late final ScreenEffects effects;
   late final Narration narration;
+
+  /// Cihaz zorlanırsa ağır görselleri kendiliğinden kapatır.
+  late final AutoQuality autoQuality = AutoQuality(this);
 
   /// Sinematik ya da geçiş sırasında oyuncu girdisi kapalıdır.
   bool cinematic = true;
@@ -277,7 +281,14 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     effects = ScreenEffects();
     narration = Narration();
     camera.viewport.addAll([effects, narration]);
+    autoQuality.attach();
     _enterMenu();
+  }
+
+  @override
+  void onRemove() {
+    autoQuality.detach();
+    super.onRemove();
   }
 
   // ---------------------------------------------------------------- ana menü
@@ -714,6 +725,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
 
   void _buildLevel(int index, {bool respawn = false, bool withPlayer = true}) {
     world.removeAll(world.children.toList());
+    autoQuality.restart();
     // Yeni bir bölüme geçerken (ölüp yeniden doğmada değil) eski bölümün
     // bekleyen metinleri atılır.
     if (!respawn || index != levelIndex) {
@@ -1491,6 +1503,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     // parçalara bölünür; böylece düşük FPS'te Kandilci oyuncudan hızlı
     // yaşamaz. Uygulama kesintisi gibi çok uzun boşluk telafi edilmez.
     if (!dt.isFinite || dt < 0) dt = 0;
+    autoQuality.tick(dt);
     dt = math.min(dt, maxFrame);
     // Korku anında zaman kısa bir süre ağırlaşır.
     if (_slow > 0) {
@@ -2065,14 +2078,13 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         _closeUp = _closeUp == 1 ? 3 : 1;
       }
       // Deneme yapısında L ışık ve derinlik denemesini açar/kapar.
-      if (Cartoon.trialBuild &&
-          event.logicalKey == LogicalKeyboardKey.keyL) {
+      if (Cartoon.trialBuild && event.logicalKey == LogicalKeyboardKey.keyL) {
         Realism.on = !Realism.on;
+        if (Realism.on) AutoQuality.userChose = true;
       }
       // Deneme yapısında K karikatürize görsel denemesini açar/kapar
       // (şimdilik yalnız Yerebatan).
-      if (Cartoon.trialBuild &&
-          event.logicalKey == LogicalKeyboardKey.keyK) {
+      if (Cartoon.trialBuild && event.logicalKey == LogicalKeyboardKey.keyK) {
         Cartoon.on = !Cartoon.on;
       }
       // Geliştirici kısayolu: , ve . Yerebatan denemesinin tonunu

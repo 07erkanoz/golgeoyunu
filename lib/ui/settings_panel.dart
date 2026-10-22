@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../game/audio.dart';
+import '../game/auto_quality.dart';
 import '../game/golge_game.dart';
 import '../game/hints.dart';
 import '../game/palette.dart';
@@ -318,7 +319,10 @@ class _SettingsPanelState extends State<SettingsPanel> {
                             trackOutlineColor: const WidgetStatePropertyAll(
                               Color(0x55EBDDCB),
                             ),
-                            onChanged: (v) => setState(() => Realism.on = v),
+                            onChanged: (v) => setState(() {
+                              Realism.on = v;
+                              if (v) AutoQuality.userChose = true;
+                            }),
                           ),
                         ],
                       ),
@@ -390,8 +394,32 @@ class _SettingsPanelState extends State<SettingsPanel> {
                           ),
                           onSelectionChanged: (v) {
                             Settings.lowGraphics = v.first;
+                            if (!v.first) AutoQuality.userChose = true;
                             Settings.save();
                             setState(() {});
+                          },
+                        ),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            S.of('autoQuality'),
+                            style: const TextStyle(color: _text, fontSize: 14),
+                          ),
+                        ),
+                        Switch(
+                          value: Settings.autoQuality,
+                          activeThumbColor: _accent,
+                          inactiveThumbColor: _text.withValues(alpha: 0.6),
+                          inactiveTrackColor: const Color(0x22EBDDCB),
+                          trackOutlineColor: const WidgetStatePropertyAll(
+                            Color(0x55EBDDCB),
+                          ),
+                          onChanged: (v) {
+                            setState(() => Settings.autoQuality = v);
+                            Settings.save();
                           },
                         ),
                       ],

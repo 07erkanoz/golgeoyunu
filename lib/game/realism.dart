@@ -84,33 +84,39 @@ class RealismLayer extends Component with HasGameReference<GolgeGame> {
     final view = game.camera.visibleWorldRect;
     for (final (at, color, radius) in _lights(view)) {
       final area = Rect.fromCircle(center: at, radius: radius);
-      // Kenar ışığı: ışığa bakan yan, uzaklıkla söner (yumuşak, bulanık).
-      final edge = Paint()
+      // Kenar ışığı: ışığa bakan yan, uzaklıkla söner. Yumuşaklık bir
+      // geniş-soluk, bir dar-parlak çizgiyle verilir (her çizgiyi ayrı
+      // bulanıklaştırmak pahalıydı).
+      Paint edge(double a, double width) => Paint()
         ..blendMode = BlendMode.plus
         ..style = PaintingStyle.stroke
         ..strokeCap = StrokeCap.round
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.5)
+        ..strokeWidth = width
         ..shader = ui.Gradient.radial(
           at,
           radius,
           [
-            color.withValues(alpha: 0.32),
-            color.withValues(alpha: 0.1),
+            color.withValues(alpha: 0.32 * a),
+            color.withValues(alpha: 0.1 * a),
             color.withValues(alpha: 0),
           ],
           const [0, 0.45, 1],
         );
-      edge.strokeWidth = 5;
+      final colWide = edge(0.35, 9);
+      final colNarrow = edge(0.7, 3);
       for (final col in _columns) {
         if (!col.overlaps(area)) continue;
         final x = at.dx < col.center.dx ? col.left + 2 : col.right - 2;
-        canvas.drawLine(Offset(x, col.top), Offset(x, col.bottom), edge);
+        canvas.drawLine(Offset(x, col.top), Offset(x, col.bottom), colWide);
+        canvas.drawLine(Offset(x, col.top), Offset(x, col.bottom), colNarrow);
       }
-      edge.strokeWidth = 3.5;
+      final lipWide = edge(0.35, 7);
+      final lipNarrow = edge(0.7, 2.5);
       for (final (x0, x1, y) in _lips) {
         if (x1 < area.left || x0 > area.right) continue;
         if (y < area.top || y > area.bottom) continue;
-        canvas.drawLine(Offset(x0, y + 1.5), Offset(x1, y + 1.5), edge);
+        canvas.drawLine(Offset(x0, y + 1.5), Offset(x1, y + 1.5), lipWide);
+        canvas.drawLine(Offset(x0, y + 1.5), Offset(x1, y + 1.5), lipNarrow);
       }
       // Yüzey: ışık taşın üstüne yumuşakça yayılır (koyular koyu kalır).
       canvas.drawCircle(
@@ -144,97 +150,152 @@ class RealismLayer extends Component with HasGameReference<GolgeGame> {
   }
 }
 
-/// Kameranın hemen önünden geçen koyu, bulanık şekiller: iri sütunlar,
-/// tavandan sarkan zincirler, dipte yıkık taşlar. Oyun katmanından daha
-/// hızlı kayar (paralaks), göz derinliği buradan okur.
+/// Kameranın hemen önünden geçen koyu, bulanık şekiller: tavandan sarkan
+/// iri kemerler, zincirler, dipte kırık sütun kütükleri. Oyun katmanından
+/// daha hızlı kayar (paralaks), göz derinliği buradan okur.
+///
+/// Şekiller bir kez, bulanık olarak resme çizilip saklanır; her karede
+/// yalnız resim yerine konur (her karede yeniden bulanıklaştırmak telefonu
+/// ısıtıyordu).
 class NearLayer extends Component with HasGameReference<GolgeGame> {
   NearLayer() : super(priority: 34);
 
   static const double parallax = 1.45;
 
+  /// Şekillerin çizildiği başvuru yüksekliği (ekran yüksekliğine ölçeklenir).
+  static const double _refH = 640;
+
   static final _ink = Paint()
     ..color = const Color(0xFF0A0706)
     ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
-  static final _chain = Paint()
+  static final _chainPaint = Paint()
     ..color = const Color(0xFF0A0706)
     ..style = PaintingStyle.stroke
     ..strokeWidth = 7
     ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3);
 
+  /// Saklanan resim ve sol üst köşesinin yerel konumu.
+  static (ui.Image, Offset)? _arch;
+  static final _stumps = <(ui.Image, Offset)>[];
+  static final _chains = <(ui.Image, Offset)>[];
+
+  static (ui.Image, Offset) _bake(Rect bounds, void Function(Canvas) draw) {
+    final rec = ui.PictureRecorder();
+    final c = Canvas(rec);
+    c.translate(-bounds.left, -bounds.top);
+    draw(c);
+    final img = rec.endRecording().toImageSync(
+      bounds.width.ceil(),
+      bounds.height.ceil(),
+    );
+    return (img, bounds.topLeft);
+  }
+
+  static void _bakeAll() {
+    if (_arch != null) return;
+    // Kemer: üstü düz, altı kavisli; yerel (0, 0) ekranın üst ortası.
+    const half = 5.0 * kTile;
+    const low = _refH * 0.2;
+    _arch = _bake(
+      const Rect.fromLTRB(-half - 70, -80, half + 70, low + 60),
+      (c) => c.drawPath(
+        Path()
+          ..moveTo(-half - 40, -60)
+          ..lineTo(half + 40, -60)
+          ..lineTo(half + 40, low + 30)
+          ..lineTo(half - 10, low + 30)
+          ..quadraticBezierTo(0, -_refH * 0.1, -half + 10, low + 30)
+          ..lineTo(-half - 40, low + 30)
+          ..close(),
+        _ink,
+      ),
+    );
+    // Kütükler: yerel (0, 0) zeminin ortası.
+    for (var i = 0; i < 3; i++) {
+      const w = 1.8 * kTile;
+      final h = _refH * (0.07 + i * 0.02);
+      _stumps.add(
+        _bake(
+          Rect.fromLTRB(-w / 2 - 24, -h - 44, w / 2 + 24, 24),
+          (c) => c.drawPath(
+            Path()
+              ..moveTo(-w / 2, 0)
+              ..lineTo(-w / 2, -h)
+              ..lineTo(-w * 0.15, -h - 18)
+              ..lineTo(w * 0.1, -h + 6)
+              ..lineTo(w / 2, -h - 10)
+              ..lineTo(w / 2, 0)
+              ..close(),
+            _ink,
+          ),
+        ),
+      );
+    }
+    // Zincirler: yerel (0, 0) ekranın üstü; ucunda ağırlık.
+    for (var i = 0; i < 4; i++) {
+      final len = _refH * (0.16 + i * 0.04);
+      _chains.add(
+        _bake(Rect.fromLTRB(-40, -20, 40, len + 50), (c) {
+          var y = -10.0;
+          var k = 0;
+          while (y < len) {
+            if (k.isEven) {
+              c.drawOval(Rect.fromLTWH(-12, y, 24, 32), _chainPaint);
+            } else {
+              c.drawLine(Offset(0, y + 2), Offset(0, y + 30), _chainPaint);
+            }
+            y += 26;
+            k++;
+          }
+          c.drawCircle(Offset(0, len + 14), 20, _ink);
+        }),
+      );
+    }
+  }
+
+  static final _imgPaint = Paint()..filterQuality = FilterQuality.medium;
+
+  void _put(Canvas canvas, (ui.Image, Offset) shape, Offset at, double k) {
+    final (img, origin) = shape;
+    canvas.save();
+    canvas.translate(at.dx, at.dy);
+    canvas.scale(k);
+    canvas.drawImage(img, origin, _imgPaint);
+    canvas.restore();
+  }
+
   @override
   void render(Canvas canvas) {
     if (!realismHere(game)) return;
+    _bakeAll();
     final cam = game.camera.viewfinder.position;
     final view = game.camera.visibleWorldRect;
     final lv = game.level;
+    final k = view.height / _refH;
     // Dünyadaki yeri x olan şeyin bu katmandaki yeri.
     double near(double x) => cam.x + (x - cam.x) * parallax;
     final span = view.width * 1.2;
-    // Tavandan sarkan iri kemerler: oyun bandının üstünde kalır.
     const archEvery = 21 * kTile;
     final first = ((cam.x - span) / archEvery).floor();
-    final archLow = view.top + view.height * 0.2;
     for (var i = first; i * archEvery < cam.x + span; i++) {
       final x = near(i * archEvery + 7.0 * kTile);
       if (x < view.left - 400 || x > view.right + 400) continue;
-      final half = 5.0 * kTile;
-      canvas.drawPath(
-        Path()
-          ..moveTo(x - half - 40, view.top - 60)
-          ..lineTo(x + half + 40, view.top - 60)
-          ..lineTo(x + half + 40, archLow + 30)
-          ..lineTo(x + half - 10, archLow + 30)
-          ..quadraticBezierTo(
-            x,
-            view.top - view.height * 0.1,
-            x - half + 10,
-            archLow + 30,
-          )
-          ..lineTo(x - half - 40, archLow + 30)
-          ..close(),
-        _ink,
-      );
+      _put(canvas, _arch!, Offset(x, view.top), k);
     }
-    // Dipte kırık sütun kütükleri: oyun bandının altında kalır.
     const stumpEvery = 19 * kTile;
     final firstS = ((cam.x - span) / stumpEvery).floor();
     final floor = math.min(view.bottom, lv.pixelHeight.toDouble()) + 20;
     for (var i = firstS; i * stumpEvery < cam.x + span; i++) {
       final x = near(i * stumpEvery + 15.0 * kTile);
       if (x < view.left - 200 || x > view.right + 200) continue;
-      final w = 1.8 * kTile;
-      final h = view.height * (0.07 + (i % 3) * 0.02);
-      canvas.drawPath(
-        Path()
-          ..moveTo(x - w / 2, floor)
-          ..lineTo(x - w / 2, floor - h)
-          ..lineTo(x - w * 0.15, floor - h - 18)
-          ..lineTo(x + w * 0.1, floor - h + 6)
-          ..lineTo(x + w / 2, floor - h - 10)
-          ..lineTo(x + w / 2, floor)
-          ..close(),
-        _ink,
-      );
+      _put(canvas, _stumps[i % 3], Offset(x, floor), k);
     }
-    // Zincirler: tavandan sarkan, ucunda ağırlık.
     const chainEvery = 17 * kTile;
     final firstC = ((cam.x - span) / chainEvery).floor();
     for (var i = firstC; i * chainEvery < cam.x + span; i++) {
       final x = near(i * chainEvery + 13.0 * kTile);
       if (x < view.left - 60 || x > view.right + 60) continue;
-      final len = view.height * (0.16 + (i % 4) * 0.04);
-      var y = view.top - 10;
-      var k = 0;
-      while (y < view.top + len) {
-        if (k.isEven) {
-          canvas.drawOval(Rect.fromLTWH(x - 12, y, 24, 32), _chain);
-        } else {
-          canvas.drawLine(Offset(x, y + 2), Offset(x, y + 30), _chain);
-        }
-        y += 26;
-        k++;
-      }
-      canvas.drawCircle(Offset(x, view.top + len + 14), 20, _ink);
+      _put(canvas, _chains[i % 4], Offset(x, view.top), k);
     }
   }
 }
