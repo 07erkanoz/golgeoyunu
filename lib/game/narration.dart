@@ -45,13 +45,18 @@ class Narration extends Component with HasGameReference<GolgeGame> {
   double _areaT = 0;
 
   /// Efsane varlığıyla ilk karşılaşma: adı, kim olduğu (tek cümle) ve
-  /// Defter'e yazıldığı. Sırayla gösterilir; bölüm başlığı varken bekler.
+  /// Defter'e yazıldığı. Karşılaşma anında gösterilir (yalnız bölüm başlığı
+  /// ve perde varken bekler); hikâye fısıltısını beklemez, kesmez: ikisi
+  /// ayrı şeritlerde durur.
   void showMyth(String name, String who) => _myths.add((name, who));
 
   final _myths = <(String, String)>[];
   (String, String)? _myth;
   double _mythT = 0;
   double _mythLen = 6.5;
+
+  /// Kart bir kat aşağıda mı (üst şeritte hikâye satırı varken açıldı).
+  bool _mythLow = false;
 
   /// Şu an gösterilen efsane kartının adı (testler için).
   String? get debugMyth => _myth?.$1;
@@ -76,8 +81,9 @@ class Narration extends Component with HasGameReference<GolgeGame> {
   double _clock = 0;
 
   /// Bu kadar bekleyen satır ekrana gelmez: o yer çoktan geçildi; "Az önce"
-  /// panelinde okunur.
-  static const double staleAfter = 9;
+  /// panelinde okunur. Art arda gelen üç dört hikâye satırı düşmesin diye
+  /// geniş tutulur (sırada bekleyen varken satırlar zaten kısalır).
+  static const double staleAfter = 25;
 
   double _counterT = 99;
   double _fireflyT = 99;
@@ -241,22 +247,16 @@ class Narration extends Component with HasGameReference<GolgeGame> {
       if (_areaT > 5) _area = null;
     }
     if (_myth == null) {
-      // Fısıltı sürerken beklenir: ikisi aynı yere düşmesin.
-      if (_myths.isNotEmpty &&
-          _title == null &&
-          _whisper == null &&
-          !inCinematic) {
+      if (_myths.isNotEmpty && _title == null && !inCinematic) {
         _myth = _myths.removeAt(0);
         _remember(RecentKind.legend, '${_myth!.$1}\n${_myth!.$2}');
         _mythT = 0;
-        _mythLen = 6.5;
+        // Arka arkaya kart bekliyorsa her biri okunacak kadar kalır.
+        _mythLen = _myths.isEmpty ? 6.5 : 4.5;
+        _mythLow = _whisper != null && _whisperTop;
       }
     } else {
       _mythT += dt;
-      // Fısıltı bekliyorsa kart daha kısa kalır.
-      if (_whispers.isNotEmpty) {
-        _mythLen = math.min(_mythLen, math.max(4.0, _mythT + 1.3));
-      }
       if (_mythT > _mythLen) _myth = null;
     }
     if (_whisper == null) {
@@ -266,19 +266,19 @@ class Narration extends Component with HasGameReference<GolgeGame> {
           !inCinematic) {
         _remember(RecentKind.story, _whispers.removeAt(0).$1);
       }
-      // Efsane kartı ekrandayken fısıltı bekler.
-      if (_whispers.isNotEmpty && _myth == null && !inCinematic) {
+      if (_whispers.isNotEmpty && !inCinematic) {
         _whisper = _whispers.removeAt(0).$1;
         _remember(RecentKind.story, _whisper!);
         _whisperT = 0;
         _whisperLen = _whisperDuration(_whisper!);
-        _whisperTop = _playerLow();
+        // Efsane kartı üst ortadayken hikâye satırı alt şeride iner.
+        _whisperTop = _playerLow() && _myth == null && _myths.isEmpty;
       }
     } else {
       _whisperT += dt;
       // Sırada bekleyen varsa bu satır okunacak kadar kalır; kapanışı yarım
       // kesilmez.
-      if (_whispers.isNotEmpty || _myths.isNotEmpty) {
+      if (_whispers.isNotEmpty) {
         _whisperLen = math.min(
           _whisperLen,
           math.max(_busyDuration(_whisper!), _whisperT + 0.8),
@@ -552,9 +552,11 @@ class Narration extends Component with HasGameReference<GolgeGame> {
     final myth = _myth;
     if (myth != null) {
       final a = _envelope(_mythT, 1.0, _mythLen - 2.3, 1.3);
+      // Üstte hikâye satırı varsa kart onun altına iner.
+      final dy = _mythLow ? h * 0.12 : 0.0;
       // Okunurluk: arkada yumuşak, koyu bir şerit (parlak ağacın önünde de).
       if (a > 0) {
-        final band = Rect.fromLTWH(0, h * 0.2, w, h * 0.24);
+        final band = Rect.fromLTWH(0, h * 0.2 + dy, w, h * 0.24);
         canvas.drawRect(
           band,
           Paint()
@@ -574,7 +576,7 @@ class Narration extends Component with HasGameReference<GolgeGame> {
       _text(
         canvas,
         S.upper(myth.$1),
-        Offset(w / 2, h * 0.27),
+        Offset(w / 2, h * 0.27 + dy),
         unit * 0.046,
         a,
         spacing: 9,
@@ -582,7 +584,7 @@ class Narration extends Component with HasGameReference<GolgeGame> {
       _text(
         canvas,
         myth.$2,
-        Offset(w / 2, h * 0.335),
+        Offset(w / 2, h * 0.335 + dy),
         unit * 0.025,
         a * 0.85,
         italic: true,
@@ -591,7 +593,7 @@ class Narration extends Component with HasGameReference<GolgeGame> {
       _text(
         canvas,
         S.upper(S.of('mythNoted')),
-        Offset(w / 2, h * 0.39),
+        Offset(w / 2, h * 0.39 + dy),
         unit * 0.016,
         a * 0.5,
         spacing: 4,
