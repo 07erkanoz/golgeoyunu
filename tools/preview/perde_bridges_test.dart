@@ -26,7 +26,8 @@ void main() {
           );
           final img = await rec.endRecording().toImage(640, 360);
           final png = await img.toByteData(format: ui.ImageByteFormat.png);
-          final name = 'b${lv.toString().padLeft(2, '0')}_${k}_${(f * 100).round()}';
+          final name =
+              'b${lv.toString().padLeft(2, '0')}_${k}_${(f * 100).round()}';
           File('build/preview/bridges/$name.png')
               .writeAsBytesSync(png!.buffer.asUint8List());
         }

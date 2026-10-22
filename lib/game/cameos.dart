@@ -315,12 +315,16 @@ class WaterFace extends Component with HasGameReference<GolgeGame> {
 
   Offset get _at => Offset(basin.area.center.dx, basin.surface);
 
-  /// Gösterdiği vana: önce boşaltan (bulmaca onunla başlar), en yakını.
+  /// Gösterdiği vana: sıradaki adım. Hazne doluyken suyu boşaltan vana
+  /// (dibe inilsin); su çekilirken ya da çekilmişken kuyunun dibindeki
+  /// dolduran vana (yüzen tahta yükselsin). Su çekilirken o da suyla iner.
   Valve? get _valve {
+    final draining = (basin.target - basin.low).abs() < 2;
     Valve? best;
     var bestD = double.infinity;
     for (final v in game.world.children.whereType<Valve>()) {
-      final d = (v.position.x - _at.dx).abs() + (v.fill ? 2000 : 0);
+      final wrong = v.fill != draining;
+      final d = (v.position.x - _at.dx).abs() + (wrong ? 2000 : 0);
       if (d < bestD) {
         bestD = d;
         best = v;
@@ -727,8 +731,16 @@ class WaterFace extends Component with HasGameReference<GolgeGame> {
   void update(double dt) {
     super.update(dt);
     _t += dt;
+    // Su inip kalkarken suya çekilmez: suyla birlikte iner, yeni vanayı
+    // gösterir; su durunca biraz daha bekler.
+    if (basin.moving && _t > rise && _t < rise + stay) {
+      _t = math.min(_t, rise + stay - 3);
+    }
     if (_t > rise + stay + sink) removeFromParent();
   }
+
+  /// Testler için: şu an gösterdiği vana.
+  Valve? get pointsAt => _valve;
 
   @override
   void render(Canvas canvas) {

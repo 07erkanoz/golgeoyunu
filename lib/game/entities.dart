@@ -79,6 +79,9 @@ class Guard extends PositionComponent
     _t = 0;
   }
 
+  /// Oyuncu ne zamandır bekçinin önünde (üstünden atlayışta).
+  double _frontT = 0;
+
   bool get _calmPatrol =>
       state == GuardState.patrol || state == GuardState.pause;
 
@@ -249,10 +252,27 @@ class Guard extends PositionComponent
     // Saklanan oyuncunun önünden geçip gider; yalnızca onu az önce görmüşse
     // ya da oyuncu açıktaysa yakalar.
     final justSaw = state == GuardState.chase && _lost < 0.4;
+    // Üstünden atlayıp geçmek yalnız habersiz bekçide işler: ona dönük ya da
+    // şüphelenmiş Kandilci feneri ve asasıyla yukarıyı da yoklar (zıplayışın
+    // tepesine dek uzanır). Arkasından, habersizken atlanabilir.
+    // "Önünde": bekçinin gövdesinin önünde (tam üstünden geçen önde sayılmaz).
+    final front = (p.center.x - center.x) * facing > gw / 2 + 6;
+    // Önüne yeni inen hemen fark edilmez; bir an önünde kalan edilir.
+    _frontT = front ? _frontT + dt : 0;
+    final aware = !_calmPatrol || suspicion > 0.25 || _frontT > 0.2;
+    final reach = toRect().deflate(4);
+    final catchZone = aware
+        ? Rect.fromLTRB(
+            reach.left - 6,
+            reach.top - 50,
+            reach.right + 6,
+            reach.bottom,
+          )
+        : reach;
     if (!p.isDead &&
         !distracted &&
         (!p.hidden || justSaw) &&
-        p.toRect().deflate(2).overlaps(toRect().deflate(4))) {
+        p.toRect().deflate(2).overlaps(catchZone)) {
       p.die(cause: DeathCause.light);
       suspicion = 0;
       _setState(GuardState.pause);

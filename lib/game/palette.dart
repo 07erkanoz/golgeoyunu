@@ -47,7 +47,7 @@ void glowDot(
 class Cartoon {
   Cartoon._();
 
-  /// `--dart-define=CARTOON=true` ile açık başlar; DEV yapısında K tuşu.
+  /// `--dart-define=CARTOON=true` ile açık başlar; deneme yapısında K tuşu.
   static bool on = const bool.fromEnvironment('CARTOON');
 
   /// Deneme yapısı mı (CARTOON ya da DEV tanımlı): ayarlar panelinde
@@ -112,4 +112,15 @@ class Cartoon {
   // Işıklar: güvenli kehribar, tehlikeli nane-camgöbeği.
   static const amber = Color(0xFFFFB648);
   static const danger = Color(0xFF6AEAD6);
+}
+
+/// Görsel deneme: ışık ve derinlik (Yerebatan). Işığa bakan taş kenarları
+/// parlar, ışıklar çevresine taşar, su sahneyi dalgalı yansıtır; arka plan
+/// pusla ve bulanıklıkla geriye çekilir, kameranın önünden koyu bir ön plan
+/// katmanı daha hızlı kayar. Deneme yapısında açık başlar; ayarlar panelinden
+/// ya da L tuşuyla açılıp kapanır. Düşük grafikte kapalıdır.
+class Realism {
+  Realism._();
+
+  static bool on = Cartoon.trialBuild;
 }

@@ -22,9 +22,8 @@ Future<void> shot(GolgeGame game, String name) async {
 
 void main() {
   setUpAll(() async {
-    final bytes = File(
-      '/usr/share/fonts/noto/NotoSans-Regular.ttf',
-    ).readAsBytesSync();
+    final bytes = File('/usr/share/fonts/noto/NotoSans-Regular.ttf')
+        .readAsBytesSync();
     await (FontLoader(
       'Roboto',
     )..addFont(Future.value(ByteData.view(bytes.buffer)))).load();
@@ -39,11 +38,7 @@ void main() {
       await game.ready();
       game.cinematic = false;
       game.player!.position.setFrom(
-        Level.standOn(
-          Vector2(col * kTile, row * kTile),
-          Player.w,
-          Player.h,
-        ),
+        Level.standOn(Vector2(col * kTile, row * kTile), Player.w, Player.h),
       );
       game.debugCloseUp = 1.3;
       for (var i = 0; i < 20; i++) {

@@ -109,4 +109,36 @@ void main() {
       );
     },
   );
+  testWithGame<GolgeGame>(
+    'anlatım gecikmez: sırada bekleyen varken satır kısalır, bayatlayan panele düşer',
+    GolgeGame.new,
+    (game) async {
+      game.debugLoadLevel(0);
+      await game.ready();
+      game.cinematic = false;
+      game.narration.resetScene();
+      final long = 'Hatıra · ${'uzun bir hatıra satırı ' * 9}';
+      final a = '$long A';
+      final b = '$long B';
+      final c = '$long C';
+      for (final t in [a, b, c]) {
+        game.narration.whisper(t);
+      }
+      run(game, 0.1);
+      expect(game.narration.debugWhisper, a);
+      // Eskiden her biri ~15 sn sürüyordu (üçü 45 sn); şimdi sırada bekleyen
+      // varken kısalır, çok bekleyen ekrana gelmez.
+      var shownC = false;
+      for (var t = 0.0; t < 24; t += 0.1) {
+        run(game, 0.1);
+        if (game.narration.debugWhisper == c) shownC = true;
+      }
+      expect(game.narration.debugWhisper, isNull, reason: 'kuyruk boşaldı');
+      expect(shownC, isFalse, reason: 'bayatlayan satır ekrana gelmez');
+      final story = game.narration.recent
+          .where((l) => l.kind == RecentKind.story)
+          .map((l) => l.text);
+      expect(story, containsAll([a, b, c]), reason: 'hepsi panelde okunur');
+    },
+  );
 }

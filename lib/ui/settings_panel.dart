@@ -295,6 +295,26 @@ class _SettingsPanelState extends State<SettingsPanel> {
                           ),
                         ],
                       ),
+                      Row(
+                        children: [
+                          const Expanded(
+                            child: Text(
+                              'Işık ve derinlik (deneme)',
+                              style: TextStyle(color: _text, fontSize: 14),
+                            ),
+                          ),
+                          Switch(
+                            value: Realism.on,
+                            activeThumbColor: _accent,
+                            inactiveThumbColor: _text.withValues(alpha: 0.6),
+                            inactiveTrackColor: const Color(0x22EBDDCB),
+                            trackOutlineColor: const WidgetStatePropertyAll(
+                              Color(0x55EBDDCB),
+                            ),
+                            onChanged: (v) => setState(() => Realism.on = v),
+                          ),
+                        ],
+                      ),
                       _label('Yerebatan tonu (deneme)', Cartoon.tone),
                       Slider(
                         value: Cartoon.tone,

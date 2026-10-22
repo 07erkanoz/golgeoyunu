@@ -40,6 +40,7 @@ import 'ski.dart';
 import 'wind.dart';
 import 'winter.dart';
 import 'puzzles.dart';
+import 'realism.dart';
 import 'rig.dart';
 import '../settings.dart';
 import 'strings.dart';
@@ -745,6 +746,8 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         TerrainComponent(level),
         LightingLayer(),
         LightShafts(),
+        RealismLayer(),
+        NearLayer(),
         ForegroundComponent(level),
         WindCurrents(),
         WaterComponent(level),
@@ -2061,24 +2064,24 @@ class GolgeGame extends FlameGame with KeyboardEvents {
           event.logicalKey == LogicalKeyboardKey.keyC) {
         _closeUp = _closeUp == 1 ? 3 : 1;
       }
-      // Geliştirici kısayolu: K karikatürize görsel denemesini açar/kapar
+      // Deneme yapısında L ışık ve derinlik denemesini açar/kapar.
+      if (Cartoon.trialBuild &&
+          event.logicalKey == LogicalKeyboardKey.keyL) {
+        Realism.on = !Realism.on;
+      }
+      // Deneme yapısında K karikatürize görsel denemesini açar/kapar
       // (şimdilik yalnız Yerebatan).
-      if (const bool.fromEnvironment('DEV') &&
+      if (Cartoon.trialBuild &&
           event.logicalKey == LogicalKeyboardKey.keyK) {
         Cartoon.on = !Cartoon.on;
       }
       // Geliştirici kısayolu: , ve . Yerebatan denemesinin tonunu
       // koyulaştırır / açar (ayarlar panelinde değeri görünür).
-      if (const bool.fromEnvironment('DEV') &&
+      if (Cartoon.trialBuild &&
           (event.logicalKey == LogicalKeyboardKey.comma ||
               event.logicalKey == LogicalKeyboardKey.period)) {
         final d = event.logicalKey == LogicalKeyboardKey.comma ? -0.05 : 0.05;
         Cartoon.tone = (Cartoon.tone + d).clamp(0.0, 1.0);
-      }
-      // Geliştirici kısayolu: V karakter stilini değiştirir.
-      if (const bool.fromEnvironment('DEV') &&
-          event.logicalKey == LogicalKeyboardKey.keyV) {
-        Player.jarStyle = !Player.jarStyle;
       }
       // Geliştirici kısayolu: T sıradaki hikâye noktasına ışınlar.
       if (const bool.fromEnvironment('DEV') &&

@@ -11,8 +11,9 @@ void main() {
   test('Erlik varlıkları', () async {
     final loader = FontLoader('Roboto');
     final f = File('/usr/share/fonts/noto/NotoSans-Regular.ttf');
-    if (f.existsSync())
+    if (f.existsSync()) {
       loader.addFont(Future.value(ByteData.view(f.readAsBytesSync().buffer)));
+    }
     await loader.load();
     const w = 1600.0;
     const h = 700.0;

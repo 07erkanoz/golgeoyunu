@@ -402,4 +402,76 @@ void main() {
       expect(p.isDead, isTrue);
     },
   );
+  for (final (behind, survives) in [(false, false), (true, true)]) {
+    testWithGame<GolgeGame>(
+      behind
+          ? 'habersiz bekçinin arkasından üstünden atlanabilir'
+          : 'dönük bekçinin üstünden atlayıp geçilemez',
+      GolgeGame.new,
+      (game) async {
+        game.debugLoadLevel(0);
+        await game.ready();
+        game.cinematic = false;
+        final g =
+            (game.world.children.whereType<Guard>().toList()
+                  ..sort((a, b) => a.position.x.compareTo(b.position.x)))
+                .first;
+        for (final o in game.world.children.whereType<Guard>().toList()) {
+          if (o != g) o.removeFromParent();
+        }
+        final p = game.player!;
+        p.position.setFrom(
+          Level.standOn(
+            Vector2(g.position.x - 7 * kTile, g.position.y),
+            Player.w,
+            Player.h,
+          ),
+        );
+        final k = game.controls.keyboard;
+        var died = false;
+        for (final lead in [1.0, 1.5]) {
+          if (died) break;
+          p.position.setFrom(
+            Level.standOn(
+              Vector2(g.position.x - 7 * kTile, g.position.y),
+              Player.w,
+              Player.h,
+            ),
+          );
+          g
+            ..state = GuardState.patrol
+            ..suspicion = 0
+            ..facing = behind ? 1 : -1;
+          k.right = true;
+          var jumpAt = -1;
+          for (var i = 0; i < 60 * 3; i++) {
+            if (behind) {
+              g
+                ..facing = 1
+                ..suspicion = 0
+                ..state = GuardState.pause;
+            }
+            final gap = g.position.x - (p.position.x + Player.w);
+            if (jumpAt < 0 && gap < lead * kTile && p.onGround) {
+              k.jump = true;
+              jumpAt = i;
+            }
+            // Tam zıplayış: tuş yükselişin sonuna dek basılı.
+            if (jumpAt >= 0 && i - jumpAt > 20) k.jump = false;
+            game.update(1 / 60);
+            if (p.isDead) {
+              died = true;
+              break;
+            }
+          }
+          k
+            ..right = false
+            ..jump = false;
+          if (died) break;
+          run(game, 2.5);
+        }
+        expect(died, !survives);
+      },
+    );
+  }
 }

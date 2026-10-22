@@ -11,8 +11,9 @@ void main() {
   test('Gökbörü ve Tulpar', () async {
     final loader = FontLoader('Roboto');
     final f = File('/usr/share/fonts/noto/NotoSans-Regular.ttf');
-    if (f.existsSync())
+    if (f.existsSync()) {
       loader.addFont(Future.value(ByteData.view(f.readAsBytesSync().buffer)));
+    }
     await loader.load();
     const w = 1800.0;
     const h = 1150.0;

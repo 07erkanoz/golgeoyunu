@@ -51,6 +51,7 @@ class Narration extends Component with HasGameReference<GolgeGame> {
   final _myths = <(String, String)>[];
   (String, String)? _myth;
   double _mythT = 0;
+  double _mythLen = 6.5;
 
   /// Şu an gösterilen efsane kartının adı (testler için).
   String? get debugMyth => _myth?.$1;
@@ -63,9 +64,20 @@ class Narration extends Component with HasGameReference<GolgeGame> {
 
   double _titleT = 0;
 
-  final _whispers = <String>[];
+  /// Bekleyen fısıltılar ve sıraya girdikleri an.
+  final _whispers = <(String, double)>[];
   String? _whisper;
   double _whisperT = 0;
+
+  /// Ekrandaki fısıltının süresi (sırada bekleyen varsa kısalır).
+  double _whisperLen = 0;
+
+  /// Anlatımın kendi saati (sıradakinin ne kadar beklediğini ölçer).
+  double _clock = 0;
+
+  /// Bu kadar bekleyen satır ekrana gelmez: o yer çoktan geçildi; "Az önce"
+  /// panelinde okunur.
+  static const double staleAfter = 9;
 
   double _counterT = 99;
   double _fireflyT = 99;
@@ -136,7 +148,7 @@ class Narration extends Component with HasGameReference<GolgeGame> {
     _area = null;
   }
 
-  void whisper(String text) => _whispers.add(text);
+  void whisper(String text) => _whispers.add((text, _clock));
 
   /// Sahne değişince (yeni bölüm, menü) eski bölümün bekleyen fısıltıları
   /// ve ipuçları atılır; yeni bölümde bağlamsız belirmesinler.
@@ -196,8 +208,12 @@ class Narration extends Component with HasGameReference<GolgeGame> {
 
   double _whisperDuration(String s) => 3.5 + s.length * 0.06;
 
+  /// Sırada bekleyen varken: okunacak kadar.
+  double _busyDuration(String s) => 2.4 + s.length * 0.04;
+
   @override
   void update(double dt) {
+    _clock += dt;
     if (inCinematic) {
       _backdrop = math.min(1, _backdrop + dt / 1.5);
       _lineT += dt;
@@ -233,22 +249,42 @@ class Narration extends Component with HasGameReference<GolgeGame> {
         _myth = _myths.removeAt(0);
         _remember(RecentKind.legend, '${_myth!.$1}\n${_myth!.$2}');
         _mythT = 0;
+        _mythLen = 6.5;
       }
     } else {
       _mythT += dt;
-      if (_mythT > 6.5) _myth = null;
+      // Fısıltı bekliyorsa kart daha kısa kalır.
+      if (_whispers.isNotEmpty) {
+        _mythLen = math.min(_mythLen, math.max(4.0, _mythT + 1.3));
+      }
+      if (_mythT > _mythLen) _myth = null;
     }
     if (_whisper == null) {
+      // Çok bekleyen satırlar ekrana gelmez (yer geçildi), panele düşer.
+      while (_whispers.isNotEmpty &&
+          _clock - _whispers.first.$2 > staleAfter &&
+          !inCinematic) {
+        _remember(RecentKind.story, _whispers.removeAt(0).$1);
+      }
       // Efsane kartı ekrandayken fısıltı bekler.
       if (_whispers.isNotEmpty && _myth == null && !inCinematic) {
-        _whisper = _whispers.removeAt(0);
+        _whisper = _whispers.removeAt(0).$1;
         _remember(RecentKind.story, _whisper!);
         _whisperT = 0;
+        _whisperLen = _whisperDuration(_whisper!);
         _whisperTop = _playerLow();
       }
     } else {
       _whisperT += dt;
-      if (_whisperT > _whisperDuration(_whisper!)) _whisper = null;
+      // Sırada bekleyen varsa bu satır okunacak kadar kalır; kapanışı yarım
+      // kesilmez.
+      if (_whispers.isNotEmpty || _myths.isNotEmpty) {
+        _whisperLen = math.min(
+          _whisperLen,
+          math.max(_busyDuration(_whisper!), _whisperT + 0.8),
+        );
+      }
+      if (_whisperT > _whisperLen) _whisper = null;
     }
     if (_hint == null) {
       if (_hints.isNotEmpty && !inCinematic && !game.menuMode.value) {
@@ -515,7 +551,7 @@ class Narration extends Component with HasGameReference<GolgeGame> {
     // Efsane kartı: adı büyük, altında kim olduğu, en altta Defter notu.
     final myth = _myth;
     if (myth != null) {
-      final a = _envelope(_mythT, 1.0, 4.2, 1.3);
+      final a = _envelope(_mythT, 1.0, _mythLen - 2.3, 1.3);
       // Okunurluk: arkada yumuşak, koyu bir şerit (parlak ağacın önünde de).
       if (a > 0) {
         final band = Rect.fromLTWH(0, h * 0.2, w, h * 0.24);
@@ -577,12 +613,7 @@ class Narration extends Component with HasGameReference<GolgeGame> {
     }
 
     if (_whisper != null) {
-      final a = _envelope(
-        _whisperT,
-        0.8,
-        _whisperDuration(_whisper!) - 1.6,
-        0.8,
-      );
+      final a = _envelope(_whisperT, 0.8, _whisperLen - 1.6, 0.8);
       // Sâye'nin olmadığı yarıda: o alttaysa yazı üstte, üstteyse altta.
       final y = _whisperTop ? h * 0.17 : h * 0.86;
       // Okunurluk için yumuşak, koyu bir şerit.

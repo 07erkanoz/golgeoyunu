@@ -89,13 +89,15 @@ y.fill(151,10,160,19,'#'); y.fill(151,2,160,6,'#')     # Kandilci'nin dar geçid
 y.put(156,9,'G'); y.put(152,9,'B')
 y.put(159,9,'v'); y.put(157,9,'9')
 # su haznesi: q sol üst, Q sağ alt; dipte dolduran vana, ortada yüzen tahta
-y.put(161,5,'q'); y.put(168,18,'Q'); y.fill(161,19,168,19,'#')
+# Su en çok geçidin tabanına (satır 10) çıkar: üstü açık havaya dayanıp
+# dimdik bir su duvarı gibi durmasın; çıkış sütunu da o hizada.
+y.put(161,9,'q'); y.put(168,18,'Q'); y.fill(161,19,168,19,'#')
 y.put(163,18,'y'); y.put(166,11,'f')
-y.fill(169,6,172,19,'#'); y.put(171,5,'B'); y.put(172,5,'K')
+y.fill(169,10,172,19,'#'); y.put(171,9,'B'); y.put(172,9,'K')
 # Haznenin çıkışında isteğe bağlı ritim yolu (ayarları levels.dart'ta):
 # basınca kalkan geniş kaya, karşılıklı inip kalkan iki kaya, uçta ateşböceği.
-y.put(174,9,'V'); y.put(178,9,'V'); y.put(181,9,'V')
-y.fill(184,5,185,5,'#'); y.put(184,4,'F'); y.fill(186,2,186,5,'#')
+y.put(173,10,'V'); y.put(177,10,'V'); y.put(180,10,'V')
+y.fill(183,5,184,5,'#'); y.put(183,4,'F'); y.fill(185,2,185,5,'#')
 # 7) Medusa Salonu: iki baş, bir Kandilci, Perseus'un kalkanı
 y.fill(173,14,222,19,'#'); y.put(174,13,'K'); y.put(176,13,'p'); y.put(175,13,'(')
 y.put(178,13,'B'); y.put(188,13,'G'); y.put(180,13,'I'); y.put(184,13,'F')
@@ -1126,8 +1128,13 @@ carve(90,16,94,23); carve(80,17,94,23)          # aşağı kat (üst katın alt�
 # Aşağı kat: şapel, karanlık; yüksek kapıya sürgü taşıyla çıkılır
 carve(95,17,107,23); carve(98,14,104,16); dk.put(101,23,'p'); dk.put(99,23,'K'); dk.put(103,23,'4')
 dk.put(105,23,'I')
-carve(108,17,150,20); dk.put(109,20,'B'); dk.put(116,20,'G'); dk.put(124,20,'~'); dk.put(125,20,'~')
-dk.put(128,17,'x'); dk.put(148,20,'X'); dk.put(132,20,'F'); dk.put(142,20,'F'); dk.put(138,18,'e')
+# Şapelin tavanından sızan su: kanatlar ıslanır, üstünden süzülüp yüksek
+# rafa geçilmez (sürgü taşıyla çıkılır).
+dk.put(80,12,'<'); dk.put(107,22,'>')
+# Yüksek raf şapelin tabanından 4 kare yukarıda: tutunarak çıkılmaz, sürgü
+# taşı şapele itilip basamak yapılır.
+carve(108,17,150,19); dk.put(109,19,'B'); dk.put(116,19,'G'); dk.put(124,19,'~'); dk.put(125,19,'~')
+dk.put(128,17,'x'); dk.put(148,19,'X'); dk.put(132,19,'F'); dk.put(142,19,'F'); dk.put(138,18,'e')
 # 3) Havalandırma bacası: aşağıdan sıcak rüzgâr, devlerin nefesi
 carve(151,10,172,39); dk.put(152,20,'p'); dk.put(153,20,'5')
 dk.fill(151,21,154,21,'#'); dk.put(152,20,'.',force=True); dk.put(153,20,'5',force=True)

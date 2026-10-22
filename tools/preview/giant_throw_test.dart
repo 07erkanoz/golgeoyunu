@@ -23,9 +23,8 @@ Future<void> shot(GolgeGame game, String name) async {
 
 void main() {
   setUpAll(() async {
-    final bytes = File(
-      '/usr/share/fonts/noto/NotoSans-Regular.ttf',
-    ).readAsBytesSync();
+    final bytes = File('/usr/share/fonts/noto/NotoSans-Regular.ttf')
+        .readAsBytesSync();
     await (FontLoader(
       'Roboto',
     )..addFont(Future.value(ByteData.view(bytes.buffer)))).load();

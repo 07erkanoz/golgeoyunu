@@ -47,6 +47,18 @@ class Backdrop extends Component with HasGameReference<GolgeGame> {
     final height = (1 - cam.y / lv.pixelHeight).clamp(0.0, 1.0);
     final rect = Rect.fromLTWH(0, 0, w, h);
 
+    // Işık ve derinlik denemesi: uzak sarnıç pusa karışır, hafifçe bulanır
+    // (göz derinliği buradan okur; oyun katmanı keskin kalır).
+    final far =
+        Realism.on &&
+        !Settings.lowGraphics &&
+        lv.def.theme == LevelTheme.cistern;
+    if (far) {
+      canvas.saveLayer(
+        rect,
+        Paint()..imageFilter = ImageFilter.blur(sigmaX: 2.2, sigmaY: 2.2),
+      );
+    }
     switch (lv.def.theme) {
       case LevelTheme.cistern when Cartoon.on:
         _cartoonCistern(canvas, rect, w, h, cam.x);
@@ -300,6 +312,15 @@ class Backdrop extends Component with HasGameReference<GolgeGame> {
           color: const Color(0xFF5E281A),
           bumpy: true,
         );
+    }
+    if (far) {
+      canvas.restore();
+      canvas.drawRect(
+        rect,
+        Paint()
+          ..color = (Cartoon.on ? Cartoon.skyMid : const Color(0xFF3A1E14))
+              .withValues(alpha: 0.22),
+      );
     }
   }
 

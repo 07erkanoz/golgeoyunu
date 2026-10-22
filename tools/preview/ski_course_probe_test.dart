@@ -82,7 +82,7 @@ void main() {
         }
         if (p.isDead && (x / kTile - _trace).abs() < 14) traced++;
         if (p.isDead && !wasDead) {
-          deaths.add('${(x / kTile).toStringAsFixed(0)}:${p.deathCause?.name}');
+          deaths.add('${(x / kTile).toStringAsFixed(0)}:${p.deathCause.name}');
         }
         wasDead = p.isDead;
       }

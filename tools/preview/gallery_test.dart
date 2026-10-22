@@ -25,10 +25,11 @@ Future<void> _fonts() async {
     'NotoSans-LightItalic.ttf',
   ]) {
     final file = File('/usr/share/fonts/noto/$f');
-    if (file.existsSync())
+    if (file.existsSync()) {
       loader.addFont(
         Future.value(ByteData.view(file.readAsBytesSync().buffer)),
       );
+    }
   }
   await loader.load();
 }

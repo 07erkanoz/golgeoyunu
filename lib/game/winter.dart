@@ -90,14 +90,20 @@ class Wolf extends PositionComponent with HasGameReference<GolgeGame> {
           // Atılmadan önce bir an çöker, hırlar: oyuncuya kaçacak an kalır.
           _crouch -= dt;
           facing = d.x >= 0 ? 1 : -1;
-          if (_crouch <= 0) _lunge = 0.45;
+          if (_crouch <= 0) {
+            _lunge = 0.45;
+            // Av havadaysa ya da yukarıdaysa kurt da sıçrar: sürekli
+            // zıplayarak altından geçilmez.
+            if (_onGround && (d.y < -10 || !p.onGround)) _vy = -470;
+          }
         } else if (_lunge > 0) {
           _lunge -= dt;
           vx = facing * runSpeed * 1.35;
         } else if (_pounceCd <= 0 &&
             d.x.abs() < 3.5 * kTile &&
             d.x.abs() > 20 &&
-            d.y.abs() < kTile) {
+            d.y > -2.6 * kTile &&
+            d.y < kTile) {
           _crouch = 0.32;
           _pounceCd = 2.4;
           GameAudio.instance.play('growl', volume: 0.6, minGapMs: 1500);
@@ -111,7 +117,11 @@ class Wolf extends PositionComponent with HasGameReference<GolgeGame> {
           hunting = false;
           _lost = 0;
         }
-        if (d.x.abs() < 18 && d.y.abs() < 24) p.die(cause: DeathCause.dark);
+        // Atılırken çene uzanır: havadaki avı da yakalar.
+        final reachY = _lunge > 0 ? 36.0 : 24.0;
+        if (d.x.abs() < 18 && d.y.abs() < reachY) {
+          p.die(cause: DeathCause.dark);
+        }
       }
     }
     if (!hunting) {
@@ -173,6 +183,12 @@ class Wolf extends PositionComponent with HasGameReference<GolgeGame> {
   void _fall(double dt) {
     _vy = math.min(_vy + 1500 * dt, 800);
     final prevBottom = position.y + size.y;
+    // Sıçrarken tavana çarpar.
+    if (_vy < 0 &&
+        (_solidAt(position.x + 4, position.y + _vy * dt) ||
+            _solidAt(position.x + size.x - 4, position.y + _vy * dt))) {
+      _vy = 0;
+    }
     position.y += _vy * dt;
     _onGround = false;
     final bottom = position.y + size.y;

@@ -37,7 +37,7 @@ LEVELS = [
     ('kMapNemrut', True, 80), ('kMapGunDogumu', True, 0), ('kMapKarYolu', True, 120),
     ('kMapPalandoken', None, 0), ('kMapCig', None, 0), ('kMapPeri', True, 0),
     ('kMapDerinkuyu', True, 0), ('kMapKonya', True, 0),
-    ('kMapErlik', False, 0), ('kMapErgenekon', True, 0), ('kMapGok', True, 0),
+    ('kMapErlik', False, 0), ('kMapErgenekon', False, 0), ('kMapGok', True, 0),
 ]
 
 # Göğün katları: `W` Tulpar'dır (kanat değil). Ona varılınca Tulpar'la uçulur;
@@ -110,6 +110,17 @@ class Map:
         self.opened = opened                     # açılmış kapı hücreleri
         self.konya = konya
         self.extra = set()
+        # Sağanak (`<` sol üst, `>` sağ alt; oyundaki gibi sırayla eşlenir):
+        # içindeyken kanatlar ıslanır, süzülünmez.
+        self.rain = []
+        starts = []
+        for r, row in enumerate(rows):
+            for c, ch in enumerate(row):
+                if ch == '<':
+                    starts.append((c, r))
+                elif ch == '>' and starts:
+                    c0, r0 = starts.pop(0)
+                    self.rain.append((c0, r0, c, r))
         self.generous = set()                    # yaklaşık sayılan düzenekler
         for r, row in enumerate(rows):
             for c, ch in enumerate(row):
@@ -123,6 +134,27 @@ class Map:
                             self.extra.add((k, r))
                             self.generous.add((k, r))
                             k += d
+                if ch == '@':
+                    # Sürgü taşı / kalkan: zemini boyunca sağa itilir; zemin
+                    # bitince aşağıdaki zemine düşer, itilmeye devam eder.
+                    # (Sola itiş benzetilmez: düştüğü geçitleri tıkamış
+                    # sayılmasın.)
+                    for d in (1,):
+                        k, rr = c, r
+                        for _ in range(200):
+                            if not (0 <= k < self.w):
+                                break
+                            if rows[rr][k] in '#H':
+                                break
+                            below = rows[rr + 1][k] if rr + 1 < self.h else '#'
+                            if below in '#=-':
+                                self.extra.add((k, rr))
+                                self.generous.add((k, rr))
+                                k += d
+                            else:
+                                rr += 1
+                                if rr + 1 >= self.h:
+                                    break
                 if ch == 'O':                    # çöken kaya: iki kare geniş
                     self.extra.add((c + 1, r))
                 if ch == 'V':                    # 4 kare yukarı çıkar
@@ -162,6 +194,9 @@ class Map:
                     while k < self.w and r + 1 < self.h and rows[r + 1][k] == 'w':
                         self.extra.add((k, r))
                         k += 1
+
+    def in_rain(self, c, r):
+        return any(c0 <= c <= c1 and r0 <= r <= r1 for c0, r0, c1, r1 in self.rain)
 
     def cell(self, c, r):
         if c < 0 or c >= self.w:
@@ -208,7 +243,8 @@ def simulate(m, x, y, vx0, glide, swing=None, release=None):
     for step in range(int(8 / DT)):
         if release is not None and step * DT > release:
             glide = False
-        gliding = glide and m.wings and (vy > -40 or m.cell(
+        wet = m.rain and m.in_rain(int((x + W_P / 2) // T), int((y + H_P / 2) // T))
+        gliding = glide and m.wings and not wet and (vy > -40 or m.cell(
             int((x + W_P / 2) // T), int((y + H_P / 2) // T)) == 'r')
         if gliding:
             vy = min(vy + G * 0.3 * DT, GLIDE_FALL)
@@ -221,7 +257,7 @@ def simulate(m, x, y, vx0, glide, swing=None, release=None):
         AIR.add((cc, cr))
         ch = m.cell(cc, cr)
         if ch == 'r':
-            vy = max(vy - 2600 * DT, -260) if (glide and m.wings) else vy - 1100 * DT
+            vy = max(vy - 2600 * DT, -260) if (glide and m.wings and not wet) else vy - 1100 * DT
             if vy < -150:
                 vx = 0
             elif vx0:

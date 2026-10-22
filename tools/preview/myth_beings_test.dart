@@ -12,8 +12,9 @@ void main() {
   test('Mitoloji varlıkları', () async {
     final loader = FontLoader('Roboto');
     final f = File('/usr/share/fonts/noto/NotoSans-Regular.ttf');
-    if (f.existsSync())
+    if (f.existsSync()) {
       loader.addFont(Future.value(ByteData.view(f.readAsBytesSync().buffer)));
+    }
     await loader.load();
     const w = 1800.0;
     const h = 1300.0;

@@ -1029,7 +1029,8 @@ void main() {
         expect(p.riding, isA<FloatPlank>());
         run(game, 18);
         expect(p.isDead, isFalse);
-        expect(p.position.y + Player.h, lessThan(7 * kTile));
+        // Su en çok geçidin tabanına (satır 10) çıkar; tahta o hizada.
+        expect(p.position.y + Player.h, lessThan(10 * kTile + 1));
         // Çıkış rafına atla.
         keys(game)
           ..right = true
@@ -2285,7 +2286,61 @@ void main() {
           ..jump = false;
         run(game, 0.5);
         expect(p.isDead, isFalse);
-        expect(p.position.y + Player.h, lessThanOrEqualTo(21 * kTile + 1));
+        // Raf satır 20'de (şapel tabanından 4 kare yukarıda).
+        expect(p.position.y + Player.h, lessThanOrEqualTo(20 * kTile + 1));
+      },
+    );
+
+    testWithGame<GolgeGame>(
+      'sürgü taşı olmadan şapelden rafa çıkılmaz; kanat ıslanır, süzülünmez',
+      GolgeGame.new,
+      (game) async {
+        final p = await place(game, 12, 104, 23);
+        for (final g in game.world.children.whereType<Guard>().toList()) {
+          g.removeFromParent();
+        }
+        // Rafın dibinden zıplayıp tutunmayı dener.
+        for (var t = 0; t < 4; t++) {
+          p.position.setFrom(
+            Level.standOn(
+              Vector2(105.5 * kTile, 23 * kTile),
+              Player.w,
+              Player.h,
+            ),
+          );
+          run(game, 0.3);
+          keys(game)
+            ..right = true
+            ..jump = true;
+          run(game, 0.9);
+          keys(game)
+            ..right = false
+            ..jump = false;
+          run(game, 0.6);
+          expect(
+            p.position.y + Player.h,
+            greaterThan(21 * kTile),
+            reason: 'taşsız rafa çıkılmamalı',
+          );
+        }
+        // Yukarı koridordan süzülerek şapelin üstünden rafa geçmeyi dener.
+        p.position.setFrom(
+          Level.standOn(Vector2(92 * kTile, 15 * kTile), Player.w, Player.h),
+        );
+        run(game, 0.3);
+        keys(game)
+          ..right = true
+          ..jump = true;
+        run(game, 3.5);
+        keys(game)
+          ..right = false
+          ..jump = false;
+        run(game, 0.5);
+        expect(
+          p.position.y + Player.h,
+          greaterThan(21 * kTile),
+          reason: 'ıslak kanatla süzülüp rafa geçilmemeli',
+        );
       },
     );
 
@@ -2638,14 +2693,14 @@ void main() {
     'Yerebatan ritim yolu: basınca kalkan kaya, karşılıklı iki kaya, rafta ateşböceği',
     GolgeGame.new,
     (game) async {
-      final p = await place(game, 0, 171, 5);
+      final p = await place(game, 0, 171, 9);
       for (final g in game.world.children.whereType<Guard>().toList()) {
         g.removeFromParent();
       }
       final rocks =
           game.world.children
               .whereType<MovingRock>()
-              .where((r) => r.x > 173 * kTile && r.x < 183 * kTile)
+              .where((r) => r.x > 172 * kTile && r.x < 182 * kTile)
               .toList()
             ..sort((a, b) => a.x.compareTo(b.x));
       expect(rocks.length, 3);

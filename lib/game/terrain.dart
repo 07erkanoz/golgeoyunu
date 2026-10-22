@@ -8,6 +8,7 @@ import 'golge_game.dart';
 import 'level.dart';
 import 'levels.dart';
 import 'palette.dart';
+import '../settings.dart';
 
 /// Arazinin bir dilimi: önceden çizilmiş resim ve kapladığı alan.
 class _Chunk {
@@ -833,6 +834,26 @@ void _cisternVaults(Canvas canvas, Level lv, int c0, int c1) {
   }
 }
 
+/// Tavan kemerlerine oturan arka sütunlar (ışık denemesi kenarlarını
+/// yakmak için): [_cisternVaults] ile aynı yerler.
+List<Rect> cisternBackColumns(Level lv) {
+  final out = <Rect>[];
+  const span = kTile * 5;
+  for (var x = kTile * 1.5; x < lv.pixelWidth; x += span) {
+    final c = (x / kTile).floor();
+    var hasFront = false;
+    for (var r = 0; r < lv.height; r++) {
+      if (lv.cell(c, r) == 'I') hasFront = true;
+    }
+    final top = _ceilingBottom(lv, c);
+    final floor = _floorTop(lv, c, top ~/ kTile);
+    if (!hasFront && floor > top + 80) {
+      out.add(Rect.fromLTRB(x - 11, top + 52, x + 11, floor - 8));
+    }
+  }
+  return out;
+}
+
 double _ceilingBottom(Level lv, int c) {
   var r = 0;
   while (r < lv.height && lv.solid(c, r)) {
@@ -1178,6 +1199,68 @@ class WaterComponent extends Component with HasGameReference<GolgeGame> {
   @override
   void update(double dt) => _t += dt;
 
+  /// Işık ve derinlik denemesi: su üstündeki sahne aynalanır, ince
+  /// şeritler halinde dalgalanır, derinde kararır; yüzeyde ince bir sis.
+  /// Aynalanan arazi ve ön sütunlar önceden çizilmiş dilimlerdir (ucuz).
+  void _reflect(Canvas canvas, List<MapEntry<int, double>> visible) {
+    if (visible.isEmpty) return;
+    final terrain = _ChunkCache.of('terrain', level, _buildTerrain);
+    final fore = _ChunkCache.of('fore', level, _buildForeground);
+    // Aynı yükseklikteki komşu su sütunları tek şerit.
+    final runs = <(double, double, double)>[];
+    for (final MapEntry(key: c, value: top) in visible) {
+      final x0 = c * kTile.toDouble();
+      if (runs.isNotEmpty && runs.last.$3 == top && runs.last.$2 == x0) {
+        runs[runs.length - 1] = (runs.last.$1, x0 + kTile, top);
+      } else {
+        runs.add((x0, x0 + kTile, top));
+      }
+    }
+    const depth = 72.0;
+    const strip = 6.0;
+    for (final (x0, x1, top) in runs) {
+      final area = Rect.fromLTRB(x0, top, x1, top + depth);
+      final mirror = Rect.fromLTRB(x0 - 40, top - depth - 12, x1 + 40, top);
+      canvas.saveLayer(area, Paint()..color = const Color(0x70000000));
+      for (var y = 0.0; y < depth; y += strip) {
+        final dx = math.sin(_t * 1.8 + y * 0.35) * (0.6 + y * 0.06);
+        canvas.save();
+        canvas.clipRect(Rect.fromLTRB(x0, top + y, x1, top + y + strip));
+        canvas.translate(dx, 2 * top);
+        canvas.scale(1, -1);
+        _drawVisible(canvas, terrain, mirror);
+        _drawVisible(canvas, fore, mirror);
+        canvas.restore();
+      }
+      canvas.restore();
+      // Derinde aynanın üstüne suyun koyuluğu iner.
+      canvas.drawRect(
+        area,
+        Paint()
+          ..shader = ui.Gradient.linear(
+            Offset(0, top),
+            Offset(0, top + depth),
+            [const Color(0x00000000), const Color(0xC00A0504)],
+          ),
+      );
+      // Yüzeyde ince sis.
+      canvas.drawRect(
+        Rect.fromLTRB(x0, top - 26, x1, top + 16),
+        Paint()
+          ..shader = ui.Gradient.linear(
+            Offset(0, top - 26),
+            Offset(0, top + 16),
+            [
+              const Color(0x00D8A07A),
+              const Color(0x22D8A07A),
+              const Color(0x00D8A07A),
+            ],
+            const [0, 0.6, 1],
+          ),
+      );
+    }
+  }
+
   @override
   void render(Canvas canvas) {
     if (_surface.isEmpty) return;
@@ -1205,6 +1288,11 @@ class WaterComponent extends Component with HasGameReference<GolgeGame> {
           ]),
       );
       canvas.drawRect(rect, body);
+    }
+    if (Realism.on &&
+        !Settings.lowGraphics &&
+        level.def.theme == LevelTheme.cistern) {
+      _reflect(canvas, visible);
     }
     final glint = Paint()..strokeWidth = 1.3;
     for (final MapEntry(key: c, value: top) in visible) {

@@ -950,9 +950,9 @@ const levels = <LevelDef>[
       ),
     ],
     rocks: [
-      (174, 9, RockProfile(onStep: true, width: 3, pause: 1.2, period: 6)),
-      (178, 9, RockProfile(period: 5, pause: 1.2, phase: 0)),
-      (181, 9, RockProfile(period: 5, pause: 1.2, phase: 0.5)),
+      (173, 10, RockProfile(onStep: true, width: 3, pause: 1.2, period: 6)),
+      (177, 10, RockProfile(period: 5, pause: 1.2, phase: 0)),
+      (180, 10, RockProfile(period: 5, pause: 1.2, phase: 0.5)),
     ],
   ),
   LevelDef(
