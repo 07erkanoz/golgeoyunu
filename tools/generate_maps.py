@@ -805,11 +805,12 @@ class Ski:
                         zones.append((lx-24, lx+v*0.45))
         s.zones=zones
         out=[]
+        s.rocks=[]
         for c,ch,up in s.marks:
             if ch=='%':
                 for d in [0]+[k*sg for k in range(1,30) for sg in (1,-1)]:
                     if s.ok_rock(c+d):
-                        c=c+d; break
+                        c=c+d; s.rocks.append(c); break
                 else:
                     print(f'{name}: kaya {c} kaldırıldı (yer yok)')
                     continue
@@ -839,6 +840,8 @@ class Ski:
         zıplayan aşar (rock_clear)."""
         W=len(s.y)
         if not (2<=c<W-8) or s.y[c]<0: return False
+        # Kayalar arası en az 24 kare: birinden zıplayan öbürüne inmesin.
+        if any(abs(c-r)<24 for r in getattr(s,'rocks',[])): return False
         x=(c+0.5)*TILE
         for a,b in s.zones:
             if a-30<=x<=b+20: return False
