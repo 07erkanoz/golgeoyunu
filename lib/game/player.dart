@@ -698,10 +698,14 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
   /// Kayarken hız. Ak Kurt'un izi ve taklalar dışarıdan iter.
   double get skiSpeed => _skiSpeed;
 
+  /// Takladan sonraki kut hızının üst sınırı: takla uçurumları ancak bu
+  /// hızla aşılır (olağan en yüksek hız 640).
+  static const double kutSpeed = 800;
+
   /// Kayan Sâye'ye ileri itiş (Ak Kurt'un izi, takla ödülü).
   void skiKick(double dv) {
     if (game.skiSurface == null) return;
-    _skiSpeed = math.min(_skiSpeed + dv, 720);
+    _skiSpeed = math.min(_skiSpeed + dv, kutSpeed);
   }
 
   bool _skiAir = false;
@@ -812,17 +816,18 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
         );
       } else {
         final th = s.slope(x);
+        // Takladan sonra kut: altın hız, rüzgâr direnci tutmaz.
+        final kut = (game.skiFx?.kut ?? 0) > 0;
         var a = g * 0.55 * math.sin(th) * (game.inMagnet(x) ? -1.4 : 1.0);
-        a -= _skiSpeed * 0.12 + 0.00035 * _skiSpeed * _skiSpeed.abs();
+        a -= _skiSpeed * 0.12 +
+            (kut ? 0 : 0.00035 * _skiSpeed * _skiSpeed.abs());
         // Yavaşken sopalarla güçlü itiş: en dik yokuşa da ağır ağır
         // tırmanılır, hiçbir vadide sıkışıp kalınmaz.
         if (dir > 0 && _skiSpeed < 300) a += _skiSpeed < 140 ? 760 : 280;
         if (dir < 0) a -= 460 * (_skiSpeed >= 0 ? 1 : -1);
         if (game.inMagnet(x)) a -= 180;
-        // Takladan sonra kut: kısa bir süre daha hızlı kayılır.
-        final kut = (game.skiFx?.kut ?? 0) > 0;
-        if (kut) a += 120;
-        _skiSpeed = (_skiSpeed + a * dt).clamp(-180.0, kut ? 720.0 : 640.0);
+        if (kut) a += 260;
+        _skiSpeed = (_skiSpeed + a * dt).clamp(-180.0, kut ? kutSpeed : 640.0);
         final nx = x + _skiSpeed * math.cos(th) * dt;
         // Kar hizasındaki kütüğe kayarak çıkar.
         for (final r in game.world.children.whereType<SkiRail>()) {
@@ -860,8 +865,11 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     if (_skiAir) {
       // Sırttan yeni havalanmış, kar hâlâ ayağının dibinde: zıplama sayılır.
       if (_skiJumpBuf > 0 && !_skiJumped && _airTime < 0.16) {
+        // Uçurumun dudağından yeni ayrıldıysa (altı boş) da sayılır: kenara
+        // geç kalan zıplama yutulmasın.
         final under = s.at(center.x);
-        if (under != null && under - (position.y + h) < 16) {
+        if ((under == null && _airTime < 0.12) ||
+            (under != null && under - (position.y + h) < 16)) {
           _skiSpeed = velocity.x.abs() > 0 ? velocity.length : _skiSpeed;
           _skiJump(s.slope(center.x));
         }

@@ -40,7 +40,8 @@ class SkiFx extends Component with HasGameReference<GolgeGame> {
     _popups.add(_Popup(label, p.center.x, p.position.y - 18));
     // Yalnız takla kut hızı verir (takla uçurumları bununla aşılır).
     if (flip) {
-      kut = math.min(4, kut + 1.6 * weight);
+      // Bir takla, rampadan takla uçurumunun kenarına dek yeter.
+      kut = math.min(5, kut + 2.6 * weight);
       p.skiKick(40.0 * weight);
     }
     GameAudio.instance.play('firefly', volume: 0.5);

@@ -97,32 +97,38 @@ class SkiTerrain extends Component with HasGameReference<GolgeGame> {
     );
     final bottom = view.bottom + 200;
     _pines(canvas, c0, c1, lt);
-    // Uçurumların içi: dipsiz, koyu bir yarık (gök görünmesin).
+    // Uçurumların içi: dipsiz, koyu bir yarık. Üstü iki kenarı birleştiren
+    // eğik çizgiden başlar ve yavaşça koyulaşır (düz bir kutu gibi gökyüzünün
+    // önüne çıkıp arkadaki dağları kesmesin).
     for (var g = c0; g <= c1; g++) {
       if (surface.rows[g] >= 0 || (g > 0 && surface.rows[g - 1] < 0)) continue;
       var e = g;
       while (e < surface.rows.length && surface.rows[e] < 0) {
         e++;
       }
-      final top =
-          math.min(
-            g > 0 ? surface.rows[g - 1] : 9999.0,
-            e < surface.rows.length ? surface.rows[e] : 9999.0,
-          ) *
+      final yl = (g > 0 ? surface.rows[g - 1] : surface.rows[e]) * kTile;
+      final yr =
+          (e < surface.rows.length ? surface.rows[e] : surface.rows[g - 1]) *
           kTile;
-      final r = Rect.fromLTRB(
-        g * kTile - 2.0,
-        top + 30,
-        e * kTile + 2.0,
-        bottom,
-      );
-      canvas.drawRect(
-        r,
+      final x0 = g * kTile - 2.0;
+      final x1 = e * kTile + 2.0;
+      final top = math.max(yl, yr) + 40;
+      final path = Path()
+        ..moveTo(x0, yl + 40)
+        ..lineTo(x1, yr + 40)
+        ..lineTo(x1, bottom)
+        ..lineTo(x0, bottom)
+        ..close();
+      final deep = Color.lerp(lt.deep, const Color(0xFF000000), 0.6)!;
+      canvas.drawPath(
+        path,
         Paint()
-          ..shader = Gradient.linear(r.topLeft, Offset(r.left, r.top + 300), [
-            Color.lerp(lt.deep, lt.skyLow, 0.15)!,
-            Color.lerp(lt.deep, const Color(0xFF000000), 0.6)!,
-          ]),
+          ..shader = Gradient.linear(
+            Offset(0, math.min(yl, yr) + 40),
+            Offset(0, top + 260),
+            [deep.withValues(alpha: 0), deep.withValues(alpha: 0.75), deep],
+            const [0, 0.55, 1],
+          ),
       );
     }
     var c = c0;

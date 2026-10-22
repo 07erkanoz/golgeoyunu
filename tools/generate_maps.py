@@ -606,7 +606,7 @@ lvl9=k9.rows()
 SKI_G = 1500.0
 SKI_JUMP = 440.0
 SKI_VMAX = 640.0      # olağan en yüksek hız
-SKI_KUT = 720.0       # takladan sonraki "kut" hızı
+SKI_KUT = 800.0       # takladan sonraki "kut" hızı
 TILE = 32.0
 
 class Ski:
@@ -699,8 +699,9 @@ class Ski:
         # İyi zamanlı (kenara yakın) zıplayış normal hızla aşamamalı.
         if any(ok(edge-j,v) for j in (5,10,20,30,40,50) for v in (600,620,640)):
             return 'easy'
-        # Kut hızıyla erken zıplayan da aşabilmeli.
-        if all(ok(edge-j,v) for j in (10,30,50) for v in (700,720)):
+        # Kut hızıyla geniş bir zıplama penceresinde aşılabilmeli (kenara
+        # 10-120 piksel kala; telefonda da yakalanır).
+        if all(ok(edge-j,v) for j in (10,40,80,120) for v in (760,800)):
             return 'ok'
         return 'short'
     def drop_off(s,gap_n,drop,land_n,land_drop):
