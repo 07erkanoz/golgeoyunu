@@ -376,6 +376,26 @@ class AboutPage extends StatelessWidget {
             height: 1.45,
           ),
         ),
+        const SizedBox(height: 14),
+        Text(
+          S.upper(S.of('aboutArt')),
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: _accent.withValues(alpha: 0.7),
+            fontSize: 10,
+            letterSpacing: 3,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          S.of('artLicense'),
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: _text.withValues(alpha: 0.45),
+            fontSize: 10.5,
+            height: 1.45,
+          ),
+        ),
       ],
     );
   }

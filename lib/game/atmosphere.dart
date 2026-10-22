@@ -6,11 +6,13 @@ import 'dart:ui' as ui;
 import 'package:flame/components.dart';
 
 import 'ark_animals.dart';
+import 'fairy_chimney.dart';
 import 'golge_game.dart';
 import 'levels.dart';
 import 'myth_shapes.dart';
 import 'nemrut.dart' show NemrutArt, NemrutHead;
 import 'palette.dart';
+import 'realism.dart';
 import 'ski_light.dart';
 import '../settings.dart';
 
@@ -36,7 +38,6 @@ class Backdrop extends Component with HasGameReference<GolgeGame> {
   @override
   void update(double dt) => _t += dt;
 
-  static const double _farScale = 3;
   static final _farPaint = Paint()..filterQuality = FilterQuality.medium;
 
   @override
@@ -52,10 +53,10 @@ class Backdrop extends Component with HasGameReference<GolgeGame> {
 
     // Işık ve derinlik denemesi: uzak sarnıç pusa karışır, hafifçe bulanır
     // (göz derinliği buradan okur; oyun katmanı keskin kalır).
-    final far =
-        Realism.on &&
-        !Settings.lowGraphics &&
-        lv.def.theme == LevelTheme.cistern;
+    final depth = realismHere(game) ? depthKind(lv) : null;
+    final far = depth != null;
+    // Kapalı sarnıçta daha bulanık; açık havada yıldızlar seçilsin diye az.
+    final farScale = depth == DepthKind.cistern ? 3.0 : 2.0;
     // Bulanıklık ucuz yoldan: sahne ekranın üçte biri çözünürlükte bir
     // resme çizilir, büyütülerek konur (tam ekran bulanıklaştırma
     // telefonu ısıtıyordu).
@@ -64,7 +65,7 @@ class Backdrop extends Component with HasGameReference<GolgeGame> {
     if (far) {
       rec = ui.PictureRecorder();
       canvas = Canvas(rec);
-      canvas.scale(1 / _farScale);
+      canvas.scale(1 / farScale);
     }
     switch (lv.def.theme) {
       case LevelTheme.cistern when Cartoon.on:
@@ -322,21 +323,27 @@ class Backdrop extends Component with HasGameReference<GolgeGame> {
     }
     if (rec != null) {
       final img = rec.endRecording().toImageSync(
-        (w / _farScale).ceil(),
-        (h / _farScale).ceil(),
+        (w / farScale).ceil(),
+        (h / farScale).ceil(),
       );
       outer.drawImageRect(
         img,
         Rect.fromLTWH(0, 0, img.width.toDouble(), img.height.toDouble()),
-        Rect.fromLTWH(0, 0, img.width * _farScale, img.height * _farScale),
+        Rect.fromLTWH(0, 0, img.width * farScale, img.height * farScale),
         _farPaint,
       );
       img.dispose();
+      // Uzak katmana inen pus.
       outer.drawRect(
         rect,
         Paint()
-          ..color = (Cartoon.on ? Cartoon.skyMid : const Color(0xFF3A1E14))
-              .withValues(alpha: 0.22),
+          ..color = switch (depth!) {
+            DepthKind.cistern =>
+              (Cartoon.on ? Cartoon.skyMid : const Color(0xFF3A1E14))
+                  .withValues(alpha: 0.22),
+            DepthKind.snow || DepthKind.konya => const Color(0x1E2A3550),
+            DepthKind.peri => const Color(0x1E7A4030),
+          },
       );
     }
   }

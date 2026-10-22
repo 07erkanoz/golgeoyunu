@@ -1378,64 +1378,69 @@ extension _EastBackdrops on Backdrop {
       0.25,
       const Color(0xFFFFC890),
     );
-    for (final (depth, color, scale, base) in [
-      (0.08, const Color(0xFF8A5A50), 0.6, 0.78),
-      (0.2, const Color(0xFF5A3A38), 0.85, 0.86),
-      (0.38, const Color(0xFF2E1E20), 1.15, 0.96),
+    // Üç kat, gün batımında göğe karşı siluet: uzakta puslu kahve, ortada
+    // toprak, yakında koyu kahve; şapka taşları daha koyu. Her katın
+    // altında alçak tüf sırtları; pencerelerde kandil.
+    for (final (depth, tones, scale, base) in [
+      (
+        0.08,
+        const ChimneyTones(
+          Color(0xFFB07E6A),
+          Color(0xFF94685A),
+          Color(0xFF6E4E46),
+        ),
+        0.6,
+        0.62,
+      ),
+      (
+        0.2,
+        const ChimneyTones(
+          Color(0xFF7E5440),
+          Color(0xFF5E3C2E),
+          Color(0xFF3A2620),
+        ),
+        0.85,
+        0.7,
+      ),
+      (
+        0.38,
+        const ChimneyTones(
+          Color(0xFF4E3024),
+          Color(0xFF3A2219),
+          Color(0xFF221410),
+        ),
+        1.15,
+        0.79,
+      ),
     ]) {
-      final p = Paint()..color = color;
-      final cap = Paint()
-        ..color = Color.lerp(color, const Color(0xFF000000), 0.35)!;
-      final window = Paint()
-        ..color = const Color(0xFFFFC27A).withValues(alpha: 0.75);
-      _repeat(w, cam.x * depth, 150 * scale, (x, rnd) {
-        if (rnd.nextDouble() < 0.2) return;
-        final ht = (120 + rnd.nextDouble() * 160) * scale;
-        final half = (16 + rnd.nextDouble() * 14) * scale;
-        final b = h * base;
-        final bx = x + rnd.nextDouble() * 40 * scale;
-        canvas.drawPath(
-          Path()
-            ..moveTo(bx - half * 2.2, b)
-            ..quadraticBezierTo(
-              bx - half * 1.1,
-              b - ht * 0.4,
-              bx - half * 0.7,
-              b - ht,
-            )
-            ..lineTo(bx + half * 0.7, b - ht)
-            ..quadraticBezierTo(
-              bx + half * 1.1,
-              b - ht * 0.4,
-              bx + half * 2.2,
-              b,
-            )
-            ..close(),
-          p,
+      // Tüf tepeleri: tabanları birbirine bağlayan alçak, yuvarlak sırt.
+      final hill = Path()..moveTo(0, h);
+      for (var x = 0.0; x <= w + 20; x += 20) {
+        final u = x + cam.x * depth;
+        hill.lineTo(
+          x,
+          h * base -
+              (10 + 8 * math.sin(u * 0.013) + 6 * math.sin(u * 0.031 + 1)) *
+                  scale,
         );
-        // Bazalt şapka.
-        canvas.drawOval(
-          Rect.fromCenter(
-            center: Offset(bx, b - ht - 4 * scale),
-            width: half * 3,
-            height: 22 * scale,
-          ),
-          cap,
+      }
+      hill
+        ..lineTo(w, h)
+        ..close();
+      canvas.drawPath(hill, Paint()..color = tones.body);
+      final lit = const Color(0xFFFFC27A).withValues(alpha: 0.85);
+      _repeat(w, cam.x * depth, 320 * scale, (x, rnd) {
+        if (rnd.nextDouble() < 0.3 + (0.38 - depth) * 0.6) return;
+        drawFairyCluster(
+          canvas,
+          Offset(x + rnd.nextDouble() * 60 * scale, h * base + 8 * scale),
+          (170 + rnd.nextDouble() * 130) * scale,
+          tones,
+          rnd,
+          peaks: 1 + rnd.nextInt(3),
+          openings: depth > 0.1 ? 0.3 : 0,
+          lit: lit,
         );
-        if (depth > 0.1 && rnd.nextDouble() < 0.6) {
-          final wy = b - ht * (0.3 + rnd.nextDouble() * 0.4);
-          canvas.drawRRect(
-            RRect.fromRectAndRadius(
-              Rect.fromCenter(
-                center: Offset(bx, wy),
-                width: 5 * scale,
-                height: 8 * scale,
-              ),
-              Radius.circular(2.5 * scale),
-            ),
-            window,
-          );
-        }
       }, salt: (depth * 1000).round());
     }
   }

@@ -170,6 +170,8 @@ class S {
     'aboutSite': 'Kişisel sayfa',
     'aboutGamePage': 'Oyunun sayfası · LifeOS ailesinin bir parçası',
     'aboutMusic': 'Müzik ve sesler',
+    'aboutArt': 'Görsel kaynaklar',
+    'artLicense': 'Peri bacası silueti: "Cappadocia Fairy chimneys", Nevit Dilmen, Wikimedia Commons, CC BY-SA 3.0. Oyundaki uyarlaması da CC BY-SA 3.0.',
     'musicLicense':
         'Menü müziği: "Turkish Maqam Soundscape", vjgalaxy (Pixabay). '
         'Pixabay İçerik Lisansı ile kullanılmaktadır.\n'
@@ -337,6 +339,8 @@ class S {
     'aboutSite': 'Personal site',
     'aboutGamePage': 'The game\'s page · part of the LifeOS family',
     'aboutMusic': 'Music and sound',
+    'aboutArt': 'Art sources',
+    'artLicense': 'Fairy chimney silhouette: "Cappadocia Fairy chimneys" by Nevit Dilmen, Wikimedia Commons, CC BY-SA 3.0. The in-game adaptation is CC BY-SA 3.0 as well.',
     'musicLicense':
         'Menu music: "Turkish Maqam Soundscape" by vjgalaxy (Pixabay), '
         'used under the Pixabay Content License.\n'
