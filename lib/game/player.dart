@@ -708,6 +708,27 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
   double _airSpin = 0;
   SkiRail? _grind;
 
+  /// Zıplama tamponu: sırtta bir anlığına havalanırken ya da inmeden hemen
+  /// önce basılan zıplama yutulmasın (sırttaki kayanın üstünden atlanabilsin).
+  double _skiJumpBuf = 0;
+
+  /// Bu havalanışta zıplandı mı (sırttan havalanınca bir kez hakkı var).
+  bool _skiJumped = false;
+
+  void _skiJump(double th) {
+    final vy = _skiSpeed * math.sin(th);
+    _skiAir = true;
+    _skiJumped = true;
+    _skiJumpBuf = 0;
+    _airSpin = 0;
+    _airTime = 0;
+    velocity.setValues(
+      _skiSpeed * math.cos(th) + math.sin(th) * 60,
+      math.min(vy, velocity.y) - 440,
+    );
+    GameAudio.instance.play('jump', volume: 0.6);
+  }
+
   bool get skiing => game.skiSurface != null;
 
   static double _wrap(double a) {
@@ -751,6 +772,7 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
   void _updateSki(double dt, int dir, bool jump, bool jumpPressed) {
     final s = game.skiSurface!;
     const g = 1500.0;
+    _skiJumpBuf = jumpPressed ? 0.14 : math.max(0, _skiJumpBuf - dt);
     facing = 1;
     crouching = false;
     sneaking = false;
@@ -818,6 +840,7 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
         if (ny == null || _skiLiftsOff(s, x, nx, _skiSpeed * math.cos(th), g)) {
           // Sırttan havalanır.
           _skiAir = true;
+          _skiJumped = false;
           _airSpin = 0;
           _airTime = 0;
           velocity.setValues(_skiSpeed * math.cos(th), vy);
@@ -827,20 +850,22 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
           onGround = true;
           velocity.setValues(_skiSpeed * math.cos(th), vy);
           _gait += _skiSpeed.abs() * dt / 40;
-          if (jumpPressed) {
-            _skiAir = true;
-            _airSpin = 0;
-            _airTime = 0;
-            velocity.setValues(
-              _skiSpeed * math.cos(th) + math.sin(th) * 60,
-              vy - 440,
-            );
-            GameAudio.instance.play('jump', volume: 0.6);
+          if (_skiJumpBuf > 0) {
+            velocity.y = vy;
+            _skiJump(th);
           }
         }
       }
     }
     if (_skiAir) {
+      // Sırttan yeni havalanmış, kar hâlâ ayağının dibinde: zıplama sayılır.
+      if (_skiJumpBuf > 0 && !_skiJumped && _airTime < 0.16) {
+        final under = s.at(center.x);
+        if (under != null && under - (position.y + h) < 16) {
+          _skiSpeed = velocity.x.abs() > 0 ? velocity.length : _skiSpeed;
+          _skiJump(s.slope(center.x));
+        }
+      }
       _airTime += dt;
       velocity.y = math.min(velocity.y + g * dt, 900);
       position.add(velocity * dt);
@@ -931,7 +956,16 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       }
     }
     for (final r in game.world.children.whereType<SkiRock>()) {
-      if (r.toRect().deflate(4).overlaps(toRect())) {
+      // Kayanın sert çekirdeği: yanına ya da tepesine sürtünmek affedilir
+      // (zıplama penceresi telefonda da yakalanabilsin).
+      final rr = r.toRect();
+      final core = Rect.fromLTRB(
+        rr.left + 7,
+        rr.top + 8,
+        rr.right - 7,
+        rr.bottom,
+      );
+      if (core.overlaps(toRect().deflate(2))) {
         die();
         return;
       }

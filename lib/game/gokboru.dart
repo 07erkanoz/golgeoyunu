@@ -9,6 +9,7 @@ import 'level.dart';
 import 'myth_figures.dart';
 import 'ski.dart';
 import 'winter.dart';
+import 'wolf_rig.dart';
 
 /// İnce buz hücreleri (haritada boş görünür, ince buz bileşeni taşır).
 final _iceCache = Expando<Set<int>>();
@@ -78,6 +79,9 @@ class GokboruSpirit extends PositionComponent with HasGameReference<GolgeGame> {
   double alpha = 0;
   WolfPose _pose = WolfPose.stand;
 
+  /// Yürüyüş adımı (0-1): alınan yolla ilerler, pençeler yerde kaymaz.
+  double _walkPhase = 0;
+
   WolfPose get pose => _pose;
   bool get howling => _state == _State.howl;
   bool get vanishing => _state == _State.vanish;
@@ -133,6 +137,8 @@ class GokboruSpirit extends PositionComponent with HasGameReference<GolgeGame> {
         _pose = WolfPose.walk;
         final step = math.min(dx.abs(), walkSpeed * dt);
         position.x += step * facing;
+        _walkPhase =
+            (_walkPhase + step / (WolfRig.walkStride * drawScale)) % 1.0;
         _followGround(dt);
         if (dx.abs() < 2) _go(_State.wait);
       case _State.wait:
@@ -160,11 +166,13 @@ class GokboruSpirit extends PositionComponent with HasGameReference<GolgeGame> {
   void render(Canvas canvas) {
     if (alpha <= 0) return;
     canvas.save();
-    // Yürürken hafifçe iner kalkar.
-    final bob = _pose == WolfPose.walk ? math.sin(_t * 9) * 0.8 : 0.0;
-    canvas.translate(size.x / 2, size.y + bob);
+    canvas.translate(size.x / 2, size.y);
     canvas.scale(facing * drawScale, drawScale);
-    MythFigures.gokboru(canvas, _t, pose: _pose, alpha: alpha);
+    if (_pose == WolfPose.walk) {
+      MythFigures.gokboruWalk(canvas, _t, _walkPhase, alpha: alpha);
+    } else {
+      MythFigures.gokboru(canvas, _t, pose: _pose, alpha: alpha);
+    }
     canvas.restore();
   }
 }
@@ -428,7 +436,7 @@ class SkiGuide extends PositionComponent with HasGameReference<GolgeGame> {
   static const double drawScale = 0.4;
 
   /// Bir dörtnala döngüsünde alınan yol (dünya pikseli).
-  static const double stride = 58;
+  static const double stride = WolfRig.gallopStride * drawScale;
 
   double _t = 0;
   double alpha = 0;
