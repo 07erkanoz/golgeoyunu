@@ -299,10 +299,15 @@ class _SettingsPanelState extends State<SettingsPanel> {
                       ),
                       Row(
                         children: [
-                          const Expanded(
+                          Expanded(
                             child: Text(
-                              'Işık ve derinlik (deneme)',
-                              style: TextStyle(color: _text, fontSize: 14),
+                              Settings.lowGraphics
+                                  ? 'Işık ve derinlik (deneme)\nDüşük grafikte kapalı'
+                                  : 'Işık ve derinlik (deneme)',
+                              style: const TextStyle(
+                                color: _text,
+                                fontSize: 14,
+                              ),
                             ),
                           ),
                           Switch(

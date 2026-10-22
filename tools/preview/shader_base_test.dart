@@ -26,6 +26,7 @@ void main() {
   });
   testWithGame<GolgeGame>('taban', GolgeGame.new, (game) async {
     Cartoon.on = const bool.fromEnvironment('ESKI') ? false : true;
+    Realism.on = const bool.fromEnvironment('YAKIN');
     game.onGameResize(Vector2(1280, 720));
     game.debugLoadLevel(0);
     await game.ready();
@@ -38,7 +39,7 @@ void main() {
     p.position.setFrom(
       Level.standOn(Vector2(28.3 * kTile, g.position.y), Player.w, Player.h),
     );
-    game.debugCloseUp = 1.55;
+    game.debugCloseUp = const bool.fromEnvironment('YAKIN') ? 2.4 : 1.55;
     for (var i = 0; i < 80; i++) {
       game.update(1 / 60);
     }
@@ -53,7 +54,7 @@ void main() {
     final png = await img.toByteData(format: ui.ImageByteFormat.png);
     Directory('build/preview').createSync(recursive: true);
     File(
-      'build/preview/isik_taban${const bool.fromEnvironment('ESKI') ? '_eski' : ''}.png',
+      'build/preview/isik_taban${const bool.fromEnvironment('YAKIN') ? '_yakin' : ''}${const bool.fromEnvironment('ESKI') ? '_eski' : ''}.png',
     ).writeAsBytesSync(png!.buffer.asUint8List());
     Map<String, double> at(Vector2 w) {
       final s = game.camera.localToGlobal(w);
@@ -71,7 +72,7 @@ void main() {
       }
     }
     File(
-      'build/preview/isik${const bool.fromEnvironment('ESKI') ? '_eski' : ''}.json',
+      'build/preview/isik${const bool.fromEnvironment('YAKIN') ? '_yakin' : ''}${const bool.fromEnvironment('ESKI') ? '_eski' : ''}.json',
     ).writeAsStringSync(
       jsonEncode({
         'lantern': at(g.lanternWorld),
@@ -94,8 +95,9 @@ void main() {
     final img2 = await rec2.endRecording().toImage(1280, 720);
     final png2 = await img2.toByteData(format: ui.ImageByteFormat.png);
     File(
-      'build/preview/isik_dunya${const bool.fromEnvironment('ESKI') ? '_eski' : ''}.png',
+      'build/preview/isik_dunya${const bool.fromEnvironment('YAKIN') ? '_yakin' : ''}${const bool.fromEnvironment('ESKI') ? '_eski' : ''}.png',
     ).writeAsBytesSync(png2!.buffer.asUint8List());
     Cartoon.on = false;
+    Realism.on = false;
   });
 }
