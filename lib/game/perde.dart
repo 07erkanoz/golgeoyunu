@@ -8,6 +8,7 @@ import 'myth_shapes.dart';
 import 'palette.dart';
 
 part 'perde_east.dart';
+part 'perde_tasvir.dart';
 
 /// Perde sahneleri: prologda, bölüm aralarında ve finalde oynanan gölge oyunu.
 enum PerdeScene {

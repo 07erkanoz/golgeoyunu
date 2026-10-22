@@ -1525,16 +1525,31 @@ void _ergenekonScene(Canvas canvas, double time, double u) {
       _ink(anvil)..strokeWidth = 4,
     );
   }
-  // Bugün: ocak sönük; Sâye külün başında.
-  final now = _span(u, 6.0, 6.4);
-  if (now > 0) {
-    for (var i = 0; i < 5; i++) {
-      canvas.drawCircle(Offset(370 + i * 9.0, g - 2), 4, _ink(now));
-    }
-    _P._puppet(canvas, const Offset(440, g), time, 0.6, now, (ink, hole) {
-      _P._saye(ink, hole, time);
-    }, scale: 0.5);
+  // Kahramanlar perdeyi doldurur: Demirci (körükler satırı), Bozkurt (dağ
+  // eridi satırı); son satırda ana iplik.
+  final smith = _enter(u, 3) * (1 - _leave(u, 3));
+  if (smith > 0) {
+    _veil(canvas, smith);
+    _tasvirDemirci(
+      canvas,
+      Offset(250 - 60 * (1 - smith), g + 12),
+      1.12,
+      time,
+      smith,
+    );
   }
+  final wolfHero = _enter(u, 4) * (1 - _leave(u, 4));
+  if (wolfHero > 0) {
+    _veil(canvas, wolfHero);
+    _tasvirBozkurt(
+      canvas,
+      Offset(330 + 120 * _span(u, 4.0, 5.0), g + 10),
+      240,
+      time,
+      wolfHero,
+    );
+  }
+  _chaseBeat(canvas, time, u, 6);
 }
 
 void _gokScene(Canvas canvas, double time, double u) {
