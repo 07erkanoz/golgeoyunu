@@ -250,6 +250,12 @@ class _TheaterPainter extends CustomPainter {
       // Perdenin adı.
       final a =
           math.min(1.0, s._card / 0.4) * math.min(1.0, (1.6 - s._card) / 0.4);
+      // Perdenin önüne ışık iner: ad, sahnedeki tasvirlerin (ayna, kule)
+      // altında kalmadan okunur.
+      canvas.drawRect(
+        r,
+        Paint()..color = const Color(0xFFE6A15A).withValues(alpha: 0.82 * a),
+      );
       _write(
         canvas,
         S.upper(title),
@@ -273,6 +279,10 @@ class _TheaterPainter extends CustomPainter {
         : 1.0;
     final isEnd = line == line.toUpperCase();
     if (isEnd) {
+      canvas.drawRect(
+        r,
+        Paint()..color = const Color(0xFFE6A15A).withValues(alpha: 0.78 * a),
+      );
       _write(
         canvas,
         line,

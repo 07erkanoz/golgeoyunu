@@ -109,11 +109,13 @@ void _floodScene(Canvas canvas, double time, double u) {
   _fallLines(canvas, time, _shown(u, 0.3, 1.5));
 
   // Gemi: dalgada sallanır, sonra doruğa oturur.
-  final float = level < 112;
-  final ay = math.min(level, 112.0);
+  // Sular doruğun altına inince tekne doruğa (y=124) oturur: dibi
+  // doruğa hafifçe gömülür (havada asılı kalmasın).
+  final float = level < 122;
+  final ay = math.min(level, 122.0);
   final bob = float ? math.sin(time * 1.6) * 4 : 0.0;
   canvas.save();
-  canvas.translate(330, ay - 8 + bob);
+  canvas.translate(330, ay - 6 + bob);
   canvas.rotate(float ? math.sin(time * 1.2) * 0.05 : 0.04);
   canvas.scale(0.75);
   _arkShape(_ink(1), _hole(0.8), _span(u, 2.9, 3.3));

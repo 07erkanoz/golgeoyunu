@@ -9,6 +9,11 @@ void main() {
   test('kahraman tasvirleri', () async {
     Directory('build/preview').createSync(recursive: true);
     const shots = {
+      'y06_uyanis': (PerdeScene.prologue, 6.5),
+      'y07_justinianus': (PerdeScene.prologue, 7.5),
+      'y08_aglayan': (PerdeScene.prologue, 8.5),
+      'y09_kovalar': (PerdeScene.prologue, 9.5),
+      'y10_yuruyus': (PerdeScene.prologue, 10.5),
       'k01_hezarfen': (PerdeScene.galata, 1.5),
       'k02_hezarfen_ucar': (PerdeScene.galata, 3.5),
       'k03_lagari': (PerdeScene.skyroad, 1.5),

@@ -217,6 +217,7 @@ class PerdePainter {
     // Bölümün efsane kahramanları kendi satırlarında perdeyi doldurur;
     // Kandilcilerden, ustadan söz eden satırda ana iplik (kovalama).
     _heroOverlay(canvas, scene, time, progress);
+    _heroExtra(canvas, scene, time, progress);
     canvas.restore();
 
     // Kandil kısıldıkça perde kararır; kenarlar hep biraz gölgede.
@@ -794,7 +795,13 @@ class PerdePainter {
 
   static void _prologue(Canvas canvas, double time, double u) {
     _c = canvas;
-    _city(canvas, 1);
+    // Başlıktan sonra şehir söner; perde sarnıcın içine iner.
+    final cityA = 1 - _span(u, 5.55, 6.05);
+    if (cityA <= 0) {
+      _cistern(canvas, time, u);
+      return;
+    }
+    _city(canvas, cityA);
     // Şehir yanıyor; kandil sönerken alevler de çekilir.
     _flames(canvas, time, 1 - _span(u, 2.6, 3.0));
 
@@ -815,11 +822,13 @@ class PerdePainter {
     // Gölgenin düşeceği yerde külden bir kayın fidanı yükselir: Umay ağacı,
     // dalında tek bir ak çaput.
     final grow = _span(u, 3.5, 4.3);
-    if (grow > 0) _umaySapling(canvas, time, const Offset(470, _ground), grow);
+    if (grow > 0 && u < 5.6) {
+      _umaySapling(canvas, time, const Offset(470, _ground), grow);
+    }
 
     // Perde karardı: bir gölge düşer.
     final fall = _span(u, 3.15, 3.55);
-    if (u > 3.1) {
+    if (u > 3.1 && u < 5.6) {
       final y = -80 + fall * fall * (_ground + 80);
       _puppet(
         canvas,

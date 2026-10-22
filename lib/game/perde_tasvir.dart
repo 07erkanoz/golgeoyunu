@@ -827,17 +827,17 @@ void _heroOverlay(Canvas canvas, PerdeScene scene, double time, double u) {
         );
         final k = _span(u, 2.1, 2.8);
         final dove = Offset(700 - k * 330, 90 + k * 70);
-        _cut(c, MythShapes.birdFlap, dove, 70, a, flip: true, deco: false);
-        // Zeytin dalı.
+        _dove(c, dove, 1.6, time, a, flip: true);
+        // Gagasında zeytin dalı.
         c.drawLine(
-          dove + const Offset(-26, -40),
-          dove + const Offset(-52, -30),
+          dove + const Offset(-44, -8),
+          dove + const Offset(-66, -2),
           _ink(a)..strokeWidth = 2.5,
         );
         for (var i = 0; i < 3; i++) {
           c.drawOval(
             Rect.fromCenter(
-              center: dove + Offset(-34 - i * 7.0, -38 + i * 3.0),
+              center: dove + Offset(-50 - i * 6.0, -9 + i * 3.0),
               width: 9,
               height: 4,
             ),
@@ -1268,4 +1268,1108 @@ void _heroOverlay(Canvas canvas, PerdeScene scene, double time, double u) {
       // Önsöz ve son kendi tasvirleriyle; Ergenekon sahnenin içinde.
       break;
   }
+}
+
+// ------------------------------------------------------------- Yerebatan
+
+/// Önsözün sarnıç satırları (6-10): sütun ormanı ve kemerler, su ve
+/// yansıması; Sâye gözünü açar, Justinianus sütunları diktirir, Ağlayan
+/// Sütun, evlerin tabanından sarkan kovalar ve balıkçı, suyun üstünde
+/// yürüyen gölge.
+void _cistern(Canvas c, double time, double u) {
+  const water = 300.0;
+  final a = _span(u, 5.6, 6.1);
+  // Sütunlar: arka sıra soluk ve kısa, ön sıra koyu; Justinianus satırında
+  // sudan yükselir.
+  final rise = u < 7 ? 1.0 : (u < 8 ? 0.15 + 0.85 * _span(u, 7.15, 7.9) : 1.0);
+  for (var row = 0; row < 2; row++) {
+    final back = row == 0;
+    final spacing = back ? 70.0 : 130.0;
+    final colW = back ? 14.0 : 26.0;
+    final top = back ? 70.0 : 10.0;
+    final ink = _ink(a * (back ? 0.45 : 0.95));
+    for (var x = back ? 30.0 : 0.0; x < 800; x += spacing) {
+      final h = (water - top) * rise;
+      final y0 = water - h;
+      // Gövde ve başlık.
+      c.drawRect(Rect.fromLTWH(x - colW / 2, y0, colW, h), ink);
+      c.drawRect(
+        Rect.fromLTWH(x - colW * 0.9, y0, colW * 1.8, back ? 6 : 12),
+        ink,
+      );
+      // Kemer: komşu sütuna.
+      if (rise >= 0.99) {
+        c.drawPath(
+          Path()
+            ..moveTo(x + colW * 0.9, top)
+            ..quadraticBezierTo(
+              x + spacing / 2,
+              top + (back ? 26 : 46),
+              x + spacing - colW * 0.9,
+              top,
+            )
+            ..lineTo(x + spacing - colW * 0.9, top - 10)
+            ..lineTo(x + colW * 0.9, top - 10)
+            ..close(),
+          ink,
+        );
+      }
+      // Sudaki yansıma: kırık kırık titrer.
+      if (!back) {
+        for (var k = 0; k < 6; k++) {
+          final yy = water + 6 + k * 8.0;
+          final off = math.sin(time * 2 + k + x * 0.05) * 3;
+          c.drawRect(
+            Rect.fromLTWH(x - colW / 2 + off, yy, colW, 4),
+            _ink(a * 0.35 * (1 - k / 6)),
+          );
+        }
+      }
+    }
+  }
+  // Tavan.
+  c.drawRect(const Rect.fromLTWH(0, 0, 780, 10), _ink(a));
+  // Su yüzü: ince ışık çizgileri.
+  final glint = _hole(0.35 * a);
+  for (var i = 0; i < 18; i++) {
+    final x = (i * 53.0 + time * 12) % 800 - 10;
+    c.drawLine(
+      Offset(x, water + 2 + (i % 3) * 6),
+      Offset(x + 20, water + 2 + (i % 3) * 6),
+      glint..strokeWidth = 1.5,
+    );
+  }
+
+  // 6: Sâye gözünü suyun ortasında açar; çevresinde halkalar.
+  final wake = _heroA(u, 6);
+  if (wake > 0) {
+    for (var k = 0; k < 3; k++) {
+      final r = 20 + ((time * 0.6 + k / 3) % 1) * 80;
+      c.drawOval(
+        Rect.fromCenter(
+          center: const Offset(390, water + 4),
+          width: r * 2,
+          height: r * 0.35,
+        ),
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.5
+          ..color = PerdePainter._hole.withValues(
+            alpha: 0.5 * wake * (1 - r / 100),
+          ),
+      );
+    }
+    _tasvirSaye(c, const Offset(390, water + 4), 1.8, time, wake);
+  }
+
+  // 7: Justinianus (taçlı, başının ardında hale) sütunları diktirir; taş
+  // taşıyan işçiler.
+  final emp = _heroA(u, 7);
+  if (emp > 0) {
+    _veil(c, emp * 0.6);
+    c.drawCircle(const Offset(200, 108), 34, _hole(0.55 * emp));
+    _cut(c, MythFigures.manSilhouette, const Offset(200, water + 4), 240, emp);
+    c.drawPath(
+      Path()
+        ..moveTo(184, 116)
+        ..lineTo(186, 96)
+        ..lineTo(194, 108)
+        ..lineTo(200, 92)
+        ..lineTo(206, 108)
+        ..lineTo(214, 96)
+        ..lineTo(216, 116)
+        ..close(),
+      _ink(emp),
+    );
+    for (var i = 0; i < 3; i++) {
+      final wx = 430 + i * 90.0 + _span(u, 7.0, 8.0) * 40;
+      _cut(
+        c,
+        MythFigures.manSilhouette,
+        Offset(wx, water + 4),
+        110,
+        emp,
+        flip: true,
+        deco: false,
+      );
+      c.drawRect(
+        Rect.fromCenter(
+          center: Offset(wx - 6, water - 112),
+          width: 36,
+          height: 22,
+        ),
+        _ink(emp),
+      );
+    }
+  }
+
+  // 8: Ağlayan Sütun: gövdesinden damlalar iner; dibinde zincirli köleler.
+  final weep = _heroA(u, 8);
+  if (weep > 0) {
+    _veil(c, weep * 0.55);
+    c.drawRect(const Rect.fromLTWH(372, 10, 36, water - 10), _ink(weep));
+    c.drawRect(const Rect.fromLTWH(360, 10, 60, 16), _ink(weep));
+    // Gövdedeki gözyaşı damarları ve inen damlalar.
+    for (var k = 0; k < 5; k++) {
+      final x = 378 + k * 6.0;
+      c.drawLine(
+        Offset(x, 40),
+        Offset(x + 1, water - 10),
+        _hole(0.25 * weep)..strokeWidth = 1.2,
+      );
+      final y = 40 + ((time * 0.5 + k * 0.23) % 1) * (water - 50);
+      c.drawCircle(Offset(x, y), 2.4, _hole(0.8 * weep));
+    }
+    for (var i = 0; i < 4; i++) {
+      final sx = 240 + i * 60.0 + (i >= 2 ? 160 : 0);
+      _cut(
+        c,
+        MythFigures.manSilhouette,
+        Offset(sx, water + 4),
+        120,
+        weep,
+        rot: (i.isEven ? 0.25 : -0.25),
+        flip: i >= 2,
+        deco: false,
+      );
+    }
+    final chain = _ink(weep)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.5;
+    for (var i = 0; i < 14; i++) {
+      c.drawOval(
+        Rect.fromCenter(
+          center: Offset(250 + i * 21.0, water - 40),
+          width: 12,
+          height: 7,
+        ),
+        chain,
+      );
+    }
+  }
+
+  // 9: Unutulan sarnıç: tavanın üstünde evler, tabanlarından sarkan
+  // kovalar; oltaya takılan bir balık.
+  final forgot = _heroA(u, 9);
+  if (forgot > 0) {
+    _veil(c, forgot * 0.4);
+    // Tavanda evlerin tabanına açılmış kova delikleri: yukarıdan ışık.
+    for (var i = 0; i < 3; i++) {
+      final hx = 150 + i * 240.0;
+      c.drawRect(Rect.fromLTWH(hx - 12, 0, 24, 10), _hole(0.9 * forgot));
+      c.drawPath(
+        Path()
+          ..moveTo(hx - 12, 10)
+          ..lineTo(hx + 12, 10)
+          ..lineTo(hx + 40, water)
+          ..lineTo(hx - 40, water)
+          ..close(),
+        _hole(0.12 * forgot),
+      );
+    }
+    // Kovalar: halatla iner çıkar.
+    for (var i = 0; i < 3; i++) {
+      final bx = 150 + i * 240.0;
+      final by =
+          80 + (math.sin(time * 0.9 + i * 2) * 0.5 + 0.5) * (water - 110);
+      c.drawLine(Offset(bx, 10), Offset(bx, by), _ink(forgot)..strokeWidth = 2);
+      c.drawPath(
+        Path()
+          ..moveTo(bx - 14, by)
+          ..lineTo(bx + 14, by)
+          ..lineTo(bx + 10, by + 22)
+          ..lineTo(bx - 10, by + 22)
+          ..close(),
+        _ink(forgot),
+      );
+    }
+    // Olta ve sıçrayan balık.
+    c.drawLine(
+      const Offset(520, 10),
+      const Offset(560, water - 10),
+      _ink(forgot)..strokeWidth = 1.5,
+    );
+    final jump = (time * 0.7) % 1;
+    final fy = water - math.sin(jump * math.pi) * 60;
+    final fish = Path()
+      ..moveTo(560, fy)
+      ..quadraticBezierTo(580, fy - 12, 600, fy)
+      ..quadraticBezierTo(580, fy + 12, 560, fy)
+      ..moveTo(598, fy)
+      ..lineTo(612, fy - 9)
+      ..lineTo(612, fy + 9)
+      ..close();
+    c.drawPath(fish, _ink(forgot));
+    c.drawCircle(Offset(566, fy - 2), 1.8, _hole(forgot));
+  }
+
+  // 10: Şimdi o sularda bir gölge yürür; suda yansıması.
+  final walk = _heroA(u, 10);
+  if (walk > 0) {
+    final x = 160 + _span(u, 10.05, 10.95) * 460;
+    _tasvirSaye(c, Offset(x, water + 4), 2.0, time, walk);
+    c.save();
+    c.translate(x, water + 8);
+    c.scale(1, -0.5);
+    c.translate(-x, -(water + 8));
+    _tasvirSaye(c, Offset(x, water + 8), 2.0, time, walk * 0.3);
+    c.restore();
+  }
+}
+
+/// Güvercin: yuvarlak gövde, küçük baş, yelpaze kuyruk, kalkık kanatlar.
+void _dove(
+  Canvas c,
+  Offset at,
+  double s,
+  double time,
+  double a, {
+  bool flip = false,
+}) {
+  if (a <= 0) return;
+  final ink = _ink(a);
+  c.save();
+  c.translate(at.dx, at.dy);
+  c.scale(flip ? -s : s, s);
+  c.drawOval(Rect.fromCenter(center: Offset.zero, width: 34, height: 18), ink);
+  c.drawCircle(const Offset(16, -7), 7, ink);
+  c.drawPath(
+    Path()
+      ..moveTo(22, -7)
+      ..lineTo(29, -5)
+      ..lineTo(22, -3)
+      ..close(),
+    ink,
+  );
+  c.drawPath(
+    Path()
+      ..moveTo(-14, -2)
+      ..lineTo(-30, -9)
+      ..lineTo(-32, 4)
+      ..lineTo(-14, 4)
+      ..close(),
+    ink,
+  );
+  final flap = math.sin(time * 10) * 0.5;
+  c.save();
+  c.rotate(-0.3 + flap);
+  c.drawPath(
+    Path()
+      ..moveTo(-6, -4)
+      ..quadraticBezierTo(-10, -34, 8, -40)
+      ..quadraticBezierTo(4, -20, 6, -4)
+      ..close(),
+    ink,
+  );
+  c.restore();
+  c.drawCircle(const Offset(18, -8), 1.4, _hole(a));
+  c.restore();
+}
+
+/// Kavuklu sultan: siluetin üstüne iri, yuvarlak kavuk.
+void _sultan(Canvas c, Offset feet, double h, double a, {bool flip = false}) {
+  _cut(c, MythFigures.manSilhouette, feet, h, a, flip: flip);
+  final s = h / 100;
+  c.drawOval(
+    Rect.fromCenter(
+      center: Offset(feet.dx, feet.dy - 104 * s),
+      width: 34 * s,
+      height: 26 * s,
+    ),
+    _ink(a),
+  );
+  c.drawCircle(Offset(feet.dx, feet.dy - 106 * s), 3 * s, _hole(0.8 * a));
+}
+
+/// Yelkenli: sürgün gemisi.
+void _ship(Canvas c, Offset at, double s, double a) {
+  final ink = _ink(a);
+  c.save();
+  c.translate(at.dx, at.dy);
+  c.scale(s);
+  c.drawPath(
+    Path()
+      ..moveTo(-50, 0)
+      ..lineTo(50, 0)
+      ..lineTo(36, 16)
+      ..lineTo(-38, 16)
+      ..close(),
+    ink,
+  );
+  c.drawLine(const Offset(0, 0), const Offset(0, -70), ink..strokeWidth = 3);
+  c.drawPath(
+    Path()
+      ..moveTo(4, -66)
+      ..quadraticBezierTo(40, -40, 4, -8)
+      ..close(),
+    ink,
+  );
+  _punchRow(c, const Offset(-40, 8), const Offset(30, 8), 6, 2, a);
+  c.restore();
+}
+
+/// Boş kalan satırlar: her satır kendi tasviriyle; son perde baştan sona.
+void _heroExtra(Canvas canvas, PerdeScene scene, double time, double u) {
+  _P._c = canvas;
+  const g = PerdePainter._ground;
+  final c = canvas;
+  void stage(double k, void Function(double a) draw, {double veil = 1}) {
+    final a = _heroA(u, k);
+    if (a <= 0) return;
+    _veil(canvas, a * veil);
+    draw(a);
+  }
+
+  switch (scene) {
+    case PerdeScene.galata:
+      _sayeBeat(canvas, time, u, 0);
+      // Okmeydanı: kanatlarla rüzgârı sınar; dokuz kez düşer, kalkar.
+      stage(2, (a) {
+        final hop = (time * 0.8) % 1;
+        final y = g + 12 - math.sin(hop * math.pi) * 90;
+        final x = 260 + hop * 260;
+        _wings(c, Offset(x, y - 160), 120, 0.3 + math.sin(time * 6) * 0.2, a);
+        _cut(c, MythFigures.manSilhouette, Offset(x, y), 170, a, deco: false);
+        final p = _hole(0.5 * a);
+        for (var i = 0; i < 9; i++) {
+          c.drawCircle(Offset(240 + i * 34.0, g + 4), 3, p);
+        }
+      });
+      // Sultan kese verir; sonra sürgün gemisi.
+      stage(4, (a) {
+        _sultan(c, const Offset(250, g + 12), 240, a);
+        c.drawOval(
+          Rect.fromCenter(
+            center: const Offset(296, g - 120),
+            width: 22,
+            height: 26,
+          ),
+          _ink(a),
+        );
+        _cut(
+          c,
+          MythFigures.manSilhouette,
+          const Offset(400, g + 12),
+          180,
+          a,
+          flip: true,
+          rot: 0.25,
+          deco: false,
+        );
+        _ship(c, Offset(560 + 160 * _span(u, 4.4, 5.0), g - 10), 1.6, a);
+      });
+    case PerdeScene.skyroad:
+      // Sâye kanatlarla bulutların arasına uçar.
+      stage(0, (a) {
+        final k = _span(u, 0.05, 0.95);
+        final at = Offset(160 + k * 460, 230 - k * 90);
+        _wings(
+          c,
+          at + const Offset(0, -100),
+          110,
+          0.4 + math.sin(time * 4) * 0.2,
+          a,
+        );
+        _tasvirSaye(canvas, at + const Offset(0, 40), 1.8, time, a);
+        _tasvirHudhud(canvas, at + const Offset(90, -60), 1.4, time, a);
+      });
+      // Lagari denize düşer, yüzerek padişahın önüne çıkar, güler.
+      stage(2, (a) {
+        _sultan(c, const Offset(560, g + 12), 230, a, flip: true);
+        final wave = Path()..moveTo(0, g + 12);
+        for (var x = 0.0; x <= 460; x += 20) {
+          wave.lineTo(x, g - 30 + math.sin(x / 30 + time * 2) * 8);
+        }
+        wave
+          ..lineTo(460, g + 12)
+          ..close();
+        final sx = 120 + 220 * _span(u, 2.05, 2.8);
+        c.save();
+        c.clipRect(Rect.fromLTWH(0, 0, 780, g - 26));
+        _cut(
+          c,
+          MythFigures.manSilhouette,
+          Offset(sx, g + 70),
+          150,
+          a,
+          deco: false,
+        );
+        c.restore();
+        c.drawPath(wave, _ink(a));
+      });
+      // Kuşlara ve ölülere görünen köprü; ucunda Kaf.
+      stage(3, (a) {
+        final bridge = Path()
+          ..moveTo(40, g)
+          ..quadraticBezierTo(390, 60, 740, g - 60)
+          ..lineTo(740, g - 48)
+          ..quadraticBezierTo(390, 76, 40, g + 12)
+          ..close();
+        c.drawPath(bridge, _ink(a));
+        _punchRow(
+          c,
+          const Offset(80, g - 20),
+          const Offset(700, g - 60),
+          22,
+          2.2,
+          a,
+        );
+        for (var i = 0; i < 5; i++) {
+          final k = ((time * 0.06 + i / 5) % 1);
+          final px = 60 + k * 660;
+          final py = g - 8 - math.sin(k * math.pi) * 200;
+          _cut(
+            c,
+            MythFigures.manSilhouette,
+            Offset(px, py),
+            60,
+            a * 0.6,
+            deco: false,
+          );
+          _cut(
+            c,
+            MythShapes.birdFlap,
+            Offset(px + 30, py - 70),
+            26,
+            a,
+            deco: false,
+          );
+        }
+      });
+    case PerdeScene.kaf:
+      _sayeBeat(canvas, time, u, 0);
+      // Kaf dünyayı yüzük gibi sarar.
+      stage(1, (a) {
+        c.drawCircle(
+          const Offset(390, 200),
+          130,
+          _ink(a)
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 34,
+        );
+        for (var i = 0; i < 24; i++) {
+          final ang = i / 24 * math.pi * 2;
+          final p =
+              const Offset(390, 200) +
+              Offset(math.cos(ang), math.sin(ang)) * 147;
+          c.drawPath(
+            Path()
+              ..moveTo(p.dx - 10, p.dy)
+              ..lineTo(p.dx + math.cos(ang) * 22, p.dy + math.sin(ang) * 22)
+              ..lineTo(p.dx + 10, p.dy)
+              ..close(),
+            _ink(a),
+          );
+        }
+        c.drawCircle(const Offset(390, 200), 90, _hole(0.35 * a));
+        c.save();
+        c.translate(390, 52);
+        c.scale(1.1);
+        c.drawPath(MythShapes.birdGlide, _ink(a));
+        c.restore();
+      });
+      // Yedi vadi: yedi kemer, üstlerinden geçen kuş sürüsü.
+      stage(3, (a) {
+        for (var i = 0; i < 7; i++) {
+          final x = 70 + i * 106.0;
+          c.drawPath(
+            Path()
+              ..moveTo(x - 46, g + 12)
+              ..quadraticBezierTo(x, g - 150 - (i % 2) * 30, x + 46, g + 12)
+              ..close(),
+            _ink(a * (0.5 + i * 0.07)),
+          );
+        }
+        final k = _span(u, 3.05, 3.95);
+        for (var i = 0; i < 30; i++) {
+          final bx = 40 + k * 600 + (i % 10) * 16.0;
+          final by = 120 + (i ~/ 10) * 22.0 + math.sin(time * 4 + i) * 4;
+          _cut(c, MythShapes.birdFlap, Offset(bx, by), 16, a, deco: false);
+        }
+      });
+    case PerdeScene.mirror:
+      // Masis: omzunda gemi; iki çoban.
+      stage(3, (a) {
+        c.drawPath(
+          Path()
+            ..moveTo(60, g + 12)
+            ..lineTo(330, 90)
+            ..lineTo(420, 140)
+            ..lineTo(520, 120)
+            ..lineTo(740, g + 12)
+            ..close(),
+          _ink(a),
+        );
+        c.drawPath(
+          Path()
+            ..moveTo(330, 90)
+            ..lineTo(306, 112)
+            ..lineTo(352, 110)
+            ..close(),
+          _hole(0.5 * a),
+        );
+        c.save();
+        c.translate(420, 128);
+        c.rotate(-0.1);
+        c.scale(0.45);
+        _arkShape(_ink(a), _hole(0.7 * a), 0.4);
+        c.restore();
+        for (final (x, f) in [(150.0, false), (640.0, true)]) {
+          _cut(
+            c,
+            MythFigures.manSilhouette,
+            Offset(x, g + 12),
+            130,
+            a,
+            flip: f,
+            deco: false,
+          );
+          c.drawLine(
+            Offset(x + (f ? -24 : 24), g - 110),
+            Offset(x + (f ? -28 : 28), g + 12),
+            _ink(a)..strokeWidth = 3,
+          );
+        }
+      });
+    case PerdeScene.flood:
+      // Kırk gün kırk gece: yağmurun altında dalgalarda gemi.
+      stage(1, (a) {
+        final wave = Path()..moveTo(0, 400);
+        for (var x = 0.0; x <= 780; x += 20) {
+          wave.lineTo(x, g - 40 + math.sin(x / 40 + time * 2) * 12);
+        }
+        wave
+          ..lineTo(780, 400)
+          ..close();
+        c.save();
+        c.translate(390, g - 70 + math.sin(time * 1.6) * 6);
+        c.rotate(math.sin(time * 1.2) * 0.06);
+        c.scale(1.3);
+        _arkShape(_ink(a), _hole(0.8 * a), 1);
+        c.restore();
+        c.drawPath(wave, _ink(a));
+        _fallLines(canvas, time, a);
+      });
+      // Gölgeler birbirini arar: eşler kavuşur.
+      stage(4, (a) {
+        final k = _span(u, 4.05, 4.8);
+        _cut(
+          c,
+          MythShapes.horse,
+          Offset(140 + k * 170, g + 10),
+          150,
+          a,
+          eye: const Offset(48, -82),
+          deco: false,
+        );
+        _cut(
+          c,
+          MythShapes.horse,
+          Offset(640 - k * 170, g + 10),
+          140,
+          a,
+          flip: true,
+          eye: const Offset(48, -82),
+          deco: false,
+        );
+        _cut(
+          c,
+          MythShapes.wolfStand,
+          Offset(250 + k * 60, g + 10),
+          90,
+          a,
+          deco: false,
+        );
+        _cut(
+          c,
+          MythShapes.wolfStand,
+          Offset(530 - k * 60, g + 10),
+          86,
+          a,
+          flip: true,
+          deco: false,
+        );
+      });
+    case PerdeScene.gods:
+      // Sâye güneye, Fırat'ın ötesine uçar.
+      _sayeBeat(canvas, time, u, 0);
+      // Kral taştan tepenin altına gömülür.
+      stage(2, (a) {
+        c.drawPath(
+          Path()
+            ..moveTo(110, g + 12)
+            ..quadraticBezierTo(390, 20, 670, g + 12)
+            ..close(),
+          _ink(a),
+        );
+        c.drawRRect(
+          RRect.fromRectAndRadius(
+            Rect.fromCenter(
+              center: const Offset(390, g - 60),
+              width: 220,
+              height: 60,
+            ),
+            const Radius.circular(10),
+          ),
+          _hole(0.75 * a),
+        );
+        _cut(
+          c,
+          MythFigures.manSilhouette,
+          const Offset(300, g - 50),
+          160,
+          a,
+          rot: -math.pi / 2,
+          deco: false,
+        );
+        _punchRow(
+          c,
+          const Offset(200, 130),
+          const Offset(580, 130),
+          14,
+          2.4,
+          a,
+        );
+      });
+    case PerdeScene.dawn:
+      // İbrahim ateşe atılır; ateş gül bahçesine döner.
+      stage(2, (a) {
+        final bloom = _span(u, 2.4, 2.9);
+        final fire = _hole(0.85 * a * (1 - bloom));
+        for (var i = 0; i < 16; i++) {
+          final x = 250 + i * 18.0;
+          final f = 60 + 40 * math.sin(time * 9 + i * 1.7);
+          c.drawPath(
+            Path()
+              ..moveTo(x - 9, g + 12)
+              ..quadraticBezierTo(x - 4, g - f * 0.5, x, g - f)
+              ..quadraticBezierTo(x + 4, g - f * 0.5, x + 9, g + 12)
+              ..close(),
+            fire,
+          );
+        }
+        for (var i = 0; i < 12; i++) {
+          final x = 250 + i * 26.0;
+          final y = g - 20 - (i % 3) * 30.0;
+          c.drawLine(
+            Offset(x, g + 12),
+            Offset(x, y),
+            _ink(a * bloom)..strokeWidth = 2,
+          );
+          _rosette(c, Offset(x, y), 9, a * bloom);
+          c.drawCircle(Offset(x, y), 7, _ink(a * bloom * 0.6));
+        }
+        _cut(c, MythFigures.manSilhouette, const Offset(390, g + 12), 210, a);
+        // Göğe atılan ok kanlı döner.
+        final arrow = _span(u, 2.05, 2.5);
+        c.drawLine(
+          Offset(640, 40 + arrow * 200),
+          Offset(650, 10 + arrow * 200),
+          _ink(a)..strokeWidth = 3,
+        );
+      });
+    case PerdeScene.caravan:
+      // Sâye ışığa dokunur.
+      stage(0, (a) {
+        c.drawCircle(const Offset(470, 190), 70, _hole(0.6 * a));
+        c.drawCircle(const Offset(470, 190), 30, _hole(0.9 * a));
+        _tasvirSaye(canvas, const Offset(330, g + 12), 2.4, time, a);
+      });
+      // Erzurum: kalesi ve çifte minaresiyle kışın kapısı.
+      stage(3, (a) {
+        c.drawRect(const Rect.fromLTWH(140, g - 120, 500, 132), _ink(a));
+        for (var x = 140.0; x < 640; x += 30) {
+          c.drawRect(Rect.fromLTWH(x, g - 140, 16, 22), _ink(a));
+        }
+        c.drawPath(
+          Path()
+            ..moveTo(350, g + 12)
+            ..lineTo(350, g - 60)
+            ..quadraticBezierTo(390, g - 110, 430, g - 60)
+            ..lineTo(430, g + 12)
+            ..close(),
+          _hole(0.7 * a),
+        );
+        for (final x in [520.0, 580.0]) {
+          c.drawRect(Rect.fromLTWH(x - 9, g - 250, 18, 130), _ink(a));
+          c.drawPath(
+            Path()
+              ..moveTo(x - 11, g - 250)
+              ..lineTo(x, g - 290)
+              ..lineTo(x + 11, g - 250)
+              ..close(),
+            _ink(a),
+          );
+        }
+        final p = _hole(0.6 * a);
+        for (var i = 0; i < 40; i++) {
+          c.drawCircle(
+            Offset((i * 71.0) % 780, (i * 43.0 + time * 50) % 360),
+            2,
+            p,
+          );
+        }
+      });
+      // Palandöken: yokuşta palanlar kayar, yük uçuruma dökülür.
+      stage(4, (a) {
+        c.save();
+        c.translate(390, g - 20);
+        c.rotate(0.25);
+        _P._c = c;
+        _P._puppet(
+          c,
+          Offset.zero,
+          time,
+          0.4,
+          a,
+          (ink, hole) => _camel(ink, hole, time),
+          scale: 2.0,
+          rod: false,
+        );
+        c.restore();
+        final fall = (time * 0.6) % 1;
+        for (var i = 0; i < 3; i++) {
+          c.drawRect(
+            Rect.fromCenter(
+              center: Offset(
+                470 + fall * 140 + i * 18,
+                g - 120 + fall * fall * 200 + i * 10,
+              ),
+              width: 30,
+              height: 20,
+            ),
+            _ink(a),
+          );
+        }
+      });
+    case PerdeScene.dragons:
+      // Fırtına nefesleri, sis uykuları.
+      stage(3, (a) {
+        _ejder(c, const Offset(560, 220), 1.15, time, a, dir: -1);
+        final p = _hole(0.35 * a);
+        for (var i = 0; i < 10; i++) {
+          final k = ((time * 0.3 + i / 10) % 1);
+          c.drawCircle(
+            Offset(560 - 70 - k * 300, 220 - k * 80 + math.sin(i * 1.3) * 20),
+            10 + k * 30,
+            p,
+          );
+        }
+      });
+    case PerdeScene.fairies:
+      // Katpatuka: güzel atlar ülkesi; yanardağın külünü rüzgâr oyar.
+      stage(1, (a) {
+        c.drawPath(
+          Path()
+            ..moveTo(420, g + 12)
+            ..lineTo(560, 60)
+            ..lineTo(600, 70)
+            ..lineTo(760, g + 12)
+            ..close(),
+          _ink(a * 0.7),
+        );
+        final p = _hole(0.4 * a);
+        for (var i = 0; i < 8; i++) {
+          final k = ((time * 0.2 + i / 8) % 1);
+          c.drawCircle(Offset(580 - k * 200, 60 - k * 40), 8 + k * 20, p);
+        }
+        for (var i = 0; i < 3; i++) {
+          final x = 140 + i * 110.0 + _span(u, 1.0, 2.0) * 60;
+          _cut(
+            c,
+            MythShapes.horse,
+            Offset(x, g + 10 - math.sin(time * 6 + i) * 6),
+            150 - i * 15.0,
+            a,
+            eye: const Offset(48, -82),
+            deco: false,
+          );
+        }
+      });
+    case PerdeScene.underground:
+      // Yuvarlak taş kapı: yalnız içeriden açılır.
+      stage(3, (a) {
+        c.drawRect(const Rect.fromLTWH(0, 40, 780, g - 28), _ink(a * 0.9));
+        c.drawRect(
+          const Rect.fromLTWH(300, 120, 200, g - 108),
+          _hole(0.55 * a),
+        );
+        final roll = _span(u, 3.2, 3.8);
+        final cx = 400 - roll * 150;
+        c.save();
+        c.translate(cx, g - 70);
+        c.rotate(-roll * 2.5);
+        c.drawCircle(Offset.zero, 82, _ink(a));
+        c.drawCircle(Offset.zero, 14, _hole(0.8 * a));
+        _rosette(c, const Offset(0, -46), 10, a);
+        c.restore();
+        _tasvirSaye(canvas, const Offset(470, g + 12), 1.6, time, a * roll);
+      }, veil: 0.3);
+    case PerdeScene.sema:
+      // Tulpar Sâye'yi karlı ovaya indirir; gökte ay.
+      stage(0, (a) {
+        c.drawCircle(const Offset(640, 70), 28, _hole(0.8 * a));
+        final k = _span(u, 0.05, 0.9);
+        final at = Offset(180 + k * 280, 150 + k * 190);
+        _cut(
+          c,
+          MythShapes.horse,
+          at,
+          170,
+          a,
+          eye: const Offset(48, -82),
+          deco: false,
+        );
+        _wings(
+          c,
+          at + const Offset(6, -128),
+          100,
+          0.4 + math.sin(time * 3) * 0.25,
+          a,
+        );
+        _tasvirSaye(canvas, at + const Offset(-6, -98), 1.0, time, a);
+      });
+      // Şeb-i Arûs: düğün gecesi; semâzen döner.
+      stage(2, (a) {
+        _semazenPuppet(c, const Offset(390, g + 12), time * 3, a);
+        c.save();
+        c.translate(390, g + 12);
+        c.scale(2.3);
+        c.translate(-390, -(g + 12));
+        _semazenPuppet(c, const Offset(390, g + 12), time * 3, a);
+        c.restore();
+      });
+    case PerdeScene.akAna:
+      // Taşın altında su sesi: Sâye kulağını taşa dayar.
+      stage(0, (a) {
+        c.drawRect(const Rect.fromLTWH(420, 0, 360, 400), _ink(a));
+        _tasvirSaye(canvas, const Offset(370, g + 12), 2.4, time, a);
+        final p = _hole(0.7 * a);
+        for (var i = 0; i < 6; i++) {
+          final y = 40 + ((time * 0.7 + i / 6) % 1) * 300;
+          c.drawCircle(Offset(470 + (i % 3) * 60.0, y), 3, p);
+        }
+      });
+    case PerdeScene.ergenekon:
+      // Kıyan ile Nüküz, eşleriyle vadiye sığınır.
+      stage(0, (a) {
+        final k = _span(u, 0.05, 0.95);
+        for (var i = 0; i < 4; i++) {
+          final x = 140 + k * 200 + i * 80.0;
+          _cut(
+            c,
+            i.isEven ? MythFigures.manSilhouette : MythFigures.akAnaSilhouette,
+            Offset(x, g + 12),
+            i.isEven ? 210 : 190,
+            a,
+            deco: i.isEven,
+          );
+        }
+      });
+      // Nevruz: her yıl o gün demir ateşte kızdırılır, örste dövülür.
+      stage(5, (a) {
+        c.drawCircle(
+          Offset(620, 120 - 30 * _span(u, 5.0, 6.0)),
+          46,
+          _hole(0.6 * a),
+        );
+        _tasvirDemirci(canvas, const Offset(260, g + 12), 1.0, time, a);
+      });
+    case PerdeScene.gok:
+      // Bir katında ay soğuk, bir katında güneş yakar.
+      stage(2, (a) {
+        c.drawPath(
+          Path.combine(
+            PathOperation.difference,
+            Path()..addOval(
+              Rect.fromCircle(center: const Offset(230, 170), radius: 80),
+            ),
+            Path()..addOval(
+              Rect.fromCircle(center: const Offset(262, 150), radius: 70),
+            ),
+          ),
+          _hole(0.8 * a),
+        );
+        c.drawCircle(const Offset(560, 170), 70, _hole(0.9 * a));
+        final ray = _hole(0.6 * a)..strokeWidth = 4;
+        for (var i = 0; i < 16; i++) {
+          final ang = i / 16 * math.pi * 2 + time * 0.3;
+          c.drawLine(
+            const Offset(560, 170) + Offset(math.cos(ang), math.sin(ang)) * 84,
+            const Offset(560, 170) + Offset(math.cos(ang), math.sin(ang)) * 120,
+            ray,
+          );
+        }
+        c.drawLine(
+          const Offset(390, 20),
+          const Offset(390, 330),
+          _ink(a)..strokeWidth = 4,
+        );
+      });
+    case PerdeScene.epilogue:
+      _epilogueStage(canvas, time, u);
+    default:
+      break;
+  }
+}
+
+/// Son perde: her satır kendi sahnesiyle.
+void _epilogueStage(Canvas c, double time, double u) {
+  const g = PerdePainter._ground;
+  void stage(double k, void Function(double a) draw, {double veil = 0.8}) {
+    final a = _heroA(u, k);
+    if (a <= 0) return;
+    _veil(c, a * veil);
+    draw(a);
+  }
+
+  void master(Offset feet, double s, double a) => _P._puppet(
+    c,
+    feet,
+    time,
+    0.9,
+    a,
+    (ink, hole) => _P._master(ink, hole),
+    scale: s,
+    rod: false,
+  );
+  void lamp(Offset at, double r, double a) {
+    c.drawCircle(
+      at,
+      r * 2.4,
+      Paint()
+        ..shader = ui.Gradient.radial(at, r * 2.4, [
+          const Color(0xFFFFE0A0).withValues(alpha: 0.7 * a),
+          const Color(0x00FFE0A0),
+        ]),
+    );
+    c.drawCircle(at, r, _hole(a));
+  }
+
+  // 0: Yeşil Kubbe'nin tepesinde, karın altında bir kandil.
+  stage(0, (a) {
+    _greenDome(c, 390, a, scale: 2.2);
+    lamp(const Offset(390, 70), 7, a);
+  });
+  // 1: Usta ve çevresinde halka olmuş Kandilciler.
+  stage(1, (a) {
+    master(const Offset(390, g + 12), 1.9, a);
+    lamp(const Offset(430, g - 150), 6, a);
+    for (var i = 0; i < 4; i++) {
+      final x = i < 2 ? 120 + i * 90.0 : 570 + (i - 2) * 90.0;
+      _tasvirKandilci(c, Offset(x, g + 12), 1.05, time, a);
+    }
+  });
+  // 2: "Geldin," dedi usta.
+  stage(2, (a) {
+    master(const Offset(470, g + 12), 1.9, a);
+    _tasvirSaye(c, const Offset(270, g + 12), 2.2, time, a);
+  });
+  // 3: Kandilciler gölgesiz; kırık güneş.
+  stage(3, (a) {
+    for (var i = 0; i < 5; i++) {
+      final ang = i / 5 * math.pi * 2;
+      c.drawPath(
+        Path()
+          ..moveTo(390, 120)
+          ..lineTo(390 + math.cos(ang) * 70, 120 + math.sin(ang) * 70)
+          ..lineTo(
+            390 + math.cos(ang + 1.1) * 70,
+            120 + math.sin(ang + 1.1) * 70,
+          )
+          ..close(),
+        _hole(0.8 * a),
+      );
+    }
+    for (var i = 0; i < 3; i++) {
+      _tasvirKandilci(c, Offset(220 + i * 170.0, g + 12), 1.15, time, a);
+    }
+  });
+  // 4: Mevlânâ'nın düğün gecesi.
+  stage(4, (a) {
+    master(const Offset(260, g + 12), 1.8, a);
+    _semazenPuppet(c, const Offset(520, g + 12), time * 3, a);
+  });
+  // 5: "Bu gece ışık ölmez. Yalnızca kavuşur."
+  stage(5, (a) {
+    master(const Offset(450, g + 12), 1.9, a);
+    _tasvirSaye(c, const Offset(300, g + 12), 2.1, time, a);
+    lamp(const Offset(490, g - 150), 7, a);
+  });
+  // 6: Ney sesi; usta kandili Sâye'nin avuçlarına bırakır.
+  stage(6, (a) {
+    master(const Offset(460, g + 12), 1.9, a);
+    _tasvirSaye(c, const Offset(300, g + 12), 2.1, time, a);
+    final k = _span(u, 6.2, 6.8);
+    lamp(
+      Offset.lerp(const Offset(500, g - 150), const Offset(356, g - 60), k)!,
+      7,
+      a,
+    );
+  });
+  // 7: "Sen benim gölgem değildin. Duamdın."
+  stage(7, (a) {
+    master(const Offset(460, g + 12), 1.9, a);
+    _tasvirSaye(c, const Offset(300, g + 12), 2.1, time, a);
+    lamp(const Offset(356, g - 60), 8, a);
+  });
+  // 10: Sâye'nin içinden bir ışık doğar.
+  stage(10, (a) {
+    _tasvirSaye(c, const Offset(390, g + 12), 2.4, time, a);
+    final r = 40 + 80 * _span(u, 10.1, 10.9);
+    c.drawCircle(const Offset(390, g - 100), r, _hole(0.55 * a));
+  }, veil: 0.5);
+  // 11: Işık göğe yükselir; Kandilciler gölgelerine bakıp ağlar.
+  stage(11, (a) {
+    final rise = _span(u, 11.05, 11.9);
+    c.drawCircle(Offset(390, g - 120 - rise * 200), 40, _hole(0.8 * a));
+    for (var i = 0; i < 4; i++) {
+      _cut(
+        c,
+        MythFigures.manSilhouette,
+        Offset(150 + i * 160.0, g + 12),
+        150,
+        a,
+        rot: 0.35,
+        deco: false,
+      );
+      c.drawRect(Rect.fromLTWH(150 + i * 160.0, g + 10, 80, 6), _ink(a * 0.5));
+    }
+  });
+  // 12: Hüdhüd: "Kırık güneşin yalnızca bir parçası buradaydı."
+  stage(12, (a) {
+    _tasvirHudhud(c, const Offset(420, 170), 3.4, time, a);
+    _tasvirSaye(c, const Offset(240, g + 12), 2.0, time, a);
+  });
+  // 13: Önünde bir yol uzanır.
+  stage(13, (a) {
+    c.drawPath(
+      Path()
+        ..moveTo(330, g + 12)
+        ..quadraticBezierTo(560, g - 40, 760, g - 120)
+        ..lineTo(760, g - 110)
+        ..quadraticBezierTo(560, g - 20, 450, g + 12)
+        ..close(),
+      _hole(0.6 * a),
+    );
+    _tasvirSaye(c, const Offset(300, g + 12), 2.2, time, a);
+  }, veil: 0.5);
+  // 14: "Yürü, Sâye."
+  stage(14, (a) {
+    final k = _span(u, 14.05, 14.95);
+    _tasvirSaye(
+      c,
+      Offset(300 + k * 380, g + 12 - k * 80),
+      2.2 - k * 1.2,
+      time,
+      a,
+    );
+    _tasvirHudhud(
+      c,
+      Offset(360 + k * 380, g - 190 - k * 60),
+      1.6 - k * 0.8,
+      time,
+      a,
+    );
+  }, veil: 0.4);
 }
