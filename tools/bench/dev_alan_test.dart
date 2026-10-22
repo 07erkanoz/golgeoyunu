@@ -16,7 +16,7 @@ void main() {
       final c = (f.x / kTile).floor();
       if ((c - c0).abs() < 40) {
         // ignore: avoid_print
-        print('ateşböceği ${c},${(f.y / kTile).floor()}');
+        print('ateşböceği $c,${(f.y / kTile).floor()}');
       }
     }
   });

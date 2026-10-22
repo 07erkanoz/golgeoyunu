@@ -48,7 +48,6 @@ void main() {
     dir.createSync(recursive: true);
     const dt = 1 / 12;
     var f = 0;
-    var hits = 0;
     var t = 0.0;
     var lastHitT = -10.0;
     Future<void> shot() async {
@@ -73,7 +72,6 @@ void main() {
         game.fireflies = 3;
         game.releaseFirefly(giant.ear + Vector2(-50, 8), 1);
         lastHitT = t;
-        hits++;
       }
       for (var k = 0; k < 5; k++) {
         game.cinematic = false;
