@@ -6,6 +6,7 @@ import '../game/levels.dart';
 import '../game/perde.dart';
 import '../game/strings.dart';
 import '../settings.dart';
+import 'story_theater.dart';
 
 /// Ana menü: arkada oyunun dünyası yavaşça akar; solda kandille aydınlanan
 /// bir hayal perdesi (oyunun adı gölge harflerle), sağda seçenekler.
@@ -50,6 +51,9 @@ class _MainMenuState extends State<MainMenu>
 
   /// Bölüm listesi açık mı.
   bool _chapters = false;
+
+  /// Hikâye tiyatrosu açık mı.
+  bool _theater = false;
 
   @override
   void dispose() {
@@ -174,6 +178,15 @@ class _MainMenuState extends State<MainMenu>
                               }),
                             ),
                           _item(
+                            S.of('story'),
+                            scale: itemK,
+                            hint: S.of('storyHint'),
+                            onTap: () => setState(() {
+                              _theater = true;
+                              _confirmNew = false;
+                            }),
+                          ),
+                          _item(
                             S.of('settings'),
                             scale: itemK,
                             onTap: widget.game.toggleSettings,
@@ -228,6 +241,13 @@ class _MainMenuState extends State<MainMenu>
               ),
             ),
           ),
+          // Hikâye tiyatrosu: perdeler art arda, menünün üstünde.
+          if (_theater)
+            Positioned.fill(
+              child: StoryTheater(
+                onClose: () => setState(() => _theater = false),
+              ),
+            ),
         ],
       ),
     );

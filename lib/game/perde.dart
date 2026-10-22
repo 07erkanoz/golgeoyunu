@@ -14,6 +14,9 @@ part 'perde_tasvir.dart';
 enum PerdeScene {
   prologue,
   galata,
+
+  /// Gökyolu: Kaf sahnesinin çizimi, kendi kahramanları (Lagari, Tulpar).
+  skyroad,
   kaf,
 
   /// Kaf'ın sırrı: aynadaki gölge, kandil doğuya taşınır.
@@ -30,6 +33,10 @@ enum PerdeScene {
 
   /// Palandöken: karda kervan, palanlar dökülür, doruklarda ejderler.
   caravan,
+
+  /// Palandöken: kervan sahnesinin çizimi, kendi kahramanları (ejderler,
+  /// derviş).
+  dragons,
 
   /// Ejder uyanır, çığ iner.
   avalanche,
@@ -62,12 +69,14 @@ enum PerdeScene {
 /// Bölümden önce oynanan perde sahnesi (yoksa düz geçiş).
 PerdeScene? interludeScene(int level) => switch (level) {
   1 => PerdeScene.galata,
-  2 || 3 => PerdeScene.kaf,
+  2 => PerdeScene.skyroad,
+  3 => PerdeScene.kaf,
   4 => PerdeScene.mirror,
   5 => PerdeScene.flood,
   6 => PerdeScene.gods,
   7 => PerdeScene.dawn,
-  8 || 9 => PerdeScene.caravan,
+  8 => PerdeScene.caravan,
+  9 => PerdeScene.dragons,
   10 => PerdeScene.avalanche,
   11 => PerdeScene.fairies,
   12 => PerdeScene.underground,
@@ -176,7 +185,7 @@ class PerdePainter {
         _prologue(canvas, time, progress);
       case PerdeScene.galata:
         _galata(canvas, time, progress);
-      case PerdeScene.kaf:
+      case PerdeScene.kaf || PerdeScene.skyroad:
         _kaf(canvas, time, progress);
       case PerdeScene.mirror:
         _mirror(canvas, time, progress);
@@ -186,7 +195,7 @@ class PerdePainter {
         _godsScene(canvas, time, progress);
       case PerdeScene.dawn:
         _godsScene(canvas, time, progress, dawn: true);
-      case PerdeScene.caravan:
+      case PerdeScene.caravan || PerdeScene.dragons:
         _caravanScene(canvas, time, progress);
       case PerdeScene.avalanche:
         _caravanScene(canvas, time, progress, avalanche: true);
@@ -205,8 +214,9 @@ class PerdePainter {
       case PerdeScene.epilogue:
         _endingScene(canvas, time, progress);
     }
-    // Bölümün efsane kahramanları ve varlıkları, kendi satırlarında.
-    _mythOverlay(canvas, scene, time, progress);
+    // Bölümün efsane kahramanları kendi satırlarında perdeyi doldurur;
+    // Kandilcilerden, ustadan söz eden satırda ana iplik (kovalama).
+    _heroOverlay(canvas, scene, time, progress);
     canvas.restore();
 
     // Kandil kısıldıkça perde kararır; kenarlar hep biraz gölgede.
