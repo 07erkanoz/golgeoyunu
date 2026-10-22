@@ -29,10 +29,10 @@ void main() {
         isTrue,
       );
       game.toggleRecent();
-      expect(game.paused, isTrue);
+      expect(game.held, isTrue);
       expect(game.settingsOpen.value, isTrue);
       game.toggleRecent();
-      expect(game.paused, isFalse);
+      expect(game.held, isFalse);
       expect(game.settingsOpen.value, isFalse);
     },
   );
@@ -45,21 +45,21 @@ void main() {
       game.cinematic = false;
       run(game, 0.2);
       game.toggleSettings();
-      expect(game.paused, isTrue);
+      expect(game.held, isTrue);
       // Ayarlar açıkken "Az önce" açılmaz.
       game.toggleRecent();
       expect(game.recentOpen, isFalse);
       game.toggleSettings();
-      expect(game.paused, isFalse);
+      expect(game.held, isFalse);
       game.toggleRecent();
-      expect(game.paused, isTrue);
+      expect(game.held, isTrue);
       // "Az önce" açıkken ayarlar açılıp kapanırsa oyun yine bekler.
       game.toggleSettings();
       game.toggleSettings();
-      expect(game.paused, isTrue);
+      expect(game.held, isTrue);
       expect(game.settingsOpen.value, isTrue);
       game.toggleRecent();
-      expect(game.paused, isFalse);
+      expect(game.held, isFalse);
       expect(game.settingsOpen.value, isFalse);
     },
   );

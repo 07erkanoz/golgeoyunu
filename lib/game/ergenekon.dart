@@ -66,8 +66,8 @@ class IronVein extends Gate {
 
   /// Ritimde: denk basışta ısı artışı, yanlışta düşüş, saniyede sönme.
   static const double beatGain = 0.14;
-  static const double offBeatLoss = 0.12;
-  static const double decay = 0.06;
+  static const double offBeatLoss = 0.06;
+  static const double decay = 0.03;
 
   /// Doğru basışlar arasında en çok bu kadar beklenebilir.
   static const double window = 8;
@@ -385,7 +385,7 @@ class Anvil extends PositionComponent with HasGameReference<GolgeGame> {
   static const double beat = 1 / 0.9;
 
   /// Vuruşun iki yanındaki denk sayılan pay (saniye).
-  static const double grace = 0.24;
+  static const double grace = 0.3;
 
   static const double drawScale = 0.36;
 
@@ -672,7 +672,7 @@ class Bellows extends PositionComponent
   double _t = math.Random().nextDouble() * 4;
 
   /// Ritimli damarda basılan körük boşalır, dolması bu kadar sürer.
-  static const double refill = 2.4;
+  static const double refill = 1.3;
   double _empty = 0;
 
   /// Körük dolu mu (ritimde basılabilir).
@@ -754,7 +754,26 @@ class Bellows extends PositionComponent
     if (v != null && v.rhythm) {
       // Ritimli ocakta sıra yok: çentik yerine dolu olduğunu gösteren
       // bir ışık; örsün vuruşuyla atar, boşken söner.
-      if (ready && v.lit && !v.opening) {
+      if (order > 0 && v.lit && !v.opening) {
+        // Ocağın ısısı: körüğün üstünde kor bir çubuk (ocak uzakta
+        // kaldığında da ilerleme görülsün).
+        const barW = 26.0;
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(
+            Rect.fromLTWH(-barW / 2, top - 20, barW, 4),
+            const Radius.circular(2),
+          ),
+          Paint()..color = const Color(0x66140A06),
+        );
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(
+            Rect.fromLTWH(-barW / 2, top - 20, barW * v.heat, 4),
+            const Radius.circular(2),
+          ),
+          Paint()..color = const Color(0xFFFF9A40),
+        );
+      }
+      if (order > 0 && ready && v.lit && !v.opening) {
         final beat = (v.anvil?.onBeat ?? false) ? 1.0 : 0.35;
         canvas.drawCircle(
           Offset(0, top - 9),

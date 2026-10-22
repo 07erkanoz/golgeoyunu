@@ -358,9 +358,13 @@ class _SettingsPanelState extends State<SettingsPanel> {
                         },
                       ),
                     ],
-                    // Android: yüksek yenileme hızı (masaüstünde ekran zaten
-                    // kendi hızında çizilir).
-                    if (defaultTargetPlatform == TargetPlatform.android)
+                    // Yüksek yenileme hızı: Android'de 90/120 Hz istenir;
+                    // masaüstünde kapalıyken kareler 60 dolayında sınırlanır
+                    // (açıkken ekranın kendi hızı).
+                    if (defaultTargetPlatform == TargetPlatform.android ||
+                        defaultTargetPlatform == TargetPlatform.windows ||
+                        defaultTargetPlatform == TargetPlatform.linux ||
+                        defaultTargetPlatform == TargetPlatform.macOS)
                       Row(
                         children: [
                           Expanded(
@@ -384,6 +388,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                               setState(() => Settings.highRefresh = v);
                               Settings.save();
                               applyRefreshRate();
+                              widget.game.pacer.apply();
                             },
                           ),
                         ],

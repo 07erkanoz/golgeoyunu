@@ -1,5 +1,6 @@
 import 'dart:io' show ProcessInfo;
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
@@ -12,6 +13,7 @@ import 'atmosphere.dart';
 import 'audio.dart';
 import 'auto_quality.dart';
 import 'creatures.dart';
+import 'frame_pacer.dart';
 import 'mechanics.dart';
 import 'entities.dart';
 import 'level.dart';
@@ -116,6 +118,25 @@ class GolgeGame extends FlameGame with KeyboardEvents {
 
   /// Cihaz zorlanırsa ağır görselleri kendiliğinden kapatır.
   late final AutoQuality autoQuality = AutoQuality(this);
+
+  /// Masaüstünde kare sınırı (bkz. [FramePacer]).
+  late final FramePacer pacer = FramePacer(this);
+
+  /// Oyun bekliyor mu (panel açık). Motorun döngüsü kare sınırı için ayrıca
+  /// durdurulabildiğinden motorun "paused" bayrağından ayrı tutulur.
+  bool get held => _held;
+  bool _held = false;
+
+  void _setHeld(bool v) {
+    if (v == _held) return;
+    _held = v;
+    if (pacer.active) return;
+    if (v) {
+      pauseEngine();
+    } else {
+      resumeEngine();
+    }
+  }
 
   /// Sinematik ya da geçiş sırasında oyuncu girdisi kapalıdır.
   bool cinematic = true;
@@ -283,6 +304,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     narration = Narration();
     camera.viewport.addAll([effects, narration]);
     autoQuality.attach();
+    pacer.apply();
     _enterMenu();
     // Geliştirici ölçümü: doğrudan bir bölümle açılır (DEV ve START_LEVEL).
     if (const bool.fromEnvironment('DEV') && _startLevel >= 0) {
@@ -307,9 +329,13 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     final mb = (ProcessInfo.currentRss / 1048576).round();
     final gfx = Settings.lowGraphics ? 'düşük' : 'yüksek';
     final light = realismHere(this) ? 'ışık açık' : 'ışık kapalı';
+    // Çalışan çizici: shader filtresi yalnız Impeller'da desteklenir.
+    final renderer = ui.ImageFilter.isShaderFilterSupported
+        ? 'Impeller'
+        : 'Skia';
     perfText =
         '$fps kare/sn · çizim ${autoQuality.workMs.toStringAsFixed(1)} ms · '
-        'bellek $mb MB · grafik $gfx · $light';
+        'bellek $mb MB · çizici $renderer · grafik $gfx · $light';
   }
 
   static const _startLevel = int.fromEnvironment(
@@ -325,6 +351,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
   @override
   void onRemove() {
     autoQuality.detach();
+    pacer.dispose();
     super.onRemove();
   }
 
@@ -464,7 +491,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
   /// Oyundan ana menüye: önce ilerlemeyi kaydeder.
   void backToMenu() {
     _saveProgress();
-    if (paused) resumeEngine();
+    _setHeld(false);
     GameAudio.instance.resumeAll();
     _enterMenu();
   }
@@ -655,14 +682,14 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     settingsOpen.value = panelOpen;
     if (menuMode.value) return;
     if (panelOpen) {
-      if (!paused) {
-        pauseEngine();
+      if (!held) {
+        _setHeld(true);
         GameAudio.instance.pauseAll();
       }
     } else {
       onFocusGame?.call();
-      if (paused) {
-        resumeEngine();
+      if (held) {
+        _setHeld(false);
         GameAudio.instance.resumeAll();
       }
     }
@@ -1227,6 +1254,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     final veins = [for (final (c, t, b) in level.ironVeins) IronVein(c, t, b)];
     if (veins.isEmpty) return;
     final counts = <IronVein, int>{};
+    final pumps = <IronVein, List<Bellows>>{};
     for (final (c, r, order) in level.def.bellows) {
       final b = Bellows(
         Vector2(c * kTile.toDouble(), r * kTile.toDouble()),
@@ -1242,7 +1270,10 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         }
       }
       b.vein = best;
-      if (order > 0) counts[best!] = (counts[best] ?? 0) + 1;
+      if (order > 0) {
+        counts[best!] = (counts[best] ?? 0) + 1;
+        (pumps[best] ??= []).add(b);
+      }
       yield b;
     }
     for (final (c0, r0, c1, r1) in level.def.interiors) {
@@ -1270,7 +1301,12 @@ class GolgeGame extends FlameGame with KeyboardEvents {
       v.rhythm = rhythm;
       v.fuelNeeded = fuel;
       if (rhythm) {
-        final a = Anvil(Vector2(v.forge.dx - 6.5 * kTile, v.forge.dy));
+        // Örs körüklerin yanında: çekiç ekranda görünsün, vuruşu duyulsun
+        // (ocağın dibindeyken körüklerden yirmi kare uzakta kalıyordu).
+        final near = pumps[v];
+        final a = Anvil(
+          _anvilSpot(near) ?? Vector2(v.forge.dx - 6.5 * kTile, v.forge.dy),
+        );
         v.anvil = a;
         yield a;
       }
@@ -1279,6 +1315,21 @@ class GolgeGame extends FlameGame with KeyboardEvents {
       v.bellowsCount = counts[v] ?? 1;
       yield v;
     }
+  }
+
+  /// Ritimli ocağın örsü için yer: körüklerin sağında, zemine oturan ilk
+  /// boş sütun.
+  Vector2? _anvilSpot(List<Bellows>? pumps) {
+    if (pumps == null || pumps.isEmpty) return null;
+    final low = pumps.reduce((a, b) => a.position.y >= b.position.y ? a : b);
+    final right = pumps.map((b) => b.position.x).reduce(math.max);
+    final row = (low.position.y / kTile).round();
+    for (var c = (right / kTile).floor() + 3; c < level.width - 1; c++) {
+      if (level.solid(c, row) && !level.solid(c, row - 1)) {
+        return Vector2((c + 0.5) * kTile, row * kTile.toDouble());
+      }
+    }
+    return null;
   }
 
   Bird? _guideBird() {
@@ -1541,6 +1592,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     // yaşamaz. Uygulama kesintisi gibi çok uzun boşluk telafi edilmez.
     if (!dt.isFinite || dt < 0) dt = 0;
     autoQuality.tick(dt);
+    autoQuality.countStep();
     if (perfShown) _updatePerf(dt);
     if (_autoWalk && !menuMode.value) {
       _autoT += dt;
@@ -2080,7 +2132,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         onToggleFullscreen?.call();
         return KeyEventResult.handled;
       }
-      if (paused) return KeyEventResult.handled;
+      if (held) return KeyEventResult.handled;
       if (event.logicalKey == LogicalKeyboardKey.keyF ||
           event.logicalKey == LogicalKeyboardKey.keyX ||
           event.logicalKey == LogicalKeyboardKey.gameButtonX) {

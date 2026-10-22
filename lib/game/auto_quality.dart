@@ -1,3 +1,5 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/scheduler.dart';
 
 import '../settings.dart';
@@ -53,7 +55,7 @@ class AutoQuality {
       Settings.autoQuality &&
       !userChose &&
       !game.menuMode.value &&
-      !game.paused &&
+      !game.held &&
       !game.cinematic &&
       game.player != null;
 
@@ -89,7 +91,34 @@ class AutoQuality {
     if (_wait > 0) _wait -= dt;
   }
 
+  // Geliştirici ölçümü: saniyede çizilen kare sayısı (FPSLOG).
+  static const _fpsLog =
+      bool.fromEnvironment('DEV') && bool.fromEnvironment('FPSLOG');
+  int _logFrames = 0;
+  final _logClock = Stopwatch()..start();
+  int _steps = 0;
+
+  /// Oyun adımı sayacı (ölçüm için).
+  void countStep() {
+    if (_fpsLog) _steps++;
+  }
+
   void _onTimings(List<FrameTiming> timings) {
+    if (_fpsLog) {
+      _logFrames += timings.length;
+      final s = _logClock.elapsedMilliseconds / 1000;
+      if (s >= 5) {
+        // ignore: avoid_print
+        print(
+          '[kare] çizilen ${(_logFrames / s).toStringAsFixed(1)}/sn, '
+          'oyun adımı ${(_steps / s).toStringAsFixed(1)}/sn, çizici '
+          '${ui.ImageFilter.isShaderFilterSupported ? 'Impeller' : 'Skia'}',
+        );
+        _logFrames = 0;
+        _steps = 0;
+        _logClock.reset();
+      }
+    }
     for (final t in timings) {
       final w = t.buildDuration > t.rasterDuration
           ? t.buildDuration
