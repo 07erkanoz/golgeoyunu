@@ -493,59 +493,122 @@ class MoltenChannel extends Deck {
   }
 }
 
-/// Vadinin sisi: yolu ve çukurları gizler (yalnızca görünüş). Gökbörü'nün
-/// izleri sisin üstünde parlar.
+/// Vadinin sisi: yolu ve çukurları gizler (yalnızca görünüş). Yerde en
+/// yoğun, yukarı çıktıkça incelir ve ~5 kare yukarıda biter (dağlar, gök
+/// açık kalır); iki yanda uzun, yumuşak bir geçişle erir; içinde ağır ağır
+/// akan bulanık tutamlar. Gökbörü'nün izleri sisin üstünde parlar.
 class MistZone extends Component with HasGameReference<GolgeGame> {
   MistZone(this.area) : super(priority: 18);
 
   final Rect area;
   double _t = 0;
 
+  /// Ay ışığında serin, grimsi pus.
+  static const _mist = Color(0xFFBFCAD2);
+
+  /// Kenarlarda erime genişliği.
+  static const double _fade = 7 * kTile;
+
   @override
   void update(double dt) => _t += dt;
+
+  /// Zeminin yüksekliği: zonun sütunlarında en sık rastlanan ilk katı
+  /// karo (çukurlar ve kayalar sayılmaz). Bir kez hesaplanır.
+  late final double _ground = () {
+    final lv = game.level;
+    final count = <int, int>{};
+    for (var c = (area.left / kTile).floor(); c < area.right / kTile; c++) {
+      for (var r = (area.top / kTile).floor(); r < lv.height; r++) {
+        if (lv.solid(c, r)) {
+          count[r] = (count[r] ?? 0) + 1;
+          break;
+        }
+      }
+    }
+    if (count.isEmpty) return area.bottom - 3 * kTile;
+    final best = count.entries.reduce((a, b) => a.value >= b.value ? a : b);
+    return best.key * kTile.toDouble();
+  }();
 
   @override
   void render(Canvas canvas) {
     final view = game.camera.visibleWorldRect;
-    final r = area.inflate(90);
+    final g = _ground;
+    final top = g - 5.5 * kTile;
+    final r = Rect.fromLTRB(
+      area.left - _fade * 0.5,
+      top,
+      area.right + _fade * 0.5,
+      math.max(area.bottom, g + 10 * kTile),
+    );
     if (!view.overlaps(r)) return;
-    // Yerden yükselen pus: aşağıda koyu, yukarı doğru incelir; iki yanda
-    // yumuşakça erir (tek katman, kenar maskesi).
     canvas.saveLayer(r, Paint());
+    // Dikey: yukarıda hiç, yere indikçe koyulaşır; zeminde ve çukurlarda
+    // yolu gizleyecek kadar yoğun.
+    double at(double y) => ((y - r.top) / r.height).clamp(0.0, 1.0);
     canvas.drawRect(
       r,
       Paint()
         ..shader = ui.Gradient.linear(
           r.topCenter,
           r.bottomCenter,
-          const [
-            Color(0x00D4DED6),
-            Color(0xB8D4DED6),
-            Color(0xF0DCE4DC),
-            Color(0x00DCE4DC),
+          // Yere yatan sis kümesi: zeminin üstünde ve toprağın ilk bir buçuk
+          // karesinde yoğun (çukurların ağzı seçilmez), aşağıda kaybolur.
+          [
+            _mist.withValues(alpha: 0),
+            _mist.withValues(alpha: 0.18),
+            _mist.withValues(alpha: 0.55),
+            _mist.withValues(alpha: 0.92),
+            _mist.withValues(alpha: 0.92),
+            _mist.withValues(alpha: 0),
           ],
-          [0, 0.5, (area.bottom - r.top) / r.height, 1],
+          [
+            0,
+            at(g - 3.5 * kTile),
+            at(g - 1.6 * kTile),
+            at(g - 0.3 * kTile),
+            at(g + 1.3 * kTile),
+            at(g + 2.9 * kTile),
+          ],
         ),
     );
-    // Ağır ağır sürüklenen yoğun tutamlar (yumuşak kenarlı).
-    for (var i = 0; i < 12; i++) {
-      final x = area.left + ((i * 151.0 + _t * (10 + i * 1.5)) % area.width);
-      final y = area.bottom - 30 - ((i * 0.41) % 1) * area.height * 0.6;
-      canvas.save();
-      canvas.translate(x, y);
-      canvas.scale(1, 0.4);
-      canvas.drawCircle(
-        Offset.zero,
-        110,
-        Paint()
-          ..shader = ui.Gradient.radial(Offset.zero, 110, const [
-            Color(0x55EEF2EE),
-            Color(0x00EEF2EE),
-          ]),
+    // Sisin altı toprak gibi koyu: çukurların içi seçilmez (yol görünmez).
+    canvas.drawRect(
+      r,
+      Paint()
+        ..shader = ui.Gradient.linear(
+          r.topCenter,
+          r.bottomCenter,
+          const [Color(0x000D0A09), Color(0x000D0A09), Color(0xFF0D0A09)],
+          [0, at(g + 1.2 * kTile), at(g + 2.4 * kTile)],
+        ),
+    );
+    // Akan tutamlar: uzun, bulanık; farklı hızlarda ve yüksekliklerde.
+    final wisp = Paint()
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 22);
+    for (var i = 0; i < 16; i++) {
+      final speed = 8 + (i % 5) * 4.0;
+      final span = r.width + 400;
+      final x = r.left - 200 + ((i * 263.0 + _t * speed) % span);
+      final hgt = ((i * 0.37) % 1) * 3.6 * kTile;
+      final y = g - 0.4 * kTile - hgt;
+      final wdt = 220.0 + (i * 53) % 180;
+      wisp.color = Color.lerp(
+        _mist,
+        const Color(0xFFFFFFFF),
+        0.25,
+      )!.withValues(alpha: 0.32 * (1 - hgt / (4.2 * kTile)));
+      canvas.drawOval(
+        Rect.fromCenter(
+          center: Offset(x, y + math.sin(_t * 0.4 + i) * 6),
+          width: wdt,
+          height: 34 + (i % 3) * 10.0,
+        ),
+        wisp,
       );
-      canvas.restore();
     }
-    // İki yanda erime.
+    // İki yanda uzun, yumuşak erime.
+    double fx(double x) => ((x - r.left) / r.width).clamp(0.0, 1.0);
     canvas.drawRect(
       r,
       Paint()
@@ -559,7 +622,7 @@ class MistZone extends Component with HasGameReference<GolgeGame> {
             Color(0xFFFFFFFF),
             Color(0x00FFFFFF),
           ],
-          [0, 90 / r.width, 1 - 90 / r.width, 1],
+          [0, fx(area.left + _fade * 0.5), fx(area.right - _fade * 0.5), 1],
         ),
     );
     canvas.restore();
