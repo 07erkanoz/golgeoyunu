@@ -117,7 +117,61 @@ class TerrainComponent extends Component with HasGameReference<GolgeGame> {
         canvas.drawRect(Rect.fromLTRB(-m, -m, lv.pixelWidth + m, 0.5), _ink);
       }
     }
+    if (theme == LevelTheme.ergenekon) _pitShade(canvas);
     _drawVisible(canvas, _chunks, game.camera.visibleWorldRect);
+  }
+
+  /// Zemin hizası: sütunlarda en sık rastlanan ilk katı karo.
+  late final int _groundRow = () {
+    final lv = _level;
+    final count = <int, int>{};
+    for (var c = 0; c < lv.width; c++) {
+      for (var r = 0; r < lv.height; r++) {
+        if (lv.solid(c, r)) {
+          count[r] = (count[r] ?? 0) + 1;
+          break;
+        }
+      }
+    }
+    return count.entries.reduce((a, b) => a.value >= b.value ? a : b).key;
+  }();
+
+  /// Açık havada zemindeki çukurların içi karanlık: arkadaki vadi (çayır,
+  /// ırmak) çukurdan görünüp düz bir yeşil blok gibi durmasın.
+  void _pitShade(Canvas canvas) {
+    final lv = _level;
+    final view = game.camera.visibleWorldRect;
+    final g = _groundRow;
+    final top = g * kTile.toDouble();
+    final c0 = math.max(0, (view.left / kTile).floor());
+    final c1 = math.min(lv.width - 1, (view.right / kTile).ceil());
+    const deep = Color(0xFF0D0A09);
+    final paint = Paint()
+      ..shader = ui.Gradient.linear(
+        Offset(0, top),
+        Offset(0, top + 2.5 * kTile),
+        [deep.withValues(alpha: 0.8), deep],
+      );
+    var c = c0;
+    while (c <= c1) {
+      if (lv.solid(c, g)) {
+        c++;
+        continue;
+      }
+      final start = c;
+      while (c <= c1 && !lv.solid(c, g)) {
+        c++;
+      }
+      canvas.drawRect(
+        Rect.fromLTRB(
+          start * kTile.toDouble(),
+          top,
+          c * kTile.toDouble(),
+          lv.pixelHeight + 400,
+        ),
+        paint,
+      );
+    }
   }
 }
 
