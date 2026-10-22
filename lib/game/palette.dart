@@ -124,4 +124,10 @@ class Realism {
   Realism._();
 
   static bool on = Cartoon.trialBuild;
+
+  /// Ölçüm için parça parça kapatma (yalnız araçlar kullanır).
+  static bool debugNoFar = false;
+  static bool debugNoLight = false;
+  static bool debugNoNear = false;
+  static bool debugNoReflect = false;
 }

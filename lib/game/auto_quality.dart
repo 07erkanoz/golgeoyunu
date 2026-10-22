@@ -17,8 +17,10 @@ class AutoQuality {
 
   final GolgeGame game;
 
-  /// Bir kare bundan uzun sürerse "geç" sayılır (≈ 40 kare/sn altı).
-  static const int slowMicros = 25000;
+  /// Karenin hazırlığı ya da ekran kartı işi bundan uzun sürerse "geç"
+  /// sayılır (≈ 45 kare/sn altı). Kare başından ekrana çıkışa kadarki süre
+  /// kullanılmaz: kareler üst üste işlendiği için akıcı oyunda da uzar.
+  static const int slowMicros = 22000;
 
   /// Bu kadar kare toplanınca karar verilir.
   static const int window = 240;
@@ -27,8 +29,13 @@ class AutoQuality {
   static const double slowShare = 0.3;
 
   /// Bölüm başında ya da bir kademe düşüldükten sonra ölçülmeyen süre
-  /// (yükleme, önbellek doldurma).
-  static const double settle = 3;
+  /// (yükleme, önbellek doldurma, ekran kartının ilk gölgelendirici
+  /// derlemeleri).
+  static const double settle = 6;
+
+  /// Kademe düşmek için üst üste bu kadar yavaş pencere gerekir (kısa bir
+  /// takılma ayarları düşürmesin).
+  static const int slowWindows = 2;
 
   /// Oyuncu ayarı elle değiştirdi: bu oturumda kendiliğinden düşürme yok.
   static bool userChose = false;
@@ -37,6 +44,7 @@ class AutoQuality {
   double _wait = settle;
   int _frames = 0;
   int _slow = 0;
+  int _slowRun = 0;
 
   bool get _measuring =>
       Settings.autoQuality &&
@@ -67,6 +75,7 @@ class AutoQuality {
     _wait = settle;
     _frames = 0;
     _slow = 0;
+    _slowRun = 0;
   }
 
   void tick(double dt) {
@@ -81,13 +90,17 @@ class AutoQuality {
     if (!_measuring || _wait > 0) return;
     for (final t in timings) {
       _frames++;
-      if (t.totalSpan.inMicroseconds > slowMicros) _slow++;
+      final work = t.buildDuration > t.rasterDuration
+          ? t.buildDuration
+          : t.rasterDuration;
+      if (work.inMicroseconds > slowMicros) _slow++;
     }
     if (_frames < window) return;
     final share = _slow / _frames;
     _frames = 0;
     _slow = 0;
-    if (share > slowShare) stepDown();
+    _slowRun = share > slowShare ? _slowRun + 1 : 0;
+    if (_slowRun >= slowWindows) stepDown();
   }
 
   /// Bir kademe düşer; düşülecek bir şey kalmadıysa false.

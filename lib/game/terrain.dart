@@ -1203,8 +1203,8 @@ class WaterComponent extends Component with HasGameReference<GolgeGame> {
   @override
   void update(double dt) => _t += dt;
 
-  /// Işık ve derinlik denemesi: su üstündeki sahne aynalanır, ince
-  /// şeritler halinde dalgalanır, derinde kararır; yüzeyde ince bir sis.
+  /// Işık ve derinlik denemesi: su üstündeki sahne aynalanır, hafifçe
+  /// salınır, derinde kararır; yüzeyde kayan parıltılar ve ince bir sis.
   /// Aynalanan arazi ve ön sütunlar önceden çizilmiş dilimlerdir (ucuz).
   void _reflect(Canvas canvas, List<MapEntry<int, double>> visible) {
     if (visible.isEmpty) return;
@@ -1221,22 +1221,32 @@ class WaterComponent extends Component with HasGameReference<GolgeGame> {
       }
     }
     const depth = 72.0;
-    const strip = 9.0;
     for (final (x0, x1, top) in runs) {
       final area = Rect.fromLTRB(x0, top, x1, top + depth);
       final mirror = Rect.fromLTRB(x0 - 40, top - depth - 12, x1 + 40, top);
+      // Tek ayna geçişi (eskiden sekiz şerit ayrı ayrı çiziliyordu: her
+      // karede sahnenin sekiz kopyası). Hafif yatay salınım dalgayı verir.
       canvas.saveLayer(area, Paint()..color = const Color(0x70000000));
-      for (var y = 0.0; y < depth; y += strip) {
-        final dx = math.sin(_t * 1.8 + y * 0.35) * (0.6 + y * 0.06);
-        canvas.save();
-        canvas.clipRect(Rect.fromLTRB(x0, top + y, x1, top + y + strip));
-        canvas.translate(dx, 2 * top);
-        canvas.scale(1, -1);
-        _drawVisible(canvas, terrain, mirror);
-        _drawVisible(canvas, fore, mirror);
-        canvas.restore();
-      }
+      canvas.translate(math.sin(_t * 1.6) * 1.2, 2 * top);
+      canvas.scale(1, -1);
+      _drawVisible(canvas, terrain, mirror);
+      _drawVisible(canvas, fore, mirror);
       canvas.restore();
+      // Yüzeyde kayan ince parıltılar: dalga.
+      final glint = Paint()
+        ..color = const Color(0x30E8B888)
+        ..strokeWidth = 1;
+      for (var k = 0; k < 4; k++) {
+        final gy = top + 6 + k * 13.0;
+        final len = 26.0 + k * 8;
+        final period = (x1 - x0) + len;
+        final gx = x0 + ((_t * (14 + k * 5) + k * 53) % period) - len;
+        canvas.drawLine(
+          Offset(math.max(x0, gx), gy),
+          Offset(math.min(x1, gx + len), gy),
+          glint,
+        );
+      }
       // Derinde aynanın üstüne suyun koyuluğu iner.
       canvas.drawRect(
         area,
@@ -1294,6 +1304,7 @@ class WaterComponent extends Component with HasGameReference<GolgeGame> {
       canvas.drawRect(rect, body);
     }
     if (Realism.on &&
+        !Realism.debugNoReflect &&
         !Settings.lowGraphics &&
         level.def.theme == LevelTheme.cistern) {
       _reflect(canvas, visible);

@@ -38,8 +38,6 @@ class Backdrop extends Component with HasGameReference<GolgeGame> {
   @override
   void update(double dt) => _t += dt;
 
-  static final _farPaint = Paint()..filterQuality = FilterQuality.medium;
-
   @override
   void render(Canvas canvas) {
     final size = game.camera.viewport.size;
@@ -51,22 +49,12 @@ class Backdrop extends Component with HasGameReference<GolgeGame> {
     final height = (1 - cam.y / lv.pixelHeight).clamp(0.0, 1.0);
     final rect = Rect.fromLTWH(0, 0, w, h);
 
-    // Işık ve derinlik denemesi: uzak sarnıç pusa karışır, hafifçe bulanır
-    // (göz derinliği buradan okur; oyun katmanı keskin kalır).
+    // Işık ve derinlik denemesi: uzak katman pusa karışır (göz derinliği
+    // buradan ve önden geçen bulanık şekillerden okur). Bulanıklaştırma
+    // yok: her karede resme çevirmek ekran kartını bekletiyor, güçlü
+    // makinede bile takılıyordu.
     final depth = realismHere(game) ? depthKind(lv) : null;
-    final far = depth != null;
-    // Kapalı sarnıçta daha bulanık; açık havada yıldızlar seçilsin diye az.
-    final farScale = lv.def.theme.indoor ? 3.0 : 2.0;
-    // Bulanıklık ucuz yoldan: sahne ekranın üçte biri çözünürlükte bir
-    // resme çizilir, büyütülerek konur (tam ekran bulanıklaştırma
-    // telefonu ısıtıyordu).
-    final outer = canvas;
-    ui.PictureRecorder? rec;
-    if (far) {
-      rec = ui.PictureRecorder();
-      canvas = Canvas(rec);
-      canvas.scale(1 / farScale);
-    }
+    final far = depth != null && !Realism.debugNoFar;
     switch (lv.def.theme) {
       case LevelTheme.cistern when Cartoon.on:
         _cartoonCistern(canvas, rect, w, h, cam.x);
@@ -321,23 +309,12 @@ class Backdrop extends Component with HasGameReference<GolgeGame> {
           bumpy: true,
         );
     }
-    if (rec != null) {
-      final img = rec.endRecording().toImageSync(
-        (w / farScale).ceil(),
-        (h / farScale).ceil(),
-      );
-      outer.drawImageRect(
-        img,
-        Rect.fromLTWH(0, 0, img.width.toDouble(), img.height.toDouble()),
-        Rect.fromLTWH(0, 0, img.width * farScale, img.height * farScale),
-        _farPaint,
-      );
-      img.dispose();
+    if (far) {
       // Uzak katmana inen pus.
-      outer.drawRect(
+      canvas.drawRect(
         rect,
         Paint()
-          ..color = switch (depth!) {
+          ..color = switch (depth) {
             DepthKind.cistern =>
               (Cartoon.on ? Cartoon.skyMid : const Color(0xFF3A1E14))
                   .withValues(alpha: 0.22),

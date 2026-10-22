@@ -117,7 +117,7 @@ class RealismLayer extends Component with HasGameReference<GolgeGame> {
 
   @override
   void render(Canvas canvas) {
-    if (!realismHere(game)) return;
+    if (!realismHere(game) || Realism.debugNoLight) return;
     final view = game.camera.visibleWorldRect;
     for (final (at, color, radius) in _lights(view)) {
       final area = Rect.fromCircle(center: at, radius: radius);
@@ -155,14 +155,17 @@ class RealismLayer extends Component with HasGameReference<GolgeGame> {
         canvas.drawLine(Offset(x0, y + 1.5), Offset(x1, y + 1.5), lipWide);
         canvas.drawLine(Offset(x0, y + 1.5), Offset(x1, y + 1.5), lipNarrow);
       }
-      // Yüzey: ışık taşın üstüne yumuşakça yayılır (koyular koyu kalır).
+      // Yüzey: ışık taşın üstüne yumuşakça yayılır. "Screen" karışımı
+      // ekran kartında doğrudan yapılır (softLight her ışık için ekranı
+      // kopyalatıyordu).
+      final glowR = radius * 0.7;
       canvas.drawCircle(
         at,
-        radius,
+        glowR,
         Paint()
-          ..blendMode = BlendMode.softLight
-          ..shader = ui.Gradient.radial(at, radius, [
-            color.withValues(alpha: 0.45),
+          ..blendMode = BlendMode.screen
+          ..shader = ui.Gradient.radial(at, glowR, [
+            color.withValues(alpha: 0.09),
             color.withValues(alpha: 0),
           ]),
       );
@@ -1119,7 +1122,7 @@ class NearLayer extends Component with HasGameReference<GolgeGame> {
 
   @override
   void render(Canvas canvas) {
-    if (!realismHere(game)) return;
+    if (!realismHere(game) || Realism.debugNoNear) return;
     final kind = depthKind(game.level)!;
     final cam = game.camera.viewfinder.position;
     final view = game.camera.visibleWorldRect;
