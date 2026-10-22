@@ -108,14 +108,7 @@ jobs:
           cache: true
       - name: Paketleri indir
         run: flutter pub get
-      - name: Testler
-        run: flutter test
-      - name: Bölüm denetimi (varılamayan yer, sıkışma, kapalı kapı)
-        run: python3 tools/audit.py
-      - name: Fizik testleri (yüksek yenileme hızı)
-        run: |
-          flutter test test/physics_test.dart --dart-define=HZ=120
-          flutter test test/physics_test.dart --dart-define=HZ=144
+      # Testler ayrı işte (aşağıda) yanında koşar: derleme onları beklemez.
       - name: Linux için derle
         run: flutter build linux --release --build-number=${{ github.run_number }} --dart-define=CARTOON=true
       - name: tar.gz olarak paketle
@@ -127,6 +120,38 @@ jobs:
         with:
           name: linux
           path: GolgeOyunu-linux-x64.tar.gz
+
+  # Testler derlemeyi beklemez, yanında üç parça hâlinde aynı anda koşar:
+  # bütün testler ve bölüm denetimi; fizik 120 Hz; fizik 144 Hz. Biri
+  # kırılırsa çalışma kırmızı görünür (sürüm yine yayımlanır: deneme
+  # sürümleri).
+  tests:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        part: [tum, hz120, hz144]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+      - name: Paketleri indir
+        run: flutter pub get
+      - name: Testler
+        if: matrix.part == 'tum'
+        run: flutter test
+      - name: Bölüm denetimi (varılamayan yer, sıkışma, kapalı kapı)
+        if: matrix.part == 'tum'
+        run: python3 tools/audit.py
+      - name: Fizik testleri (120 Hz)
+        if: matrix.part == 'hz120'
+        run: flutter test test/physics_test.dart --dart-define=HZ=120
+      - name: Fizik testleri (144 Hz)
+        if: matrix.part == 'hz144'
+        run: flutter test test/physics_test.dart --dart-define=HZ=144
 
   release:
     needs: [windows, android, linux]
