@@ -1317,6 +1317,43 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     }
   }
 
+  /// Görev satırı: oyuncu çok adımlı bir düzeneğin alanındaysa o anki adım.
+  String? _objective(Player p) {
+    for (final v in world.children.whereType<IronVein>()) {
+      if (v.opening) continue;
+      final pumps = world.children.whereType<Bellows>().where(
+        (b) => b.vein == v && b.order > 0,
+      );
+      if (pumps.isEmpty) continue;
+      final left = pumps.map((b) => b.position.x).reduce(math.min);
+      final x = p.center.x;
+      if (x < left - 10 * kTile || x > v.forge.dx + 4 * kTile) continue;
+      if ((p.center.y - v.forge.dy).abs() > 14 * kTile) continue;
+      final steps = <String>[
+        if (v.fuelNeeded > 0)
+          Hints.fill(
+            Hints.text('goalFuel')
+                .replaceAll('{n}', '${math.min(v.fuel, v.fuelNeeded)}')
+                .replaceAll('{need}', '${v.fuelNeeded}'),
+          ),
+        Hints.text('goalLight'),
+        if (v.rhythm)
+          Hints.text('goalBeat')
+              .replaceAll('{heat}', '${(v.heat * 100).round()}')
+        else
+          Hints.text('goalOrder').replaceAll('{next}', '${v.next}'),
+      ];
+      final at = v.fuelNeeded > 0 && !v.fueled
+          ? 0
+          : !v.lit
+          ? steps.length - 2
+          : steps.length - 1;
+      return '${Hints.text('goalForge')} · ${at + 1}/${steps.length} · '
+          '${steps[at]}';
+    }
+    return null;
+  }
+
   /// Ritimli ocağın örsü için yer: körüklerin sağında, zemine oturan ilk
   /// boş sütun.
   Vector2? _anvilSpot(List<Bellows>? pumps) {
@@ -1622,6 +1659,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
 
     final p = player;
     if (p == null || !p.isMounted) return;
+    narration.objective = cinematic ? null : _objective(p);
     if (!cinematic && !p.isDead) {
       _checkStoryPoints(p);
       _updateTension(p, dt);

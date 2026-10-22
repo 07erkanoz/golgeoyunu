@@ -121,6 +121,34 @@ class IronVein extends Gate {
     _h * (1 - melt),
   );
 
+  /// Kömür sandıklarının itileceği çukur: zeminde nabız gibi atan sıcak
+  /// bir ışık ve aşağı bakan oklar (nereye itileceği gözle görülsün).
+  void _pitMark(Canvas canvas) {
+    final cx = kTile / 2 - 3 * kTile;
+    final y = _h;
+    final a = 0.35 + 0.25 * math.sin(_t * 3);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromCenter(center: Offset(cx, y - 2), width: 5 * kTile, height: 6),
+        const Radius.circular(3),
+      ),
+      Paint()..color = const Color(0xFFFF9A40).withValues(alpha: a),
+    );
+    final arrow = Paint()
+      ..color = const Color(0xFFFFC27A).withValues(alpha: a + 0.2)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.5
+      ..strokeCap = StrokeCap.round;
+    for (final dx in [-1.4 * kTile, 0.0, 1.4 * kTile]) {
+      final bob = 4 * math.sin(_t * 3 + dx);
+      final ax = cx + dx;
+      final ay = y - 26 + bob;
+      canvas.drawLine(Offset(ax, ay - 12), Offset(ax, ay), arrow);
+      canvas.drawLine(Offset(ax - 6, ay - 6), Offset(ax, ay), arrow);
+      canvas.drawLine(Offset(ax + 6, ay - 6), Offset(ax, ay), arrow);
+    }
+  }
+
   /// Bir körük basıldı.
   void pump(Bellows b) {
     if (opening) return;
@@ -221,6 +249,7 @@ class IronVein extends Gate {
     final w = kTile.toDouble();
     final h = _h;
     final top = h * melt;
+    if (fuelNeeded > 0 && !fueled) _pitMark(canvas);
     // Demir: koyu, pas lekeli; ısındıkça kızarır.
     final glow = math.max(heat, melt) * (0.85 + 0.15 * math.sin(_t * 5));
     final body = Rect.fromLTWH(0, top, w, h - top);
@@ -387,11 +416,16 @@ class Anvil extends PositionComponent with HasGameReference<GolgeGame> {
   /// Vuruşun iki yanındaki denk sayılan pay (saniye).
   static const double grace = 0.3;
 
-  static const double drawScale = 0.36;
+  /// Usta iri çizilir (Sâye'nin üç katı): çekicin inişi uzaktan görülsün.
+  static const double drawScale = 0.9;
 
   double _t = 0;
   double _hit = 0;
   bool _met = false;
+
+  /// Vuruş döngüsünde nerede (0 = çekiç örse indi, 1'e doğru yeniden
+  /// iniyor).
+  double get phase => (_t / beat) % 1.0;
 
   /// Şu an vuruşa denk mi.
   bool get onBeat {
@@ -434,8 +468,8 @@ class Anvil extends PositionComponent with HasGameReference<GolgeGame> {
     // Vuruşta örsten kıvılcım ve ışık halkası (ritim gözle de görülsün).
     if (_hit > 0) {
       canvas.drawCircle(
-        Offset(facing * 12, -9),
-        10 + 26 * (1 - _hit),
+        Offset(facing * 31 * drawScale, -22 * drawScale),
+        14 + 40 * (1 - _hit),
         Paint()
           ..style = PaintingStyle.stroke
           ..strokeWidth = 2
@@ -771,6 +805,22 @@ class Bellows extends PositionComponent
             const Radius.circular(2),
           ),
           Paint()..color = const Color(0xFFFF9A40),
+        );
+      }
+      final anvil = v.anvil;
+      if (order > 0 && ready && v.lit && !v.opening && anvil != null) {
+        // Vuruşa doğru daralan halka: kapanıp parladığı an basma anı.
+        final ph = anvil.phase;
+        final r = 6 + 26 * (1 - ph);
+        final on = anvil.onBeat;
+        canvas.drawCircle(
+          Offset(0, top - 9),
+          on ? 9 : r,
+          Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = on ? 3.5 : 2
+            ..color = (on ? const Color(0xFFFFE6A8) : const Color(0xFFFFB050))
+                .withValues(alpha: on ? 1 : 0.35 + 0.5 * ph),
         );
       }
       if (order > 0 && ready && v.lit && !v.opening) {

@@ -1208,7 +1208,12 @@ class NearLayer extends Component with HasGameReference<GolgeGame> {
         else if (c is StoneGiant)
           c.toRect(),
     ];
+    // Yerebatan dışında yalnız tepeden sarkan, küçük şekiller: yerden
+    // yükselen iri şekiller (kaya, kristal, fıçı, bulut...) oyunu örtüyordu.
+    final sparse = kind != DepthKind.cistern;
     for (final row in _rowsOf(kind)) {
+      if (sparse && row.at != _Anchor.top) continue;
+      final sk = sparse ? k * 0.65 : k;
       final every = row.every * kTile;
       final first = ((cam.x - span) / every).floor();
       final y = switch (row.at) {
@@ -1224,25 +1229,25 @@ class NearLayer extends Component with HasGameReference<GolgeGame> {
             keep.any((r) => x > r.left - 200 * k && x < r.right + 200 * k)) {
           continue;
         }
-        final at = Offset(x, y + row.drop * k);
+        final at = Offset(x, y + row.drop * sk);
         final (img, origin) = shape;
         final box = Rect.fromLTWH(
-          at.dx + origin.dx * k,
-          at.dy + origin.dy * k,
-          img.width * k,
-          img.height * k,
+          at.dx + origin.dx * sk,
+          at.dy + origin.dy * sk,
+          img.width * sk,
+          img.height * sk,
         );
         final see = _clearance(box, actors);
         if (see <= 0.02) continue;
         if (see < 1) {
           _fadePaint.color = Color.fromRGBO(255, 255, 255, see);
-          _put(canvas, shape, at, k, _fadePaint);
+          _put(canvas, shape, at, sk, _fadePaint);
         } else {
-          _put(canvas, shape, at, k);
+          _put(canvas, shape, at, sk);
         }
         final glows = row.glows;
         if (glows != null) {
-          _glow(canvas, at + glows[i % glows.length] * k, k);
+          _glow(canvas, at + glows[i % glows.length] * sk, sk);
         }
       }
     }

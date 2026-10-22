@@ -45,6 +45,7 @@ void main() {
       game.update(1 / 60);
     }
     game.narration.resetScene();
+    game.update(1 / 60);
     final rec = ui.PictureRecorder();
     game.render(ui.Canvas(rec));
     final img = await rec.endRecording().toImage(1280, 720);

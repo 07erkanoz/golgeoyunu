@@ -156,9 +156,50 @@ class Narration extends Component with HasGameReference<GolgeGame> {
 
   void whisper(String text) => _whispers.add((text, _clock));
 
+  /// Çok adımlı bir düzeneğin o anki adımı (yoksa null); her karede oyun
+  /// belirler. Sol üstte küçük, kalıcı bir satır olarak yazılır.
+  String? objective;
+  TextPainter? _goalTp;
+  String? _goalText;
+
+  void _objectiveLine(Canvas canvas, String s, double unit) {
+    if (s != _goalText) {
+      _goalText = s;
+      _goalTp = TextPainter(
+        text: TextSpan(
+          text: s,
+          style: TextStyle(
+            fontFamily: 'Roboto',
+            color: kText.withValues(alpha: 0.9),
+            fontSize: math.max(12, unit * 0.022),
+            height: 1.3,
+            shadows: const [Shadow(blurRadius: 6, color: Color(0xFF000000))],
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout(maxWidth: math.max(240, game.size.x * 0.45));
+    }
+    final tp = _goalTp!;
+    const left = 24.0;
+    const top = 54.0;
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(left - 10, top - 6, tp.width + 20, tp.height + 12),
+        const Radius.circular(6),
+      ),
+      Paint()..color = const Color(0x8C0A0605),
+    );
+    canvas.drawRect(
+      Rect.fromLTWH(left - 10, top - 6, 3, tp.height + 12),
+      Paint()..color = const Color(0xFFE0A15F),
+    );
+    tp.paint(canvas, const Offset(left, top));
+  }
+
   /// Sahne değişince (yeni bölüm, menü) eski bölümün bekleyen fısıltıları
   /// ve ipuçları atılır; yeni bölümde bağlamsız belirmesinler.
   void resetScene() {
+    objective = null;
     recent.clear();
     _myths.clear();
     _myth = null;
@@ -659,6 +700,10 @@ class Narration extends Component with HasGameReference<GolgeGame> {
     }
 
     if (game.menuMode.value) return;
+
+    // Görev satırı: çok adımlı düzenekte o anki adım (sol üstte, kalıcı).
+    final goal = objective;
+    if (goal != null && !inCinematic) _objectiveLine(canvas, goal, unit);
 
     if (_hint != null && !inCinematic) {
       final a = _envelope(_hintT, 0.3, _hintDuration(_hint!) - 0.9, 0.6);

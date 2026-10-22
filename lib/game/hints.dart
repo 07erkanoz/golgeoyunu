@@ -92,8 +92,11 @@ class Hints {
   }
 
   /// İpucunun seçili dilde, bu cihazın kontrolleriyle yazılmış metni.
-  static String text(String key) {
-    var s = (S.en ? _en : _tr)[key] ?? _tr[key] ?? key;
+  static String text(String key) =>
+      fill((S.en ? _en : _tr)[key] ?? _tr[key] ?? key);
+
+  /// Metindeki tuş yer tutucularını bu cihazın kontrolleriyle doldurur.
+  static String fill(String s) {
     for (final e in _controls.entries) {
       s = s.replaceAll('{${e.key}}', e.value);
     }
@@ -135,6 +138,13 @@ class Hints {
     'bellows': '{up} Körüğe bas · üstündeki çentik sayısı sırasıyla · sıra bozulur ya da geç kalırsan ateş söner',
     'bellowsBeat': '{up} Körüğü çekiç örse indiği anda bas · basılan körük dolana dek öbürüne koş',
     'fuel': 'Ocak boş · kömür sandıklarını ocağın önündeki çukura it · birini basamak için sakla',
+    'goalFuel':
+        'Kömür sandıklarını ocağın önündeki ışıklı çukura it ({n}/{need})',
+    'goalLight': 'Ocağın ağzına bir ateşböceği at: {firefly}',
+    'goalBeat':
+        'Körüğün üstündeki halka kapanıp parlayınca bas: {up} · ısı %{heat}',
+    'goalOrder': 'Körüklere üstlerindeki çentik sayısı sırasıyla bas: {up} · sıradaki {next}',
+    'goalForge': 'Ocak',
     'nevruz': '{up} Demire üç kez vur',
     'molten': 'Akan demir yakar · soğuyup kararınca üstünden geç',
     'kormos': 'Körmösler ışığa gelir · {down} kavanozunu ört · ya da ateşböceği sal: {firefly}',
@@ -202,6 +212,12 @@ class Hints {
     'bellows': '{up} Pump the bellows · in the order of the notches on each · break the order or wait too long and the fire dies',
     'bellowsBeat': '{up} Pump a bellows just as the hammer hits the anvil · run to another while it refills',
     'fuel': 'The forge is empty · push the charcoal crates into the pit before it · keep one as a step',
+    'goalFuel': 'Push the charcoal crates into the glowing pit before the forge ({n}/{need})',
+    'goalLight': 'Throw a firefly into the forge mouth: {firefly}',
+    'goalBeat': 'Pump the bellows when the ring above it closes and flashes: {up} · heat {heat}%',
+    'goalOrder':
+        'Pump the bellows in the order of their notches: {up} · next {next}',
+    'goalForge': 'Forge',
     'nevruz': '{up} Strike the iron three times',
     'molten': 'Flowing iron burns · cross only when it cools and darkens',
     'kormos': 'Körmös drift toward light · {down} cover your jar · or release a firefly: {firefly}',
