@@ -241,6 +241,10 @@ Picture _buildTerrain(Level lv, int c0, int c1, int r0, int r1) {
             Rect.fromLTWH(x - 0.5, y - 0.5, kTile + 1, kTile + 1),
             ink,
           );
+          // Doku denemesi: bölümün malzemesi (orijinal koyu renklerde).
+          if (Cartoon.on && lv.def.skiSurface == null) {
+            _themedBody(canvas, lv, theme, c, r, x, y, rnd);
+          }
           if (theme == LevelTheme.ark) _hullPlanks(canvas, lv, c, r, x, y);
           // Zeminin yüzü: üst kenarda ışık alan ince bir şerit; taşın
           // içine doğru söner (zemin karanlıkta da seçilsin).
@@ -1533,5 +1537,200 @@ void _cartoonColumn(
       2,
       Paint()..color = Cartoon.lip.withValues(alpha: 0.4),
     );
+  }
+}
+
+// --------------------------------------------------------- doku denemesi
+
+/// Bölümün malzemesi: (gövdenin yüzeye yakın rengi, ayrıntı rengi).
+/// Koyu kalır (orijinal siluet); ayrıntı yalnız yüzeye yakın karolarda.
+(Color, Color) _bodyTones(LevelTheme theme) => switch (theme) {
+  LevelTheme.snow => (const Color(0xFF161B28), const Color(0xFF2C374C)),
+  LevelTheme.peri => (const Color(0xFF26160E), const Color(0xFF4A2C1C)),
+  LevelTheme.konya => (const Color(0xFF141824), const Color(0xFF283044)),
+  LevelTheme.cliffs => (const Color(0xFF22130E), const Color(0xFF3E2418)),
+  LevelTheme.cave => (const Color(0xFF24130B), const Color(0xFF42281A)),
+  LevelTheme.ark => (const Color(0xFF1E120A), const Color(0xFF3A2414)),
+  LevelTheme.nemrut => (const Color(0xFF1A1622), const Color(0xFF332C40)),
+  LevelTheme.kaf => (const Color(0xFF0B201B), const Color(0xFF1C5444)),
+  LevelTheme.underworld => (const Color(0xFF110B1A), const Color(0xFF34265A)),
+  LevelTheme.ergenekon => (const Color(0xFF151518), const Color(0xFF2E3038)),
+  LevelTheme.sky => (const Color(0xFF26140F), const Color(0xFF46281C)),
+  LevelTheme.heavens => (const Color(0xFF131828), const Color(0xFF2A3450)),
+  LevelTheme.cistern => (Cartoon.stone, Cartoon.seam),
+};
+
+/// Doku denemesi (kayak bölümleri hariç): karonun gövdesi bölümün malzemesiyle (yüzeyden derine
+/// koyulaşır), üstüne malzemenin işlemesi: kesme taş derzleri, tüf
+/// katmanları, kaya çatlakları, keski izleri, maden damarları. Konya'da
+/// yüzeyin hemen altında çini kuşak, Kapadokya'da oyma güvercinlik.
+void _themedBody(
+  Canvas canvas,
+  Level lv,
+  LevelTheme theme,
+  int c,
+  int r,
+  double x,
+  double y,
+  math.Random rnd,
+) {
+  var depth = 0;
+  while (depth < 4 && r - depth - 1 >= 0 && lv.solid(c, r - depth - 1)) {
+    depth++;
+  }
+  if (depth >= 4) return;
+  final (body, detail) = _bodyTones(theme);
+  final fade = 1 - depth / 4;
+  // Karo içinde yumuşak geçiş (üst kenarı bir üstteki karonun alt kenarıyla
+  // aynı renk): basamak basamak bant ve karo izi kalmaz.
+  canvas.drawRect(
+    Rect.fromLTWH(x - 0.5, y - 0.5, kTile + 1, kTile + 1),
+    Paint()
+      ..isAntiAlias = false
+      ..shader = ui.Gradient.linear(Offset(x, y), Offset(x, y + kTile), [
+        Color.lerp(kInk, body, fade)!,
+        Color.lerp(kInk, body, math.max(0, fade - 0.25))!,
+      ]),
+  );
+  final a = 0.75 * fade;
+  final line = Paint()
+    ..color = detail.withValues(alpha: a)
+    ..strokeWidth = 1.3
+    ..style = PaintingStyle.stroke
+    ..strokeCap = StrokeCap.round;
+  // Karonun dünyadaki yeri: desen karodan karoya kesintisiz sürsün.
+  double wave(double wx, double k) =>
+      math.sin(wx * 0.045 + k) * 2.2 + math.sin(wx * 0.11 + k * 2) * 1.2;
+  switch (theme) {
+    case LevelTheme.konya || LevelTheme.nemrut:
+      // Kesme taş: Nemrut'ta iri bloklar, Konya'da düzgün sıralar.
+      final h = theme == LevelTheme.nemrut ? 32.0 : 16.0;
+      final w = theme == LevelTheme.nemrut ? 64.0 : 32.0;
+      for (var sy = (y / h).ceil() * h; sy < y + kTile; sy += h) {
+        canvas.drawLine(Offset(x, sy), Offset(x + kTile, sy), line);
+      }
+      final course = (y / h).floor();
+      final off = course.isEven ? 0.0 : w / 2;
+      for (var vx = ((x - off) / w).ceil() * w + off; vx < x + kTile; vx += w) {
+        final top = math.max(y, course * h);
+        canvas.drawLine(
+          Offset(vx, top),
+          Offset(vx, math.min(y + kTile, course * h + h)),
+          line,
+        );
+      }
+      if (theme == LevelTheme.konya && depth == 0) {
+        // Çini kuşak: firuze zemin, ak benekler, ince lacivert kenar.
+        final band = Rect.fromLTWH(x - 0.5, y + 9, kTile + 1, 6);
+        canvas.drawRect(band, Paint()..color = const Color(0xCC1E6A78));
+        final dot = Paint()..color = const Color(0xCC9ADCE0);
+        for (var dx = 4.0; dx < kTile; dx += 8) {
+          canvas.drawCircle(Offset(x + dx, y + 12), 1.3, dot);
+        }
+        final edge = Paint()
+          ..color = const Color(0xCC14244A)
+          ..strokeWidth = 1;
+        canvas.drawLine(Offset(x, y + 9), Offset(x + kTile, y + 9), edge);
+        canvas.drawLine(Offset(x, y + 15), Offset(x + kTile, y + 15), edge);
+      }
+    case LevelTheme.peri || LevelTheme.sky || LevelTheme.heavens:
+      // Tüf ve tortu katmanları: dünyada süren dalgalı yatay çizgiler.
+      for (var band = 0; band < 3; band++) {
+        final by = y + 6 + band * 10.0;
+        final p = Path()..moveTo(x, by + wave(x, band + r * 3.0));
+        for (var dx = 4.0; dx <= kTile; dx += 4) {
+          p.lineTo(x + dx, by + wave(x + dx, band + r * 3.0));
+        }
+        canvas.drawPath(p, line);
+      }
+      if (theme == LevelTheme.peri && depth >= 1 && rnd.nextDouble() < 0.14) {
+        // Oyma güvercinlik: küçük kemerli karanlık oyuk.
+        final hx = x + 8 + rnd.nextDouble() * (kTile - 16);
+        canvas.drawRRect(
+          RRect.fromRectAndCorners(
+            Rect.fromLTWH(hx - 4, y + 10, 8, 11),
+            topLeft: const Radius.circular(4),
+            topRight: const Radius.circular(4),
+          ),
+          Paint()..color = kInk.withValues(alpha: 0.9),
+        );
+      }
+    case LevelTheme.snow || LevelTheme.cliffs:
+      // Kaya: köşeli, kırık çatlaklar.
+      for (var i = 0; i < 2; i++) {
+        if (rnd.nextDouble() < 0.35) continue;
+        var px = x + rnd.nextDouble() * kTile;
+        var py = y + 3 + rnd.nextDouble() * 10;
+        final p = Path()..moveTo(px, py);
+        for (var k = 0; k < 3; k++) {
+          px += (rnd.nextDouble() - 0.5) * 14;
+          py += 4 + rnd.nextDouble() * 7;
+          p.lineTo(px, py);
+        }
+        canvas.drawPath(p, line);
+      }
+      if (theme == LevelTheme.snow && depth == 0) {
+        // Buz parıltısı: yüzeyin altında birkaç ince ak çizgi.
+        final ice = Paint()
+          ..color = const Color(0x557CA0C8)
+          ..strokeWidth = 1;
+        final gx = x + rnd.nextDouble() * (kTile - 10);
+        canvas.drawLine(Offset(gx, y + 7), Offset(gx + 8, y + 9), ice);
+      }
+    case LevelTheme.cave:
+      // Yumuşak tüfe vurulmuş keski izleri: kısa, eğik, sıra sıra.
+      for (var row = 0; row < 3; row++) {
+        for (var k = 0; k < 3; k++) {
+          if (rnd.nextDouble() < 0.3) continue;
+          final sx = x + 3 + k * 10 + rnd.nextDouble() * 3;
+          final sy = y + 5 + row * 10;
+          canvas.drawLine(Offset(sx, sy), Offset(sx + 4, sy + 5), line);
+        }
+      }
+    case LevelTheme.kaf || LevelTheme.underworld || LevelTheme.ergenekon:
+      // Maden damarları: kıvrımlı ince çizgi, Kaf'ta zümrüt, Erlik'te mor,
+      // Ergenekon'da kızgın demir.
+      final glow = switch (theme) {
+        LevelTheme.kaf => const Color(0xFF3ACF9A),
+        LevelTheme.underworld => const Color(0xFF8A6ACF),
+        _ => const Color(0xFFE0642A),
+      };
+      if (rnd.nextDouble() < 0.55) {
+        var px = x + rnd.nextDouble() * kTile;
+        var py = y + 2.0;
+        final p = Path()..moveTo(px, py);
+        while (py < y + kTile) {
+          px += (rnd.nextDouble() - 0.5) * 10;
+          py += 5 + rnd.nextDouble() * 4;
+          p.lineTo(px, py);
+        }
+        canvas.drawPath(
+          p,
+          Paint()
+            ..color = glow.withValues(alpha: 0.18 * fade)
+            ..strokeWidth = 5
+            ..style = PaintingStyle.stroke
+            ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.5),
+        );
+        canvas.drawPath(
+          p,
+          Paint()
+            ..color = glow.withValues(alpha: 0.55 * fade)
+            ..strokeWidth = 1.1
+            ..style = PaintingStyle.stroke,
+        );
+      }
+    case LevelTheme.ark:
+      // Ağaç lifi: tahtaların boyunca ince dalgalı çizgiler.
+      for (var k = 0; k < 3; k++) {
+        final gy = y + 5 + k * 9 + rnd.nextDouble() * 3;
+        final p = Path()..moveTo(x, gy);
+        for (var dx = 4.0; dx <= kTile; dx += 4) {
+          p.lineTo(x + dx, gy + math.sin((x + dx) * 0.2 + k) * 0.8);
+        }
+        canvas.drawPath(p, line..strokeWidth = 0.8);
+      }
+    case LevelTheme.cistern:
+      break;
   }
 }

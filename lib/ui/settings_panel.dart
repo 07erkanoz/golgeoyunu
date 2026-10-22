@@ -275,14 +275,15 @@ class _SettingsPanelState extends State<SettingsPanel> {
                         setState(() {});
                       },
                     ),
-                    // Deneme yapısında: Yerebatan görsel denemesi açılıp
-                    // kapanır, tonu kaydırılır (0 karanlık, 100 aydınlık).
+                    // Deneme yapısında: renk ve doku denemesi (Yerebatan
+                    // renkleri, bütün bölümlerde zemin dokusu) açılıp kapanır,
+                    // tonu kaydırılır (0 karanlık, 100 aydınlık).
                     if (Cartoon.trialBuild) ...[
                       Row(
                         children: [
                           const Expanded(
                             child: Text(
-                              'Yerebatan görsel denemesi',
+                              'Renk ve doku denemesi',
                               style: TextStyle(color: _text, fontSize: 14),
                             ),
                           ),

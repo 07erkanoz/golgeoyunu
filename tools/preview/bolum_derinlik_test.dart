@@ -1,7 +1,7 @@
 // Renk ve derinlik denemesinin öteki bölümlerdeki hali: Kar Yolu, Peri
-// Bacaları, Konya; ışık-derinlik kapalı ve açık.
+// Bacaları, Konya; ışık-derinlik kapalı, açık; doku denemesiyle.
 // `flutter test tools/preview/bolum_derinlik_test.dart` →
-// build/preview/derinlik_<bölüm>_<yok|isik>.png
+// build/preview/derinlik_<bölüm>_<yok|isik|doku>.png
 import 'dart:io';
 import 'dart:ui' as ui;
 
@@ -50,10 +50,14 @@ void main() {
     )..addFont(Future.value(ByteData.view(bytes.buffer)))).load();
   });
   for (final (ad, lv, sutun) in _yerler) {
-    for (final real in [false, true]) {
-      final name = 'derinlik_${ad}_${real ? 'isik' : 'yok'}';
+    for (final (tag, cartoon, real) in [
+      ('yok', false, false),
+      ('isik', false, true),
+      ('doku', true, true),
+    ]) {
+      final name = 'derinlik_${ad}_$tag';
       testWithGame<GolgeGame>(name, GolgeGame.new, (game) async {
-        Cartoon.on = true;
+        Cartoon.on = cartoon;
         Realism.on = real;
         game.onGameResize(Vector2(1280, 720));
         game.debugLoadLevel(lv);

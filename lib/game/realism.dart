@@ -11,6 +11,7 @@ import 'fairy_chimney.dart';
 import 'golge_game.dart';
 import 'level.dart';
 import 'levels.dart';
+import 'nemrut.dart' show StoneGiant;
 import 'palette.dart';
 import 'terrain.dart';
 import '../settings.dart';
@@ -1132,6 +1133,12 @@ class NearLayer extends Component with HasGameReference<GolgeGame> {
     // (yakın şey ekranda daha aşağıda görünür).
     final ground = cam.y + ((_ground ?? cam.y) - cam.y) * parallax + 8 * k;
     final rim = _rimOf(kind);
+    // Önemli varlıkların (taş dev) önüne zeminden şekil düşmesin: duruşu
+    // ve atışı okunmalı.
+    final keep = [
+      for (final c in game.world.children)
+        if (c is StoneGiant) c.toRect().inflate(3 * kTile),
+    ];
     for (final row in _rowsOf(kind)) {
       final every = row.every * kTile;
       final first = ((cam.x - span) / every).floor();
@@ -1144,6 +1151,10 @@ class NearLayer extends Component with HasGameReference<GolgeGame> {
         final x = near(i * every + row.phase * kTile);
         if (x < view.left - 400 * k || x > view.right + 400 * k) continue;
         final shape = row.shapes[i % row.shapes.length];
+        if (row.at != _Anchor.top &&
+            keep.any((r) => x > r.left - 200 * k && x < r.right + 200 * k)) {
+          continue;
+        }
         final at = Offset(x, y + row.drop * k);
         if (rim != null) {
           // Arka ışık: şeklin ortam renginde kopyası sol üste kayık, önüne
