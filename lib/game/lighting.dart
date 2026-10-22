@@ -172,6 +172,8 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
           _light(canvas, c.glowCenter, 60, 0.45);
         case Apparition a:
           _light(canvas, a.glowCenter, a.glowRadius, 0.7 * a.alpha);
+        case Anvil a:
+          _light(canvas, a.glowCenter, 70, 0.55);
         case AkAnaRise a:
           _light(canvas, a.glowCenter, 150, 0.85 * a.alpha);
         case SkiGuide s when s.alpha > 0:

@@ -596,7 +596,11 @@ class LightFlood extends PositionComponent with HasGameReference<GolgeGame> {
     this.dark = false,
     this.molten = false,
     this.wake,
+    this.maxSpeed = 72,
   }) : super(priority: 30);
+
+  /// Selin yükselme hızının üst sınırı (piksel/sn).
+  final double maxSpeed;
 
   /// Ergenekon: eriyen demir dağdan akkor demir yükselir.
   final bool molten;
@@ -650,7 +654,7 @@ class LightFlood extends PositionComponent with HasGameReference<GolgeGame> {
       return;
     }
     if (p.isDead) return;
-    _speed = math.min(72, _speed + dt * 2.4);
+    _speed = math.min(maxSpeed, _speed + dt * 2.4);
     position.y -= _speed * dt;
     // Çok geride kalırsa yetişir.
     position.y = math.min(position.y, p.position.y + Player.h + 9 * kTile);

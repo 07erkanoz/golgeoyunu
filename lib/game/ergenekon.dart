@@ -7,8 +7,10 @@ import 'package:flame/components.dart';
 import 'audio.dart';
 import 'entities.dart';
 import 'golge_game.dart';
+import 'konya.dart';
 import 'level.dart';
 import 'mechanics.dart';
+import 'myth_figures.dart';
 import 'player.dart';
 import 'puzzles.dart';
 import 'strings.dart';
@@ -51,8 +53,40 @@ class IronVein extends Gate {
   /// Bu damara bağlı körük sayısı (kurulurken verilir).
   int bellowsCount = 1;
 
+  /// Ritimli damar: körükler Demirci'nin örs vuruşuna denk basılır; sıra
+  /// yoktur. Isı her denk basışta artar, yavaşça söner.
+  bool rhythm = false;
+
+  /// Ocağın önündeki çukura itilmesi gereken kömür sandığı sayısı (odun
+  /// ve kömür yığılmadan ocak yanmaz).
+  int fuelNeeded = 0;
+
+  /// Damarın örsü (ritimli damarda).
+  Anvil? anvil;
+
+  /// Ritimde: denk basışta ısı artışı, yanlışta düşüş, saniyede sönme.
+  static const double beatGain = 0.14;
+  static const double offBeatLoss = 0.12;
+  static const double decay = 0.06;
+
   /// Doğru basışlar arasında en çok bu kadar beklenebilir.
   static const double window = 8;
+
+  /// Çukurdaki kömür sandığı sayısı.
+  int get fuel {
+    if (fuelNeeded == 0) return 0;
+    final pitX = forge.dx - 3 * kTile;
+    return game.world.children
+        .whereType<Crate>()
+        .where(
+          (c) =>
+              c.position.y > forge.dy - 10 &&
+              (c.center.x - pitX).abs() < 3 * kTile,
+        )
+        .length;
+  }
+
+  bool get fueled => fuel >= fuelNeeded;
 
   double get _h => _rows * kTile.toDouble();
 
@@ -92,7 +126,27 @@ class IronVein extends Gate {
     if (opening) return;
     if (!lit) {
       GameAudio.instance.play('fizzle', volume: 0.5);
-      game.once('forgeCold', S.of('forgeCold'));
+      game.once(
+        fueled ? 'forgeCold' : 'forgeFuel',
+        S.of(fueled ? 'forgeCold' : 'forgeFuel'),
+      );
+      return;
+    }
+    if (rhythm) {
+      final a = anvil;
+      if (a != null && a.onBeat) {
+        heat = math.min(1, heat + beatGain);
+        _flash = 1;
+        GameAudio.instance.play('fire', volume: 0.6);
+        if (heat >= 1) {
+          opening = true;
+          GameAudio.instance.play('grind', volume: 0.7);
+          GameAudio.instance.play('gate', volume: 0.6);
+        }
+      } else {
+        heat = math.max(0, heat - offBeatLoss);
+        GameAudio.instance.play('fizzle', volume: 0.6);
+      }
       return;
     }
     if (b.order == next) {
@@ -129,6 +183,8 @@ class IronVein extends Gate {
       return;
     }
     if (!lit) {
+      // Kömür yığılmadan ocak ateşböceğini çekmez.
+      if (!fueled) return;
       // Sönmüş ocak yakına salınan ateşböceğini kendine çeker; böcek
       // közlere değince ocak yanar.
       final mouth = Vector2(forge.dx, forge.dy - 18);
@@ -142,9 +198,16 @@ class IronVein extends Gate {
           l.removeFromParent();
           GameAudio.instance.play('fire', volume: 0.8);
           game.shake(3);
-          game.once('forgeLit', S.of('forgeLit'));
+          game.once(
+            rhythm ? 'forgeLitBeat' : 'forgeLit',
+            S.of(rhythm ? 'forgeLitBeat' : 'forgeLit'),
+          );
         }
       }
+      return;
+    }
+    if (rhythm) {
+      heat = math.max(0, heat - decay * dt);
       return;
     }
     if (next > 1) {
@@ -309,6 +372,288 @@ class IronVein extends Gate {
   }
 }
 
+/// Demirci'nin örsü: ritimli damarın başında Demirci durur, çekici örse
+/// düzenli vurur. Körükler bu vuruşa denk basılınca ocak ısınır ("yetmiş
+/// körük" bir ağızdan üfler). Çekiç kalkıp inerken vuruş önceden görülür.
+class Anvil extends PositionComponent with HasGameReference<GolgeGame> {
+  Anvil(Vector2 feet, {this.facing = 1})
+    : super(position: feet, anchor: Anchor.bottomCenter, priority: 16);
+
+  final int facing;
+
+  /// İki vuruş arası (saniye): Demirci çiziminin çekiç döngüsü.
+  static const double beat = 1 / 0.9;
+
+  /// Vuruşun iki yanındaki denk sayılan pay (saniye).
+  static const double grace = 0.24;
+
+  static const double drawScale = 0.36;
+
+  double _t = 0;
+  double _hit = 0;
+  bool _met = false;
+
+  /// Şu an vuruşa denk mi.
+  bool get onBeat {
+    final ph = (_t / beat) % 1.0;
+    return math.min(ph, 1 - ph) * beat < grace;
+  }
+
+  Offset get glowCenter => Offset(position.x, position.y - 30);
+
+  @override
+  void update(double dt) {
+    super.update(dt);
+    final before = (_t / beat).floor();
+    _t += dt;
+    _hit = math.max(0, _hit - dt * 4);
+    final p = game.player;
+    if ((_t / beat).floor() != before) {
+      _hit = 1;
+      // Vuruş: yakındaysa duyulur.
+      final near = p == null
+          ? 0.0
+          : (1 - (p.center.x - position.x).abs() / (18 * kTile)).clamp(
+              0.0,
+              1.0,
+            );
+      if (near > 0) {
+        GameAudio.instance.play('chain', volume: 0.55 * near, minGapMs: 300);
+        GameAudio.instance.play('land', volume: 0.35 * near, minGapMs: 300);
+      }
+    }
+    if (!_met && p != null && (p.center.x - position.x).abs() < 9 * kTile) {
+      _met = true;
+      game.once('cameo:demirci', S.of('cameo_demirci'));
+      game.meetMyth('demirci');
+    }
+  }
+
+  @override
+  void render(Canvas canvas) {
+    // Vuruşta örsten kıvılcım ve ışık halkası (ritim gözle de görülsün).
+    if (_hit > 0) {
+      canvas.drawCircle(
+        Offset(facing * 12, -9),
+        10 + 26 * (1 - _hit),
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2
+          ..color = const Color(0xFFFFC870).withValues(alpha: 0.6 * _hit),
+      );
+    }
+    canvas.save();
+    canvas.scale(facing * drawScale, drawScale);
+    MythFigures.demirci(canvas, _t);
+    canvas.restore();
+  }
+}
+
+/// Nevruz örsü: vadiden çıkışta akkor bir demir. Efsanede o gün bir demir
+/// ateşte kızdırılıp örste dövülür. ↑ ile üç kez vurulunca en yakın kapı
+/// (ileride) açılır, şafak söker.
+class NevruzAnvil extends PositionComponent
+    with HasGameReference<GolgeGame>, Usable {
+  NevruzAnvil(Vector2 cell)
+    : super(
+        position: Vector2(cell.x + kTile / 2, cell.y + kTile),
+        size: Vector2(34, 26),
+        anchor: Anchor.bottomCenter,
+        priority: 15,
+      );
+
+  static const int strikesNeeded = 3;
+  int strikes = 0;
+  double _cool = 0;
+  double _hit = 0;
+  double _t = 0;
+
+  bool get done => strikes >= strikesNeeded;
+
+  @override
+  bool canUse(Vector2 p) =>
+      !done && (p.x - position.x).abs() < 34 && (p.y - position.y).abs() < 44;
+
+  @override
+  void use() {
+    if (_cool > 0 || done) return;
+    strikes++;
+    _cool = 0.45;
+    _hit = 1;
+    game.shake(2.5);
+    GameAudio.instance.play('chain', volume: 0.7);
+    GameAudio.instance.play('land', volume: 0.5);
+    if (done) {
+      GameAudio.instance.play('gate', volume: 0.6);
+      game.once('nevruzStruck', S.of('nevruzStruck'));
+      Gate? best;
+      var bestD = double.infinity;
+      for (final g in game.world.children.whereType<Gate>()) {
+        if (g is IronVein || g.position.x < position.x) continue;
+        final d = g.position.x - position.x;
+        if (d < bestD) {
+          bestD = d;
+          best = g;
+        }
+      }
+      best?.opening = true;
+    }
+  }
+
+  @override
+  void update(double dt) {
+    super.update(dt);
+    _t += dt;
+    _cool = math.max(0, _cool - dt);
+    _hit = math.max(0, _hit - dt * 3);
+  }
+
+  @override
+  void render(Canvas canvas) {
+    canvas.save();
+    canvas.translate(size.x / 2, size.y);
+    final ink = Paint()..color = const Color(0xFF140C08);
+    // Örs.
+    canvas.drawPath(
+      Path()
+        ..moveTo(-16, -18)
+        ..lineTo(14, -18)
+        ..lineTo(18, -15)
+        ..lineTo(8, -12)
+        ..lineTo(6, 0)
+        ..lineTo(-6, 0)
+        ..lineTo(-8, -12)
+        ..lineTo(-14, -14)
+        ..close(),
+      ink,
+    );
+    // Üstünde akkor demir: vuruldukça soğur, işi bitince ak ışır.
+    final glow = done
+        ? 0.6 + 0.4 * math.sin(_t * 3)
+        : 1 - strikes / strikesNeeded * 0.4;
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        const Rect.fromLTWH(-10, -22, 20, 4),
+        const Radius.circular(2),
+      ),
+      Paint()
+        ..color = Color.lerp(
+          const Color(0xFFB04018),
+          const Color(0xFFFFE0A0),
+          glow,
+        )!,
+    );
+    canvas.drawCircle(
+      const Offset(0, -20),
+      18,
+      Paint()
+        ..shader = ui.Gradient.radial(const Offset(0, -20), 18, [
+          const Color(0xFFFF9A40).withValues(alpha: 0.5 * glow),
+          const Color(0x00FF9A40),
+        ]),
+    );
+    if (_hit > 0) {
+      final spark = Paint()..color = const Color(0xFFFFE8B0);
+      for (var i = 0; i < 9; i++) {
+        final a = -math.pi / 2 + (i - 4) * 0.32;
+        canvas.drawCircle(
+          const Offset(0, -22) +
+              Offset(math.cos(a), math.sin(a)) * (6 + 22 * (1 - _hit)),
+          1.2,
+          spark,
+        );
+      }
+    }
+    canvas.restore();
+  }
+}
+
+/// Eriyen demir dağın içi: açık havanın yerine koyu, pas tonlu kaya;
+/// içinde kızıl demir damarları atar, akkor demir yükseldikçe daha çok
+/// ışır.
+class IronInterior extends Component with HasGameReference<GolgeGame> {
+  IronInterior(this.area) : super(priority: -5);
+
+  final Rect area;
+  double _t = 0;
+  late final List<List<Offset>> _veins = () {
+    final r = math.Random(area.left.toInt() * 31 + area.top.toInt());
+    return [
+      for (var i = 0; i < 26; i++)
+        () {
+          var p = Offset(
+            area.left + r.nextDouble() * area.width,
+            area.top + r.nextDouble() * area.height,
+          );
+          final pts = [p];
+          var a = r.nextDouble() * math.pi * 2;
+          for (var k = 0; k < 7; k++) {
+            a += (r.nextDouble() - 0.5) * 1.4;
+            p += Offset(math.cos(a), math.sin(a)) * (14 + r.nextDouble() * 22);
+            pts.add(p);
+          }
+          return pts;
+        }(),
+    ];
+  }();
+
+  @override
+  void update(double dt) => _t += dt;
+
+  @override
+  void render(Canvas canvas) {
+    final view = game.camera.visibleWorldRect;
+    if (!view.overlaps(area)) return;
+    canvas.save();
+    canvas.clipRect(area);
+    canvas.drawRect(
+      area,
+      Paint()
+        ..shader = ui.Gradient.linear(
+          area.topCenter,
+          area.bottomCenter,
+          const [Color(0xFF1A100C), Color(0xFF2A1610), Color(0xFF3A1A0E)],
+          const [0, 0.6, 1],
+        ),
+    );
+    // Kaya katmanları: eğik, soluk çizgiler.
+    final strata = Paint()
+      ..color = const Color(0xFF4A2A1C).withValues(alpha: 0.35)
+      ..strokeWidth = 2;
+    for (var y = area.top; y < area.bottom; y += 26) {
+      canvas.drawLine(Offset(area.left, y), Offset(area.right, y + 18), strata);
+    }
+    // Kızıl damarlar: akkor demir yükseldikçe daha çok ışır.
+    var heat = 0.35;
+    for (final f in game.world.children.whereType<LightFlood>()) {
+      if (f.awake) heat = 0.75;
+    }
+    final glow = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+    for (var i = 0; i < _veins.length; i++) {
+      final pts = _veins[i];
+      final pulse = 0.6 + 0.4 * math.sin(_t * 1.6 + i * 0.9);
+      final path = Path()..moveTo(pts.first.dx, pts.first.dy);
+      for (final q in pts.skip(1)) {
+        path.lineTo(q.dx, q.dy);
+      }
+      glow
+        ..strokeWidth = 5
+        ..color = const Color(0xFFFF5A1E).withValues(alpha: 0.18 * heat * pulse)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
+      canvas.drawPath(path, glow);
+      glow
+        ..strokeWidth = 1.4
+        ..maskFilter = null
+        ..color = const Color(0xFFFF9A50).withValues(alpha: 0.7 * heat * pulse);
+      canvas.drawPath(path, glow);
+    }
+    canvas.restore();
+  }
+}
+
 /// Deriden körük: ↑ ile basılır. Üstündeki çentik sayısı sırasını söyler.
 class Bellows extends PositionComponent
     with HasGameReference<GolgeGame>, Usable {
@@ -326,18 +671,33 @@ class Bellows extends PositionComponent
   double _press = 0;
   double _t = math.Random().nextDouble() * 4;
 
-  /// Sırası 0 olan körük süstür (dağın dibindeki yetmiş körükten biri).
+  /// Ritimli damarda basılan körük boşalır, dolması bu kadar sürer.
+  static const double refill = 2.4;
+  double _empty = 0;
+
+  /// Körük dolu mu (ritimde basılabilir).
+  bool get ready => _empty <= 0;
+
+  /// Sırası 0 olan körük süstür (dağın dibindeki yetmiş körükten biri);
+  /// sıralı damarda süs körüğe basmak ocağı söndürür.
   @override
   bool canUse(Vector2 p) =>
-      order > 0 &&
+      (order > 0 || !(vein?.rhythm ?? false)) &&
       (p.x - position.x).abs() < 26 &&
       (p.y - position.y).abs() < 44;
 
   @override
   void use() {
+    final v = vein;
+    if (v != null && v.rhythm && !ready) {
+      // Boş körük: hava yok.
+      GameAudio.instance.play('creak', volume: 0.3, minGapMs: 200);
+      return;
+    }
     _press = 1;
     GameAudio.instance.play('gust', volume: 0.35, minGapMs: 150);
-    vein?.pump(this);
+    if (v != null && v.rhythm && v.lit) _empty = refill;
+    v?.pump(this);
   }
 
   @override
@@ -345,13 +705,17 @@ class Bellows extends PositionComponent
     super.update(dt);
     _t += dt;
     _press = math.max(0, _press - dt * 3);
+    _empty = math.max(0, _empty - dt);
   }
 
   @override
   void render(Canvas canvas) {
     canvas.save();
     canvas.translate(size.x / 2, size.y);
-    final squash = 1 - 0.45 * math.sin(_press * math.pi);
+    // Basınca çöker; ritimde boşken yavaş yavaş yeniden şişer.
+    final deflated = _empty / refill;
+    final squash =
+        (1 - 0.45 * math.sin(_press * math.pi)) * (1 - 0.55 * deflated);
     final ink = Paint()..color = const Color(0xFF2A1A12);
     final hide = Paint()..color = const Color(0xFF6A4630);
     // Alt tahta, deri körük, üst tahta, sap.
@@ -417,7 +781,7 @@ class MoltenChannel extends Deck {
   /// Döngü: akkor akış, soğuma, kara köprü, yeniden kızarma.
   static const double flowing = 3.2;
   static const double cooling = 0.8;
-  static const double solidFor = 4.0;
+  static const double solidFor = 3.0;
   static const double warning = 1.0;
   static const double period = flowing + cooling + solidFor + warning;
 

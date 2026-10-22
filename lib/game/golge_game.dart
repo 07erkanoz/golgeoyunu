@@ -794,7 +794,11 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         for (final c in level.ringCells) FairyRing(c),
         for (final c in level.raftCells) Raft(c),
         for (var i = 0; i < level.ventCells.length; i++)
-          FireVent(level.ventCells[i], phase: i * 1.1),
+          FireVent(
+            level.ventCells[i],
+            phase: i * 1.1,
+            ignites: level.def.theme == LevelTheme.ergenekon,
+          ),
         for (final c in level.balloonCells) LanternBalloon(c),
         for (final c in level.featherCells) SimurgFeather(c),
         for (final c in level.altarCells) FeatherAltar(c),
@@ -831,7 +835,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
             MoltenChannel(
               Vector2(c * kTile.toDouble(), r * kTile.toDouble()),
               n,
-              phase: (c * 0.73) % MoltenChannel.period,
+              phase: _moltenPhase(c),
             )
           else
             RottenPlank(c, r, n),
@@ -877,7 +881,13 @@ class GolgeGame extends FlameGame with KeyboardEvents {
             StormWall(level.chaseStart!, level.chaseEnd!)
           else if (level.def.theme == LevelTheme.ergenekon)
             // Dağ erir: akkor demir aşağıdan yükselir.
-            LightFlood(level.chaseStart!, level.chaseTop!, molten: true)
+            // Kat kat tırmanışa göre ağır yükselir (bacalarda beklenir).
+            LightFlood(
+              level.chaseStart!,
+              level.chaseTop!,
+              molten: true,
+              maxSpeed: 20,
+            )
           else if (level.def.theme == LevelTheme.underworld)
             // Erlik'in karanlığı: Sâye Çalkuyruk'a binince yükselir.
             LightFlood(
@@ -1108,6 +1118,16 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     }
   }
 
+  /// Akan demir kanallarının döngü kayması: yan yana kanallar sırayla
+  /// (soldan sağa 1,1 sn arayla) katılaşır; adadan adaya dalgayla geçilir.
+  double _moltenPhase(int col) {
+    final cols = [for (final (c, _, _) in level.rottenRuns) c]..sort();
+    final i = cols.indexOf(col);
+    return ((-(i < 0 ? 0 : i) * 1.1) % MoltenChannel.period +
+            MoltenChannel.period) %
+        MoltenChannel.period;
+  }
+
   /// Ergenekon: demir damarları ve onlara bağlı körükler (her körük en
   /// yakın damara).
   Iterable<Component> _forges() sync* {
@@ -1131,6 +1151,36 @@ class GolgeGame extends FlameGame with KeyboardEvents {
       b.vein = best;
       if (order > 0) counts[best!] = (counts[best] ?? 0) + 1;
       yield b;
+    }
+    for (final (c0, r0, c1, r1) in level.def.interiors) {
+      yield IronInterior(
+        Rect.fromLTRB(
+          c0 * kTile.toDouble(),
+          r0 * kTile.toDouble(),
+          (c1 + 1) * kTile.toDouble(),
+          (r1 + 1) * kTile.toDouble(),
+        ),
+      );
+    }
+    final nv = level.def.nevruz;
+    if (nv != null) {
+      yield NevruzAnvil(
+        Vector2(nv.$1 * kTile.toDouble(), nv.$2 * kTile.toDouble()),
+      );
+    }
+    // Soldan sağa damar biçimleri (ritim, kömür sandığı) ve ritimli
+    // damarın başında Demirci'nin örsü.
+    final sorted = [...veins]..sort((a, b) => a.forge.dx.compareTo(b.forge.dx));
+    for (var i = 0; i < sorted.length && i < level.def.forges.length; i++) {
+      final (rhythm, fuel) = level.def.forges[i];
+      final v = sorted[i];
+      v.rhythm = rhythm;
+      v.fuelNeeded = fuel;
+      if (rhythm) {
+        final a = Anvil(Vector2(v.forge.dx - 6.5 * kTile, v.forge.dy));
+        v.anvil = a;
+        yield a;
+      }
     }
     for (final v in veins) {
       v.bellowsCount = counts[v] ?? 1;
@@ -1539,7 +1589,12 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         KutCage k when near(k, 3, 3) && !k.freed => 'kut',
         Calkuyruk c when near(c, 5, 4) && !onHorse => 'horse',
         IronVein v when near(v, 6, 4) && !v.lit => 'forge',
+        IronVein v when v.fuelNeeded > 0 && !v.fueled && near(v, 10, 4) =>
+          'fuel',
+        Bellows b when near(b, 4, 3) && (b.vein?.rhythm ?? false) =>
+          'bellowsBeat',
         Bellows b when near(b, 4, 3) && b.order > 0 => 'bellows',
+        NevruzAnvil n when near(n, 5, 3) => 'nevruz',
         MoltenChannel m when near(m, 4, 3) => 'molten',
         DrumCloud d when near(d, 4, 3) => 'drum',
         ScorchZone z

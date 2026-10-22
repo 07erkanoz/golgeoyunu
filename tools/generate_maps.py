@@ -1316,7 +1316,7 @@ lvl_erlik=er.rows()
 # ------------------------------------------------------------ XV · ERGENEKON (Ötüken)
 # Dört yanı aşılmaz dağlarla çevrili vadi. `d` demir damarı (dikey), `u`
 # akan demir (yatay dizi), `z`/`Z` eriyen dağdan yükselen akkor demir.
-# Körükler ve sis LevelDef'te (bellows, mists).
+# Körükler, ocak biçimleri (ritim, kömür), Nevruz örsü ve sis LevelDef'te.
 W,H=332,44
 eg=G(W,H)
 F=34                                     # zemin: 34. satırda durulur
@@ -1328,42 +1328,69 @@ mountain(0,0,0)
 eg.put(2,F,'P'); eg.put(3,F,'p'); eg.put(5,F,'1'); eg.put(12,F,'F'); eg.put(20,F,'F')
 eg.fill(24,F-1,27,F,'#')
 eg.put(32,F,'K')
-# B) Demir dağın dibi: ilk ocak (iki körük), Demirci
+# B) Odun ve kömür, yetmiş körük: üç kömür sandığı; ikisi ocağın önündeki
+# çukura (yakıt), biri yüksek körük rafına basamak. Demirci örse vurur;
+# körükler vuruşa denk basılır.
 eg.put(42,F,'p'); eg.put(45,F,'2')
-eg.fill(64,F-2,72,F-2,'#')                          # körük rafı
-eg.put(80,F,'F'); eg.put(83,F,'F')
+eg.fill(61,F-3,63,F-3,'#')                          # yüksek körük rafı
+eg.put(56,F,'F'); eg.put(84,F,'F')
+eg.put(72,F,'C'); eg.put(76,F,'C'); eg.put(80,F,'C')
+gc(88,F+1,89,F+1)                                   # kömür çukuru
 mountain(93,99,0); eg.fill(92,0,92,F-7,'#'); eg.fill(92,F-6,92,F,'d')
 gc(93,F-6,99,F)                                     # damarın ardındaki tünel
-# C) Akan demir: çukurlar üstünde akıp soğuyan yollar
+# C) Akan demir: kanallar soldan sağa sırayla katılaşır (dalga)
 eg.put(100,F,'3'); eg.put(101,F,'p')
 x=104
 for n in (6,6,7,6):
     gc(x,F+1,x+n-1,H-3); eg.fill(x,H-3,x+n-1,H-3,'^'); eg.fill(x,F+1,x+n-1,F+1,'u')
     x+=n+3
 eg.put(146,F,'K'); eg.put(148,F,'F')
-# D) Sisli çayır: gizli çukurlar (Gökbörü'nün izleri gösterir)
+# D) Sisli çayır: geniş gizli çukurlar, ortalarında tek karelik adacık
+# (kanat yok; Gökbörü'nün izleri adacıkları gösterir)
 eg.put(151,F,'4'); eg.put(152,F,'p')
-for c0,c1 in ((160,161),(171,173),(183,184),(195,197),(206,207)):
-    gc(c0,F+1,c1,H-3); eg.fill(c0,H-3,c1,H-3,'^')
+for c0 in (158,170,182,194,205):
+    gc(c0,F+1,c0+4,H-3); eg.fill(c0,H-3,c0+4,H-3,'^')
+    eg.fill(c0+2,F+1,c0+2,H-3,'#')
 # Asena'nın mağarası: kaya tavan, Umay ağacı
 eg.fill(214,F-6,234,F-6,'#'); eg.fill(214,F-5,214,F-3,'#'); eg.fill(234,F-5,234,F-2,'#')
 eg.put(217,F,'5'); eg.put(218,F,'p'); eg.put(222,F,'K'); eg.put(229,F,'M')
-# E) İkinci damar: üç körük (biri yukarıda, biri akan demirin ötesinde)
+# E) İkinci damar: üç körük (biri yukarıda, biri akan demirin ötesinde);
+# süs körüklerine basmak ocağı söndürür
 eg.put(236,F,'6'); eg.put(237,F,'p'); eg.put(244,F,'F')
 eg.fill(256,F-7,264,F-7,'#'); eg.fill(255,F-6,255,F,'|'); eg.put(262,F-8,'M')
 gc(266,F+1,272,H-3); eg.fill(266,H-3,272,H-3,'^'); eg.fill(266,F+1,272,F+1,'u')
 eg.put(280,F,'F'); eg.put(282,F,'F')
 mountain(287,293,0); eg.fill(286,0,286,F-9,'#'); eg.fill(286,F-8,286,F,'d')
 gc(287,F-6,293,F)
-# F) Nevruz yarığı: dağ erir, akkor demir yükselir; yukarı, şafağa
+# F) Demir dağın içi: dağ erir, akkor demir yükselir. Kat kat taban; her
+# katın açıklığı bir sağda bir solda, aradaki yol alevli bacaların
+# üstünden geçer. Bir katta tek sandık: iki bacadan birini tıkar (ateşin
+# üstünde bir süre sonra tutuşur).
 mountain(294,331,6)
 gc(294,F-6,299,F); gc(300,6,310,F)
 eg.put(294,F,'7'); eg.put(295,F,'p'); eg.put(296,F,'K'); eg.put(298,F,'z')
-eg.fill(302,F-14,302,F,'|'); eg.fill(303,F-15,306,F-15,'#')
-eg.fill(307,7,307,F-16,'|'); eg.fill(304,9,306,9,'#'); eg.fill(308,6,310,6,'#')
-gc(311,3,330,5); eg.fill(311,6,330,6,'#')
-eg.put(305,8,'Z')
-eg.put(313,5,'8'); eg.put(318,5,'K'); eg.put(322,4,'M'); eg.put(328,5,'E')
+floors=[(31,'R'),(27,'L'),(23,'R'),(19,'L'),(15,'R'),(11,'L'),(7,'R')]
+prev=F+1
+for r,side in floors:
+    eg.fill(300,r,310,r,'#')
+    if side=='R': gc(309,r,310,r)
+    else: gc(300,r,301,r)
+    # Açıklıktan aşağıdaki kata sarkan zincir: tırmanılır, üstte kata inilir.
+    ch=310 if side=='R' else 300
+    eg.fill(ch,r-1,ch,prev-1,'|')
+    prev=r
+# Bacalar (katın üstünde durulan satıra) ve sandık: kat arası üç kare boş,
+# sandığın üstünden atlanabilir.
+for c,r in [(305,30),(305,26),(305,22),(302,22),(303,18),(307,18),
+            (306,14),(303,14),(302,10),(305,10),(308,10)]:
+    eg.put(c,r,'!')
+eg.put(307,22,'C')
+# Çıkış koridoru en üst katla aynı hizada.
+gc(311,4,330,6); eg.fill(311,7,330,7,'#')
+eg.put(309,8,'Z')
+# G) Nevruz: örste demir dövülür, kapı açılır, ilk sabah
+eg.put(313,6,'8'); eg.put(314,6,'K'); eg.fill(322,4,322,6,'H')
+eg.put(326,5,'M'); eg.put(328,6,'E')
 lvl_ergenekon=eg.rows()
 
 # ------------------------------------------------------------ XVI · GÖĞÜN KATLARI (Ötüken)

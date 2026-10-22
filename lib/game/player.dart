@@ -80,6 +80,7 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       (game.level.def.wings || game.wingsCollected) &&
       // Yerin altında gök yok: kanatlar açılmaz.
       game.level.def.theme != LevelTheme.underworld &&
+      !game.level.def.noWings &&
       !game.level.inRain(center);
 
   /// Uzaktan zor görülür (parmak ucu ya da çömelme).

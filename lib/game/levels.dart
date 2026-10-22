@@ -88,6 +88,10 @@ class LevelDef {
     this.bardEn = '',
     this.bellows = const [],
     this.mists = const [],
+    this.forges = const [],
+    this.nevruz,
+    this.interiors = const [],
+    this.noWings = false,
     this.scorch = const [],
     this.legends = const [],
     this.gokboruRun = false,
@@ -109,6 +113,22 @@ class LevelDef {
 
   /// Yolu gizleyen sis alanları (sol, üst, sağ, alt sütun/satır).
   final List<(int, int, int, int)> mists;
+
+  /// Ergenekon: soldan sağa her demir damarının biçimi: (ritim mi,
+  /// ocağa itilmesi gereken kömür sandığı sayısı). Ritimli damarda
+  /// körükler Demirci'nin örs vuruşuna denk basılır.
+  final List<(bool, int)> forges;
+
+  /// Ergenekon'un çıkışındaki Nevruz örsü (sütun, durulan satır): üç kez
+  /// vurulunca en yakın kapı açılır.
+  final (int, int)? nevruz;
+
+  /// Dağın içi (c0, r0, c1, r1): açık havanın yerine koyu kaya duvar,
+  /// içinde kızıl demir damarları.
+  final List<(int, int, int, int)> interiors;
+
+  /// Bu bölümde kanatlar açılmaz (boşluklar süzülerek geçilmesin).
+  final bool noWings;
 
   /// Bölüm başında, başlıktan sonra ozanın tek dizesi (Dede Korkut
   /// havasında; bir kez).
@@ -1600,13 +1620,19 @@ const levels = <LevelDef>[
     gokboruWatch: [(316, 5)],
     pawTrails: [(152, 213, 34)],
     mists: [(152, 26, 213, 37)],
-    cameos: [('demirci', 88, 34), ('asena', 227, 34)],
+    cameos: [('asena', 227, 34)],
+    // İlk ocak ritimli (Demirci'nin çekicine uy) ve iki kömür sandığı ister;
+    // ikinci ocak çentik sırasıyla.
+    forges: [(true, 2), (false, 0)],
+    noWings: true,
+    nevruz: (316, 6),
+    interiors: [(287, 0, 310, 34)],
     bellows: [
-      (68, 31, 1),
-      (55, 34, 2),
-      (60, 34, 0),
-      (75, 34, 0),
-      (78, 34, 0),
+      (58, 34, 1),
+      (62, 30, 1),
+      (66, 34, 1),
+      (50, 34, 0),
+      (53, 34, 0),
       (240, 34, 1),
       (260, 26, 2),
       (276, 34, 3),
@@ -1621,7 +1647,7 @@ const levels = <LevelDef>[
       'Sisli Çayır',
       'Asena\'nın Mağarası',
       'İkinci Damar',
-      'Nevruz Yarığı',
+      'Demir Dağın İçi',
     ],
     areasEn: [
       'Kıyan\'s Gorge',
@@ -1630,26 +1656,26 @@ const levels = <LevelDef>[
       'The Misty Meadow',
       'Asena\'s Cave',
       'The Second Vein',
-      'The Nevruz Cleft',
+      'Inside the Iron Mountain',
     ],
     whispers: [
       'Ergenekon: dört yanı aşılmaz dağ. İçeride çayır, ırmak, meyve; ama çıkış yok.',
-      'Dağın dibinde körükler: deriden, sıra sıra. Ocak sönük.',
+      'Dağın dibinde körükler: deriden, sıra sıra. Ocak boş ve sönük: önce odun ve kömür yığılır, sonra yetmiş körük bir ağızdan üfler.',
       'Demir aktı. Akarken yakar; soğuyup kararınca yol olur.',
       'Sabah sisi vadiyi örttü. Yolu göremiyorsun; ama biri önünden geçmiş.',
       'Bir mağara, içinde ak boz bir kurt. Göktürkler derdi ki kurt, yok olmaktan kurtulan çocuğu böyle bir mağarada büyüttü.',
       'İkinci damar daha derin. Üç körük: biri yukarıda, biri akan demirin ötesinde.',
-      'Dağ eriyor! Aşağıdan akkor demir yükseliyor: yukarı, yarıktan!',
+      'Dağ eriyor! Aşağıdan akkor demir yükseliyor: kat kat yukarı, bacaların arasından!',
       'Vadiden çıkış: ilk sabah. Bu güne Nevruz derler; o gün bir demir ateşte kızdırılır, örste dövülür.',
     ],
     whispersEn: [
       'Ergenekon: impassable mountains on every side. Inside, meadows, a river, fruit; but no way out.',
-      'Bellows at the foot of the mountain: made of hide, row upon row. The forge is cold.',
+      'Bellows at the foot of the mountain: made of hide, row upon row. The forge is empty and cold: first wood and charcoal are heaped, then seventy bellows blow as one.',
       'The iron flowed. While it flows it burns; when it cools and darkens it becomes a road.',
       'The morning mist has covered the valley. You cannot see the way; but someone has walked ahead of you.',
       'A cave, and in it a pale grey wolf. The Göktürks said a wolf raised the child saved from destruction in just such a cave.',
       'The second vein runs deeper. Three bellows: one above, one beyond the flowing iron.',
-      'The mountain is melting! Molten iron rises from below: up, through the cleft!',
+      'The mountain is melting! Molten iron rises from below: up, floor by floor, between the vents!',
       'Out of the valley: the first morning. They call this day Nevruz; on it a piece of iron is heated in the fire and struck on the anvil.',
     ],
     memories: [

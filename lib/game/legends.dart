@@ -832,7 +832,7 @@ class Raft extends Deck {
 /// Yanan damlarda bir baca: aralıklarla alev püskürtür. Üstüne sandık
 /// itilirse tıkanır.
 class FireVent extends PositionComponent with HasGameReference<GolgeGame> {
-  FireVent(Vector2 cell, {double phase = 0})
+  FireVent(Vector2 cell, {double phase = 0, this.ignites = false})
     : _t = phase,
       super(
         position: Vector2(cell.x + kTile / 2, cell.y + kTile),
@@ -843,6 +843,12 @@ class FireVent extends PositionComponent with HasGameReference<GolgeGame> {
   static const double warn = 0.7;
   static const double burn = 1.3;
   double _t;
+
+  /// Ergenekon: bacayı tıkayan sandık ateşin üstünde ısınır, iki alev
+  /// boyu sonra tutuşup yanar (tıkamak geçicidir).
+  final bool ignites;
+  double _scorch = 0;
+  static const double scorchLimit = 2.4;
 
   bool get plugged => game.world.children.whereType<Crate>().any(
     (c) => c.toRect().contains(Offset(position.x, position.y - 6)),
@@ -886,6 +892,21 @@ class FireVent extends PositionComponent with HasGameReference<GolgeGame> {
         p.toRect().deflate(2).overlaps(flame)) {
       p.die(cause: DeathCause.light);
     }
+    if (ignites && heat >= 1) {
+      final cover = game.world.children.whereType<Crate>().where(
+        (c) => c.toRect().contains(Offset(position.x, position.y - 6)),
+      );
+      if (cover.isNotEmpty) {
+        _scorch += dt;
+        if (_scorch > scorchLimit) {
+          _scorch = 0;
+          cover.first.removeFromParent();
+          GameAudio.instance.play('fire', volume: 0.7 * near, minGapMs: 0);
+          GameAudio.instance.play('crumble', volume: 0.5 * near);
+          game.once('ventCrateBurn', S.of('ventCrateBurn'));
+        }
+      }
+    }
   }
 
   @override
@@ -893,7 +914,22 @@ class FireVent extends PositionComponent with HasGameReference<GolgeGame> {
     final ink = Paint()..color = kInk;
     canvas.drawRect(const Rect.fromLTWH(-8, -10, 16, 10), ink);
     canvas.drawRect(const Rect.fromLTWH(-10, -12, 20, 3), ink);
-    if (plugged) return;
+    if (plugged) {
+      // Tıkayan sandık ısınır: altından kızıl bir parıltı.
+      if (ignites && _scorch > 0) {
+        final a = (_scorch / scorchLimit).clamp(0.0, 1.0);
+        canvas.drawCircle(
+          const Offset(0, -18),
+          20 + 8 * a,
+          Paint()
+            ..shader = ui.Gradient.radial(const Offset(0, -18), 28, [
+              const Color(0xFFFF6A2A).withValues(alpha: 0.55 * a),
+              const Color(0x00FF6A2A),
+            ]),
+        );
+      }
+      return;
+    }
     final h = heat;
     if (h <= 0) return;
     if (h < 1) {

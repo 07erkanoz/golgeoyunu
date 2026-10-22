@@ -189,7 +189,12 @@ class MythFigures {
 
   /// Yürüyen Gökbörü: aynı iskelet, adım adım (bir döngü
   /// [WolfRig.walkStride] birim yol).
-  static void gokboruWalk(Canvas c, double t, double phase, {double alpha = 1}) {
+  static void gokboruWalk(
+    Canvas c,
+    double t,
+    double phase, {
+    double alpha = 1,
+  }) {
     c.drawOval(
       Rect.fromCenter(center: const Offset(0, 0), width: 110, height: 8),
       Paint()
