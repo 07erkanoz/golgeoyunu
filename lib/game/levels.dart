@@ -617,6 +617,179 @@ List<String> interludeText(int level) {
   return level < all.length ? all[level] : const [];
 }
 
+/// Bölüm içi köprüler: Hikâye tiyatrosunda her bölümün perdesinden sonra,
+/// Sâye'nin o bölümde yaşadıkları (indeks = bölüm). Oyunda oynanan yol
+/// perdede kısaca anlatılır; böylece perdeler birbirine bağlanır.
+const bridges = <List<String>>[
+  [
+    'Sâye sütunların ormanında yürüdü. Karanlık suyun içinden bir su iyesi belirdi; ince eliyle paslı bir vanayı gösterdi.',
+    'Sütunların dibinde Medusa\'nın taş başları yatıyordu: biri baş aşağı, biri yan. Bakışlarına gölgesini değdirmeden geçti.',
+    'Bir salın üstünde karanlık kanallardan süzüldü. Suyun bittiği yerde yukarıya, yanan şehre açılan bir merdiven vardı.',
+  ],
+  [
+    'Kulenin mahzeninden kat kat yukarı tırmandı. Kandilcilerin gözcüleri soğuk fenerleriyle her katı tarıyordu; Sâye gölgeden gölgeye geçti.',
+    'Hezarfen\'in atölyesinde tozlu bir sandık buldu. İçinde kartal tüyünden iki kanat duruyordu.',
+    'Çan katını geçti, külahın tepesine çıktı. Aşağıda Haliç bir ayna gibi parlıyordu. Korkmadan kendini boşluğa bıraktı.',
+  ],
+  [
+    'Rüzgâr yolunda kanatlarını açtı; kargaların adalarını, Kandilcilerin bulut kampını geride bıraktı.',
+    'Fırtına adalarında şimşek perdeyi yaktı. Sâye gölgeden örülmüş bir köprünün üstünden uçtu.',
+    'Bulutların ardında Tulpar\'ın yelesi bir an parladı. Önde güneşin kapısı açılıyordu.',
+  ],
+  [
+    'Zümrüt köprüden geçti. Kandilcilerin gök karakolunun önünden gölgesini rüzgâra verip süzüldü.',
+    'Simurg\'un üç tüyünü birer birer buldu; her tüye dokunduğunda dağın bir yerinde bir kuş öttü.',
+    'Üçüncü tüyle ayna salonunun kapısı açıldı.',
+  ],
+  [
+    'Dağın eteğinden iplere tutunarak tırmandı; tipi yüzüne vuruyordu. Terk edilmiş bir ağılda soluklandı.',
+    'Akori\'de, Nuh\'un diktiği söylenen bağın yanından geçti. Aziz Hakob\'un manastırında Ayaz Ata\'nın ak gölgesi önünden yürüdü.',
+    'Buz mağarasının dibinde tufanın eşiği açıldı.',
+  ],
+  [
+    'Ambarlarda aslanların, atların, kuşların gölgeleri eşlerini arıyordu. Sâye kilitleri açtı; eşler birbirine kavuştu.',
+    'Ambar kuyusunun dibinde Ak Ana sudan ona baktı. Su yükseldi, Sâye\'yi güverteye taşıdı.',
+    'Güvertede ışığın yeri boştu; Kandilciler onu çoktan götürmüştü.',
+  ],
+  [
+    'Batı terasında başsız tanrıların arasından geçti. Deprem yarıkları ayağının altında açılıp kapandı.',
+    'Kartalın gözünden, tümülüsün taşlarından doğuya bir geçit buldu.',
+  ],
+  [
+    'Doğu terasında taştan dev uyandı; her adımında dağ sarsıldı. Sâye onun gölgesinden gölgesine kaçtı.',
+    'Güneş taş yüzlere vurduğu an Kandilcilerin yakmak üzere olduğu ışığa uzandı.',
+  ],
+  [
+    'Kervan yolunda Gökbörü önden yürüdü. Sâye onun izlerine basarak kurtların ormanını geçti.',
+    'Donmuş gölün üstünden, ocağı sönmüş bir hanın önünden geçti; ejderin eteğine vardı.',
+  ],
+  [
+    'Çoban kulübesinde tahtadan bir kızak buldu ve kendini ejderin sırtından aşağı bıraktı.',
+    'Kandil balonlarının altından, manyetik tepenin üstünden kaydı; ejderin sıçrayışından uçup Erzurum\'a doğru indi.',
+  ],
+  [
+    'Ejder uyandı; beyaz nefesi Sâye\'nin ardından aktı.',
+    'Gökbörü önde koştu. Sâye kırık sırttan son kez atladı, bir sığınağa girdi; çığ başının üstünden geçip gitti.',
+  ],
+  [
+    'Muşkara\'dan peri bacalarına tırmandı. Güvercinliklerin, kaya kiliselerinin arasında perilerin dansını gördü.',
+    'Albastı kızıl gölgesiyle ışığını çalmaya geldi. Sâye demirin ardına sığındı; Albastı demirden korkar.',
+    'Ay doğarken Uçhisar\'ın tepesine vardı.',
+  ],
+  [
+    'Mahzenden şapele, havalandırma bacalarından derin kuyuya indi. Yuvarlak taş kapılar onu içeriden kabul etti.',
+    'Devlerin kapısında uyuyan dev uyandı ve peşine düştü; karanlıkta Gökbörü\'nün gözleri ona yolu gösterdi.',
+    'En dipte taşın altından bir uğultu geliyordu.',
+  ],
+  [
+    'Konya ovasından eski höyüğe, İkonion kapısından Alâeddin Tepesi\'ne yürüdü.',
+    'Karatay\'ın yıldızlı kubbesinin altından, İnce Minare\'nin yanından, Şems\'in kuyusundan geçti. Semâhanede semâzenler dönüyordu.',
+    'Kar yağıyordu. Sâye Yeşil Kubbe\'ye tırmandı.',
+  ],
+  [
+    'Kara kapıdan geçti. Mürekkep köprülerde Körmösler ışığını kokladı; Sâye karanlığa saklandı.',
+    'Kut zindanında kafesleri açtı; çalınan canlar kuş olup yukarı uçtu.',
+    'Çalkuyruk kuyusunun dibinde Er Töştük\'ün atı başını kaldırdı ve ona yukarı giden yolu gösterdi.',
+  ],
+  [
+    'Kıyan Boğazı\'ndan demir dağın dibine indi. Kömür sandıklarını ocağa itti, körükleri ritimle bastı; ocak yeniden yandı.',
+    'Akan demir dalga dalga geldi. Sisli çayırın adacıklarından geçti; Asena\'nın mağarasında boz kurdun gözleri parladı.',
+    'Demir dağın içinden yol açtı. Nevruz örsüne üç kez vurdu; kapı açıldı.',
+  ],
+  [
+    'Kamın davulu çaldıkça bulut kapısından ay katına, ay katından gün katına yükseldi.',
+    'Hüma\'nın gölgesi başına düştü. Ülgen\'in kapısında Tulpar onu bekliyordu.',
+  ],
+];
+
+const bridgesEn = <List<String>>[
+  [
+    'Saye walked through the forest of columns. A water spirit rose from the dark water and pointed her slender hand at a rusted valve.',
+    'At the foot of the columns lay Medusa\'s stone heads: one upside down, one on its side. He passed without letting his shadow touch their gaze.',
+    'On a raft he drifted through the dark channels. Where the water ended, a stair rose toward the burning city.',
+  ],
+  [
+    'From the tower\'s cellar he climbed floor by floor. The Lamplighters\' watchmen swept every floor with cold lanterns; Saye slipped from shadow to shadow.',
+    'In Hezarfen\'s workshop he found a dusty chest. Inside lay two wings of eagle feathers.',
+    'He passed the bell floor and climbed to the top of the cone. Below, the Golden Horn shone like a mirror. Without fear, he let himself fall.',
+  ],
+  [
+    'On the wind road he spread his wings and left behind the islands of crows and the Lamplighters\' cloud camp.',
+    'Over the storm islands lightning lit the screen. Saye flew across a bridge woven of shadow.',
+    'Beyond the clouds Tulpar\'s mane flashed for a moment. Ahead, the gate of the sun was opening.',
+  ],
+  [
+    'He crossed the emerald bridge and glided past the Lamplighters\' sky outpost, giving his shadow to the wind.',
+    'One by one he found the Simurgh\'s three feathers; each time he touched one, a bird sang somewhere on the mountain.',
+    'With the third feather, the door of the mirror hall opened.',
+  ],
+  [
+    'From the foot of the mountain he climbed along the ropes, the blizzard in his face. He rested in an abandoned sheepfold.',
+    'At Akori he passed the vineyard Noah is said to have planted. At Saint Hakob\'s monastery he walked past the white shadow of Ayaz Ata.',
+    'At the bottom of the ice cave, the threshold of the Flood opened.',
+  ],
+  [
+    'In the holds the shadows of lions, horses and birds were searching for their mates. Saye opened the locks; the pairs found each other.',
+    'At the bottom of the hold well, Ak Ana looked up at him from the water. The water rose and carried Saye to the deck.',
+    'On the deck the place of the light was empty; the Lamplighters had long since taken it.',
+  ],
+  [
+    'On the western terrace he passed among the headless gods. Earthquake rifts opened and closed beneath his feet.',
+    'Through the eagle\'s eye and the stones of the tumulus he found a passage east.',
+  ],
+  [
+    'On the eastern terrace the stone giant woke; the mountain shook with every step. Saye fled from one of its shadows to the next.',
+    'The moment the sun struck the stone faces, he reached for the light the Lamplighters were about to kindle.',
+  ],
+  [
+    'On the caravan road Gokboru walked ahead. Saye stepped in its tracks through the forest of wolves.',
+    'He crossed the frozen lake, passed an inn whose hearth had gone cold, and reached the foot of the dragon.',
+  ],
+  [
+    'In the shepherd\'s hut he found a wooden sled and let himself go down the dragon\'s back.',
+    'He slid beneath the lantern balloons and over the magnetic hill, flew from the dragon\'s leap and came down toward Erzurum.',
+  ],
+  [
+    'The dragon woke; its white breath poured after Saye.',
+    'Gokboru ran ahead. Saye leapt from the broken ridge one last time and slipped into a shelter; the avalanche passed over his head.',
+  ],
+  [
+    'From Mushkara he climbed the fairy chimneys. Among the dovecotes and rock churches he saw the fairies dance.',
+    'Albasti came with her red shadow to steal his light. Saye took refuge behind iron; Albasti fears iron.',
+    'As the moon rose he reached the top of Uchisar.',
+  ],
+  [
+    'From the cellar to the chapel, through the air shafts, he went down into the deep well. The round stone doors let him in from the inside.',
+    'At the giants\' gate the sleeping giant woke and gave chase; in the dark, Gokboru\'s eyes showed him the way.',
+    'At the very bottom a hum was rising from beneath the stone.',
+  ],
+  [
+    'He walked from the plain of Konya to the old mound, through the gate of Iconium to the Hill of Alaeddin.',
+    'He passed beneath the starry dome of the Karatay, beside the Slender Minaret, past the well of Shams. In the semahane the semazens were turning.',
+    'Snow was falling. Saye climbed the Green Dome.',
+  ],
+  [
+    'He passed the black gate. On the ink bridges the Kormos sniffed at his light; Saye hid in the dark.',
+    'In the dungeon of kut he opened the cages; the stolen souls became birds and flew upward.',
+    'At the bottom of Chalkuyruk\'s well, Er Toshtuk\'s horse raised its head and showed him the way up.',
+  ],
+  [
+    'Through Kiyan Gorge he went down to the foot of the iron mountain. He pushed the coal crates into the forge and pressed the bellows in rhythm; the forge burned again.',
+    'Molten iron came in waves. He crossed the islets of the misty meadow; in Asena\'s cave the eyes of the grey wolf shone.',
+    'He opened a way through the iron mountain. He struck the Nevruz anvil three times; the gate opened.',
+  ],
+  [
+    'As the kam\'s drum beat, he rose from the cloud gate to the layer of the moon, and from the moon to the layer of the sun.',
+    'The Huma\'s shadow fell on his head. At Ulgen\'s gate, Tulpar was waiting for him.',
+  ],
+];
+
+/// Bölümün köprü satırları (tiyatro).
+List<String> bridgeText(int level) {
+  final all = S.en ? bridgesEn : bridges;
+  return level < all.length ? all[level] : const [];
+}
+
 const levels = <LevelDef>[
   LevelDef(
     title: 'I · YEREBATAN',

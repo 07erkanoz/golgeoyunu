@@ -36,6 +36,24 @@ void main() {
     }
   });
 
+  test('her geçilen bölümün ardından köprü; metinler eksiksiz', () {
+    expect(bridges.length, levels.length);
+    expect(bridgesEn.length, levels.length);
+    for (var i = 0; i < bridges.length; i++) {
+      expect(bridges[i], isNotEmpty, reason: 'köprü $i');
+      expect(bridgesEn[i].length, bridges[i].length, reason: 'köprü $i');
+    }
+    Settings.unlocked = 3;
+    SaveGame.current = null;
+    final acts = StoryTheater.acts();
+    final bridged = acts.where((a) => a.$4 != null).map((a) => a.$4);
+    expect(bridged, [levelOrder[0], levelOrder[1], levelOrder[2]]);
+    // Köprü, bölümünün perdesinden hemen sonra gelir.
+    Settings.unlocked = levelOrder.length - 1;
+    final all = StoryTheater.acts();
+    expect(all[all.length - 2].$4, levelOrder.last);
+  });
+
   testWidgets('tiyatro dokunmayla ilerler, perde geçilir, kapanır', (
     tester,
   ) async {

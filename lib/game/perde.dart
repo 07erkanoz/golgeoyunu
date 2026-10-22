@@ -9,6 +9,8 @@ import 'palette.dart';
 
 part 'perde_east.dart';
 part 'perde_tasvir.dart';
+part 'perde_kisi.dart';
+part 'perde_kopru.dart';
 
 /// Perde sahneleri: prologda, bölüm aralarında ve finalde oynanan gölge oyunu.
 enum PerdeScene {
@@ -115,8 +117,10 @@ class PerdePainter {
     PerdeScene scene,
     double time,
     double progress,
-    double alpha,
-  ) {
+    double alpha, {
+    int? bridge,
+    int bridgeLines = 3,
+  }) {
     if (alpha <= 0) return;
     _time = time;
     final r = screenRect(size);
@@ -131,7 +135,7 @@ class PerdePainter {
     // Kandilin titreşimi ve sahneye göre perdenin aydınlığı.
     final flicker =
         0.92 + 0.05 * math.sin(time * 7.3) + 0.03 * math.sin(time * 13.1 + 1.7);
-    final lamp = _lampFor(scene, progress) * flicker;
+    final lamp = (bridge != null ? 1.0 : _lampFor(scene, progress)) * flicker;
 
     // Oda: perdenin ışığı yere ve tavana vurur.
     canvas.drawRect(
@@ -180,44 +184,49 @@ class PerdePainter {
     canvas.translate(r.left, r.top);
     final k = r.width / _vw;
     canvas.scale(k, r.height / _vh);
-    switch (scene) {
-      case PerdeScene.prologue:
-        _prologue(canvas, time, progress);
-      case PerdeScene.galata:
-        _galata(canvas, time, progress);
-      case PerdeScene.kaf || PerdeScene.skyroad:
-        _kaf(canvas, time, progress);
-      case PerdeScene.mirror:
-        _mirror(canvas, time, progress);
-      case PerdeScene.flood:
-        _floodScene(canvas, time, progress);
-      case PerdeScene.gods:
-        _godsScene(canvas, time, progress);
-      case PerdeScene.dawn:
-        _godsScene(canvas, time, progress, dawn: true);
-      case PerdeScene.caravan || PerdeScene.dragons:
-        _caravanScene(canvas, time, progress);
-      case PerdeScene.avalanche:
-        _caravanScene(canvas, time, progress, avalanche: true);
-      case PerdeScene.fairies:
-        _fairiesScene(canvas, time, progress);
-      case PerdeScene.underground:
-        _fairiesScene(canvas, time, progress, underground: true);
-      case PerdeScene.akAna:
-        _akAnaScene(canvas, time, progress);
-      case PerdeScene.ergenekon:
-        _ergenekonScene(canvas, time, progress);
-      case PerdeScene.gok:
-        _gokScene(canvas, time, progress);
-      case PerdeScene.sema:
-        _semaScene(canvas, time, progress);
-      case PerdeScene.epilogue:
-        _endingScene(canvas, time, progress);
+    if (bridge != null) {
+      // Köprü: Sâye'nin bölümde yürüdüğü yol (Hikâye tiyatrosu).
+      _bridgeStage(canvas, bridge, time, progress, bridgeLines);
+    } else {
+      switch (scene) {
+        case PerdeScene.prologue:
+          _prologue(canvas, time, progress);
+        case PerdeScene.galata:
+          _galata(canvas, time, progress);
+        case PerdeScene.kaf || PerdeScene.skyroad:
+          _kaf(canvas, time, progress);
+        case PerdeScene.mirror:
+          _mirror(canvas, time, progress);
+        case PerdeScene.flood:
+          _floodScene(canvas, time, progress);
+        case PerdeScene.gods:
+          _godsScene(canvas, time, progress);
+        case PerdeScene.dawn:
+          _godsScene(canvas, time, progress, dawn: true);
+        case PerdeScene.caravan || PerdeScene.dragons:
+          _caravanScene(canvas, time, progress);
+        case PerdeScene.avalanche:
+          _caravanScene(canvas, time, progress, avalanche: true);
+        case PerdeScene.fairies:
+          _fairiesScene(canvas, time, progress);
+        case PerdeScene.underground:
+          _fairiesScene(canvas, time, progress, underground: true);
+        case PerdeScene.akAna:
+          _akAnaScene(canvas, time, progress);
+        case PerdeScene.ergenekon:
+          _ergenekonScene(canvas, time, progress);
+        case PerdeScene.gok:
+          _gokScene(canvas, time, progress);
+        case PerdeScene.sema:
+          _semaScene(canvas, time, progress);
+        case PerdeScene.epilogue:
+          _endingScene(canvas, time, progress);
+      }
+      // Bölümün efsane kahramanları kendi satırlarında perdeyi doldurur;
+      // Kandilcilerden, ustadan söz eden satırda ana iplik (kovalama).
+      _heroOverlay(canvas, scene, time, progress);
+      _heroExtra(canvas, scene, time, progress);
     }
-    // Bölümün efsane kahramanları kendi satırlarında perdeyi doldurur;
-    // Kandilcilerden, ustadan söz eden satırda ana iplik (kovalama).
-    _heroOverlay(canvas, scene, time, progress);
-    _heroExtra(canvas, scene, time, progress);
     canvas.restore();
 
     // Kandil kısıldıkça perde kararır; kenarlar hep biraz gölgede.
@@ -1033,20 +1042,9 @@ class PerdePainter {
         final sx = (facesRight ? 1.0 : -1.0) * hgt / 100;
         canvas.scale(sx, hgt / 100);
         if (kind == 1) {
-          canvas.drawPath(MythFigures.akAnaSilhouette, ink);
-          // Başörtüsü: başı ve omuzları saran yumuşak örtü.
-          canvas.drawPath(
-            Path()
-              ..moveTo(-8, -86)
-              ..cubicTo(-9, -104, 9, -104, 8, -86)
-              ..cubicTo(10, -80, 11, -76, 12, -72)
-              ..lineTo(-12, -72)
-              ..cubicTo(-11, -76, -10, -80, -8, -86)
-              ..close(),
-            ink,
-          );
+          _person(canvas, Offset.zero, 100, a, i % 4 == 1 ? _woman2 : _woman);
         } else if (kind == 0) {
-          canvas.drawPath(MythFigures.manSilhouette, ink);
+          _person(canvas, Offset.zero, 100, a, i % 3 == 0 ? _lagari : _worker);
         } else {
           canvas.drawPath(MythShapes.kam, ink);
         }

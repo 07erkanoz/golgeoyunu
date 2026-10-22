@@ -1214,12 +1214,13 @@ void _ergenekonScene(Canvas canvas, double time, double u) {
   if (people > 0) {
     for (var i = 0; i < 4; i++) {
       final x = 40 + walk * 160 - i * 26.0;
-      _shape(
+      _person(
         canvas,
-        i.isEven ? MythShapes.kam : MythFigures.akAnaSilhouette,
         Offset(x, g),
         i.isEven ? 62 : 58,
-        _ink(people),
+        people,
+        const [_kiyan, _woman, _nukuz, _woman2][i],
+        time: time,
       );
     }
   }
@@ -1228,13 +1229,14 @@ void _ergenekonScene(Canvas canvas, double time, double u) {
   if (crowd > 0) {
     for (var i = 0; i < 9; i++) {
       final x = 520 + (i % 5) * 34.0 - melt * 120 - _span(u, 4.4, 5.0) * 200;
-      _shape(
+      _person(
         canvas,
-        i.isEven ? MythShapes.kam : MythFigures.akAnaSilhouette,
         Offset(x, g),
         40 + (i % 3) * 4.0,
-        _ink(crowd * 0.9),
+        crowd * 0.9,
+        const [_shepherd, _woman, _kiyan, _woman2, _worker][i % 5],
         flip: true,
+        time: time + i,
       );
     }
   }

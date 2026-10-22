@@ -10,31 +10,43 @@ import '../game/strings.dart';
 import '../settings.dart';
 
 /// Hikâye tiyatrosu: önsöz ve oyuncunun ulaştığı yere dek açılan bütün
-/// bölüm perdeleri art arda, oyundaki gibi gölge oyunu olarak oynar.
+/// bölüm perdeleri art arda, oyundaki gibi gölge oyunu olarak oynar. Her
+/// geçilmiş bölümün ardından bir köprü: Sâye'nin o bölümde yürüdüğü yol.
 /// Henüz oynanmamış perdeler kapalı kalır: hikâyenin devamı oynayarak açılır.
 class StoryTheater extends StatefulWidget {
   const StoryTheater({super.key, required this.onClose});
 
   final VoidCallback onClose;
 
-  /// Oynanacak perdeler: (sahne, satırlar, üst yazı).
-  static List<(PerdeScene, List<String>, String)> acts() {
+  /// Oynanacak perdeler: (sahne, satırlar, üst yazı, köprünün bölümü).
+  /// Köprüde (son alan bölüm kimliği) başlık kartı yoktur; bölümün perdesi
+  /// kesintisiz sürer.
+  static List<(PerdeScene, List<String>, String, int?)> acts() {
     final reached = math.max(
       orderOf(SaveGame.current?.level ?? 0),
       Settings.unlocked,
     );
-    final out = <(PerdeScene, List<String>, String)>[
-      (PerdeScene.prologue, prologueText, S.of('storyPrologue')),
+    final out = <(PerdeScene, List<String>, String, int?)>[
+      (PerdeScene.prologue, prologueText, S.of('storyPrologue'), null),
     ];
+    void bridge(int lv) {
+      final lines = bridgeText(lv);
+      if (lines.isEmpty) return;
+      out.add((out.last.$1, lines, levels[lv].titleText, lv));
+    }
+
     for (var o = 1; o <= reached && o < levelOrder.length; o++) {
+      // Bir önceki bölüm geçildi: Sâye'nin oradaki yolu.
+      bridge(levelOrder[o - 1]);
       final lv = levelOrder[o];
       final scene = interludeScene(lv);
       final lines = interludeText(lv);
       if (scene == null || lines.isEmpty) continue;
-      out.add((scene, lines, levels[lv].titleText));
+      out.add((scene, lines, levels[lv].titleText, null));
     }
     if (reached >= levelOrder.length - 1) {
-      out.add((PerdeScene.epilogue, epilogueText, S.of('storyEpilogue')));
+      bridge(levelOrder.last);
+      out.add((PerdeScene.epilogue, epilogueText, S.of('storyEpilogue'), null));
     }
     return out;
   }
@@ -53,7 +65,7 @@ class _StoryTheaterState extends State<StoryTheater>
   static const _lineIn = 1.2;
   static const _lineOut = 1.0;
 
-  late final List<(PerdeScene, List<String>, String)> _acts =
+  late final List<(PerdeScene, List<String>, String, int?)> _acts =
       StoryTheater.acts();
   late final Ticker _ticker;
   final _tick = ValueNotifier<int>(0);
@@ -131,7 +143,7 @@ class _StoryTheaterState extends State<StoryTheater>
       _line = 0;
       _lineT = 0;
       _sceneT = 0;
-      _card = 1.6;
+      _card = _acts[_act].$4 == null ? 1.6 : 0;
     } else {
       _ended = true;
     }
@@ -228,7 +240,7 @@ class _TheaterPainter extends CustomPainter {
     final w = size.width;
     final h = size.height;
     final unit = math.min(h, w * 0.6);
-    final (scene, lines, title) = s._acts[s._act];
+    final (scene, lines, title, bridge) = s._acts[s._act];
     final r = PerdePainter.screenRect(size);
     if (s._ended) {
       // Kapalı perde: devamı oynayarak açılır.
@@ -245,7 +257,16 @@ class _TheaterPainter extends CustomPainter {
       return;
     }
     final progress = s._card > 0 ? 0.0 : s._line + (s._lineT / s._lineLen);
-    PerdePainter.paint(canvas, size, scene, s._sceneT, progress, 1);
+    PerdePainter.paint(
+      canvas,
+      size,
+      scene,
+      s._sceneT,
+      progress,
+      1,
+      bridge: bridge,
+      bridgeLines: lines.length,
+    );
     if (s._card > 0) {
       // Perdenin adı.
       final a =

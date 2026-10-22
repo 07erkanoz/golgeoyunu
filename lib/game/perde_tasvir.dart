@@ -597,21 +597,8 @@ void _ejder(
 
 /// Kavuklu, uzun cüppeli bir insan tasviri (derviş, Mevlânâ): siluetin
 /// üstüne uzun sikke.
-void _dervish(Canvas c, Offset feet, double h, double a, {bool flip = false}) {
-  _cut(c, MythFigures.manSilhouette, feet, h, a, flip: flip);
-  final s = h / 100;
-  c.drawRRect(
-    RRect.fromRectAndRadius(
-      Rect.fromCenter(
-        center: Offset(feet.dx + (flip ? -1 : 1) * 1 * s, feet.dy - 104 * s),
-        width: 12 * s,
-        height: 22 * s,
-      ),
-      Radius.circular(5 * s),
-    ),
-    _ink(a),
-  );
-}
+void _dervish(Canvas c, Offset feet, double h, double a, {bool flip = false}) =>
+    _person(c, feet, h, a, _dervishLook, flip: flip);
 
 // ---------------------------------------------------------- kahramanlar
 
@@ -632,21 +619,13 @@ void _heroOverlay(Canvas canvas, PerdeScene scene, double time, double u) {
       // Hezarfen: kanatlarıyla kulede; sonra Boğaz'ın üstünden süzülür.
       stage(1, (a) {
         _wings(c, const Offset(372, g - 175), 150, 0.1, a);
-        _cut(c, MythFigures.manSilhouette, const Offset(370, g + 12), 230, a);
+        _person(c, const Offset(370, g + 12), 230, a, _hezarfenFly);
       });
       stage(3, (a) {
         final k = _span(u, 3.1, 3.95);
         final at = Offset(640 - k * 470, 150 + k * 60);
         _wings(c, at, 170, 0.55 + math.sin(time * 1.5) * 0.05, a);
-        _cut(
-          c,
-          MythFigures.manSilhouette,
-          at + const Offset(0, 60),
-          120,
-          a,
-          rot: -1.45,
-          deco: false,
-        );
+        _person(c, at + const Offset(0, 60), 120, a, _hezarfenFly, rot: -1.45);
       });
       _sayeBeat(canvas, time, u, 5);
     case PerdeScene.skyroad:
@@ -677,14 +656,13 @@ void _heroOverlay(Canvas canvas, PerdeScene scene, double time, double u) {
           );
         }
         c.restore();
-        _cut(
+        _person(
           c,
-          MythFigures.manSilhouette,
           Offset(232 + k * 320, g - 90 - k * 220),
           120,
           a,
+          _lagari,
           rot: -0.5,
-          deco: false,
         );
       });
       _chaseBeat(canvas, time, u, 4);
@@ -774,40 +752,18 @@ void _heroOverlay(Canvas canvas, PerdeScene scene, double time, double u) {
       _chaseBeat(canvas, time, u, 2);
       // Aziz Hakob: meleğin getirdiği tahta.
       stage(4, (a) {
-        _cut(
-          c,
-          MythFigures.ayazAtaSilhouette,
-          const Offset(300, g + 12),
-          220,
-          a,
-          flip: true,
-        );
+        _person(c, const Offset(300, g + 12), 220, a, _monk, flip: true);
         final k = _span(u, 4.1, 4.7);
         final angel = Offset(520, 60 + k * 90);
         _wings(c, angel, 110, 0.2 + math.sin(time * 2) * 0.1, a);
-        _cut(
-          c,
-          MythFigures.manSilhouette,
-          angel + const Offset(0, 110),
-          110,
-          a,
-          flip: true,
-          deco: false,
-        );
+        _person(c, angel + const Offset(0, 110), 110, a, _angel, flip: true);
         c.drawRect(
           Rect.fromLTWH(angel.dx - 70, angel.dy + 40, 60, 12),
           _ink(a),
         );
       });
       stage(5, (a) {
-        _cut(
-          c,
-          MythFigures.ayazAtaSilhouette,
-          const Offset(400, g + 12),
-          270,
-          a,
-          flip: true,
-        );
+        _person(c, const Offset(400, g + 12), 270, a, _monk, flip: true);
         final p = _hole(0.6 * a);
         for (var i = 0; i < 40; i++) {
           final x = (i * 97.0 + time * 40) % 780;
@@ -818,13 +774,7 @@ void _heroOverlay(Canvas canvas, PerdeScene scene, double time, double u) {
     case PerdeScene.flood:
       // Nuh ve zeytin dallı güvercin.
       stage(2, (a) {
-        _cut(
-          c,
-          MythFigures.ayazAtaSilhouette,
-          const Offset(300, g + 12),
-          240,
-          a,
-        );
+        _person(c, const Offset(300, g + 12), 240, a, _nuh);
         final k = _span(u, 2.1, 2.8);
         final dove = Offset(700 - k * 330, 90 + k * 70);
         _dove(c, dove, 1.6, time, a, flip: true);
@@ -851,13 +801,7 @@ void _heroOverlay(Canvas canvas, PerdeScene scene, double time, double u) {
         final rise = _span(u, 5.05, 5.6);
         c.save();
         c.clipRect(const Rect.fromLTWH(0, 0, 780, g + 12));
-        _cut(
-          c,
-          MythFigures.akAnaSilhouette,
-          Offset(390, g + 160 - 160 * rise),
-          280,
-          a,
-        );
+        _person(c, Offset(390, g + 160 - 160 * rise), 280, a, _akAna);
         c.restore();
         c.drawCircle(
           Offset(390, g + 160 - 160 * rise - 250),
@@ -868,34 +812,8 @@ void _heroOverlay(Canvas canvas, PerdeScene scene, double time, double u) {
     case PerdeScene.gods:
       // Antiochos ve Herakles el sıkışır (Nemrut'un dexiosis kabartması).
       stage(1, (a) {
-        _cut(c, MythFigures.manSilhouette, const Offset(320, g + 12), 240, a);
-        // Sivri, beş dişli Ermeni taçı.
-        c.drawPath(
-          Path()
-            ..moveTo(304, g - 220)
-            ..lineTo(308, g - 262)
-            ..lineTo(316, g - 236)
-            ..lineTo(322, g - 270)
-            ..lineTo(328, g - 236)
-            ..lineTo(336, g - 262)
-            ..lineTo(340, g - 220)
-            ..close(),
-          _ink(a),
-        );
-        _cut(
-          c,
-          MythFigures.manSilhouette,
-          const Offset(470, g + 12),
-          250,
-          a,
-          flip: true,
-        );
-        // Herakles'in topuzu.
-        c.drawLine(
-          const Offset(500, g - 120),
-          const Offset(540, g - 40),
-          _ink(a)..strokeWidth = 10,
-        );
+        _person(c, const Offset(320, g + 12), 240, a, _antiochos);
+        _person(c, const Offset(470, g + 12), 250, a, _herakles, flip: true);
       });
       _chaseBeat(canvas, time, u, 4);
     case PerdeScene.dawn:
@@ -927,14 +845,7 @@ void _heroOverlay(Canvas canvas, PerdeScene scene, double time, double u) {
           2.4,
           a,
         );
-        _cut(
-          c,
-          MythFigures.manSilhouette,
-          box + const Offset(0, -34),
-          110,
-          a,
-          deco: false,
-        );
+        _person(c, box + const Offset(0, -34), 110, a, _nemrud);
         // Göğe atılan ok.
         c.drawLine(
           box + const Offset(20, -120),
@@ -944,7 +855,7 @@ void _heroOverlay(Canvas canvas, PerdeScene scene, double time, double u) {
       });
       // Sivrisinek: kral başını tutar.
       stage(3, (a) {
-        _cut(c, MythFigures.manSilhouette, const Offset(390, g + 12), 270, a);
+        _person(c, const Offset(390, g + 12), 270, a, _nemrud);
         final k = _span(u, 3.1, 3.8);
         c.drawCircle(Offset(640 - k * 230, 120 + k * 20), 3.5, _ink(a));
         c.drawCircle(Offset(640 - k * 230, 118 + k * 20), 1.6, _hole(a));
@@ -952,18 +863,10 @@ void _heroOverlay(Canvas canvas, PerdeScene scene, double time, double u) {
       _chaseBeat(canvas, time, u, 4);
       // Tepegöz ve Basat.
       stage(5, (a) {
-        _cut(
-          c,
-          MythFigures.manSilhouette,
-          const Offset(540, g + 12),
-          320,
-          a,
-          flip: true,
-          eye: const Offset(2, -94),
-        );
+        _person(c, const Offset(540, g + 12), 250, a, _tepegoz, flip: true);
         final step = _span(u, 5.1, 5.7);
         final bx = 180 + step * 140;
-        _cut(c, MythFigures.manSilhouette, Offset(bx, g + 12), 150, a);
+        _person(c, Offset(bx, g + 12), 150, a, _basat);
         c.drawLine(
           Offset(bx + 30, g - 80),
           Offset(bx + 90, g - 140),
@@ -1063,7 +966,7 @@ void _heroOverlay(Canvas canvas, PerdeScene scene, double time, double u) {
           0.15 + math.sin(time * 2.5) * 0.12,
           a,
         );
-        _cut(c, MythFigures.akAnaSilhouette, const Offset(390, g + 12), 250, a);
+        _person(c, const Offset(390, g + 12), 250, a, _periBare);
       });
       _sayeBeat(canvas, time, u, 3);
       stage(4, (a) {
@@ -1080,15 +983,7 @@ void _heroOverlay(Canvas canvas, PerdeScene scene, double time, double u) {
       _chaseBeat(canvas, time, u, 0);
       // Peri Padişahı ateşli devi yerin altına sürer.
       stage(2, (a) {
-        _cut(
-          c,
-          MythFigures.manSilhouette,
-          const Offset(520, g + 80),
-          330,
-          a,
-          flip: true,
-          eye: const Offset(2, -94),
-        );
+        _person(c, const Offset(520, g + 80), 260, a, _giant, flip: true);
         final p = _hole(0.7 * a);
         for (var i = 0; i < 10; i++) {
           c.drawCircle(
@@ -1100,19 +995,7 @@ void _heroOverlay(Canvas canvas, PerdeScene scene, double time, double u) {
             p,
           );
         }
-        _cut(c, MythFigures.akAnaSilhouette, const Offset(230, g + 12), 220, a);
-        c.drawPath(
-          Path()
-            ..moveTo(212, g - 212)
-            ..lineTo(218, g - 240)
-            ..lineTo(226, g - 222)
-            ..lineTo(232, g - 246)
-            ..lineTo(238, g - 222)
-            ..lineTo(246, g - 240)
-            ..lineTo(250, g - 212)
-            ..close(),
-          _ink(a),
-        );
+        _person(c, const Offset(230, g + 12), 220, a, _periQueen);
       });
       // Erlik: yerin dibinden boynuzlu bir gölge.
       stage(4, (a) {
@@ -1120,34 +1003,7 @@ void _heroOverlay(Canvas canvas, PerdeScene scene, double time, double u) {
         c.save();
         c.clipRect(const Rect.fromLTWH(0, 0, 780, g + 12));
         final f = Offset(390, g + 220 - 210 * rise);
-        _cut(
-          c,
-          MythFigures.manSilhouette,
-          f,
-          300,
-          a,
-          eye: const Offset(2, -94),
-        );
-        for (final sx in [-1.0, 1.0]) {
-          c.drawPath(
-            Path()
-              ..moveTo(f.dx + sx * 14, f.dy - 290)
-              ..quadraticBezierTo(
-                f.dx + sx * 50,
-                f.dy - 330,
-                f.dx + sx * 30,
-                f.dy - 360,
-              )
-              ..quadraticBezierTo(
-                f.dx + sx * 40,
-                f.dy - 320,
-                f.dx + sx * 4,
-                f.dy - 292,
-              )
-              ..close(),
-            _ink(a),
-          );
-        }
+        _person(c, f, 260, a, _erlik);
         c.restore();
       });
     case PerdeScene.sema:
@@ -1172,20 +1028,14 @@ void _heroOverlay(Canvas canvas, PerdeScene scene, double time, double u) {
             p..strokeWidth = 3,
           );
         }
-        _cut(c, MythFigures.manSilhouette, const Offset(390, g - 20), 230, a);
+        _person(c, const Offset(390, g - 20), 230, a, _kayra);
       });
       // Ak Ana sudan yükselir: "Yarat."
       stage(2, (a) {
         final rise = _span(u, 2.05, 2.6);
         c.save();
         c.clipRect(const Rect.fromLTWH(0, 0, 780, g + 12));
-        _cut(
-          c,
-          MythFigures.akAnaSilhouette,
-          Offset(390, g + 170 - 170 * rise),
-          290,
-          a,
-        );
+        _person(c, Offset(390, g + 170 - 170 * rise), 290, a, _akAna);
         c.restore();
       });
       // Erlik yerin altına sürülür.
@@ -1193,17 +1043,16 @@ void _heroOverlay(Canvas canvas, PerdeScene scene, double time, double u) {
         final fall = _span(u, 3.2, 3.9);
         c.save();
         c.clipRect(const Rect.fromLTWH(0, 0, 780, g + 12));
-        _cut(
+        _person(
           c,
-          MythFigures.manSilhouette,
           Offset(470, g + 12 + fall * 260),
-          240,
+          220,
           a,
+          _erlik,
           flip: true,
-          eye: const Offset(2, -94),
         );
         c.restore();
-        _cut(c, MythFigures.manSilhouette, const Offset(250, g + 12), 250, a);
+        _person(c, const Offset(250, g + 12), 250, a, _kayra);
       });
       _chaseBeat(canvas, time, u, 4);
       // Er Töştük, konuşan atı Çalkuyruk'la.
@@ -1217,27 +1066,18 @@ void _heroOverlay(Canvas canvas, PerdeScene scene, double time, double u) {
           a,
           eye: const Offset(48, -82),
         );
-        _cut(
-          c,
-          MythFigures.manSilhouette,
-          Offset(x - 8, g - 120),
-          130,
-          a,
-          deco: false,
-        );
+        _person(c, Offset(x - 8, g - 120), 130, a, _erTostuk);
       });
       // Körmösler: Erlik'in gölgeleri, ışık delikli gözler.
       stage(6, (a) {
         for (var i = 0; i < 3; i++) {
-          _cut(
+          _person(
             c,
-            MythFigures.manSilhouette,
             Offset(220 + i * 170.0, g + 12 + math.sin(time * 2 + i) * 4),
             200 + i * 20.0,
             a,
+            _kormos,
             flip: i.isOdd,
-            eye: const Offset(2, -94),
-            deco: false,
           );
         }
       });
@@ -1368,7 +1208,7 @@ void _cistern(Canvas c, double time, double u) {
   if (emp > 0) {
     _veil(c, emp * 0.6);
     c.drawCircle(const Offset(200, 108), 34, _hole(0.55 * emp));
-    _cut(c, MythFigures.manSilhouette, const Offset(200, water + 4), 240, emp);
+    _person(c, const Offset(200, water + 4), 240, emp, _justinian);
     c.drawPath(
       Path()
         ..moveTo(184, 116)
@@ -1383,15 +1223,7 @@ void _cistern(Canvas c, double time, double u) {
     );
     for (var i = 0; i < 3; i++) {
       final wx = 430 + i * 90.0 + _span(u, 7.0, 8.0) * 40;
-      _cut(
-        c,
-        MythFigures.manSilhouette,
-        Offset(wx, water + 4),
-        110,
-        emp,
-        flip: true,
-        deco: false,
-      );
+      _person(c, Offset(wx, water + 4), 110, emp, _worker, flip: true);
       c.drawRect(
         Rect.fromCenter(
           center: Offset(wx - 6, water - 112),
@@ -1422,15 +1254,14 @@ void _cistern(Canvas c, double time, double u) {
     }
     for (var i = 0; i < 4; i++) {
       final sx = 240 + i * 60.0 + (i >= 2 ? 160 : 0);
-      _cut(
+      _person(
         c,
-        MythFigures.manSilhouette,
         Offset(sx, water + 4),
         120,
         weep,
+        _slave,
         rot: (i.isEven ? 0.25 : -0.25),
         flip: i >= 2,
-        deco: false,
       );
     }
     final chain = _ink(weep)
@@ -1567,19 +1398,8 @@ void _dove(
 }
 
 /// Kavuklu sultan: siluetin üstüne iri, yuvarlak kavuk.
-void _sultan(Canvas c, Offset feet, double h, double a, {bool flip = false}) {
-  _cut(c, MythFigures.manSilhouette, feet, h, a, flip: flip);
-  final s = h / 100;
-  c.drawOval(
-    Rect.fromCenter(
-      center: Offset(feet.dx, feet.dy - 104 * s),
-      width: 34 * s,
-      height: 26 * s,
-    ),
-    _ink(a),
-  );
-  c.drawCircle(Offset(feet.dx, feet.dy - 106 * s), 3 * s, _hole(0.8 * a));
-}
+void _sultan(Canvas c, Offset feet, double h, double a, {bool flip = false}) =>
+    _person(c, feet, h, a, _sultanLook, flip: flip);
 
 /// Yelkenli: sürgün gemisi.
 void _ship(Canvas c, Offset at, double s, double a) {
@@ -1629,7 +1449,7 @@ void _heroExtra(Canvas canvas, PerdeScene scene, double time, double u) {
         final y = g + 12 - math.sin(hop * math.pi) * 90;
         final x = 260 + hop * 260;
         _wings(c, Offset(x, y - 160), 120, 0.3 + math.sin(time * 6) * 0.2, a);
-        _cut(c, MythFigures.manSilhouette, Offset(x, y), 170, a, deco: false);
+        _person(c, Offset(x, y), 170, a, _hezarfenFly);
         final p = _hole(0.5 * a);
         for (var i = 0; i < 9; i++) {
           c.drawCircle(Offset(240 + i * 34.0, g + 4), 3, p);
@@ -1638,23 +1458,14 @@ void _heroExtra(Canvas canvas, PerdeScene scene, double time, double u) {
       // Sultan kese verir; sonra sürgün gemisi.
       stage(4, (a) {
         _sultan(c, const Offset(250, g + 12), 240, a);
-        c.drawOval(
-          Rect.fromCenter(
-            center: const Offset(296, g - 120),
-            width: 22,
-            height: 26,
-          ),
-          _ink(a),
-        );
-        _cut(
+        _person(
           c,
-          MythFigures.manSilhouette,
           const Offset(400, g + 12),
           180,
           a,
+          _hezarfenFly,
           flip: true,
           rot: 0.25,
-          deco: false,
         );
         _ship(c, Offset(560 + 160 * _span(u, 4.4, 5.0), g - 10), 1.6, a);
       });
@@ -1686,14 +1497,7 @@ void _heroExtra(Canvas canvas, PerdeScene scene, double time, double u) {
         final sx = 120 + 220 * _span(u, 2.05, 2.8);
         c.save();
         c.clipRect(Rect.fromLTWH(0, 0, 780, g - 26));
-        _cut(
-          c,
-          MythFigures.manSilhouette,
-          Offset(sx, g + 70),
-          150,
-          a,
-          deco: false,
-        );
+        _person(c, Offset(sx, g + 70), 150, a, _lagari);
         c.restore();
         c.drawPath(wave, _ink(a));
       });
@@ -1718,14 +1522,7 @@ void _heroExtra(Canvas canvas, PerdeScene scene, double time, double u) {
           final k = ((time * 0.06 + i / 5) % 1);
           final px = 60 + k * 660;
           final py = g - 8 - math.sin(k * math.pi) * 200;
-          _cut(
-            c,
-            MythFigures.manSilhouette,
-            Offset(px, py),
-            60,
-            a * 0.6,
-            deco: false,
-          );
+          _person(c, Offset(px, py), 60, a * 0.6, _worker);
           _cut(
             c,
             MythShapes.birdFlap,
@@ -1815,15 +1612,7 @@ void _heroExtra(Canvas canvas, PerdeScene scene, double time, double u) {
         _arkShape(_ink(a), _hole(0.7 * a), 0.4);
         c.restore();
         for (final (x, f) in [(150.0, false), (640.0, true)]) {
-          _cut(
-            c,
-            MythFigures.manSilhouette,
-            Offset(x, g + 12),
-            130,
-            a,
-            flip: f,
-            deco: false,
-          );
+          _person(c, Offset(x, g + 12), 130, a, _shepherd, flip: f);
           c.drawLine(
             Offset(x + (f ? -24 : 24), g - 110),
             Offset(x + (f ? -28 : 28), g + 12),
@@ -1913,14 +1702,13 @@ void _heroExtra(Canvas canvas, PerdeScene scene, double time, double u) {
           ),
           _hole(0.75 * a),
         );
-        _cut(
+        _person(
           c,
-          MythFigures.manSilhouette,
           const Offset(300, g - 50),
           160,
           a,
+          _antiochos,
           rot: -math.pi / 2,
-          deco: false,
         );
         _punchRow(
           c,
@@ -1959,7 +1747,7 @@ void _heroExtra(Canvas canvas, PerdeScene scene, double time, double u) {
           _rosette(c, Offset(x, y), 9, a * bloom);
           c.drawCircle(Offset(x, y), 7, _ink(a * bloom * 0.6));
         }
-        _cut(c, MythFigures.manSilhouette, const Offset(390, g + 12), 210, a);
+        _person(c, const Offset(390, g + 12), 210, a, _ibrahim);
         // Göğe atılan ok kanlı döner.
         final arrow = _span(u, 2.05, 2.5);
         c.drawLine(
@@ -2156,13 +1944,18 @@ void _heroExtra(Canvas canvas, PerdeScene scene, double time, double u) {
         final k = _span(u, 0.05, 0.95);
         for (var i = 0; i < 4; i++) {
           final x = 140 + k * 200 + i * 80.0;
-          _cut(
+          _person(
             c,
-            i.isEven ? MythFigures.manSilhouette : MythFigures.akAnaSilhouette,
             Offset(x, g + 12),
             i.isEven ? 210 : 190,
             a,
-            deco: i.isEven,
+            (i % 4 == 0
+                ? _kiyan
+                : i % 4 == 1
+                ? _woman
+                : i % 4 == 2
+                ? _nukuz
+                : _woman2),
           );
         }
       });
@@ -2324,15 +2117,7 @@ void _epilogueStage(Canvas c, double time, double u) {
     final rise = _span(u, 11.05, 11.9);
     c.drawCircle(Offset(390, g - 120 - rise * 200), 40, _hole(0.8 * a));
     for (var i = 0; i < 4; i++) {
-      _cut(
-        c,
-        MythFigures.manSilhouette,
-        Offset(150 + i * 160.0, g + 12),
-        150,
-        a,
-        rot: 0.35,
-        deco: false,
-      );
+      _person(c, Offset(150 + i * 160.0, g + 12), 150, a, _kandilci, rot: 0.35);
       c.drawRect(Rect.fromLTWH(150 + i * 160.0, g + 10, 80, 6), _ink(a * 0.5));
     }
   });
