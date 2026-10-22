@@ -415,8 +415,13 @@ extension _EastBackdrops on Backdrop {
     const span = 140.0;
     final first = ((offset - span) / span).floor();
     final peaks = <Offset>[];
+    // Her tepenin dünyadaki sırası: rastgele ayrıntılar (boyun, kar) buna
+    // bağlıdır, kamera kaydıkça değişmez (eskiden ekran konumuna bağlıydı,
+    // tepeler her harekette kıpırdıyordu).
+    final ids = <int>[];
     for (var i = first; i * span - offset < w + span * 2; i++) {
       final r = math.Random(i * 7919 + seed);
+      ids.add(i);
       peaks.add(
         Offset(
           i * span - offset + r.nextDouble() * 60,
@@ -430,7 +435,7 @@ extension _EastBackdrops on Backdrop {
       outline.add(p);
       if (k + 1 < peaks.length) {
         final q = peaks[k + 1];
-        final r = math.Random(k * 31 + seed);
+        final r = math.Random(ids[k] * 31 + seed);
         // İki tepe arasında kırıklı bir boyun.
         final mid = Offset.lerp(p, q, 0.45 + r.nextDouble() * 0.1)!;
         outline.add(
@@ -463,7 +468,8 @@ extension _EastBackdrops on Backdrop {
     final dark = Paint()
       ..color = Color.lerp(body, const Color(0xFF000000), 0.35)!;
     final lit = Paint()..color = Color.lerp(body, snow, 0.18)!;
-    for (final p in peaks) {
+    for (var pi = 0; pi < peaks.length; pi++) {
+      final p = peaks[pi];
       canvas.drawPath(
         Path()
           ..moveTo(p.dx, p.dy)
@@ -482,7 +488,7 @@ extension _EastBackdrops on Backdrop {
       );
       // Kar: zirveden yarıklara dalga dalga iner.
       final sl = p.dy + (base - p.dy) * snowline;
-      final r = math.Random(p.dx.round());
+      final r = math.Random(ids[pi] * 131 + seed);
       final half = (sl - p.dy) * 1.3;
       final cpts = <Offset>[Offset(p.dx, p.dy - 2)];
       for (var k = 0; k <= 8; k++) {
