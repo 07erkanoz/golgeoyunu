@@ -44,7 +44,7 @@ class StoryTheater extends StatefulWidget {
       if (scene == null || lines.isEmpty) continue;
       out.add((scene, lines, levels[lv].titleText, null));
     }
-    if (reached >= levelOrder.length - 1) {
+    if (Settings.finished) {
       bridge(levelOrder.last);
       out.add((PerdeScene.epilogue, epilogueText, S.of('storyEpilogue'), null));
     }
@@ -52,9 +52,7 @@ class StoryTheater extends StatefulWidget {
   }
 
   /// Hepsi açıldı mı (son perde de).
-  static bool get complete =>
-      math.max(orderOf(SaveGame.current?.level ?? 0), Settings.unlocked) >=
-      levelOrder.length - 1;
+  static bool get complete => Settings.finished;
 
   @override
   State<StoryTheater> createState() => _StoryTheaterState();

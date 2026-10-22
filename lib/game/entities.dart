@@ -6,6 +6,7 @@ import 'package:flame/components.dart';
 
 import 'audio.dart';
 import 'golge_game.dart';
+import 'levels.dart';
 import 'legends.dart';
 import 'level.dart';
 import 'mechanics.dart';
@@ -285,6 +286,8 @@ class Guard extends PositionComponent
       if (!lure.glowing) continue;
       final d = lure.position - center;
       if (d.length > range || d.y.abs() > 160) continue;
+      // Duvarın, kayanın ardındaki ışık görülmez.
+      if (!level.lineOfSight(_lantern, lure.position)) continue;
       _lure = lure;
       _investigateX = null;
       suspicion = 0;
@@ -424,13 +427,17 @@ class Guard extends PositionComponent
     final flicker = alert
         ? 0.88 + 0.12 * math.sin(_t * 31) * math.sin(_t * 7)
         : 1.0;
+    // Görsel deneme: tehlike ışığı daha doygun nane-camgöbeği, koni net.
+    final toon = Cartoon.on && game.level.def.theme == LevelTheme.cistern;
     final beam = Color.lerp(
-      kCold,
+      toon ? Cartoon.danger : kCold,
       const Color(0xFFF2FFFC),
-      alert ? 0.8 : doubt * 0.6,
+      alert ? 0.8 : doubt * (toon ? 0.35 : 0.6),
     )!;
     final beamAlpha =
-        (alert ? 0.42 : (distracted ? 0.07 : 0.14 + doubt * 0.16)) * flicker;
+        (alert ? 0.42 : (distracted ? 0.07 : 0.14 + doubt * 0.16)) *
+        flicker *
+        (toon ? Cartoon.beam : 1);
 
     // Işık konisi: kayada kesilir.
     final seen = coneShape;
@@ -494,8 +501,8 @@ class Guard extends PositionComponent
         lean: _leanS,
         lampAngle: -_lanternSway / 9.5,
         doubt: doubt,
-        ink: kInk,
-        rim: beam.withValues(alpha: 0.35 + 0.25 * doubt),
+        ink: toon ? Cartoon.char : kInk,
+        rim: beam.withValues(alpha: (toon ? 0.6 : 0.35) + 0.25 * doubt),
         eye: beam.withValues(
           alpha: alert ? flicker : (distracted ? 0.35 : 0.6 + doubt * 0.4),
         ),

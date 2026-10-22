@@ -1510,6 +1510,10 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     _renderBody(canvas);
   }
 
+  /// Karikatürize oranlar ve renk (iri baş, pabuç ve kavanoz, kırmızı
+  /// atkı): bütün bölümlerde.
+  bool get _toon => Cartoon.saye;
+
   void _renderBody(Canvas canvas, {bool riding = false}) {
     final ski = skiing && !isDead;
     if (ski) {
@@ -1540,11 +1544,20 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       _fill.color = kInk;
       _limb.color = kInk;
     }
+    final toon = _toon;
+    if (toon) {
+      _fill.color = Cartoon.char;
+      _limb.color = Cartoon.char;
+    }
     canvas.save();
     canvas.translate((w - _artW * _artScale) / 2, 0);
     canvas.scale(_artScale);
     jarStyle ? _renderJar(canvas) : _renderEyes(canvas);
     canvas.restore();
+    if (toon) {
+      _fill.color = kInk;
+      _limb.color = kInk;
+    }
     if (ski) {
       drawSkis(canvas, Offset(w / 2, h), 34);
       canvas.restore();
@@ -2009,9 +2022,12 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     // Arkadaki kol ve bacak bir ton açık: iki bacak birbirine karışmaz,
     // derinlik okunur (kenar ışığı ve gölge geçişlerinde tek renk).
     final ink = _limb.color;
+    final toon = _toon;
     final far = _rimPass
         ? ink
-        : Color.lerp(kInk, const Color(0xFF5A3A26), 0.32)!;
+        : (toon
+              ? Cartoon.charLit
+              : Color.lerp(kInk, const Color(0xFF5A3A26), 0.32)!);
 
     void leg(Offset target, {bool back = false}) {
       final (knee, foot) = solveLimb(hip, target, thigh, shin);
@@ -2024,12 +2040,12 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       canvas.drawLine(hip, knee, _limb..strokeJoin = StrokeJoin.round);
       _limb.strokeWidth = 3.6;
       canvas.drawLine(knee, foot, _limb);
-      // Küçük bot.
+      // Küçük bot (denemede iri, karikatür pabuç).
       canvas.drawOval(
         Rect.fromCenter(
-          center: foot.translate(1.6, -0.6),
-          width: 6.4,
-          height: 3,
+          center: foot.translate(toon ? 2.4 : 1.6, toon ? -1 : -0.6),
+          width: toon ? 8.8 : 6.4,
+          height: toon ? 4.4 : 3,
         ),
         _fill,
       );
@@ -2093,6 +2109,15 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       canvas.scale(-1, 1);
       canvas.translate(-head.dx, 0);
     }
+    // Denemede baş ve saç boyundan büyütülür (karikatür oranı).
+    final bigHead = toon;
+    if (bigHead) {
+      final pivot = Offset(head.dx - 1, headY + 6);
+      canvas.save();
+      canvas.translate(pivot.dx, pivot.dy);
+      canvas.scale(1.3);
+      canvas.translate(-pivot.dx, -pivot.dy);
+    }
     // Baş: yuvarlak kafatası, öne çıkan alın ve küçük burun, geriye çekilen
     // çene; dağınık saçlar rüzgârla arkaya yatar.
     canvas.drawCircle(head.translate(-0.3, -0.2), 6.0, _fill);
@@ -2148,14 +2173,18 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       ..lineTo(h(-2, -1).dx, h(-2, -1).dy)
       ..close();
     canvas.drawPath(hair, _fill);
+    if (bigHead) canvas.restore();
 
     if (looking) canvas.restore();
 
     // Uzun atkı: boyuna dolanır, iki ucu ardında dalgalanır.
     final neck = Offset(head.dx - 1.5, headY + 7);
+    final scarfPaint = toon && !_rimPass
+        ? (Paint()..color = Cartoon.scarf)
+        : _fill;
     canvas.drawOval(
       Rect.fromCenter(center: neck.translate(0.5, 0), width: 9, height: 4),
-      _fill,
+      scarfPaint,
     );
     for (final tail in const [0.0, 1.0]) {
       final len = 13.0 - tail * 4 + wind * 5;
@@ -2180,7 +2209,7 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
         bottom.add(Offset(x, y + half));
       }
       final ribbon = Path()..addPolygon([...top, ...bottom.reversed], true);
-      canvas.drawPath(ribbon, _fill);
+      canvas.drawPath(ribbon, scarfPaint);
     }
 
     // Kavanozu tutan ön kol ve ip.
@@ -2200,7 +2229,17 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       );
     }
 
-    _drawJar(canvas, jar, lightAmount);
+    if (toon) {
+      // İri kavanoz: uzaktan da okunur.
+      canvas.save();
+      canvas.translate(jar.dx, jar.dy);
+      canvas.scale(1.35);
+      canvas.translate(-jar.dx, -jar.dy);
+      _drawJar(canvas, jar, lightAmount);
+      canvas.restore();
+    } else {
+      _drawJar(canvas, jar, lightAmount);
+    }
     {
       // Işığın görünen merkezi: kavanozun bu karedeki gerçek yeri (kenar ışığı
       // ve duvar gölgesi geçişleri buraya gelmeden döner).

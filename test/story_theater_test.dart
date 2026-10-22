@@ -14,7 +14,17 @@ void main() {
     expect(acts.first.$1, PerdeScene.prologue);
   });
 
+  test('son bölüme ulaşmak sonu açmaz; oyun bitince açılır', () {
+    Settings.unlocked = levelOrder.length - 1;
+    Settings.finished = false;
+    SaveGame.current = null;
+    final acts = StoryTheater.acts();
+    expect(acts.last.$1, isNot(PerdeScene.epilogue));
+    expect(StoryTheater.complete, isFalse);
+  });
+
   test('hepsi açıkken önsöz, bölüm perdeleri ve son', () {
+    Settings.finished = true;
     Settings.unlocked = levelOrder.length - 1;
     SaveGame.current = null;
     final acts = StoryTheater.acts();
@@ -44,12 +54,14 @@ void main() {
       expect(bridgesEn[i].length, bridges[i].length, reason: 'köprü $i');
     }
     Settings.unlocked = 3;
+    Settings.finished = false;
     SaveGame.current = null;
     final acts = StoryTheater.acts();
     final bridged = acts.where((a) => a.$4 != null).map((a) => a.$4);
     expect(bridged, [levelOrder[0], levelOrder[1], levelOrder[2]]);
     // Köprü, bölümünün perdesinden hemen sonra gelir.
     Settings.unlocked = levelOrder.length - 1;
+    Settings.finished = true;
     final all = StoryTheater.acts();
     expect(all[all.length - 2].$4, levelOrder.last);
   });

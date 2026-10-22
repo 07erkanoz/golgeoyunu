@@ -48,6 +48,8 @@ class Backdrop extends Component with HasGameReference<GolgeGame> {
     final rect = Rect.fromLTWH(0, 0, w, h);
 
     switch (lv.def.theme) {
+      case LevelTheme.cistern when Cartoon.on:
+        _cartoonCistern(canvas, rect, w, h, cam.x);
       case LevelTheme.cistern:
         // Yerebatan: kemerli sütun ormanı, tavandaki deliklerden süzülen yangın ışığı.
         _gradient(canvas, rect, const [
@@ -298,6 +300,93 @@ class Backdrop extends Component with HasGameReference<GolgeGame> {
           color: const Color(0xFF5E281A),
           bumpy: true,
         );
+    }
+  }
+
+  /// Görsel deneme: patlıcan moru sarnıç; kat kat, düşük karşıtlıklı
+  /// kemerler ve sütunlar, uzakta sıcak pencereler.
+  void _cartoonCistern(
+    Canvas canvas,
+    Rect rect,
+    double w,
+    double h,
+    double camX,
+  ) {
+    _gradient(canvas, rect, [Cartoon.skyTop, Cartoon.skyMid, Cartoon.skyLow]);
+    // En uzakta: kemer sıraları ve aralarında sıcak ışık.
+    for (var layer = 0; layer < 3; layer++) {
+      final par = 0.15 + layer * 0.17;
+      final spacing = 70.0 + layer * 46;
+      final width = 8.0 + layer * 6;
+      final col = Color.lerp(
+        Cartoon.skyMid,
+        Cartoon.farCol,
+        0.45 + layer * 0.28,
+      )!;
+      final top = h * (0.30 - layer * 0.08);
+      final bottom = h * (0.78 + layer * 0.04);
+      final paint = Paint()..color = col;
+      final offset = camX * par;
+      final first = (offset / spacing).floor() - 1;
+      for (var i = first; i * spacing - offset < w + spacing; i++) {
+        final x = i * spacing - offset;
+        if (layer == 0 && i % 3 == 0) {
+          // Uzak sıcak pencere.
+          glowDot(
+            canvas,
+            Offset(x + spacing / 2, bottom - h * 0.12),
+            spacing * 0.5,
+            const Color(0xFFE08A48),
+            Cartoon.windowGlow,
+          );
+        }
+        canvas.drawRect(
+          Rect.fromLTRB(x - width / 2, top, x + width / 2, bottom),
+          paint,
+        );
+        canvas.drawRect(
+          Rect.fromLTRB(x - width, top, x + width, top + width * 0.7),
+          paint,
+        );
+        canvas.drawPath(
+          Path()
+            ..moveTo(x, top)
+            ..lineTo(x, 0)
+            ..lineTo(x + spacing, 0)
+            ..lineTo(x + spacing, top)
+            ..quadraticBezierTo(x + spacing / 2, top - spacing * 0.6, x, top)
+            ..close(),
+          paint,
+        );
+        // Kemerin ışık alan kenarı.
+        canvas.drawPath(
+          Path()
+            ..moveTo(x, top)
+            ..quadraticBezierTo(
+              x + spacing / 2,
+              top - spacing * 0.6,
+              x + spacing,
+              top,
+            ),
+          Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1.5 + layer
+            ..color = Cartoon.archRim.withValues(alpha: 0.25 + layer * 0.15),
+        );
+        // Suda yansıma.
+        canvas.drawRect(
+          Rect.fromLTRB(
+            x - width / 2 + math.sin(_t * 1.2 + i) * 2,
+            bottom + 4,
+            x + width / 2 + math.sin(_t * 1.2 + i) * 2,
+            bottom + 4 + (h - bottom) * 0.6,
+          ),
+          Paint()..color = col.withValues(alpha: 0.35),
+        );
+      }
+    }
+    if (!Settings.lowGraphics) {
+      _lightShafts(canvas, w, h, offset: camX * 0.2);
     }
   }
 
@@ -698,7 +787,11 @@ class ScreenEffects extends Component with HasGameReference<GolgeGame> {
           const [0.0, 0.55, 1.0],
         );
     }
-    canvas.drawRect(Rect.fromLTWH(0, 0, w, h), _vignette!);
+    final soft = Cartoon.on && game.level.def.theme == LevelTheme.cistern;
+    canvas.drawRect(
+      Rect.fromLTWH(0, 0, w, h),
+      _vignette!..color = Color.fromRGBO(0, 0, 0, soft ? Cartoon.vignette : 1),
+    );
   }
 
   /// Korku anı: kısa soğuk çakma, sonra kenarlardan içeri sızan ve kalp
@@ -902,7 +995,10 @@ class ScreenEffects extends Component with HasGameReference<GolgeGame> {
 
     // Sürüklenen sis: mağarada köz, kayalıkta kül, gökte toz rengi.
     final (fogColor, fogAlpha) = switch (theme) {
-      LevelTheme.cistern => (const Color(0xFFD08A5A), 0.05),
+      LevelTheme.cistern => (
+        const Color(0xFFD08A5A),
+        Cartoon.on ? Cartoon.fog : 0.05,
+      ),
       LevelTheme.cave => (kEmber, 0.05),
       LevelTheme.cliffs => (const Color(0xFFB09080), 0.06),
       LevelTheme.sky => (const Color(0xFFF0C8A0), 0.09),

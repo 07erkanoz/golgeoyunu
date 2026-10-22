@@ -31,6 +31,10 @@ class Settings {
   /// Ulaşılan en ileri bölüm: bölüm listesinde buraya kadarı açıktır.
   static int unlocked = 0;
 
+  /// Oyun sonuna dek oynandı mı (son perde izlendi). Son bölüme ulaşmak
+  /// yetmez: Hikâye tiyatrosu sonu ancak bu doğruysa oynar.
+  static bool finished = false;
+
   /// Dokunmatik düğmelerin görünürlüğü (0.1 – 1).
   static double touchOpacity = 0.7;
 
@@ -101,6 +105,7 @@ class Settings {
       touchGestures = _read(() => p.getBool('touch_gestures')) ?? touchGestures;
       calmEffects = _read(() => p.getBool('calm_effects')) ?? calmEffects;
       leftHanded = _read(() => p.getBool('left_handed')) ?? leftHanded;
+      finished = _read(() => p.getBool('finished')) ?? finished;
       // Kayıtlı bir tercih yoksa cihazın dili: Türkçe değilse İngilizce.
       final lang = _read(() => p.getString('lang'));
       S.lang = switch (lang) {
@@ -145,6 +150,7 @@ class Settings {
       await p.setDouble('brightness', brightness);
       await p.setString('lang', S.en ? 'en' : 'tr');
       await p.setInt('unlocked', unlocked);
+      await p.setBool('finished', finished);
       await p.setInt('unlockedOrder', levelOrderVersion);
     } catch (_) {
       // Yazılamazsa bir sonraki değişiklikte yeniden denenir.

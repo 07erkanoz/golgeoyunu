@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../game/audio.dart';
 import '../game/golge_game.dart';
 import '../game/hints.dart';
+import '../game/palette.dart';
 import '../game/strings.dart';
 import '../settings.dart';
 import 'info_pages.dart';
@@ -271,6 +272,19 @@ class _SettingsPanelState extends State<SettingsPanel> {
                         setState(() {});
                       },
                     ),
+                    // Geliştirici yapısında: Yerebatan görsel denemesinin
+                    // tonu (0 karanlık, 100 aydınlık).
+                    if (const bool.fromEnvironment('DEV')) ...[
+                      _label('Yerebatan tonu (deneme)', Cartoon.tone),
+                      Slider(
+                        value: Cartoon.tone,
+                        divisions: 20,
+                        onChanged: (v) {
+                          Cartoon.tone = v;
+                          setState(() {});
+                        },
+                      ),
+                    ],
                     Row(
                       children: [
                         Text(

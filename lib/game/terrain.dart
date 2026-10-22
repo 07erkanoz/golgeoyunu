@@ -65,6 +65,8 @@ List<_Chunk> _chunked(
 /// doğunca (aynı bölüm) yeniden çizilmez, bölüm değişince eskisi bırakılır.
 class _ChunkCache {
   static LevelDef? _def;
+  static bool _cartoon = false;
+  static double _tone = -1;
   static final _lists = <String, List<_Chunk>>{};
 
   static List<_Chunk> of(
@@ -72,7 +74,11 @@ class _ChunkCache {
     Level lv,
     Picture Function(Level, int c0, int c1, int r0, int r1) build,
   ) {
-    if (!identical(_def, lv.def)) {
+    if (!identical(_def, lv.def) ||
+        _cartoon != Cartoon.on ||
+        (Cartoon.on && _tone != Cartoon.toneStep)) {
+      _cartoon = Cartoon.on;
+      _tone = Cartoon.toneStep;
       for (final list in _lists.values) {
         for (final c in list) {
           c.picture.dispose();
@@ -93,12 +99,14 @@ void _drawVisible(Canvas canvas, List<_Chunk> chunks, Rect view) {
 
 /// Arazi dilim dilim önceden çizilir; her karede yalnızca görünenler basılır.
 class TerrainComponent extends Component with HasGameReference<GolgeGame> {
-  TerrainComponent(this._level)
-    : _chunks = _ChunkCache.of('terrain', _level, _buildTerrain),
-      super(priority: 0);
+  TerrainComponent(this._level) : super(priority: 0) {
+    _chunks;
+  }
 
   final Level _level;
-  final List<_Chunk> _chunks;
+  // Önbellekten her karede alınır: görsel deneme açılıp kapanınca yeniden
+  // çizilir (aynı bölümde tek bir sözlük bakışı).
+  List<_Chunk> get _chunks => _ChunkCache.of('terrain', _level, _buildTerrain);
   static final _ink = Paint()..color = kInk;
 
   @override
@@ -178,11 +186,12 @@ class TerrainComponent extends Component with HasGameReference<GolgeGame> {
 /// Oyuncunun önünde çizilenler (uzun otlar, ön sütunlar): gizlenme yerlerini
 /// görsel olarak da örter.
 class ForegroundComponent extends Component with HasGameReference<GolgeGame> {
-  ForegroundComponent(Level level)
-    : _chunks = _ChunkCache.of('fore', level, _buildForeground),
-      super(priority: 30);
+  ForegroundComponent(this._level) : super(priority: 30) {
+    _chunks;
+  }
 
-  final List<_Chunk> _chunks;
+  final Level _level;
+  List<_Chunk> get _chunks => _ChunkCache.of('fore', _level, _buildForeground);
 
   @override
   void render(Canvas canvas) =>
@@ -202,6 +211,8 @@ Picture _buildTerrain(Level lv, int c0, int c1, int r0, int r1) {
     ..strokeCap = StrokeCap.round;
   final cloud = Paint()..color = kCloud;
   final theme = lv.def.theme;
+  final cartoon = Cartoon.on && theme == LevelTheme.cistern;
+  if (cartoon) ink.color = Cartoon.stone;
 
   for (var r = r0; r <= r1; r++) {
     for (var c = c0; c <= c1; c++) {
@@ -211,6 +222,19 @@ Picture _buildTerrain(Level lv, int c0, int c1, int r0, int r1) {
       switch (lv.cell(c, r)) {
         case '#' when lv.isIce(c, r):
           _iceBlock(canvas, lv, c, r, x, y, rnd);
+        case '#' when cartoon:
+          _cartoonStone(canvas, lv, c, r, x, y, rnd);
+          for (final side in [-1, 1]) {
+            if (lv.solid(c + side, r)) continue;
+            final ex = side < 0 ? x : x + kTile;
+            for (var i = 0; i < 2; i++) {
+              canvas.drawCircle(
+                Offset(ex, y + 4 + rnd.nextDouble() * (kTile - 8)),
+                1.5 + rnd.nextDouble() * 2.5,
+                ink,
+              );
+            }
+          }
         case '#':
           canvas.drawRect(
             Rect.fromLTWH(x - 0.5, y - 0.5, kTile + 1, kTile + 1),
@@ -764,7 +788,8 @@ const _rim = Color(0xFF8A4A2A);
 /// karede bir sütuna oturur; harita `I` sütunlarını da aynı hizaya koyar.
 void _cisternVaults(Canvas canvas, Level lv, int c0, int c1) {
   final ceiling = _ceilingBottom(lv, 1);
-  final ink = Paint()..color = kInk;
+  final cartoon = Cartoon.on;
+  final ink = Paint()..color = cartoon ? Cartoon.stoneDeep : kInk;
   const span = kTile * 5;
   for (var x = kTile * 1.5; x < lv.pixelWidth; x += span) {
     if (x < c0 * kTile || x >= (c1 + 1) * kTile) continue;
@@ -777,6 +802,23 @@ void _cisternVaults(Canvas canvas, Level lv, int c0, int c1) {
         ..close(),
       ink,
     );
+    if (cartoon) {
+      // Kemerin ışık alan alt kenarı.
+      canvas.drawPath(
+        Path()
+          ..moveTo(x, ceiling + 64)
+          ..quadraticBezierTo(
+            x + span / 2,
+            ceiling - 24,
+            x + span,
+            ceiling + 64,
+          ),
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2.5
+          ..color = Cartoon.archRim,
+      );
+    }
     final c = (x / kTile).floor();
     var hasFront = false;
     for (var r = 0; r < lv.height; r++) {
@@ -786,7 +828,7 @@ void _cisternVaults(Canvas canvas, Level lv, int c0, int c1) {
     final top = _ceilingBottom(lv, c);
     final floor = _floorTop(lv, c, top ~/ kTile);
     if (!hasFront && floor > top + 80) {
-      _column(canvas, x, top + 40, floor, back: true);
+      _column(canvas, x, top + 40, floor, back: true, cartoon: cartoon);
     }
   }
 }
@@ -895,7 +937,12 @@ void _column(
   double top,
   double bottom, {
   bool back = false,
+  bool cartoon = false,
 }) {
+  if (cartoon) {
+    _cartoonColumn(canvas, cx, top, bottom, back: back);
+    return;
+  }
   final body = Paint()..color = back ? const Color(0xFF1C100B) : _stone;
   const hw = 11.0;
   canvas.drawRect(
@@ -1063,6 +1110,7 @@ Picture _buildForeground(Level lv, int c0, int c1, int r0, int r1) {
           c * kTile + kTile / 2,
           top + 40,
           _floorTop(lv, c, r + 1),
+          cartoon: Cartoon.on && lv.def.theme == LevelTheme.cistern,
         );
         continue;
       }
@@ -1097,6 +1145,8 @@ Picture _buildForeground(Level lv, int c0, int c1, int r0, int r1) {
 
 /// Sarnıcın suyu: oyuncunun önünde çizilir, düşen her şeyi yutar.
 class WaterComponent extends Component with HasGameReference<GolgeGame> {
+  bool get _cartoon => Cartoon.on && level.def.theme == LevelTheme.cistern;
+
   WaterComponent(this.level) : super(priority: 26) {
     for (var c = 0; c < level.width; c++) {
       for (var r = 0; r < level.height; r++) {
@@ -1147,11 +1197,11 @@ class WaterComponent extends Component with HasGameReference<GolgeGame> {
         bottom,
       );
       final body = _bodies.putIfAbsent(
-        top,
+        top + (_cartoon ? 0.25 + Cartoon.toneStep * 0.1 : 0),
         () => Paint()
           ..shader = ui.Gradient.linear(Offset(0, top), Offset(0, top + 90), [
-            const Color(0xF0381A10),
-            const Color(0xFF0A0504),
+            if (_cartoon) Cartoon.water else const Color(0xF0381A10),
+            if (_cartoon) Cartoon.waterDeep else const Color(0xFF0A0504),
           ]),
       );
       canvas.drawRect(rect, body);
@@ -1164,15 +1214,18 @@ class WaterComponent extends Component with HasGameReference<GolgeGame> {
         final y = top + 3 + i * 9 + math.sin(phase) * 1.5;
         final len = 6 + 6 * (0.5 + 0.5 * math.sin(phase * 1.3));
         final gx = x + ((c * 13 + i * 11) % 24) + math.sin(_t * 0.5 + c) * 3;
-        glint.color = const Color(0xFFE8915A).withValues(
-          alpha: (0.35 - i * 0.1) * (0.6 + 0.4 * math.sin(phase * 2)),
-        );
+        glint.color = (_cartoon ? Cartoon.glint : const Color(0xFFE8915A))
+            .withValues(
+              alpha: (0.35 - i * 0.1) * (0.6 + 0.4 * math.sin(phase * 2)),
+            );
         canvas.drawLine(Offset(gx, y), Offset(gx + len, y), glint);
       }
     }
     // Sütunların su üstündeki dalgalı yansımaları.
     final reflection = Paint()
-      ..color = const Color(0xFF050302).withValues(alpha: 0.55);
+      ..color = (_cartoon ? Cartoon.stone : const Color(0xFF050302)).withValues(
+        alpha: 0.55,
+      );
     for (final cx in _columns) {
       if (cx < view.left - kTile || cx > view.right + kTile) continue;
       final top = _surface[(cx / kTile).floor()];
@@ -1185,8 +1238,10 @@ class WaterComponent extends Component with HasGameReference<GolgeGame> {
     // Su yüzünün ince ışığı: yalnız suyun olduğu sütunlarda (önceden bütün
     // bölüm boyunca, kayaların üstünden de geçen bir çizgiydi).
     final edge = Paint()
-      ..color = const Color(0xFFC0703A).withValues(alpha: 0.25)
-      ..strokeWidth = 1;
+      ..color = (_cartoon ? Cartoon.lip : const Color(0xFFC0703A)).withValues(
+        alpha: _cartoon ? 0.5 : 0.25,
+      )
+      ..strokeWidth = _cartoon ? 1.5 : 1;
     for (final MapEntry(key: c, value: top) in visible) {
       canvas.drawLine(
         Offset(c * kTile.toDouble(), top),
@@ -1245,6 +1300,150 @@ void _surfaceLight(
       Offset(gx, gy),
       Offset(gx + 3 + rnd.nextDouble() * 4, gy + 1),
       grain,
+    );
+  }
+}
+
+// --------------------------------------------------------- görsel deneme
+
+/// Karikatürize taş: sıcak kahve gövde, sıra sıra taş derzleri; yüzeyde
+/// ışık alan kalın bir dudak (basılacak kenar tek bakışta okunur).
+void _cartoonStone(
+  Canvas canvas,
+  Level lv,
+  int c,
+  int r,
+  double x,
+  double y,
+  math.Random rnd,
+) {
+  final top = r > 0 && !lv.solid(c, r - 1);
+  // Yüzeyden derinlik (0 = üst karo): taş derinleştikçe koyulaşır, derz
+  // kaybolur; göz yalnız basılacak kenarda kalır.
+  var depth = 0;
+  while (depth < 4 && r - depth - 1 >= 0 && lv.solid(c, r - depth - 1)) {
+    depth++;
+  }
+  final deep = depth >= 2;
+  canvas.drawRect(
+    Rect.fromLTWH(x - 0.5, y - 0.5, kTile + 1, kTile + 1),
+    Paint()
+      ..color = Color.lerp(
+        Cartoon.stone,
+        Cartoon.stoneBottom,
+        (depth / 3).clamp(0.0, 1.0),
+      )!,
+  );
+  if (depth >= 3) return;
+  // Derzler: yarım karo kaymalı taş sıraları.
+  final seam = Paint()
+    ..color = Cartoon.seam.withValues(alpha: deep ? 0.25 : 0.55)
+    ..strokeWidth = 1.2;
+  for (var row = 0; row < 2; row++) {
+    final sy = y + row * 16.0 + (top ? 8 : 0);
+    if (sy > y + kTile - 2) continue;
+    canvas.drawLine(Offset(x, sy), Offset(x + kTile, sy), seam);
+    final off = (r + row).isEven ? 0.0 : 16.0;
+    final vx = x + off + 8 * rnd.nextDouble() * 0.2;
+    canvas.drawLine(
+      Offset(vx, sy),
+      Offset(vx, math.min(sy + 16, y + kTile)),
+      seam,
+    );
+  }
+  if (!top) return;
+  // Üst dudak: aydınlık bant, en üstte sıcak çizgi, altında koyu kesik.
+  canvas.drawRect(
+    Rect.fromLTWH(x - 0.5, y, kTile + 1, 6),
+    Paint()..color = Cartoon.lip,
+  );
+  canvas.drawRect(
+    Rect.fromLTWH(x - 0.5, y, kTile + 1, 1.8),
+    Paint()..color = Cartoon.lipHot,
+  );
+  canvas.drawRect(
+    Rect.fromLTWH(x - 0.5, y + 6, kTile + 1, 1.6),
+    Paint()..color = Cartoon.seam.withValues(alpha: 0.8),
+  );
+  // Dudakta birkaç çentik.
+  final notch = Paint()..color = Cartoon.stone.withValues(alpha: 0.5);
+  for (var i = 0; i < 2; i++) {
+    final nx = x + 4 + rnd.nextDouble() * (kTile - 10);
+    canvas.drawRect(
+      Rect.fromLTWH(nx, y + 2.5, 3 + rnd.nextDouble() * 3, 1.4),
+      notch,
+    );
+  }
+}
+
+/// Karikatürize sütun: kalın gövde, iri başlık ve kaide, ışık alan sol
+/// kenar, tavus gözü oymaları.
+void _cartoonColumn(
+  Canvas canvas,
+  double cx,
+  double top,
+  double bottom, {
+  bool back = false,
+}) {
+  final hw = back ? 10.0 : 15.0;
+  final body = back
+      ? (Paint()..color = Cartoon.backCol)
+      : (Paint()
+          ..shader = ui.Gradient.linear(
+            Offset(cx - hw, 0),
+            Offset(cx + hw, 0),
+            Cartoon.colGrad,
+            const [0, 0.42, 1],
+          ));
+  final cap = Paint()..color = back ? Cartoon.backCol : Cartoon.stone;
+  final capW = back ? 5.0 : 12.0;
+  canvas.drawRect(Rect.fromLTRB(cx - hw, top, cx + hw, bottom), body);
+  // Başlık: iki kademe.
+  canvas.drawPath(
+    Path()
+      ..moveTo(cx - hw - capW, top)
+      ..lineTo(cx + hw + capW, top)
+      ..lineTo(cx + hw + 4, top + 10)
+      ..lineTo(cx + hw, top + 18)
+      ..lineTo(cx - hw, top + 18)
+      ..lineTo(cx - hw - 4, top + 10)
+      ..close(),
+    cap,
+  );
+  canvas.drawRect(
+    Rect.fromLTRB(cx - hw - capW, top, cx + hw + capW, top + 2.5),
+    Paint()..color = Cartoon.lip.withValues(alpha: back ? 0.35 : 0.8),
+  );
+  // Kaide.
+  canvas.drawRect(
+    Rect.fromLTRB(cx - hw - 6, bottom - 12, cx + hw + 6, bottom),
+    cap,
+  );
+  canvas.drawRect(
+    Rect.fromLTRB(cx - hw - 6, bottom - 12, cx + hw + 6, bottom - 10),
+    Paint()..color = Cartoon.lip.withValues(alpha: back ? 0.3 : 0.7),
+  );
+  if (back) return;
+  canvas.drawLine(
+    Offset(cx - hw + 1.5, top + 18),
+    Offset(cx - hw + 1.5, bottom - 12),
+    Paint()
+      ..color = Cartoon.lip.withValues(alpha: 0.55)
+      ..strokeWidth = 2.5,
+  );
+  final eye = Paint()
+    ..color = Cartoon.lip.withValues(alpha: 0.45)
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 1.8;
+  for (var y = top + 46; y < bottom - 36; y += 40) {
+    canvas.drawOval(
+      Rect.fromCenter(center: Offset(cx, y), width: 12, height: 20),
+      eye,
+    );
+    canvas.drawCircle(
+      Offset(cx, y),
+      2,
+      Paint()..color = Cartoon.lip.withValues(alpha: 0.4),
     );
   }
 }

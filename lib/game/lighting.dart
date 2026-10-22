@@ -36,7 +36,8 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
       );
 
   static double _baseDarkness(LevelTheme theme) => switch (theme) {
-    LevelTheme.cistern => 0.48,
+    // Görsel deneme: renk dili okunsun diye sarnıç çok daha aydınlık.
+    LevelTheme.cistern => Cartoon.on ? Cartoon.darkness : 0.48,
     LevelTheme.cave => 0.45,
     LevelTheme.cliffs => 0.32,
     LevelTheme.sky => 0.18,

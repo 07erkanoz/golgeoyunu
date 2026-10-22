@@ -1201,6 +1201,9 @@ kn.put(271,27,'K'); kn.put(275,27,'M'); kn.put(277,27,'F')
 # 6) Şems'in Kuyusu: sokak kuyuda biter; dipte karanlık bir geçit
 kn.fill(283,28,331,47,'#')
 kn.fill(330,12,331,27,'#')                        # dergâhın duvarı
+# Dergâhın damı: minareden süzülüp buraya inen geri dönebilsin (yoksa
+# iki yanı yüksek duvar, sıkışılır).
+kn.fill(332,11,332,25,'|')
 kc(305,28,306,39); kc(305,40,331,42)
 kn.put(305,42,'p'); kn.put(306,42,'K'); kn.put(309,42,'F'); kn.put(308,41,')')
 kn.put(307,40,'x'); kn.put(330,42,'X'); kn.put(318,40,'e'); kn.put(322,42,'M')

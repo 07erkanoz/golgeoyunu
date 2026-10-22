@@ -307,6 +307,9 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     effects.fadeTo(0, 1.6);
     GameAudio.instance.menuMusic(true);
     overlays.remove(settingsOverlay);
+    overlays.remove(recentOverlay);
+    _settingsShown = false;
+    recentOpen = false;
     settingsOpen.value = false;
     _showOverlay(menuOverlay);
   }
@@ -580,21 +583,39 @@ class GolgeGame extends FlameGame with KeyboardEvents {
 
   void toggleRecent() {
     if (menuMode.value) return;
+    if (!recentOpen && _settingsShown) return;
+    recentOpen = !recentOpen;
     if (recentOpen) {
-      recentOpen = false;
-      overlays.remove(recentOverlay);
-      settingsOpen.value = false;
-      onFocusGame?.call();
-      resumeEngine();
-      GameAudio.instance.resumeAll();
-    } else {
-      if (overlays.isActive(settingsOverlay)) return;
-      recentOpen = true;
       controls.resetAll();
       _showOverlay(recentOverlay);
-      settingsOpen.value = true;
-      pauseEngine();
-      GameAudio.instance.pauseAll();
+    } else {
+      overlays.remove(recentOverlay);
+    }
+    _syncPanels();
+  }
+
+  /// Ayarlar paneli açık mı (bindirme kayıtlı olmasa da: testlerde).
+  bool _settingsShown = false;
+
+  /// Açık panel var mı: oyun ancak hiçbiri açık değilken yürür. Duraklama
+  /// tek tek açma/kapama çağrılarından değil, bu durumdan türer (iki panel
+  /// üst üste açılıp biri kapanınca oyun arkada yürümesin).
+  bool get panelOpen => recentOpen || _settingsShown;
+
+  void _syncPanels() {
+    settingsOpen.value = panelOpen;
+    if (menuMode.value) return;
+    if (panelOpen) {
+      if (!paused) {
+        pauseEngine();
+        GameAudio.instance.pauseAll();
+      }
+    } else {
+      onFocusGame?.call();
+      if (paused) {
+        resumeEngine();
+        GameAudio.instance.resumeAll();
+      }
     }
   }
 
@@ -609,24 +630,17 @@ class GolgeGame extends FlameGame with KeyboardEvents {
   void Function()? onFocusGame;
 
   void toggleSettings() {
-    if (overlays.isActive(settingsOverlay)) {
-      overlays.remove(settingsOverlay);
-      settingsOpen.value = false;
-      onFocusGame?.call();
-      if (!menuMode.value) {
-        resumeEngine();
-        GameAudio.instance.resumeAll();
-      }
-    } else {
+    _settingsShown = !_settingsShown;
+    if (_settingsShown) {
       // Basılı kalan tuş ya da parmak menü kapanınca oyuncuyu yürütmesin.
       controls.resetAll();
       _showOverlay(settingsOverlay);
-      settingsOpen.value = true;
-      if (!menuMode.value) {
-        pauseEngine();
-        GameAudio.instance.pauseAll();
-      }
+    } else {
+      overlays.remove(settingsOverlay);
+      // Menüde ayarlar kapanınca odak yine oyuna (menü tuşlarına) döner.
+      if (menuMode.value) onFocusGame?.call();
     }
+    _syncPanels();
   }
 
   /// Testler için: bölüm başlığını (ve ardından ozan dizesini) gösterir.
@@ -1294,6 +1308,9 @@ class GolgeGame extends FlameGame with KeyboardEvents {
           return;
         }
         final ending = epilogueText;
+        // Oyun bitti: tiyatronun son perdesi bundan sonra açılır.
+        Settings.finished = true;
+        Settings.save();
         narration.playCinematic(
           [
             ...ending.take(ending.length - 1),
@@ -1906,7 +1923,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         event.logicalKey == LogicalKeyboardKey.gameButtonSelect;
     if (menuMode.value) {
       if (event is KeyDownEvent && esc) {
-        if (overlays.isActive(settingsOverlay)) {
+        if (_settingsShown) {
           toggleSettings();
         } else if (SaveGame.current != null) {
           // Ana menüde Esc: kaldığın yerden devam.
@@ -1927,7 +1944,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         toggleRecent();
         return KeyEventResult.handled;
       }
-      if (esc && narration.inCinematic && !overlays.isActive(settingsOverlay)) {
+      if (esc && narration.inCinematic && !_settingsShown) {
         narration.skipAll();
         return KeyEventResult.handled;
       }
@@ -1980,6 +1997,20 @@ class GolgeGame extends FlameGame with KeyboardEvents {
       if (const bool.fromEnvironment('DEV') &&
           event.logicalKey == LogicalKeyboardKey.keyC) {
         _closeUp = _closeUp == 1 ? 3 : 1;
+      }
+      // Geliştirici kısayolu: K karikatürize görsel denemesini açar/kapar
+      // (şimdilik yalnız Yerebatan).
+      if (const bool.fromEnvironment('DEV') &&
+          event.logicalKey == LogicalKeyboardKey.keyK) {
+        Cartoon.on = !Cartoon.on;
+      }
+      // Geliştirici kısayolu: , ve . Yerebatan denemesinin tonunu
+      // koyulaştırır / açar (ayarlar panelinde değeri görünür).
+      if (const bool.fromEnvironment('DEV') &&
+          (event.logicalKey == LogicalKeyboardKey.comma ||
+              event.logicalKey == LogicalKeyboardKey.period)) {
+        final d = event.logicalKey == LogicalKeyboardKey.comma ? -0.05 : 0.05;
+        Cartoon.tone = (Cartoon.tone + d).clamp(0.0, 1.0);
       }
       // Geliştirici kısayolu: V karakter stilini değiştirir.
       if (const bool.fromEnvironment('DEV') &&

@@ -298,4 +298,57 @@ void main() {
       expect(p.isDead, isFalse);
     },
   );
+  testWithGame<GolgeGame>(
+    'ateşböceği duvarın ardından bekçiyi çekmez; görülen ışık çeker',
+    GolgeGame.new,
+    (game) async {
+      game.debugLoadLevel(0);
+      await game.ready();
+      game.cinematic = false;
+      final g = game.world.children.whereType<Guard>().first;
+      final lv = game.level;
+      final eye = g.lanternWorld;
+      Vector2? hidden;
+      Vector2? open;
+      for (var dx = -360.0; dx <= 360; dx += 8) {
+        for (var dy = -120.0; dy <= 120; dy += 8) {
+          final p = eye + Vector2(dx, dy);
+          if (p.length2 == 0 || (p - eye).length > 340) continue;
+          final c = (p.x / kTile).floor();
+          final r = (p.y / kTile).floor();
+          if (lv.solid(c, r)) continue;
+          bool clear(Vector2 q) => lv.lineOfSight(eye, q);
+          final around = [
+            for (final o in [
+              Vector2(0, 0),
+              Vector2(8, 0),
+              Vector2(-8, 0),
+              Vector2(0, 8),
+              Vector2(0, -8),
+            ])
+              clear(p + o),
+          ];
+          if (around.every((v) => !v)) hidden ??= p;
+          if (around.every((v) => v) && (p - eye).length > 60) open ??= p;
+        }
+      }
+      expect(hidden, isNotNull, reason: 'duvar ardında bir yer bulunmalı');
+      expect(open, isNotNull);
+      g
+        ..state = GuardState.patrol
+        ..suspicion = 0;
+      final behind = FireflyLure(hidden!, 1);
+      await game.world.add(behind);
+      await game.ready();
+      g.update(1 / 60);
+      expect(g.state, isNot(GuardState.investigate));
+      behind.removeFromParent();
+      await game.ready();
+      final seen = FireflyLure(open!, 1);
+      await game.world.add(seen);
+      await game.ready();
+      g.update(1 / 60);
+      expect(g.state, GuardState.investigate);
+    },
+  );
 }

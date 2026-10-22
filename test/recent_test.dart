@@ -31,4 +31,31 @@ void main() {
       expect(game.settingsOpen.value, isFalse);
     },
   );
+  testWithGame<GolgeGame>(
+    'iki panel: biri kapanınca öbürü açıkken oyun duraklı kalır',
+    GolgeGame.new,
+    (game) async {
+      game.debugLoadLevel(0);
+      await game.ready();
+      game.cinematic = false;
+      run(game, 0.2);
+      game.toggleSettings();
+      expect(game.paused, isTrue);
+      // Ayarlar açıkken "Az önce" açılmaz.
+      game.toggleRecent();
+      expect(game.recentOpen, isFalse);
+      game.toggleSettings();
+      expect(game.paused, isFalse);
+      game.toggleRecent();
+      expect(game.paused, isTrue);
+      // "Az önce" açıkken ayarlar açılıp kapanırsa oyun yine bekler.
+      game.toggleSettings();
+      game.toggleSettings();
+      expect(game.paused, isTrue);
+      expect(game.settingsOpen.value, isTrue);
+      game.toggleRecent();
+      expect(game.paused, isFalse);
+      expect(game.settingsOpen.value, isFalse);
+    },
+  );
 }

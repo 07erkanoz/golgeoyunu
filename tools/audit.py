@@ -61,6 +61,18 @@ def bellows_of(name):
     body = block[k:block.index(']', k)]
     return [tuple(int(v) for v in t) for t in re.findall(r'\((\d+),\s*(\d+),\s*(\d+)\)', body)]
 
+def nevruz_of(name):
+    """Bölümün Nevruz örsü (levels.dart `nevruz: (sütun, satır)`): üç kez
+    vurulunca sağındaki en yakın kapıyı açar."""
+    src = open('lib/game/levels.dart', encoding='utf-8').read()
+    i = src.index('map: %s' % name)
+    j = src.rindex('LevelDef(', 0, i)
+    k = src.find('LevelDef(', i)
+    block = src[j:k if k > 0 else len(src)]
+    m = re.search(r'nevruz:\s*\((\d+),\s*(\d+)\)', block)
+    return (int(m.group(1)), int(m.group(2))) if m else None
+
+
 # Yerin altı (Erlik'in katı): `a` kut kafesi (kol gibi en yakın kapıyı
 # açar, üstüne basılmaz), `b` Körmös (havada, engel değil), `W` Çalkuyruk:
 # ona varılınca atla zıplanır (1.42 kat hız: yaklaşık iki kat yükseklik).
@@ -499,6 +511,13 @@ def audit(idx):
                 bs = groups.get(g, [])
                 if bs and all(b in reach for b in bs) and ('vein', g) not in used:
                     new.append((('vein', g), g))
+        anvil = nevruz_of(name)
+        if anvil and ('nevruz', anvil) not in used and any(
+                (anvil[0] + dc, anvil[1] + dr) in reach
+                for dc in (-1, 0, 1) for dr in (-1, 0, 1)):
+            g = nearest_gate(gs, opened_gates, anvil, right_only=True)
+            if g is not None:
+                new.append((('nevruz', anvil), g))
         if under and not horse and any(c in reach for c in cells(rows, 'W')):
             # Çalkuyruk'a varıldı: bundan sonra atla zıplanır.
             horse = True
