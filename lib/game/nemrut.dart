@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui';
 
@@ -6,6 +7,7 @@ import 'package:flutter/services.dart' show rootBundle;
 
 import 'audio.dart';
 import 'entities.dart';
+import 'giant_puppet.dart';
 import 'golge_game.dart';
 import 'level.dart';
 import 'mechanics.dart';
@@ -666,33 +668,34 @@ class StoneGiant extends PositionComponent
     hits = hitsToFall;
     _fallT = 1;
     _impact = true;
+    _afterImpact = 5;
     return [this, GiantBridge(_bridgeAt)];
   }
 
+  /// Köprü: yatan gövdenin üstü (gövde sağdaki ayak ucundan uzanır).
   Vector2 get _bridgeAt =>
-      Vector2(position.x + size.x / 2, position.y - kTile * 1.2);
+      Vector2(position.x + size.x / 2 + 40, position.y - kTile * 1.2);
 
-  /// Kulağın dünyadaki yeri.
-  Vector2 get ear => NemrutImages.giantReady
-      // Çizimdeki kulak (SVG 390,183): baş yürüyüş yönünün tersine bakan
-      // yanda görünür.
-      ? Vector2(
-          position.x + size.x * 0.5 - _dir * (390 - 320) * _svgScale,
-          position.y - (801 - 183) * _svgScale,
-        )
-      : Vector2(
-          position.x + size.x * 0.5 + _dir * 22,
-          position.y - size.y * 0.78,
-        );
-
-  /// SVG çiziminin (yer 801, tepe ~34) dev boyuna ölçeği.
-  double get _svgScale => size.y / (801 - 34);
+  /// Kulağın dünyadaki yeri (kuklanın başıyla birlikte oynar).
+  Vector2 get ear {
+    final pp = _puppet;
+    final p = _pose;
+    if (pp == null || p == null) {
+      return Vector2(position.x + size.x * 0.5, position.y - size.y * 0.78);
+    }
+    return _toWorld(pp.earOf(p));
+  }
 
   @override
   void update(double dt) {
     super.update(dt);
     _t += dt;
     _flinch.update(0, dt);
+    _tick(dt);
+    _refreshPose();
+  }
+
+  void _tick(double dt) {
     for (var i = _dust.length - 1; i >= 0; i--) {
       final (x, age) = _dust[i];
       if (age + dt > 1.4) {
@@ -702,14 +705,16 @@ class StoneGiant extends PositionComponent
       }
     }
     if (fallen) {
+      if (_impact) _afterImpact += dt;
       _fallT = math.min(1, _fallT + dt * 0.7);
       if (_fallT >= 1 && !_impact) {
         // Gövde yere çarpar: toz, sarsıntı, gümbürtü.
         _impact = true;
         game.shake(12);
         GameAudio.instance.play('land');
-        for (var k = 0; k < 7; k++) {
-          _dust.add((size.x * 0.5 + (k - 3) * 40.0, 0));
+        // Yatan gövde boyunca toz kalkar.
+        for (var k = 0; k < 8; k++) {
+          _dust.add((size.x * 0.5 + 40 + k * 40.0, 0));
         }
       }
       return;
@@ -759,6 +764,7 @@ class StoneGiant extends PositionComponent
     // Ağır adımlar: iki nokta arasında gidip gelir.
     position.x += _dir * 26 * dt;
     _walk += dt;
+    _puppet?.walk(26 * dt / GiantPuppet.scale);
     if (position.x > _home + span) _dir = -1;
     if (position.x < _home) _dir = 1;
     final p = game.player;
@@ -838,11 +844,16 @@ class StoneGiant extends PositionComponent
     return lv.pixelHeight.toDouble();
   }
 
-  /// Elin yeri (taş buradan kalkar): başın yanında, kulak tarafında.
-  Vector2 get hand => Vector2(
-    position.x + size.x / 2 - _dir * size.x * 0.12,
-    position.y - size.y - 26,
-  );
+  /// Elin yeri (taş buradan kalkar): başının üstünde tuttuğu kaya.
+  Vector2 get hand {
+    final pp = _puppet;
+    if (pp == null) {
+      return Vector2(position.x + size.x / 2, position.y - size.y - 26);
+    }
+    final p = pp.pose(throwStage: 1, throwK: 1);
+    final b = pp.boulder(p, 1, 1);
+    return b == null ? _toWorld(pp.earOf(p)) : _toWorld(b);
+  }
 
   void _launch() {
     final t = _target;
@@ -872,6 +883,8 @@ class StoneGiant extends PositionComponent
           );
         }
         if (hits >= hitsToFall) {
+          final pose = _pose;
+          if (pose != null) _puppet?.freezeForFall(pose);
           fallen = true;
           GameAudio.instance.play('crumble');
           game.once('giantFell', S.of('giantFell'));
@@ -898,51 +911,62 @@ class StoneGiant extends PositionComponent
     }
   }
 
-  static final _stone = Paint()..color = const Color(0xFF241E2C);
-  static final _edge = Paint()
-    ..color = const Color(0xFF4A4058)
-    ..strokeWidth = 2
-    ..strokeCap = StrokeCap.round;
-  static final _seam = Paint()
-    ..color = const Color(0xFF15111A)
-    ..strokeWidth = 1.6
-    ..style = PaintingStyle.stroke;
+  // ------------------------------------------------------------ görünüş
 
-  /// [a]dan [b]ye uzanan, köşeleri kırık bir taş blok; üst kenarında soluk
-  /// ışık, ortasında derz.
-  void _block(
-    Canvas canvas,
-    Offset a,
-    Offset b,
-    double width, {
-    double chip = 0.2,
-  }) {
-    final d = b - a;
-    final len = d.distance;
-    if (len < 0.01) return;
-    final u = d / len;
-    final n = Offset(-u.dy, u.dx) * (width / 2);
-    final c = math.min(width, len) * chip;
-    final p = Path()
-      ..moveTo((a + n + u * c).dx, (a + n + u * c).dy)
-      ..lineTo((b + n - u * c * 0.6).dx, (b + n - u * c * 0.6).dy)
-      ..lineTo((b + n * 0.55).dx, (b + n * 0.55).dy)
-      ..lineTo((b - n * 0.8).dx, (b - n * 0.8).dy)
-      ..lineTo((b - n - u * c).dx, (b - n - u * c).dy)
-      ..lineTo((a - n + u * c * 0.5).dx, (a - n + u * c * 0.5).dy)
-      ..lineTo((a - n * 0.6).dx, (a - n * 0.6).dy)
-      ..lineTo((a + n * 0.7).dx, (a + n * 0.7).dy)
-      ..close();
-    canvas.drawPath(p, _stone);
-    // Işığa bakan kenar (sol üst) ve ortadaki derz.
-    final lit = n.dx < 0 || n.dy < 0 ? n : -n;
-    canvas.drawLine(a + lit * 0.85 + u * c, b + lit * 0.85 - u * c, _edge);
-    canvas.drawLine(
-      a + u * (len * 0.5) - n * 0.6,
-      a + u * (len * 0.5) + n * 0.6,
-      _seam,
+  /// Yeni taş dev kuklası (yürüyüş, kaya kaldırma, sendeleme, devrilme).
+  GiantPuppet? _puppet;
+  GiantPose? _pose;
+
+  /// Çarpmadan sonra geçen süre (devrilmenin sekmesi için).
+  double _afterImpact = 0;
+
+  @override
+  FutureOr<void> onLoad() {
+    // Veri yüklüyse bekletmeden: ölünce bölüm yeniden kurulurken dev aynı
+    // karede yerini alır (düzen kaydı onu kaçırmaz).
+    final ready = GiantPuppet.cached();
+    if (ready != null) {
+      _puppet = ready;
+      _refreshPose();
+      return null;
+    }
+    return GiantPuppet.load().then((p) {
+      _puppet = p;
+      _refreshPose();
+    });
+  }
+
+  int get _throwStage => switch (_throw) {
+    _Throw.none => 0,
+    _Throw.windup => 1,
+    _Throw.release => 2,
+    _Throw.recover => 3,
+  };
+
+  double get _throwK => switch (_throw) {
+    _Throw.windup => _throwT / windupTime,
+    _Throw.release => _throwT / 0.35,
+    _Throw.recover => _throwT / recoverTime,
+    _Throw.none => 0,
+  };
+
+  /// O anki duruşu kurar (kulak ve elin yeri de buradan okunur).
+  void _refreshPose() {
+    final pp = _puppet;
+    if (pp == null || fallen) return;
+    _pose = pp.pose(
+      stagger: math.max(0, _stagger),
+      throwStage: _throwStage,
+      throwK: _throwK,
+      flinch: -_flinch.value.abs() * 0.02,
     );
   }
+
+  /// Kuklanın yerel noktasının dünyadaki yeri.
+  Vector2 _toWorld(Offset q) => Vector2(
+    position.x + size.x / 2 + _dir * q.dx * GiantPuppet.scale,
+    position.y + q.dy * GiantPuppet.scale,
+  );
 
   @override
   void render(Canvas canvas) {
@@ -962,234 +986,31 @@ class StoneGiant extends PositionComponent
         dust,
       );
     }
+    final pp = _puppet;
+    if (pp == null) return;
+    const s = GiantPuppet.scale;
     canvas.save();
-    // Yıkılış: önce dizler çöker, sonra gövde öne devrilir ve ağırlaşarak
-    // yere çarpar. Son hâli köprüyle aynı hizada yatan bir taş yığını.
-    final buckle = fallen ? (_fallT / 0.3).clamp(0.0, 1.0) : 0.0;
-    final topple = fallen ? ((_fallT - 0.2) / 0.8).clamp(0.0, 1.0) : 0.0;
-    final f = topple * topple;
     if (fallen) {
-      final k = 1 - 0.68 * f;
-      canvas.translate(w / 2, h - w * k / 2 * f);
-      canvas.rotate(f * math.pi / 2);
-      canvas.scale(k, 1);
-      canvas.translate(-w / 2, -h);
+      // Devrilme: tek parça taş olarak sağdaki ayak ucundan döner, yere
+      // çarpıp seker; yatan gövde biraz gömülür (üstü köprüyle aynı hizada).
+      final a = GiantPuppet.fallAngle(_fallT, _impact ? _afterImpact : 0);
+      final sink = _sink * (a / (math.pi / 2)).clamp(0.0, 1.0);
+      const px = GiantPuppet.pivotX * s;
+      canvas.translate(w / 2 + px, h + sink);
+      canvas.rotate(a);
+      canvas.translate(-px, 0);
+      canvas.scale(_dir * s, s);
+      pp.drawPose(canvas, pp.fallPose);
+    } else {
+      final p = _pose ?? pp.pose();
+      canvas.translate(w / 2, h);
+      canvas.scale(_dir * s, s);
+      pp.drawPose(canvas, p, boulderAt: pp.boulder(p, _throwStage, _throwK));
     }
-    final stung = !fallen && _stagger > 0 ? (_stagger / 2.4) : 0.0;
-    // Adım: ağırlık basan bacağa geçer, öbürü kalkıp öne gelir.
-    final walking = !fallen && _stagger <= 0 && _throw == _Throw.none;
-    final s =
-        ((_walk * _stepRate - math.pi / 2) % (2 * math.pi) + 2 * math.pi) %
-        (2 * math.pi);
-    final swingA = s < math.pi;
-    final half = (s % math.pi) / math.pi; // salınımın ne kadarı
-    final lift = math.sin(half * math.pi);
-    if (NemrutImages.giantReady) {
-      _renderSprites(
-        canvas,
-        buckle: buckle,
-        stung: stung,
-        walking: walking,
-        swingA: swingA,
-        half: half,
-        lift: lift,
-      );
-      if (hits > 0) _cracks(canvas, w, h);
-      canvas.restore();
-      _renderThrow(canvas);
-      if (!fallen) {
-        // Kulak: yerel çizim sol üst köşeden (konum ayakların yeri).
-        final e = ear - (position - Vector2(0, size.y));
-        glowDot(
-          canvas,
-          e.toOffset(),
-          16,
-          kWarmLight,
-          0.25 + 0.15 * math.sin(_t * 4),
-        );
-      }
-      return;
-    }
-    _renderDark(
-      canvas,
-      buckle: buckle,
-      stung: stung,
-      walking: walking,
-      swingA: swingA,
-      half: half,
-      lift: lift,
-    );
-    if (hits > 0) _cracks(canvas, w, h);
-    canvas.restore();
-    _renderThrow(canvas);
-    if (!fallen) {
-      final e = ear - (position - Vector2(0, size.y));
-      glowDot(
-        canvas,
-        e.toOffset(),
-        16,
-        kWarmLight,
-        0.25 + 0.15 * math.sin(_t * 4),
-      );
-    }
-    return;
-    // ignore: dead_code
-    const reach = 15.0;
-    // Kalça: basan ayağın üstüne kayar, basışta çöker.
-    final sway = (swingA ? 1 : -1) * 5.0 * lift;
-    final bob = -4 * lift + buckle * h * 0.14;
-    final hipY = h * 0.68 + bob;
-    final hipA = Offset(w * 0.36 + sway, hipY);
-    final hipB = Offset(w * 0.64 + sway, hipY);
-    double planted(double t) => _dir * reach * (1 - 2 * t);
-    double swung(double t) =>
-        _dir * reach * (-1 + 2 * (0.5 - math.cos(t * math.pi) / 2));
-    final footA = Offset(
-      w * 0.36 +
-          (walking ? (swingA ? swung(half) : planted(half)) : 0) -
-          buckle * 10,
-      h - (walking && swingA ? lift * 16 : 0),
-    );
-    final footB = Offset(
-      w * 0.64 +
-          (walking ? (!swingA ? swung(half) : planted(half)) : 0) +
-          buckle * 10,
-      h - (walking && !swingA ? lift * 16 : 0),
-    );
-    // Dizler yürüme yönüne kırılır (yıkılırken öne çöker).
-    final bend = _dir.toDouble();
-    for (final (hip, foot) in [(hipA, footA), (hipB, footB)]) {
-      final (knee, end) = solveLimb(
-        hip,
-        foot,
-        h * 0.175,
-        h * 0.175,
-        bend: bend,
-      );
-      _block(canvas, hip, knee, w * 0.17);
-      _block(canvas, knee, end.translate(0, -h * 0.03), w * 0.15);
-      _block(
-        canvas,
-        end.translate(-w * 0.1, -h * 0.018),
-        end.translate(w * 0.1, -h * 0.018),
-        h * 0.036,
-        chip: 0.1,
-      );
-    }
-    // Leğen ve gövde: genişleyen göğüs, kırık omuz taşları.
-    _block(
-      canvas,
-      Offset(w * 0.24 + sway, hipY),
-      Offset(w * 0.76 + sway, hipY),
-      h * 0.08,
-    );
-    final chest = h * 0.34 + bob * 0.8;
-    canvas.drawPath(
-      Path()
-        ..moveTo(w * 0.22 + sway, hipY - h * 0.02)
-        ..lineTo(w * 0.1 + sway * 0.7, chest)
-        ..lineTo(w * 0.16 + sway * 0.7, chest - h * 0.03)
-        ..lineTo(w * 0.84 + sway * 0.7, chest - h * 0.03)
-        ..lineTo(w * 0.9 + sway * 0.7, chest)
-        ..lineTo(w * 0.78 + sway, hipY - h * 0.02)
-        ..close(),
-      _stone,
-    );
-    canvas.drawLine(
-      Offset(w * 0.16 + sway * 0.7, chest - h * 0.025),
-      Offset(w * 0.84 + sway * 0.7, chest - h * 0.025),
-      _edge,
-    );
-    // Göğüs taşlarının derzleri.
-    for (final y in [0.43, 0.52, 0.6]) {
-      canvas.drawLine(
-        Offset(w * 0.2 + sway * 0.8, h * y + bob * 0.8),
-        Offset(w * 0.8 + sway * 0.8, h * y + bob * 0.8),
-        _seam,
-      );
-    }
-    // Kollar: yürürken bacakların tersine sallanır; temas anında kulak
-    // tarafındaki el kulağa gider, öbürü dengeyi toplar.
-    final swat = stung > 0
-        ? math.sin(math.min(1, (1 - stung) * 3) * math.pi / 2)
-        : 0.0;
-    final headC = Offset(
-      w * 0.5 + _flinch.value + sway * 0.6,
-      h * 0.22 + bob * 0.7,
-    );
-    for (final side in [-1.0, 1.0]) {
-      final shoulder = Offset(
-        w * (0.5 + side * 0.4) + sway * 0.7,
-        chest + h * 0.01,
-      );
-      final armSwing = walking ? (swingA ? 1 : -1) * side * lift * 10 : 0.0;
-      var hand = Offset(
-        shoulder.dx + side * 6 + armSwing * _dir,
-        h * 0.66 + bob * 0.5,
-      );
-      if (side == _dir && swat > 0) {
-        hand = Offset.lerp(hand, headC + Offset(side * 30, 6), swat)!;
-      } else if (stung > 0) {
-        hand = hand.translate(side * 14 * stung, -12 * stung);
-      }
-      if (buckle > 0) {
-        hand = hand.translate(side * 10 * buckle, -h * 0.05 * buckle);
-      }
-      final (elbow, end) = solveLimb(
-        shoulder,
-        hand,
-        h * 0.17,
-        h * 0.16,
-        bend: side,
-      );
-      _block(canvas, shoulder, elbow, w * 0.15);
-      _block(canvas, elbow, end, w * 0.13);
-      _block(
-        canvas,
-        shoulder.translate(-w * 0.07, -h * 0.01),
-        shoulder.translate(w * 0.07, -h * 0.01),
-        h * 0.05,
-        chip: 0.25,
-      );
-    }
-    // Baş: kulaktan kaçar (temas), sonra yerine döner; Nemrut heykellerinin
-    // sivri külahı.
-    canvas.save();
-    canvas.translate(headC.dx, headC.dy + h * 0.08);
-    canvas.rotate(_flinch.value * 0.012 - _dir * swat * 0.12);
-    canvas.translate(-headC.dx, -headC.dy - h * 0.08);
-    final hx = headC.dx;
-    final hy = headC.dy;
-    // Nemrut'un dev başı: Antiochos'un uzun tiarası; çenesi boynun üstünde.
-    final hh = h * 0.38;
-    final chin = Offset(hx, hy + h * 0.1);
-    canvas.save();
-    canvas.translate(chin.dx, chin.dy);
-    NemrutArt.head(canvas, NemrutHead.antiochos, hh);
-    canvas.restore();
-    // Gözler: kandil ateşi; her temasta söner, sendelerken titrer.
-    final flicker = stung > 0 ? (0.5 + 0.5 * math.sin(_t * 30)) : 1.0;
-    final glowA = fallen ? 0.0 : (0.85 - hits * 0.22).clamp(0.0, 1.0) * flicker;
-    for (final sx in const [-1.0, 1.0]) {
-      final e = chin + Offset(sx * 10 * hh / 100, -34 * hh / 100);
-      canvas.drawOval(
-        Rect.fromCenter(center: e, width: 16, height: 9),
-        Paint()
-          ..color = const Color(0xFFFF9A40).withValues(alpha: 0.35 * glowA)
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
-      );
-      canvas.drawOval(
-        Rect.fromCenter(center: e, width: 8, height: 3.2),
-        Paint()..color = const Color(0xFFFFC080).withValues(alpha: glowA),
-      );
-    }
-    canvas.restore();
-    // Çatlaklar: her temasta yenisi açılır, içinden kor gibi ışık sızar.
-    if (hits > 0) _cracks(canvas, w, h);
     canvas.restore();
     if (!fallen) {
       // Kulak: ateşböceğinin girmesi gereken yer, hafifçe parlar.
-      final e = ear - position;
+      final e = ear - (position - Vector2(0, h));
       glowDot(
         canvas,
         e.toOffset(),
@@ -1199,6 +1020,9 @@ class StoneGiant extends PositionComponent
       );
     }
   }
+
+  /// Yatan gövdenin gömülmesi: üstü köprünün üstüyle aynı hizaya iner.
+  static const double _sink = 32;
 }
 
 enum _Throw { none, windup, release, recover }
@@ -1350,474 +1174,9 @@ void _drawBoulder(
 }
 
 /// Temas sayısına göre devin çatlakları (yerel koordinatta, oranla).
-const _crackLines = [
-  // 1. temas: başta ve omuzda
-  [
-    Offset(0.46, 0.14),
-    Offset(0.5, 0.2),
-    Offset(0.47, 0.26),
-    Offset(0.52, 0.31),
-  ],
-  [Offset(0.2, 0.31), Offset(0.27, 0.38), Offset(0.24, 0.45)],
-  // 2. temas: gövde boyunca
-  [Offset(0.62, 0.33), Offset(0.56, 0.42), Offset(0.6, 0.5), Offset(0.54, 0.6)],
-  [Offset(0.3, 0.45), Offset(0.38, 0.52), Offset(0.34, 0.62)],
-  // 3. temas (yıkılırken): bacaklara iner
-  [Offset(0.5, 0.6), Offset(0.45, 0.7), Offset(0.5, 0.8), Offset(0.46, 0.92)],
-];
-
-extension on StoneGiant {
-  /// Kaldırılan taş ve onu tutan kol (kulağı örter): devin yerel çiziminde.
-  void _renderThrow(Canvas canvas) {
-    if (fallen) return;
-    if (_throw != _Throw.windup && _throw != _Throw.release) return;
-    final origin = position - Vector2(0, size.y);
-    Offset local(Vector2 v) => (v - origin).toOffset();
-    final lift = _throw == _Throw.windup
-        ? 1 - math.pow(1 - (_throwT / windupTime).clamp(0.0, 1.0), 2).toDouble()
-        : 1.0;
-    final handW = hand;
-    final shoulder = Vector2(
-      position.x + size.x / 2 - _dir * size.x * 0.3,
-      position.y - size.y * 0.7,
-    );
-    final rise = Vector2.zero()..setFrom(shoulder + (handW - shoulder) * lift);
-    if (_throw == _Throw.windup) {
-      // Taşı tutan kol: omuzdan başın yanına, kulağın önünden geçer.
-      _block(canvas, local(shoulder), local(rise), 30);
-      canvas.save();
-      canvas.translate(local(rise).dx, local(rise).dy - 20);
-      canvas.rotate(math.sin(_t * 9) * 0.05 * lift);
-      _drawBoulder(canvas, 26);
-      canvas.restore();
-    } else {
-      // Atış: kol öne savrulur.
-      final k = (_throwT / 0.35).clamp(0.0, 1.0);
-      final fore = Vector2(
-        position.x + size.x / 2 + _dir * size.x * 0.5 * k,
-        position.y - size.y * (1 - 0.3 * k),
-      );
-      _block(canvas, local(shoulder), local(fore), 30);
-    }
-  }
-
-  /// Karanlıkta yürüyen dev heykel: Antiochos tiaralı başı, kuşaklı Pers
-  /// tuniği, kıvrımlı geniş pantolon, arkada pelerin. Gövde gecenin kendisi
-  /// kadar koyu; yalnız arkasından vuran şafak kenarını çizer, gözleri kor.
-  void _renderDark(
-    Canvas canvas, {
-    required double buckle,
-    required double stung,
-    required bool walking,
-    required bool swingA,
-    required double half,
-    required double lift,
-  }) {
-    final w = size.x;
-    final h = size.y;
-    canvas.save();
-    // Çizim sağa bakar; sola yürürken aynalanır.
-    if (_dir < 0) {
-      canvas.translate(w, 0);
-      canvas.scale(-1, 1);
-    }
-    const body = Color(0xFF0B0910);
-    const rimCol = Color(0xFFD89A6E);
-    final fill = Paint()..color = body;
-    final rim = Paint()
-      ..color = rimCol.withValues(alpha: 0.75)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1.5);
-    final fold = Paint()
-      ..color = const Color(0xFF1E1826)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.6
-      ..strokeCap = StrokeCap.round;
-    // Parça: önce arkadan vuran ışığın kenarı (sola-yukarı kaydırılmış
-    // kopya), üstüne koyu gövde.
-    Path solid(List<Path> ps) {
-      var out = ps.first;
-      for (final q in ps.skip(1)) {
-        out = Path.combine(PathOperation.union, out, q);
-      }
-      return out;
-    }
-
-    void part(Path p) {
-      canvas.drawPath(p.shift(const Offset(-2.2, -1.6)), rim);
-      canvas.drawPath(p, fill);
-    }
-
-    // Ayak dibinde sis.
-    canvas.drawOval(
-      Rect.fromCenter(center: Offset(w / 2, h - 2), width: w * 1.6, height: 26),
-      Paint()
-        ..color = const Color(0xFFB8A8C0).withValues(alpha: 0.12)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10),
-    );
-    // Yürüyüş: ağırlık basan bacağa geçer, öbürü kalkıp öne gelir.
-    const reach = 16.0;
-    double planted(double t) => reach * (1 - 2 * t);
-    double swung(double t) =>
-        reach * (-1 + 2 * (0.5 - math.cos(t * math.pi) / 2));
-    final bob = -4 * lift + buckle * h * 0.14;
-    final hipY = h * 0.6 + bob;
-    final cx = w * 0.5;
-    final sway = (swingA ? 1 : -1) * 3.0 * lift;
-    // Bacak: geniş Pers pantolonu, dizde bükülür; ayakkabı kalın.
-    Path leg(Offset hip, Offset foot) {
-      final (knee, end) = solveLimb(hip, foot, h * 0.2, h * 0.2, bend: 1);
-      Path tube(Offset a, Offset b, double w0, double w1) {
-        final d = b - a;
-        final n = Offset(-d.dy, d.dx) / (d.distance + 1e-6);
-        return solid([
-          Path()
-            ..moveTo((a + n * w0).dx, (a + n * w0).dy)
-            ..lineTo((b + n * w1).dx, (b + n * w1).dy)
-            ..lineTo((b - n * w1).dx, (b - n * w1).dy)
-            ..lineTo((a - n * w0).dx, (a - n * w0).dy)
-            ..close(),
-          Path()..addOval(Rect.fromCircle(center: b, radius: w1)),
-        ]);
-      }
-
-      return solid([
-        tube(hip, knee, w * 0.13, w * 0.11),
-        tube(knee, end.translate(0, -h * 0.04), w * 0.11, w * 0.085),
-        Path()..addRRect(
-          RRect.fromRectAndRadius(
-            Rect.fromLTRB(
-              end.dx - w * 0.1,
-              end.dy - h * 0.05,
-              end.dx + w * 0.17,
-              end.dy,
-            ),
-            Radius.circular(w * 0.04),
-          ),
-        ),
-      ]);
-    }
-
-    Offset foot(bool swingLeg, double baseX) => Offset(
-      baseX +
-          (walking ? (swingLeg ? swung(half) : planted(half)) : 0) +
-          (swingLeg ? 0 : 0),
-      h - (walking && swingLeg ? lift * 16 : 0),
-    );
-    final backHip = Offset(cx - w * 0.08 + sway, hipY);
-    final frontHip = Offset(cx + w * 0.08 + sway, hipY);
-    // Arka bacak ve arka kol önce (koyu ama hafif soluk: derinlik).
-    final backLeg = leg(
-      backHip,
-      foot(!swingA, cx - w * 0.12) - Offset(buckle * 10, 0),
-    );
-    canvas.drawPath(backLeg, Paint()..color = const Color(0xFF15121B));
-    // Pelerin: omuzlardan arkaya, dizlere dek; yürürken dalgalanır.
-    final chestY = h * 0.3 + bob * 0.8;
-    final flap = math.sin(_t * 1.6) * 6 + (walking ? lift * 6 : 0);
-    part(
-      Path()
-        ..moveTo(cx - w * 0.2 + sway, chestY)
-        ..cubicTo(
-          cx - w * 0.42,
-          h * 0.45,
-          cx - w * 0.46 - flap,
-          h * 0.66,
-          cx - w * 0.36 - flap,
-          h * 0.8,
-        )
-        ..lineTo(cx - w * 0.1, h * 0.72)
-        ..lineTo(cx - w * 0.05 + sway, chestY)
-        ..close(),
-    );
-    final frontLeg = leg(
-      frontHip,
-      foot(swingA, cx + w * 0.12) + Offset(buckle * 10, 0),
-    );
-    part(frontLeg);
-    // Pantolonun kıvrımları.
-    for (final y in [0.68, 0.74, 0.8]) {
-      canvas.drawLine(
-        Offset(frontHip.dx - w * 0.06, h * y + bob * 0.5),
-        Offset(frontHip.dx + w * 0.05, h * y + 4 + bob * 0.5),
-        fold,
-      );
-    }
-    // Tunik: omuzlar geniş, belde kuşak, eteği uyluğu örter ve açılır.
-    final hem = h * 0.66 + bob;
-    final tunic = Path()
-      ..moveTo(cx - w * 0.22 + sway, chestY)
-      ..quadraticBezierTo(
-        cx + sway * 0.6,
-        chestY - h * 0.03,
-        cx + w * 0.24 + sway,
-        chestY,
-      )
-      ..lineTo(cx + w * 0.2 + sway, h * 0.5 + bob)
-      ..lineTo(cx + w * 0.3 + sway * 1.3, hem)
-      ..quadraticBezierTo(
-        cx + sway,
-        hem + h * 0.025,
-        cx - w * 0.3 + sway * 1.3,
-        hem,
-      )
-      ..lineTo(cx - w * 0.2 + sway, h * 0.5 + bob)
-      ..close();
-    part(tunic);
-    // Kuşak ve eteğin kıvrımları.
-    canvas.drawLine(
-      Offset(cx - w * 0.21 + sway, h * 0.5 + bob),
-      Offset(cx + w * 0.21 + sway, h * 0.5 + bob),
-      Paint()
-        ..color = const Color(0xFF2A2030)
-        ..strokeWidth = 4,
-    );
-    for (var i = -2; i <= 2; i++) {
-      canvas.drawLine(
-        Offset(cx + i * w * 0.08 + sway, h * 0.52 + bob),
-        Offset(cx + i * w * 0.11 + sway * 1.2, hem - 2),
-        fold,
-      );
-    }
-    // Kollar: omuzdan sarkan geniş kollu giysi; yürürken sallanır, temasta
-    // öndeki el kulağa gider.
-    final swat = stung > 0
-        ? math.sin(math.min(1, (1 - stung) * 3) * math.pi / 2)
-        : 0.0;
-    final headC = Offset(
-      cx + _flinch.value * 0.6 + sway * 0.6,
-      h * 0.17 + bob * 0.7,
-    );
-    for (final side in [-1.0, 1.0]) {
-      final sh = Offset(cx + side * w * 0.22 + sway, chestY + h * 0.02);
-      final swing = walking ? (swingA ? 1 : -1) * side * lift * 10 : 0.0;
-      var hand = Offset(sh.dx + side * 4 + swing, h * 0.58 + bob * 0.5);
-      if (side > 0 && swat > 0) {
-        hand = Offset.lerp(hand, headC + Offset(w * 0.2, 4), swat)!;
-      } else if (stung > 0) {
-        hand = hand.translate(side * 12 * stung, -10 * stung);
-      }
-      if (buckle > 0) {
-        hand = hand.translate(side * 10 * buckle, -h * 0.05 * buckle);
-      }
-      final (elbow, end) = solveLimb(sh, hand, h * 0.16, h * 0.15, bend: side);
-      Path seg(Offset a, Offset b, double r0, double r1) {
-        final d = b - a;
-        final n = Offset(-d.dy, d.dx) / (d.distance + 1e-6);
-        return solid([
-          Path()
-            ..moveTo((a + n * r0).dx, (a + n * r0).dy)
-            ..lineTo((b + n * r1).dx, (b + n * r1).dy)
-            ..lineTo((b - n * r1).dx, (b - n * r1).dy)
-            ..lineTo((a - n * r0).dx, (a - n * r0).dy)
-            ..close(),
-          Path()..addOval(Rect.fromCircle(center: a, radius: r0)),
-          Path()..addOval(Rect.fromCircle(center: b, radius: r1)),
-        ]);
-      }
-
-      final arm = solid([
-        seg(sh, elbow, w * 0.085, w * 0.07),
-        seg(elbow, end, w * 0.07, w * 0.055),
-        Path()..addOval(Rect.fromCircle(center: end, radius: w * 0.065)),
-      ]);
-      if (side < 0) {
-        canvas.drawPath(arm, Paint()..color = const Color(0xFF15121B));
-      } else {
-        part(arm);
-      }
-    }
-    // Baş: Nemrut tiarası; yüz koyu, kenarı şafakla çizilir.
-    canvas.save();
-    final chin = Offset(headC.dx, headC.dy + h * 0.1);
-    canvas.translate(chin.dx, chin.dy);
-    canvas.rotate(_flinch.value * 0.012 - swat * 0.12);
-    final hh = h * 0.3;
-    canvas.save();
-    canvas.translate(-2.2, -1.6);
-    NemrutArt.head(
-      canvas,
-      NemrutHead.antiochos,
-      hh,
-      flat: rimCol.withValues(alpha: 0.7),
-    );
-    canvas.restore();
-    NemrutArt.head(canvas, NemrutHead.antiochos, hh, flat: body);
-    // Gözler: kor; her temasta söner, sendelerken titrer.
-    final flicker = stung > 0 ? (0.5 + 0.5 * math.sin(_t * 30)) : 1.0;
-    final glowA = fallen ? 0.0 : (0.9 - hits * 0.22).clamp(0.0, 1.0) * flicker;
-    for (final sx in const [-1.0, 1.0]) {
-      final e = Offset(sx * 10 * hh / 100, -34 * hh / 100);
-      canvas.drawOval(
-        Rect.fromCenter(center: e, width: 18, height: 10),
-        Paint()
-          ..color = const Color(0xFFFF8A30).withValues(alpha: 0.45 * glowA)
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5),
-      );
-      canvas.drawOval(
-        Rect.fromCenter(center: e, width: 8, height: 3),
-        Paint()..color = const Color(0xFFFFC080).withValues(alpha: glowA),
-      );
-    }
-    canvas.restore();
-    canvas.restore();
-  }
-
-  /// Kullanıcının çizdiği taş dev (tools/import_nemrut_svg.py): her uzuv
-  /// rig.json'daki dönüş noktası etrafında çevrilir. Yürüyüş eski çizimle
-  /// aynı evreden çıkar: basan ayak yerde kalır, öbürü kalkıp öne gelir,
-  /// kalça basan ayağa kayar. Çizim sola bakar; sağa yürürken aynalanır.
-  void _renderSprites(
-    Canvas canvas, {
-    required double buckle,
-    required double stung,
-    required bool walking,
-    required bool swingA,
-    required double half,
-    required double lift,
-  }) {
-    final w = size.x;
-    final h = size.y;
-    final sc = _svgScale;
-    canvas.save();
-    canvas.translate(w / 2, h);
-    canvas.scale(sc * (_dir > 0 ? -1 : 1), sc);
-    canvas.translate(-320, -801);
-    final tint = Paint()
-      ..filterQuality = FilterQuality.medium
-      ..colorFilter = ColorFilter.mode(
-        NemrutImages.tint(game),
-        BlendMode.modulate,
-      );
-    void img(String k, {Offset at = Offset.zero}) {
-      final im = NemrutImages.get(k);
-      final r = nemrutSprites[k];
-      if (im == null || r == null) return;
-      canvas.drawImageRect(
-        im,
-        Rect.fromLTWH(0, 0, im.width.toDouble(), im.height.toDouble()),
-        r.shift(at),
-        tint,
-      );
-    }
-
-    // Bir uzvu [pivot0] çevresinde döndürüp [pivot]a taşıyarak çizer.
-    void part(String k, Offset pivot0, Offset pivot, double rot) {
-      canvas.save();
-      canvas.translate(pivot.dx, pivot.dy);
-      canvas.rotate(rot);
-      canvas.translate(-pivot0.dx, -pivot0.dy);
-      img(k);
-      canvas.restore();
-    }
-
-    // Çizim bükülmez: adım atan bacak bütün hâlinde kalkıp öne gelir ve
-    // basar (ağır taş adım); kollar omuzdan tek parça sallanır. İleri yön
-    // çizimde -x.
-    final bob = -3 * lift + buckle * 110;
-    final body = Offset(0, bob);
-    final upper = Offset(0, bob * 0.9);
-
-    void leg(String side, bool swinging) {
-      final up = walking && swinging ? lift * 26 : 0.0;
-      // Kalkan ayak öne gider, basan ayak geriye kayar (gövde ilerler).
-      final dx = walking
-          ? (swinging ? -10 * math.sin(half * math.pi) : 0.0)
-          : 0.0;
-      final spread = buckle * (side == 'front' ? -26 : 26);
-      final at = Offset(dx + spread, -up + bob * 0.3);
-      for (final k in ['leg', 'shin', 'foot']) {
-        img('giant_${k}_$side', at: at);
-      }
-    }
-
-    // Kol: omuz çevresinde tek parça döner.
-    void arm(String side, Offset sh0, double rot, {required bool plate}) {
-      final sh = sh0 + upper;
-      for (final k in ['arm', 'forearm', 'hand']) {
-        part('giant_${k}_$side', sh0, sh, rot);
-      }
-      if (plate) part('giant_shoulder_$side', sh0, sh, rot * 0.4);
-    }
-
-    final armSwing = walking ? (swingA ? 1 : -1) * lift * 0.09 : 0.0;
-    // Temasta kulak tarafındaki (arka) kol kulağa kalkar.
-    final swat = stung > 0
-        ? math.sin(math.min(1, (1 - stung) * 3) * math.pi / 2)
-        : 0.0;
-    final backRot = armSwing - swat * 2.3 - buckle * 0.5;
-    final frontRot = -armSwing + stung * 0.25 + buckle * 0.5;
-
-    // SVG belge sırası.
-    leg('back', !swingA);
-    arm('back', const Offset(452, 282), backRot, plate: false);
-    img('giant_pelvis', at: body);
-    leg('front', swingA);
-    img('giant_torso', at: upper);
-    img('giant_chest_carving', at: upper);
-    // Baş: temasta kulaktan kaçar.
-    final neck = const Offset(335, 239) + upper;
-    canvas.save();
-    canvas.translate(neck.dx, neck.dy);
-    canvas.rotate(-_flinch.value * 0.012 + swat * 0.12);
-    canvas.translate(-335, -239);
-    canvas.translate(-_flinch.value / sc, 0);
-    img('giant_head');
-    // Gözler: kandil ateşi; her temasta söner, sendelerken titrer.
-    final flicker = stung > 0 ? (0.5 + 0.5 * math.sin(_t * 30)) : 1.0;
-    final glowA = fallen ? 0.0 : (0.85 - hits * 0.22).clamp(0.0, 1.0) * flicker;
-    for (final e in const [Offset(306.7, 171.7), Offset(354.7, 171.7)]) {
-      canvas.drawOval(
-        Rect.fromCenter(center: e, width: 30, height: 16),
-        Paint()
-          ..color = const Color(0xFFFF9A40).withValues(alpha: 0.45 * glowA)
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8),
-      );
-      if (glowA < 0.8) {
-        // Sönen göz: kor kararır.
-        canvas.drawOval(
-          Rect.fromCenter(center: e, width: 22, height: 8),
-          Paint()
-            ..color = const Color(0xFF241E2C).withValues(alpha: 0.85 - glowA),
-        );
-      }
-    }
-    canvas.restore();
-    arm('front', const Offset(207, 286), frontRot, plate: true);
-    part(
-      'giant_shoulder_back',
-      const Offset(452, 282),
-      const Offset(452, 282) + upper,
-      0,
-    );
-    canvas.restore();
-  }
-
-  void _cracks(Canvas canvas, double w, double h) {
-    final n = math.min(_crackLines.length, hits * 2 + (fallen ? 1 : 0));
-    final glow = Paint()
-      ..color = const Color(0xFFFF9A40).withValues(alpha: fallen ? 0.25 : 0.55)
-      ..strokeWidth = 3
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
-    final core = Paint()
-      ..color = const Color(0xFFFFE0A0).withValues(alpha: fallen ? 0.3 : 0.85)
-      ..strokeWidth = 1.2
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
-    for (var i = 0; i < n; i++) {
-      final pts = _crackLines[i];
-      final path = Path()..moveTo(pts.first.dx * w, pts.first.dy * h);
-      for (final p in pts.skip(1)) {
-        path.lineTo(p.dx * w, p.dy * h);
-      }
-      canvas.drawPath(path, glow);
-      canvas.drawPath(path, core);
-    }
-  }
-}
-
-/// Yıkılan devin gövdesi: üstünden geçilen bir köprü.
+/// Devrilen devin gövdesi: üstü yürünebilir köprüdür. Görünen taş,
+/// devin kendi yatan gövdesidir; burada yalnız basılacak sırtın ince ışığı
+/// çizilir.
 class GiantBridge extends Deck {
   GiantBridge(Vector2 at) : super(position: at, size: Vector2(9 * kTile, 16));
 
@@ -1826,19 +1185,11 @@ class GiantBridge extends Deck {
 
   @override
   void render(Canvas canvas) {
-    final stone = Paint()..color = const Color(0xFF241E2C);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromLTWH(0, 0, size.x, 22),
-        const Radius.circular(8),
-      ),
-      stone,
-    );
     canvas.drawLine(
-      const Offset(4, 1.5),
-      Offset(size.x - 4, 1.5),
+      const Offset(6, 1.5),
+      Offset(size.x - 10, 1.5),
       Paint()
-        ..color = const Color(0xFFC8D2E2).withValues(alpha: 0.7)
+        ..color = const Color(0xFFC8D2E2).withValues(alpha: 0.35)
         ..strokeWidth = 2,
     );
   }

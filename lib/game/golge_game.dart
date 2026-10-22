@@ -33,6 +33,7 @@ import 'konya.dart';
 import 'hints.dart';
 import 'legends.dart';
 import 'umay.dart';
+import 'giant_puppet.dart';
 import 'gokboru.dart';
 import 'cameos.dart';
 import 'erlik.dart';
@@ -297,6 +298,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
   Future<void> onLoad() async {
     // Nemrut görselleri arka planda yüklenir; gelene dek kod çizimi kullanılır.
     NemrutImages.load();
+    GiantPuppet.load();
     ShadowArt.load();
     camera.viewfinder.anchor = Anchor.center;
     camera.backdrop = Backdrop();
