@@ -750,6 +750,30 @@ class Bellows extends PositionComponent
         ..close(),
       ink,
     );
+    final v = vein;
+    if (v != null && v.rhythm) {
+      // Ritimli ocakta sıra yok: çentik yerine dolu olduğunu gösteren
+      // bir ışık; örsün vuruşuyla atar, boşken söner.
+      if (ready && v.lit && !v.opening) {
+        final beat = (v.anvil?.onBeat ?? false) ? 1.0 : 0.35;
+        canvas.drawCircle(
+          Offset(0, top - 9),
+          3.2,
+          Paint()
+            ..color = const Color(0xFFFFD890)
+                .withValues(alpha: 0.4 + 0.6 * beat),
+        );
+        canvas.drawCircle(
+          Offset(0, top - 9),
+          9,
+          Paint()
+            ..color = const Color(0xFFFFB050).withValues(alpha: 0.25 * beat)
+            ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
+        );
+      }
+      canvas.restore();
+      return;
+    }
     // Çentikler: sırası (ışıklı oyuk).
     final hot = vein?.lit ?? false;
     final notch = Paint()
