@@ -272,9 +272,29 @@ class _SettingsPanelState extends State<SettingsPanel> {
                         setState(() {});
                       },
                     ),
-                    // Geliştirici yapısında: Yerebatan görsel denemesinin
-                    // tonu (0 karanlık, 100 aydınlık).
-                    if (const bool.fromEnvironment('DEV')) ...[
+                    // Deneme yapısında: Yerebatan görsel denemesi açılıp
+                    // kapanır, tonu kaydırılır (0 karanlık, 100 aydınlık).
+                    if (Cartoon.trialBuild) ...[
+                      Row(
+                        children: [
+                          const Expanded(
+                            child: Text(
+                              'Yerebatan görsel denemesi',
+                              style: TextStyle(color: _text, fontSize: 14),
+                            ),
+                          ),
+                          Switch(
+                            value: Cartoon.on,
+                            activeThumbColor: _accent,
+                            inactiveThumbColor: _text.withValues(alpha: 0.6),
+                            inactiveTrackColor: const Color(0x22EBDDCB),
+                            trackOutlineColor: const WidgetStatePropertyAll(
+                              Color(0x55EBDDCB),
+                            ),
+                            onChanged: (v) => setState(() => Cartoon.on = v),
+                          ),
+                        ],
+                      ),
                       _label('Yerebatan tonu (deneme)', Cartoon.tone),
                       Slider(
                         value: Cartoon.tone,

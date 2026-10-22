@@ -50,6 +50,12 @@ class Cartoon {
   /// `--dart-define=CARTOON=true` ile açık başlar; DEV yapısında K tuşu.
   static bool on = const bool.fromEnvironment('CARTOON');
 
+  /// Deneme yapısı mı (CARTOON ya da DEV tanımlı): ayarlar panelinde
+  /// denemeyi açıp kapatan anahtar ve ton kaydırıcısı görünür (dokunmatikte
+  /// K tuşu yok).
+  static const bool trialBuild =
+      bool.fromEnvironment('CARTOON') || bool.fromEnvironment('DEV');
+
   /// Sâye'nin karikatürize görünüşü: bütün bölümlerde açık.
   static bool saye = true;
 

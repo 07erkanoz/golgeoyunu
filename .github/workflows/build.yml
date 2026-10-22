@@ -30,7 +30,7 @@ jobs:
       - name: Paketleri indir
         run: flutter pub get
       - name: Windows için derle
-        run: flutter build windows --release --build-number=${{ github.run_number }}
+        run: flutter build windows --release --build-number=${{ github.run_number }} --dart-define=CARTOON=true
       - name: Zip olarak paketle
         shell: pwsh
         run: Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath GolgeOyunu-windows.zip
@@ -76,7 +76,7 @@ jobs:
         # Sürüm kodu her derlemede artar: bazı üreticilerin yükleyicileri aynı
         # sürüm kodunun üstüne kurmayı reddedip kaldır-kur dayatıyordu (kayıt
         # ve ayarlar silinir).
-        run: flutter build apk --release --target-platform android-arm64 --build-number=${{ github.run_number }}
+        run: flutter build apk --release --target-platform android-arm64 --build-number=${{ github.run_number }} --dart-define=CARTOON=true
       - name: İmza doğrulama (kalıcı anahtar)
         # Yalnızca kalıcı anahtarla imzalanmış APK yayımlanır: farklı imzalı
         # bir sürüm güncelleme olarak kurulamaz, kaldır-kur verileri siler.
@@ -117,7 +117,7 @@ jobs:
           flutter test test/physics_test.dart --dart-define=HZ=120
           flutter test test/physics_test.dart --dart-define=HZ=144
       - name: Linux için derle
-        run: flutter build linux --release --build-number=${{ github.run_number }}
+        run: flutter build linux --release --build-number=${{ github.run_number }} --dart-define=CARTOON=true
       - name: tar.gz olarak paketle
         run: |
           mkdir -p GolgeOyunu
