@@ -22,6 +22,11 @@ class Settings {
   /// dahili ekran kartları için.
   static bool lowGraphics = false;
 
+  /// Yüksek yenileme hızı (Android, 90/120 Hz ve üstü ekranlarda): açıkken
+  /// telefonun en yüksek hızı istenir (daha akıcı, pil biraz daha çabuk
+  /// biter). Oyunun fiziği 120 ve 144 Hz'de de sınanır.
+  static bool highRefresh = false;
+
   /// Dokunmatik kontrol: düğmeler ya da hareket (sürükle / dokun).
   static bool touchGestures = true;
 
@@ -105,6 +110,7 @@ class Settings {
       touchGestures = _read(() => p.getBool('touch_gestures')) ?? touchGestures;
       calmEffects = _read(() => p.getBool('calm_effects')) ?? calmEffects;
       leftHanded = _read(() => p.getBool('left_handed')) ?? leftHanded;
+      highRefresh = _read(() => p.getBool('high_refresh')) ?? highRefresh;
       finished = _read(() => p.getBool('finished')) ?? finished;
       // Kayıtlı bir tercih yoksa cihazın dili: Türkçe değilse İngilizce.
       final lang = _read(() => p.getString('lang'));
@@ -145,6 +151,7 @@ class Settings {
       await p.setBool('touch_gestures', touchGestures);
       await p.setBool('calm_effects', calmEffects);
       await p.setBool('left_handed', leftHanded);
+      await p.setBool('high_refresh', highRefresh);
       await p.setDouble('touch_scale', touchScale);
       await p.setDouble('touch_opacity', touchOpacity);
       await p.setDouble('brightness', brightness);

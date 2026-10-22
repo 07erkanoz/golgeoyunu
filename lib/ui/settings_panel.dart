@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../game/audio.dart';
@@ -5,6 +6,7 @@ import '../game/golge_game.dart';
 import '../game/hints.dart';
 import '../game/palette.dart';
 import '../game/strings.dart';
+import '../display.dart';
 import '../settings.dart';
 import 'info_pages.dart';
 
@@ -325,6 +327,36 @@ class _SettingsPanelState extends State<SettingsPanel> {
                         },
                       ),
                     ],
+                    // Android: yüksek yenileme hızı (masaüstünde ekran zaten
+                    // kendi hızında çizilir).
+                    if (defaultTargetPlatform == TargetPlatform.android)
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              S.of('highRefresh'),
+                              style: const TextStyle(
+                                color: _text,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                          Switch(
+                            value: Settings.highRefresh,
+                            activeThumbColor: _accent,
+                            inactiveThumbColor: _text.withValues(alpha: 0.6),
+                            inactiveTrackColor: const Color(0x22EBDDCB),
+                            trackOutlineColor: const WidgetStatePropertyAll(
+                              Color(0x55EBDDCB),
+                            ),
+                            onChanged: (v) {
+                              setState(() => Settings.highRefresh = v);
+                              Settings.save();
+                              applyRefreshRate();
+                            },
+                          ),
+                        ],
+                      ),
                     Row(
                       children: [
                         Text(
