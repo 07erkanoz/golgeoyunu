@@ -466,6 +466,9 @@ class GreatLamp extends PositionComponent with HasGameReference<GolgeGame> {
   static const double sweep = 1.15;
   static const double period = 7.0;
 
+  /// Huzmede bu kadar kalan gölge silinir.
+  static const double exposureLimit = 0.2;
+
   final double _phase;
   double _t = 0;
   double exposure = 0;
@@ -492,7 +495,10 @@ class GreatLamp extends PositionComponent with HasGameReference<GolgeGame> {
       }
       exposure += dt;
       game.threat = math.max(game.threat, 0.9);
-      if (exposure > 0.1) {
+      // Huzmenin kenarına bir an değen kaçabilir (eskiden 0,1 sn idi, tepkiye
+      // vakit kalmıyordu). Açıkta durana huzmenin tam geçişi ~0,3 sn sürer:
+      // eşik bundan kısa kalmalı, yoksa gölgeye saklanmak gereksizleşir.
+      if (exposure > exposureLimit) {
         exposure = 0;
         p.die(cause: DeathCause.light);
       }
