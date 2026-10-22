@@ -1818,10 +1818,15 @@ void main() {
         giant.throws = false;
         for (var i = 0; i < 3; i++) {
           game.fireflies = 3;
-          run(game, 2.6);
+          // Yürürken kulağını korur: yolun sonunda soluklanırken (kulak
+          // açıkken) bırakılır.
+          for (var k = 0; k < 60 * 30 && !giant.earOpen; k++) {
+            run(game, 1 / 60);
+          }
           final ear = giant.ear;
           game.releaseFirefly(ear + Vector2(-60, 10), 1);
           run(game, 0.6);
+          run(game, 2.6);
         }
         GolgeGame.debugLevels = null;
         expect(giant.hits, 3);

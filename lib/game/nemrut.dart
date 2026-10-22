@@ -643,13 +643,24 @@ class StoneGiant extends PositionComponent
   double _throwT = 0;
   double _cool = 1.5;
   int thrown = 0;
-  static const double recoverTime = 1.6;
+  static const double recoverTime = 2.2;
+
+  /// Yolun sonunda soluklanma: döner, bir an durur; kulağı açıktır.
+  static const double restTime = 1.8;
+  double _rest = 0;
+
+  /// Yürürken kulağına yaklaşan ışığı eliyle savurur (kalan sn).
+  double _swat = 0;
+  static const double swatTime = 0.45;
   static const double cooldown = 2.2;
   static const double flightTime = 0.9;
   double get windupTime => thrown == 0 ? 1.4 : 1.05;
 
-  /// Kulak açık mı (taşı kaldırırken ve atarken kolu kulağını örter).
-  bool get earOpen => _throw == _Throw.none || _throw == _Throw.recover;
+  /// Kulak açık mı: yalnız taşı attıktan sonra toparlanırken ve yolun
+  /// sonunda soluklanırken. Yürürken kulağını korur, taşı kaldırıp atarken
+  /// kolu kulağını örter (ateşböceği her fırsatta değil, zamanında girer).
+  bool get earOpen =>
+      _throw == _Throw.recover || (_throw == _Throw.none && _rest > 0);
 
   @override
   String get persistKind => 'giant';
@@ -756,17 +767,31 @@ class StoneGiant extends PositionComponent
       if (earOpen) _checkLures();
       return;
     }
+    _swat = math.max(0, _swat - dt);
+    if (_rest > 0) {
+      // Soluklanırken kulak açıktır.
+      _rest -= dt;
+      _crush(pl);
+      _checkLures();
+      return;
+    }
     _cool -= dt;
     if (throws && _cool <= 0 && pl != null && _canTarget(pl)) {
       _startThrow(pl);
       return;
     }
-    // Ağır adımlar: iki nokta arasında gidip gelir.
+    // Ağır adımlar: iki nokta arasında gidip gelir; uçta döner, soluklanır.
     position.x += _dir * 26 * dt;
     _walk += dt;
     _puppet?.walk(26 * dt / GiantPuppet.scale);
-    if (position.x > _home + span) _dir = -1;
-    if (position.x < _home) _dir = 1;
+    if (position.x > _home + span && _dir > 0) {
+      _dir = -1;
+      _rest = restTime;
+    }
+    if (position.x < _home && _dir < 0) {
+      _dir = 1;
+      _rest = restTime;
+    }
     final p = game.player;
     // Bacak sin(evre) ile gidip gelir: uçlarda (her yarım dönüşte) ayak
     // yere oturur.
@@ -786,7 +811,19 @@ class StoneGiant extends PositionComponent
       }
     }
     _crush(p);
-    _checkLures();
+    _guardEar();
+  }
+
+  /// Yürürken kulağına yaklaşan ışığı eliyle savurup söndürür.
+  void _guardEar() {
+    for (final l in game.world.children.whereType<FireflyLure>().toList()) {
+      if (l.glowing && (l.position - ear).length < 62) {
+        l.removeFromParent();
+        _swat = swatTime;
+        GameAudio.instance.play('fizzle', volume: 0.7);
+        game.once('giantGuard', S.of('giantGuard'), hint: true);
+      }
+    }
   }
 
   /// Ayakların dibi ezer.
@@ -936,6 +973,18 @@ class StoneGiant extends PositionComponent
     });
   }
 
+  @override
+  void onMount() {
+    super.onMount();
+    // Devin alanında ateşböceği bitmez: alınanın yerine başka yerde yenisi.
+    if (!fallen &&
+        !game.world.children.whereType<GiantFireflies>().any(
+          (f) => f.giant == this,
+        )) {
+      game.world.add(GiantFireflies(this));
+    }
+  }
+
   int get _throwStage => switch (_throw) {
     _Throw.none => 0,
     _Throw.windup => 1,
@@ -959,6 +1008,11 @@ class StoneGiant extends PositionComponent
       throwStage: _throwStage,
       throwK: _throwK,
       flinch: -_flinch.value.abs() * 0.02,
+      swat: _swat / swatTime,
+      rest: _rest > 0
+          ? math.min(1, math.min(_rest, restTime - _rest) / 0.4)
+          : 0,
+      time: _t,
     );
   }
 
@@ -1008,15 +1062,17 @@ class StoneGiant extends PositionComponent
       pp.drawPose(canvas, p, boulderAt: pp.boulder(p, _throwStage, _throwK));
     }
     canvas.restore();
-    if (!fallen) {
-      // Kulak: ateşböceğinin girmesi gereken yer, hafifçe parlar.
+    if (!fallen && _stagger <= 0) {
+      // Kulak: açıkken (atıştan sonra, soluklanırken) belirgin parlar;
+      // kapalıyken yalnız sönük bir iz.
       final e = ear - (position - Vector2(0, h));
+      final open = earOpen;
       glowDot(
         canvas,
         e.toOffset(),
-        16,
+        open ? 24 : 12,
         kWarmLight,
-        0.25 + 0.15 * math.sin(_t * 4),
+        open ? 0.6 + 0.25 * math.sin(_t * 8) : 0.12,
       );
     }
   }
@@ -1174,6 +1230,86 @@ void _drawBoulder(
 }
 
 /// Temas sayısına göre devin çatlakları (yerel koordinatta, oranla).
+/// Devin alanındaki ateşböcekleri: alınan sürünün yerine birkaç saniye
+/// sonra yenisi çıkar; devden en uzak boş yerde (ateşböceği bitince oyuncu
+/// devden kaçıp yenisini toplar). Dev devrilince durur.
+class GiantFireflies extends Component with HasGameReference<GolgeGame> {
+  GiantFireflies(this.giant);
+
+  final StoneGiant giant;
+
+  /// En çok bu kadar sürü aynı anda.
+  static const int alive = 2;
+
+  /// Bir yer boşaldıktan sonra yeniden dolması için en az süre.
+  static const double regrow = 3.5;
+
+  /// İki yeni sürü arası.
+  static const double gap = 2.5;
+
+  late final List<Vector2> _spots;
+  final _swarms = <int, FireflySwarm>{};
+  final _emptyFor = <int, double>{};
+  double _cool = 0;
+
+  @override
+  void onLoad() {
+    final lo = giant._home - 20 * kTile;
+    final hi = giant._home + StoneGiant.span + 25 * kTile;
+    _spots = [
+      for (final c in game.level.fireflyCells)
+        if (c.x >= lo && c.x <= hi) c.clone(),
+    ];
+    // Bölümün kendi sürüleri bu yerlerdeyse sahiplenilir.
+    for (final s in game.world.children.whereType<FireflySwarm>()) {
+      for (var i = 0; i < _spots.length; i++) {
+        final at = _spots[i] + Vector2(kTile / 2, kTile / 2);
+        if ((s.position - at).length < 4) _swarms[i] = s;
+      }
+    }
+  }
+
+  @override
+  void update(double dt) {
+    if (giant.fallen || !giant.isMounted) {
+      removeFromParent();
+      return;
+    }
+    _cool -= dt;
+    var count = 0;
+    for (var i = 0; i < _spots.length; i++) {
+      final s = _swarms[i];
+      if (s != null && s.isMounted && s.strength >= 1) {
+        count++;
+        _emptyFor[i] = 0;
+      } else {
+        _emptyFor[i] = (_emptyFor[i] ?? 0) + dt;
+      }
+    }
+    if (count >= alive || _cool > 0 || _spots.isEmpty) return;
+    final p = game.player;
+    final gx = giant.position.x + giant.size.x / 2;
+    int? best;
+    var bestD = -1.0;
+    for (var i = 0; i < _spots.length; i++) {
+      if ((_emptyFor[i] ?? 0) < regrow) continue;
+      final at = _spots[i] + Vector2(kTile / 2, kTile / 2);
+      if (p != null && (p.center - at).length < 3 * kTile) continue;
+      final d = (at.x - gx).abs();
+      if (d > bestD) {
+        bestD = d;
+        best = i;
+      }
+    }
+    if (best == null) return;
+    final s = FireflySwarm(_spots[best]);
+    _swarms[best] = s;
+    _emptyFor[best] = 0;
+    _cool = gap;
+    game.world.add(s);
+  }
+}
+
 /// Devrilen devin gövdesi: üstü yürünebilir köprüdür. Görünen taş,
 /// devin kendi yatan gövdesidir; burada yalnız basılacak sırtın ince ışığı
 /// çizilir.

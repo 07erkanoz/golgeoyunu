@@ -400,10 +400,38 @@ class GiantPuppet {
     int throwStage = 0,
     double throwK = 0,
     double flinch = 0,
+    double swat = 0,
+    double rest = 0,
+    double time = 0,
   }) {
     final base = _walkPose();
     final p = base.copy();
     p.headAngle += flinch;
+    if (rest > 0) {
+      // Soluklanma: başı öne düşer, omuzlar iner, ağır ağır nefes alır.
+      final breath = math.sin(time * 3) * .5 + .5;
+      p.headAngle += .12 * rest;
+      p.body += ui.Offset(0, (4 + 2 * breath) * rest);
+      _reach(
+        p,
+        true,
+        _toLocal(p, base.armN[2]) + ui.Offset(4 * rest, 6 * rest),
+      );
+    }
+    if (swat > 0 && stagger <= 0 && throwStage == 0) {
+      // Kulağına yaklaşan ışığı savurur: el hızla kulağa kalkıp iner.
+      final k = math.sin(math.pi * (1 - swat));
+      final ear = earOf(p);
+      _reach(
+        p,
+        true,
+        ui.Offset.lerp(
+          _toLocal(p, base.armN[2]),
+          ear + const ui.Offset(18, -6),
+          k,
+        )!,
+      );
+    }
     if (stagger > 0) {
       // Kulağına giren ışık: baş geri kaçar, el kulağa gider, gövde
       // geriye sendeleyip ağırca toparlanır.
