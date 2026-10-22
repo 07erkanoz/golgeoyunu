@@ -5,6 +5,59 @@
 import 'maps.dart';
 import 'strings.dart';
 
+/// Hareketli kayanın ayarı (haritadaki `V`/`R` kayasına sütun ve satırla
+/// bağlanır): yol uzunluğu, dönem, başlangıç anı, uçlarda bekleme, basınca
+/// çalışma ve genişlik. Verilmeyen kayalar eski davranışı korur.
+class RockProfile {
+  const RockProfile({
+    this.range = 4,
+    this.period = 5.5,
+    this.phase,
+    this.pause = 0,
+    this.onStep = false,
+    this.width = 2,
+  });
+
+  /// Kare olarak yol (dikey kaya yukarı, yatay kaya sağa).
+  final double range;
+
+  /// Bir gidiş-dönüşün saniyesi (uçlardaki bekleme dâhil).
+  final double period;
+
+  /// Başlangıç anı (0-1, dönemin kesri); verilmezse konuma bağlı.
+  final double? phase;
+
+  /// Her uçta bekleme (saniye).
+  final double pause;
+
+  /// Üstüne basılınca yola çıkar, dönüp başlangıçta bekler.
+  final bool onStep;
+
+  /// Kare olarak genişlik.
+  final int width;
+}
+
+/// Gözcü'nün tarama ayarı (haritadaki `g`ye sütun ve satırla bağlanır):
+/// baktığı yön, taramanın ortası ve genişliği (radyan, aşağı doğru artı),
+/// hızı ve başlangıç anı. Verilmeyen Gözcüler eski davranışı korur.
+class WatcherProfile {
+  const WatcherProfile({
+    this.facing,
+    this.center = 0.6,
+    this.sweep = 0.55,
+    this.speed = 0.7,
+    this.phase = 0,
+  });
+
+  final int? facing;
+  final double center;
+  final double sweep;
+  final double speed;
+
+  /// Dönemin kesri olarak başlangıç anı (0-1): iki Gözcü sırayla tarasın.
+  final double phase;
+}
+
 /// Bölümün mekânı: gökyüzü, arazi süsleri, ışık, sis ve sesler buna göre.
 enum LevelTheme {
   cistern,
@@ -87,6 +140,8 @@ class LevelDef {
     this.bard = '',
     this.bardEn = '',
     this.bellows = const [],
+    this.rocks = const [],
+    this.watchers = const [],
     this.mists = const [],
     this.forges = const [],
     this.nevruz,
@@ -110,6 +165,12 @@ class LevelDef {
   /// Ergenekon: deri körükler (sütun, satır, sıra); her biri en yakın demir
   /// damarına bağlanır, sırası üstündeki çentiklerle gösterilir.
   final List<(int, int, int)> bellows;
+
+  /// Hareketli kayaların ayarları (sütun, satır, ayar).
+  final List<(int, int, RockProfile)> rocks;
+
+  /// Gözcülerin tarama ayarları (sütun, satır, ayar).
+  final List<(int, int, WatcherProfile)> watchers;
 
   /// Yolu gizleyen sis alanları (sol, üst, sağ, alt sütun/satır).
   final List<(int, int, int, int)> mists;
@@ -877,6 +938,22 @@ const levels = <LevelDef>[
     ],
     map: kMapYerebatan,
     echoes: [(20, 31), (72, 89)],
+    // Su haznesinin çıkışında isteğe bağlı ritim yolu: basınca kalkan geniş
+    // kaya, sonra biri yükselirken öbürü inen iki kaya; uçta bir ateşböceği.
+    // Yarasa Galerisi'nin çıkışında sola bakan Gözcü: son sütunlarla çıkış
+    // arasını tarar; bekçiyi çana çekip onun dönüşünü bekleyen geçer.
+    watchers: [
+      (
+        95,
+        11,
+        WatcherProfile(facing: -1, center: 0.42, sweep: 0.3, speed: 0.9),
+      ),
+    ],
+    rocks: [
+      (174, 9, RockProfile(onStep: true, width: 3, pause: 1.2, period: 6)),
+      (178, 9, RockProfile(period: 5, pause: 1.2, phase: 0)),
+      (181, 9, RockProfile(period: 5, pause: 1.2, phase: 0.5)),
+    ],
   ),
   LevelDef(
     title: 'II · KULE',

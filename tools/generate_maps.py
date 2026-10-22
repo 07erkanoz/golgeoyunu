@@ -58,6 +58,9 @@ y.fill(70,12,70,13,'#'); y.fill(91,12,91,13,'#')
 for c in (76,81,86): y.put(c,13,'I')
 for c in (72,79,86): y.put(c,8,'b')
 y.put(82,13,'G'); y.put(69,13,'F'); y.put(88,13,'M'); y.put(68,13,'5'); y.put(91,11,'B')
+# Kaçış odası: girişte çan (bekçiyi sese çeker), çıkışta sola bakan Gözcü
+# (ayarı levels.dart'ta). Çanı çal, sütunda saklan, Gözcü dönünce geç.
+y.put(73,10,'c'); y.put(95,11,'g')
 # 5) asansör
 y.fill(95,12,96,13,'#')                      # basamak
 y.fill(97,10,101,11,'#')                     # raf
@@ -89,6 +92,10 @@ y.put(159,9,'v'); y.put(157,9,'9')
 y.put(161,5,'q'); y.put(168,18,'Q'); y.fill(161,19,168,19,'#')
 y.put(163,18,'y'); y.put(166,11,'f')
 y.fill(169,6,172,19,'#'); y.put(171,5,'B'); y.put(172,5,'K')
+# Haznenin çıkışında isteğe bağlı ritim yolu (ayarları levels.dart'ta):
+# basınca kalkan geniş kaya, karşılıklı inip kalkan iki kaya, uçta ateşböceği.
+y.put(174,9,'V'); y.put(178,9,'V'); y.put(181,9,'V')
+y.fill(184,5,185,5,'#'); y.put(184,4,'F'); y.fill(186,2,186,5,'#')
 # 7) Medusa Salonu: iki baş, bir Kandilci, Perseus'un kalkanı
 y.fill(173,14,222,19,'#'); y.put(174,13,'K'); y.put(176,13,'p'); y.put(175,13,'(')
 y.put(178,13,'B'); y.put(188,13,'G'); y.put(180,13,'I'); y.put(184,13,'F')

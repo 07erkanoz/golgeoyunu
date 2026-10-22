@@ -24,6 +24,7 @@ class RecentPanel extends StatelessWidget {
     RecentKind.story => S.of('recentStory'),
     RecentKind.hint => S.of('recentHint'),
     RecentKind.legend => S.of('recentLegend'),
+    RecentKind.solution => S.of('recentSolution'),
   };
 
   @override
@@ -108,17 +109,20 @@ class RecentPanel extends StatelessWidget {
                                       ),
                                     ),
                                     const SizedBox(height: 3),
-                                    Text(
-                                      l.text,
-                                      style: TextStyle(
-                                        color: _text.withValues(alpha: 0.9),
-                                        fontSize: 14,
-                                        height: 1.45,
-                                        fontStyle: l.kind == RecentKind.story
-                                            ? FontStyle.italic
-                                            : FontStyle.normal,
+                                    if (l.kind == RecentKind.solution)
+                                      _Solution(l.text)
+                                    else
+                                      Text(
+                                        l.text,
+                                        style: TextStyle(
+                                          color: _text.withValues(alpha: 0.9),
+                                          fontSize: 14,
+                                          height: 1.45,
+                                          fontStyle: l.kind == RecentKind.story
+                                              ? FontStyle.italic
+                                              : FontStyle.normal,
+                                        ),
                                       ),
-                                    ),
                                   ],
                                 );
                               },
@@ -131,6 +135,46 @@ class RecentPanel extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Katlı çözüm: istenince açılır (oyuncu kendisi bulmak isteyebilir).
+class _Solution extends StatefulWidget {
+  const _Solution(this.text);
+
+  final String text;
+
+  @override
+  State<_Solution> createState() => _SolutionState();
+}
+
+class _SolutionState extends State<_Solution> {
+  bool _open = false;
+
+  @override
+  Widget build(BuildContext context) {
+    if (_open) {
+      return Text(
+        widget.text,
+        style: TextStyle(
+          color: _text.withValues(alpha: 0.9),
+          fontSize: 14,
+          height: 1.45,
+        ),
+      );
+    }
+    return TextButton(
+      onPressed: () => setState(() => _open = true),
+      style: TextButton.styleFrom(
+        foregroundColor: _accent,
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(6),
+          side: BorderSide(color: _accent.withValues(alpha: 0.35)),
+        ),
+      ),
+      child: Text(S.of('showSolution'), style: const TextStyle(fontSize: 13)),
     );
   }
 }

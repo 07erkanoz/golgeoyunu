@@ -1813,6 +1813,8 @@ void main() {
         game.cinematic = false;
         run(game, 0.2);
         final giant = game.world.children.whereType<StoneGiant>().first;
+        // Bu test yalnız kulağı sınar: taş atma (kulağı örter) kapalı.
+        giant.throws = false;
         for (var i = 0; i < 3; i++) {
           game.fireflies = 3;
           run(game, 2.6);
@@ -2632,6 +2634,138 @@ void main() {
       },
     );
   });
+  testWithGame<GolgeGame>(
+    'Yerebatan ritim yolu: basınca kalkan kaya, karşılıklı iki kaya, rafta ateşböceği',
+    GolgeGame.new,
+    (game) async {
+      final p = await place(game, 0, 171, 5);
+      for (final g in game.world.children.whereType<Guard>().toList()) {
+        g.removeFromParent();
+      }
+      final rocks =
+          game.world.children
+              .whereType<MovingRock>()
+              .where((r) => r.x > 173 * kTile && r.x < 183 * kTile)
+              .toList()
+            ..sort((a, b) => a.x.compareTo(b.x));
+      expect(rocks.length, 3);
+      final (r1, r2, r3) = (rocks[0], rocks[1], rocks[2]);
+      final low = r1.y;
+      final top = low - 4 * kTile;
+      run(game, 2);
+      expect(r1.y, low, reason: 'basılmadan kalkmaz');
+      final k = keys(game);
+      // Sütunun tepesinden kayaya in.
+      k.right = true;
+      for (var i = 0; i < _hz * 3 && p.riding != r1; i++) {
+        game.update(_dt);
+        if (p.position.x > r1.x + kTile) k.right = false;
+      }
+      k.right = false;
+      expect(p.riding, r1);
+      run(game, 0.6);
+      expect(r1.y, lessThan(low), reason: 'basınca yola çıkar');
+
+      /// [from] üstünde sağ kenara yürü; [to] aynı hizaya gelince atla.
+      bool hop(Deck from, Deck to, {double? needTop}) {
+        for (var i = 0; i < _hz * 40; i++) {
+          final edge = from.x + from.width - Player.w - 4;
+          k.right = p.position.x < edge;
+          final level = (to.y - from.y).abs() < 10;
+          final high = needTop == null || from.y <= needTop + 3;
+          if (level && high && p.riding == from && p.onGround) {
+            k
+              ..right = true
+              ..jump = true;
+            for (var j = 0; j < _hz * 1.5; j++) {
+              game.update(_dt);
+              if (j > _hz * 0.25) k.jump = false;
+              // Hedefin ortasına gelince bırak (öteye uçma).
+              if (p.center.x >= to.x + to.width / 2) k.right = false;
+              if (p.riding == to || p.isDead) break;
+            }
+            k
+              ..right = false
+              ..jump = false;
+            return p.riding == to;
+          }
+          game.update(_dt);
+          if (p.isDead) return false;
+        }
+        return false;
+      }
+
+      expect(hop(r1, r2, needTop: top), isTrue, reason: '1 → 2');
+      expect(hop(r2, r3), isTrue, reason: '2 → 3');
+      // Son kaya tepeye çıkınca rafa.
+      final before = game.fireflies;
+      for (var i = 0; i < _hz * 12 && r3.y > top + 3; i++) {
+        k.right = p.position.x < r3.x + r3.width - Player.w - 4;
+        game.update(_dt);
+      }
+      k
+        ..right = true
+        ..jump = true;
+      run(game, 0.3);
+      k.jump = false;
+      run(game, 0.8);
+      k.right = false;
+      run(game, 0.5);
+      expect(p.isDead, isFalse);
+      expect(p.position.y + Player.h, closeTo(5 * kTile, 4), reason: 'rafta');
+      expect(game.fireflies, greaterThanOrEqualTo(before));
+    },
+  );
+  testWithGame<GolgeGame>(
+    'Yarasa Galerisi kaçış odası: çan bekçiyi çeker, Gözcü zamanlama ister',
+    GolgeGame.new,
+    (game) async {
+      await place(game, 0, 70, 13);
+      final bell = nearest<WindBell>(game, 73 * kTile);
+      final guard = nearest<Guard>(game, 82 * kTile);
+      final watcher = nearest<Watcher>(game, 95 * kTile);
+      expect(watcher.facing, -1, reason: 'Gözcü galeriye bakar');
+      // Ateşböceği çana değince çalar; bekçi sese gelir.
+      game.world.add(FireflyLure(bell.position + Vector2(0, 4), 1));
+      run(game, 0.1);
+      expect(bell.ringing, isTrue);
+      run(game, 0.5);
+      expect(guard.state, GuardState.investigate);
+      expect(guard.facing, -1, reason: 'bekçi çana döner');
+    },
+  );
+
+  testWithGame<GolgeGame>(
+    'Yarasa Galerisi: Gözcünün önünden koşmak zamanlama ister',
+    GolgeGame.new,
+    (game) async {
+      var passed = 0;
+      var caught = 0;
+      for (var delay = 0.0; delay < 7; delay += 0.5) {
+        final p = await place(game, 0, 85, 13);
+        for (final g in game.world.children.whereType<Guard>().toList()) {
+          g.removeFromParent();
+        }
+        final k = keys(game);
+        run(game, delay);
+        k.right = true;
+        for (var i = 0; i < _hz * 4 && p.position.x < 93 * kTile; i++) {
+          game.update(_dt);
+          if (p.isDead) break;
+        }
+        k.right = false;
+        if (p.isDead) {
+          caught++;
+        } else {
+          passed++;
+        }
+      }
+      // ignore: avoid_print
+      print('Gözcü önünden geçiş: $passed geçti, $caught yakalandı');
+      expect(passed, greaterThan(0), reason: 'doğru anda geçilebilmeli');
+      expect(caught, greaterThan(0), reason: 'her an geçilmemeli');
+    },
+  );
 }
 
 const F = 20;

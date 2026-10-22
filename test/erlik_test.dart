@@ -74,6 +74,29 @@ void main() {
   );
 
   testWithGame<GolgeGame>(
+    'Körmös ışığı kaybedince son gördüğü yere süzülür, sonra yuvasına döner',
+    GolgeGame.new,
+    (game) async {
+      await _load(game);
+      final k = game.world.children.whereType<Kormos>().single;
+      _standAt(game, 13);
+      run(game, 0.3);
+      expect(k.hunting, isTrue);
+      game.controls.keyboard.down = true;
+      run(game, 0.1);
+      expect(k.hunting, isFalse);
+      expect(k.searching, isTrue, reason: 'örtülünce hemen dönmez');
+      final seen = k.lastLight!.clone();
+      final d0 = (k.position - seen).length;
+      run(game, 0.6);
+      expect((k.position - seen).length, lessThan(d0));
+      run(game, Kormos.searchTime);
+      expect(k.searching, isFalse, reason: 'arama süresi biter');
+      game.controls.keyboard.down = false;
+    },
+  );
+
+  testWithGame<GolgeGame>(
     'Körmös dokunduğu çocuğun ışığını söndürür',
     GolgeGame.new,
     (game) async {

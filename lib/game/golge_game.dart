@@ -643,6 +643,26 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     _syncPanels();
   }
 
+  /// Bölüm verisindeki Gözcü ayarı (haritadaki `g`nin sütun ve satırıyla).
+  WatcherProfile? _watcherProfile(Vector2 cell) {
+    final c = (cell.x / kTile).round();
+    final r = (cell.y / kTile).round();
+    for (final (wc, wr, p) in level.def.watchers) {
+      if (wc == c && wr == r) return p;
+    }
+    return null;
+  }
+
+  /// Bölüm verisindeki kaya ayarı (haritadaki kayanın sütun ve satırıyla).
+  RockProfile? _rockProfile(Vector2 cell) {
+    final c = (cell.x / kTile).round();
+    final r = (cell.y / kTile).round();
+    for (final (rc, rr, p) in level.def.rocks) {
+      if (rc == c && rr == r) return p;
+    }
+    return null;
+  }
+
   /// Testler için: bölüm başlığını (ve ardından ozan dizesini) gösterir.
   void debugShowTitle() => _showLevelTitle();
 
@@ -699,6 +719,8 @@ class GolgeGame extends FlameGame with KeyboardEvents {
       narration.resetScene();
       // Başka bölüme geçerken önceki bölümün bulmaca durumu atılır.
       _puzzle = null;
+      _fails.clear();
+      _nearKey = null;
     }
     _atCheckpoint = null;
     levelIndex = index;
@@ -767,7 +789,11 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         ?_guideBird(),
         for (final f in level.fireflyCells) FireflySwarm(f),
         for (final (c, vertical) in level.movingCells)
-          MovingRock(c, vertical: vertical),
+          MovingRock(
+            c,
+            vertical: vertical,
+            profile: _rockProfile(c) ?? const RockProfile(),
+          ),
         for (final c in level.crumbleCells) CrumbleRock(c),
         ..._lifts(),
         for (final c in level.batCells)
@@ -780,7 +806,8 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         for (final c in level.kutCells) KutCage(c),
         for (final c in level.thinIceCells) ThinIce(c),
         for (final c in level.crowCells) Crow(c),
-        for (final c in level.watcherCells) Watcher(c),
+        for (final c in level.watcherCells)
+          Watcher(c, profile: _watcherProfile(c)),
         if (level.def.theme == LevelTheme.heavens)
           for (final c in level.wingsCells) TulparMount(c)
         else if (level.def.theme == LevelTheme.underworld)
@@ -1221,6 +1248,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
   void onPlayerDied() {
     if (_transitioning) return;
     _transitioning = true;
+    _hintStep();
     GameAudio.instance.silenceLoops();
     void respawn() {
       _buildLevel(levelIndex, respawn: true);
@@ -1542,6 +1570,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
   /// İlk karşılaşmada düzeneğin nasıl kullanıldığını söyler (bir kez;
   /// kayıtla hatırlanır).
   void _updateHints(Player p, double dt) {
+    _nearAge += dt;
     _hintScan += dt;
     if (_hintScan < 0.3) return;
     _hintScan = 0;
@@ -1665,9 +1694,43 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         MagnetZone m when m.covers(p.center.x + 4 * kTile) => 'magnet',
         _ => null,
       };
-      if (key != null) show(key);
+      if (key != null) {
+        _nearKey = key;
+        _nearAge = 0;
+        show(key);
+      }
     }
   }
+
+  /// Son yakınında olunan düzenek (ipucu anahtarı) ve ondan bu yana geçen
+  /// süre: ölüm onun başında mı oldu?
+  String? _nearKey;
+  double _nearAge = 99;
+
+  /// Bu bölümde düzenek başına ölüm sayısı (ipucunun basamakları için).
+  final _fails = <String, int>{};
+
+  /// İpucunun basamakları: ilk karşılaşmada davranış (ilk ipucu), aynı
+  /// düzenekte ikinci ölümde ilişki, üçüncüde istenince açılan çözüm.
+  void _hintStep() {
+    final key = _nearKey;
+    if (key == null || _nearAge > 5) return;
+    final n = (_fails[key] ?? 0) + 1;
+    _fails[key] = n;
+    if (n == 2) {
+      final rel = Hints.relation(key);
+      if (rel.isNotEmpty) narration.hint(rel, queue: true);
+    } else if (n == 3) {
+      final sol = Hints.solution(key);
+      if (sol.isNotEmpty) {
+        narration.rememberSolution(sol);
+        narration.hint(S.of('solutionReady'), queue: true);
+      }
+    }
+  }
+
+  /// Testler için: bu düzenekte kaç kez ölündü.
+  int failsAt(String key) => _fails[key] ?? 0;
 
   void _updateTension(Player p, double dt) {
     var raw = 0.0;

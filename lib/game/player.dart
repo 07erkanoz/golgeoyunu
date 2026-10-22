@@ -215,6 +215,8 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     switch (riding) {
       case CrumbleRock rock:
         rock.stoodOn = true;
+      case MovingRock rock:
+        rock.stoodOn = true;
       default:
     }
 

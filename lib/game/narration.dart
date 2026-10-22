@@ -110,6 +110,10 @@ class Narration extends Component with HasGameReference<GolgeGame> {
   /// düğmesinden yeniden okur. Bölüm değişince temizlenir.
   final recent = <RecentLine>[];
 
+  /// İpucunun somut çözümü: "Az önce" panelinde katlı durur, istenince
+  /// açılır (ekrana yazılmaz).
+  void rememberSolution(String text) => _remember(RecentKind.solution, text);
+
   void _remember(RecentKind kind, String text) {
     if (text.trim().isEmpty) return;
     if (recent.isNotEmpty &&
@@ -657,7 +661,7 @@ class Narration extends Component with HasGameReference<GolgeGame> {
 }
 
 /// Az önce ekrana gelen bir yazının türü.
-enum RecentKind { title, place, story, hint, legend }
+enum RecentKind { title, place, story, hint, legend, solution }
 
 class RecentLine {
   const RecentLine(this.kind, this.text);

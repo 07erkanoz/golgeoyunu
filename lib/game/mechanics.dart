@@ -94,26 +94,70 @@ abstract class Deck extends PositionComponent with HasGameReference<GolgeGame> {
   }
 }
 
-/// İki nokta arasında yumuşakça gidip gelen kaya.
+/// İki nokta arasında yumuşakça gidip gelen kaya. Ayarı ([RockProfile])
+/// bölüm verisinden gelir: yol, dönem, başlangıç anı, uçlarda bekleme,
+/// basınca çalışma, genişlik.
 class MovingRock extends Deck {
-  MovingRock(Vector2 cell, {required bool vertical})
-    : _origin = Vector2(cell.x, cell.y),
-      _axis = vertical ? Vector2(0, -1) : Vector2(1, 0),
-      // Yan yana kayalar aynı anda inip kalkmasın: evre konuma bağlı.
-      _t = (cell.x / kTile * 0.9) % period,
-      super(position: Vector2(cell.x, cell.y), size: Vector2(kTile * 2, 14));
+  MovingRock(
+    Vector2 cell, {
+    required bool vertical,
+    this.profile = const RockProfile(),
+  }) : _origin = Vector2(cell.x, cell.y),
+       _axis = vertical ? Vector2(0, -1) : Vector2(1, 0),
+       // Yan yana kayalar aynı anda inip kalkmasın: evre verilmezse konuma
+       // bağlı.
+       _t = profile.onStep
+           ? 0
+           : (profile.phase != null
+                 ? profile.phase! * profile.period
+                 : (cell.x / kTile * 0.9) % profile.period),
+       super(
+         position: Vector2(cell.x, cell.y),
+         size: Vector2(kTile * profile.width.toDouble(), 14),
+       );
 
-  static const double range = kTile * 4;
-  static const double period = 5.5;
+  final RockProfile profile;
   final Vector2 _origin;
   final Vector2 _axis;
   double _t;
 
+  /// Basınca çalışan kaya yolda mı (bir tur atıp başlangıçta durur).
+  bool running = false;
+
+  /// Oyuncu bu karede üstünde mi (oyuncu yazar).
+  bool stoodOn = false;
+
+  /// Dönem içindeki an → yolun ne kadarı (0 başlangıç, 1 uç). Uçlarda
+  /// [RockProfile.pause] kadar bekler; arada yumuşak hızlanıp yavaşlar.
+  double _along(double t) {
+    final period = profile.period;
+    final half = period / 2;
+    final u = t % period;
+    final move = math.max(0.05, half - profile.pause);
+    final seg = u < half ? u : u - half;
+    final e = seg < move ? 0.5 - 0.5 * math.cos(seg / move * math.pi) : 1.0;
+    return u < half ? e : 1 - e;
+  }
+
   @override
   void step(double dt) {
-    _t += dt;
-    final k = 0.5 - 0.5 * math.cos(_t / period * 2 * math.pi);
-    moveTo(_origin + _axis * (range * k));
+    if (profile.onStep) {
+      if (!running && stoodOn) {
+        running = true;
+        GameAudio.instance.play('grind', volume: 0.5);
+      }
+      if (running) {
+        _t += dt;
+        if (_t >= profile.period) {
+          _t = 0;
+          running = false;
+        }
+      }
+    } else {
+      _t += dt;
+    }
+    stoodOn = false;
+    moveTo(_origin + _axis * (profile.range * kTile * _along(_t)));
   }
 
   @override

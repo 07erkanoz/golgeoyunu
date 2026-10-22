@@ -2035,6 +2035,21 @@ class WindBell extends PositionComponent
   double _ring = 0;
   double _rearm = 0;
 
+  /// Tavana uzanan ip (çan havada asılı kalmasın).
+  double _rope = 6;
+
+  @override
+  void onMount() {
+    super.onMount();
+    final lv = game.level;
+    final c = (position.x / kTile).floor();
+    var r = (position.y / kTile).floor() - 1;
+    while (r >= 0 && !lv.solid(c, r)) {
+      r--;
+    }
+    _rope = math.max(6, position.y - (r + 1) * kTile);
+  }
+
   /// Şu an çalıyor mu (yeni vurulmuş).
   bool get ringing => _ring > 0;
 
@@ -2060,8 +2075,16 @@ class WindBell extends PositionComponent
     _t += dt;
     _ring = math.max(0, _ring - dt * 0.6);
     _rearm -= dt;
+    if (_rearm > 0) return;
+    // Uzaktan çalmak: ateşböceği çana değince çalar (bekçiyi oraya çeker).
+    for (final l in game.world.children.whereType<FireflyLure>()) {
+      if (l.glowing && (l.position - position).length < 26) {
+        _ringNow();
+        return;
+      }
+    }
     final p = game.player;
-    if (p == null || p.isDead || _rearm > 0) return;
+    if (p == null || p.isDead) return;
     final d = p.center - position;
     final fast = p.velocity.x.abs() > 75 || !p.onGround;
     if (d.x.abs() < 44 && d.y > 0 && d.y < 4 * kTile && fast) _ringNow();
@@ -2071,7 +2094,7 @@ class WindBell extends PositionComponent
   void render(Canvas canvas) {
     final swing = math.sin(_t * 1.3) * 0.08 + math.sin(_t * 14) * 0.35 * _ring;
     canvas.drawLine(
-      Offset.zero,
+      Offset(0, 6 - _rope),
       const Offset(0, 6),
       Paint()
         ..color = kInk

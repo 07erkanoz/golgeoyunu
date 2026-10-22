@@ -9,6 +9,7 @@ import 'package:golge/game/hints.dart';
 import 'package:golge/settings.dart';
 import 'package:golge/game/level.dart';
 import 'package:golge/game/levels.dart';
+import 'package:golge/game/nemrut.dart';
 import 'package:golge/game/player.dart';
 import 'package:golge/game/winter.dart';
 
@@ -349,6 +350,56 @@ void main() {
       await game.ready();
       g.update(1 / 60);
       expect(g.state, GuardState.investigate);
+    },
+  );
+  testWithGame<GolgeGame>(
+    'taş dev: ilk taş kısa düşer; işaretten çekilen kurtulur, duran ezilir',
+    GolgeGame.new,
+    (game) async {
+      game.debugLoadLevel(7);
+      await game.ready();
+      game.cinematic = false;
+      for (final g in game.world.children.whereType<Guard>().toList()) {
+        g.removeFromParent();
+      }
+      final giant = game.world.children.whereType<StoneGiant>().first;
+      final p = game.player!;
+      p.position.setFrom(
+        Level.standOn(
+          Vector2(giant.position.x - 8 * kTile, 19 * kTile),
+          Player.w,
+          Player.h,
+        ),
+      );
+      ThrowMark? waitMark() {
+        for (var i = 0; i < 60 * 8; i++) {
+          run(game, 1 / 60);
+          final m = game.world.children.whereType<ThrowMark>();
+          if (m.isNotEmpty) return m.first;
+        }
+        return null;
+      }
+
+      // 1. taş: hedef oyuncunun önüne (deva doğru) kısa düşer.
+      final m1 = waitMark();
+      expect(m1, isNotNull);
+      expect((m1!.position.x - p.center.x).abs(), greaterThan(2 * kTile));
+      expect(giant.earOpen, isFalse, reason: 'taşı kaldırırken kulak örtülü');
+      run(game, 2.6);
+      expect(p.isDead, isFalse);
+      expect(game.world.children.whereType<StoneStep>(), isNotEmpty);
+      // 2. taş: işaret belirince çekil; taş eski yere düşer.
+      final m2 = waitMark();
+      expect(m2, isNotNull);
+      expect((m2!.position.x - p.center.x).abs(), lessThan(kTile));
+      p.position.x -= 3 * kTile;
+      run(game, 2.6);
+      expect(p.isDead, isFalse, reason: 'hedef sabit: çekilen kurtulur');
+      // 3. taş: kıpırdamayan ezilir.
+      final m3 = waitMark();
+      expect(m3, isNotNull);
+      run(game, 2.6);
+      expect(p.isDead, isTrue);
     },
   );
 }

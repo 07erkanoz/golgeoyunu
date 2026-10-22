@@ -168,7 +168,7 @@ class Hints {
     'animal': 'Hayvanı eşinin gölgesine it',
     'star': '{up} Yıldız taşını çevir · Aslan\'ın sırasını kur',
     'boulder': 'Gevşek kayaların altında durma',
-    'giant': '{firefly} Devin kulağına üç kez ateşböceği sal',
+    'giant': 'İşaretten çekil · dev toparlanırken {firefly} kulağına ateşböceği sal (üç kez)',
     'wolf': 'Kurt kokunu alır · yükseğe çık ya da {firefly}',
     'ice': 'İnce buzda durma · çatlar',
     'ski': '{right} hızlan · {left} yavaşla · {jump} sıçra',
@@ -237,7 +237,7 @@ class Hints {
     'animal': 'Push the animal to its mate\'s shadow',
     'star': '{up} Turn the star stone · match the Lion\'s order',
     'boulder': 'Don\'t stop under loose boulders',
-    'giant': '{firefly} Release a firefly at the giant\'s ear, three times',
+    'giant': 'Step off the mark · while the giant recovers, {firefly} release a firefly at its ear (three times)',
     'wolf': 'Wolves smell you · climb high or {firefly}',
     'ice': 'Don\'t stand on thin ice · it cracks',
     'ski': '{right} speed up · {left} slow down · {jump} leap',
@@ -254,10 +254,73 @@ class Hints {
     'flip': 'Hold {jump} in the air · flip to gain speed · wide chasms are crossed only at flip speed',
   };
 
+  /// İkinci basamak: aynı düzenekte ikinci kez ölünce söylenen ilişki
+  /// ("ne neye bağlı"). Üçüncü basamak: istenince açılan somut çözüm ("Az
+  /// önce" panelinde katlı durur).
+  static String relation(String key) =>
+      (S.en ? _relationEn : _relationTr)[key] ?? '';
+  static String solution(String key) =>
+      (S.en ? _solutionEn : _solutionTr)[key] ?? '';
+
+  static const _relationTr = {
+    'guard':
+        'Kandilci önce sese ve ışığa döner; arkasındaki boşluk o zaman açılır.',
+    'watcher':
+        'Gözcü\'nün ışığı gidip gelir; yakınını ve uzağını aynı anda görmez.',
+    'bell': 'Çanın sesi yakındaki Kandilcileri oraya çeker; sesin geldiği yere bakarlar.',
+    'medusa': 'Medusa\'nın bakışı yalnız kıpırdayanı taşa çevirir.',
+    'giant':
+        'Dev taşı kaldırınca kulağını örter; attıktan sonra bir an toparlanır.',
+    'kormos': 'Körmös yalnız açık ışığı görür; ışığı kaybedince son gördüğü yere süzülür.',
+    'wolf': 'Kurt atılmadan önce çömelip hazırlanır; atıldıktan sonra yön değiştiremez.',
+    'lamp': 'Büyük fenerin huzmesi damları sırayla tarar; gölgede kalan yer güvenlidir.',
+    'bellowsBeat': 'Körük ancak çekiç örse indiği anda ocağı ısıtır; erken ya da geç basmak ısıyı düşürür.',
+  };
+
+  static const _relationEn = {
+    'guard': 'A Lamplighter turns first toward sound and light; that is when the way behind him opens.',
+    'watcher': 'The Watcher\'s light sweeps back and forth; it cannot see near and far at once.',
+    'bell': 'The bell draws nearby Lamplighters; they look where the sound came from.',
+    'medusa': 'Medusa\'s gaze turns to stone only what moves.',
+    'giant': 'Lifting a stone, the giant covers its ear; after the throw it recovers for a moment.',
+    'kormos': 'A Körmös sees only open light; when it loses the light it drifts to where it last saw it.',
+    'wolf': 'A wolf crouches before it lunges; once it lunges, it cannot turn.',
+    'lamp': 'The great lamp\'s beam sweeps the roofs in turn; whatever lies in shadow is safe.',
+    'bellowsBeat': 'A bellows heats the forge only when pumped as the hammer strikes; too early or too late, the heat drops.',
+  };
+
+  static const _solutionTr = {
+    'guard': 'Ateşböceğini Kandilci\'nin ardına sal ya da yakındaki çanı çal. Başını çevirince sütunun ardından geç. Görüldüysen aynı sütunda bekleme; bir sonrakine geç.',
+    'watcher': 'Işığın uçtan uca gidişini bir kez izle. Işık senden uzağa döndüğü anda koş, sıradaki siperde dur. Ateşböceği salarsan Gözcü ışığını ona çevirir.',
+    'bell': 'Çana ateşböceği sal ya da altından koşarak geç. Kandilci sese yürürken sütunun ardında çömel; o geçince öbür yana ilerle.',
+    'medusa': 'Gözleri kapanınca bir sonraki sütuna yürü; aralanınca dur, kıpırdama. Kalkan varsa önüne it, ardında yürü.',
+    'giant': 'İşaret belirince yerinden çekil. Taş düşer düşmez, dev toparlanırken rafa çık ve kulağına ateşböceği sal. Üç kez. Düşen taş birkaç saniye basamaktır.',
+    'kormos': 'Kavanozunu ört ve hemen yer değiştir: Körmös eski yerinde ararken karanlıktan geç. Ateşböceği salarsan onu uzağa çeker.',
+    'wolf': 'Kurt çömelince yana ya da yukarı çekil. İnce buzun kenarında beklersen atılışı onu buza düşürür. Ateşböceği kurdu bir süre korkutur.',
+    'lamp': 'Revakın ya da bacanın gölgesinde dur. Huzme üstünden geçip uzaklaşınca bir sonraki gölgeye koş; huzmede bir an bile kalma.',
+    'bellowsBeat': 'Örsü dinle: çekiç inerken körüğün hazır ışığı yanar, o anda bas. Körük dolarken öbürüne koş, sıradaki vuruşu bekle.',
+  };
+
+  static const _solutionEn = {
+    'guard': 'Release a firefly behind the Lamplighter or ring a nearby bell. When he turns his head, slip past behind the column. If you were seen, do not wait at the same column; move to the next.',
+    'watcher': 'Watch the light sweep end to end once. Run the moment it turns away from you and stop at the next cover. A firefly makes the Watcher turn its light to it.',
+    'bell': 'Release a firefly at the bell or run beneath it. While the Lamplighter walks to the sound, crouch behind a column; once he has passed, go the other way.',
+    'medusa': 'Walk to the next column when her eyes close; stop and stay still as they open. If there is a shield, push it ahead and walk behind it.',
+    'giant': 'Step away when the mark appears. As soon as the stone lands, while the giant recovers, climb to the shelf and release a firefly at its ear. Three times. The fallen stone is a step for a few seconds.',
+    'kormos': 'Cover your jar and move at once: while the Körmös searches the old spot, pass through the dark. A firefly draws it away.',
+    'wolf': 'When the wolf crouches, step aside or climb. Wait at the edge of thin ice and its lunge will drop it in. A firefly scares the wolf for a while.',
+    'lamp': 'Stand in the shadow of a porch or chimney. When the beam has passed over and away, run to the next shadow; never stay in the beam even for a moment.',
+    'bellowsBeat': 'Listen to the anvil: as the hammer falls the bellows\' ready light glows; pump then. While it refills, run to the other and wait for the next strike.',
+  };
+
   /// Hikâyeye karışan şiirsel bilmeceler (alttaki fısıltıyla anlatılır).
   static String poem(String key) => (S.en ? _poemEn : _poemTr)[key] ?? '';
 
   static const _poemTr = {
+    'giant':
+        'Taş dev taşı kaldırınca kulağını örter.\n'
+        'Taşın düşeceği yer önceden bellidir: orada durma.\n'
+        'Atan kol ağırdır; toparlanırken kulak açıktır.',
     'umay':
         'Taşın çatlağında bir kayın.\n'
         'Umay her çocuğun yanındadır: düşersen buradan kalkarsın.',
@@ -274,6 +337,10 @@ class Hints {
   };
 
   static const _poemEn = {
+    'giant':
+        'Lifting a stone, the giant covers its ear.\n'
+        'Where the stone will fall is known before: do not stand there.\n'
+        'The throwing arm is heavy; recovering, the ear is open.',
     'umay':
         'A birch in the crack of the stone.\n'
         'Umay stands by every child: if you fall, you rise here.',

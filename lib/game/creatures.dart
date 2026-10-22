@@ -341,7 +341,7 @@ class Crow extends PositionComponent with HasGameReference<GolgeGame> {
 /// ışığında uzun kalan çocuğu yakalatır. Ateşböceği salınırsa ışığını ona
 /// kilitler.
 class Watcher extends PositionComponent with HasGameReference<GolgeGame> {
-  Watcher(Vector2 cell)
+  Watcher(Vector2 cell, {this.profile})
     : super(
         position: Level.standOn(cell, 22, 52),
         size: Vector2(22, 52),
@@ -350,6 +350,9 @@ class Watcher extends PositionComponent with HasGameReference<GolgeGame> {
 
   static const double beamLength = 360;
   static const double beamHalf = 0.17;
+
+  /// Bölüm verisinden tarama ayarı (yoksa eski düzen).
+  final WatcherProfile? profile;
 
   int facing = 1;
   double suspicion = 0;
@@ -386,9 +389,20 @@ class Watcher extends PositionComponent with HasGameReference<GolgeGame> {
       if (dx.abs() < kTile || dx.abs() > 25 * kTile) continue;
       if (mate == null || dx.abs() < mate.abs()) mate = dx;
     }
-    facing = mate != null
-        ? (mate > 0 ? 1 : -1)
-        : (position.x < game.level.pixelWidth / 2 ? 1 : -1);
+    facing =
+        profile?.facing ??
+        (mate != null
+            ? (mate > 0 ? 1 : -1)
+            : (position.x < game.level.pixelWidth / 2 ? 1 : -1));
+    final pr = profile;
+    if (pr != null) {
+      // Başlangıç anı dönemin kesri: ışın ilk karede ayarın yerinde.
+      _t = pr.phase * 2 * math.pi / pr.speed;
+      final a = pr.center + pr.sweep * math.sin(_t * pr.speed);
+      _eye = a;
+      _aim.value = a;
+      _angle = a;
+    }
   }
 
   @override
@@ -409,7 +423,10 @@ class Watcher extends PositionComponent with HasGameReference<GolgeGame> {
     } else {
       // Tarama: düzgün gidip gelir (uçlarda beklemek kayalardaki geçiş
       // aralığını daraltıyordu).
-      target = 0.6 + 0.55 * math.sin(_t * 0.7);
+      final pr = profile;
+      target = pr == null
+          ? 0.6 + 0.55 * math.sin(_t * 0.7)
+          : pr.center + pr.sweep * math.sin(_t * pr.speed);
     }
     _eye = approach(_eye, target, dt, 0.08);
     _aim.update(target, dt);

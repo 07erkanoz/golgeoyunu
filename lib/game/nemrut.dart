@@ -12,6 +12,7 @@ import 'mechanics.dart';
 import 'nemrut_sprites.dart';
 import 'palette.dart';
 import 'persist.dart';
+import 'player.dart';
 import 'puzzles.dart';
 import 'rig.dart';
 import 'strings.dart';
@@ -632,6 +633,22 @@ class StoneGiant extends PositionComponent
   /// Temasta başın kulaktan kaçışı (yay: çeker, geri gelir).
   final _flinch = Spring(stiffness: 55, damping: 5);
 
+  /// Taş atma döngüsü: oyuncuyu görünce durur, taşı başının yanına kaldırır
+  /// (kulağını korur), düşeceği yeri işaretler, atar, sonra toparlanır. Hedef
+  /// atıştan önce sabitlenir: taş oyuncunun sonraki yerini izlemez.
+  bool throws = true;
+  _Throw _throw = _Throw.none;
+  double _throwT = 0;
+  double _cool = 1.5;
+  int thrown = 0;
+  static const double recoverTime = 1.6;
+  static const double cooldown = 2.2;
+  static const double flightTime = 0.9;
+  double get windupTime => thrown == 0 ? 1.4 : 1.05;
+
+  /// Kulak açık mı (taşı kaldırırken ve atarken kolu kulağını örter).
+  bool get earOpen => _throw == _Throw.none || _throw == _Throw.recover;
+
   @override
   String get persistKind => 'giant';
 
@@ -706,6 +723,39 @@ class StoneGiant extends PositionComponent
       }
       return;
     }
+    final pl = game.player;
+    if (_throw != _Throw.none) {
+      _throwT += dt;
+      switch (_throw) {
+        case _Throw.windup:
+          _shieldEar();
+          if (_throwT >= windupTime) _launch();
+        case _Throw.release:
+          _shieldEar();
+          if (_throwT >= 0.35) {
+            _throw = _Throw.recover;
+            _throwT = 0;
+            // Ağır kolun ardından öne sendeler: kulak açıktır.
+            _flinch.kick(_dir * 6);
+            GameAudio.instance.play('grind', volume: 0.5);
+          }
+        case _Throw.recover:
+          if (_throwT >= recoverTime) {
+            _throw = _Throw.none;
+            _cool = cooldown;
+          }
+        case _Throw.none:
+          break;
+      }
+      _crush(pl);
+      if (earOpen) _checkLures();
+      return;
+    }
+    _cool -= dt;
+    if (throws && _cool <= 0 && pl != null && _canTarget(pl)) {
+      _startThrow(pl);
+      return;
+    }
     // Ağır adımlar: iki nokta arasında gidip gelir.
     position.x += _dir * 26 * dt;
     _walk += dt;
@@ -729,11 +779,82 @@ class StoneGiant extends PositionComponent
         game.quake = math.max(game.quake, 0.6 * near);
       }
     }
-    if (p != null && !p.isDead) {
-      // Ayakların dibi ezer.
-      final feet = Rect.fromLTWH(position.x, position.y - 28, size.x, 28);
-      if (p.toRect().overlaps(feet)) p.die();
+    _crush(p);
+    _checkLures();
+  }
+
+  /// Ayakların dibi ezer.
+  void _crush(Player? p) {
+    if (p == null || p.isDead) return;
+    final feet = Rect.fromLTWH(position.x, position.y - 28, size.x, 28);
+    if (p.toRect().overlaps(feet)) p.die();
+  }
+
+  /// Taşı kaldırırken kolu kulağını örter: gelen ışık kola çarpıp söner.
+  void _shieldEar() {
+    for (final l in game.world.children.whereType<FireflyLure>().toList()) {
+      if (l.glowing && (l.position - ear).length < 54) {
+        l.removeFromParent();
+        GameAudio.instance.play('fizzle', volume: 0.6);
+      }
     }
+  }
+
+  /// Oyuncuyu görüyor ve taş ona yetişir mi?
+  bool _canTarget(Player p) {
+    if (p.isDead || p.hidden || game.cinematic) return false;
+    final cx = position.x + size.x / 2;
+    final dx = (p.center.x - cx).abs();
+    return dx > 2.5 * kTile &&
+        dx < 20 * kTile &&
+        (p.center.y - position.y).abs() < 9 * kTile;
+  }
+
+  /// Taşı kaldırır; hedef şimdi sabitlenir ve yere işaretlenir. İlk taş
+  /// bilerek kısa düşer (oyuncu işareti öğrenir).
+  void _startThrow(Player p) {
+    final cx = position.x + size.x / 2;
+    var tx = p.center.x;
+    if (thrown == 0) tx += (tx > cx ? -1 : 1) * 3 * kTile;
+    final ty = _groundBelow(tx, p.position.y + Player.h - 4);
+    _target = Vector2(tx, ty);
+    _dir = tx > cx ? 1 : -1;
+    _throw = _Throw.windup;
+    _throwT = 0;
+    game.world.add(ThrowMark(_target!, windupTime + flightTime));
+    GameAudio.instance.play('grind', volume: 0.8);
+    game.once('giantThrow', S.of('giantThrow'), hint: true);
+  }
+
+  Vector2? _target;
+
+  /// Taşın düşeceği zemin: [x] sütununda [y]'den aşağı ilk dolu kare.
+  double _groundBelow(double x, double y) {
+    final lv = game.level;
+    final c = (x / kTile).floor();
+    for (var r = (y / kTile).floor(); r < lv.height; r++) {
+      if (lv.solid(c, r)) return r * kTile.toDouble();
+    }
+    return lv.pixelHeight.toDouble();
+  }
+
+  /// Elin yeri (taş buradan kalkar): başın yanında, kulak tarafında.
+  Vector2 get hand => Vector2(
+    position.x + size.x / 2 - _dir * size.x * 0.12,
+    position.y - size.y - 26,
+  );
+
+  void _launch() {
+    final t = _target;
+    _throw = _Throw.release;
+    _throwT = 0;
+    thrown++;
+    if (t == null) return;
+    game.world.add(ThrownStone(hand, t, flightTime));
+    GameAudio.instance.play('throw');
+  }
+
+  void _checkLures() {
     for (final l in game.world.children.whereType<FireflyLure>().toList()) {
       if (l.glowing && (l.position - ear).length < 46) {
         l.removeFromParent();
@@ -770,6 +891,8 @@ class StoneGiant extends PositionComponent
         }
         // Bir karede tek vuruş: aynı anda gelen ikinci ışık sayılmaz (çift
         // köprü kurulmaz).
+        _throw = _Throw.none;
+        _cool = cooldown;
         break;
       }
     }
@@ -854,7 +977,7 @@ class StoneGiant extends PositionComponent
     }
     final stung = !fallen && _stagger > 0 ? (_stagger / 2.4) : 0.0;
     // Adım: ağırlık basan bacağa geçer, öbürü kalkıp öne gelir.
-    final walking = !fallen && _stagger <= 0;
+    final walking = !fallen && _stagger <= 0 && _throw == _Throw.none;
     final s =
         ((_walk * _stepRate - math.pi / 2) % (2 * math.pi) + 2 * math.pi) %
         (2 * math.pi);
@@ -873,8 +996,10 @@ class StoneGiant extends PositionComponent
       );
       if (hits > 0) _cracks(canvas, w, h);
       canvas.restore();
+      _renderThrow(canvas);
       if (!fallen) {
-        final e = ear - position;
+        // Kulak: yerel çizim sol üst köşeden (konum ayakların yeri).
+        final e = ear - (position - Vector2(0, size.y));
         glowDot(
           canvas,
           e.toOffset(),
@@ -896,8 +1021,9 @@ class StoneGiant extends PositionComponent
     );
     if (hits > 0) _cracks(canvas, w, h);
     canvas.restore();
+    _renderThrow(canvas);
     if (!fallen) {
-      final e = ear - position;
+      final e = ear - (position - Vector2(0, size.y));
       glowDot(
         canvas,
         e.toOffset(),
@@ -1075,6 +1201,154 @@ class StoneGiant extends PositionComponent
   }
 }
 
+enum _Throw { none, windup, release, recover }
+
+/// Taşın düşeceği yer: zeminde nabız gibi atan halka ve üstüne dökülen
+/// çakıl. Dev taşı kaldırdığı anda belirir; taş düşünce söner.
+class ThrowMark extends PositionComponent {
+  ThrowMark(Vector2 at, this.life) : super(position: at.clone(), priority: 13);
+
+  final double life;
+  double _t = 0;
+
+  @override
+  void update(double dt) {
+    _t += dt;
+    if (_t > life + 0.2) removeFromParent();
+  }
+
+  @override
+  void render(Canvas canvas) {
+    final k = (_t / life).clamp(0.0, 1.0);
+    final pulse = 0.5 + 0.5 * math.sin(_t * (6 + 10 * k));
+    final a = (0.35 + 0.5 * k) * (0.7 + 0.3 * pulse);
+    final w = 2.4 * kTile;
+    canvas.drawOval(
+      Rect.fromCenter(center: const Offset(0, -2), width: w, height: 12),
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.5
+        ..color = const Color(0xFFE8A060).withValues(alpha: a),
+    );
+    canvas.drawOval(
+      Rect.fromCenter(
+        center: const Offset(0, -2),
+        width: w * (0.3 + 0.6 * k),
+        height: 5 + 5 * k,
+      ),
+      Paint()
+        ..color = const Color(0xFF0A0706).withValues(alpha: 0.35 + 0.4 * k),
+    );
+    // Yukarıdan dökülen çakıl: taşın geleceği yeri gökten de söyler.
+    final grit = Paint()..color = const Color(0xFFB8A890).withValues(alpha: a);
+    for (var i = 0; i < 5; i++) {
+      final fx = (i - 2) * 9.0 + math.sin(i * 2.3) * 4;
+      final fy = -((_t * 140 + i * 37) % 120);
+      canvas.drawCircle(Offset(fx, fy), 1.6, grit);
+    }
+  }
+}
+
+/// Devin attığı taş: sabit hedefe yay çizerek düşer; düştüğü yerde ezer,
+/// sonra bir süre basamak olarak kalır.
+class ThrownStone extends PositionComponent with HasGameReference<GolgeGame> {
+  ThrownStone(Vector2 from, this.to, this.flight)
+    : _from = from.clone(),
+      super(position: from.clone(), priority: 22);
+
+  final Vector2 _from;
+  final Vector2 to;
+  final double flight;
+  double _t = 0;
+
+  @override
+  void update(double dt) {
+    _t += dt;
+    final k = (_t / flight).clamp(0.0, 1.0);
+    final arc = 4 * k * (1 - k) * 3.5 * kTile;
+    position.setValues(
+      _from.x + (to.x - _from.x) * k,
+      _from.y + (to.y - 18 - _from.y) * k - arc,
+    );
+    angle += dt * 6;
+    if (k < 1) return;
+    game.shake(7);
+    GameAudio.instance.play('crumble');
+    GameAudio.instance.play('land', volume: 0.8);
+    final p = game.player;
+    final zone = Rect.fromCenter(
+      center: Offset(to.x, to.y - 22),
+      width: 2.4 * kTile,
+      height: 48,
+    );
+    if (p != null && !p.isDead && p.toRect().overlaps(zone)) {
+      p.die();
+    }
+    game.world.add(StoneStep(Vector2(to.x - 26, to.y - 26)));
+    removeFromParent();
+  }
+
+  @override
+  void render(Canvas canvas) => _drawBoulder(canvas, 24);
+}
+
+/// Taşın kalıntısı: birkaç saniye basamaktır (yüksek rafa, kulağa
+/// uzanmak için), sonra ufalanıp söner.
+class StoneStep extends Deck {
+  StoneStep(Vector2 at) : super(position: at, size: Vector2(52, 26));
+
+  static const double life = 7;
+  double _t = 0;
+
+  @override
+  bool get active => _t < life - 0.8;
+
+  @override
+  void step(double dt) {
+    _t += dt;
+    if (_t > life) removeFromParent();
+  }
+
+  @override
+  void render(Canvas canvas) {
+    final fade = ((life - _t) / 0.8).clamp(0.0, 1.0);
+    final crack = _t > life - 1.6 ? math.sin(_t * 60) * 1.2 : 0.0;
+    canvas.save();
+    canvas.translate(26 + crack, 14);
+    _drawBoulder(canvas, 27, alpha: fade, flat: true);
+    canvas.restore();
+  }
+}
+
+void _drawBoulder(
+  Canvas canvas,
+  double r, {
+  double alpha = 1,
+  bool flat = false,
+}) {
+  final rock = Paint()
+    ..color = const Color(0xFF2A2430).withValues(alpha: alpha);
+  final top = flat ? -0.5 : -1.0;
+  canvas.drawPath(
+    Path()
+      ..moveTo(-r, -r * 0.4)
+      ..lineTo(-r * 0.35, r * top)
+      ..lineTo(r * 0.7, r * top * 0.8)
+      ..lineTo(r, r * 0.25)
+      ..lineTo(r * 0.35, r)
+      ..lineTo(-r * 0.85, r * 0.75)
+      ..close(),
+    rock,
+  );
+  canvas.drawLine(
+    Offset(-r * 0.6, r * top * 0.7),
+    Offset(r * 0.55, r * top * 0.75),
+    Paint()
+      ..color = const Color(0xFFC8D2E2).withValues(alpha: 0.6 * alpha)
+      ..strokeWidth = 2,
+  );
+}
+
 /// Temas sayısına göre devin çatlakları (yerel koordinatta, oranla).
 const _crackLines = [
   // 1. temas: başta ve omuzda
@@ -1093,6 +1367,40 @@ const _crackLines = [
 ];
 
 extension on StoneGiant {
+  /// Kaldırılan taş ve onu tutan kol (kulağı örter): devin yerel çiziminde.
+  void _renderThrow(Canvas canvas) {
+    if (fallen) return;
+    if (_throw != _Throw.windup && _throw != _Throw.release) return;
+    final origin = position - Vector2(0, size.y);
+    Offset local(Vector2 v) => (v - origin).toOffset();
+    final lift = _throw == _Throw.windup
+        ? 1 - math.pow(1 - (_throwT / windupTime).clamp(0.0, 1.0), 2).toDouble()
+        : 1.0;
+    final handW = hand;
+    final shoulder = Vector2(
+      position.x + size.x / 2 - _dir * size.x * 0.3,
+      position.y - size.y * 0.7,
+    );
+    final rise = Vector2.zero()..setFrom(shoulder + (handW - shoulder) * lift);
+    if (_throw == _Throw.windup) {
+      // Taşı tutan kol: omuzdan başın yanına, kulağın önünden geçer.
+      _block(canvas, local(shoulder), local(rise), 30);
+      canvas.save();
+      canvas.translate(local(rise).dx, local(rise).dy - 20);
+      canvas.rotate(math.sin(_t * 9) * 0.05 * lift);
+      _drawBoulder(canvas, 26);
+      canvas.restore();
+    } else {
+      // Atış: kol öne savrulur.
+      final k = (_throwT / 0.35).clamp(0.0, 1.0);
+      final fore = Vector2(
+        position.x + size.x / 2 + _dir * size.x * 0.5 * k,
+        position.y - size.y * (1 - 0.3 * k),
+      );
+      _block(canvas, local(shoulder), local(fore), 30);
+    }
+  }
+
   /// Karanlıkta yürüyen dev heykel: Antiochos tiaralı başı, kuşaklı Pers
   /// tuniği, kıvrımlı geniş pantolon, arkada pelerin. Gövde gecenin kendisi
   /// kadar koyu; yalnız arkasından vuran şafak kenarını çizer, gözleri kor.

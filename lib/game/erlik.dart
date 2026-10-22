@@ -46,6 +46,15 @@ class Kormos extends PositionComponent with HasGameReference<GolgeGame> {
   /// Bu karede neye yöneldi (yoksa null).
   Vector2? _target;
 
+  /// Işığı gözden kaybedince son gördüğü yere bir süre süzülür: kavanozu
+  /// örtüp aynı yerde çömelmek yetmez, yer değiştirmek gerekir.
+  Vector2? lastLight;
+  double _search = 0;
+  static const double searchTime = 2.6;
+
+  /// Son görülen ışığı arıyor mu.
+  bool get searching => _search > 0 && lastLight != null;
+
   Level get level => game.level;
 
   bool _blocked(double x, double y) {
@@ -107,8 +116,18 @@ class Kormos extends PositionComponent with HasGameReference<GolgeGame> {
       GameAudio.instance.play('suspect', volume: 0.45, minGapMs: 2500);
     }
     _target = target;
+    if (target != null && target == p?.center) {
+      lastLight = target.clone();
+      _search = searchTime;
+    } else if (target != null) {
+      // Ateşböceğine dönen eski izi bırakır.
+      _search = 0;
+    }
     if (target != null) {
       _step(target, speed, dt);
+    } else if (searching) {
+      _search -= dt;
+      _step(lastLight!, drift * 1.3, dt);
     } else {
       // Yuvasına döner, orada ağır ağır salınır.
       final home = _home + Vector2(math.sin(_t * 0.6) * 10, math.sin(_t) * 4);
