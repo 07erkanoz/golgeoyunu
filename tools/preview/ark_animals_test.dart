@@ -10,7 +10,10 @@ void main() {
   test('gemi hayvanları', () async {
     final rec = ui.PictureRecorder();
     final c = ui.Canvas(rec);
-    c.drawRect(const ui.Rect.fromLTWH(0, 0, 1800, 760), ui.Paint()..color = const ui.Color(0xFF3A2414));
+    c.drawRect(
+      const ui.Rect.fromLTWH(0, 0, 1800, 760),
+      ui.Paint()..color = const ui.Color(0xFF3A2414),
+    );
     var x = 150.0;
     for (final k in ArkAnimal.kinds) {
       c.save();
@@ -28,6 +31,7 @@ void main() {
     final img = await rec.endRecording().toImage(1800, 760);
     final png = await img.toByteData(format: ui.ImageByteFormat.png);
     Directory('build/gallery').createSync(recursive: true);
-    File('build/gallery/gemi_hayvanlar.png').writeAsBytesSync(png!.buffer.asUint8List());
+    File('build/gallery/gemi_hayvanlar.png')
+        .writeAsBytesSync(png!.buffer.asUint8List());
   });
 }

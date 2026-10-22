@@ -641,17 +641,59 @@ class Ski:
     def deco(s,kind,dx=0):
         s.decor.append((kind,s.x+dx))
     def rail_over_gap(s,n,drop_after):
-        c=s.x; r=int(round(s.row))
+        # Kütük tam satır hizasında: önünde o satırda kısa bir düzlük, kar
+        # kütüğün üstüyle aynı yükseklikte (kayakçı kayarak çıkar).
+        r=int(math.floor(s.row+0.5))
+        s.y += [(s.row+r)/2, r, r]; s.row=r
+        c=s.x
         s.marks.append((c-1,'=',('rail',n+2,r)))
         s.gap(n,drop_after,'rail')
+    # Alto'daki gibi: her uçurum olağan hızla (440-640), kenara 10-120
+    # piksel kala basılan her zıplamayla aşılır. Takla yalnız ödüldür.
+    GAP_V=(440,500,560,640)
+    GAP_J=(10,40,80,120)
+    def _gap_ok(s,gap,vs=None,js=None):
+        g0,g1,_=gap
+        edge=(g0-0.5)*TILE; far=(g1+0.5)*TILE
+        for v in vs or s.GAP_V:
+            for j in js or s.GAP_J:
+                jx=edge-j
+                if s.at(jx) is None: continue
+                lx,diff,wall=s.fly(jx,v,True)
+                # Erken zıplayan rampaya iner: oradan yeniden zıplar ya da
+                # kenardan kendiliğinden uçar; ikisinden biri yeterse güvenli.
+                if lx is not None and not wall and lx<edge:
+                    if lx<edge-30: continue
+                    l2,_,w2=s.fly(edge-1,v,False)
+                    if l2 is not None and not w2 and l2>=far+8: continue
+                if lx is None or wall or lx<far+8: return False
+        return True
+    def _fit(s,build,sizes,name):
+        """build(n) ile kur, sınavı geçen ilk ölçüyü bırak."""
+        x0=s.x; r0=s.row; g0=len(s.gaps)
+        for n in sizes:
+            del s.y[x0:]; s.row=r0; del s.gaps[g0:]
+            build(n)
+            # Sınav için yamaç geçici olarak uzatılır (pistin devamı henüz
+            # kurulmadı; uzun uçuş oraya iner). Bütün pist check()'te
+            # yeniden sınanır.
+            end=len(s.y); last=s.y[-1]; d=s.y[-1]-s.y[-2] if s.y[-2]>=0 else 0.3
+            s.y += [last+d*(k+1) for k in range(40)]
+            ok=all(s._gap_ok(g) for g in s.gaps[g0:] if g[2]!='rail')
+            del s.y[end:]
+            if ok:
+                return n
+        raise AssertionError(f'{name} {x0}: uygun ölçü yok')
     def jump(s,kick_n,kick_rise,gap_n,land_drop,land_n):
         """Rampa, uçurum ve aşağı eğimli iniş yamacı."""
         # Rampadan önce kısa düzlük: yaklaşırken çukura düşülmez, zıplama
         # zamanı bağışlayıcı olur.
-        s.flat(3)
-        s.kicker(kick_n,kick_rise)
-        s.gap(gap_n,land_drop*0.6)
-        s.slope(land_n,land_drop*0.4)
+        def b(n):
+            s.flat(3)
+            s.kicker(kick_n,kick_rise)
+            s.gap(n,land_drop*0.6)
+            s.slope(land_n,land_drop*0.4)
+        s._fit(b,range(gap_n,1,-1),'atlayış')
     def flip_ramp(s,land_n=26):
         """Takla rampası: dik bir yamaca uzun bir uçuş; zıplayan her hızda bir
         takla sığar (1,02 sn dönüş + pay). Derinlik bunu sağlayana dek artar."""
@@ -664,7 +706,7 @@ class Ski:
             g=s.gaps[-1]; edge=(g[0]-0.5)*TILE; far=(g[1]+0.5)*TILE
             good=True
             for v in (420,500,580,640):
-                for j in (10,40,80):
+                for j in (10,40,80,120):
                     lx,diff,wall=s.fly(edge-j,v,True)
                     if (lx is None or wall or lx<far+8 or s.last_t<1.2
                             or lx>far+(land_n-3)*TILE):
@@ -673,42 +715,20 @@ class Ski:
                 return
         raise AssertionError(f'takla rampası {x0} kurulamadı')
     def takla_gap(s,n=12,drop=7,land_n=24):
-        """Takla hızıyla aşılan uçurum: yalnız takladan sonraki kut hızıyla
-        karşıya varılır (normal en yüksek hızla, iyi zamanlı zıplayan bile
-        kısa düşer). Genişlik ve derinlik bu koşulu sağlayana dek aranır."""
-        x0=s.x; r0=s.row; g0=len(s.gaps)
-        for kr in (1.2,2.0,3.0):
-            for dd in range(10,44,2):
-                for nn in range(8,48):
-                    del s.y[x0:]; s.row=r0; del s.gaps[g0:]
-                    s.flat(2); s.kicker(4,kr)
-                    s.gap(nn,dd*0.75,'takla')
-                    s.slope(land_n,dd*0.25+drop*0.3)
-                    st=s._takla_ok(s.gaps[-1])
-                    if st=='ok':
-                        print(f'takla uçurumu {x0}: genişlik {nn}, derinlik {dd}, rampa {kr}')
-                        return
-                    if st=='short': break
-        raise AssertionError(f'takla uçurumu {x0} için ölçü bulunamadı')
-    def _takla_ok(s,gap):
-        g0,g1,_=gap
-        edge=(g0-0.5)*TILE; far=(g1+0.5)*TILE
-        def ok(jx,v):
-            lx,diff,wall=s.fly(jx,v,True)
-            return lx is not None and lx>=far+8 and not wall
-        # İyi zamanlı (kenara yakın) zıplayış normal hızla aşamamalı.
-        if any(ok(edge-j,v) for j in (5,10,20,30,40,50) for v in (600,620,640)):
-            return 'easy'
-        # Kut hızıyla geniş bir zıplama penceresinde aşılabilmeli (kenara
-        # 10-120 piksel kala; telefonda da yakalanır).
-        if all(ok(edge-j,v) for j in (10,40,80,120) for v in (760,800)):
-            return 'ok'
-        return 'short'
+        """Büyük uçurum: rampadan uçulur; olağan hızla aşılır, sığabilen en
+        geniş ölçü seçilir (takla buraya hız katar ama şart değil)."""
+        def b(nn):
+            s.flat(2); s.kicker(4,1.6)
+            s.gap(nn,drop*0.8,'takla')
+            s.slope(land_n,drop*0.4)
+        s._fit(b,range(n,3,-1),'büyük uçurum')
     def drop_off(s,gap_n,drop,land_n,land_drop):
         """Rampasız uçurum: kenardan düşülür, dik bir yamaca inilir."""
-        s.flat(3)
-        s.gap(gap_n,drop)
-        s.slope(land_n,land_drop)
+        def b(n):
+            s.flat(3)
+            s.gap(n,drop)
+            s.slope(land_n,land_drop)
+        s._fit(b,range(gap_n,1,-1),'düşüş')
     def rollers(s,k,n,drop,rise):
         """Takla tümsekleri: inişli çıkışlı sıra."""
         for _ in range(k):
@@ -761,18 +781,15 @@ class Ski:
             if kind=='rail': continue
             edge=(g0-0.5)*TILE
             far=(g1+0.5)*TILE
-            for v in range(300,int(SKI_KUT)+1,20):
-                for jx in ([edge-1] if kind!='takla' else [edge-20,edge-40,edge-70])+([edge-30,edge-60,edge-90] if kind!='takla' else []):
+            assert s._gap_ok((g0,g1,kind)), f'{name}: uçurum {g0} olağan hızla aşılamıyor'
+            for v in range(400,661,20):
+                for jx in [edge-1]+[edge-j for j in s.GAP_J]:
                     jump = jx<edge-1
                     if s.at(jx) is None: continue
                     lx,diff,wall=s.fly(jx,v,jump)
                     ok = lx is not None and lx>=far+8 and not wall
-                    if kind=='takla':
-                        pass
-                    elif v>=480 and (jump or v>=520):
-                        assert ok, f'{name}: uçurum {g0} {v} hızla aşılamıyor (zıplama {jump}, iniş {lx}, duvar {wall})'
                     if ok:
-                        zones.append((lx-24, lx+v*0.75))
+                        zones.append((lx-24, lx+v*0.45))
         s.zones=zones
         out=[]
         for c,ch,up in s.marks:
@@ -787,6 +804,9 @@ class Ski:
         s.marks=out
 
     def ok_rock(s,c):
+        """Kaya: iniş yerinde, uçurumun ardında, sırtın hemen arkasında
+        olmaz; önünde uçurum olmaz; her olağan hızda ona 30-120 piksel kala
+        zıplayan aşar (rock_clear)."""
         W=len(s.y)
         if not (2<=c<W-8) or s.y[c]<0: return False
         x=(c+0.5)*TILE
@@ -794,13 +814,42 @@ class Ski:
             if a-30<=x<=b+20: return False
         for g in range(max(1,c-14),c+1):
             if s.y[g]>=0 and s.y[g-1]<0: return False
-        for c2 in range(c+1,min(W,c+8)):
+        # Önde 22 kare uçurum yok: kayadan zıplayan bir rampaya ya da
+        # uçurumun ağzına inmesin.
+        for c2 in range(max(1,c-12),min(W,c+22)):
             if s.y[c2]<0: return False
-            if s.y[c2]<s.y[c2-1]-0.05: return False
-        for g in range(max(2,c-14),c+1):
-            if min(s.y[g],s.y[g-1],s.y[g-2])<0: continue
-            if (s.y[g-1]-s.y[g-2])-(s.y[g]-s.y[g-1])>0.25: return False
-        return s.y[c+1]>=s.y[c]
+        # Sırttan en az 12 kare sonra: hızlı gelen sırttan havalanıp havada
+        # kayaya çarpmasın.
+        for g in range(max(2,c-12),c+1):
+            if (s.y[g-1]-s.y[g-2])-(s.y[g]-s.y[g-1])>0.2: return False
+        return s.rock_clear(c)
+
+    def rock_clear(s,c):
+        """Kayaya 30-120 piksel kala, her olağan hızda zıplayan onun üstünden
+        aşar ve güvenle iner (Dart: SkiRock ve kayanın sert çekirdeği)."""
+        rx=(c+0.5)*TILE; gy=s.y[c]*TILE
+        core_l=rx-7; core_r=rx+7; core_top=gy-14
+        for v in (380,460,540,640):
+            for d in (30,60,90,120):
+                x=rx-14-d-7
+                y=s.at(x)
+                if y is None: return False
+                th=s.slope_at(x)
+                vx=v*math.cos(th)+math.sin(th)*60; vy=v*math.sin(th)-SKI_JUMP
+                dt=1/240; t=0; landed=False
+                while t<4:
+                    vy=min(vy+SKI_G*dt,900); x+=vx*dt; y+=vy*dt; t+=dt
+                    if x+5>core_l and x-5<core_r and y-2>core_top:
+                        return False
+                    g=s.at(x)
+                    # Uçuş yolu uçurumun üstünden geçmez (kayadan zıplayan
+                    # uçuruma inmesin).
+                    if g is None: return False
+                    if y>=g:
+                        if x<core_r+8: return False
+                        landed=True; break
+                if not landed: return False
+        return True
 
     def build(s):
         """İşaretler (sütun, satır, harf) ve yükseklikler."""

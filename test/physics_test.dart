@@ -2046,17 +2046,18 @@ void main() {
       // ignore: avoid_print
       print('palandöken süre ${simT.toStringAsFixed(1)} sn, ölüm $deaths');
       expect(game.player!.center.x, greaterThan(end - kTile * 2));
-      expect(deaths, lessThanOrEqualTo(3));
+      expect(deaths, 0);
     });
 
     testWithGame<GolgeGame>(
-      'takla atmayan takla uçurumunu aşamaz',
+      'takla atmayan da pisti ölmeden bitirir (takla yalnız ödül)',
       GolgeGame.new,
       (game) async {
         await place(game, 9, 3, 7);
         final end = game.level.exitCell.x;
-        final deaths = skiRun(game, 120, end - kTile, flips: false);
-        expect(deaths, greaterThan(0));
+        final deaths = skiRun(game, 400, end - kTile, flips: false);
+        expect(game.player!.center.x, greaterThan(end - kTile * 2));
+        expect(deaths, 0);
       },
     );
 

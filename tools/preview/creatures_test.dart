@@ -21,7 +21,9 @@ void main() {
     game.cinematic = false;
     final p = game.player!;
     // Kule'nin zemin katında boş bir yer.
-    p.position.setFrom(Level.standOn(Vector2(20 * kTile, 13 * kTile), Player.w, Player.h));
+    p.position.setFrom(
+      Level.standOn(Vector2(20 * kTile, 13 * kTile), Player.w, Player.h),
+    );
     final feet = p.position.y + Player.h;
     final base = Vector2(p.position.x, feet - kTile);
     game.world.addAll([
@@ -35,12 +37,16 @@ void main() {
       game.update(1 / 60);
     }
     // Kamera yaratıkların ortasına.
-    game.camera.viewfinder.position = Vector2(base.x + 3.5 * kTile, feet - 2 * kTile);
+    game.camera.viewfinder.position = Vector2(
+      base.x + 3.5 * kTile,
+      feet - 2 * kTile,
+    );
     final rec = ui.PictureRecorder();
     game.render(ui.Canvas(rec));
     final img = await rec.endRecording().toImage(1280, 720);
     final png = await img.toByteData(format: ui.ImageByteFormat.png);
     Directory('build/gallery').createSync(recursive: true);
-    File('build/gallery/yaratiklar.png').writeAsBytesSync(png!.buffer.asUint8List());
+    File('build/gallery/yaratiklar.png')
+        .writeAsBytesSync(png!.buffer.asUint8List());
   });
 }

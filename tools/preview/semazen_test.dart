@@ -36,6 +36,7 @@ void main() {
     final img = await rec.endRecording().toImage(1800, 700);
     final png = await img.toByteData(format: ui.ImageByteFormat.png);
     Directory('build/gallery').createSync(recursive: true);
-    File('build/gallery/semazen.png').writeAsBytesSync(png!.buffer.asUint8List());
+    File('build/gallery/semazen.png')
+        .writeAsBytesSync(png!.buffer.asUint8List());
   });
 }

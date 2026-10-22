@@ -783,7 +783,9 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     if (before == null || atV == null || ahead == null) return false;
     final rate = (atV - before) / math.max(half, 0.001);
     final ballistic = before + rate * 2 * half + 0.5 * g * look * look;
-    return ahead > ballistic + 1.5;
+    // Küçük tümsekler kaldırmaz (kayakçı kara yapışık kalır, zıplama boşa
+    // gitmez); yalnız belirgin sırtlar ve rampa uçları havalandırır.
+    return ahead > ballistic + 4.0;
   }
 
   void _updateSki(double dt, int dir, bool jump, bool jumpPressed) {
@@ -793,7 +795,7 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       _skiStarted = true;
       _skiSpeed = math.max(_skiSpeed, skiStartSpeed);
     }
-    _skiJumpBuf = jumpPressed ? 0.14 : math.max(0, _skiJumpBuf - dt);
+    _skiJumpBuf = jumpPressed ? 0.22 : math.max(0, _skiJumpBuf - dt);
     facing = 1;
     crouching = false;
     sneaking = false;
@@ -882,7 +884,7 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     }
     if (_skiAir) {
       // Sırttan yeni havalanmış, kar hâlâ ayağının dibinde: zıplama sayılır.
-      if (_skiJumpBuf > 0 && !_skiJumped && _airTime < 0.16) {
+      if (_skiJumpBuf > 0 && !_skiJumped && _airTime < 0.2) {
         // Uçurumun dudağından yeni ayrıldıysa (altı boş) da sayılır: kenara
         // geç kalan zıplama yutulmasın.
         final under = s.at(center.x);
@@ -949,7 +951,11 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
         final th = s.slope(center.x);
         final diff = _wrap(skiAngle - th);
         if (diff.abs() < landTolerance) {
-          _skiSpeed = velocity.x * math.cos(th) + velocity.y * math.sin(th);
+          // İnişte hız büyük ölçüde korunur (yokuşa inen durmasın).
+          _skiSpeed = math.max(
+            velocity.x * math.cos(th) + velocity.y * math.sin(th),
+            velocity.x * 0.9,
+          );
           final flips = (_airSpin / (2 * math.pi) + 0.15).floor();
           final fx = game.skiFx;
           if (flips > 0) {

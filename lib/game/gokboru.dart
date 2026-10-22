@@ -423,7 +423,8 @@ class GokboruWarden extends Component with HasGameReference<GolgeGame> {
   }
 }
 
-/// Kayak yamaçlarında Ak Kurt (Gökbörü): Sâye'nin önünde dörtnala koşar.
+/// Kayak yamaçlarında Ak Kurt (Gökbörü): bir kez, birkaç saniye Sâye'nin
+/// önünde dörtnala koşar, sonra kaybolur.
 /// Uçurumlardan ve kayaların üstünden önce o sıçrar (zamanlamayı gösterir);
 /// basıp geçtiği karda ışıldayan pençe izleri kalır, izin üstünden kayan
 /// hızlanır. Çığ'da çığ uyanınca, Palandöken'de ilk tepeden sonra görünür;
@@ -469,9 +470,15 @@ class SkiGuide extends PositionComponent with HasGameReference<GolgeGame> {
     return ya + (yb - ya) * u - math.sin(u * math.pi) * (span * 0.35 + 30);
   }
 
+  /// Görüneli kaç saniye oldu: bir kez, kısa bir an görünür, sonra
+  /// karlı tepelerin ardında kaybolur ve dönmez.
+  double _seen = 0;
+  static const double appearFor = 6;
+
   bool get _running {
     final p = game.player;
     if (p == null || p.isDead) return false;
+    if (_seen > appearFor) return false;
     Avalanche? av;
     for (final c in game.world.children) {
       if (c is Avalanche) av = c;
@@ -497,6 +504,7 @@ class SkiGuide extends PositionComponent with HasGameReference<GolgeGame> {
     }
     final p = game.player;
     final running = _running;
+    if (_shown) _seen += dt;
     if (running && !_shown && p != null) {
       _shown = true;
       position.setValues(
