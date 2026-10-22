@@ -415,16 +415,18 @@ class SkiDecor extends Component with HasGameReference<GolgeGame> {
     final (x0, y0, _, _, top) = _archGeo(x, y);
     final rock = Paint()
       ..color = Color.lerp(lt.deep, const Color(0xFF000000), 0.4)!;
+    // Ön planda: ayak ekranın altına dek iner (dibi karın önünde kesik
+    // kalmasın).
     canvas.drawPath(
       Path()
-        ..moveTo(x0 - 60, y0 + 60)
+        ..moveTo(x0 - 58, y0 + 900)
         ..lineTo(x0 - 64, y0 - 60)
         ..lineTo(x0 - 52, top + 70)
         ..lineTo(x0 - 30, top + 20)
         ..lineTo(x0 + 2, top + 40)
         ..lineTo(x0 + 14, top + 104)
         ..lineTo(x0 + 8, y0 - 50)
-        ..lineTo(x0 + 4, y0 + 60)
+        ..lineTo(x0 + 6, y0 + 900)
         ..close(),
       rock,
     );

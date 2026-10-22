@@ -604,7 +604,7 @@ lvl9=k9.rows()
 # ------------------------------------------------------------ kayak pisti
 # Kayak fiziği (lib/game/player.dart _updateSki ile aynı sabitler).
 SKI_G = 1500.0
-SKI_JUMP = 440.0
+SKI_JUMP = 560.0
 SKI_VMAX = 640.0      # olağan en yüksek hız
 SKI_KUT = 800.0       # takladan sonraki "kut" hızı
 TILE = 32.0
@@ -770,7 +770,9 @@ class Ski:
         açı farkı, karşı duvara çarptı mı)."""
         th=s.slope_at(x); y=s.at(x)
         vx=v*math.cos(th); vy=v*math.sin(th)
-        if jump: vx+=math.sin(th)*60; vy-=SKI_JUMP
+        if jump:
+            vx+=math.sin(th)*60
+            vy=(vy if vy<0 else vy*0.35)-SKI_JUMP
         dt=1/240; t=0
         while t<4:
             vy=min(vy+SKI_G*dt,900); x+=vx*dt; y+=vy*dt; t+=dt
@@ -863,7 +865,8 @@ class Ski:
                 y=s.at(x)
                 if y is None: return False
                 th=s.slope_at(x)
-                vx=v*math.cos(th)+math.sin(th)*60; vy=v*math.sin(th)-SKI_JUMP
+                vx=v*math.cos(th)+math.sin(th)*60
+                vy=v*math.sin(th); vy=(vy if vy<0 else vy*0.35)-SKI_JUMP
                 dt=1/240; t=0; landed=False
                 while t<4:
                     vy=min(vy+SKI_G*dt,900); x+=vx*dt; y+=vy*dt; t+=dt

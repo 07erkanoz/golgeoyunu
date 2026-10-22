@@ -702,6 +702,13 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
   /// hızla aşılır (olağan en yüksek hız 640).
   static const double kutSpeed = 800;
 
+  /// Kayakta zıplayış hızı (yukarı). Pist üreteci de aynısını kullanır
+  /// (tools/generate_maps.py SKI_JUMP).
+  static const double skiJump = 560;
+
+  /// Zıplarken yamacın aşağı akışından kalan pay.
+  static double _jumpBase(double vy) => vy < 0 ? vy : vy * 0.35;
+
   /// Takla dönüş hızı (radyan/sn): bir tam takla ~0,83 sn; takla
   /// rampasındaki uçuşa (en az 1,2 sn) rahatça sığar.
   static const double flipRate = 7.6;
@@ -741,7 +748,9 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     _airTime = 0;
     velocity.setValues(
       _skiSpeed * math.cos(th) + math.sin(th) * 60,
-      math.min(vy, velocity.y) - 440,
+      // Yokuş aşağı akışın çoğu bırakılır: kayakçı ekranda da gerçekten
+      // havalanır (Alto gibi yüksek, süzülür bir zıplayış).
+      _jumpBase(math.min(vy, velocity.y)) - skiJump,
     );
     GameAudio.instance.play('jump', volume: 0.6);
   }
@@ -821,7 +830,7 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
         _skiAir = true;
         _airTime = 0;
         game.skiFx?.trick(S.of('trickRail'));
-        velocity.setValues(_skiSpeed, -430);
+        velocity.setValues(_skiSpeed, -skiJump);
         GameAudio.instance.play('jump', volume: 0.6);
       } else if (center.x > rail.position.x + rail.size.x) {
         _grind = null;
