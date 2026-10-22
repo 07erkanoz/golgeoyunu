@@ -56,7 +56,7 @@ class Backdrop extends Component with HasGameReference<GolgeGame> {
     final depth = realismHere(game) ? depthKind(lv) : null;
     final far = depth != null;
     // Kapalı sarnıçta daha bulanık; açık havada yıldızlar seçilsin diye az.
-    final farScale = depth == DepthKind.cistern ? 3.0 : 2.0;
+    final farScale = lv.def.theme.indoor ? 3.0 : 2.0;
     // Bulanıklık ucuz yoldan: sahne ekranın üçte biri çözünürlükte bir
     // resme çizilir, büyütülerek konur (tam ekran bulanıklaştırma
     // telefonu ısıtıyordu).
@@ -341,8 +341,18 @@ class Backdrop extends Component with HasGameReference<GolgeGame> {
             DepthKind.cistern =>
               (Cartoon.on ? Cartoon.skyMid : const Color(0xFF3A1E14))
                   .withValues(alpha: 0.22),
-            DepthKind.snow || DepthKind.konya => const Color(0x1E2A3550),
+            DepthKind.snow ||
+            DepthKind.konya ||
+            DepthKind.nemrut => const Color(0x1E2A3550),
             DepthKind.peri => const Color(0x1E7A4030),
+            DepthKind.cliffs => const Color(0x1E5A3020),
+            DepthKind.sky => const Color(0x1A9A5030),
+            DepthKind.kaf => const Color(0x1A1E6A50),
+            DepthKind.ark => const Color(0x1E5A3A20),
+            DepthKind.cave => const Color(0x1E4A2818),
+            DepthKind.underworld => const Color(0x1E281838),
+            DepthKind.ergenekon => const Color(0x1A303850),
+            DepthKind.heavens => const Color(0x1A3A4A80),
           },
       );
     }

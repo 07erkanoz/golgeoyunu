@@ -16,16 +16,38 @@ import 'terrain.dart';
 import '../settings.dart';
 
 /// Işık ve derinliğin çizildiği bölüm türleri.
-enum DepthKind { cistern, snow, peri, konya }
+enum DepthKind {
+  cistern,
+  snow,
+  peri,
+  konya,
+  cliffs,
+  sky,
+  kaf,
+  ark,
+  nemrut,
+  cave,
+  underworld,
+  ergenekon,
+  heavens,
+}
 
-/// Bu bölümün derinlik türü (yoksa null: kayak bölümleri ve henüz
-/// denenmeyenler).
+/// Bu bölümün derinlik türü (kayak bölümlerinde yok: hız ve okunurluk).
 DepthKind? depthKind(Level lv) => switch (lv.def.theme) {
   LevelTheme.cistern => DepthKind.cistern,
-  LevelTheme.snow when lv.def.skiSurface == null => DepthKind.snow,
+  LevelTheme.snow when lv.def.skiSurface != null => null,
+  LevelTheme.snow => DepthKind.snow,
   LevelTheme.peri => DepthKind.peri,
   LevelTheme.konya => DepthKind.konya,
-  _ => null,
+  LevelTheme.cliffs => DepthKind.cliffs,
+  LevelTheme.sky => DepthKind.sky,
+  LevelTheme.kaf => DepthKind.kaf,
+  LevelTheme.ark => DepthKind.ark,
+  LevelTheme.nemrut => DepthKind.nemrut,
+  LevelTheme.cave => DepthKind.cave,
+  LevelTheme.underworld => DepthKind.underworld,
+  LevelTheme.ergenekon => DepthKind.ergenekon,
+  LevelTheme.heavens => DepthKind.heavens,
 };
 
 /// Bu bölümde ışık ve derinlik denemesi çizilsin mi.
@@ -173,7 +195,14 @@ enum _Anchor { top, bottom, ground }
 
 /// Yakın katmanda aralıklarla dizilen bir şekil sırası.
 class _Row {
-  const _Row(this.shapes, this.every, this.phase, {this.at = _Anchor.top});
+  const _Row(
+    this.shapes,
+    this.every,
+    this.phase, {
+    this.at = _Anchor.top,
+    this.glows,
+    this.drop = 0,
+  });
 
   final List<_Shape> shapes;
 
@@ -182,6 +211,14 @@ class _Row {
   final double phase;
 
   final _Anchor at;
+
+  /// Her şeklin (sırayla) sıcak ışık saçan noktası, şeklin yerel
+  /// biriminde (fener camı gibi); yoksa null.
+  final List<Offset>? glows;
+
+  /// Üste asılı şeklin ekranın üstünden ne kadar aşağıda başladığı
+  /// (başvuru biriminde; iç mekânda koyu tavan bandından aşağı insin diye).
+  final double drop;
 }
 
 /// Kameranın hemen önünden geçen koyu, bulanık şekiller (Yerebatan'da
@@ -215,6 +252,23 @@ class NearLayer extends Component with HasGameReference<GolgeGame> {
   static final _rows = <DepthKind, List<_Row>>{};
   static _Shape? _flake;
   static _Shape? _mote;
+  static final _dotCache = <int, _Shape>{};
+
+  /// Renkli, yumuşak küçük zerre (toz, kıvılcım, ışık).
+  static _Shape _dot(Color color, double r) =>
+      _dotCache.putIfAbsent(color.toARGB32() ^ r.hashCode, () {
+        final e = r * 3;
+        return _bake(
+          Rect.fromLTRB(-e, -e, e, e),
+          (c) => c.drawCircle(
+            Offset.zero,
+            r,
+            Paint()
+              ..color = color
+              ..maskFilter = MaskFilter.blur(BlurStyle.normal, r * 0.7),
+          ),
+        );
+      });
 
   double _t = 0;
 
@@ -237,6 +291,15 @@ class NearLayer extends Component with HasGameReference<GolgeGame> {
       DepthKind.snow => _snow(),
       DepthKind.peri => _peri(),
       DepthKind.konya => _konya(),
+      DepthKind.cliffs => _cliffs(),
+      DepthKind.sky => _sky(),
+      DepthKind.kaf => _kaf(),
+      DepthKind.ark => _ark(),
+      DepthKind.nemrut => _nemrut(),
+      DepthKind.cave => _cave(),
+      DepthKind.underworld => _underworld(),
+      DepthKind.ergenekon => _ergenekon(),
+      DepthKind.heavens => _heavens(),
     },
   );
 
@@ -560,10 +623,429 @@ class NearLayer extends Component with HasGameReference<GolgeGame> {
     });
     return [
       _Row([eave], 25, 6),
-      _Row(lamps, 19, 14),
+      _Row(
+        lamps,
+        19,
+        14,
+        glows: [
+          for (var i = 0; i < 2; i++) Offset(0, _refH * (0.14 + i * 0.07) + 29),
+        ],
+      ),
       _Row([railing], 21, 3, at: _Anchor.ground),
     ];
   }
+
+  // ------------------------------------------------------------ ortak parçalar
+
+  /// Zemine oturan şekil: gövdesi aşağı uzar ve zeminin altında erir
+  /// (koyu zeminin önünde kesik kenarlı kutu kalmasın).
+  static _Shape _bakeGround(Rect bounds, void Function(Canvas) draw) =>
+      _bake(bounds, (c) {
+        c.saveLayer(bounds, Paint());
+        draw(c);
+        c.drawRect(
+          bounds,
+          Paint()
+            ..blendMode = BlendMode.dstIn
+            ..shader = ui.Gradient.linear(
+              const Offset(0, 20),
+              const Offset(0, 150),
+              [const Color(0xFF000000), const Color(0x00000000)],
+            ),
+        );
+        c.restore();
+      });
+
+  /// Tavandan sarkan sivri kaya dişleri (sarkıtlar).
+  static _Shape _stalactites(Color ink, int seed) {
+    final r = math.Random(seed);
+    return _bake(const Rect.fromLTRB(-300, -90, 300, 280), (c) {
+      final p = Path()
+        ..moveTo(-280, -70)
+        ..lineTo(280, -70)
+        ..lineTo(280, 10);
+      var x = 280.0;
+      while (x > -280) {
+        final w = 22 + r.nextDouble() * 40;
+        final len = 20 + r.nextDouble() * (r.nextDouble() < 0.3 ? 200 : 70);
+        p
+          ..lineTo(x - w * 0.45, 10 + len)
+          ..lineTo(x - w, 6 + r.nextDouble() * 18);
+        x -= w;
+      }
+      p
+        ..lineTo(-280, 10)
+        ..close();
+      c.drawPath(p, _inkOf(ink));
+    });
+  }
+
+  /// Tavandan sarkan kökler: dalgalı, ince uçlu.
+  static _Shape _roots(Color ink, int seed) {
+    final r = math.Random(seed);
+    return _bake(const Rect.fromLTRB(-240, -40, 240, 380), (c) {
+      for (var k = 0; k < 6; k++) {
+        final x0 = -190 + r.nextDouble() * 380;
+        final len = 110 + r.nextDouble() * 220;
+        final p = Path()..moveTo(x0, -20);
+        var y = -20.0;
+        var x = x0;
+        while (y < len) {
+          final ny = y + 40 + r.nextDouble() * 30;
+          final nx = x + (r.nextDouble() - 0.5) * 36;
+          p.quadraticBezierTo(
+            x + (r.nextDouble() - 0.5) * 40,
+            (y + ny) / 2,
+            nx,
+            ny,
+          );
+          x = nx;
+          y = ny;
+        }
+        c.drawPath(p, _lineOf(ink, 3 + r.nextDouble() * 6));
+      }
+    });
+  }
+
+  /// Zemine oturan iri kaya; üst kenarı hafif ışık alır, istenirse içinde
+  /// kızgın çatlaklar.
+  static _Shape _rock(Color ink, Color rim, int seed, {Color? crack}) {
+    final r = math.Random(seed);
+    final w = 120 + r.nextDouble() * 110;
+    final h = 50 + r.nextDouble() * 90;
+    double j(double v) => v * (0.85 + r.nextDouble() * 0.3);
+    final top = [
+      Offset(-w, 10),
+      Offset(-w * 0.8, -j(h * 0.5)),
+      Offset(-w * 0.45, -j(h * 0.9)),
+      Offset(-w * 0.1, -h),
+      Offset(w * 0.3, -j(h * 0.8)),
+      Offset(w * 0.7, -j(h * 0.45)),
+      Offset(w, 0),
+    ];
+    return _bakeGround(Rect.fromLTRB(-w - 40, -h * 1.3 - 40, w + 40, 200), (c) {
+      c.drawPath(
+        Path()..addPolygon([
+          const Offset(0, 200) + Offset(-w, 0),
+          ...top,
+          Offset(w, 200),
+        ], true),
+        _inkOf(ink),
+      );
+      c.drawPath(Path()..addPolygon(top, false), _lineOf(rim, 4));
+      if (crack != null) {
+        for (var k = 0; k < 3; k++) {
+          final x = -w * 0.6 + k * w * 0.55 + r.nextDouble() * 20;
+          final p = Path()..moveTo(x, -h * 0.6);
+          var y = -h * 0.6;
+          var cx = x;
+          while (y < 60) {
+            cx += (r.nextDouble() - 0.5) * 30;
+            y += 18 + r.nextDouble() * 14;
+            p.lineTo(cx, y);
+          }
+          c.drawPath(p, _lineOf(crack.withValues(alpha: 0.35), 12, 8));
+          c.drawPath(p, _lineOf(crack, 3, 1.5));
+        }
+      }
+    });
+  }
+
+  /// Kameranın önünden geçen bulut öbeği (yuvarlakların birleşimi).
+  static _Shape _cloud(Color col, int seed, {bool hang = false}) {
+    final r = math.Random(seed);
+    return _bake(const Rect.fromLTRB(-360, -230, 360, 230), (c) {
+      final paint = _inkOf(col, 16);
+      for (var k = 0; k < 7; k++) {
+        final x = -250 + k * 83 + (r.nextDouble() - 0.5) * 40;
+        final rad = 55 + r.nextDouble() * 70 - (k - 3).abs() * 8;
+        final y = (hang ? 1 : -1) * rad * (0.4 + r.nextDouble() * 0.3);
+        c.drawCircle(Offset(x, y), rad, paint);
+      }
+    });
+  }
+
+  /// Zümrüt kristal öbeği: eğik altıgen prizmalar, ışığa bakan kenar parlak.
+  static _Shape _crystals(int seed) {
+    final r = math.Random(seed);
+    return _bakeGround(const Rect.fromLTRB(-200, -280, 200, 200), (c) {
+      final n = 3 + r.nextInt(3);
+      for (var k = 0; k < n; k++) {
+        final bx = -120 + r.nextDouble() * 240;
+        final h = 80 + r.nextDouble() * 150;
+        final w = 16 + r.nextDouble() * 18;
+        final lean = (r.nextDouble() - 0.5) * 0.7;
+        c.save();
+        c.translate(bx, 30);
+        c.rotate(lean);
+        c.drawPath(
+          Path()..addPolygon([
+            Offset(-w, 160),
+            Offset(-w, -h + w),
+            Offset(0, -h),
+            Offset(w, -h + w),
+            Offset(w, 160),
+          ], true),
+          _inkOf(const Color(0xFF082A22), 4),
+        );
+        c.drawLine(
+          Offset(0, -h),
+          const Offset(0, 140),
+          _lineOf(const Color(0x661E6A54), 4, 2),
+        );
+        c.drawPath(
+          Path()..addPolygon([
+            Offset(-w, 120),
+            Offset(-w, -h + w),
+            Offset(0, -h),
+          ], false),
+          _lineOf(const Color(0x995AEBB0), 3, 2),
+        );
+        c.restore();
+      }
+    });
+  }
+
+  /// İpe asılı fener; camından sıcak ışık sızar.
+  static _Shape _lantern(Color ink, double len, Paint rope) {
+    final fill = _inkOf(ink);
+    return _bake(Rect.fromLTRB(-50, -20, 50, len + 90), (c) {
+      if (rope.style == PaintingStyle.stroke && rope.strokeWidth > 5) {
+        _chain(c, len, rope);
+      } else {
+        c.drawLine(const Offset(0, -10), Offset(0, len + 6), rope);
+      }
+      c.drawPath(
+        Path()
+          ..moveTo(-16, len + 6)
+          ..lineTo(16, len + 6)
+          ..lineTo(26, len + 50)
+          ..lineTo(-26, len + 50)
+          ..close(),
+        fill,
+      );
+      c.drawRect(
+        Rect.fromLTWH(-12, len + 16, 24, 26),
+        Paint()
+          ..color = const Color(0xBFFFB060)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
+      );
+      c.drawOval(Rect.fromLTWH(-20, len + 48, 40, 14), fill);
+    });
+  }
+
+  // ------------------------------------------------------------ Kule
+
+  static List<_Row> _cliffs() {
+    const ink = Color(0xFF0C0705);
+    const rim = Color(0x55C07848);
+    return [
+      _Row([_roots(ink, 1), _roots(ink, 2)], 18, 6),
+      _Row(
+        [for (var i = 0; i < 3; i++) _rock(ink, rim, 10 + i)],
+        16,
+        12,
+        at: _Anchor.ground,
+      ),
+    ];
+  }
+
+  // ------------------------------------------------------------ Gökyolu
+
+  static List<_Row> _sky() => [
+    _Row(
+      [_cloud(const Color(0xB8A0583C), 1), _cloud(const Color(0xA8B4684A), 2)],
+      22,
+      4,
+      at: _Anchor.bottom,
+    ),
+    _Row([_cloud(const Color(0x80C07A58), 3, hang: true)], 27, 15),
+  ];
+
+  // ------------------------------------------------------------ Kaf
+
+  static List<_Row> _kaf() => [
+    _Row([_crystals(1), _crystals(2), _crystals(3)], 18, 7, at: _Anchor.ground),
+    _Row([_stalactites(const Color(0xFF061A16), 4)], 31, 19),
+  ];
+
+  // ------------------------------------------------------------ Nuh'un Gemisi
+
+  static List<_Row> _ark() {
+    const ink = Color(0xFF0C0705);
+    final fill = _inkOf(ink);
+    final rope = _lineOf(ink, 4, 2);
+    // Tavan kirişi ve iki dirsek.
+    final beam = _bake(const Rect.fromLTRB(-360, -80, 360, 200), (c) {
+      c.drawRect(const Rect.fromLTRB(-330, -60, 330, 26), fill);
+      final brace = _lineOf(ink, 22, 6);
+      c.drawLine(const Offset(-240, 20), const Offset(-320, 160), brace);
+      c.drawLine(const Offset(240, 20), const Offset(320, 160), brace);
+      for (var x = -300.0; x <= 300; x += 75) {
+        c.drawCircle(Offset(x, -10), 7, _inkOf(const Color(0xFF2A1A10), 3));
+      }
+    });
+    // Fıçı ve sandık.
+    final hoop = _lineOf(const Color(0xFF2A1A10), 5, 3);
+    final cargo = [
+      _bakeGround(const Rect.fromLTRB(-90, -170, 200, 200), (c) {
+        c.drawRRect(
+          RRect.fromLTRBR(-60, -140, 60, 180, const Radius.circular(40)),
+          fill,
+        );
+        for (final y in [-100.0, -20.0]) {
+          c.drawLine(Offset(-58, y), Offset(58, y), hoop);
+        }
+        c.drawRect(const Rect.fromLTRB(70, -90, 180, 180), fill);
+        c.drawLine(const Offset(74, -86), const Offset(176, 0), hoop);
+        c.drawLine(const Offset(176, -86), const Offset(74, 0), hoop);
+      }),
+      _bakeGround(const Rect.fromLTRB(-150, -210, 150, 200), (c) {
+        c.drawRect(const Rect.fromLTRB(-130, -70, 0, 180), fill);
+        c.drawRect(const Rect.fromLTRB(-90, -180, 30, -70), fill);
+        c.drawRect(const Rect.fromLTRB(10, -60, 130, 180), fill);
+        c.drawLine(const Offset(-126, -66), const Offset(-4, 20), hoop);
+        c.drawLine(const Offset(14, -56), const Offset(126, 20), hoop);
+      }),
+    ];
+    return [
+      _Row([beam], 15, 3, drop: _refH * 0.12),
+      _Row(
+        [_lantern(ink, _refH * 0.16, rope), _lantern(ink, _refH * 0.24, rope)],
+        23,
+        11,
+        drop: _refH * 0.1,
+        glows: [Offset(0, _refH * 0.16 + 29), Offset(0, _refH * 0.24 + 29)],
+      ),
+      _Row(cargo, 19, 8, at: _Anchor.ground),
+    ];
+  }
+
+  // ------------------------------------------------------------ Nemrut
+
+  static List<_Row> _nemrut() {
+    const ink = Color(0xFF0A080E);
+    final fill = _inkOf(ink);
+    final snow = _inkOf(const Color(0x8CB8C0D4), 5);
+    // Devrik taş baş: yüzü yana dönük, külahı yerde; üstünde kar.
+    final head = _bakeGround(const Rect.fromLTRB(-260, -240, 260, 200), (c) {
+      c.drawOval(const Rect.fromLTRB(-120, -190, 90, 60), fill);
+      c.drawPath(
+        Path()
+          ..moveTo(60, -170)
+          ..quadraticBezierTo(200, -150, 240, -30)
+          ..lineTo(70, 40)
+          ..close(),
+        fill,
+      );
+      c.drawRect(const Rect.fromLTRB(-200, 20, 200, 200), fill);
+      c.drawOval(const Rect.fromLTRB(-100, -196, 40, -172), snow);
+      c.drawOval(const Rect.fromLTRB(90, -160, 200, -140), snow);
+    });
+    // Kırık kaide taşları.
+    final blocks = _bakeGround(const Rect.fromLTRB(-220, -180, 220, 200), (c) {
+      c.drawRect(const Rect.fromLTRB(-190, -60, 40, 200), fill);
+      c.drawPath(
+        Path()..addPolygon(const [
+          Offset(-20, -60),
+          Offset(-10, -150),
+          Offset(110, -130),
+          Offset(150, -40),
+          Offset(150, 200),
+          Offset(-20, 200),
+        ], true),
+        fill,
+      );
+      c.drawOval(const Rect.fromLTRB(-186, -70, 30, -50), snow);
+    });
+    return [
+      _Row([head, blocks], 24, 10, at: _Anchor.ground),
+    ];
+  }
+
+  // ------------------------------------------------------------ Derinkuyu
+
+  static List<_Row> _cave() {
+    const ink = Color(0xFF0A0605);
+    final fill = _inkOf(ink);
+    // Oyma kapı kemeri: yeraltı şehrinin geçitleri.
+    final door = _bake(const Rect.fromLTRB(-200, -330, 200, 40), (c) {
+      c.drawPath(
+        Path()
+          ..fillType = PathFillType.evenOdd
+          ..addRect(const Rect.fromLTRB(-180, -310, 180, 30))
+          ..addRRect(
+            RRect.fromLTRBAndCorners(
+              -70,
+              -220,
+              70,
+              30,
+              topLeft: const Radius.circular(70),
+              topRight: const Radius.circular(70),
+            ),
+          ),
+        fill,
+      );
+    });
+    return [
+      _Row(
+        [_stalactites(ink, 1), _stalactites(ink, 2)],
+        17,
+        5,
+        drop: _refH * 0.08,
+      ),
+      _Row([door], 23, 14, at: _Anchor.bottom),
+    ];
+  }
+
+  // ------------------------------------------------------------ Erlik
+
+  static List<_Row> _underworld() {
+    const ink = Color(0xFF06040A);
+    const rim = Color(0x447A5AB0);
+    return [
+      _Row(
+        [_stalactites(ink, 3), _stalactites(ink, 4)],
+        16,
+        4,
+        drop: _refH * 0.06,
+      ),
+      _Row(
+        [_rock(ink, rim, 5), _rock(ink, rim, 6)],
+        19,
+        11,
+        at: _Anchor.ground,
+      ),
+    ];
+  }
+
+  // ------------------------------------------------------------ Ergenekon
+
+  static List<_Row> _ergenekon() {
+    const ink = Color(0xFF08070A);
+    const rim = Color(0x447080A0);
+    const ember = Color(0xFFFF7A30);
+    return [
+      _Row(
+        [for (var i = 0; i < 3; i++) _rock(ink, rim, 20 + i, crack: ember)],
+        17,
+        9,
+        at: _Anchor.ground,
+      ),
+    ];
+  }
+
+  // ------------------------------------------------------------ Göğün Katları
+
+  static List<_Row> _heavens() => [
+    _Row(
+      [_cloud(const Color(0xB8485A8C), 5), _cloud(const Color(0xA8566A9C), 6)],
+      20,
+      6,
+      at: _Anchor.bottom,
+    ),
+    _Row([_cloud(const Color(0x80607AAE), 7, hang: true)], 29, 17),
+  ];
 
   // ------------------------------------------------------------ zerreler
 
@@ -592,6 +1074,23 @@ class NearLayer extends Component with HasGameReference<GolgeGame> {
   );
 
   static final _imgPaint = Paint()..filterQuality = FilterQuality.medium;
+  static final _rimPaint = Paint()..filterQuality = FilterQuality.medium;
+
+  /// Bölümün ortam ışığı: koyu ortamda yakın şekillerin kenarı bununla
+  /// seçilir (Yerebatan, kar, Kapadokya ve Konya'da gerek yok: arka plan
+  /// zaten açık).
+  static Color? _rimOf(DepthKind kind) => switch (kind) {
+    DepthKind.cliffs => const Color(0x8C8A4A2A),
+    DepthKind.sky => const Color(0x80E09060),
+    DepthKind.kaf => const Color(0x8C2EA07A),
+    DepthKind.ark => const Color(0x99A06A38),
+    DepthKind.nemrut => const Color(0x8C8478A8),
+    DepthKind.cave => const Color(0x998A5428),
+    DepthKind.underworld => const Color(0x997050B0),
+    DepthKind.ergenekon => const Color(0x806A7898),
+    DepthKind.heavens => const Color(0x80A8B8E8),
+    _ => null,
+  };
   final _dotPaint = Paint()..filterQuality = FilterQuality.medium;
 
   void _put(Canvas canvas, _Shape shape, Offset at, double k, [Paint? paint]) {
@@ -632,6 +1131,7 @@ class NearLayer extends Component with HasGameReference<GolgeGame> {
     // Sâye'nin yürüdüğü çizgi, kameraya yakın katmana izdüşürülmüş
     // (yakın şey ekranda daha aşağıda görünür).
     final ground = cam.y + ((_ground ?? cam.y) - cam.y) * parallax + 8 * k;
+    final rim = _rimOf(kind);
     for (final row in _rowsOf(kind)) {
       final every = row.every * kTile;
       final first = ((cam.x - span) / every).floor();
@@ -644,25 +1144,74 @@ class NearLayer extends Component with HasGameReference<GolgeGame> {
         final x = near(i * every + row.phase * kTile);
         if (x < view.left - 400 * k || x > view.right + 400 * k) continue;
         final shape = row.shapes[i % row.shapes.length];
-        _put(canvas, shape, Offset(x, y), k);
-        if (kind == DepthKind.konya && row.shapes.length == 2) {
-          _lampGlow(canvas, x, view.top, k, i % 2);
+        final at = Offset(x, y + row.drop * k);
+        if (rim != null) {
+          // Arka ışık: şeklin ortam renginde kopyası sol üste kayık, önüne
+          // koyu şekil gelir; kenarda ince, yumuşak bir ışık kalır.
+          _rimPaint.colorFilter = ColorFilter.mode(rim, BlendMode.srcIn);
+          _put(canvas, shape, at + Offset(-3 * k, -4 * k), k, _rimPaint);
+        }
+        _put(canvas, shape, at, k);
+        final glows = row.glows;
+        if (glows != null) {
+          _glow(canvas, at + glows[i % glows.length] * k, k);
         }
       }
     }
-    switch (kind) {
-      case DepthKind.snow || DepthKind.konya:
-        _dots(canvas, view, cam.x, k, _flakeShape, 26, 70, 0.55, -18);
-      case DepthKind.peri:
-        _dots(canvas, view, cam.x, k, _moteShape, 30, -14, 0.8, 10);
-      case DepthKind.cistern:
-        break;
+    // (zerre, adet, düşüş hızı (eksi: yükselir), parlaklık, rüzgâr)
+    final dots = switch (kind) {
+      DepthKind.snow ||
+      DepthKind.konya ||
+      DepthKind.nemrut => (_flakeShape, 26, 70.0, 0.55, -18.0),
+      DepthKind.peri => (_moteShape, 30, -14.0, 0.8, 10.0),
+      DepthKind.cliffs ||
+      DepthKind.ark ||
+      DepthKind.cave => (_dot(const Color(0xFFE8C8A0), 3), 24, 6.0, 0.45, 5.0),
+      DepthKind.sky => (
+        _dot(const Color(0xFFFFB070), 3.5),
+        26,
+        -22.0,
+        0.7,
+        14.0,
+      ),
+      DepthKind.kaf => (
+        _dot(const Color(0xFF8CFFD8), 3.5),
+        24,
+        -10.0,
+        0.7,
+        4.0,
+      ),
+      DepthKind.underworld => (
+        _dot(const Color(0xFFB8A0FF), 4),
+        18,
+        -8.0,
+        0.5,
+        2.0,
+      ),
+      DepthKind.ergenekon => (
+        _dot(const Color(0xFFFF8A40), 3),
+        30,
+        -34.0,
+        0.85,
+        8.0,
+      ),
+      DepthKind.heavens => (
+        _dot(const Color(0xFFDDE6FF), 2.5),
+        30,
+        4.0,
+        0.6,
+        -6.0,
+      ),
+      DepthKind.cistern => null,
+    };
+    if (dots != null) {
+      final (shape, count, fall, alpha, wind) = dots;
+      _dots(canvas, view, cam.x, k, shape, count, fall, alpha, wind);
     }
   }
 
-  /// Kandil camının çevresine taşan sıcak ışık.
-  void _lampGlow(Canvas canvas, double x, double top, double k, int i) {
-    final at = Offset(x, top + (_refH * (0.14 + i * 0.07) + 29) * k);
+  /// Fener camının çevresine taşan sıcak ışık.
+  void _glow(Canvas canvas, Offset at, double k) {
     final r = 110 * k;
     canvas.drawCircle(
       at,

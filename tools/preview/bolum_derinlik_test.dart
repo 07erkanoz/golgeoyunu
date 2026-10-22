@@ -15,7 +15,7 @@ import 'package:golge/game/palette.dart';
 import 'package:golge/game/player.dart';
 
 /// (ad, bölüm, oyuncunun başlangıçtan kaç sütun ilerde durduğu)
-const _yerler = [
+const _ilk = [
   ('karyolu', 8, 14.0),
   ('karyolu2', 8, 40.0),
   ('peri', 11, 14.0),
@@ -23,6 +23,23 @@ const _yerler = [
   ('konya', 13, 14.0),
   ('konya2', 13, 38.0),
 ];
+
+/// Kalan bölümler: `--dart-define=KALAN=true` ile.
+const _kalan = [
+  ('kule', 1, 10.0),
+  ('gokyolu', 2, 14.0),
+  ('kaf', 3, 14.0),
+  ('agri', 4, 14.0),
+  ('gemi', 5, 14.0),
+  ('nemrut', 6, 14.0),
+  ('gundogumu', 7, 14.0),
+  ('derinkuyu', 12, 14.0),
+  ('erlik', 14, 14.0),
+  ('ergenekon', 15, 14.0),
+  ('katlar', 16, 14.0),
+];
+
+const _yerler = bool.fromEnvironment('KALAN') ? _kalan : _ilk;
 
 void main() {
   setUpAll(() async {
