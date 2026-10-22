@@ -863,7 +863,9 @@ class ScreenEffects extends Component with HasGameReference<GolgeGame> {
   /// Kar: yakındakiler büyük ve hızlı, uzaktakiler küçük; rüzgârla savrulur.
   void _snow(Canvas canvas, double w, double h, Vector2 cam) {
     final flake = Paint();
-    final count = Settings.lowGraphics ? 40 : 110;
+    // Kayakta hafif, ince bir kar (Alto gibi): az ve küçük taneler.
+    final ski = game.skiSurface != null;
+    final count = Settings.lowGraphics ? 40 : (ski ? 55 : 110);
     final zoom = game.camera.viewfinder.zoom;
     final spanX = w + 40;
     final spanY = h + 20;
@@ -881,8 +883,12 @@ class ScreenEffects extends Component with HasGameReference<GolgeGame> {
       final y =
           (_hash(i + 300) * spanY + _t * speed - cam.y * par) % spanY - 10;
       flake.color = const Color(0xFFF2F6FA)
-          .withValues(alpha: 0.25 + 0.5 * depth);
-      canvas.drawCircle(Offset(x, y), 0.8 + depth * 1.8, flake);
+          .withValues(alpha: (0.25 + 0.5 * depth) * (ski ? 0.6 : 1));
+      canvas.drawCircle(
+        Offset(x, y),
+        ski ? 0.6 + depth * 0.9 : 0.8 + depth * 1.8,
+        flake,
+      );
     }
   }
 

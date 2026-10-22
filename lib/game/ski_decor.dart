@@ -86,10 +86,9 @@ class SkiDecor extends Component with HasGameReference<GolgeGame> {
   /// Ormanda kameraya yakın, iri ve koyu çamlar: Sâye'nin önünden geçer,
   /// derinlik verir (yamacın biraz altında, ön planda).
   void _frontPines(Canvas canvas, Rect view, SkiLight lt) {
-    final dark = Color.lerp(lt.deep, const Color(0xFF000000), 0.55)!;
-    final paint = Paint()..color = dark.withValues(alpha: 0.92);
-    final snow = Paint()
-      ..color = Color.lerp(lt.snowShade, lt.deep, 0.4)!.withValues(alpha: 0.9);
+    // Neredeyse kara silüetler: Alto'daki gibi önden hızla geçer.
+    final dark = Color.lerp(lt.deep, const Color(0xFF000000), 0.7)!;
+    final paint = Paint()..color = dark;
     for (final (a, b) in forests) {
       for (var c = a; c < b; c += 9) {
         final h = (c * 2654435761) & 0xffff;
@@ -98,52 +97,7 @@ class SkiDecor extends Component with HasGameReference<GolgeGame> {
         if (x < view.left || x > view.right) continue;
         final g = surface.at(x);
         if (g == null) continue;
-        final base = g + 70 + (h % 30);
-        final ht = 150.0 + (h % 90);
-        final tree = Path()..moveTo(x, base - ht);
-        // Sağ kenar: dallar dışa taşar, uçları sarkar.
-        for (var k = 0; k < 5; k++) {
-          final ty = base - ht + (k + 1) * ht * 0.18;
-          final half = ht * (0.1 + k * 0.055);
-          tree
-            ..lineTo(x + half, ty)
-            ..lineTo(x + half * 0.55, ty - ht * 0.03);
-        }
-        tree
-          ..lineTo(x + 6, base)
-          ..lineTo(x - 6, base);
-        for (var k = 4; k >= 0; k--) {
-          final ty = base - ht + (k + 1) * ht * 0.18;
-          final half = ht * (0.1 + k * 0.055);
-          tree
-            ..lineTo(x - half * 0.55, ty - ht * 0.03)
-            ..lineTo(x - half, ty);
-        }
-        tree.close();
-        canvas.drawPath(tree, paint);
-        // Dalların üstündeki kar: ince, koyu-mavimsi (ön planda göze batmaz).
-        for (var k = 0; k < 5; k++) {
-          final ty = base - ht + (k + 1) * ht * 0.18;
-          final half = ht * (0.1 + k * 0.055);
-          canvas.drawPath(
-            Path()
-              ..moveTo(x - half * 0.5, ty - ht * 0.05)
-              ..quadraticBezierTo(
-                x,
-                ty - ht * 0.09,
-                x + half * 0.9,
-                ty - ht * 0.005,
-              )
-              ..quadraticBezierTo(
-                x,
-                ty - ht * 0.06,
-                x - half * 0.5,
-                ty - ht * 0.05,
-              )
-              ..close(),
-            snow,
-          );
-        }
+        drawAltoPine(canvas, x, g + 80 + (h % 30), 170.0 + (h % 90), paint);
       }
     }
   }

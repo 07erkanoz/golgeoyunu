@@ -648,9 +648,9 @@ class Ski:
         c=s.x
         s.marks.append((c-1,'=',('rail',n+2,r)))
         s.gap(n,drop_after,'rail')
-    # Alto'daki gibi: her uçurum olağan hızla (440-640), kenara 10-120
+    # Alto'daki gibi: her uçurum olağan hızla (320-640), kenara 10-120
     # piksel kala basılan her zıplamayla aşılır. Takla yalnız ödüldür.
-    GAP_V=(440,500,560,640)
+    GAP_V=(320,400,500,640)
     GAP_J=(10,40,80,120)
     def _gap_ok(s,gap,vs=None,js=None):
         g0,g1,_=gap
@@ -704,13 +704,17 @@ class Ski:
             s.gap(5,dd,'flip')
             s.slope(land_n,9)
             g=s.gaps[-1]; edge=(g[0]-0.5)*TILE; far=(g[1]+0.5)*TILE
-            good=True
+            # Her olağan hızda aşılır; hızlı gelende bir takla sığar
+            # (dönüş ~0,83 sn). Sınav için yamaç geçici uzatılır.
+            end=len(s.y); d=s.y[-1]-s.y[-2]
+            s.y += [s.y[-1]+d*(k+1) for k in range(40)]
+            good=s._gap_ok(g)
             for v in (420,500,580,640):
-                for j in (10,40,80,120):
+                for j in (10,40,80):
                     lx,diff,wall=s.fly(edge-j,v,True)
-                    if (lx is None or wall or lx<far+8 or s.last_t<1.2
-                            or lx>far+(land_n-3)*TILE):
+                    if (lx is None or wall or lx<far+8 or s.last_t<1.0):
                         good=False
+            del s.y[end:]
             if good:
                 return
         raise AssertionError(f'takla rampası {x0} kurulamadı')
@@ -721,7 +725,7 @@ class Ski:
             s.flat(2); s.kicker(4,1.6)
             s.gap(nn,drop*0.8,'takla')
             s.slope(land_n,drop*0.4)
-        s._fit(b,range(n,3,-1),'büyük uçurum')
+        s._fit(b,range(n,1,-1),'büyük uçurum')
     def drop_off(s,gap_n,drop,land_n,land_drop):
         """Rampasız uçurum: kenardan düşülür, dik bir yamaca inilir."""
         def b(n):
@@ -730,10 +734,16 @@ class Ski:
             s.slope(land_n,land_drop)
         s._fit(b,range(gap_n,1,-1),'düşüş')
     def rollers(s,k,n,drop,rise):
-        """Takla tümsekleri: inişli çıkışlı sıra."""
+        """Tümsek sırası: yumuşak dalgalar (kosinüs), aralarında sırtlar;
+        hızlı gelen sırtlardan hafifçe havalanır."""
         for _ in range(k):
-            s.slope(n,drop)
-            s.kicker(max(3,n//2),rise)
+            L=n+max(3,n//2)
+            net=drop-rise
+            A=(drop+rise)/2
+            for i in range(L):
+                t=(i+1)/L
+                s.y.append(s.row+net*t+A*(1-math.cos(2*math.pi*t))/2)
+            s.row+=net
 
     # ---------------------------------------------- yüzey (Dart ile aynı)
     def at(s,x):
@@ -776,6 +786,7 @@ class Ski:
     def check(s,name):
         """Atlayışları sınar; iniş bölgelerine ve rampaların önüne kaya
         koymaz (yakındaki uygun yere taşır)."""
+        s.smooth()
         zones=[]
         for g0,g1,kind in s.gaps:
             if kind=='rail': continue
@@ -803,6 +814,23 @@ class Ski:
             out.append((c,ch,up))
         s.marks=out
 
+    def smooth(s,passes=3):
+        """Yamacı yumuşatır (kırık köşeler kalmasın); uçurum kenarlarının
+        3 karelik dudağına ve rampalara dokunmaz."""
+        W=len(s.y)
+        keep=[False]*W
+        for g0,g1,kind in s.gaps:
+            for c in range(max(0,g0-7),min(W,g1+3)): keep[c]=True
+        for c,ch,up in s.marks:
+            if isinstance(up,tuple):
+                for k in range(-3,up[1]+3):
+                    if 0<=c+k<W: keep[c+k]=True
+        for _ in range(passes):
+            y=s.y[:]
+            for c in range(2,W-2):
+                if keep[c] or min(y[c-2:c+3])<0: continue
+                s.y[c]=(y[c-2]+2*y[c-1]+3*y[c]+2*y[c+1]+y[c+2])/9
+
     def ok_rock(s,c):
         """Kaya: iniş yerinde, uçurumun ardında, sırtın hemen arkasında
         olmaz; önünde uçurum olmaz; her olağan hızda ona 30-120 piksel kala
@@ -829,7 +857,7 @@ class Ski:
         aşar ve güvenle iner (Dart: SkiRock ve kayanın sert çekirdeği)."""
         rx=(c+0.5)*TILE; gy=s.y[c]*TILE
         core_l=rx-7; core_r=rx+7; core_top=gy-14
-        for v in (380,460,540,640):
+        for v in (320,420,520,640):
             for d in (30,60,90,120):
                 x=rx-14-d-7
                 y=s.at(x)

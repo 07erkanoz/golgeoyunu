@@ -37,56 +37,77 @@ extension _SkiBackdrop on Backdrop {
         Rect.fromCenter(center: Offset.zero, width: w * 1.4, height: h * 0.18),
         Paint()
           ..shader = ui.Gradient.radial(Offset.zero, w * 0.7, [
-            const Color(0xFFCFD8FF).withValues(alpha: 0.12 * lt.night),
+            const Color(0xFFCFD8FF).withValues(alpha: 0.045 * lt.night),
             const Color(0x00CFD8FF),
           ]),
       );
       canvas.restore();
     }
-    // Güneş ve ay.
+    // Güneş ve ay: yumuşak, geniş bir hale içinde.
     final horizon = h * 0.8;
     final sun = LightPos.of(SkiLight.sunAt(progress), w, horizon);
     if (sun.dy < horizon + 40 && !storm) {
-      _lightLeak(canvas, sun, h * 0.9, 0.32, lt.sun);
-      canvas.drawCircle(sun, h * 0.06, Paint()..color = lt.sun);
+      _halo(canvas, sun, h * 0.75, lt.sun, 0.45 * (1 - lt.night * 0.5));
       canvas.drawCircle(
         sun,
-        h * 0.06,
-        Paint()..color = const Color(0xFFFFFFFF).withValues(alpha: 0.35),
+        h * 0.055,
+        Paint()..color = Color.lerp(lt.sun, const Color(0xFFFFFFFF), 0.55)!,
       );
     }
     if (lt.night > 0.2) {
       final moon = LightPos.of(SkiLight.moonAt(progress), w, horizon);
-      _lightLeak(canvas, moon, h * 0.4, 0.2 * lt.night, lt.sun);
+      _halo(canvas, moon, h * 0.45, const Color(0xFFE8ECFF), 0.22 * lt.night);
       canvas.drawCircle(
         moon,
-        h * 0.045,
-        Paint()..color = const Color(0xFFF4F1E6).withValues(alpha: lt.night),
+        h * 0.04,
+        Paint()..color = const Color(0xFFF6F3EA).withValues(alpha: lt.night),
       );
     }
-    // Uzak sırtlar: üç kat, uzaktakiler göğe karışır.
+    // Uzun, yumuşak bulutlar (uzak katmanların ardında).
+    _clouds(canvas, w, h, cam, lt, storm, far: true);
+    // Kat kat sıradağlar: uzaktaki göğe karışır, aralarında sis.
     final rise = (game.level.pixelHeight - cam.y) * 0.02;
-    for (final (depth, base, amp, seed, mix) in const [
-      (0.03, 0.56, 70.0, 41, 0.62),
-      (0.07, 0.66, 55.0, 42, 0.42),
-      (0.13, 0.76, 40.0, 43, 0.22),
-    ]) {
+    final layers = [
+      // (parallax, taban, yükseklik, tohum, göğe karışma, sivrilik, orman)
+      (0.02, 0.48, 100.0, 41, 0.80, 1.0, false),
+      (0.05, 0.58, 85.0, 42, 0.62, 0.85, false),
+      (0.10, 0.69, 40.0, 43, 0.44, 0.0, true),
+      (0.18, 0.80, 30.0, 44, 0.26, 0.0, true),
+    ];
+    for (final (depth, base, amp, seed, mix, sharp, forest) in layers) {
       final body = Color.lerp(
-        Color.lerp(lt.ridge, lt.deep, 0.35)!,
+        Color.lerp(lt.ridge, lt.deep, 0.55)!,
         lt.skyLow,
         mix,
       )!;
-      final cap = Color.lerp(lt.snowLit, lt.skyLow, mix + 0.15)!;
-      _snowRidge(
+      final by = h * base + rise * depth * 10;
+      _range(
         canvas,
         w,
         h,
         offset: cam.x * depth,
-        base: h * base + rise * depth * 10,
+        base: by,
         amp: amp,
         seed: seed,
+        sharp: sharp,
         body: body,
-        cap: cap,
+        cap: sharp > 0.5 ? Color.lerp(lt.snowLit, lt.skyLow, mix * 0.8)! : null,
+        forest: forest,
+      );
+      // Katmanın eteğinde sis: bir sonraki katmanı ayırır.
+      canvas.drawRect(
+        Rect.fromLTRB(0, by - amp * 0.6, w, by + h * 0.12),
+        Paint()
+          ..shader = ui.Gradient.linear(
+            Offset(0, by - amp * 0.6),
+            Offset(0, by + h * 0.12),
+            [
+              lt.skyLow.withValues(alpha: 0),
+              lt.skyLow.withValues(alpha: 0.55 * (1 - mix * 0.4)),
+              lt.skyLow.withValues(alpha: 0),
+            ],
+            const [0, 0.55, 1],
+          ),
       );
     }
     // Erzurum'un ışıkları (gece, uzakta).
@@ -99,37 +120,7 @@ extension _SkiBackdrop on Backdrop {
         canvas.drawCircle(Offset(x, h * 0.8 + rnd.nextDouble() * 6), 1.1, city);
       }
     }
-    // Akan bulutlar: güneşin rengini alır, rüzgârla yavaşça sürüklenir.
-    final cloud = Paint();
-    for (var i = 0; i < 7; i++) {
-      final rnd = math.Random(i * 977 + 3);
-      final span = w + 600;
-      final x =
-          ((rnd.nextDouble() * span -
-                          _t * (6 + rnd.nextDouble() * 10) -
-                          cam.x * (0.02 + 0.02 * rnd.nextDouble())) %
-                      span +
-                  span) %
-              span -
-          300;
-      final y = h * (0.12 + rnd.nextDouble() * 0.38);
-      final cw = 160 + rnd.nextDouble() * 220;
-      final a = (storm ? 0.5 : 0.28) * (1 - lt.night * 0.6);
-      cloud.shader = ui.Gradient.linear(Offset(0, y - 20), Offset(0, y + 20), [
-        Color.lerp(lt.sun, const Color(0xFFFFFFFF), 0.4)!.withValues(alpha: a),
-        lt.skyMid.withValues(alpha: a * 0.6),
-      ]);
-      for (var k = 0; k < 5; k++) {
-        canvas.drawOval(
-          Rect.fromCenter(
-            center: Offset(x + (k - 2) * cw * 0.18, y + (k.isEven ? 0 : -6)),
-            width: cw * (0.5 - (k - 2).abs() * 0.08),
-            height: 22 + (2 - (k - 2).abs()) * 8.0,
-          ),
-          cloud,
-        );
-      }
-    }
+    _clouds(canvas, w, h, cam, lt, storm, far: false);
     if (storm) {
       // Tipi: gök soluk beyaza boğulur, nefes alır gibi.
       canvas.drawRect(
@@ -141,9 +132,77 @@ extension _SkiBackdrop on Backdrop {
     }
   }
 
-  /// Karlı dağ sırası: sivri tepeler, yalnız yükseklerinde kar; karın alt
-  /// kenarı yamaç yarıklarında aşağı sarkar.
-  void _snowRidge(
+  /// Işık kaynağının çevresinde yumuşak, geniş hale.
+  void _halo(Canvas canvas, Offset at, double r, Color c, double a) {
+    canvas.drawCircle(
+      at,
+      r,
+      Paint()
+        ..shader = ui.Gradient.radial(
+          at,
+          r,
+          [
+            c.withValues(alpha: a),
+            c.withValues(alpha: a * 0.35),
+            c.withValues(alpha: 0),
+          ],
+          const [0, 0.25, 1],
+        ),
+    );
+  }
+
+  /// Uzun, bulanık kenarlı bulutlar; güneşin rengini alır, rüzgârla akar.
+  void _clouds(
+    Canvas canvas,
+    double w,
+    double h,
+    Vector2 cam,
+    SkiLight lt,
+    bool storm, {
+    required bool far,
+  }) {
+    final n = far ? 4 : 2;
+    for (var i = 0; i < n; i++) {
+      final rnd = math.Random(i * 977 + (far ? 3 : 91));
+      final span = w + 900;
+      final speed = far ? 4 + rnd.nextDouble() * 5 : 10 + rnd.nextDouble() * 8;
+      final par = far ? 0.01 : 0.04;
+      final x =
+          ((rnd.nextDouble() * span - _t * speed - cam.x * par) % span + span) %
+              span -
+          450;
+      final y =
+          h *
+          (far
+              ? 0.18 + rnd.nextDouble() * 0.22
+              : 0.08 + rnd.nextDouble() * 0.12);
+      final cw = (far ? 380 : 520) + rnd.nextDouble() * 300;
+      final ch = (far ? 26 : 34) + rnd.nextDouble() * 18;
+      final a = (storm ? 0.55 : 0.3) * (1 - lt.night * 0.55);
+      final lit = Color.lerp(lt.sun, const Color(0xFFFFFFFF), 0.45)!;
+      final paint = Paint()
+        ..maskFilter = MaskFilter.blur(BlurStyle.normal, ch * 0.45);
+      // Gövde ve ışık alan üst kenar.
+      paint.color = Color.lerp(lt.skyMid, lt.skyLow, 0.4)!.withValues(alpha: a);
+      canvas.drawOval(
+        Rect.fromCenter(center: Offset(x, y), width: cw, height: ch),
+        paint,
+      );
+      paint.color = lit.withValues(alpha: a * 0.8);
+      canvas.drawOval(
+        Rect.fromCenter(
+          center: Offset(x - cw * 0.08, y - ch * 0.25),
+          width: cw * 0.7,
+          height: ch * 0.5,
+        ),
+        paint,
+      );
+    }
+  }
+
+  /// Sıradağ katmanı: [sharp] 1 sivri kayalık tepeler (karlı), 0 yumuşak
+  /// tepeler; [forest] tepelerin üstünde çam ormanı silueti.
+  void _range(
     Canvas canvas,
     double w,
     double h, {
@@ -151,47 +210,74 @@ extension _SkiBackdrop on Backdrop {
     required double base,
     required double amp,
     required int seed,
+    required double sharp,
     required Color body,
-    required Color cap,
+    Color? cap,
+    bool forest = false,
   }) {
-    // Üçgen dalga: sivri tepe, düz yamaç.
-    double tri(double x) {
-      final f = x - x.floorToDouble();
+    // Üçgen dalga: sivri tepe, V vadi (yuvarlak, pul pul etek olmasın).
+    double tri(double v) {
+      final f = v - v.floorToDouble();
       return 1 - (f - 0.5).abs() * 2;
     }
 
-    double peak(double x) =>
-        0.62 * math.pow(tri(x * 0.0021 + seed * 0.37), 1.6) +
-        0.28 * tri(x * 0.0057 + seed * 0.11) +
-        0.1 * tri(x * 0.019 + seed);
-    final top = <Offset>[];
-    for (var sx = -20.0; sx <= w + 20; sx += 8) {
-      top.add(Offset(sx, base - peak(sx + offset) * amp * 2.2));
+    double ridged(double x) {
+      final spiky =
+          0.58 * math.pow(tri(x * 0.0019 + seed * 0.37), 1.4) +
+          0.28 * tri(x * 0.0051 + seed * 0.11) +
+          0.14 * tri(x * 0.017 + seed * 0.7);
+      final soft =
+          0.5 +
+          0.3 * math.sin(x * 0.0031 + seed) +
+          0.2 * math.sin(x * 0.0083 + seed * 2);
+      return spiky * sharp + soft * (1 - sharp);
     }
-    final path = Path()..moveTo(-20, h);
+
+    final top = <Offset>[];
+    for (var sx = -24.0; sx <= w + 24; sx += 6) {
+      top.add(Offset(sx, base - ridged(sx + offset) * amp * 2));
+    }
+    final path = Path()..moveTo(-24, h);
     for (final p in top) {
       path.lineTo(p.dx, p.dy);
     }
     path
-      ..lineTo(w + 20, h)
+      ..lineTo(w + 24, h)
       ..close();
-    canvas.drawPath(path, Paint()..color = body);
-    // Kar: belli bir yükseklikten yukarısı; alt kenarı dişli.
-    final line = base - amp * 1.0;
-    canvas.save();
-    canvas.clipPath(path);
-    final snow = Path()..moveTo(-20, -10);
-    for (var sx = -20.0; sx <= w + 20; sx += 8) {
-      final jag =
-          math.sin((sx + offset) * 0.09 + seed) * 7 +
-          math.sin((sx + offset) * 0.031) * 10;
-      snow.lineTo(sx, line + jag);
+    if (forest) {
+      // Tepelerin üstünde sık çam ormanı: ince, sivri siluetler.
+      for (var i = 0; i < top.length; i++) {
+        final q = top[i];
+        final k = ((q.dx + offset) / 6).floor();
+        final hv = ((k * 2654435761) & 0xffff) / 65535.0;
+        if (hv < 0.35) continue;
+        final th = amp * (0.28 + hv * 0.42);
+        final tw = th * 0.22;
+        path.addPolygon([
+          Offset(q.dx - tw, q.dy + 2),
+          Offset(q.dx, q.dy - th),
+          Offset(q.dx + tw, q.dy + 2),
+        ], true);
+      }
     }
-    snow
-      ..lineTo(w + 20, -10)
-      ..close();
-    canvas.drawPath(snow, Paint()..color = cap);
-    canvas.restore();
+    canvas.drawPath(path, Paint()..color = body);
+    if (cap != null) {
+      // Yüksek sırtlarda kar: tepeden aşağı sarkan dilimler.
+      canvas.save();
+      canvas.clipPath(path);
+      final snow = Path()..moveTo(-24, -10);
+      for (var sx = -24.0; sx <= w + 24; sx += 6) {
+        final jag =
+            math.sin((sx + offset) * 0.07 + seed) * 6 +
+            math.sin((sx + offset) * 0.023) * 9;
+        snow.lineTo(sx, base - amp * 0.95 + jag);
+      }
+      snow
+        ..lineTo(w + 24, -10)
+        ..close();
+      canvas.drawPath(snow, Paint()..color = cap);
+      canvas.restore();
+    }
   }
 }
 

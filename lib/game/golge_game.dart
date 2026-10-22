@@ -718,6 +718,13 @@ class GolgeGame extends FlameGame with KeyboardEvents {
             k,
             headroom: _headroom(k),
             small: _cairns.contains(k),
+            // Kayakta ağaç yerine oba (taş yığını, çaputlu direk): karın
+            // üstüne oturur.
+            cairn: skiSurface != null,
+            groundY: switch (skiSurface?.at(k.x + kTile / 2)) {
+              final double y => y + 3,
+              _ => null,
+            },
             // Yolun son ağacı (Konya'da) çiçek açar.
             bloom:
                 level.def.theme == LevelTheme.konya &&
@@ -1773,9 +1780,10 @@ class GolgeGame extends FlameGame with KeyboardEvents {
       _skiCamY = _skiCamY.isNaN || _snapCamera
           ? mid
           : approach(_skiCamY, mid, dt, 0.25);
+      // Alto gibi: yamaç ekranın alt yarısında, üstte gök ve sıradağlar.
       target
         ..x = p.center.x + _lookAhead * 1.6
-        ..y = _skiCamY;
+        ..y = _skiCamY - halfH * 0.32;
     }
     target.x = level.pixelWidth <= halfW * 2
         ? level.pixelWidth / 2

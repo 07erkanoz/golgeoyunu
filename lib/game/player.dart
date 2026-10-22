@@ -794,6 +794,14 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     if (!_skiStarted) {
       _skiStarted = true;
       _skiSpeed = math.max(_skiSpeed, skiStartSpeed);
+      // Kayıt noktası karo hizasında: kayakçı karın üstüne oturtulur (yoksa
+      // havada doğup düşüyordu).
+      final y0 = s.at(center.x);
+      if (y0 != null) {
+        position.y = y0 - h;
+        skiAngle = s.slope(center.x);
+        _skiAir = false;
+      }
     }
     _skiJumpBuf = jumpPressed ? 0.22 : math.max(0, _skiJumpBuf - dt);
     facing = 1;

@@ -209,6 +209,30 @@ class SkiTerrain extends Component with HasGameReference<GolgeGame> {
         ..strokeJoin = StrokeJoin.round
         ..color = lt.snowLit,
     );
+    // Üst kenarda ince, parlak bir çizgi: yamacın kenarı gökten keskin
+    // ayrılır.
+    canvas.drawPath(
+      edge,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.6
+        ..strokeJoin = StrokeJoin.round
+        ..color = Color.lerp(lt.snowLit, const Color(0xFFFFFFFF), 0.55)!,
+    );
+    // Karın içinde soluk katman çizgileri (yamaca koşut).
+    for (final (d, a) in const [(26.0, 0.16), (64.0, 0.11), (118.0, 0.07)]) {
+      final strata = Path()..moveTo(top.first.dx, top.first.dy + d);
+      for (final q in top) {
+        strata.lineTo(q.dx, q.dy + d);
+      }
+      canvas.drawPath(
+        strata,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.4
+          ..color = lt.snowLit.withValues(alpha: a),
+      );
+    }
     // Işığı yakalayan parıltılar: kenarda göz kırpan kristaller.
     final glint = Paint();
     for (var i = 0; i < top.length; i++) {
@@ -327,12 +351,16 @@ class SkiTerrain extends Component with HasGameReference<GolgeGame> {
     );
   }
 
-  /// Yamacın arkasındaki çamlar: kat kat dallar, üstlerinde kar; havanın
-  /// rengine karışır (kayalardan ayrı dursun diye soluk ve göğe yakın).
+  /// Yamacın arkasındaki çamlar: Alto'daki gibi ince, uzun, koyu siluetler
+  /// (kat kat sarkan dallar); ormanlarda sık, başka yerde seyrek; boyları
+  /// değişir. Göğün rengine hafifçe karışır.
   void _pines(Canvas canvas, int c0, int c1, SkiLight lt) {
-    final body = Color.lerp(lt.ridge, lt.deep, 0.35)!;
+    final body = Color.lerp(
+      Color.lerp(lt.deep, const Color(0xFF000000), 0.35)!,
+      lt.skyLow,
+      0.12,
+    )!;
     final tree = Paint()..color = body;
-    final snow = Paint()..color = Color.lerp(lt.snowLit, lt.skyLow, 0.3)!;
     final forests = [
       for (final (k, c) in game.level.def.skiDecor)
         if (k == 'forest') (c, c + 70),
@@ -340,36 +368,52 @@ class SkiTerrain extends Component with HasGameReference<GolgeGame> {
     bool inForest(int i) => forests.any((f) => i >= f.$1 && i < f.$2);
     for (var i = c0; i <= c1; i++) {
       if (surface.rows[i] < 0) continue;
-      if ((i * 7919) % (inForest(i) ? 2 : 7) != 0) continue;
-      final x = (i + 0.5) * kTile + ((i * 37) % 11 - 5);
+      final hv = ((i * 2654435761) & 0xffff) / 65535.0;
+      if (hv > (inForest(i) ? 0.62 : 0.14)) continue;
+      final x = (i + 0.5) * kTile + (hv * 23 % 11 - 5);
       final y = surface.at(x);
       if (y == null) continue;
-      final h = 54.0 + (i * 31) % 40;
-      // Kökü karın içinde: yamacın biraz gerisinde, biraz yukarıda başlar.
-      final base = y + 14;
-      for (var k = 0; k < 4; k++) {
-        final ty = base - h + k * h * 0.2;
-        final half = h * (0.14 + k * 0.07);
-        canvas.drawPath(
-          Path()
-            ..moveTo(x, ty)
-            ..lineTo(x + half, ty + h * 0.32)
-            ..lineTo(x - half, ty + h * 0.32)
-            ..close(),
-          tree,
-        );
-        canvas.drawPath(
-          Path()
-            ..moveTo(x, ty + 1)
-            ..lineTo(x + half * 0.7, ty + h * 0.22)
-            ..lineTo(x + half * 0.2, ty + h * 0.18)
-            ..lineTo(x - half * 0.5, ty + h * 0.21)
-            ..close(),
-          snow,
-        );
-      }
+      final h = 64.0 + ((i * 131) % 70);
+      drawAltoPine(canvas, x, y + 10, h, tree);
     }
   }
+}
+
+/// İnce çam silueti (Alto gibi): tepeden aşağı genişleyen, uçları sarkan
+/// dal katları.
+void drawAltoPine(Canvas canvas, double x, double base, double h, Paint p) {
+  const tiers = 6;
+  final top = base - h;
+  final right = <Offset>[Offset(x, top)];
+  for (var k = 0; k < tiers; k++) {
+    final u0 = k / tiers;
+    final u1 = (k + 1) / tiers;
+    final y1 = top + h * 0.86 * u1;
+    final half = h * (0.07 + 0.17 * u1);
+    // Dal ucu biraz aşağı sarkar, iç köşe yukarıda kalır.
+    right.add(Offset(x + half, y1 + h * 0.025));
+    if (k < tiers - 1) {
+      right.add(
+        Offset(x + half * 0.42, top + h * 0.86 * (u0 + u1) / 2 + h * 0.05),
+      );
+    }
+  }
+  final path = Path()..moveTo(x, top);
+  for (final q in right.skip(1)) {
+    path.lineTo(q.dx, q.dy);
+  }
+  // Gövde.
+  path
+    ..lineTo(x + h * 0.025, base - h * 0.12)
+    ..lineTo(x + h * 0.025, base)
+    ..lineTo(x - h * 0.025, base)
+    ..lineTo(x - h * 0.025, base - h * 0.12);
+  for (final q in right.reversed.skip(0)) {
+    if (q.dx == x) break;
+    path.lineTo(2 * x - q.dx, q.dy);
+  }
+  path.close();
+  canvas.drawPath(path, p);
 }
 
 /// Karın içinden çıkan kaya: kayarken üstünden atlanmalı. Çamlardan ayrı
