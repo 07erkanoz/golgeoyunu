@@ -702,6 +702,18 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
   /// hızla aşılır (olağan en yüksek hız 640).
   static const double kutSpeed = 800;
 
+  /// Takla dönüş hızı (radyan/sn): bir tam takla ~0,83 sn; takla
+  /// rampasındaki uçuşa (en az 1,2 sn) rahatça sığar.
+  static const double flipRate = 7.6;
+
+  /// İnişte bedenle yamaç arasındaki açı bundan büyükse düşülür.
+  static const double landTolerance = 1.35;
+
+  /// Kayak bölümü başlarken ya da yeniden doğunca ilk hız: kayıt noktasından
+  /// sıfırdan başlayan, ilerideki takla rampasında hızlanamıyordu.
+  static const double skiStartSpeed = 380;
+  bool _skiStarted = false;
+
   /// Kayan Sâye'ye ileri itiş (Ak Kurt'un izi, takla ödülü).
   void skiKick(double dv) {
     if (game.skiSurface == null) return;
@@ -722,6 +734,7 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
   void _skiJump(double th) {
     final vy = _skiSpeed * math.sin(th);
     _skiAir = true;
+    onGround = false;
     _skiJumped = true;
     _skiJumpBuf = 0;
     _airSpin = 0;
@@ -776,6 +789,10 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
   void _updateSki(double dt, int dir, bool jump, bool jumpPressed) {
     final s = game.skiSurface!;
     const g = 1500.0;
+    if (!_skiStarted) {
+      _skiStarted = true;
+      _skiSpeed = math.max(_skiSpeed, skiStartSpeed);
+    }
     _skiJumpBuf = jumpPressed ? 0.14 : math.max(0, _skiJumpBuf - dt);
     facing = 1;
     crouching = false;
@@ -819,7 +836,8 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
         // Takladan sonra kut: altın hız, rüzgâr direnci tutmaz.
         final kut = (game.skiFx?.kut ?? 0) > 0;
         var a = g * 0.55 * math.sin(th) * (game.inMagnet(x) ? -1.4 : 1.0);
-        a -= _skiSpeed * 0.12 +
+        a -=
+            _skiSpeed * 0.12 +
             (kut ? 0 : 0.00035 * _skiSpeed * _skiSpeed.abs());
         // Yavaşken sopalarla güçlü itiş: en dik yokuşa da ağır ağır
         // tırmanılır, hiçbir vadide sıkışıp kalınmaz.
@@ -877,10 +895,17 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       _airTime += dt;
       velocity.y = math.min(velocity.y + g * dt, 900);
       position.add(velocity * dt);
-      if (jump) {
+      // Bırakılan taklanın kaçta kaçı dönüldü: dörtte üçü geçtiyse kendi
+      // tamamlanır (tuşu biraz erken bırakan ters inmesin).
+      final turn = (_airSpin / (2 * math.pi)) % 1.0;
+      final finishing = !jump && _airSpin > 0 && turn > 0.62;
+      if (jump || finishing) {
         // Basılı tutunca geriye takla.
-        skiAngle -= 6.2 * dt;
-        _airSpin += 6.2 * dt;
+        final step = flipRate * dt;
+        final left = (1 - turn) * 2 * math.pi;
+        final d = finishing ? math.min(step, left + 1e-4) : step;
+        skiAngle -= d;
+        _airSpin += d;
       } else {
         // Takla atmıyorsa beden, ineceği yamaca kendiliğinden hizalanır.
         skiAngle = _wrap(skiAngle);
@@ -923,7 +948,7 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       } else if (ground != null && position.y + h >= ground) {
         final th = s.slope(center.x);
         final diff = _wrap(skiAngle - th);
-        if (diff.abs() < 1.1) {
+        if (diff.abs() < landTolerance) {
           _skiSpeed = velocity.x * math.cos(th) + velocity.y * math.sin(th);
           final flips = (_airSpin / (2 * math.pi) + 0.15).floor();
           final fx = game.skiFx;

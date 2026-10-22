@@ -2016,8 +2016,8 @@ void main() {
           keys(game).jump =
               flips &&
               (spin > 0.15
-                  ? (2 * math.pi - spin) / 6.2 < left
-                  : left > 2 * math.pi / 6.2 + 0.08);
+                  ? (2 * math.pi - spin) / Player.flipRate < left
+                  : left > 2 * math.pi / Player.flipRate + 0.08);
         }
         game.update(_dt);
         simT += _dt;
