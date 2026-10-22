@@ -35,6 +35,12 @@ bool get _isDesktop =>
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Settings.load(lowGraphicsByDefault: _isTouch);
+  // Geliştirici ölçümü: grafik düzeyi zorlanır (kayıtlı ayara dokunmaz).
+  if (const bool.fromEnvironment('DEV')) {
+    const gfx = String.fromEnvironment('GFX');
+    if (gfx == 'low') Settings.lowGraphics = true;
+    if (gfx == 'high') Settings.lowGraphics = false;
+  }
   if (_isMobile) {
     await Flame.device.fullScreen();
     await Flame.device.setLandscape();

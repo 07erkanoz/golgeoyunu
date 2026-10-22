@@ -22,7 +22,15 @@ Future<double> _frame(GolgeGame game) async {
 }
 
 void main() {
-  for (final (lv, col, ad) in [(0, 28.0, 'yerebatan'), (0, 160.0, 'su')]) {
+  const only = String.fromEnvironment('YER');
+  for (final (lv, col, ad) in [
+    (0, 28.0, 'yerebatan'),
+    (0, 160.0, 'su'),
+    (5, 20.0, 'gemi'),
+    (5, 60.0, 'gemi2'),
+    (5, 110.0, 'gemi3'),
+  ]) {
+    if (only.isNotEmpty && !ad.startsWith(only)) continue;
     for (final (tag, cartoon, real, off) in [
       ('sade', false, false, ''),
       ('hepsi', true, true, ''),
@@ -63,7 +71,9 @@ void main() {
         }
         times.sort();
         // ignore: avoid_print
-        print('$ad ${tag.padRight(6)} ortanca ${times[6].toStringAsFixed(1)} ms');
+        print(
+          '$ad ${tag.padRight(6)} ortanca ${times[6].toStringAsFixed(1)} ms',
+        );
         Cartoon.on = false;
         Realism.on = false;
       });

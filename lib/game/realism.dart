@@ -6,6 +6,7 @@ import 'dart:ui' as ui;
 import 'package:flame/components.dart';
 
 import 'creatures.dart';
+import 'erlik.dart' show Kormos;
 import 'entities.dart';
 import 'fairy_chimney.dart';
 import 'golge_game.dart';
@@ -14,6 +15,7 @@ import 'levels.dart';
 import 'nemrut.dart' show StoneGiant;
 import 'palette.dart';
 import 'terrain.dart';
+import 'winter.dart' show Wolf;
 import '../settings.dart';
 
 /// Işık ve derinliğin çizildiği bölüm türleri.
@@ -288,24 +290,59 @@ class NearLayer extends Component with HasGameReference<GolgeGame> {
     return (img, bounds.topLeft);
   }
 
-  static List<_Row> _rowsOf(DepthKind kind) => _rows.putIfAbsent(
-    kind,
-    () => switch (kind) {
-      DepthKind.cistern => _cistern(),
-      DepthKind.snow => _snow(),
-      DepthKind.peri => _peri(),
-      DepthKind.konya => _konya(),
-      DepthKind.cliffs => _cliffs(),
-      DepthKind.sky => _sky(),
-      DepthKind.kaf => _kaf(),
-      DepthKind.ark => _ark(),
-      DepthKind.nemrut => _nemrut(),
-      DepthKind.cave => _cave(),
-      DepthKind.underworld => _underworld(),
-      DepthKind.ergenekon => _ergenekon(),
-      DepthKind.heavens => _heavens(),
-    },
-  );
+  static List<_Row> _rowsOf(DepthKind kind) =>
+      _rows.putIfAbsent(kind, () => _withRim(kind, _buildRows(kind)));
+
+  /// Koyu ortamda kenar ışığı şeklin resmine bir kez işlenir (her karede
+  /// ikinci bir renkli kopya çizmek pahalıydı).
+  static List<_Row> _withRim(DepthKind kind, List<_Row> rows) {
+    final rim = _rimOf(kind);
+    if (rim == null) return rows;
+    final tint = Paint()..colorFilter = ColorFilter.mode(rim, BlendMode.srcIn);
+    _Shape lit(_Shape shape) {
+      final (img, origin) = shape;
+      final bounds = Rect.fromLTWH(
+        origin.dx - 3,
+        origin.dy - 4,
+        img.width + 3.0,
+        img.height + 4.0,
+      );
+      final out = _bake(bounds, (c) {
+        c.drawImage(img, origin.translate(-3, -4), tint);
+        c.drawImage(img, origin, Paint());
+      });
+      img.dispose();
+      return out;
+    }
+
+    return [
+      for (final r in rows)
+        _Row(
+          [for (final sh in r.shapes) lit(sh)],
+          r.every,
+          r.phase,
+          at: r.at,
+          glows: r.glows,
+          drop: r.drop,
+        ),
+    ];
+  }
+
+  static List<_Row> _buildRows(DepthKind kind) => switch (kind) {
+    DepthKind.cistern => _cistern(),
+    DepthKind.snow => _snow(),
+    DepthKind.peri => _peri(),
+    DepthKind.konya => _konya(),
+    DepthKind.cliffs => _cliffs(),
+    DepthKind.sky => _sky(),
+    DepthKind.kaf => _kaf(),
+    DepthKind.ark => _ark(),
+    DepthKind.nemrut => _nemrut(),
+    DepthKind.cave => _cave(),
+    DepthKind.underworld => _underworld(),
+    DepthKind.ergenekon => _ergenekon(),
+    DepthKind.heavens => _heavens(),
+  };
 
   // ------------------------------------------------------------ Yerebatan
 
@@ -1077,8 +1114,28 @@ class NearLayer extends Component with HasGameReference<GolgeGame> {
     ),
   );
 
-  static final _imgPaint = Paint()..filterQuality = FilterQuality.medium;
-  static final _rimPaint = Paint()..filterQuality = FilterQuality.medium;
+  // Yumuşak, bulanık şekiller: ucuz örnekleme yeter.
+  static final _imgPaint = Paint()..filterQuality = FilterQuality.low;
+  static final _fadePaint = Paint()..filterQuality = FilterQuality.low;
+
+  /// Yakın şeklin ne kadar görüneceği (0–1): Sâye'ye ya da bir düşmana
+  /// değiyorsa çok soluk, dört karelik mesafeden uzaktaysa tam.
+  static double _clearance(Rect box, List<Rect> actors) {
+    var see = 1.0;
+    for (final a in actors) {
+      final dx = math.max(
+        0.0,
+        math.max(box.left - a.right, a.left - box.right),
+      );
+      final dy = math.max(
+        0.0,
+        math.max(box.top - a.bottom, a.top - box.bottom),
+      );
+      final d = math.sqrt(dx * dx + dy * dy);
+      see = math.min(see, 0.12 + 0.88 * (d / (4 * kTile)).clamp(0.0, 1.0));
+    }
+    return see;
+  }
 
   /// Bölümün ortam ışığı: koyu ortamda yakın şekillerin kenarı bununla
   /// seçilir (Yerebatan, kar, Kapadokya ve Konya'da gerek yok: arka plan
@@ -1095,7 +1152,7 @@ class NearLayer extends Component with HasGameReference<GolgeGame> {
     DepthKind.heavens => const Color(0x80A8B8E8),
     _ => null,
   };
-  final _dotPaint = Paint()..filterQuality = FilterQuality.medium;
+  final _dotPaint = Paint()..filterQuality = FilterQuality.low;
 
   void _put(Canvas canvas, _Shape shape, Offset at, double k, [Paint? paint]) {
     final (img, origin) = shape;
@@ -1135,12 +1192,21 @@ class NearLayer extends Component with HasGameReference<GolgeGame> {
     // Sâye'nin yürüdüğü çizgi, kameraya yakın katmana izdüşürülmüş
     // (yakın şey ekranda daha aşağıda görünür).
     final ground = cam.y + ((_ground ?? cam.y) - cam.y) * parallax + 8 * k;
-    final rim = _rimOf(kind);
     // Önemli varlıkların (taş dev) önüne zeminden şekil düşmesin: duruşu
     // ve atışı okunmalı.
     final keep = [
       for (final c in game.world.children)
         if (c is StoneGiant) c.toRect().inflate(3 * kTile),
+    ];
+    // Oyunun okunması gerekenler: Sâye ve düşmanlar. Yakın şekil bunlara
+    // yaklaştıkça saydamlaşır, üstlerini hiç örtmez.
+    final actors = <Rect>[
+      if (game.player case final p? when p.isMounted) p.toRect(),
+      for (final c in game.world.children)
+        if (c is Guard || c is Watcher || c is Wolf || c is Kormos)
+          (c as PositionComponent).toRect()
+        else if (c is StoneGiant)
+          c.toRect(),
     ];
     for (final row in _rowsOf(kind)) {
       final every = row.every * kTile;
@@ -1159,13 +1225,21 @@ class NearLayer extends Component with HasGameReference<GolgeGame> {
           continue;
         }
         final at = Offset(x, y + row.drop * k);
-        if (rim != null) {
-          // Arka ışık: şeklin ortam renginde kopyası sol üste kayık, önüne
-          // koyu şekil gelir; kenarda ince, yumuşak bir ışık kalır.
-          _rimPaint.colorFilter = ColorFilter.mode(rim, BlendMode.srcIn);
-          _put(canvas, shape, at + Offset(-3 * k, -4 * k), k, _rimPaint);
+        final (img, origin) = shape;
+        final box = Rect.fromLTWH(
+          at.dx + origin.dx * k,
+          at.dy + origin.dy * k,
+          img.width * k,
+          img.height * k,
+        );
+        final see = _clearance(box, actors);
+        if (see <= 0.02) continue;
+        if (see < 1) {
+          _fadePaint.color = Color.fromRGBO(255, 255, 255, see);
+          _put(canvas, shape, at, k, _fadePaint);
+        } else {
+          _put(canvas, shape, at, k);
         }
-        _put(canvas, shape, at, k);
         final glows = row.glows;
         if (glows != null) {
           _glow(canvas, at + glows[i % glows.length] * k, k);

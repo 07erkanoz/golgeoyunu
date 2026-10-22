@@ -1,3 +1,4 @@
+import 'dart:io' show ProcessInfo;
 import 'dart:math' as math;
 
 import 'package:flame/components.dart';
@@ -283,7 +284,43 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     camera.viewport.addAll([effects, narration]);
     autoQuality.attach();
     _enterMenu();
+    // Geliştirici ölçümü: doğrudan bir bölümle açılır (DEV ve START_LEVEL).
+    if (const bool.fromEnvironment('DEV') && _startLevel >= 0) {
+      debugLoadLevel(_startLevel);
+    }
   }
+
+  /// Deneme yapısında F3: ölçüm göstergesi (kare sayısı, kare süresi,
+  /// bellek, grafik modu). Yarım saniyede bir yenilenir.
+  bool perfShown = false;
+  String perfText = '';
+  double _perfT = 0;
+  int _perfFrames = 0;
+
+  void _updatePerf(double dt) {
+    _perfT += dt;
+    _perfFrames++;
+    if (_perfT < 0.5) return;
+    final fps = (_perfFrames / _perfT).round();
+    _perfT = 0;
+    _perfFrames = 0;
+    final mb = (ProcessInfo.currentRss / 1048576).round();
+    final gfx = Settings.lowGraphics ? 'düşük' : 'yüksek';
+    final light = realismHere(this) ? 'ışık açık' : 'ışık kapalı';
+    perfText =
+        '$fps kare/sn · çizim ${autoQuality.workMs.toStringAsFixed(1)} ms · '
+        'bellek $mb MB · grafik $gfx · $light';
+  }
+
+  static const _startLevel = int.fromEnvironment(
+    'START_LEVEL',
+    defaultValue: -1,
+  );
+
+  /// Geliştirici ölçümü: Sâye kendi kendine sağa yürür, ara ara zıplar.
+  static const _autoWalk =
+      bool.fromEnvironment('DEV') && bool.fromEnvironment('AUTOWALK');
+  double _autoT = 0;
 
   @override
   void onRemove() {
@@ -1504,6 +1541,14 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     // yaşamaz. Uygulama kesintisi gibi çok uzun boşluk telafi edilmez.
     if (!dt.isFinite || dt < 0) dt = 0;
     autoQuality.tick(dt);
+    if (perfShown) _updatePerf(dt);
+    if (_autoWalk && !menuMode.value) {
+      _autoT += dt;
+      controls.keyboard
+        ..right = true
+        ..jump = (_autoT % 1.2) < 0.4;
+      cinematic = false;
+    }
     dt = math.min(dt, maxFrame);
     // Korku anında zaman kısa bir süre ağırlaşır.
     if (_slow > 0) {
@@ -2078,6 +2123,9 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         _closeUp = _closeUp == 1 ? 3 : 1;
       }
       // Deneme yapısında L ışık ve derinlik denemesini açar/kapar.
+      if (Cartoon.trialBuild && event.logicalKey == LogicalKeyboardKey.f3) {
+        perfShown = !perfShown;
+      }
       if (Cartoon.trialBuild && event.logicalKey == LogicalKeyboardKey.keyL) {
         Realism.on = !Realism.on;
         if (Realism.on) AutoQuality.userChose = true;

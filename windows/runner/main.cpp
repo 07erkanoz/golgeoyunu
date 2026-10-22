@@ -2,8 +2,18 @@
 #include <flutter/flutter_view_controller.h>
 #include <windows.h>
 
+#include <algorithm>
+
 #include "flutter_window.h"
 #include "utils.h"
+
+// On machines with two GPUs (laptops, integrated graphics + NVIDIA/AMD) ask
+// the drivers to run the game on the discrete GPU; otherwise it may start on
+// the weak integrated one.
+extern "C" {
+__declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001;
+__declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
+}
 
 int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
                       _In_ wchar_t *command_line, _In_ int show_command) {
@@ -21,6 +31,17 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
 
   std::vector<std::string> command_line_arguments =
       GetCommandLineArguments();
+
+  // Prefer the high performance GPU and use the Impeller renderer. Starting
+  // with "--skia" falls back to the old renderer (in case Impeller misbehaves
+  // on a machine).
+  project.set_gpu_preference(
+      flutter::GpuPreference::HighPerformancePreference);
+  const bool skia =
+      std::find(command_line_arguments.begin(), command_line_arguments.end(),
+                "--skia") != command_line_arguments.end();
+  project.set_impeller_switch(skia ? flutter::ImpellerSwitch::Disabled
+                                   : flutter::ImpellerSwitch::Enabled);
 
   project.set_dart_entrypoint_arguments(std::move(command_line_arguments));
 

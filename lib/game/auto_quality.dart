@@ -46,6 +46,9 @@ class AutoQuality {
   int _slow = 0;
   int _slowRun = 0;
 
+  /// Son karelerin ortalama çizim işi (ms): ölçüm göstergesi için.
+  double workMs = 0;
+
   bool get _measuring =>
       Settings.autoQuality &&
       !userChose &&
@@ -87,6 +90,12 @@ class AutoQuality {
   }
 
   void _onTimings(List<FrameTiming> timings) {
+    for (final t in timings) {
+      final w = t.buildDuration > t.rasterDuration
+          ? t.buildDuration
+          : t.rasterDuration;
+      workMs = workMs * 0.9 + w.inMicroseconds / 1000 * 0.1;
+    }
     if (!_measuring || _wait > 0) return;
     for (final t in timings) {
       _frames++;

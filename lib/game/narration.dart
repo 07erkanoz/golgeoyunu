@@ -647,6 +647,17 @@ class Narration extends Component with HasGameReference<GolgeGame> {
       );
     }
 
+    if (game.perfShown && game.perfText.isNotEmpty) {
+      _text(
+        canvas,
+        game.perfText,
+        Offset(w / 2, h * 0.035),
+        unit * 0.018,
+        0.9,
+        maxWidth: w * 0.9,
+      );
+    }
+
     if (game.menuMode.value) return;
 
     if (_hint != null && !inCinematic) {
