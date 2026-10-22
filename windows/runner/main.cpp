@@ -32,16 +32,17 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
   std::vector<std::string> command_line_arguments =
       GetCommandLineArguments();
 
-  // Prefer the high performance GPU and use the Impeller renderer. Starting
-  // with "--skia" falls back to the old renderer (in case Impeller misbehaves
-  // on a machine).
+  // Prefer the high performance GPU and use the Skia renderer. Flutter 3.47
+  // made Impeller the desktop default; on Windows it runs through ANGLE and
+  // redraws every static picture each frame, which made the game stutter on
+  // strong GPUs. Starting with "--impeller" selects Impeller for comparison.
   project.set_gpu_preference(
       flutter::GpuPreference::HighPerformancePreference);
-  const bool skia =
+  const bool impeller =
       std::find(command_line_arguments.begin(), command_line_arguments.end(),
-                "--skia") != command_line_arguments.end();
-  project.set_impeller_switch(skia ? flutter::ImpellerSwitch::Disabled
-                                   : flutter::ImpellerSwitch::Enabled);
+                "--impeller") != command_line_arguments.end();
+  project.set_impeller_switch(impeller ? flutter::ImpellerSwitch::Enabled
+                                       : flutter::ImpellerSwitch::Disabled);
 
   project.set_dart_entrypoint_arguments(std::move(command_line_arguments));
 
