@@ -311,7 +311,8 @@ class _TheaterPainter extends CustomPainter {
     final isEnd = line == line.toUpperCase();
     if (isEnd) {
       PerdePainter.gostermelik(canvas, r, line, s._sceneT, a);
-    } else {
+    } else if (Settings.subtitles || !GameAudio.instance.speaks(line)) {
+      // Seslendirilen satırın yazısı gösterilmez (altyazı kapalıyken).
       _write(
         canvas,
         line,

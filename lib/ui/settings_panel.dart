@@ -9,9 +9,12 @@ import '../game/palette.dart';
 import '../game/strings.dart';
 import '../display.dart';
 import '../settings.dart';
+import 'page_frame.dart';
 
-/// Esc ya da dişli simgesiyle açılan ayarlar: ses seviyeleri ve tam ekran.
-/// Açıkken oyun durur.
+/// Ayarlar: Esc ya da dişli simgesiyle açılan, Defter ve Hakkında ile aynı
+/// çerçevede sekmeli bir sayfa (Ses, Görüntü, Oyun, Kontroller, Lisanslar);
+/// her sekmede başlıklı bölümler. Açıkken oyun durur; oyun sırasında altta
+/// Ana menü / Yeniden dene / Devam et.
 class SettingsPanel extends StatefulWidget {
   const SettingsPanel({
     super.key,
@@ -40,11 +43,39 @@ class SettingsPanel extends StatefulWidget {
   State<SettingsPanel> createState() => _SettingsPanelState();
 }
 
+enum _Tab { sound, display, game, controls, licenses }
+
 class _SettingsPanelState extends State<SettingsPanel> {
   static const _text = Color(0xFFEBDDCB);
   static const _accent = Color(0xFFE0A15F);
 
-  void _changed() {
+  /// Son açık sekme (yeniden açılınca oradan).
+  static _Tab _last = _Tab.sound;
+  _Tab _tab = _last;
+
+  double _k = 1;
+
+  /// Yazı ölçeği: alçak ekranda (telefon) da okunur kalsın diye küçülmesi
+  /// sınırlı (boşluklar _k ile küçülür).
+  double get _f => _k < 0.92 ? 0.92 : _k;
+
+  List<_Tab> get _tabs => [
+    _Tab.sound,
+    _Tab.display,
+    _Tab.game,
+    if (widget.canTouch) _Tab.controls,
+    _Tab.licenses,
+  ];
+
+  String _tabName(_Tab t) => S.of(switch (t) {
+    _Tab.sound => 'tabSound',
+    _Tab.display => 'tabDisplay',
+    _Tab.game => 'tabGame',
+    _Tab.controls => 'tabControls',
+    _Tab.licenses => 'tabLicenses',
+  });
+
+  void _save() {
     GameAudio.instance.applyVolumes();
     Settings.save();
     setState(() {});
@@ -52,529 +83,38 @@ class _SettingsPanelState extends State<SettingsPanel> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: const Color(0xCC050302),
-      alignment: Alignment.center,
-      child: Container(
-        width: 400,
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.sizeOf(context).height * 0.94,
+    _k = (MediaQuery.sizeOf(context).height / 640).clamp(0.6, 1.0);
+    if (!_tabs.contains(_tab)) _tab = _Tab.sound;
+    return Material(
+      type: MaterialType.transparency,
+      child: SliderTheme(
+        data: SliderTheme.of(context).copyWith(
+          activeTrackColor: _accent,
+          inactiveTrackColor: const Color(0x33E0A15F),
+          thumbColor: _accent,
+          overlayColor: const Color(0x22E0A15F),
+          trackHeight: 3,
         ),
-        padding: const EdgeInsets.fromLTRB(28, 24, 28, 20),
-        decoration: BoxDecoration(
-          color: const Color(0xFF140C09),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0x33E0A15F)),
-        ),
-        // Anahtarların dokunma halkaları panelin zemininde görünsün.
-        child: Material(
-          type: MaterialType.transparency,
-          child: SliderTheme(
-            data: SliderTheme.of(context).copyWith(
-              activeTrackColor: _accent,
-              inactiveTrackColor: const Color(0x33E0A15F),
-              thumbColor: _accent,
-              overlayColor: const Color(0x22E0A15F),
-            ),
-            child: SingleChildScrollView(
+        child: PageFrame(
+          k: _k,
+          title: S.of('settingsTitle'),
+          onBack: widget.game.toggleSettings,
+          tabs: [for (final t in _tabs) _tabName(t)],
+          tab: _tabs.indexOf(_tab),
+          onTab: (i) => setState(() => _last = _tab = _tabs[i]),
+          footer: _footer(),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 560),
               child: Column(
-                mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    S.of('settingsTitle'),
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: _text,
-                      fontSize: 20,
-                      letterSpacing: 6,
-                      fontWeight: FontWeight.w300,
-                    ),
-                  ),
-                  const SizedBox(height: 22),
-                  _label(S.of('music'), Settings.music),
-                  Slider(
-                    value: Settings.music,
-                    onChanged: (v) {
-                      Settings.music = v;
-                      _changed();
-                    },
-                  ),
-                  _label(S.of('ambience'), Settings.ambience),
-                  Slider(
-                    value: Settings.ambience,
-                    onChanged: (v) {
-                      Settings.ambience = v;
-                      _changed();
-                    },
-                  ),
-                  _label(S.of('effects'), Settings.effects),
-                  Slider(
-                    value: Settings.effects,
-                    onChanged: (v) {
-                      Settings.effects = v;
-                      _changed();
-                    },
-                  ),
-                  if (widget.canFullscreen)
-                    SwitchListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: Text(
-                        S.of('fullscreen'),
-                        style: const TextStyle(color: _text),
-                      ),
-                      value: Settings.fullscreen,
-                      activeThumbColor: _accent,
-                      onChanged: (v) {
-                        widget.onFullscreen(v);
-                        setState(() {});
-                      },
-                    ),
-                  if (widget.canTouch) ...[
-                    Row(
-                      children: [
-                        Text(
-                          S.of('touchControls'),
-                          style: const TextStyle(color: _text, fontSize: 14),
-                        ),
-                        const Spacer(),
-                        SegmentedButton<bool>(
-                          segments: [
-                            ButtonSegment(
-                              value: false,
-                              label: Text(S.of('touchButtons')),
-                            ),
-                            ButtonSegment(
-                              value: true,
-                              label: Text(S.of('touchGestures')),
-                            ),
-                          ],
-                          selected: {Settings.touchGestures},
-                          showSelectedIcon: false,
-                          style: SegmentedButton.styleFrom(
-                            foregroundColor: _text,
-                            selectedForegroundColor: const Color(0xFF140C09),
-                            selectedBackgroundColor: _accent,
-                            side: const BorderSide(color: Color(0x55EBDDCB)),
-                          ),
-                          onSelectionChanged: (v) {
-                            Settings.touchGestures = v.first;
-                            Settings.save();
-                            widget.onTouchChanged?.call();
-                            setState(() {});
-                          },
-                        ),
-                      ],
-                    ),
-                    _label(S.of('touchOpacity'), Settings.touchOpacity),
-                    Slider(
-                      value: Settings.touchOpacity,
-                      min: 0.1,
-                      onChanged: (v) {
-                        Settings.touchOpacity = v;
-                        Settings.save();
-                        widget.onTouchChanged?.call();
-                        setState(() {});
-                      },
-                    ),
-                    if (!Settings.touchGestures) ...[
-                      _label(S.of('touchScale'), Settings.touchScale),
-                      Slider(
-                        value: Settings.touchScale,
-                        min: 0.75,
-                        max: 1.4,
-                        onChanged: (v) {
-                          Settings.touchScale = v;
-                          Settings.save();
-                          widget.onTouchChanged?.call();
-                          setState(() {});
-                        },
-                      ),
-                    ],
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            S.of('leftHanded'),
-                            style: const TextStyle(color: _text, fontSize: 14),
-                          ),
-                        ),
-                        Switch(
-                          value: Settings.leftHanded,
-                          activeThumbColor: _accent,
-                          inactiveThumbColor: _text.withValues(alpha: 0.6),
-                          inactiveTrackColor: const Color(0x22EBDDCB),
-                          trackOutlineColor: const WidgetStatePropertyAll(
-                            Color(0x55EBDDCB),
-                          ),
-                          onChanged: (v) {
-                            Settings.leftHanded = v;
-                            Settings.save();
-                            widget.onTouchChanged?.call();
-                            setState(() {});
-                          },
-                        ),
-                      ],
-                    ),
-                    if (Settings.touchGestures)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
-                        child: Text(
-                          Hints.sides(S.of('touchHelpGestures')),
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: _text.withValues(alpha: 0.55),
-                            fontSize: 11,
-                            height: 1.45,
-                          ),
-                        ),
-                      ),
-                  ],
-                  _label(S.of('brightness'), Settings.brightness),
-                  Slider(
-                    value: Settings.brightness,
-                    min: 0.6,
-                    max: 1.6,
-                    onChanged: (v) {
-                      Settings.brightness = v;
-                      Settings.save();
-                      setState(() {});
-                    },
-                  ),
-                  // Fısıltı, ipucu ve efsane kartının yazısı büyütülür.
-                  _label(S.of('textSize'), Settings.textScale),
-                  Slider(
-                    value: Settings.textScale,
-                    min: 0.8,
-                    max: 1.6,
-                    divisions: 8,
-                    onChanged: (v) {
-                      Settings.textScale = v;
-                      setState(() {});
-                    },
-                    onChangeEnd: (_) => Settings.save(),
-                  ),
-                  // Deneme yapısında: renk ve doku denemesi (Yerebatan
-                  // renkleri, bütün bölümlerde zemin dokusu) açılıp kapanır,
-                  // tonu kaydırılır (0 karanlık, 100 aydınlık).
-                  if (Cartoon.trialBuild) ...[
-                    Row(
-                      children: [
-                        const Expanded(
-                          child: Text(
-                            'Renk ve doku denemesi',
-                            style: TextStyle(color: _text, fontSize: 14),
-                          ),
-                        ),
-                        Switch(
-                          value: Cartoon.on,
-                          activeThumbColor: _accent,
-                          inactiveThumbColor: _text.withValues(alpha: 0.6),
-                          inactiveTrackColor: const Color(0x22EBDDCB),
-                          trackOutlineColor: const WidgetStatePropertyAll(
-                            Color(0x55EBDDCB),
-                          ),
-                          onChanged: (v) => setState(() {
-                            Cartoon.on = v;
-                            Settings.texture = v;
-                            Settings.save();
-                          }),
-                        ),
-                      ],
-                    ),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            Settings.lowGraphics
-                                ? 'Işık ve derinlik (deneme)\nDüşük grafikte kapalı'
-                                : 'Işık ve derinlik (deneme)',
-                            style: const TextStyle(color: _text, fontSize: 14),
-                          ),
-                        ),
-                        Switch(
-                          value: Realism.on,
-                          activeThumbColor: _accent,
-                          inactiveThumbColor: _text.withValues(alpha: 0.6),
-                          inactiveTrackColor: const Color(0x22EBDDCB),
-                          trackOutlineColor: const WidgetStatePropertyAll(
-                            Color(0x55EBDDCB),
-                          ),
-                          onChanged: (v) => setState(() {
-                            Realism.on = v;
-                            Settings.realism = v;
-                            Settings.save();
-                            if (v) AutoQuality.userChose = true;
-                          }),
-                        ),
-                      ],
-                    ),
-                    Row(
-                      children: [
-                        const Expanded(
-                          child: Text(
-                            'Ölçüm göstergesi (kare, bellek)',
-                            style: TextStyle(color: _text, fontSize: 14),
-                          ),
-                        ),
-                        Switch(
-                          value: widget.game.perfShown,
-                          activeThumbColor: _accent,
-                          inactiveThumbColor: _text.withValues(alpha: 0.6),
-                          inactiveTrackColor: const Color(0x22EBDDCB),
-                          trackOutlineColor: const WidgetStatePropertyAll(
-                            Color(0x55EBDDCB),
-                          ),
-                          onChanged: (v) => setState(() {
-                            widget.game.perfShown = v;
-                            Settings.save();
-                          }),
-                        ),
-                      ],
-                    ),
-                    _label(S.of('colorTone'), Cartoon.tone),
-                    Slider(
-                      value: Cartoon.tone,
-                      divisions: 20,
-                      onChanged: (v) {
-                        Cartoon.tone = v;
-                        Settings.tone = v;
-                        setState(() {});
-                      },
-                      onChangeEnd: (_) => Settings.save(),
-                    ),
-                  ],
-                  // Yüksek yenileme hızı: Android'de 90/120 Hz istenir;
-                  // masaüstünde kapalıyken kareler 60 dolayında sınırlanır
-                  // (açıkken ekranın kendi hızı).
-                  if (defaultTargetPlatform == TargetPlatform.android ||
-                      defaultTargetPlatform == TargetPlatform.windows ||
-                      defaultTargetPlatform == TargetPlatform.linux ||
-                      defaultTargetPlatform == TargetPlatform.macOS)
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            S.of('highRefresh'),
-                            style: const TextStyle(color: _text, fontSize: 14),
-                          ),
-                        ),
-                        Switch(
-                          value: Settings.highRefresh,
-                          activeThumbColor: _accent,
-                          inactiveThumbColor: _text.withValues(alpha: 0.6),
-                          inactiveTrackColor: const Color(0x22EBDDCB),
-                          trackOutlineColor: const WidgetStatePropertyAll(
-                            Color(0x55EBDDCB),
-                          ),
-                          onChanged: (v) {
-                            setState(() => Settings.highRefresh = v);
-                            Settings.save();
-                            applyRefreshRate();
-                            widget.game.pacer.apply();
-                          },
-                        ),
-                      ],
-                    ),
-                  Row(
-                    children: [
-                      Text(
-                        S.of('graphics'),
-                        style: const TextStyle(color: _text, fontSize: 14),
-                      ),
-                      const Spacer(),
-                      SegmentedButton<bool>(
-                        segments: [
-                          ButtonSegment(
-                            value: false,
-                            label: Text(S.of('gfxHigh')),
-                          ),
-                          ButtonSegment(
-                            value: true,
-                            label: Text(S.of('gfxLow')),
-                          ),
-                        ],
-                        selected: {Settings.lowGraphics},
-                        showSelectedIcon: false,
-                        style: SegmentedButton.styleFrom(
-                          foregroundColor: _text,
-                          selectedForegroundColor: const Color(0xFF140C09),
-                          selectedBackgroundColor: _accent,
-                          side: const BorderSide(color: Color(0x55EBDDCB)),
-                        ),
-                        onSelectionChanged: (v) {
-                          Settings.lowGraphics = v.first;
-                          Settings.autoLowered = false;
-                          if (!v.first) AutoQuality.userChose = true;
-                          Settings.save();
-                          setState(() {});
-                        },
-                      ),
-                    ],
-                  ),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          S.of('autoQuality'),
-                          style: const TextStyle(color: _text, fontSize: 14),
-                        ),
-                      ),
-                      Switch(
-                        value: Settings.autoQuality,
-                        activeThumbColor: _accent,
-                        inactiveThumbColor: _text.withValues(alpha: 0.6),
-                        inactiveTrackColor: const Color(0x22EBDDCB),
-                        trackOutlineColor: const WidgetStatePropertyAll(
-                          Color(0x55EBDDCB),
-                        ),
-                        onChanged: (v) {
-                          setState(() => Settings.autoQuality = v);
-                          Settings.save();
-                        },
-                      ),
-                    ],
-                  ),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          S.of('calmEffects'),
-                          style: const TextStyle(color: _text, fontSize: 14),
-                        ),
-                      ),
-                      Switch(
-                        value: Settings.calmEffects,
-                        activeThumbColor: _accent,
-                        inactiveThumbColor: _text.withValues(alpha: 0.6),
-                        inactiveTrackColor: const Color(0x22EBDDCB),
-                        trackOutlineColor: const WidgetStatePropertyAll(
-                          Color(0x55EBDDCB),
-                        ),
-                        onChanged: (v) {
-                          Settings.calmEffects = v;
-                          Settings.save();
-                          setState(() {});
-                        },
-                      ),
-                    ],
-                  ),
-                  // Anlatım sesi: fısıltılar, hatıralar ve perde okunur.
-                  _switchRow(S.of('voiceSetting'), Settings.voice, (v) {
-                    Settings.voice = v;
-                    if (!v) GameAudio.instance.stopVoice(clearQueue: true);
-                  }),
-                  if (Settings.voice) ...[
-                    _label(S.of('voiceVolume'), Settings.voiceVolume),
-                    Slider(
-                      value: Settings.voiceVolume,
-                      onChanged: (v) {
-                        Settings.voiceVolume = v;
-                        GameAudio.instance.applyVolumes();
-                        setState(() {});
-                      },
-                      onChangeEnd: (_) => Settings.save(),
-                    ),
-                  ],
-                  // Anlatım: ikinci oynayışta hikâyeyi yeniden okumak
-                  // istemeyen için.
-                  _switchRow(
-                    S.of('storyWhispers'),
-                    Settings.storyWhispers,
-                    (v) => Settings.storyWhispers = v,
-                    note: S.of('storyWhispersHint'),
-                  ),
-                  _switchRow(
-                    S.of('hintsSetting'),
-                    Settings.hints,
-                    (v) => Settings.hints = v,
-                  ),
-                  _switchRow(
-                    S.of('skipSeenPerde'),
-                    Settings.skipSeenPerde,
-                    (v) => Settings.skipSeenPerde = v,
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Text(
-                        S.of('language'),
-                        style: const TextStyle(color: _text, fontSize: 14),
-                      ),
-                      const Spacer(),
-                      SegmentedButton<Lang>(
-                        segments: const [
-                          ButtonSegment(value: Lang.tr, label: Text('Türkçe')),
-                          ButtonSegment(value: Lang.en, label: Text('English')),
-                        ],
-                        selected: {S.lang},
-                        showSelectedIcon: false,
-                        style: SegmentedButton.styleFrom(
-                          foregroundColor: _text,
-                          selectedForegroundColor: const Color(0xFF140C09),
-                          selectedBackgroundColor: _accent,
-                          side: const BorderSide(color: Color(0x55EBDDCB)),
-                        ),
-                        onSelectionChanged: (v) {
-                          S.lang = v.first;
-                          Settings.save();
-                          widget.onLanguage();
-                          setState(() {});
-                        },
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 14),
-                  Text(
-                    S.of('controls'),
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: _text.withValues(alpha: 0.55),
-                      fontSize: 12,
-                      height: 1.5,
-                    ),
-                  ),
-                  const SizedBox(height: 18),
-                  if (widget.inGame) ...[
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: widget.game.backToMenu,
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: _text,
-                              side: const BorderSide(color: Color(0x55EBDDCB)),
-                            ),
-                            child: Text(S.of('mainMenu')),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: () {
-                              widget.game.toggleSettings();
-                              widget.game.player?.die();
-                            },
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: _text,
-                              side: const BorderSide(color: Color(0x55EBDDCB)),
-                            ),
-                            child: Text(S.of('retry')),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                  ],
-                  FilledButton(
-                    onPressed: widget.game.toggleSettings,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: _accent,
-                      foregroundColor: const Color(0xFF140C09),
-                    ),
-                    child: Text(widget.inGame ? S.of('resume') : S.of('close')),
-                  ),
-                ],
+                children: switch (_tab) {
+                  _Tab.sound => _sound(),
+                  _Tab.display => _display(),
+                  _Tab.game => _gameTab(),
+                  _Tab.controls => _controls(),
+                  _Tab.licenses => _licenses(),
+                },
               ),
             ),
           ),
@@ -583,45 +123,384 @@ class _SettingsPanelState extends State<SettingsPanel> {
     );
   }
 
-  /// Açma/kapama satırı: değişince kaydedilir.
-  Widget _switchRow(
-    String text,
+  // ------------------------------------------------------------- sekmeler
+
+  List<Widget> _sound() => [
+    _section(S.of('secVolumes')),
+    _slider(S.of('music'), Settings.music, (v) => Settings.music = v),
+    _slider(S.of('ambience'), Settings.ambience, (v) => Settings.ambience = v),
+    _slider(S.of('effects'), Settings.effects, (v) => Settings.effects = v),
+    _section(S.of('secNarration')),
+    _switch(S.of('voiceSetting'), Settings.voice, (v) {
+      Settings.voice = v;
+      if (!v) GameAudio.instance.stopVoice(clearQueue: true);
+    }),
+    if (Settings.voice)
+      _slider(
+        S.of('voiceVolume'),
+        Settings.voiceVolume,
+        (v) => Settings.voiceVolume = v,
+      ),
+    _switch(
+      S.of('subtitles'),
+      Settings.subtitles,
+      (v) => Settings.subtitles = v,
+      note: S.of('subtitlesHint'),
+    ),
+  ];
+
+  List<Widget> _display() => [
+    _section(S.of('secScreen')),
+    if (widget.canFullscreen)
+      _switch(S.of('fullscreen'), Settings.fullscreen, (v) {
+        widget.onFullscreen(v);
+      }, save: false),
+    _slider(
+      S.of('brightness'),
+      Settings.brightness,
+      (v) => Settings.brightness = v,
+      min: 0.6,
+      max: 1.6,
+    ),
+    _slider(
+      S.of('textSize'),
+      Settings.textScale,
+      (v) => Settings.textScale = v,
+      min: 0.8,
+      max: 1.6,
+      divisions: 8,
+    ),
+    _section(S.of('secGraphics')),
+    _row(
+      S.of('graphics'),
+      _segments<bool>(
+        {false: S.of('gfxHigh'), true: S.of('gfxLow')},
+        Settings.lowGraphics,
+        (v) {
+          Settings.lowGraphics = v;
+          Settings.autoLowered = false;
+          if (!v) AutoQuality.userChose = true;
+        },
+      ),
+    ),
+    _switch(
+      S.of('autoQuality'),
+      Settings.autoQuality,
+      (v) => Settings.autoQuality = v,
+    ),
+    // Yüksek yenileme hızı: Android'de 90/120 Hz istenir; masaüstünde
+    // kapalıyken kareler 60 dolayında sınırlanır (açıkken ekranın hızı).
+    if (defaultTargetPlatform == TargetPlatform.android ||
+        defaultTargetPlatform == TargetPlatform.windows ||
+        defaultTargetPlatform == TargetPlatform.linux ||
+        defaultTargetPlatform == TargetPlatform.macOS)
+      _switch(S.of('highRefresh'), Settings.highRefresh, (v) {
+        Settings.highRefresh = v;
+        applyRefreshRate();
+        widget.game.pacer.apply();
+      }),
+    if (Cartoon.trialBuild) ...[
+      _switch(
+        S.of('lightDepth'),
+        Realism.on,
+        (v) {
+          Realism.on = v;
+          Settings.realism = v;
+          if (v) AutoQuality.userChose = true;
+        },
+        note: Settings.lowGraphics ? S.of('lightDepthLow') : null,
+        noteAlways: true,
+      ),
+      _switch(S.of('textureSetting'), Cartoon.on, (v) {
+        Cartoon.on = v;
+        Settings.texture = v;
+      }),
+      _slider(S.of('colorTone'), Cartoon.tone, (v) {
+        Cartoon.tone = v;
+        Settings.tone = v;
+      }, divisions: 20),
+    ],
+    _section(S.of('secAccess')),
+    _switch(
+      S.of('calmEffects'),
+      Settings.calmEffects,
+      (v) => Settings.calmEffects = v,
+    ),
+    if (Cartoon.trialBuild)
+      _switch(
+        S.of('perfMeter'),
+        widget.game.perfShown,
+        (v) => widget.game.perfShown = v,
+      ),
+  ];
+
+  List<Widget> _gameTab() => [
+    _section(S.of('language')),
+    _row(
+      S.of('language'),
+      _segments<Lang>({Lang.tr: 'Türkçe', Lang.en: 'English'}, S.lang, (v) {
+        S.lang = v;
+        widget.onLanguage();
+      }),
+    ),
+    _section(S.of('secNarration')),
+    // İkinci oynayışta hikâyeyi yeniden okumak istemeyen için.
+    _switch(
+      S.of('storyWhispers'),
+      Settings.storyWhispers,
+      (v) => Settings.storyWhispers = v,
+      note: S.of('storyWhispersHint'),
+    ),
+    _switch(S.of('hintsSetting'), Settings.hints, (v) => Settings.hints = v),
+    _switch(
+      S.of('skipSeenPerde'),
+      Settings.skipSeenPerde,
+      (v) => Settings.skipSeenPerde = v,
+    ),
+    if (!widget.canTouch) ...[
+      _section(S.of('secKeys')),
+      Text(
+        S.of('controls'),
+        style: TextStyle(
+          color: _text.withValues(alpha: 0.65),
+          fontSize: 13 * _f,
+          height: 1.6,
+        ),
+      ),
+    ],
+  ];
+
+  List<Widget> _controls() => [
+    _section(S.of('touchControls')),
+    _row(
+      S.of('touchControls'),
+      _segments<bool>(
+        {false: S.of('touchButtons'), true: S.of('touchGestures')},
+        Settings.touchGestures,
+        (v) => Settings.touchGestures = v,
+        after: widget.onTouchChanged,
+      ),
+    ),
+    _slider(
+      S.of('touchOpacity'),
+      Settings.touchOpacity,
+      (v) => Settings.touchOpacity = v,
+      min: 0.1,
+      after: widget.onTouchChanged,
+    ),
+    if (!Settings.touchGestures)
+      _slider(
+        S.of('touchScale'),
+        Settings.touchScale,
+        (v) => Settings.touchScale = v,
+        min: 0.75,
+        max: 1.4,
+        after: widget.onTouchChanged,
+      ),
+    _switch(S.of('leftHanded'), Settings.leftHanded, (v) {
+      Settings.leftHanded = v;
+      widget.onTouchChanged?.call();
+    }),
+    if (Settings.touchGestures)
+      Padding(
+        padding: EdgeInsets.only(top: 10 * _k),
+        child: Text(
+          Hints.sides(S.of('touchHelpGestures')),
+          style: TextStyle(
+            color: _text.withValues(alpha: 0.6),
+            fontSize: 12 * _f,
+            height: 1.5,
+          ),
+        ),
+      ),
+  ];
+
+  List<Widget> _licenses() => [
+    Text(
+      S.of('licensesIntro'),
+      style: TextStyle(
+        color: _text.withValues(alpha: 0.7),
+        fontSize: 13 * _f,
+        height: 1.5,
+      ),
+    ),
+    _credit(S.of('creditMusic'), S.of('creditMusicText')),
+    _credit(S.of('creditSounds'), S.of('creditSoundsText')),
+    _credit(S.of('creditVoice'), S.of('creditVoiceText')),
+    _credit(S.of('creditArt'), S.of('creditArtText')),
+    SizedBox(height: 22 * _k),
+    Align(
+      alignment: Alignment.centerLeft,
+      child: OutlinedButton(
+        onPressed: () => showLicensePage(
+          context: context,
+          applicationName: S.of('gameTitle'),
+        ),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: _text,
+          side: const BorderSide(color: Color(0x55E0A15F)),
+        ),
+        child: Text(S.of('openLicenses')),
+      ),
+    ),
+  ];
+
+  // ----------------------------------------------------------- yapıtaşları
+
+  /// Oyun sırasında altta sabit: Ana menü, Yeniden dene, Devam et.
+  Widget? _footer() {
+    if (!widget.inGame) return null;
+    final side = OutlinedButton.styleFrom(
+      foregroundColor: _text,
+      side: const BorderSide(color: Color(0x55EBDDCB)),
+    );
+    return Row(
+      children: [
+        OutlinedButton(
+          onPressed: widget.game.backToMenu,
+          style: side,
+          child: Text(S.of('mainMenu')),
+        ),
+        SizedBox(width: 10 * _k),
+        OutlinedButton(
+          onPressed: () {
+            widget.game.toggleSettings();
+            widget.game.player?.die();
+          },
+          style: side,
+          child: Text(S.of('retry')),
+        ),
+        const Spacer(),
+        FilledButton(
+          onPressed: widget.game.toggleSettings,
+          style: FilledButton.styleFrom(
+            backgroundColor: _accent,
+            foregroundColor: const Color(0xFF140C09),
+          ),
+          child: Text(S.of('resume')),
+        ),
+      ],
+    );
+  }
+
+  /// Bölüm başlığı: küçük, geniş aralıklı, ılık; yanında ince bir çizgi.
+  Widget _section(String title) => Padding(
+    padding: EdgeInsets.only(top: 22 * _k, bottom: 6 * _k),
+    child: Row(
+      children: [
+        Text(
+          S.upper(title),
+          style: TextStyle(
+            color: _accent.withValues(alpha: 0.9),
+            fontSize: 11 * _f,
+            letterSpacing: 3,
+          ),
+        ),
+        SizedBox(width: 12 * _k),
+        Expanded(child: Container(height: 1, color: const Color(0x22E0A15F))),
+      ],
+    ),
+  );
+
+  /// Ayar satırı: solda ad, sağda denetim.
+  Widget _row(String label, Widget control) => Padding(
+    padding: EdgeInsets.symmetric(vertical: 4 * _k),
+    child: Row(
+      children: [
+        Expanded(
+          child: Text(
+            label,
+            style: TextStyle(color: _text, fontSize: 14 * _f),
+          ),
+        ),
+        control,
+      ],
+    ),
+  );
+
+  Widget _slider(
+    String label,
+    double value,
+    void Function(double) set, {
+    double min = 0,
+    double max = 1,
+    int? divisions,
+    VoidCallback? after,
+  }) => Padding(
+    padding: EdgeInsets.symmetric(vertical: 2 * _k),
+    child: Row(
+      children: [
+        Expanded(
+          flex: 4,
+          child: Text(
+            label,
+            style: TextStyle(color: _text, fontSize: 14 * _f),
+          ),
+        ),
+        Expanded(
+          flex: 5,
+          child: Slider(
+            value: value.clamp(min, max),
+            min: min,
+            max: max,
+            divisions: divisions,
+            onChanged: (v) {
+              set(v);
+              GameAudio.instance.applyVolumes();
+              after?.call();
+              setState(() {});
+            },
+            onChangeEnd: (_) => Settings.save(),
+          ),
+        ),
+        SizedBox(
+          width: 42 * _f,
+          child: Text(
+            '${(value * 100).round()}',
+            textAlign: TextAlign.right,
+            style: TextStyle(
+              color: _text.withValues(alpha: 0.6),
+              fontSize: 13 * _f,
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+
+  Widget _switch(
+    String label,
     bool value,
     void Function(bool) set, {
     String? note,
+    bool noteAlways = false,
+    bool save = true,
   }) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Row(
-        children: [
-          Expanded(
-            child: Text(
-              text,
-              style: const TextStyle(color: _text, fontSize: 14),
-            ),
-          ),
-          Switch(
-            value: value,
-            activeThumbColor: _accent,
-            inactiveThumbColor: _text.withValues(alpha: 0.6),
-            inactiveTrackColor: const Color(0x22EBDDCB),
-            trackOutlineColor: const WidgetStatePropertyAll(Color(0x55EBDDCB)),
-            onChanged: (v) {
-              set(v);
-              Settings.save();
-              setState(() {});
-            },
-          ),
-        ],
+      _row(
+        label,
+        Switch(
+          value: value,
+          activeThumbColor: _accent,
+          inactiveThumbColor: _text.withValues(alpha: 0.6),
+          inactiveTrackColor: const Color(0x22EBDDCB),
+          trackOutlineColor: const WidgetStatePropertyAll(Color(0x55EBDDCB)),
+          onChanged: (v) {
+            set(v);
+            if (save) _save();
+            setState(() {});
+          },
+        ),
       ),
-      if (note != null && !value)
+      if (note != null && (noteAlways || !value))
         Padding(
-          padding: const EdgeInsets.only(bottom: 6),
+          padding: EdgeInsets.only(bottom: 6 * _k, right: 60 * _k),
           child: Text(
             note,
             style: TextStyle(
               color: _text.withValues(alpha: 0.55),
-              fontSize: 11,
+              fontSize: 11.5 * _f,
               height: 1.45,
             ),
           ),
@@ -629,14 +508,55 @@ class _SettingsPanelState extends State<SettingsPanel> {
     ],
   );
 
-  Widget _label(String text, double value) => Row(
-    children: [
-      Text(text, style: const TextStyle(color: _text, fontSize: 14)),
-      const Spacer(),
-      Text(
-        '${(value * 100).round()}',
-        style: TextStyle(color: _text.withValues(alpha: 0.6), fontSize: 13),
-      ),
+  Widget _segments<T>(
+    Map<T, String> options,
+    T value,
+    void Function(T) set, {
+    VoidCallback? after,
+  }) => SegmentedButton<T>(
+    segments: [
+      for (final e in options.entries)
+        ButtonSegment(value: e.key, label: Text(e.value)),
     ],
+    selected: {value},
+    showSelectedIcon: false,
+    style: SegmentedButton.styleFrom(
+      foregroundColor: _text,
+      selectedForegroundColor: const Color(0xFF140C09),
+      selectedBackgroundColor: _accent,
+      side: const BorderSide(color: Color(0x55EBDDCB)),
+      visualDensity: VisualDensity.compact,
+    ),
+    onSelectionChanged: (v) {
+      set(v.first);
+      after?.call();
+      _save();
+    },
+  );
+
+  Widget _credit(String title, String body) => Padding(
+    padding: EdgeInsets.only(top: 18 * _k),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          S.upper(title),
+          style: TextStyle(
+            color: _accent.withValues(alpha: 0.85),
+            fontSize: 11 * _f,
+            letterSpacing: 3,
+          ),
+        ),
+        SizedBox(height: 5 * _k),
+        Text(
+          body,
+          style: TextStyle(
+            color: _text.withValues(alpha: 0.7),
+            fontSize: 13 * _f,
+            height: 1.5,
+          ),
+        ),
+      ],
+    ),
   );
 }

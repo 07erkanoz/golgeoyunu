@@ -52,6 +52,10 @@ class Settings {
   /// olan satırlar). Kapalıyken yalnız yazı.
   static bool voice = true;
 
+  /// Altyazı: seslendirilen satırın yazısı da görünür (varsayılan kapalı:
+  /// ses varken yazı gösterilmez; sesi olmayan satırlar hep yazıdır).
+  static bool subtitles = false;
+
   /// Anlatım sesinin düzeyi (0 – 1).
   static double voiceVolume = 0.9;
 
@@ -180,6 +184,7 @@ class Settings {
       storyWhispers = _read(() => p.getBool('story_whispers')) ?? storyWhispers;
       hints = _read(() => p.getBool('hints')) ?? hints;
       voice = _read(() => p.getBool('voice')) ?? voice;
+      subtitles = _read(() => p.getBool('subtitles')) ?? subtitles;
       hintIntroSeen =
           _read(() => p.getBool('hint_intro_seen')) ?? hintIntroSeen;
       skipSeenPerde =
@@ -263,6 +268,7 @@ class Settings {
       await p.setBool('story_whispers', storyWhispers);
       await p.setBool('hints', hints);
       await p.setBool('voice', voice);
+      await p.setBool('subtitles', subtitles);
       await p.setDouble('voice_volume', voiceVolume);
       await p.setBool('hint_intro_seen', hintIntroSeen);
       await p.setBool('skip_seen_perde', skipSeenPerde);

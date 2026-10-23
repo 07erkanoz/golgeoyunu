@@ -364,6 +364,11 @@ class GameAudio {
   /// Anlatım konuşuyor ya da sırada satır var mı.
   bool get voiceBusy => _voice != null || _voiceBusy || _voiceQueue.isNotEmpty;
 
+  /// Bu satır şimdi seslendirilecek mi (anlatım açık, ses düzeyi sıfır
+  /// değil, sesi var): öyleyse yazısı gösterilmez (altyazı açık değilse).
+  bool speaks(String text) =>
+      _ready && Settings.voice && Settings.voiceVolume > 0.02 && hasVoice(text);
+
   /// Bu satırın sesi var mı.
   bool hasVoice(String text) => _voiceFiles.contains(_voicePath(text));
 

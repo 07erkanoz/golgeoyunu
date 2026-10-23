@@ -660,6 +660,10 @@ class Narration extends Component with HasGameReference<GolgeGame> {
     }
   }
 
+  /// Satır seslendiriliyor ve altyazı kapalı: yazısı gösterilmez.
+  bool _voiced(String text) =>
+      !Settings.subtitles && GameAudio.instance.speaks(text);
+
   /// İpucu şeridinin üst kenarı (yer adının altı; sol üstteki görev satırı
   /// ve ateşböceklerinin altında kalır).
   static double hintTop(double h) => math.max(h * 0.12, 88.0);
@@ -734,7 +738,7 @@ class Narration extends Component with HasGameReference<GolgeGame> {
         if (isEnd) {
           // Perdenin adı perdeye bir göstermelik olarak konur.
           PerdePainter.gostermelik(canvas, r, line, _sceneT, a);
-        } else {
+        } else if (!_voiced(line)) {
           _text(
             canvas,
             line,
@@ -749,7 +753,7 @@ class Narration extends Component with HasGameReference<GolgeGame> {
             maxWidth: math.max(w * 0.5, math.min(w * 0.8, w - 2 * 170)),
           );
         }
-      } else {
+      } else if (isEnd || !_voiced(line)) {
         _text(
           canvas,
           line,
@@ -875,12 +879,15 @@ class Narration extends Component with HasGameReference<GolgeGame> {
       );
     }
 
-    if (_whisper != null || _prev != null) {
+    // Seslendirilen fısıltının yazısı gösterilmez (altyazı kapalıyken).
+    final shownW = _whisper != null && !_voiced(_whisper!) ? _whisper : null;
+    final shownP = _prev != null && !_voiced(_prev!) ? _prev : null;
+    if (shownW != null || shownP != null) {
       final a = math.max(
-        _whisper == null
+        shownW == null
             ? 0.0
             : _envelope(_whisperT, 0.6, _whisperLen - 1.4, 0.8),
-        _prev == null ? 0.0 : _envelope(_prevT, 0.6, _prevLen - 1.4, 0.8),
+        shownP == null ? 0.0 : _envelope(_prevT, 0.6, _prevLen - 1.4, 0.8),
       );
       // Hep aynı yerde: en altta ortada (dokunmatikte iki başparmağın
       // arasında); uzun satır yukarı doğru büyür.
@@ -901,10 +908,10 @@ class Narration extends Component with HasGameReference<GolgeGame> {
       // Önceki satır yeni satırın üstüne kayar, biraz solar.
       // Küçük ekranda yığın efsane kartına değecekse önceki satır gizlenir
       // ("Az önce" panelinde okunur).
-      final prev = _prev;
-      final above = prev == null || _whisper == null
+      final prev = shownP;
+      final above = prev == null || shownW == null
           ? 0.0
-          : _measure(_whisper!, size, w * 0.64) + size * 0.5;
+          : _measure(shownW, size, w * 0.64) + size * 0.5;
       if (prev != null &&
           bottom - above - _measure(prev, size, w * 0.64) >= stackLimit) {
         final e = 1 - math.pow(1 - _shift, 3).toDouble();
@@ -920,10 +927,10 @@ class Narration extends Component with HasGameReference<GolgeGame> {
           anchor: 1,
         );
       }
-      if (_whisper != null) {
+      if (shownW != null) {
         _text(
           canvas,
-          _whisper!,
+          shownW,
           Offset(w / 2, bottom),
           size,
           _envelope(_whisperT, 0.6, _whisperLen - 1.4, 0.8),
