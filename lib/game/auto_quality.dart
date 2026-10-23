@@ -148,7 +148,7 @@ class AutoQuality {
       game.narration.whisper(S.of('autoQualityLight'));
     } else if (!Settings.lowGraphics) {
       Settings.lowGraphics = true;
-      Settings.save();
+      Settings.autoLowered = true;
       game.narration.whisper(S.of('autoQualityLow'));
     } else {
       return false;

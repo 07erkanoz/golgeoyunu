@@ -20,8 +20,12 @@ class Settings {
   static bool fullscreen = false;
 
   /// Düşük grafik: sis, film greni, titreme ve ağır ışık katmanı kapalı;
-  /// dahili ekran kartları için.
+  /// dahili ekran kartları için. Varsayılan yüksek.
   static bool lowGraphics = false;
+
+  /// Düşük grafiği otomatik kalite açtı (oyuncu seçmedi): o oturuma özgüdür,
+  /// kaydedilmez; bir sonraki açılışta oyuncunun seçimi geri gelir.
+  static bool autoLowered = false;
 
   /// Yüksek yenileme hızı (Android, 90/120 Hz ve üstü ekranlarda): açıkken
   /// telefonun en yüksek hızı istenir (daha akıcı, pil biraz daha çabuk
@@ -29,13 +33,16 @@ class Settings {
   static bool highRefresh = false;
 
   /// Otomatik kalite: cihaz zorlanırsa ağır görseller kendiliğinden kapanır.
-  static bool autoQuality = true;
+  /// Varsayılan kapalı: oyuncunun seçtiği ışık ve grafik kendiliğinden
+  /// değişmesin; ayarlardan açılabilir.
+  static bool autoQuality = false;
 
   /// Dokunmatik kontrol: düğmeler ya da hareket (sürükle / dokun).
   static bool touchGestures = true;
 
   /// Parlaklık (0.6 – 1.6): karanlık örtüyü ve ekranın genel ışığını ayarlar.
-  static double brightness = 1.0;
+  static double brightness = defaultBrightness;
+  static const defaultBrightness = 0.85;
 
   /// Ulaşılan en ileri bölüm: bölüm listesinde buraya kadarı açıktır.
   static int unlocked = 0;
@@ -49,12 +56,17 @@ class Settings {
   static bool allOpen = false;
 
   /// Deneme ayarları (kaydedilir): renk ve doku, ışık ve derinlik, ölçüm
-  /// göstergesi, Yerebatan tonu. Otomatik kalitenin oyun sırasında ışığı
+  /// göstergesi, renk tonu. Otomatik kalitenin oyun sırasında ışığı
   /// kapatması tercih sayılmaz (kaydedilmez).
   static bool texture = Cartoon.trialBuild;
   static bool realism = Cartoon.trialBuild;
   static bool perf = false;
-  static double tone = 0;
+  static double tone = defaultTone;
+  static const defaultTone = 0.35;
+
+  /// Kayıtlı ayarların sürümü: varsayılanlar değişince eski kayıttaki
+  /// görüntü ayarları bir kez yeni varsayılana çekilir.
+  static const _version = 2;
 
   /// Dokunmatik düğmelerin görünürlüğü (0.1 – 1).
   static double touchOpacity = 0.7;
@@ -73,6 +85,9 @@ class Settings {
   static double get flashScale => calmEffects ? 0.25 : 1;
 
   static SharedPreferences? _prefs;
+
+  /// Testler için: ayar deposu yeniden açılır (sahte değerler okunsun).
+  static void debugReopen() => _prefs = null;
 
   /// Ayar deposu: açılamazsa bir sonraki kayıtta yeniden denenir.
   static Future<SharedPreferences?> _open() async {
@@ -103,8 +118,7 @@ class Settings {
     }
   }
 
-  static Future<void> load({bool lowGraphicsByDefault = false}) async {
-    lowGraphics = lowGraphicsByDefault;
+  static Future<void> load() async {
     S.lang = deviceLang();
     final p = await _open();
     // Sayı değeri: sonlu ve aralıkta değilse varsayılan kalır.
@@ -149,6 +163,18 @@ class Settings {
         : SaveData.decode(_read(() => p.getString('save')));
     final fromFile = SaveData.decode(await SaveGame._readFile());
     SaveGame.current = SaveData.newer(fromPrefs, fromFile);
+    // Eski kayıt: görüntü ayarları yeni varsayılanlara (renk tonu 35,
+    // parlaklık 85, ışık ve derinlik açık, grafik yüksek, otomatik kalite
+    // kapalı) bir kez çekilir.
+    final version = p == null ? null : _read(() => p.getInt('settings_v'));
+    if ((version ?? 0) < _version) {
+      tone = defaultTone;
+      brightness = defaultBrightness;
+      lowGraphics = false;
+      autoQuality = false;
+      texture = Cartoon.trialBuild;
+      realism = Cartoon.trialBuild;
+    }
     // "unlocked": oynanış sırasındaki en ileri yer. Sıra değiştiyse (yeni
     // bölümler araya girdiyse) eski yer yeni sıraya çevrilir.
     final u = p == null ? null : _read(() => p.getInt('unlocked'));
@@ -166,6 +192,7 @@ class Settings {
       Realism.on = realism;
       Cartoon.tone = tone;
     }
+    if ((version ?? 0) < _version) await save();
   }
 
   static Future<void> save() async {
@@ -176,7 +203,7 @@ class Settings {
       await p.setDouble('music', music);
       await p.setDouble('effects', effects);
       await p.setBool('fullscreen', fullscreen);
-      await p.setBool('low_graphics', lowGraphics);
+      await p.setBool('low_graphics', lowGraphics && !autoLowered);
       await p.setBool('touch_gestures', touchGestures);
       await p.setBool('calm_effects', calmEffects);
       await p.setBool('left_handed', leftHanded);
@@ -194,6 +221,7 @@ class Settings {
       await p.setBool('perf', perf);
       await p.setDouble('tone', tone);
       await p.setInt('unlockedOrder', levelOrderVersion);
+      await p.setInt('settings_v', _version);
     } catch (_) {
       // Yazılamazsa bir sonraki değişiklikte yeniden denenir.
     }

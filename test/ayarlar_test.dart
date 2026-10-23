@@ -12,6 +12,7 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   test('deneme ayarları kaydedilir ve yeniden açılışta uygulanır', () async {
+    Settings.debugReopen();
     SharedPreferences.setMockInitialValues({});
     await Settings.load();
     Settings.texture = false;
@@ -37,6 +38,68 @@ void main() {
       expect(Cartoon.on, isFalse);
       expect(Realism.on, isFalse);
     }
+  });
+
+  test(
+    'ilk açılışta varsayılanlar: ton 35, parlaklık 85, grafik yüksek',
+    () async {
+      Settings.debugReopen();
+      SharedPreferences.setMockInitialValues({});
+      Settings.lowGraphics = true;
+      await Settings.load();
+      expect(Settings.tone, closeTo(0.35, 1e-9));
+      expect(Settings.brightness, closeTo(0.85, 1e-9));
+      expect(Settings.lowGraphics, isFalse);
+      expect(Settings.realism, Cartoon.trialBuild);
+      expect(Settings.texture, Cartoon.trialBuild);
+    },
+  );
+
+  test(
+    'eski kayıt bir kez yeni varsayılanlara çekilir, sonra seçim kalır',
+    () async {
+      Settings.debugReopen();
+      SharedPreferences.setMockInitialValues({
+        'flutter.tone': 0.0,
+        'flutter.brightness': 1.3,
+        'flutter.low_graphics': true,
+        'flutter.realism': false,
+        'flutter.music': 0.2,
+      'flutter.auto_quality': true,
+      });
+      await Settings.load();
+      expect(Settings.tone, closeTo(0.35, 1e-9));
+      expect(Settings.brightness, closeTo(0.85, 1e-9));
+      expect(Settings.lowGraphics, isFalse);
+      expect(Settings.realism, Cartoon.trialBuild);
+      expect(Settings.music, closeTo(0.2, 1e-9));
+      expect(Settings.autoQuality, isFalse);
+      // Oyuncu yeniden değiştirir: artık her açılışta seçimi gelir.
+      Settings.tone = 0.6;
+      Settings.brightness = 1.1;
+      Settings.lowGraphics = true;
+      await Settings.save();
+      Settings.tone = 0;
+      Settings.brightness = 1;
+      Settings.lowGraphics = false;
+      await Settings.load();
+      expect(Settings.tone, closeTo(0.6, 1e-9));
+      expect(Settings.brightness, closeTo(1.1, 1e-9));
+      expect(Settings.lowGraphics, isTrue);
+    },
+  );
+
+  test('otomatik kalitenin düşürdüğü grafik kaydedilmez', () async {
+    Settings.debugReopen();
+    SharedPreferences.setMockInitialValues({});
+    await Settings.load();
+    expect(Settings.lowGraphics, isFalse);
+    Settings.lowGraphics = true;
+    Settings.autoLowered = true;
+    await Settings.save();
+    Settings.autoLowered = false;
+    await Settings.load();
+    expect(Settings.lowGraphics, isFalse);
   });
 
   test('her şey açıkken Hikâye tiyatrosu son perdeye dek oynar', () {

@@ -61,9 +61,9 @@ class Cartoon {
 
   /// Sarnıcın tonu: 0 = oyunun orijinal renkleri (denemenin taş sıraları,
   /// ışık alan kenarları, oymalı sütunları ve kemerleriyle), 1 = konseptteki
-  /// kadar aydınlık. Çocuk testinde orijinal renkler seçildi: 0. Geliştirici ayarından kaydırılır;
-  /// arazi bu değer 0,05'lik adımla değişince yeniden çizilir.
-  static double tone = 0;
+  /// kadar aydınlık. Varsayılan 0,35 (ayarlarda "Renk tonu"); arazi bu değer
+  /// 0,05'lik adımla değişince yeniden çizilir.
+  static double tone = 0.35;
 
   static double get toneStep => (tone * 20).round() / 20;
 

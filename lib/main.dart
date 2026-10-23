@@ -34,7 +34,7 @@ bool get _isDesktop =>
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Settings.load(lowGraphicsByDefault: _isTouch);
+  await Settings.load();
   // Geliştirici ölçümü: grafik düzeyi zorlanır (kayıtlı ayara dokunmaz).
   if (const bool.fromEnvironment('DEV')) {
     const gfx = String.fromEnvironment('GFX');

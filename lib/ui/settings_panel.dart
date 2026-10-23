@@ -319,7 +319,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                         ),
                       ],
                     ),
-                    _label('Yerebatan tonu (deneme)', Cartoon.tone),
+                    _label(S.of('colorTone'), Cartoon.tone),
                     Slider(
                       value: Cartoon.tone,
                       divisions: 20,
@@ -391,6 +391,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                         ),
                         onSelectionChanged: (v) {
                           Settings.lowGraphics = v.first;
+                          Settings.autoLowered = false;
                           if (!v.first) AutoQuality.userChose = true;
                           Settings.save();
                           setState(() {});
