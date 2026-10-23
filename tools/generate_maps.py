@@ -1484,9 +1484,9 @@ ot.put(168,F-1,'6')
 bog(171,187)
 for c,r in ((172,F),(176,F-2),(180,F-4),(184,F-6)): roots((c,),r)
 og(188,200,F-7); ot.put(189,F-8,'K'); ot.put(191,F-8,'7')
-for c in (190,196,203,211,216): ot.put(c,F-8,'c')
+for c in (190,195,199,203,207,211,216): ot.put(c,F-8,'c')
 ot.fill(201,F-7,212,F-7,'.'); roots((201,205,209),F-7)   # kökler ve ışık birlikte
-bog(201,212)
+ot.fill(201,F-4,212,H-1,'w')                     # bataklık köklerin hemen altında
 og(213,218,F-7)
 # C) Ak Geyik
 og(219,330); ot.put(220,F-1,'K'); ot.put(221,F-1,'p'); ot.put(223,F-1,'8')

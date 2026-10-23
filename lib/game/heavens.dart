@@ -68,6 +68,9 @@ class DrumCloud extends Deck {
   KamDrum? _drum;
   double _show = 0;
 
+  /// Görünürlük (0 batık, 1 kalkık).
+  double get shown => _show;
+
   KamDrum? get drum =>
       _drum ??= game.world.children.whereType<KamDrum>().firstOrNull;
 
@@ -132,12 +135,42 @@ class DrumCloud extends Deck {
   /// Ötüken'in davul kökleri: vuruşta bataklıktan kıvrılarak kalkar, öbür
   /// vuruşta suya çekilir. İnmeden önce titrer; kalkmadan önce uçları
   /// suyun yüzünde kıpırdar.
+  double? _stalk;
+
+  /// Kökün altında suyun ya da toprağın başladığı yer (yerel y).
+  double _depthBelow() {
+    final c = ((position.x + size.x / 2) / kTile).floor();
+    final r0 = (position.y / kTile).floor() + 1;
+    for (var r = r0; r < r0 + 30; r++) {
+      final ch = game.level.cell(c, r);
+      if (ch == '#' || ch == 'w') return r * kTile - position.y + 4;
+    }
+    return 30 * kTile.toDouble();
+  }
+
   void _renderRoots(Canvas canvas) {
     final d = drum;
     final phase = d?.phase ?? 0;
     final w = size.x;
     final sink = (1 - _show) * 26;
     final shake = on && phase > 0.78 ? math.sin(phase * 90) * 1.6 : 0.0;
+    // Kökün gövdesi: aşağıdaki sudan ya da topraktan yükselir (havada
+    // asılı durmasın).
+    final depth = _stalk ??= _depthBelow();
+    final stalk = Paint()
+      ..color = const Color(0xFF140E08)
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+    for (var i = 0; i < 3; i++) {
+      final x = w * (0.2 + i * 0.3);
+      stalk.strokeWidth = 7 - i * 1.5;
+      final path = Path()..moveTo(x, depth);
+      for (var y = depth; y > sink + 8; y -= 18) {
+        path.lineTo(x + math.sin(y * 0.05 + i * 2) * 4, y);
+      }
+      path.lineTo(x + shake, sink + 8);
+      canvas.drawPath(path, stalk);
+    }
     canvas.save();
     canvas.translate(shake, sink);
     final a = 0.35 + 0.65 * _show;

@@ -2053,7 +2053,10 @@ const levels = <LevelDef>[
     glades: [
       (20, 26, 60, 40, 0),
       (70, 26, 100, 40, 1),
-      (188, 18, 218, 33, 2),
+      // Sahanlıkta ışık sırayla söner; vuruş beklenen uçta ve köklerin
+      // üstünde durgundur (iki zorluk üst üste binince geçilmiyordu).
+      (188, 18, 197, 33, 2),
+      (198, 18, 218, 33, 0),
       (299, 26, 329, 40, 0),
       (400, 18, 413, 39, 2),
     ],

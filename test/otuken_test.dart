@@ -610,4 +610,16 @@ void main() {
     expect(gate.solid, isFalse);
     expect(game.world.children.whereType<KarabasanEnd>(), isEmpty);
   });
+
+  testWithGame<GolgeGame>(
+    'kökler ve ışık ateşböceği olmadan da geçilir',
+    GolgeGame.new,
+    (game) async {
+      final p = await _place(game, 189, 32);
+      _run(game, 0.2);
+      game.fireflies = 0;
+      _runForest(game, p, goal: 214);
+      expect(p.isDead, isFalse);
+    },
+  );
 }

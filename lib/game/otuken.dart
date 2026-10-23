@@ -8,6 +8,7 @@ import 'audio.dart';
 import 'deer_rig.dart';
 import 'entities.dart';
 import 'golge_game.dart';
+import 'heavens.dart';
 import 'level.dart';
 import 'myth_figures.dart';
 import 'persist.dart';
@@ -280,6 +281,33 @@ class GladeZone extends PositionComponent with HasGameReference<GolgeGame> {
         ),
     );
     canvas.restore();
+    // Alanın altında (çukur, bataklık) karanlık birden kesilmesin: erir.
+    final below = Rect.fromLTRB(
+      layer.left,
+      ground + 8,
+      layer.right,
+      ground + 8 + 5 * kTile,
+    );
+    canvas.drawRect(
+      below,
+      Paint()
+        ..shader = ui.Gradient.linear(below.topCenter, below.bottomCenter, [
+          const Color(0xFF040A0C).withValues(alpha: 0.72),
+          const Color(0x00040A0C),
+        ]),
+    );
+
+    // Basılacak kökler karanlıkta da seçilsin: üstlerinde soluk yosun.
+    final rim = Paint()
+      ..strokeWidth = 2
+      ..strokeCap = StrokeCap.round;
+    for (final d in game.world.children.whereType<DrumCloud>()) {
+      final r = d.toRect();
+      if (!r.overlaps(layer)) continue;
+      final y = r.top + 2 + (1 - d.shown) * 26;
+      rim.color = const Color(0xFFC8E0A0).withValues(alpha: 0.55 * d.shown);
+      canvas.drawLine(Offset(r.left + 2, y), Offset(r.right - 2, y), rim);
+    }
 
     // Huzmeler: sabah ışığı, içinde polen ve toz.
     final ray = Paint()..blendMode = BlendMode.plus;
@@ -883,7 +911,6 @@ class KarabasanEnd extends PositionComponent with HasGameReference<GolgeGame> {
   }
 }
 
-
 /// Hayat Ağacı'nın gövdesi: dev bir ak kayın. Kabuğunda kara izler, dibinde
 /// toprağa yayılan kökler, gövdesine bağlanmış ak ve al çaputlar.
 class TreeOfLife extends PositionComponent with HasGameReference<GolgeGame> {
@@ -945,11 +972,12 @@ class TreeOfLife extends PositionComponent with HasGameReference<GolgeGame> {
     canvas.drawPath(
       body,
       Paint()
-        ..shader = ui.Gradient.linear(Offset(l, 0), Offset(r, 0), const [
-          Color(0xFFF4F0E2),
-          Color(0xFFE2DCC8),
-          Color(0xFF9C9684),
-        ], const [0, 0.55, 1]),
+        ..shader = ui.Gradient.linear(
+          Offset(l, 0),
+          Offset(r, 0),
+          const [Color(0xFFF4F0E2), Color(0xFFE2DCC8), Color(0xFF9C9684)],
+          const [0, 0.55, 1],
+        ),
     );
     canvas.save();
     canvas.clipPath(body);
@@ -1075,7 +1103,8 @@ class TreeCrown extends PositionComponent with HasGameReference<GolgeGame> {
     final glint = Paint()..blendMode = BlendMode.plus;
     for (var i = 0; i < 18; i++) {
       final h = (i * 40503) & 0xffff;
-      final c = middle +
+      final c =
+          middle +
           Offset(
             ((h % 200) / 100 - 1) * radius * 1.2,
             (((h >> 7) % 100) / 100 - 0.6) * radius * 0.8,
