@@ -684,7 +684,10 @@ class Narration extends Component with HasGameReference<GolgeGame> {
             a,
             italic: true,
             spacing: 0.5,
-            maxWidth: w * 0.8,
+            // Sağ altta "Atla" düğmesi (ve telefonun çentik payı), solda
+            // satır geçme yazısı: satır ikisinin arasında kalır, uzunsa
+            // iki satıra bölünür.
+            maxWidth: math.max(w * 0.5, math.min(w * 0.8, w - 2 * 170)),
           );
         }
       } else {
@@ -699,8 +702,9 @@ class Narration extends Component with HasGameReference<GolgeGame> {
           maxWidth: w * 0.8,
         );
       }
-      // Sağ altta "Atla" düğmesi var; satır geçme yolu solda yazar.
-      _text(canvas, S.of('skipHint'), Offset(130, h - 30), unit * 0.022, 0.25);
+      // Sağ altta "Atla" düğmesi var; satır geçme yolu sol altta, perdenin
+      // satırının altında yazar.
+      _text(canvas, S.of('skipHint'), Offset(110, h - 12), unit * 0.022, 0.25);
       return;
     }
 
