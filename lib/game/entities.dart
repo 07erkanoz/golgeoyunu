@@ -1022,8 +1022,7 @@ class FireflySwarm extends PositionComponent with HasGameReference<GolgeGame> {
 
   double _fadeIn = 1;
 
-  double get strength =>
-      _taken ? (1 - _gone / 0.8).clamp(0.0, 1.0) : _fadeIn;
+  double get strength => _taken ? (1 - _gone / 0.8).clamp(0.0, 1.0) : _fadeIn;
 
   @override
   void render(Canvas canvas) {

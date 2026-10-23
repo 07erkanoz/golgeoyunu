@@ -7,6 +7,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'game/levels.dart';
+import 'game/palette.dart';
 import 'game/strings.dart';
 
 /// Oyuncu ayarları: ses seviyeleri, dil ve tam ekran. Cihazda saklanır.
@@ -42,6 +43,18 @@ class Settings {
   /// Oyun sonuna dek oynandı mı (son perde izlendi). Son bölüme ulaşmak
   /// yetmez: Hikâye tiyatrosu sonu ancak bu doğruysa oynar.
   static bool finished = false;
+
+  /// Gizli dokunuşla her şey açıldı: bütün bölümler, Hikâye'nin bütün
+  /// perdeleri (son dahil) ve Defter'in bütün hatıraları ve efsaneleri.
+  static bool allOpen = false;
+
+  /// Deneme ayarları (kaydedilir): renk ve doku, ışık ve derinlik, ölçüm
+  /// göstergesi, Yerebatan tonu. Otomatik kalitenin oyun sırasında ışığı
+  /// kapatması tercih sayılmaz (kaydedilmez).
+  static bool texture = Cartoon.trialBuild;
+  static bool realism = Cartoon.trialBuild;
+  static bool perf = false;
+  static double tone = 0;
 
   /// Dokunmatik düğmelerin görünürlüğü (0.1 – 1).
   static double touchOpacity = 0.7;
@@ -107,6 +120,7 @@ class Settings {
     touchOpacity = num('touch_opacity', touchOpacity, 0.1, 1);
     brightness = num('brightness', brightness, 0.6, 1.6);
     touchScale = num('touch_scale', touchScale, 0.75, 1.4);
+    tone = num('tone', tone, 0, 1);
     if (p != null) {
       fullscreen = _read(() => p.getBool('fullscreen')) ?? fullscreen;
       lowGraphics = _read(() => p.getBool('low_graphics')) ?? lowGraphics;
@@ -116,6 +130,10 @@ class Settings {
       highRefresh = _read(() => p.getBool('high_refresh')) ?? highRefresh;
       autoQuality = _read(() => p.getBool('auto_quality')) ?? autoQuality;
       finished = _read(() => p.getBool('finished')) ?? finished;
+      allOpen = _read(() => p.getBool('all_open')) ?? allOpen;
+      texture = _read(() => p.getBool('texture')) ?? texture;
+      realism = _read(() => p.getBool('realism')) ?? realism;
+      perf = _read(() => p.getBool('perf')) ?? perf;
       // Kayıtlı bir tercih yoksa cihazın dili: Türkçe değilse İngilizce.
       final lang = _read(() => p.getString('lang'));
       S.lang = switch (lang) {
@@ -141,6 +159,13 @@ class Settings {
     ).clamp(0, levelOrder.length - 1);
     final reached = orderOf(SaveGame.current?.level ?? 0);
     if (reached > unlocked) unlocked = reached;
+    if (allOpen) unlocked = levelOrder.length - 1;
+    // Deneme ayarları yalnızca deneme yapısında uygulanır.
+    if (Cartoon.trialBuild) {
+      Cartoon.on = texture;
+      Realism.on = realism;
+      Cartoon.tone = tone;
+    }
   }
 
   static Future<void> save() async {
@@ -163,6 +188,11 @@ class Settings {
       await p.setString('lang', S.en ? 'en' : 'tr');
       await p.setInt('unlocked', unlocked);
       await p.setBool('finished', finished);
+      await p.setBool('all_open', allOpen);
+      await p.setBool('texture', texture);
+      await p.setBool('realism', realism);
+      await p.setBool('perf', perf);
+      await p.setDouble('tone', tone);
       await p.setInt('unlockedOrder', levelOrderVersion);
     } catch (_) {
       // Yazılamazsa bir sonraki değişiklikte yeniden denenir.

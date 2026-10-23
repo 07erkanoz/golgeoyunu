@@ -44,7 +44,7 @@ class StoryTheater extends StatefulWidget {
       if (scene == null || lines.isEmpty) continue;
       out.add((scene, lines, levels[lv].titleText, null));
     }
-    if (Settings.finished) {
+    if (Settings.finished || Settings.allOpen) {
       bridge(levelOrder.last);
       out.add((PerdeScene.epilogue, epilogueText, S.of('storyEpilogue'), null));
     }
@@ -52,7 +52,7 @@ class StoryTheater extends StatefulWidget {
   }
 
   /// Hepsi açıldı mı (son perde de).
-  static bool get complete => Settings.finished;
+  static bool get complete => Settings.finished || Settings.allOpen;
 
   @override
   State<StoryTheater> createState() => _StoryTheaterState();

@@ -76,6 +76,16 @@ class MemoryBookPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final open = levelOrder.take(Settings.unlocked + 1);
+    // Gizli dokunuşla her şey açıldıysa bütün hatıralar ve efsaneler.
+    final memories = Settings.allOpen
+        ? {
+            for (var l = 0; l < levels.length; l++)
+              for (var i = 0; i < levels[l].memoryTexts.length; i++) '$l:$i',
+          }
+        : this.memories;
+    final myths = Settings.allOpen
+        ? {for (final c in MythCard.all) c.id}
+        : this.myths;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [

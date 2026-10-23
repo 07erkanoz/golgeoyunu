@@ -1625,7 +1625,10 @@ void _otukenScene(Canvas canvas, double time, double u) {
       canvas.save();
       canvas.translate(390 + math.sin(time * 0.5) * 80, 45);
       canvas.scale(0.5);
-      canvas.drawPath(MythShapes.birdGlide.shift(const Offset(-52, -20)), _ink(birds));
+      canvas.drawPath(
+        MythShapes.birdGlide.shift(const Offset(-52, -20)),
+        _ink(birds),
+      );
       canvas.restore();
     }
   }
@@ -1680,7 +1683,11 @@ void _otukenScene(Canvas canvas, double time, double u) {
     final blink = (time % 4) < 0.15 ? 0.2 : 1.0;
     for (final dx in [-14.0, 14.0]) {
       canvas.drawOval(
-        Rect.fromCenter(center: c + Offset(dx + 20, -16), width: 14, height: 6 * blink),
+        Rect.fromCenter(
+          center: c + Offset(dx + 20, -16),
+          width: 14,
+          height: 6 * blink,
+        ),
         _hole(dark),
       );
     }

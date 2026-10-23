@@ -111,7 +111,8 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
       for (var i = 1; i <= 4; i++) {
         canvas.drawRect(
           z.deflate(edge / 2 - i * edge / 8),
-          Paint()..color = shadowInk(game.level.def.theme).withValues(alpha: 0.1),
+          Paint()
+            ..color = shadowInk(game.level.def.theme).withValues(alpha: 0.1),
         );
       }
     }
@@ -311,7 +312,8 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
       if (z.overlaps(rect)) {
         canvas.drawRect(
           z,
-          Paint()..color = shadowInk(game.level.def.theme).withValues(alpha: 0.45),
+          Paint()
+            ..color = shadowInk(game.level.def.theme).withValues(alpha: 0.45),
         );
       }
     }

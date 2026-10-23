@@ -2105,7 +2105,12 @@ extension _EastBackdrops on Backdrop {
         Rect.fromLTWH(0, 0, w, h),
         Paint()..color = Color.fromRGBO(0, 0, 0, wt[0]),
       );
-      _moon(canvas, Offset(w * 0.3, h * 0.26), h * 0.12, const Color(0xFFCFE0FF));
+      _moon(
+        canvas,
+        Offset(w * 0.3, h * 0.26),
+        h * 0.12,
+        const Color(0xFFCFE0FF),
+      );
       canvas.restore();
     }
     final day = wt[3] + wt[4];

@@ -318,7 +318,9 @@ class GolgeGame extends FlameGame with KeyboardEvents {
 
   /// Deneme yapısında F3: ölçüm göstergesi (kare sayısı, kare süresi,
   /// bellek, grafik modu). Yarım saniyede bir yenilenir.
-  bool perfShown = false;
+  /// Ölçüm göstergesi (ayarda kaydedilir).
+  bool get perfShown => Settings.perf;
+  set perfShown(bool v) => Settings.perf = v;
   String perfText = '';
   double _perfT = 0;
   int _perfFrames = 0;
@@ -2376,15 +2378,20 @@ class GolgeGame extends FlameGame with KeyboardEvents {
       // Deneme yapısında L ışık ve derinlik denemesini açar/kapar.
       if (Cartoon.trialBuild && event.logicalKey == LogicalKeyboardKey.f3) {
         perfShown = !perfShown;
+        Settings.save();
       }
       if (Cartoon.trialBuild && event.logicalKey == LogicalKeyboardKey.keyL) {
         Realism.on = !Realism.on;
+        Settings.realism = Realism.on;
+        Settings.save();
         if (Realism.on) AutoQuality.userChose = true;
       }
       // Deneme yapısında K karikatürize görsel denemesini açar/kapar
       // (şimdilik yalnız Yerebatan).
       if (Cartoon.trialBuild && event.logicalKey == LogicalKeyboardKey.keyK) {
         Cartoon.on = !Cartoon.on;
+        Settings.texture = Cartoon.on;
+        Settings.save();
       }
       // Geliştirici kısayolu: , ve . Yerebatan denemesinin tonunu
       // koyulaştırır / açar (ayarlar panelinde değeri görünür).

@@ -33,6 +33,8 @@ class _MainMenuState extends State<MainMenu>
     if (_taps < 7) return;
     _taps = 0;
     Settings.unlocked = levelOrder.length - 1;
+    // Her şey açılır: Hikâye'nin bütün perdeleri ve Defter de.
+    Settings.allOpen = true;
     Settings.save();
     setState(() => _unlockedNote = true);
     Future.delayed(const Duration(seconds: 2), () {

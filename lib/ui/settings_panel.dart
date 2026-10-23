@@ -295,7 +295,11 @@ class _SettingsPanelState extends State<SettingsPanel> {
                             trackOutlineColor: const WidgetStatePropertyAll(
                               Color(0x55EBDDCB),
                             ),
-                            onChanged: (v) => setState(() => Cartoon.on = v),
+                            onChanged: (v) => setState(() {
+                              Cartoon.on = v;
+                              Settings.texture = v;
+                              Settings.save();
+                            }),
                           ),
                         ],
                       ),
@@ -322,6 +326,8 @@ class _SettingsPanelState extends State<SettingsPanel> {
                             ),
                             onChanged: (v) => setState(() {
                               Realism.on = v;
+                              Settings.realism = v;
+                              Settings.save();
                               if (v) AutoQuality.userChose = true;
                             }),
                           ),
@@ -343,8 +349,10 @@ class _SettingsPanelState extends State<SettingsPanel> {
                             trackOutlineColor: const WidgetStatePropertyAll(
                               Color(0x55EBDDCB),
                             ),
-                            onChanged: (v) =>
-                                setState(() => widget.game.perfShown = v),
+                            onChanged: (v) => setState(() {
+                              widget.game.perfShown = v;
+                              Settings.save();
+                            }),
                           ),
                         ],
                       ),
@@ -354,8 +362,10 @@ class _SettingsPanelState extends State<SettingsPanel> {
                         divisions: 20,
                         onChanged: (v) {
                           Cartoon.tone = v;
+                          Settings.tone = v;
                           setState(() {});
                         },
+                        onChangeEnd: (_) => Settings.save(),
                       ),
                     ],
                     // Yüksek yenileme hızı: Android'de 90/120 Hz istenir;

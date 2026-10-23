@@ -361,9 +361,7 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     pushing = false;
     final wind = windX == 0
         ? 0.0
-        : (crouching
-              ? 0.0
-              : windX * (gliding ? 1.5 : (onGround ? 0.85 : 1.0)));
+        : (crouching ? 0.0 : windX * (gliding ? 1.5 : (onGround ? 0.85 : 1.0)));
     windX = 0;
     _moveX((velocity.x + wind) * dt, dir);
     // Kare hızından bağımsız yörünge: yerçekimi/süzülme/rüzgâr ivmesi için

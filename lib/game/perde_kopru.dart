@@ -1690,10 +1690,7 @@ void _bOtuken(Canvas c, double time, double u, double n) {
     c.save();
     c.translate(560 + dk * 120, _gb);
     c.scale(0.9);
-    c.drawPath(
-      DeerRig.frame(time * 0.8, alert: 0.5).shape,
-      _ink(a1),
-    );
+    c.drawPath(DeerRig.frame(time * 0.8, alert: 0.5).shape, _ink(a1));
     c.restore();
     c.drawCircle(Offset(640 + dk * 120, _gb - 90), 10, _hole(0.8 * a1));
   }
@@ -1710,10 +1707,7 @@ void _bOtuken(Canvas c, double time, double u, double n) {
       _ink(a2),
     );
     final flow = _span(u, 2.3, 2.9);
-    c.drawRect(
-      Rect.fromLTWH(632, 0, 36, _gb * flow),
-      _hole(0.75 * a2),
-    );
+    c.drawRect(Rect.fromLTWH(632, 0, 36, _gb * flow), _hole(0.75 * a2));
     final scatter = _span(u, 2.5, 2.95);
     for (var i = 0; i < 14; i++) {
       final ang = i / 14 * math.pi * 2;

@@ -903,12 +903,7 @@ class NearLayer extends Component with HasGameReference<GolgeGame> {
     const ink = Color(0xFF06100A);
     return [
       _Row([_bough(ink, 1), _bough(ink, 2)], 21, 5),
-      _Row(
-        [_fern(ink, 3), _fern(ink, 4)],
-        17,
-        11,
-        at: _Anchor.ground,
-      ),
+      _Row([_fern(ink, 3), _fern(ink, 4)], 17, 11, at: _Anchor.ground),
     ];
   }
 
@@ -925,7 +920,11 @@ class NearLayer extends Component with HasGameReference<GolgeGame> {
         final x = -200 + k * 64 + r.nextDouble() * 20;
         final len = 50 + r.nextDouble() * 90;
         final y0 = 10 + 30 * math.sin((x + 250) / 500 * math.pi);
-        c.drawLine(Offset(x, y0), Offset(x + 6, y0 + len), _lineOf(ink, 2.5, 1));
+        c.drawLine(
+          Offset(x, y0),
+          Offset(x + 6, y0 + len),
+          _lineOf(ink, 2.5, 1),
+        );
         for (var j = 0; j < 5; j++) {
           final ly = y0 + len * (0.3 + j * 0.16);
           final side = j.isEven ? 1.0 : -1.0;
@@ -946,7 +945,8 @@ class NearLayer extends Component with HasGameReference<GolgeGame> {
       final stem = _lineOf(ink, 3, 1);
       final leaf = _inkOf(ink, 2);
       for (var k = 0; k < 6; k++) {
-        final a = -math.pi / 2 + (k - 2.5) * 0.32 + (r.nextDouble() - 0.5) * 0.1;
+        final a =
+            -math.pi / 2 + (k - 2.5) * 0.32 + (r.nextDouble() - 0.5) * 0.1;
         final len = 70 + r.nextDouble() * 50;
         final tip = Offset(math.cos(a) * len, math.sin(a) * len);
         final p = Path()
