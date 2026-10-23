@@ -169,3 +169,19 @@ tam başında bir tane daha.
 - **Hikâye:** Ötüken perdesi (BEŞİNCİ PERDE kartı buraya geçti), köprü
   sahnesi, Derinkuyu'nun son fısıltısı köklere bağlandı, Erlik perdesi
   köklerden iner, Hikâye sayfası ve Defter (Ötüken, Ak Geyik, Hayat Ağacı).
+
+### Uzatma (2026-10-23, oyun denemesinden sonra)
+
+Çocuk oyuncu ormanı çok kısa buldu: üç sarmaşık parkuru eklendi (harita
+446 → 674 kare). Her atlayış botla on bırakış biçimiyle ölçüldü
+(test/otuken_test.dart, "parkur atlayışları"): zorlarda 3-4, ortalarda 8-9
+biçim geçer; hiçbiri geçilmez değil.
+
+- **Sarmaşık Deresi** (Orman Eşiği ile Kam'ın Korusu arası): üç atlayış.
+- **Geyiğin Yolu** (Ak Geyik ile Kara Bataklık arası): kütükler, yüksek
+  sahanlık, iki zincir, pompalanarak geçilen uzun salınım, zor hatıra.
+- **Ulu Dallar** (Kara Bataklık ile Hayat Ağacı arası): sarmaşıkla dallara,
+  bataklığın üstünde dal dal.
+
+Ölçü: sarmaşıktan ilk salınışta bırakan 3-7, pompalayıp bırakan 7-11 kare
+ileri iner (tools/preview/ip_inis_test.dart).

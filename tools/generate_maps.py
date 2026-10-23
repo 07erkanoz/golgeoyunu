@@ -1540,7 +1540,52 @@ ot.fill(x+17,Ft+1,x+17,Ft+1,'#')
 ot.put(x+22,Ft-1,'t'); ot.put(x+6,Ft-1,']')
 ot.fill(x+25,Ft-14,x+25,Ft-7,'#'); ot.fill(x+25,Ft-6,x+25,Ft-1,'H')
 ot.fill(x+26,Ft,445,Ft,'#'); ot.put(x+27,Ft-1,'{'); ot.put(443,Ft-1,'E')
-lvl_otuken=ot.rows()
+# --- Sarmaşık parkurları: eski haritanın arasına sütun olarak eklenir; böylece
+# öbür bölümlerin yerleri değişmez, yalnız sağa kayar (OTUKEN_INS).
+def parkour(w):
+    g=G(w,H)
+    def gr(c0,c1,top=F): g.fill(c0,top,c1,H-1,'#')
+    def vine(c,base=F,n=8): g.fill(c,base-n-1,c,base-2,'S')
+    return g,gr,vine
+# Ölçü (tools/preview/ip_inis_test.dart): sarmaşıktan ilk salınışta bırakan
+# 3-7, pompalayıp bırakan 7-11 kare ileri iner. Kolay atlayışta kütük ipten
+# 4-8 kare, zorda 6-9 kare ileride; uzun salınım yalnız pompayla geçilir.
+# S1) Geyiğin Yolu: geyiğin gösterdiği yol, dikenli yarın üstünde sarmaşıklar.
+s1,gr,vine=parkour(112)
+s1.fill(0,H-2,111,H-1,'^')                       # yarın dibi dikenli
+gr(0,6); s1.put(1,F-1,'p'); s1.put(2,F-1,'K'); s1.put(4,F-1,'}'); s1.put(5,F-1,'F')
+vine(8);  gr(12,16)                              # tek ip, karşıda kütük
+vine(18); gr(24,27,F-1)                          # daha uzak, biraz yüksek kütük
+vine(29,F-1); gr(35,44,F-3); s1.put(38,F-4,'K')  # yükseğe bırak: sahanlık
+vine(46,F-3); vine(51,F-3); gr(55,59,F-2)        # iki sarmaşık zinciri
+vine(61,F-2); vine(66,F-2); gr(70,76); s1.put(73,F-1,'F')
+vine(78,F,11)                                    # uzun salınım: pompala
+gr(83,84,F-4); s1.put(83,F-5,'M')                # erken bırakana kaya: hatıra
+gr(87,111)
+# S2) Ulu Dallar: Hayat Ağacı'na giden yüksek dallar; altı bataklık.
+s2,gr,vine=parkour(72)
+B=F-8                                            # dalların yüksekliği
+gr(0,5); s2.put(1,F-1,'K'); s2.put(3,F-1,'p')
+s2.fill(6,F+2,52,H-1,'w')                         # bataklık
+s2.fill(6,B,9,B,'#'); s2.fill(5,B,5,F-1,'|')       # sarmaşıkla ilk dala
+vine(11,B);   s2.fill(15,B-1,19,B-1,'=')
+vine(21,B-1); s2.fill(27,B,30,B,'=')              # uzak dal
+vine(32,B); vine(37,B); s2.fill(41,B-2,45,B-2,'='); s2.put(43,B-3,'F')
+vine(47,B-2)
+gr(53,71)                                        # ağacın dibine iniş
+# S0) Sarmaşık Deresi: Orman Eşiği ile Kam'ın Korusu arasında, suyun üstünde.
+s0,gr,vine=parkour(44)
+gr(0,3)
+s0.fill(4,F+2,34,H-1,'w')                         # dere
+vine(5);  gr(9,13)
+vine(15); gr(21,24,F-1)                          # uzak, biraz yüksek taş
+vine(26,F-1); vine(31,F-1)
+gr(35,43)
+OTUKEN_INS = [(105, s0.rows()), (331, s1.rows()), (399, s2.rows())]
+rows = ot.rows()
+for at, ins in sorted(OTUKEN_INS, reverse=True):
+    rows = [r[:at] + x + r[at:] for r, x in zip(rows, ins)]
+lvl_otuken=rows
 
 MAPS = [('kMapYerebatan', lvl1), ('kMapKule', lvl2), ('kMapGokyolu', lvl3), ('kMapKaf', lvl4), ('kMapAgri', lvl5), ('kMapGemi', lvl6), ('kMapNemrut', lvl7), ('kMapGunDogumu', lvl8), ('kMapKarYolu', lvl9), ('kMapPalandoken', lvl10), ('kMapCig', lvl11), ('kMapPeri', lvl12), ('kMapDerinkuyu', lvl13), ('kMapKonya', lvl14), ('kMapErlik', lvl_erlik), ('kMapErgenekon', lvl_ergenekon), ('kMapGok', lvl_gok), ('kMapOtuken', lvl_otuken)]
 

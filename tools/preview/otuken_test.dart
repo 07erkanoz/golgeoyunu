@@ -34,14 +34,18 @@ void main() {
   for (final (name, col, row, warm) in [
     ('otuken_1_esik', 27, 39, 1.5),
     ('otuken_2_ip', 60, 39, 1.0),
-    ('otuken_3_kokler', 110, 39, 2.0),
-    ('otuken_4_geyik', 233, 39, 1.0),
-    ('otuken_5_gecit', 255, 33, 1.0),
-    ('otuken_6_bataklik', 356, 39, 1.0),
-    ('otuken_7_agac', 405, 30, 1.0),
-    ('otuken_8_tepe', 418, 16, 1.0),
-    ('otuken_9_kok_isik', 199, 32, 1.5),
-    ('otuken_10_agac_dibi', 410, 39, 0.5),
+    ('otuken_3_kokler', 154, 39, 2.0),
+    ('otuken_4_geyik', 277, 39, 1.0),
+    ('otuken_5_gecit', 299, 33, 1.0),
+    ('otuken_6_bataklik', 512, 39, 1.0),
+    ('otuken_7_agac', 621, 30, 1.0),
+    ('otuken_8_tepe', 634, 16, 1.0),
+    ('otuken_9_kok_isik', 243, 32, 1.5),
+    ('otuken_10_agac_dibi', 626, 39, 0.5),
+    ('otuken_11_agac_tepe', 625, 21, 0.5),
+    ('otuken_12_dere', 113, 39, 0.5),
+    ('otuken_13_geyik_yolu', 395, 38, 0.5),
+    ('otuken_14_ulu_dallar', 572, 31, 0.5),
   ]) {
     testWithGame<GolgeGame>(name, GolgeGame.new, (game) async {
       Cartoon.on = true;

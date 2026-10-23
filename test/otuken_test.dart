@@ -98,6 +98,7 @@ void _runForest(
   var minA = 0.0;
   var held = false;
   var lureT = 0.0;
+  var vineY = -1.0;
   for (var i = 0; i < 60 * seconds; i++) {
     final k = _keys(game);
     // Karabasan yetişirse ardına ateşböceği salar (ipucunun dediği gibi).
@@ -129,6 +130,14 @@ void _runForest(
             p.ropeAngle > release &&
             p.ropeOmega > 0 &&
             (eager || minA < -release * 0.6);
+    } else if (p.state == PlayerState.vine) {
+      // Tepeye varınca (yükselmiyorsa) dala sıçrar.
+      final top = (p.position.y - vineY).abs() < 0.1;
+      vineY = p.position.y;
+      k
+        ..up = true
+        ..right = true
+        ..jump = top;
     } else if (p.state == PlayerState.hang) {
       k
         ..up = true
@@ -141,6 +150,8 @@ void _runForest(
         ..left = false;
       final right = p.position.x + Player.w;
       final foot = p.position.y + Player.h + 4;
+      // Sarmaşığa gelince tırman.
+      if (game.level.cellAt(p.center.x + 6, p.center.y) == '|') k.up = true;
       // Sıradaki kök (önde, 5 kare içinde).
       DrumCloud? next;
       for (final d in roots) {
@@ -153,9 +164,11 @@ void _runForest(
       }
       final c = ((right + 6) / kTile).floor();
       final r = (foot / kTile).floor();
+      bool floor(int cc, int rr) =>
+          game.level.solid(cc, rr) || game.level.cell(cc, rr) == '=';
       final gapAhead =
-          !game.level.solid(c, r) &&
-          !game.level.solid(c, r + 1) &&
+          !floor(c, r) &&
+          !floor(c, r + 1) &&
           !roots.any(
             (d) =>
                 d.on &&
@@ -243,8 +256,8 @@ void main() {
   group('sarmaşıklar', () {
     for (final (name, from, jump, goal) in [
       ('dere', 55.0, 60.4, 70.0),
-      ('dikenli yar', 129.0, 134.4, 151.0),
-      ('bataklık', 366.0, 370.4, 383.0),
+      ('dikenli yar', 173.0, 178.4, 195.0),
+      ('bataklık', 522.0, 526.4, 539.0),
     ]) {
       for (final rel in [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]) {
         testWithGame<GolgeGame>('$name (bırakış $rel)', GolgeGame.new, (
@@ -269,9 +282,9 @@ void main() {
 
   group('davul kökleri', () {
     for (final (name, from, row, goal) in [
-      ('bataklık kökleri', 106.0, 39, 129.0),
-      ('kök merdiveni', 165.0, 39, 189.0),
-      ('kökler ve ışık', 189.0, 32, 214.0),
+      ('bataklık kökleri', 150.0, 39, 173.0),
+      ('kök merdiveni', 209.0, 39, 233.0),
+      ('kökler ve ışık', 233.0, 32, 258.0),
     ]) {
       testWithGame<GolgeGame>(name, GolgeGame.new, (game) async {
         final p = await _place(game, from, row);
@@ -292,16 +305,16 @@ void main() {
   >('Kara Bataklık: Karabasan kovalarken ağacın dibine varılır', GolgeGame.new, (
     game,
   ) async {
-    final p = await _place(game, 334, 39);
+    final p = await _place(game, 490, 39);
     _run(game, 0.2);
-    _runForest(game, p, goal: 397, eager: true);
+    _runForest(game, p, goal: 553, eager: true);
     final k = game.world.children.whereType<Karabasan>().firstOrNull;
     // ignore: avoid_print
     print(
       'KOVALAMA: x=${(p.position.x / kTile).toStringAsFixed(1)} dead=${p.isDead} ${p.deathCause} kara=${k == null ? '-' : (k.position.x / kTile).toStringAsFixed(1)}',
     );
     expect(p.isDead, isFalse);
-    expect(p.position.x, greaterThan(396 * kTile));
+    expect(p.position.x, greaterThan(552 * kTile));
   });
 
   group('ışık lekeleri', () {
@@ -371,30 +384,30 @@ void main() {
     >('ateşböceğini izler, köke basar, kapı açılır; karanlığa girmez', GolgeGame.new, (
       game,
     ) async {
-      final p = await _place(game, 222, 39);
+      final p = await _place(game, 266, 39);
       final deer = game.world.children.whereType<AkGeyik>().single;
       _run(game, 0.5);
-      expect(gateAt(game, 242).solid, isTrue);
+      expect(gateAt(game, 286).solid, isTrue);
       // 1) Kök: Sâye geyiğin önünde durup ateşböceğini köke salar.
-      walkTo(game, p, 231);
+      walkTo(game, p, 275);
       lure(game, p, 1);
       _run(game, 4);
       // ignore: avoid_print
       print(
         'GEYIK ilk: ${(deer.position.x / kTile).toStringAsFixed(2)} sâye ${(p.center.x / kTile).toStringAsFixed(2)}',
       );
-      expect(deer.position.x, greaterThan(235 * kTile));
+      expect(deer.position.x, greaterThan(279 * kTile));
       _run(game, 2);
-      expect(gateAt(game, 242).solid, isFalse);
+      expect(gateAt(game, 286).solid, isFalse);
       // 2) Geçit: geyik aşağıda, Sâye üst yolda.
-      walkTo(game, p, 248.3);
+      walkTo(game, p, 292.3);
       _run(game, 1);
       // Sarmaşıktan üst yola tırman.
       p.position.setFrom(
-        Level.standOn(Vector2(250 * kTile, 33 * kTile), Player.w, Player.h),
+        Level.standOn(Vector2(294 * kTile, 33 * kTile), Player.w, Player.h),
       );
       _run(game, 0.3);
-      walkTo(game, p, 251);
+      walkTo(game, p, 295);
       // ignore: avoid_print
       print(
         'GEYIK geçit önü: ${(deer.position.x / kTile).toStringAsFixed(2)} sâye ${(p.center.x / kTile).toStringAsFixed(2)} ${(p.center.y / kTile).toStringAsFixed(2)}',
@@ -408,43 +421,43 @@ void main() {
           'GEYIK ${(deer.position.x / kTile).toStringAsFixed(2)} lure ${l == null ? '-' : (l.position.x / kTile).toStringAsFixed(2)}',
         );
       }
-      expect(gateAt(game, 260).solid, isFalse, reason: 'geyik köke basmalı');
-      walkTo(game, p, 276.5);
+      expect(gateAt(game, 304).solid, isFalse, reason: 'geyik köke basmalı');
+      walkTo(game, p, 320.5);
       _keys(game).up = true;
       _run(game, 0.3);
       _keys(game).up = false;
       _run(game, 3);
-      expect(gateAt(game, 268).solid, isFalse);
+      expect(gateAt(game, 312).solid, isFalse);
       // Sâye inip geyiği alır; geyik ardından gelir.
       p.position.setFrom(
-        Level.standOn(Vector2(298 * kTile, 39 * kTile), Player.w, Player.h),
+        Level.standOn(Vector2(342 * kTile, 39 * kTile), Player.w, Player.h),
       );
       _run(game, 0.3);
-      walkTo(game, p, 262, max: 20);
+      walkTo(game, p, 306, max: 20);
       _run(game, 1);
-      walkTo(game, p, 297, max: 20);
+      walkTo(game, p, 341, max: 20);
       _run(game, 3);
       // ignore: avoid_print
       print(
         'GEYIK geçitten sonra: ${(deer.position.x / kTile).toStringAsFixed(1)}',
       );
-      expect(deer.position.x, greaterThan(290 * kTile));
+      expect(deer.position.x, greaterThan(334 * kTile));
       // 3) Işıksız yol: kısa karanlıktan ışığa sıçrar, uzun karanlığa girmez.
-      walkTo(game, p, 302);
+      walkTo(game, p, 346);
       _run(game, 3);
-      expect(deer.position.x, greaterThan(299.5 * kTile));
-      walkTo(game, p, 309.8);
+      expect(deer.position.x, greaterThan(343.5 * kTile));
+      walkTo(game, p, 353.8);
       _run(game, 3);
       // ignore: avoid_print
       print(
         'GEYIK karanlık önü: ${(deer.position.x / kTile).toStringAsFixed(2)} sâye ${(p.center.x / kTile).toStringAsFixed(2)} ölü=${p.isDead}',
       );
-      expect(deer.position.x, lessThan(304.5 * kTile));
-      walkTo(game, p, 302);
+      expect(deer.position.x, lessThan(348.5 * kTile));
+      walkTo(game, p, 346);
       // Ateşböcekleriyle ışık köprüsü kur: her ışığa önce Sâye yürür.
       // Üç ateşböceği yeter: Sâye ışıktan ışığa yürür, her birinde birini salar.
       game.fireflies = 3;
-      for (final at in [302.0, 310.0, 318.0]) {
+      for (final at in [346.0, 354.0, 362.0]) {
         walkTo(game, p, at);
         _run(game, 1.5);
         lure(game, p, 1);
@@ -459,10 +472,10 @@ void main() {
         'GEYIK sonda: ${(deer.position.x / kTile).toStringAsFixed(1)} ölü=${p.isDead}',
       );
       // Sâye kapıya yürür; geyik ardından köke basar.
-      walkTo(game, p, 329);
+      walkTo(game, p, 373);
       _run(game, 3);
-      expect(gateAt(game, 330).solid, isFalse);
-      walkTo(game, p, 333);
+      expect(gateAt(game, 374).solid, isFalse);
+      walkTo(game, p, 489);
       _run(game, 4);
       expect(deer.gone || deer.leaving, isTrue);
     }, timeout: const Timeout(Duration(minutes: 3)));
@@ -473,7 +486,7 @@ void main() {
   >('Hayat Ağacı: ışık sırayla düşerken dallardan tepeye', GolgeGame.new, (
     game,
   ) async {
-    final p = await _place(game, 401, 39);
+    final p = await _place(game, 629, 39);
     _run(game, 0.2);
     final z = game.world.children.whereType<GladeZone>().last;
     final k = _keys(game);
@@ -497,16 +510,16 @@ void main() {
         if (next >= branches.length) {
           // En üst daldan salona.
           k.right = true;
-          targetX = 417 * kTile;
-          if (p.center.x > 410.8 * kTile) k.jump = true;
+          targetX = 645 * kTile;
+          if (p.center.x > 638.8 * kTile) k.jump = true;
         } else {
           final (_, left) = branches[next];
           final beam = left ? 0 : 1;
           final x = p.center.x / kTile;
           // Işıkta bekle; hedef dala ışık düşünce kenara yürü ve zıpla.
           final ground = feet > 39.5;
-          final waitX = ground ? 410.0 : (left ? 409.6 : 405.4);
-          final jumpX = ground ? 410.0 : (left ? 408.4 : 406.6);
+          final waitX = ground ? 638.0 : (left ? 637.6 : 633.4);
+          final jumpX = ground ? 638.0 : (left ? 636.4 : 634.6);
           final go = z.beamOn(beam) >= 0.9 && z.litLeft(beam) > 1.0;
           final want = go ? jumpX : waitX;
           if ((x - want).abs() > 0.3) {
@@ -514,7 +527,7 @@ void main() {
             k.left = x > want;
           } else if (go) {
             k.jump = true;
-            targetX = (left ? 404.8 : 409.6) * kTile;
+            targetX = (left ? 632.8 : 637.6) * kTile;
             steps++;
           }
         }
@@ -530,14 +543,14 @@ void main() {
       }
       game.update(_dt);
       if (p.isDead) break;
-      if (p.onGround && feet < 17.5 && p.center.x > 414 * kTile) break;
+      if (p.onGround && feet < 17.5 && p.center.x > 642 * kTile) break;
     }
     // ignore: avoid_print
     print(
       'AGAC: x=${(p.center.x / kTile).toStringAsFixed(1)} satır=${((p.position.y + Player.h) / kTile).toStringAsFixed(1)} ölü=${p.isDead} ${p.deathCause} adım=$steps ateşböceği=${game.fireflies}',
     );
     expect(p.isDead, isFalse);
-    expect(p.center.x, greaterThan(414 * kTile));
+    expect(p.center.x, greaterThan(642 * kTile));
   }, timeout: const Timeout(Duration(minutes: 3)));
 
   testWithGame<
@@ -552,19 +565,19 @@ void main() {
       _run(game, 0.1);
     }
 
-    var p = await _place(game, 418, 12);
+    var p = await _place(game, 646, 12);
     expect(game.world.children.whereType<GladeZone>(), isNotEmpty);
     expect(game.world.children.whereType<KarabasanEnd>(), hasLength(1));
     _run(game, 0.3);
     press();
     // İkinci ayna sağdaki raftan, üçüncüsü yerden çevrilir.
     p.position.setFrom(
-      Level.standOn(Vector2(428 * kTile, 12 * kTile), Player.w, Player.h),
+      Level.standOn(Vector2(656 * kTile, 12 * kTile), Player.w, Player.h),
     );
     _run(game, 0.3);
     press();
     p.position.setFrom(
-      Level.standOn(Vector2(426 * kTile, 16 * kTile), Player.w, Player.h),
+      Level.standOn(Vector2(654 * kTile, 16 * kTile), Player.w, Player.h),
     );
     _run(game, 0.3);
     press();
@@ -573,7 +586,7 @@ void main() {
     expect(lock.open, isFalse, reason: 'sandık huzmeyi kesiyor olmalı');
     p = game.player!;
     p.position.setFrom(
-      Level.standOn(Vector2(428.6 * kTile, 16 * kTile), Player.w, Player.h),
+      Level.standOn(Vector2(656.6 * kTile, 16 * kTile), Player.w, Player.h),
     );
     _keys(game).right = true;
     _run(game, 1.5);
@@ -621,10 +634,10 @@ void main() {
     'kökler ve ışık ateşböceği olmadan da geçilir',
     GolgeGame.new,
     (game) async {
-      final p = await _place(game, 189, 32);
+      final p = await _place(game, 233, 32);
       _run(game, 0.2);
       game.fireflies = 0;
-      _runForest(game, p, goal: 214);
+      _runForest(game, p, goal: 258);
       expect(p.isDead, isFalse);
     },
   );
@@ -632,20 +645,67 @@ void main() {
     'ormanda ateşböceği kümesi alındıktan sonra yeniden belirir',
     GolgeGame.new,
     (game) async {
-      final p = await _place(game, 299, 39);
+      final p = await _place(game, 343, 39);
       game.fireflies = 0;
       final swarm = game.world.children.whereType<FireflySwarm>().firstWhere(
-        (f) => (f.position.x / kTile).floor() == 301,
+        (f) => (f.position.x / kTile).floor() == 345,
       );
       p.position.setFrom(swarm.position - Vector2(Player.w / 2, Player.h / 2));
       _run(game, 0.5);
       expect(game.fireflies, 1);
       p.position.setFrom(
-        Level.standOn(Vector2(303 * kTile, 39 * kTile), Player.w, Player.h),
+        Level.standOn(Vector2(347 * kTile, 39 * kTile), Player.w, Player.h),
       );
       _run(game, 10.5);
       expect(swarm.isMounted, isTrue);
       expect(swarm.strength, greaterThan(0.5));
     },
   );
+  // Her atlayış: on bırakış biçiminden en az biri geçmeli (oyuncu her
+  // atlayışta kendi bırakışını seçer). Kaç biçimin geçtiği zorluğu gösterir.
+  group('parkur atlayışları', () {
+    const s0 = 105.0, s1 = 375.0, s2 = 555.0;
+    for (final (name, from, row, t0, t1) in [
+      ('dere', s0 + 2, 39, s0 + 9, s0 + 13),
+      ('dere taşı', s0 + 11, 39, s0 + 21, s0 + 24),
+      ('dere zinciri', s0 + 22, 38, s0 + 35, s0 + 43),
+      ('kütük', s1 + 5, 39, s1 + 12, s1 + 16),
+      ('uzak kütük', s1 + 13, 39, s1 + 24, s1 + 27),
+      ('yüksek sahanlık', s1 + 25, 38, s1 + 35, s1 + 44),
+      ('zincir', s1 + 42, 36, s1 + 55, s1 + 59),
+      ('ikinci zincir', s1 + 57, 37, s1 + 70, s1 + 76),
+      ('uzun salınım', s1 + 74, 39, s1 + 87, s1 + 111),
+      ('ilk dal', s2 + 2, 39, s2 + 15, s2 + 19),
+      ('uzak dal', s2 + 17, 30, s2 + 27, s2 + 30),
+      ('dal zinciri', s2 + 29, 31, s2 + 41, s2 + 45),
+      ('ağacın dibi', s2 + 43, 29, s2 + 53, s2 + 71),
+    ]) {
+      testWithGame<GolgeGame>('atlayış: $name', GolgeGame.new, (game) async {
+        var ok = 0;
+        final ways = <String>[];
+        for (final eager in [true, false]) {
+          for (final rel in [0.2, 0.4, 0.6, 0.8, 1.0]) {
+            final p = await _place(game, from, row);
+            _run(game, 0.2);
+            _runForest(
+              game,
+              p,
+              goal: t0 - 0.6,
+              release: rel,
+              eager: eager,
+              seconds: 25,
+            );
+            final x = p.position.x / kTile;
+            if (!p.isDead && p.onGround && x >= t0 - 0.6 && x <= t1 + 0.6) {
+              ok++;
+              ways.add('${eager ? 'ilk' : 'pompa'} $rel');
+            }
+          }
+        }
+        // ignore: avoid_print
+        print('ATLAYIS $name: $ok/10 ${ways.join(', ')}');
+        expect(ok, greaterThan(0));
+      }, timeout: const Timeout(Duration(minutes: 3)));
+    }
+  });
 }

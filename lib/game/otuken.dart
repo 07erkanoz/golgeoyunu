@@ -285,7 +285,10 @@ class GladeZone extends PositionComponent with HasGameReference<GolgeGame> {
           ]),
       );
     }
-    // Kenarlarda erir.
+    // Kenarlarda ve tepede yumuşakça erir (kutu gibi görünmesin): yanlarda
+    // üç, tepede dört kare boyunca.
+    final span = area.width + 2 * kTile;
+    final side = math.min(0.45, 3 * kTile / span);
     canvas.drawRect(
       layer,
       Paint()
@@ -299,7 +302,17 @@ class GladeZone extends PositionComponent with HasGameReference<GolgeGame> {
             Color(0xFF000000),
             Color(0x00000000),
           ],
-          const [0, 0.07, 0.93, 1],
+          [0, side, 1 - side, 1],
+        ),
+    );
+    canvas.drawRect(
+      layer,
+      Paint()
+        ..blendMode = BlendMode.dstIn
+        ..shader = ui.Gradient.linear(
+          Offset(0, area.top - 2 * kTile),
+          Offset(0, area.top + 2 * kTile),
+          const [Color(0x00000000), Color(0xFF000000)],
         ),
     );
     canvas.restore();
