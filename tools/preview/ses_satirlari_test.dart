@@ -34,6 +34,10 @@ void main() {
         for (final l in interludeText(i)) {
           add(l, VoiceRole.perde, 'perde:$i');
         }
+        // Hikâye tiyatrosunda perdeler arası: Sâye'nin o bölümdeki yolu.
+        for (final l in bridgeText(i)) {
+          add(l, VoiceRole.perde, 'kopru:$i');
+        }
         if (d.bardText.isNotEmpty) add(d.bardText, VoiceRole.ozan, 'ozan:$i');
         for (final w in d.whisperTexts) {
           add(w, whisperRole(w), 'fisilti:$i');
