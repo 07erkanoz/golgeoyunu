@@ -82,7 +82,30 @@ class _StoryTheaterState extends State<StoryTheater>
 
   double get _hold {
     final l = _lines[_line.clamp(0, _lines.length - 1)];
-    return math.max(2.8, l.length * 0.055);
+    // Seslendirilmiş satır ses bitene dek kalır.
+    return math.max(
+      math.max(2.8, l.length * 0.055),
+      _lineVoice + 0.5 - _lineIn,
+    );
+  }
+
+  /// Şu anki satırın ses süresi; hangi satırın okunduğu (perde·satır).
+  double _lineVoice = 0;
+  int _spoken = -1;
+
+  /// Satır başlarken anlatıcı okur (sesi varsa).
+  void _speak() {
+    final key = _act * 1000 + _line;
+    if (key == _spoken) return;
+    _spoken = key;
+    _lineVoice = 0;
+    GameAudio.instance.speak(
+      _lines[_line],
+      interrupt: true,
+      onStart: (d) {
+        if (_spoken == key) _lineVoice = d;
+      },
+    );
   }
 
   double get _lineLen => _lineIn + _hold + _lineOut;
@@ -99,6 +122,7 @@ class _StoryTheaterState extends State<StoryTheater>
   void dispose() {
     _ticker.dispose();
     _tick.dispose();
+    GameAudio.instance.stopVoice(clearQueue: true);
     GameAudio.instance.perde(false);
     GameAudio.instance.menuMusic(true);
     super.dispose();
@@ -116,9 +140,11 @@ class _StoryTheaterState extends State<StoryTheater>
     if (_card > 0) {
       _card = math.max(0, _card - dt);
     } else {
+      _speak();
       _lineT += dt;
       if (_lineT > _lineLen) _nextLine();
     }
+    GameAudio.instance.updateVoice();
     _tick.value++;
   }
 

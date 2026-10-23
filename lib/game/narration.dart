@@ -25,11 +25,32 @@ class Narration extends Component with HasGameReference<GolgeGame> {
   static const _lineHold = 2.8;
   static const _lineOut = 1.0;
 
-  /// Satır ekranda kalma süresi: uzun satırlar okunacak kadar kalır.
+  /// Satır ekranda kalma süresi: uzun satırlar okunacak kadar kalır;
+  /// seslendirilmişse ses bitene dek.
   double get _hold {
     if (_lines.isEmpty) return _lineHold;
     final line = _lines[_lineIndex.clamp(0, _lines.length - 1)];
-    return math.max(_lineHold, line.length * 0.055);
+    return math.max(
+      math.max(_lineHold, line.length * 0.055),
+      _lineVoice + 0.5 - _lineIn,
+    );
+  }
+
+  /// Perdenin şu anki satırının ses süresi (yoksa 0).
+  double _lineVoice = 0;
+
+  /// Perdenin satırı başlarken sesi çalınır (anlatıcı okur).
+  void _speakLine() {
+    _lineVoice = 0;
+    if (_lineIndex >= _lines.length) return;
+    final index = _lineIndex;
+    GameAudio.instance.speak(
+      _lines[index],
+      interrupt: true,
+      onStart: (d) {
+        if (_lineIndex == index && inCinematic) _lineVoice = d;
+      },
+    );
   }
 
   List<String> _lines = const [];
@@ -137,18 +158,28 @@ class Narration extends Component with HasGameReference<GolgeGame> {
     _whisper = null;
     _prev = null;
     _title = null;
+    if (lines.isEmpty) {
+      GameAudio.instance.stopVoice(clearQueue: true);
+    } else {
+      _speakLine();
+    }
   }
 
   /// Sahnenin tamamını atlar (Esc).
   void skipAll() {
     if (!inCinematic) return;
+    GameAudio.instance.stopVoice(clearQueue: true);
     _lineIndex = _lines.length - 1;
+    _lineVoice = 0;
     _lineT = _lineIn + _hold;
   }
 
   /// Satırı kapatmaya başla; zaten kapanıyorsa hemen sonrakine geç.
   void skip() {
     if (!inCinematic) return;
+    // Satır geçilince sesi de susar.
+    GameAudio.instance.stopVoice(clearQueue: true);
+    _lineVoice = 0;
     final fadeOutStart = _lineIn + _hold;
     _lineT = _lineT < fadeOutStart
         ? fadeOutStart
@@ -239,6 +270,7 @@ class Narration extends Component with HasGameReference<GolgeGame> {
   /// Sahne değişince (yeni bölüm, menü) eski bölümün bekleyen fısıltıları
   /// ve ipuçları atılır; yeni bölümde bağlamsız belirmesinler.
   void resetScene() {
+    GameAudio.instance.stopVoice(clearQueue: true);
     objective = null;
     recent.clear();
     _myths.clear();
@@ -323,6 +355,7 @@ class Narration extends Component with HasGameReference<GolgeGame> {
   @override
   void update(double dt) {
     _clock += dt;
+    GameAudio.instance.updateVoice();
     if (_out != null) {
       _outT += dt;
       if (_outT >= outDuration || inCinematic) _out = null;
@@ -334,6 +367,7 @@ class Narration extends Component with HasGameReference<GolgeGame> {
       if (_lineT > _lineIn + _hold + _lineOut) {
         _lineT = 0;
         _lineIndex++;
+        _speakLine();
         if (_lineIndex >= _lines.length) {
           _lines = const [];
           perdeOn.value = false;
@@ -388,14 +422,17 @@ class Narration extends Component with HasGameReference<GolgeGame> {
     // yarım kesilmez.
     if (_whispers.isNotEmpty) {
       if (_prev != null) {
-        _prevLen = math.min(
-          _prevLen,
-          math.max(_busyDuration(_prev!), _prevT + 0.8),
+        _prevLen = math.max(
+          _prevVoice,
+          math.min(_prevLen, math.max(_busyDuration(_prev!), _prevT + 0.8)),
         );
       } else if (_whisper != null) {
-        _whisperLen = math.min(
-          _whisperLen,
-          math.max(_busyDuration(_whisper!), _whisperT + 0.8),
+        _whisperLen = math.max(
+          _whisperVoice,
+          math.min(
+            _whisperLen,
+            math.max(_busyDuration(_whisper!), _whisperT + 0.8),
+          ),
         );
       }
     }
@@ -414,13 +451,35 @@ class Narration extends Component with HasGameReference<GolgeGame> {
       _prev = _whisper;
       _prevT = _whisperT;
       _prevLen = _whisperLen;
+      _prevVoice = _whisperVoice;
       _shift = 0;
     }
-    _whisper = _whispers.removeAt(0).$1;
-    _remember(RecentKind.story, _whisper!);
+    final shown = _whispers.removeAt(0).$1;
+    _whisper = shown;
+    _remember(RecentKind.story, shown);
     _whisperT = 0;
-    _whisperLen = _whisperDuration(_whisper!);
+    _whisperLen = _whisperDuration(shown);
+    _whisperVoice = 0;
+    // Seslendirilmişse okunur; yazı ses bitene dek kalır (ses sıradaysa
+    // başladığı andan itibaren).
+    GameAudio.instance.speak(
+      shown,
+      onStart: (d) {
+        if (_whisper == shown) {
+          _whisperVoice = _whisperT + d + 0.8;
+          _whisperLen = math.max(_whisperLen, _whisperVoice);
+        } else if (_prev == shown) {
+          _prevVoice = _prevT + d + 0.8;
+          _prevLen = math.max(_prevLen, _prevVoice);
+        }
+      },
+    );
   }
+
+  /// Ekrandaki fısıltıların sesinin bittiği an (kendi saatlerine göre):
+  /// sırada bekleyen olsa da yazı bundan önce kapanmaz.
+  double _whisperVoice = 0;
+  double _prevVoice = 0;
 
   double _envelope(double t, double fadeIn, double hold, double fadeOut) {
     if (t < fadeIn) return t / fadeIn;

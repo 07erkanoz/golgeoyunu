@@ -70,6 +70,8 @@ flutter:
     - assets/icon/
     - assets/images/nemrut/
     - assets/art/
+    # Anlatım sesleri (tools/seslendir.py üretir).
+    - assets/voice/tr/
 
   # To add assets to your application, add an assets section, like this:
   # assets:

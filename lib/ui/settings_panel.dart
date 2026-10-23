@@ -459,6 +459,23 @@ class _SettingsPanelState extends State<SettingsPanel> {
                       ),
                     ],
                   ),
+                  // Anlatım sesi: fısıltılar, hatıralar ve perde okunur.
+                  _switchRow(S.of('voiceSetting'), Settings.voice, (v) {
+                    Settings.voice = v;
+                    if (!v) GameAudio.instance.stopVoice(clearQueue: true);
+                  }),
+                  if (Settings.voice) ...[
+                    _label(S.of('voiceVolume'), Settings.voiceVolume),
+                    Slider(
+                      value: Settings.voiceVolume,
+                      onChanged: (v) {
+                        Settings.voiceVolume = v;
+                        GameAudio.instance.applyVolumes();
+                        setState(() {});
+                      },
+                      onChangeEnd: (_) => Settings.save(),
+                    ),
+                  ],
                   // Anlatım: ikinci oynayışta hikâyeyi yeniden okumak
                   // istemeyen için.
                   _switchRow(

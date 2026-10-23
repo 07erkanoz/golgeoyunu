@@ -48,6 +48,13 @@ class Settings {
   /// oynanışı anlatan sözler yine söylenir). İkinci oynayış için.
   static bool storyWhispers = true;
 
+  /// Anlatım sesi: fısıltılar, hatıralar ve perde seslendirilir (sesi
+  /// olan satırlar). Kapalıyken yalnız yazı.
+  static bool voice = true;
+
+  /// Anlatım sesinin düzeyi (0 – 1).
+  static double voiceVolume = 0.9;
+
   /// İpuçları ekranda (kapalıyken yalnız "Az önce" panelinde).
   static bool hints = true;
 
@@ -154,6 +161,7 @@ class Settings {
     touchOpacity = num('touch_opacity', touchOpacity, 0.1, 1);
     brightness = num('brightness', brightness, 0.6, 1.6);
     textScale = num('text_scale', textScale, 0.8, 1.6);
+    voiceVolume = num('voice_volume', voiceVolume, 0, 1);
     touchScale = num('touch_scale', touchScale, 0.75, 1.4);
     tone = num('tone', tone, 0, 1);
     if (p != null) {
@@ -171,6 +179,7 @@ class Settings {
       perf = _read(() => p.getBool('perf')) ?? perf;
       storyWhispers = _read(() => p.getBool('story_whispers')) ?? storyWhispers;
       hints = _read(() => p.getBool('hints')) ?? hints;
+      voice = _read(() => p.getBool('voice')) ?? voice;
       hintIntroSeen =
           _read(() => p.getBool('hint_intro_seen')) ?? hintIntroSeen;
       skipSeenPerde =
@@ -253,6 +262,8 @@ class Settings {
       await p.setDouble('tone', tone);
       await p.setBool('story_whispers', storyWhispers);
       await p.setBool('hints', hints);
+      await p.setBool('voice', voice);
+      await p.setDouble('voice_volume', voiceVolume);
       await p.setBool('hint_intro_seen', hintIntroSeen);
       await p.setBool('skip_seen_perde', skipSeenPerde);
       await p.setStringList('seen_perde', seenPerde.toList());

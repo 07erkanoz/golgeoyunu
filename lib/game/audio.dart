@@ -1,10 +1,13 @@
 import 'dart:async';
 import 'dart:math' as math;
 
+import 'package:flutter/services.dart' show AssetManifest, rootBundle;
 import 'package:flutter_soloud/flutter_soloud.dart';
 
 import '../settings.dart';
 import 'levels.dart';
+import 'strings.dart';
+import 'voice.dart';
 
 /// Oyunun sesleri: arka plan (menü müziği, perde neyi ya da bölümün ortam
 /// sesi), seviyesi değişen gerilim döngüleri ve efektler.
@@ -134,9 +137,12 @@ class GameAudio {
 
   double get _ambientVolume => Settings.ambience * 0.8 * (1 - 0.65 * _duck);
 
-  double _bedVolume(String name) => name == 'menu_theme' || name == 'perde_ney'
-      ? Settings.music
-      : _ambientVolume;
+  double _bedVolume(String name) =>
+      (name == 'menu_theme' || name == 'perde_ney'
+          ? Settings.music
+          : _ambientVolume) *
+      // Anlatım konuşurken müzik ve ortam sesi geri çekilir.
+      (_voice != null ? 0.5 : 1);
 
   static const _fadeIn = Duration(milliseconds: 900);
   static const _fadeOut = Duration(milliseconds: 600);
@@ -286,6 +292,7 @@ class GameAudio {
   void applyVolumes() {
     if (!_ready) return;
     _setBedVolume();
+    _applyVoiceVolume();
     for (final l in _loops) {
       l.refresh();
     }
@@ -306,6 +313,8 @@ class GameAudio {
     if (!_ready) return;
     final h = _bed;
     if (h != null) _safe(() => _s.setPause(h, pause), null);
+    final v = _voice;
+    if (v != null) _safe(() => _s.setPause(v, pause), null);
     for (final l in _loops) {
       l.pause(pause);
     }
@@ -319,6 +328,102 @@ class GameAudio {
     } catch (e) {
       _log('hata: $e');
       return fallback;
+    }
+  }
+
+  // ------------------------------------------------------------- anlatım
+
+  /// Oyunun içindeki anlatım sesleri (`assets/voice/<dil>/<kimlik>.mp3`).
+  final _voiceFiles = <String>{};
+
+  /// Çalan anlatım satırı ve kaynağı (bitince bırakılır).
+  SoundHandle? _voice;
+  AudioSource? _voiceSrc;
+
+  /// Sırada bekleyen satırlar: metin, sıraya girdiği an, başlayınca
+  /// çağrılacak (süreyi saniye olarak alır).
+  final _voiceQueue = <(String, int, void Function(double)?)>[];
+
+  /// Bu kadar bekleyen satır çalınmaz (o an geçti).
+  static const _voiceStaleMs = 12000;
+
+  bool _voiceBusy = false;
+
+  String _voicePath(String text) =>
+      'assets/voice/${S.en ? 'en' : 'tr'}/${voiceId(text)}.mp3';
+
+  /// Bu satırın sesi var mı.
+  bool hasVoice(String text) => _voiceFiles.contains(_voicePath(text));
+
+  /// Anlatım satırını seslendirir (sesi varsa ve anlatım açıksa). Başka
+  /// satır konuşuyorsa sıraya girer; [interrupt] ile (perde) onu keser.
+  /// [onStart] ses başlayınca süresiyle çağrılır (yazı o kadar kalsın).
+  void speak(
+    String text, {
+    bool interrupt = false,
+    void Function(double seconds)? onStart,
+  }) {
+    if (!_ready || !Settings.voice || !hasVoice(text)) return;
+    if (interrupt) {
+      _voiceQueue.clear();
+      stopVoice();
+    }
+    _voiceQueue.add((text, DateTime.now().millisecondsSinceEpoch, onStart));
+    _nextVoice();
+  }
+
+  /// Anlatımı susturur (perde atlanınca, menüye dönülünce).
+  void stopVoice({bool clearQueue = false}) {
+    if (clearQueue) _voiceQueue.clear();
+    final h = _voice;
+    final src = _voiceSrc;
+    _voice = null;
+    _voiceSrc = null;
+    if (h != null) _safe(() => _s.stop(h), null);
+    if (src != null) _safe(() => _s.disposeSource(src), null);
+    _setBedVolume();
+  }
+
+  /// Her karede: biten satır bırakılır, sıradaki başlar.
+  void updateVoice() {
+    final h = _voice;
+    if (h != null && !_safe(() => _s.getIsValidVoiceHandle(h), false)) {
+      stopVoice();
+    }
+    _nextVoice();
+  }
+
+  Future<void> _nextVoice() async {
+    if (_voice != null || _voiceBusy || _voiceQueue.isEmpty) return;
+    final now = DateTime.now().millisecondsSinceEpoch;
+    _voiceQueue.removeWhere((e) => now - e.$2 > _voiceStaleMs);
+    if (_voiceQueue.isEmpty) return;
+    final (text, _, onStart) = _voiceQueue.removeAt(0);
+    _voiceBusy = true;
+    try {
+      final src = await _s.loadAsset(_voicePath(text), mode: LoadMode.disk);
+      final h = _s.play(
+        src,
+        volume: Settings.voiceVolume.clamp(0.0, 1.0),
+        paused: _paused,
+      );
+      _voice = h;
+      _voiceSrc = src;
+      _setBedVolume();
+      onStart?.call(_s.getLength(src).inMilliseconds / 1000);
+      _log('anlatım ${voiceId(text)}');
+    } catch (e) {
+      _log('anlatım çalınamadı: $e');
+    } finally {
+      _voiceBusy = false;
+    }
+  }
+
+  /// Ses düzeyi ayardan değişince çalan satıra da uygulanır.
+  void _applyVoiceVolume() {
+    final h = _voice;
+    if (h != null) {
+      _safe(() => _s.setVolume(h, Settings.voiceVolume.clamp(0.0, 1.0)), null);
     }
   }
 
@@ -360,6 +465,15 @@ class GameAudio {
     // Yükleme sürerken istenmiş olanlar şimdi başlar.
     _updateBed();
     applyVolumes();
+    // Anlatım sesleri çalınırken yüklenir; burada yalnız hangileri var.
+    try {
+      final m = await AssetManifest.loadFromAssetBundle(rootBundle);
+      _voiceFiles.addAll(
+        m.listAssets().where((a) => a.startsWith('assets/voice/')),
+      );
+    } catch (e) {
+      _log('anlatım listesi okunamadı: $e');
+    }
   }
 }
 
