@@ -1319,7 +1319,8 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     if (level.lockCells.isNotEmpty && level.def.glades.isNotEmpty) {
       final (c0, _, c1, r1, _) = level.def.glades.last;
       yield KarabasanEnd(
-        Vector2((c0 + c1 + 1) / 2 * kTile, (r1 + 1) * kTile.toDouble()),
+        // Ağacın dibi: alanın son satırı zemindir.
+        Vector2((c0 + c1 + 1) / 2 * kTile, r1 * kTile.toDouble()),
       );
     }
   }
