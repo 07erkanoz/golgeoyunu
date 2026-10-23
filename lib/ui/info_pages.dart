@@ -65,7 +65,15 @@ class MemoryBookPage extends StatelessWidget {
     super.key,
     required this.memories,
     this.myths = const {},
+    this.showMemories = true,
+    this.showLegends = true,
+    this.heading = true,
   });
+
+  /// Defter sekmeli açılınca yalnız bir bölümü gösterir; başlık çerçevede.
+  final bool showMemories;
+  final bool showLegends;
+  final bool heading;
 
   /// "bölüm:sıra" anahtarları.
   final Set<String> memories;
@@ -89,125 +97,136 @@ class MemoryBookPage extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _Heading(S.of('bookTitle')),
-        const SizedBox(height: 14),
-        Text(S.of('bookIntro'), style: _body),
-        const SizedBox(height: 10),
-        // Özet: bütün yolda bulunanlar.
-        Text(
-          S
-              .of('bookTally')
-              .replaceAll(
-                '{m}',
-                '${[for (var l = 0; l < levels.length; l++)
-                  for (var i = 0; i < levels[l].memoryTexts.length; i++)
-                    if (memories.contains('$l:$i')) 1].length}',
-              )
-              .replaceAll(
-                '{mt}',
-                '${levels.fold(0, (n, l) => n + l.memoryTexts.length)}',
-              )
-              .replaceAll(
-                '{e}',
-                '${MythCard.all.where((c) => myths.contains(c.id)).length}',
-              )
-              .replaceAll('{et}', '${MythCard.all.length}'),
-          style: const TextStyle(
-            color: _accent,
-            fontSize: 12,
-            letterSpacing: 1,
-          ),
-        ),
-        for (final l in open)
-          if (levels[l].memoryTexts.isNotEmpty) ...[
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    S.upper(levels[l].titleText),
-                    style: const TextStyle(
-                      color: _accent,
-                      fontSize: 12,
-                      letterSpacing: 2,
-                    ),
-                  ),
-                ),
-                Text(
-                  '${[for (var i = 0; i < levels[l].memoryTexts.length; i++)
-                    if (memories.contains('$l:$i')) i].length}'
-                  ' / ${levels[l].memoryTexts.length}',
-                  style: TextStyle(
-                    color: _text.withValues(alpha: 0.5),
-                    fontSize: 11,
-                  ),
-                ),
-              ],
-            ),
-            for (var i = 0; i < levels[l].memoryTexts.length; i++)
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: memories.contains('$l:$i')
-                    ? Text(
-                        // "Hatıra ·" öneki defterde gereksiz.
-                        levels[l].memoryTexts[i].replaceFirst(
-                          RegExp(r'^\S+ · '),
-                          '',
-                        ),
-                        style: _body.copyWith(fontStyle: FontStyle.italic),
-                      )
-                    : Text(
-                        '· · ·',
-                        style: TextStyle(
-                          color: _text.withValues(alpha: 0.25),
-                          letterSpacing: 4,
-                        ),
-                      ),
-              ),
+        if (showMemories) ...[
+          if (heading) ...[
+            _Heading(S.of('bookTitle')),
+            const SizedBox(height: 14),
           ],
-        const SizedBox(height: 30),
-        _Heading(S.of('legendsTitle')),
-        const SizedBox(height: 14),
-        Text(S.of('legendsIntro'), style: _body),
-        for (final card in MythCard.all)
-          if (myths.contains(card.id)) ...[
-            const SizedBox(height: 16),
-            Text(
-              S.upper(card.name),
-              style: const TextStyle(
-                color: _accent,
-                fontSize: 12,
-                letterSpacing: 2,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(card.who, style: _body.copyWith(fontStyle: FontStyle.italic)),
-            const SizedBox(height: 6),
-            Text(card.story, style: _body),
-            const SizedBox(height: 4),
-            Text(
-              card.source,
-              style: TextStyle(
-                color: _text.withValues(alpha: 0.45),
-                fontSize: 11,
-              ),
-            ),
-          ],
-        if (MythCard.all.any((c) => !myths.contains(c.id))) ...[
-          const SizedBox(height: 18),
+          Text(S.of('bookIntro'), style: _body),
+          const SizedBox(height: 10),
+          // Özet: bütün yolda bulunanlar.
           Text(
             S
-                .of('legendsWaiting')
+                .of('bookTally')
                 .replaceAll(
-                  '{n}',
-                  '${MythCard.all.where((c) => !myths.contains(c.id)).length}',
-                ),
-            style: TextStyle(
-              color: _text.withValues(alpha: 0.4),
-              fontStyle: FontStyle.italic,
+                  '{m}',
+                  '${[for (var l = 0; l < levels.length; l++)
+                    for (var i = 0; i < levels[l].memoryTexts.length; i++)
+                      if (memories.contains('$l:$i')) 1].length}',
+                )
+                .replaceAll(
+                  '{mt}',
+                  '${levels.fold(0, (n, l) => n + l.memoryTexts.length)}',
+                )
+                .replaceAll(
+                  '{e}',
+                  '${MythCard.all.where((c) => myths.contains(c.id)).length}',
+                )
+                .replaceAll('{et}', '${MythCard.all.length}'),
+            style: const TextStyle(
+              color: _accent,
               fontSize: 12,
+              letterSpacing: 1,
             ),
           ),
+          for (final l in open)
+            if (levels[l].memoryTexts.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      S.upper(levels[l].titleText),
+                      style: const TextStyle(
+                        color: _accent,
+                        fontSize: 12,
+                        letterSpacing: 2,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    '${[for (var i = 0; i < levels[l].memoryTexts.length; i++)
+                      if (memories.contains('$l:$i')) i].length}'
+                    ' / ${levels[l].memoryTexts.length}',
+                    style: TextStyle(
+                      color: _text.withValues(alpha: 0.5),
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ),
+              for (var i = 0; i < levels[l].memoryTexts.length; i++)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: memories.contains('$l:$i')
+                      ? Text(
+                          // "Hatıra ·" öneki defterde gereksiz.
+                          levels[l].memoryTexts[i].replaceFirst(
+                            RegExp(r'^\S+ · '),
+                            '',
+                          ),
+                          style: _body.copyWith(fontStyle: FontStyle.italic),
+                        )
+                      : Text(
+                          '· · ·',
+                          style: TextStyle(
+                            color: _text.withValues(alpha: 0.25),
+                            letterSpacing: 4,
+                          ),
+                        ),
+                ),
+            ],
+        ],
+        if (showLegends) ...[
+          if (showMemories) const SizedBox(height: 30),
+          if (heading) ...[
+            _Heading(S.of('legendsTitle')),
+            const SizedBox(height: 14),
+          ],
+          Text(S.of('legendsIntro'), style: _body),
+          for (final card in MythCard.all)
+            if (myths.contains(card.id)) ...[
+              const SizedBox(height: 16),
+              Text(
+                S.upper(card.name),
+                style: const TextStyle(
+                  color: _accent,
+                  fontSize: 12,
+                  letterSpacing: 2,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                card.who,
+                style: _body.copyWith(fontStyle: FontStyle.italic),
+              ),
+              const SizedBox(height: 6),
+              Text(card.story, style: _body),
+              const SizedBox(height: 4),
+              Text(
+                card.source,
+                style: TextStyle(
+                  color: _text.withValues(alpha: 0.45),
+                  fontSize: 11,
+                ),
+              ),
+            ],
+          if (MythCard.all.any((c) => !myths.contains(c.id))) ...[
+            const SizedBox(height: 18),
+            Text(
+              S
+                  .of('legendsWaiting')
+                  .replaceAll(
+                    '{n}',
+                    '${MythCard.all.where((c) => !myths.contains(c.id)).length}',
+                  ),
+              style: TextStyle(
+                color: _text.withValues(alpha: 0.4),
+                fontStyle: FontStyle.italic,
+                fontSize: 12,
+              ),
+            ),
+          ],
         ],
       ],
     );
@@ -218,7 +237,10 @@ class MemoryBookPage extends StatelessWidget {
 
 /// Oyunun hikâyesi: oyuncunun ulaştığı perdeye kadar açılır, sonu söylemez.
 class StoryPage extends StatelessWidget {
-  const StoryPage({super.key});
+  const StoryPage({super.key, this.heading = true});
+
+  /// Başlık çerçevedeyse sayfada yinelenmez.
+  final bool heading;
 
   /// Perdeler oynanış sırasıyla: (metin numarası, perdenin ilk bölümünün
   /// kimliği). Yer, `levelOrder`'daki sıradan bulunur (bölüm kimliği değil).
@@ -234,8 +256,10 @@ class StoryPage extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _Heading(S.of('storyTitle')),
-        const SizedBox(height: 18),
+        if (heading) ...[
+          _Heading(S.of('storyTitle')),
+          const SizedBox(height: 18),
+        ],
         Text(S.of('storyIntro'), style: _body),
         for (final (i, start) in _acts) ...[
           const SizedBox(height: 18),
