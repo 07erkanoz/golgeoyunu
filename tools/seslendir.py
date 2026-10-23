@@ -101,6 +101,15 @@ def spoken(text: str, lang: str = "tr") -> str:
 QUOTE = re.compile(r"[\"“”]([^\"“”]+)[\"“”]")
 
 
+# Dil açıkça söylenir: kısa satırlarda ("Gölge Oyunu") model dili kendisi
+# tahmin ediyor, İngilizce sanıyordu.
+LANG = {
+    "tr": ("tr-TR", "Language: Turkish. Native Turkish pronunciation and intonation."),
+    "en": ("en-US", "Language: English."),
+}
+DIL = "tr"
+
+
 def body_single(voice: str, text: str, note: str) -> dict:
     return {
         "contents": [
@@ -110,6 +119,8 @@ def body_single(voice: str, text: str, note: str) -> dict:
                         "text": "# AUDIO PROFILE: " + voice + "\n"
                         "## THE SCENE: Behind a lit shadow-play screen.\n"
                         "### DIRECTOR'S NOTES\n"
+                        + LANG[DIL][1]
+                        + "\n"
                         + PROFILE[voice]
                         + "\n"
                         + note
@@ -122,7 +133,8 @@ def body_single(voice: str, text: str, note: str) -> dict:
         "generationConfig": {
             "responseModalities": ["AUDIO"],
             "speechConfig": {
-                "voiceConfig": {"prebuiltVoiceConfig": {"voiceName": voice}}
+                "languageCode": LANG[DIL][0],
+                "voiceConfig": {"prebuiltVoiceConfig": {"voiceName": voice}},
             },
         },
     }
@@ -267,6 +279,8 @@ def main() -> None:
     ap.add_argument("--yeniden", action="store_true", help="var olanı yeniden üret")
     ap.add_argument("--kuru", action="store_true", help="üretmeden listele")
     a = ap.parse_args()
+    global DIL
+    DIL = a.dil
 
     lines = json.loads(pathlib.Path(f"build/ses/satirlar_{a.dil}.json").read_text())
     notes = json.loads(NOTES.read_text()) if NOTES.exists() else {}
