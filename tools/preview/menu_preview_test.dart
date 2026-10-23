@@ -51,6 +51,21 @@ void main() {
       await tester.pump(const Duration(milliseconds: 100));
     }
     await _shot(tester, 'ana_menu');
+    for (final (key, name) in [
+      ('about', 'menu_hakkinda'),
+      ('book', 'menu_defter'),
+      ('story', 'menu_hikaye'),
+    ]) {
+      await tester.tap(find.text(S.of(key)).first);
+      for (var i = 0; i < 10; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      await _shot(tester, name);
+      await tester.tap(find.text(S.of('back')).last);
+      for (var i = 0; i < 5; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+    }
     if (Settings.unlocked >= 1) {
       await tester.tap(find.text(S.of('chapters')));
       for (var i = 0; i < 10; i++) {

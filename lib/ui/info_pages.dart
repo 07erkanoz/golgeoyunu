@@ -83,9 +83,9 @@ class MemoryBookPage extends StatelessWidget {
               for (var i = 0; i < levels[l].memoryTexts.length; i++) '$l:$i',
           }
         : this.memories;
-    final myths = Settings.allOpen
-        ? {for (final c in MythCard.all) c.id}
-        : this.myths;
+    // Efsaneler hep açık: oyuncu kahramanları ve varlıkları istediği an
+    // okur. Hatıralar bulundukça açılır (her şey açıksa hepsi).
+    final myths = {for (final c in MythCard.all) c.id};
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [

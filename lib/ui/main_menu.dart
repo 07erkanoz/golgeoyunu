@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../game/golge_game.dart';
 import '../game/levels.dart';
 import '../game/perde.dart';
 import '../game/strings.dart';
 import '../settings.dart';
+import 'info_pages.dart';
 import 'story_theater.dart';
 
 /// Ana menü: arkada oyunun dünyası yavaşça akar; solda kandille aydınlanan
@@ -56,6 +58,9 @@ class _MainMenuState extends State<MainMenu>
 
   /// Hikâye tiyatrosu açık mı.
   bool _theater = false;
+
+  /// Menünün üstünde açık sayfa: Hikâye, Defter ya da Hakkında.
+  _Sheet? _sheet;
 
   @override
   void dispose() {
@@ -184,7 +189,16 @@ class _MainMenuState extends State<MainMenu>
                             scale: itemK,
                             hint: S.of('storyHint'),
                             onTap: () => setState(() {
-                              _theater = true;
+                              _sheet = _Sheet.story;
+                              _confirmNew = false;
+                            }),
+                          ),
+                          _item(
+                            S.of('book'),
+                            scale: itemK,
+                            hint: S.of('bookHint'),
+                            onTap: () => setState(() {
+                              _sheet = _Sheet.book;
                               _confirmNew = false;
                             }),
                           ),
@@ -192,6 +206,15 @@ class _MainMenuState extends State<MainMenu>
                             S.of('settings'),
                             scale: itemK,
                             onTap: widget.game.toggleSettings,
+                          ),
+                          _item(
+                            S.of('about'),
+                            scale: itemK,
+                            hint: S.of('aboutHint'),
+                            onTap: () => setState(() {
+                              _sheet = _Sheet.about;
+                              _confirmNew = false;
+                            }),
                           ),
                           if (widget.onQuit != null)
                             _item(
@@ -243,6 +266,55 @@ class _MainMenuState extends State<MainMenu>
               ),
             ),
           ),
+          // Hikâye, Defter, Hakkında: menünün üstünde tam ekran.
+          if (_sheet == _Sheet.story)
+            _page(
+              k,
+              itemK,
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: _item(
+                      S.of('watchActs'),
+                      scale: itemK,
+                      primary: true,
+                      onTap: () => setState(() => _theater = true),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const StoryPage(),
+                ],
+              ),
+            ),
+          if (_sheet == _Sheet.book)
+            _page(
+              k,
+              itemK,
+              MemoryBookPage(
+                memories: widget.game.collectedMemories,
+                myths: widget.game.mythsSeen,
+              ),
+            ),
+          if (_sheet == _Sheet.about)
+            Positioned.fill(
+              child: _AboutScreen(
+                k: k,
+                itemK: itemK,
+                back: _item(
+                  S.of('back'),
+                  scale: itemK,
+                  onTap: () => setState(() => _sheet = null),
+                ),
+                link: (label, hint, uri) => _item(
+                  label,
+                  scale: itemK * 0.85,
+                  hint: hint,
+                  onTap: () => _open(uri),
+                ),
+              ),
+            ),
           // Hikâye tiyatrosu: perdeler art arda, menünün üstünde.
           if (_theater)
             Positioned.fill(
@@ -254,6 +326,43 @@ class _MainMenuState extends State<MainMenu>
       ),
     );
   }
+
+  Future<void> _open(Uri uri) async {
+    try {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {
+      // Tarayıcı açılamazsa sessizce geçilir.
+    }
+  }
+
+  /// Menünün üstünde açılan yazılı sayfa: ortada okunur genişlikte, altta
+  /// Geri.
+  Widget _page(double k, double itemK, Widget child) => Positioned.fill(
+    child: ColoredBox(
+      color: const Color(0xFF070403),
+      child: SafeArea(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 640),
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(24 * k, 18 * k, 24 * k, 8 * k),
+              child: Column(
+                children: [
+                  Expanded(child: SingleChildScrollView(child: child)),
+                  const _Ornament(),
+                  _item(
+                    S.of('back'),
+                    scale: itemK,
+                    onTap: () => setState(() => _sheet = null),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
 
   Widget _langButton(String label, Lang lang) {
     final active = S.lang == lang;
@@ -464,6 +573,165 @@ class _Ornament extends StatelessWidget {
           ),
           Expanded(child: Container(height: 1, color: accent.withAlpha(80))),
         ],
+      ),
+    );
+  }
+}
+
+enum _Sheet { story, book, about }
+
+/// Hakkında: bir gölge oyununun sonundaki gibi. Solda aydınlık perde, sağda
+/// perde kapanırken okunan künye: hayalî (perdeyi oynatan usta), müzik,
+/// sesler, tasvirler; bağlantılar menünün seçenekleri gibi.
+class _AboutScreen extends StatelessWidget {
+  const _AboutScreen({
+    required this.k,
+    required this.itemK,
+    required this.back,
+    required this.link,
+  });
+
+  final double k;
+  final double itemK;
+  final Widget back;
+  final Widget Function(String label, String hint, Uri uri) link;
+
+  static const _text = Color(0xFFEBDDCB);
+  static const _accent = Color(0xFFE0A15F);
+
+  Widget _label(String t) => Text(
+    S.upper(t),
+    style: TextStyle(
+      color: _accent.withValues(alpha: 0.85),
+      fontSize: 11 * k,
+      letterSpacing: 3.5,
+    ),
+  );
+
+  Widget _credit(String title, String body) => Padding(
+    padding: EdgeInsets.only(top: 14 * k),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _label(title),
+        SizedBox(height: 4 * k),
+        Text(
+          body,
+          style: TextStyle(
+            color: _text.withValues(alpha: 0.62),
+            fontSize: 12.5 * k,
+            height: 1.5,
+          ),
+        ),
+      ],
+    ),
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    return ColoredBox(
+      color: const Color(0xFF070403),
+      child: SafeArea(
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(28 * k, 16 * k, 40 * k, 16 * k),
+          child: Row(
+            children: [
+              Expanded(
+                flex: 11,
+                child: Center(
+                  child: AspectRatio(
+                    aspectRatio: 1 / 0.8,
+                    child: _MenuPerde(
+                      title: S.of('gameTitle'),
+                      tagline: S.of('aboutGame'),
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(width: 36 * k),
+              Expanded(
+                flex: 9,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: SingleChildScrollView(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SizedBox(height: 12 * k),
+                            Text(
+                              S.of('credits'),
+                              style: TextStyle(
+                                color: _text.withValues(alpha: 0.5),
+                                fontSize: 13 * k,
+                                fontStyle: FontStyle.italic,
+                                letterSpacing: 2,
+                              ),
+                            ),
+                            SizedBox(height: 18 * k),
+                            _label(S.of('hayali')),
+                            SizedBox(height: 6 * k),
+                            Text(
+                              'Erkan Öz',
+                              style: TextStyle(
+                                color: _text,
+                                fontSize: 34 * k,
+                                fontWeight: FontWeight.w300,
+                                letterSpacing: 3,
+                              ),
+                            ),
+                            Text(
+                              S.of('hayaliRole'),
+                              style: TextStyle(
+                                color: _accent.withValues(alpha: 0.7),
+                                fontSize: 12 * k,
+                                letterSpacing: 2,
+                              ),
+                            ),
+                            SizedBox(height: 14 * k),
+                            Text(
+                              S.of('aboutDev'),
+                              style: TextStyle(
+                                color: _text.withValues(alpha: 0.82),
+                                fontSize: 14 * k,
+                                fontStyle: FontStyle.italic,
+                                height: 1.55,
+                              ),
+                            ),
+                            SizedBox(height: 14 * k),
+                            const _Ornament(),
+                            _credit(
+                              S.of('creditMusic'),
+                              S.of('creditMusicText'),
+                            ),
+                            _credit(
+                              S.of('creditSounds'),
+                              S.of('creditSoundsText'),
+                            ),
+                            _credit(S.of('creditArt'), S.of('creditArtText')),
+                            SizedBox(height: 16 * k),
+                            link(
+                              S.of('siteLink'),
+                              S.of('aboutSite'),
+                              Uri.https('erkanoz.com', '/'),
+                            ),
+                            link(
+                              S.of('gameLink'),
+                              'lifeos.com.tr/gölgeler',
+                              Uri.https('lifeos.com.tr', '/gölgeler/'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    back,
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
