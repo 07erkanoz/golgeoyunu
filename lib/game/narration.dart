@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 import 'package:flame/components.dart';
 import 'package:flutter/painting.dart';
 
+import '../settings.dart';
 import 'audio.dart';
 import 'golge_game.dart';
 import 'palette.dart';
@@ -12,6 +13,10 @@ import 'strings.dart';
 
 /// Hikâye katmanı: siyah ekranda akan sinematik satırlar, bölüm başlıkları,
 /// oyun içi fısıltılar ve hatıra sayacı.
+///
+/// Oyun içinde her yazının sabit bir yeri vardır, hiçbiri yer değiştirmez
+/// ve birbirinin üstüne binmez: yer adı en üstte, ipucu hemen altında,
+/// efsane kartı ortada, hikâye fısıltısı en altta.
 class Narration extends Component with HasGameReference<GolgeGame> {
   Narration() : super(priority: 20);
 
@@ -47,16 +52,13 @@ class Narration extends Component with HasGameReference<GolgeGame> {
   /// Efsane varlığıyla ilk karşılaşma: adı, kim olduğu (tek cümle) ve
   /// Defter'e yazıldığı. Karşılaşma anında gösterilir (yalnız bölüm başlığı
   /// ve perde varken bekler); hikâye fısıltısını beklemez, kesmez: ikisi
-  /// ayrı şeritlerde durur.
+  /// ayrı şeritlerde durur (kart ortada, fısıltı altta).
   void showMyth(String name, String who) => _myths.add((name, who));
 
   final _myths = <(String, String)>[];
   (String, String)? _myth;
   double _mythT = 0;
   double _mythLen = 6.5;
-
-  /// Kart bir kat aşağıda mı (üst şeritte hikâye satırı varken açıldı).
-  bool _mythLow = false;
 
   /// Şu an gösterilen efsane kartının adı (testler için).
   String? get debugMyth => _myth?.$1;
@@ -76,6 +78,18 @@ class Narration extends Component with HasGameReference<GolgeGame> {
 
   /// Ekrandaki fısıltının süresi (sırada bekleyen varsa kısalır).
   double _whisperLen = 0;
+
+  /// Alt yazı gibi akış: yeni fısıltı beklemeden en alta gelir, önceki bir
+  /// satır yukarı kayıp okunmayı sürdürür. En çok iki satır görünür.
+  String? _prev;
+  double _prevT = 0;
+  double _prevLen = 0;
+
+  /// Önceki satırın yukarı kayışı (0 → 1).
+  double _shift = 1;
+
+  /// Yeni satır gelmeden önce alttaki satırın en az görünme süresi.
+  static const double _minShow = 1.0;
 
   /// Anlatımın kendi saati (sıradakinin ne kadar beklediğini ölçer).
   double _clock = 0;
@@ -105,6 +119,7 @@ class Narration extends Component with HasGameReference<GolgeGame> {
     _backdrop = instantBlack ? 1 : 0;
     _onCinematicDone = onDone;
     _whisper = null;
+    _prev = null;
     _title = null;
   }
 
@@ -205,44 +220,59 @@ class Narration extends Component with HasGameReference<GolgeGame> {
     _myth = null;
     _whispers.clear();
     _whisper = null;
+    _prev = null;
     _hints.clear();
     _hint = null;
+    _pending = null;
     _area = null;
   }
 
-  /// Kullanım istemi: Sâye'nin başının üstünde küçük bir etiket; hikâye
+  /// Kullanım istemi: üstte, yer adının altında sabit şeritte; hikâye
   /// fısıltısıyla yarışmaz.
-  /// Yer ipuçları sıraya girmez: ekran boşsa hemen gösterilir ve `true`
-  /// döner; doluysa `false` (oyuncu hâlâ yakındaysa sonra yeniden denenir).
+  /// Yer ipuçları sırayı beklemez: ekran boşsa hemen, doluysa ekrandaki
+  /// ipucu okunacak kadar kaldıktan sonra onun yerine geçer; oyuncu o arada
+  /// uzaklaşsa da gösterilir (hızlı ilerleyen oyuncu da görür). Gösterildiği
+  /// an [onShown] çağrılır. Yalnız perde sırasında `false`.
   /// Olay ipuçları ([queue]) sıraya girer.
-  bool hint(String text, {bool queue = false}) {
+  bool hint(String text, {bool queue = false, VoidCallback? onShown}) {
     if (queue) {
       if (_hint != text && !_hints.contains(text)) _hints.add(text);
       return true;
     }
     if (!canHint) return false;
-    _hint = text;
-    _remember(RecentKind.hint, text);
-    _hintT = 0;
+    if (_hint == text) return true;
+    if (_hints.isEmpty && _hintFree) {
+      _showHint(text);
+      onShown?.call();
+    } else if (_pending?.$1 != text) {
+      // Bekleyen tek yer ipucu: en yenisi (oyuncunun şu an olduğu yer).
+      _pending = (text, onShown);
+    }
     return true;
   }
 
+  void _showHint(String text) {
+    _hint = text;
+    _remember(RecentKind.hint, text);
+    _hintT = 0;
+  }
+
+  /// Ekrandaki ipucu en az bu kadar kalır, sonra yeni yerin ipucu gelir.
+  static const double minHintShow = 2.2;
+
+  bool get _hintFree => _hint == null || _hintT >= minHintShow;
+
+  /// Sırasını bekleyen yer ipucu.
+  (String, VoidCallback?)? _pending;
+
   /// Şu an yeni bir ipucu gösterilebilir mi?
-  bool get canHint => _hint == null && _hints.isEmpty && !inCinematic;
+  bool get canHint => !inCinematic;
 
   String? get debugWhisper => _whisper;
+
+  /// Ekrandaki bütün fısıltılar (üstteki önceki satır dahil).
+  List<String> get debugWhispers => [?_prev, ?_whisper];
   String? get debugHint => _hint;
-
-  /// Fısıltı üstte mi (Sâye ekranın alt yarısındayken)? Fısıltı boyunca
-  /// sabit kalır, zıplamaz.
-  bool _whisperTop = false;
-
-  bool _playerLow() {
-    final p = game.player;
-    if (p == null || !p.isMounted) return false;
-    final g = game.camera.localToGlobal(p.center);
-    return g.y > game.camera.viewport.size.y * 0.5;
-  }
 
   final _hints = <String>[];
   String? _hint;
@@ -294,51 +324,72 @@ class Narration extends Component with HasGameReference<GolgeGame> {
         _mythT = 0;
         // Arka arkaya kart bekliyorsa her biri okunacak kadar kalır.
         _mythLen = _myths.isEmpty ? 6.5 : 4.5;
-        _mythLow = _whisper != null && _whisperTop;
       }
     } else {
       _mythT += dt;
       if (_mythT > _mythLen) _myth = null;
     }
-    if (_whisper == null) {
-      // Çok bekleyen satırlar ekrana gelmez (yer geçildi), panele düşer.
-      while (_whispers.isNotEmpty &&
-          _clock - _whispers.first.$2 > staleAfter &&
-          !inCinematic) {
-        _remember(RecentKind.story, _whispers.removeAt(0).$1);
+    _updateWhispers(dt);
+    if (_hint != null) {
+      _hintT += dt;
+      if (_hintT > _hintDuration(_hint!)) _hint = null;
+    }
+    // Ekrandaki ipucu okunacak kadar kaldıysa sıradaki gelir: önce olay
+    // ipuçları (ölümden sonraki ilişki, çözüm), sonra bekleyen yer ipucu.
+    if (_hintFree && !inCinematic && !game.menuMode.value) {
+      final pending = _pending;
+      if (_hints.isNotEmpty) {
+        _showHint(_hints.removeAt(0));
+      } else if (pending != null) {
+        _pending = null;
+        _showHint(pending.$1);
+        pending.$2?.call();
       }
-      if (_whispers.isNotEmpty && !inCinematic) {
-        _whisper = _whispers.removeAt(0).$1;
-        _remember(RecentKind.story, _whisper!);
-        _whisperT = 0;
-        _whisperLen = _whisperDuration(_whisper!);
-        // Efsane kartı üst ortadayken hikâye satırı alt şeride iner.
-        _whisperTop = _playerLow() && _myth == null && _myths.isEmpty;
-      }
-    } else {
-      _whisperT += dt;
-      // Sırada bekleyen varsa bu satır okunacak kadar kalır; kapanışı yarım
-      // kesilmez.
-      if (_whispers.isNotEmpty) {
+    }
+    _counterT += dt;
+    _fireflyT += dt;
+  }
+
+  void _updateWhispers(double dt) {
+    if (_whisper != null) _whisperT += dt;
+    if (_prev != null) _prevT += dt;
+    _shift = math.min(1, _shift + dt / 0.35);
+    // Sırada bekleyen varsa ekrandakiler okunacak kadar kalır; kapanışları
+    // yarım kesilmez.
+    if (_whispers.isNotEmpty) {
+      if (_prev != null) {
+        _prevLen = math.min(
+          _prevLen,
+          math.max(_busyDuration(_prev!), _prevT + 0.8),
+        );
+      } else if (_whisper != null) {
         _whisperLen = math.min(
           _whisperLen,
           math.max(_busyDuration(_whisper!), _whisperT + 0.8),
         );
       }
-      if (_whisperT > _whisperLen) _whisper = null;
     }
-    if (_hint == null) {
-      if (_hints.isNotEmpty && !inCinematic && !game.menuMode.value) {
-        _hint = _hints.removeAt(0);
-        _remember(RecentKind.hint, _hint!);
-        _hintT = 0;
-      }
-    } else {
-      _hintT += dt;
-      if (_hintT > _hintDuration(_hint!)) _hint = null;
+    if (_prev != null && _prevT > _prevLen) _prev = null;
+    if (_whisper != null && _whisperT > _whisperLen) _whisper = null;
+    if (_whispers.isEmpty || inCinematic) return;
+    // Çok bekleyen satırlar ekrana gelmez (yer geçildi), panele düşer.
+    while (_whispers.isNotEmpty && _clock - _whispers.first.$2 > staleAfter) {
+      _remember(RecentKind.story, _whispers.removeAt(0).$1);
     }
-    _counterT += dt;
-    _fireflyT += dt;
+    if (_whispers.isEmpty) return;
+    // Yeni satır en alta gelir: alt boşsa hemen; doluysa alttaki biraz
+    // görününce o yukarı kayar (üst de doluysa üstteki bitince).
+    if (_whisper != null) {
+      if (_prev != null || _whisperT < _minShow) return;
+      _prev = _whisper;
+      _prevT = _whisperT;
+      _prevLen = _whisperLen;
+      _shift = 0;
+    }
+    _whisper = _whispers.removeAt(0).$1;
+    _remember(RecentKind.story, _whisper!);
+    _whisperT = 0;
+    _whisperLen = _whisperDuration(_whisper!);
   }
 
   double _envelope(double t, double fadeIn, double hold, double fadeOut) {
@@ -358,6 +409,8 @@ class Narration extends Component with HasGameReference<GolgeGame> {
     double maxWidth = 900,
     Color color = kText,
     bool shadow = true,
+    FontWeight weight = FontWeight.w300,
+    double anchor = 0.5,
   }) {
     if (alpha <= 0) return;
     // Dizilmiş yazılar önbellekte: saydamlık 20 basamağa yuvarlanır, böylece
@@ -365,7 +418,8 @@ class Narration extends Component with HasGameReference<GolgeGame> {
     final a = (alpha * 20).round() / 20;
     if (a <= 0) return;
     final key =
-        '$s|$fontSize|$italic|$spacing|$maxWidth|${color.toARGB32()}|$a|$shadow';
+        '$s|$fontSize|$italic|$spacing|$maxWidth|${color.toARGB32()}|$a|$shadow|'
+        '${weight.value}';
     var tp = _cache[key];
     if (tp == null) {
       if (_cache.length > 120) _clearCache();
@@ -378,12 +432,31 @@ class Narration extends Component with HasGameReference<GolgeGame> {
         maxWidth,
         color,
         shadow,
+        weight,
       );
     }
-    tp.paint(canvas, center - Offset(tp.width / 2, tp.height / 2));
+    // [anchor]: noktanın yazının neresine düştüğü (0 üst, 0.5 orta, 1 alt).
+    tp.paint(canvas, center - Offset(tp.width / 2, tp.height * anchor));
   }
 
   final _cache = <String, TextPainter>{};
+
+  /// Fısıltı satırının yüksekliği (önceki satırı üstüne koymak için).
+  double _measure(String s, double size, double maxWidth) {
+    final key = 'olcu|$s|$size|$maxWidth';
+    final tp = _cache[key] ??= _layout(
+      s,
+      size,
+      1,
+      true,
+      0,
+      maxWidth,
+      kText,
+      true,
+      FontWeight.w400,
+    );
+    return tp.height;
+  }
 
   /// Önbellek boşaltılırken dizilmiş metinlerin yerel kaynakları da bırakılır.
   void _clearCache() {
@@ -400,31 +473,29 @@ class Narration extends Component with HasGameReference<GolgeGame> {
     double w,
     double h,
     double unit,
-    double alpha, {
-    required bool top,
-  }) {
+    double alpha,
+  ) {
     if (alpha <= 0) return;
     final a = (alpha * 20).round() / 20;
-    // Küçük ve sakin: hikâyenin önüne geçmez.
-    final size = math.max(10.5, unit * 0.019);
+    // Sakin ama okunur: telefonda da küçülmez; yazı büyüklüğü ayarıyla büyür.
+    final size = math.max(13.5, unit * 0.024) * Settings.textScale;
     final key = 'istem|$s|$size|$a';
     final tp = _cache[key] ??= _layout(
       s,
       size,
       a,
       false,
-      0.4,
-      w * 0.56,
+      0.3,
+      w * 0.6,
       const Color(0xFFFFE9C4),
       false,
+      FontWeight.w400,
     );
-    // Ortada, iki başparmağın arasında (dokunmatikte sol yarı yürüme, sağ
-    // yarı zıplama); fısıltının karşı tarafında: fısıltı üstteyse altta,
-    // alttaysa üstte (yer adının altında).
-    final bw = tp.width + 20;
-    final bh = tp.height + 8;
+    // Hep aynı yerde: üstte ortada, yer adının altında.
+    final bw = tp.width + 24;
+    final bh = tp.height + 10;
     final left = (w - bw) / 2;
-    final y = top ? h * 0.115 : h - bh - math.max(12.0, h * 0.035);
+    final y = hintTop(h);
     final box = RRect.fromRectAndRadius(
       Rect.fromLTWH(left, y, bw, bh),
       Radius.circular(math.min(bh / 2, 14)),
@@ -440,8 +511,12 @@ class Narration extends Component with HasGameReference<GolgeGame> {
         ..strokeWidth = 0.8
         ..color = const Color(0xFFE0A15F).withValues(alpha: 0.4 * a),
     );
-    tp.paint(canvas, Offset(left + 10, y + 4));
+    tp.paint(canvas, Offset(left + 12, y + 5));
   }
+
+  /// İpucu şeridinin üst kenarı (yer adının altı; sol üstteki görev satırı
+  /// ve ateşböceklerinin altında kalır).
+  static double hintTop(double h) => math.max(h * 0.12, 88.0);
 
   TextPainter _layout(
     String s,
@@ -451,8 +526,9 @@ class Narration extends Component with HasGameReference<GolgeGame> {
     double spacing,
     double maxWidth,
     Color color,
-    bool shadow,
-  ) {
+    bool shadow, [
+    FontWeight weight = FontWeight.w300,
+  ]) {
     return TextPainter(
       text: TextSpan(
         text: s,
@@ -461,7 +537,7 @@ class Narration extends Component with HasGameReference<GolgeGame> {
           color: color.withValues(alpha: alpha),
           fontSize: fontSize,
           fontStyle: italic ? FontStyle.italic : FontStyle.normal,
-          fontWeight: FontWeight.w300,
+          fontWeight: weight,
           letterSpacing: spacing,
           height: 1.4,
           shadows: [
@@ -515,7 +591,7 @@ class Narration extends Component with HasGameReference<GolgeGame> {
             canvas,
             line,
             Offset(w / 2, (r.bottom + h) / 2 + r.height * 0.02),
-            unit * 0.034,
+            math.max(15.0, unit * 0.034) * Settings.textScale,
             a,
             italic: true,
             spacing: 0.5,
@@ -527,7 +603,7 @@ class Narration extends Component with HasGameReference<GolgeGame> {
           canvas,
           line,
           Offset(w / 2, h / 2),
-          unit * (isEnd ? 0.05 : 0.036),
+          unit * (isEnd ? 0.05 : 0.036) * Settings.textScale,
           a,
           italic: !isEnd,
           spacing: isEnd ? 10 : 0.5,
@@ -574,15 +650,25 @@ class Narration extends Component with HasGameReference<GolgeGame> {
       }
     }
 
+    // Fısıltı yığınının çıkabileceği en üst yer (efsane kartının altı).
+    var stackLimit = hintTop(h) + 44;
     // Efsane kartı: adı büyük, altında kim olduğu, en altta Defter notu.
     final myth = _myth;
     if (myth != null) {
       final a = _envelope(_mythT, 1.0, _mythLen - 2.3, 1.3);
-      // Üstte hikâye satırı varsa kart onun altına iner.
-      final dy = _mythLow ? h * 0.12 : 0.0;
+      final k = Settings.textScale;
+      final nameSize = math.max(20.0, unit * 0.046) * k;
+      final whoSize = math.max(14.0, unit * 0.026) * k;
+      final noteSize = math.max(10.0, unit * 0.016) * k;
+      // Sabit yeri: ipucu şeridinin altında, ekranın ortasında.
+      final top = math.max(h * 0.3, hintTop(h) + 44);
+      final nameY = top + nameSize * 0.9;
+      final whoY = nameY + nameSize * 0.75 + whoSize * 1.1;
+      final noteY = whoY + whoSize * 1.4 + noteSize;
+      stackLimit = noteY + noteSize + 8;
       // Okunurluk: arkada yumuşak, koyu bir şerit (parlak ağacın önünde de).
       if (a > 0) {
-        final band = Rect.fromLTWH(0, h * 0.2 + dy, w, h * 0.24);
+        final band = Rect.fromLTRB(0, top - h * 0.03, w, noteY + h * 0.04);
         canvas.drawRect(
           band,
           Paint()
@@ -602,26 +688,28 @@ class Narration extends Component with HasGameReference<GolgeGame> {
       _text(
         canvas,
         S.upper(myth.$1),
-        Offset(w / 2, h * 0.27 + dy),
-        unit * 0.046,
+        Offset(w / 2, nameY),
+        nameSize,
         a,
         spacing: 9,
+        weight: FontWeight.w400,
       );
       _text(
         canvas,
         myth.$2,
-        Offset(w / 2, h * 0.335 + dy),
-        unit * 0.025,
-        a * 0.85,
+        Offset(w / 2, whoY),
+        whoSize,
+        a * 0.9,
         italic: true,
         maxWidth: w * 0.7,
+        weight: FontWeight.w400,
       );
       _text(
         canvas,
         S.upper(S.of('mythNoted')),
-        Offset(w / 2, h * 0.39 + dy),
-        unit * 0.016,
-        a * 0.5,
+        Offset(w / 2, noteY),
+        noteSize,
+        a * 0.55,
         spacing: 4,
       );
     }
@@ -633,44 +721,71 @@ class Narration extends Component with HasGameReference<GolgeGame> {
         canvas,
         '—  ${_area!}  —',
         Offset(w / 2, h * 0.07),
-        unit * 0.022,
+        math.max(12.0, unit * 0.022) * Settings.textScale,
         a * 0.8,
         italic: true,
         spacing: 2,
       );
     }
 
-    if (_whisper != null) {
-      final a = _envelope(_whisperT, 0.8, _whisperLen - 1.6, 0.8);
-      // Sâye'nin olmadığı yarıda: o alttaysa yazı üstte, üstteyse altta.
-      final y = _whisperTop ? h * 0.17 : h * 0.86;
-      // Okunurluk için yumuşak, koyu bir şerit.
+    if (_whisper != null || _prev != null) {
+      final a = math.max(
+        _whisper == null
+            ? 0.0
+            : _envelope(_whisperT, 0.6, _whisperLen - 1.4, 0.8),
+        _prev == null ? 0.0 : _envelope(_prevT, 0.6, _prevLen - 1.4, 0.8),
+      );
+      // Hep aynı yerde: en altta ortada (dokunmatikte iki başparmağın
+      // arasında); uzun satır yukarı doğru büyür.
+      final bottom = h - math.max(14.0, h * 0.045);
+      final size = math.max(15.0, unit * 0.032) * Settings.textScale;
+      // Okunurluk için alttan yükselen yumuşak, koyu bir şerit.
       if (a > 0) {
-        final band = Rect.fromLTWH(0, y - h * 0.08, w, h * 0.16);
+        final band = Rect.fromLTRB(0, h * 0.66, w, h);
         canvas.drawRect(
           band,
           Paint()
-            ..shader = ui.Gradient.linear(
-              band.topCenter,
-              band.bottomCenter,
-              [
-                const Color(0x00050302),
-                const Color(0xFF050302).withValues(alpha: 0.6 * a),
-                const Color(0x00050302),
-              ],
-              const [0, 0.5, 1],
-            ),
+            ..shader = ui.Gradient.linear(band.topCenter, band.bottomCenter, [
+              const Color(0x00050302),
+              const Color(0xFF050302).withValues(alpha: 0.7 * a),
+            ]),
         );
       }
-      _text(
-        canvas,
-        _whisper!,
-        Offset(w / 2, y),
-        unit * 0.028,
-        a,
-        italic: true,
-        maxWidth: w * 0.6,
-      );
+      // Önceki satır yeni satırın üstüne kayar, biraz solar.
+      // Küçük ekranda yığın efsane kartına değecekse önceki satır gizlenir
+      // ("Az önce" panelinde okunur).
+      final prev = _prev;
+      final above = prev == null || _whisper == null
+          ? 0.0
+          : _measure(_whisper!, size, w * 0.64) + size * 0.5;
+      if (prev != null &&
+          bottom - above - _measure(prev, size, w * 0.64) >= stackLimit) {
+        final e = 1 - math.pow(1 - _shift, 3).toDouble();
+        _text(
+          canvas,
+          prev,
+          Offset(w / 2, bottom - above * e),
+          size,
+          _envelope(_prevT, 0.6, _prevLen - 1.4, 0.8) * 0.75,
+          italic: true,
+          maxWidth: w * 0.64,
+          weight: FontWeight.w400,
+          anchor: 1,
+        );
+      }
+      if (_whisper != null) {
+        _text(
+          canvas,
+          _whisper!,
+          Offset(w / 2, bottom),
+          size,
+          _envelope(_whisperT, 0.6, _whisperLen - 1.4, 0.8),
+          italic: true,
+          maxWidth: w * 0.64,
+          weight: FontWeight.w400,
+          anchor: 1,
+        );
+      }
     }
 
     if (game.perfShown && game.perfText.isNotEmpty) {
@@ -692,14 +807,7 @@ class Narration extends Component with HasGameReference<GolgeGame> {
 
     if (_hint != null && !inCinematic) {
       final a = _envelope(_hintT, 0.3, _hintDuration(_hint!) - 0.9, 0.6);
-      // Fısıltı varsa onun karşı tarafında; yoksa Sâye'nin olmadığı yarıda.
-      // Efsane kartı üstteyken ipucu altta.
-      final top = _whisper != null
-          ? !_whisperTop
-          : _myth != null
-          ? false
-          : _playerLow();
-      _prompt(canvas, _hint!, w, h, unit, a, top: top);
+      _prompt(canvas, _hint!, w, h, unit, a);
     }
 
     // Kavanozdaki ateşböcekleri: sol üstte küçük ışıklar.

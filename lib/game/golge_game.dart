@@ -1871,16 +1871,21 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     void show(String key) {
       final id = 'hint:$levelIndex:$key';
       if (_whispersShown.contains(id)) return;
-      // Ekran doluysa gösterilmiş sayılmaz; oyuncu hâlâ yakındaysa sonraki
-      // taramada yeniden denenir (geçip gittiyse sonra çıkmaz).
-      if (!narration.hint(Hints.text(key))) return;
-      _whispersShown.add(id);
-      // Bazı düzeneklerin kuralı bir de şiirle, hikâyenin içinde anlatılır.
-      final poem = Hints.poem(key);
-      if (poem.isNotEmpty) once('poem:$key', poem);
-      // Düzeneğin ardındaki efsane Defter'e yazılır.
-      final legend = _hintLegends[key];
-      if (legend != null) meetMyth(legend);
+      // Ekranda başka ipucu varsa bu sıraya girer; gösterildiği an
+      // gösterilmiş sayılır (oyuncu o arada geçip gitse de çıkar).
+      narration.hint(
+        Hints.text(key),
+        onShown: () {
+          if (!_whispersShown.add(id)) return;
+          // Bazı düzeneklerin kuralı bir de şiirle, hikâyenin içinde
+          // anlatılır.
+          final poem = Hints.poem(key);
+          if (poem.isNotEmpty) once('poem:$key', poem);
+          // Düzeneğin ardındaki efsane Defter'e yazılır.
+          final legend = _hintLegends[key];
+          if (legend != null) meetMyth(legend);
+        },
+      );
     }
 
     bool near(PositionComponent c, double dx, [double? dy]) {

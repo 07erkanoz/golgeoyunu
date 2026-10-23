@@ -44,6 +44,10 @@ class Settings {
   static double brightness = defaultBrightness;
   static const defaultBrightness = 0.85;
 
+  /// Yazı büyüklüğü (0.8 – 1.6): fısıltı, ipucu, efsane kartı ve perde
+  /// satırları bununla büyür.
+  static double textScale = 1.0;
+
   /// Ulaşılan en ileri bölüm: bölüm listesinde buraya kadarı açıktır.
   static int unlocked = 0;
 
@@ -133,6 +137,7 @@ class Settings {
     effects = num('effects', effects, 0, 1);
     touchOpacity = num('touch_opacity', touchOpacity, 0.1, 1);
     brightness = num('brightness', brightness, 0.6, 1.6);
+    textScale = num('text_scale', textScale, 0.8, 1.6);
     touchScale = num('touch_scale', touchScale, 0.75, 1.4);
     tone = num('tone', tone, 0, 1);
     if (p != null) {
@@ -212,6 +217,7 @@ class Settings {
       await p.setDouble('touch_scale', touchScale);
       await p.setDouble('touch_opacity', touchOpacity);
       await p.setDouble('brightness', brightness);
+      await p.setDouble('text_scale', textScale);
       await p.setString('lang', S.en ? 'en' : 'tr');
       await p.setInt('unlocked', unlocked);
       await p.setBool('finished', finished);

@@ -110,7 +110,7 @@ void main() {
     },
   );
   testWithGame<GolgeGame>(
-    'anlatım gecikmez ve kopmaz: art arda gelen satırlar kısalarak hepsi ekrana gelir, çok bayatlayan panele düşer',
+    'anlatım gecikmez ve kopmaz: art arda gelen satırlar alt yazı gibi akar, çok bayatlayan panele düşer',
     GolgeGame.new,
     (game) async {
       game.debugLoadLevel(0);
@@ -118,23 +118,25 @@ void main() {
       game.cinematic = false;
       game.narration.resetScene();
       final long = 'Hatıra · ${'uzun bir hatıra satırı ' * 9}';
-      final lines = [for (final x in 'ABCDE'.split('')) '$long $x'];
+      final lines = [for (final x in 'ABCDEFG'.split('')) '$long $x'];
       for (final t in lines) {
         game.narration.whisper(t);
       }
       run(game, 0.1);
       expect(game.narration.debugWhisper, lines[0]);
+      // Bir saniye sonra ikinci satır beklemeden alta gelir, ilki üstte sürer.
+      run(game, 1.1);
+      expect(game.narration.debugWhispers, [lines[0], lines[1]]);
       final shown = <String>{};
-      for (var t = 0.0; t < 60; t += 0.1) {
+      for (var t = 0.0; t < 80; t += 0.1) {
         run(game, 0.1);
-        final w = game.narration.debugWhisper;
-        if (w != null) shown.add(w);
+        shown.addAll(game.narration.debugWhispers);
       }
       expect(game.narration.debugWhisper, isNull, reason: 'kuyruk boşaldı');
       expect(
         shown,
-        containsAll(lines.take(3)),
-        reason: 'art arda üç hikâye satırı kaybolmaz',
+        containsAll(lines.take(5)),
+        reason: 'art arda beş hikâye satırı kaybolmaz',
       );
       expect(
         shown.contains(lines.last),
@@ -165,13 +167,11 @@ void main() {
       game.narration.whisper(b);
       run(game, 0.2);
       expect(game.narration.debugMyth, isNotNull, reason: 'kart hemen açılır');
-      expect(game.narration.debugWhisper, a, reason: 'hikâye satırı sürer');
-      String? next;
-      for (var t = 0.0; t < 10 && next == null; t += 0.1) {
-        run(game, 0.1);
-        if (game.narration.debugWhisper == b) next = b;
-      }
-      expect(next, b, reason: 'sıradaki satır kart yüzünden düşmez');
+      expect(
+        game.narration.debugWhispers,
+        [a, b],
+        reason: 'hikâye satırı sürer, yenisi beklemeden altına gelir',
+      );
     },
   );
 }

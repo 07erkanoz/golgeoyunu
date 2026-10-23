@@ -241,6 +241,19 @@ class _SettingsPanelState extends State<SettingsPanel> {
                       setState(() {});
                     },
                   ),
+                  // Fısıltı, ipucu ve efsane kartının yazısı büyütülür.
+                  _label(S.of('textSize'), Settings.textScale),
+                  Slider(
+                    value: Settings.textScale,
+                    min: 0.8,
+                    max: 1.6,
+                    divisions: 8,
+                    onChanged: (v) {
+                      Settings.textScale = v;
+                      setState(() {});
+                    },
+                    onChangeEnd: (_) => Settings.save(),
+                  ),
                   // Deneme yapısında: renk ve doku denemesi (Yerebatan
                   // renkleri, bütün bölümlerde zemin dokusu) açılıp kapanır,
                   // tonu kaydırılır (0 karanlık, 100 aydınlık).
