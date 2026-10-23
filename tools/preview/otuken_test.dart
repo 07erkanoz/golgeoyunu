@@ -41,6 +41,7 @@ void main() {
     ('otuken_7_agac', 405, 30, 1.0),
     ('otuken_8_tepe', 418, 16, 1.0),
     ('otuken_9_kok_isik', 199, 32, 1.5),
+    ('otuken_10_agac_dibi', 410, 39, 0.5),
   ]) {
     testWithGame<GolgeGame>(name, GolgeGame.new, (game) async {
       Cartoon.on = true;

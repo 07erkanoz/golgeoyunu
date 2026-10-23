@@ -1518,7 +1518,7 @@ og(365,370); thorns(371,381); ropes((372,378),8)
 og(382,398); ot.put(396,F-1,'Z')
 # E) Hayat Ağacı: ışık sırayla düşer; tepede güneş aynalarla indirilir.
 ot.put(399,F-1,'K'); ot.put(401,F-1,'p'); ot.put(402,F-1,'[')
-og(399,412)
+og(399,413)
 Ft=17
 og(414,421,Ft+1)                                # gövde
 for i,r in enumerate(range(F-2,Ft,-2)):         # dallar: sağ ve sol sırayla

@@ -57,6 +57,18 @@ class GladeZone extends PositionComponent with HasGameReference<GolgeGame> {
   bool _inside = false;
   double _rustleT = 0;
 
+  /// Alanın altı çoğunlukla zemin mi (karanlığın aşağı erimesine gerek yok).
+  late final bool _groundBelow = () {
+    final r = (area.bottom / kTile).floor();
+    final c0 = (area.left / kTile).floor();
+    final c1 = (area.right / kTile).ceil();
+    var solid = 0;
+    for (var c = c0; c < c1; c++) {
+      if (game.level.solid(c, r)) solid++;
+    }
+    return solid > (c1 - c0) * 0.6;
+  }();
+
   /// Huzmenin yarı genişliği.
   static const double half = 1.5 * kTile;
 
@@ -89,6 +101,15 @@ class GladeZone extends PositionComponent with HasGameReference<GolgeGame> {
     return 0;
   }
 
+  /// Huzmelerin eğikliği: yerden yukarı çıktıkça sola kayma (piksel başına).
+  /// Ağaç gibi yüksek alanlarda huzme dik iner (yoksa yukarıdaki dallarda
+  /// görünen ışıkla güvenli yer birbirini tutmaz).
+  double get slant => area.height > area.width ? 0 : 0.18;
+
+  /// Huzmenin [y] yüksekliğindeki x'i (çizimle aynı eğiklik).
+  double beamXAt(int i, double y) =>
+      beamX(i) - slant * math.max(0, area.bottom - kTile - y);
+
   double beamX(int i) => beams[i] + (wind == 1 ? _sway * swayTiles * kTile : 0);
 
   /// Huzmenin gücü: 1 tam, 0 sönük. Sönmeden önce titrer.
@@ -113,11 +134,12 @@ class GladeZone extends PositionComponent with HasGameReference<GolgeGame> {
   }
 
   /// x'e huzme düşüyor mu?
-  bool beamCovers(double x) {
+  bool beamCovers(double x, [double? y]) {
     for (var i = 0; i < beams.length; i++) {
       final on = beamOn(i);
       if (on < 0.5) continue;
-      if ((x - beamX(i)).abs() < half * (0.6 + 0.4 * on)) return true;
+      final bx = y == null ? beamX(i) : beamXAt(i, y);
+      if ((x - bx).abs() < half * (0.6 + 0.4 * on)) return true;
     }
     return false;
   }
@@ -126,7 +148,7 @@ class GladeZone extends PositionComponent with HasGameReference<GolgeGame> {
   /// ışığı.
   bool lit(Offset at, {bool deer = true}) {
     if (!area.contains(at)) return true;
-    if (beamCovers(at.dx)) return true;
+    if (beamCovers(at.dx, at.dy)) return true;
     if (lureLights(game, at)) return true;
     if (deer) {
       for (final d in game.world.children.whereType<AkGeyik>()) {
@@ -206,7 +228,7 @@ class GladeZone extends PositionComponent with HasGameReference<GolgeGame> {
         ]),
     );
     final cut = Paint()..blendMode = BlendMode.dstOut;
-    final skew = (ground - layer.top) * 0.18;
+    final skew = (ground - layer.top) * slant;
     for (var i = 0; i < beams.length; i++) {
       final on = beamOn(i);
       if (on <= 0.01) continue;
@@ -282,20 +304,23 @@ class GladeZone extends PositionComponent with HasGameReference<GolgeGame> {
     );
     canvas.restore();
     // Alanın altında (çukur, bataklık) karanlık birden kesilmesin: erir.
+    // Altı zeminse gerek yok (yoksa zeminin üstünde kenarlı bir şerit kalır).
     final below = Rect.fromLTRB(
       layer.left,
       ground + 8,
       layer.right,
       ground + 8 + 5 * kTile,
     );
-    canvas.drawRect(
-      below,
-      Paint()
-        ..shader = ui.Gradient.linear(below.topCenter, below.bottomCenter, [
-          const Color(0xFF040A0C).withValues(alpha: 0.72),
-          const Color(0x00040A0C),
-        ]),
-    );
+    if (!_groundBelow) {
+      canvas.drawRect(
+        below,
+        Paint()
+          ..shader = ui.Gradient.linear(below.topCenter, below.bottomCenter, [
+            const Color(0xFF040A0C).withValues(alpha: 0.72),
+            const Color(0x00040A0C),
+          ]),
+      );
+    }
 
     // Basılacak kökler karanlıkta da seçilsin: üstlerinde soluk yosun.
     final rim = Paint()
@@ -975,32 +1000,56 @@ class TreeOfLife extends PositionComponent with HasGameReference<GolgeGame> {
     final top = trunk.top;
     final bottom = trunk.bottom;
     final w = r - l;
-    // Kökler: gövdenin dibinden toprağa kıvrılarak yayılır.
-    final root = Paint()
-      ..color = const Color(0xFFD8D2BE)
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
-    final rootDark = Paint()
-      ..color = const Color(0xFF2A2418)
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
-    for (final (dx, len, thick) in [
-      (-1.0, 5.5, 22.0),
-      (-1.0, 3.2, 14.0),
-      (1.0, 4.8, 20.0),
-      (1.0, 2.6, 12.0),
+    // Kökler: gövdenin dibinden toprağa yayılan, gittikçe incelen payandalar;
+    // kabuk renginden toprağın rengine koyulaşır.
+    for (final (side, reach, lift, thick) in [
+      (-1.0, 4.6, 2.6, 30.0),
+      (-1.0, 2.6, 1.6, 18.0),
+      (1.0, 4.0, 2.4, 26.0),
+      (1.0, 2.2, 1.4, 16.0),
     ]) {
-      final x0 = dx < 0 ? l + 20 : r - 20;
-      final path = Path()
-        ..moveTo(x0, bottom - 2.2 * kTile)
+      final x0 = side < 0 ? l + 10 : r - 10;
+      final tip = Offset(x0 + side * reach * kTile, bottom + 4);
+      final y0 = bottom - lift * kTile;
+      final root = Path()
+        ..moveTo(x0, y0)
         ..quadraticBezierTo(
-          x0 + dx * len * kTile * 0.4,
-          bottom - 0.4 * kTile,
-          x0 + dx * len * kTile,
+          x0 + side * reach * kTile * 0.35,
+          bottom - thick * 0.6,
+          tip.dx,
+          tip.dy,
+        )
+        ..lineTo(tip.dx - side * thick * 0.9, bottom + 8)
+        ..quadraticBezierTo(
+          x0 + side * thick * 0.4,
           bottom + 6,
+          x0 - side * thick,
+          bottom + 6,
+        )
+        ..close();
+      canvas.drawPath(
+        root,
+        Paint()
+          ..shader = ui.Gradient.linear(
+            Offset(x0, y0),
+            tip,
+            const [Color(0xFFD8D2BE), Color(0xFF8A826C), Color(0xFF2A2418)],
+            const [0, 0.45, 1],
+          ),
+      );
+      // Kabuğun kara izleri kökte de sürer.
+      final mark = Paint()..color = const Color(0xFF1C1814);
+      for (var k = 1; k < 4; k++) {
+        final t = k / 4;
+        final at = Offset.lerp(Offset(x0, y0 + thick * 0.5), tip, t)!;
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(
+            Rect.fromCenter(center: at, width: 10 - k * 2.0, height: 2.4),
+            const Radius.circular(1.2),
+          ),
+          mark,
         );
-      canvas.drawPath(path, rootDark..strokeWidth = thick + 4);
-      canvas.drawPath(path, root..strokeWidth = thick);
+      }
     }
     // Gövde: aşağıda genişleyen, ışığa bakan yanı ak, öbür yanı gölgeli.
     final body = Path()
@@ -1067,16 +1116,20 @@ class TreeOfLife extends PositionComponent with HasGameReference<GolgeGame> {
       final cloth = Paint()
         ..color = red ? const Color(0xFFB8322A) : const Color(0xFFF8F4EA);
       canvas.drawRect(Rect.fromLTRB(l - 4, y, r + 4, y + 5), cloth);
-      final sway = math.sin(_t * 2.2 + i) * 6;
-      canvas.drawPath(
-        Path()
-          ..moveTo(l - 2, y + 2)
-          ..quadraticBezierTo(l - 16, y + 10 + sway, l - 24 + sway, y + 26)
-          ..lineTo(l - 18 + sway, y + 27)
-          ..quadraticBezierTo(l - 10, y + 12, l + 2, y + 5)
-          ..close(),
-        cloth,
-      );
+      // Düğümden aşağı sarkan iki kısa bez ucu; rüzgârda hafifçe sallanır.
+      for (final k in [0.0, 1.0]) {
+        final sway = math.sin(_t * 2.2 + i + k) * 2.5;
+        final x = l + 2 + k * 5;
+        canvas.drawPath(
+          Path()
+            ..moveTo(x - 2, y + 4)
+            ..lineTo(x + 2, y + 4)
+            ..lineTo(x + 2 + sway, y + 16 - k * 3)
+            ..lineTo(x - 1.5 + sway, y + 17 - k * 3)
+            ..close(),
+          cloth,
+        );
+      }
     }
   }
 }
