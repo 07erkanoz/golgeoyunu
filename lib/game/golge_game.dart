@@ -598,6 +598,16 @@ class GolgeGame extends FlameGame with KeyboardEvents {
       (z) => z.inflate(6 * kTile).contains(Offset(r.x, r.y)),
     );
     if (near) fireflies = math.max(fireflies, startFireflies);
+    // Ötüken'in ışık alanlarının başında en az üç: ışık köprüsü kurulabilsin.
+    final glade = level.def.glades.any(
+      (z) => Rect.fromLTRB(
+        (z.$1 - 8) * kTile.toDouble(),
+        (z.$2 - 8) * kTile.toDouble(),
+        (z.$3 + 9) * kTile.toDouble(),
+        (z.$4 + 9) * kTile.toDouble(),
+      ).contains(Offset(r.x, r.y)),
+    );
+    if (glade) fireflies = math.max(fireflies, 3);
   }
 
   void _updateMenuCamera(double dt) {
@@ -873,7 +883,11 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         for (final l in level.leverCells) Lever(l),
         for (final (col, top, bottom) in level.gates) Gate(col, top, bottom),
         ?_guideBird(),
-        for (final f in level.fireflyCells) FireflySwarm(f),
+        for (final f in level.fireflyCells)
+          FireflySwarm(
+            f,
+            regrow: level.def.theme == LevelTheme.forest ? 9 : null,
+          ),
         for (final (c, vertical) in level.movingCells)
           MovingRock(
             c,

@@ -327,7 +327,7 @@ void main() {
       'gölgede durulursa Karabasan yutar',
       GolgeGame.new,
       (game) async {
-        final p = await _place(game, 27, 39);
+        final p = await _place(game, 38, 39);
         _run(game, 4);
         expect(p.isDead, isTrue);
         expect(p.deathCause, DeathCause.dark);
@@ -337,7 +337,7 @@ void main() {
     testWithGame<GolgeGame>('huzmenin içinde durmak güvenli', GolgeGame.new, (
       game,
     ) async {
-      final p = await _place(game, 22.6, 39);
+      final p = await _place(game, 41.1, 39);
       _run(game, 6);
       expect(p.isDead, isFalse);
     });
@@ -620,6 +620,26 @@ void main() {
       game.fireflies = 0;
       _runForest(game, p, goal: 214);
       expect(p.isDead, isFalse);
+    },
+  );
+  testWithGame<GolgeGame>(
+    'ormanda ateşböceği kümesi alındıktan sonra yeniden belirir',
+    GolgeGame.new,
+    (game) async {
+      final p = await _place(game, 299, 39);
+      game.fireflies = 0;
+      final swarm = game.world.children.whereType<FireflySwarm>().firstWhere(
+        (f) => (f.position.x / kTile).floor() == 302,
+      );
+      p.position.setFrom(swarm.position - Vector2(Player.w / 2, Player.h / 2));
+      _run(game, 0.5);
+      expect(game.fireflies, 1);
+      p.position.setFrom(
+        Level.standOn(Vector2(304 * kTile, 39 * kTile), Player.w, Player.h),
+      );
+      _run(game, 10.5);
+      expect(swarm.isMounted, isTrue);
+      expect(swarm.strength, greaterThan(0.5));
     },
   );
 }

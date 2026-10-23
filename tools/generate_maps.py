@@ -1461,11 +1461,11 @@ def ropes(cols,n=6):
 def roots(cols,r=F):
     for c in cols: ot.fill(c,r,c+2,r,'u')
 # A) Orman Eşiği: ışık lekeleri (durgun), dere ve ilk ip, rüzgârlı lekeler
-og(0,19); ot.put(2,F-1,'P'); ot.put(3,F-1,'p'); ot.put(5,F-1,'1')
+og(0,19); ot.put(2,F-1,'P'); ot.put(3,F-1,'p'); ot.put(4,F-1,'1')
 og(11,12,F-1)                                   # yosunlu taş
 ot.put(16,F-4,'e')                              # karanlıkta iki göz
-og(20,60); ot.put(21,F-1,'2')
-for c in (23,31,39,47,55): ot.put(c,F-1,'c')
+og(20,60); ot.put(10,F-1,'2')
+for c in (35,41,47,53,58): ot.put(c,F-1,'c')
 og(35,36,F-2)                                   # devrik kütük
 ot.fill(37,F-4,40,F-4,'='); ot.put(39,F-5,'M')  # kütükten dala: hatıra
 bog(61,68); ropes((62,),8)                      # dere: ilk sarmaşık

@@ -983,8 +983,12 @@ class Bird extends PositionComponent with HasGameReference<GolgeGame> {
 /// Karanlıkta dans eden küçük bir ateşböceği sürüsü: yanından geçen çocuk
 /// kavanozuna bir tane alır.
 class FireflySwarm extends PositionComponent with HasGameReference<GolgeGame> {
-  FireflySwarm(Vector2 cell)
+  FireflySwarm(Vector2 cell, {this.regrow})
     : super(position: cell + Vector2(kTile / 2, kTile / 2), priority: 19);
+
+  /// Verilirse alındıktan bu kadar saniye sonra aynı yerde yeniden belirir
+  /// (Ötüken: orman ateşböceğiyle dolu; geyiğin yolu hiç kilitlenmesin).
+  final double? regrow;
 
   double _t = math.Random().nextDouble() * 9;
   bool _taken = false;
@@ -996,9 +1000,17 @@ class FireflySwarm extends PositionComponent with HasGameReference<GolgeGame> {
     _t += dt;
     if (_taken) {
       _gone += dt;
-      if (_gone > 0.8) removeFromParent();
+      final back = regrow;
+      if (back == null) {
+        if (_gone > 0.8) removeFromParent();
+      } else if (_gone > 0.8 + back) {
+        _taken = false;
+        _gone = 0;
+        _fadeIn = 0;
+      }
       return;
     }
+    _fadeIn = math.min(1, _fadeIn + dt);
     final p = game.player;
     if (p == null || p.isDead) return;
     if ((p.center - position).length < 26 &&
@@ -1008,7 +1020,10 @@ class FireflySwarm extends PositionComponent with HasGameReference<GolgeGame> {
     }
   }
 
-  double get strength => _taken ? (1 - _gone / 0.8).clamp(0.0, 1.0) : 1;
+  double _fadeIn = 1;
+
+  double get strength =>
+      _taken ? (1 - _gone / 0.8).clamp(0.0, 1.0) : _fadeIn;
 
   @override
   void render(Canvas canvas) {
