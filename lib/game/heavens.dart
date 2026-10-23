@@ -9,7 +9,9 @@ import 'golge_game.dart';
 import 'level.dart';
 import 'mechanics.dart';
 import 'myth_figures.dart';
+import 'myth_shapes.dart';
 import 'player.dart';
+import 'strings.dart';
 
 // XVI · Göğün Katları (docs/MITOLOJI.md §5): Kam'ın davulu, ay katı, gün
 // katı, Umay kuşunun gölgesi, Ülgen'in kapısı, Tulpar'la fırtınadan kaçış.
@@ -146,6 +148,24 @@ class ScorchZone extends PositionComponent with HasGameReference<GolgeGame> {
 
   double burn = 0;
 
+  /// İlk kez güneşe çıkan daha geç yanar (kuralı öğrensin diye); gölgeye
+  /// bir kez girince olağan hıza döner.
+  bool _learned = false;
+
+  /// Yanarken Sâye'den tüten duman (dünya konumu, yaş).
+  final _smoke = <(Offset, double)>[];
+  double _smokeT = 0;
+
+  /// Kanat: ara ara güçlü çırpış, arada süzülüş (radyan, + yukarı).
+  double get flap {
+    final cyc = _t % 3.4;
+    if (cyc < 1.3) {
+      final env = math.sin(math.pi * cyc / 1.3);
+      return 0.5 * env * math.sin(cyc * 2 * math.pi * 2.3);
+    }
+    return 0.05 * math.sin(_t * 1.3);
+  }
+
   /// Kuşun x'i: zonun üstünde gidip gelir.
   double get birdX {
     final k = (_t / sweep) % 2;
@@ -179,8 +199,25 @@ class ScorchZone extends PositionComponent with HasGameReference<GolgeGame> {
     }
     final inside = area.contains(Offset(p.center.x, p.center.y));
     if (inside) game.meetMyth('umayKusu');
+    for (var i = _smoke.length - 1; i >= 0; i--) {
+      final (at, age) = _smoke[i];
+      if (age + dt > 1.2) {
+        _smoke.removeAt(i);
+      } else {
+        _smoke[i] = (at + Offset(0, -26 * dt), age + dt);
+      }
+    }
+    if (inside && inShade(p.center.x)) _learned = true;
     if (inside && !inShade(p.center.x)) {
-      burn += dt / burnTime;
+      // Güneş yakar: ilk kez söylenir; ilk seferde daha yavaş.
+      game.once('scorchBurn', S.of('scorchBurn'), hint: true);
+      burn += dt / (_learned ? burnTime : burnTime * 2.2);
+      _smokeT -= dt;
+      if (_smokeT <= 0) {
+        _smokeT = 0.08;
+        _smoke.add((Offset(p.center.x, p.position.y + 6), 0));
+        GameAudio.instance.play('fizzle', volume: 0.25, minGapMs: 260);
+      }
       if (burn >= 1) {
         burn = 0;
         p.die(cause: DeathCause.light);
@@ -246,19 +283,19 @@ class ScorchZone extends PositionComponent with HasGameReference<GolgeGame> {
     }
     // Kuşun gölgesi: huzmeleri silen serin bir sütun.
     canvas.drawRect(
-      Rect.fromLTRB(x - shade * 1.3, top, x + shade * 1.3, layer.bottom),
+      Rect.fromLTRB(x - shade * 1.06, top, x + shade * 1.06, layer.bottom),
       Paint()
         ..blendMode = BlendMode.dstOut
         ..shader = ui.Gradient.linear(
-          Offset(x - shade * 1.3, 0),
-          Offset(x + shade * 1.3, 0),
+          Offset(x - shade * 1.06, 0),
+          Offset(x + shade * 1.06, 0),
           const [
             Color(0x00000000),
             Color(0xFF000000),
             Color(0xFF000000),
             Color(0x00000000),
           ],
-          const [0, 0.25, 0.75, 1],
+          const [0, 0.06, 0.94, 1],
         ),
     );
     // Kenarlarda eriyen maske (dikdörtgen görünmesin).
@@ -290,21 +327,54 @@ class ScorchZone extends PositionComponent with HasGameReference<GolgeGame> {
           const [0, 0.5, 1],
         ),
     );
+    // Yerde net gölge: güvenli alanın tam genişliğinde koyu, kenarı keskin
+    // bir leke ve üstünde kuşun yassı silueti.
     canvas.drawOval(
       Rect.fromCenter(
         center: Offset(x, ground - 2),
-        width: shade * 1.8,
-        height: 10,
+        width: shade * 2,
+        height: 12,
       ),
-      Paint()..color = const Color(0x88101828),
+      Paint()..color = const Color(0xAA0C1220),
     );
+    canvas.save();
+    canvas.translate(x, ground - 3);
+    canvas.scale(_facing * 1.6, 0.22);
+    canvas.drawPath(
+      MythShapes.birdGlide.shift(const Offset(0, 20)),
+      Paint()..color = const Color(0xCC070B14),
+    );
+    canvas.restore();
+    // Gölgenin iki kenarında ince serin çizgi: nerede bittiği okunsun.
+    for (final side in const [-1.0, 1.0]) {
+      final ex = x + side * shade;
+      canvas.drawLine(
+        Offset(ex, ground - 2 * kTile),
+        Offset(ex, ground),
+        Paint()
+          ..color = const Color(0x5590B8E8)
+          ..strokeWidth = 2,
+      );
+    }
     // Kuş.
     canvas.save();
     // Kuş zeminin birkaç kat üstünde uçar: gölgesiyle birlikte görünür.
     canvas.translate(x, ground - 6.5 * kTile + math.sin(_t * 1.6) * 6);
-    canvas.scale(_facing * 1.1, 1.1);
-    MythFigures.umayBird(canvas, _t);
+    // Kuş iri: kanat vuruşu ve yönü uzaktan okunsun.
+    canvas.scale(_facing * 1.6, 1.6);
+    MythFigures.umayBird(canvas, _t, flap: flap);
     canvas.restore();
+    // Yanan Sâye'den tüten duman.
+    for (final (at, age) in _smoke) {
+      final k = age / 1.2;
+      canvas.drawCircle(
+        at + Offset(math.sin(age * 9 + at.dx) * 4, 0),
+        3 + k * 9,
+        Paint()
+          ..color = const Color(0xFF4A3A30).withValues(alpha: 0.5 * (1 - k))
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3),
+      );
+    }
     // Yanma: Sâye güneşte kaldıkça ekran beyazlaşır.
     if (burn > 0) {
       canvas.drawRect(

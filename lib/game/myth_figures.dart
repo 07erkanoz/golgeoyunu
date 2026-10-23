@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:typed_data';
 import 'dart:ui';
 import 'dart:ui' as ui;
 
@@ -926,8 +927,15 @@ class MythFigures {
 
   /// Umay kuşu (Hüma): altın ak ışıklı büyük kuş. [glide] doğruysa kanatlar
   /// açık süzülür (önden), değilse çapraz kanat çırparak iner.
-  static void umayBird(Canvas c, double t, {bool glide = true}) {
-    final shape = glide ? MythShapes.birdGlide : MythShapes.birdFlap;
+  static void umayBird(
+    Canvas c,
+    double t, {
+    bool glide = true,
+    double flap = 0,
+  }) {
+    final shape = glide
+        ? (flap.abs() > 0.001 ? _flapped(flap) : MythShapes.birdGlide)
+        : MythShapes.birdFlap;
     c.save();
     c.translate(0, math.sin(t * 1.4) * 1.5);
     _skyBody(
@@ -947,6 +955,47 @@ class MythFigures {
       1,
     );
     c.restore();
+  }
+
+  /// Süzülen kuşun kanatları omuzlardan ayrı: gövde ortada sabit, kanatlar
+  /// omuzların çevresinde döner ([a] > 0: kanatlar yukarı).
+  static final Path _gliderBody = Path.combine(
+    PathOperation.intersect,
+    MythShapes.birdGlide,
+    Path()..addRect(const Rect.fromLTRB(-9, -60, 9, 10)),
+  );
+  static final Path _gliderLeft = Path.combine(
+    PathOperation.intersect,
+    MythShapes.birdGlide,
+    Path()..addRect(const Rect.fromLTRB(-70, -60, -7, 10)),
+  );
+  static final Path _gliderRight = Path.combine(
+    PathOperation.intersect,
+    MythShapes.birdGlide,
+    Path()..addRect(const Rect.fromLTRB(7, -60, 70, 10)),
+  );
+
+  static Float64List _turn(double a, Offset pivot) {
+    final co = math.cos(a), si = math.sin(a);
+    return Float64List.fromList([
+      co, si, 0, 0, //
+      -si, co, 0, 0,
+      0, 0, 1, 0,
+      pivot.dx - co * pivot.dx + si * pivot.dy,
+      pivot.dy - si * pivot.dx - co * pivot.dy,
+      0,
+      1,
+    ]);
+  }
+
+  static Path _flapped(double a) {
+    final l = _gliderLeft.transform(_turn(a, const Offset(-8, -24)));
+    final r = _gliderRight.transform(_turn(-a, const Offset(8, -24)));
+    return Path.combine(
+      PathOperation.union,
+      Path.combine(PathOperation.union, _gliderBody, l),
+      r,
+    );
   }
 
   // --------------------------------------------------------------- Ak Ana

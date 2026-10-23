@@ -132,7 +132,8 @@ class Hints {
     'lever': '{up} Kolu çek',
     'umay': 'Umay ağacı · dokun: düştüğünde buradan yeniden başlarsın',
     'drum': 'Kam\'ın davulu · her vuruşta bir bulut takımı belirir, öbürü söner · vuruşu bekle, sonra atla',
-    'scorch': 'Gün katının ışığı yakar · Umay kuşunun gölgesinde yürü',
+    'scorch':
+        'Gün katının ışığı yakar · Hüma\'nın gölgesinde, onunla birlikte yürü',
     'tulpar': 'Tulpar · sırtına bin · havada zıplayınca kanat çırpar: {jump}',
     'forge': 'Ocak sönmüş · yanına ateşböceği sal, yeniden yansın: {firefly}',
     'bellows': '{up} Körüğe bas · üstündeki çentik sayısı sırasıyla · sıra bozulur ya da geç kalırsan ateş söner',
@@ -206,7 +207,7 @@ class Hints {
     'lever': '{up} Pull the lever',
     'umay': 'Umay tree · touch it: if you fall, you rise here again',
     'drum': 'Kam\'s drum · on each beat one set of clouds appears and the other fades · wait for the beat, then jump',
-    'scorch': 'The light of the sun layer burns · walk in the shadow of the Umay bird',
+    'scorch': 'The light of the sun layer burns · walk in the Huma\'s shadow, along with it',
     'tulpar': 'Tulpar · climb on his back · jump in the air to beat his wings: {jump}',
     'forge': 'The forge is cold · release a firefly beside it to light it again: {firefly}',
     'bellows': '{up} Pump the bellows · in the order of the notches on each · break the order or wait too long and the fire dies',
