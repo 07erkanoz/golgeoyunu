@@ -437,7 +437,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
           (w) =>
               !w.startsWith('$index:') &&
               !w.startsWith('hint:$index:') &&
-              !(w.startsWith('event:') && w.split(':')[2] == '$index'),
+              !(w.startsWith('event:') && _eventLevel(w) == '$index'),
         ),
       );
     fireflies = startFireflies;
@@ -453,6 +453,13 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     effects.setFade(1, kInk);
     effects.fadeTo(0, 1.4);
     _showLevelTitle();
+  }
+
+  /// Olay anahtarındaki bölüm ("event:ad:bölüm:…"); biçime uymayan eski
+  /// anahtarlarda null (bölüm başlatmayı düşürmesin).
+  static String? _eventLevel(String key) {
+    final parts = key.split(':');
+    return parts.length > 2 ? parts[2] : null;
   }
 
   /// Kaldığın yerden: son kontrol noktasında, toplananlarla birlikte.

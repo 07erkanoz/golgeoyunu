@@ -902,10 +902,14 @@ class KarabasanEnd extends PositionComponent with HasGameReference<GolgeGame> {
 
   static const double duration = 4.2;
 
+  /// Olay anahtarı öbürleri gibi "ad:bölüm" biçiminde (bölüm baştan
+  /// oynanınca silinebilsin).
+  String get _key => 'karabasanEnd:${game.levelIndex}';
+
   @override
   void onMount() {
     super.onMount();
-    if (game.eventSeen('karabasanEnd')) removeFromParent();
+    if (game.eventSeen(_key)) removeFromParent();
   }
 
   @override
@@ -917,7 +921,7 @@ class KarabasanEnd extends PositionComponent with HasGameReference<GolgeGame> {
     if (_t < 0) {
       if (!lock.open) return;
       _t = 0;
-      game.markEvent('karabasanEnd');
+      game.markEvent(_key);
       GameAudio.instance.play('growl', volume: 1);
       GameAudio.instance.dread(0);
       game.scare(0.6, sting: false);
