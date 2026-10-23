@@ -669,7 +669,7 @@ class Karabasan extends PositionComponent with HasGameReference<GolgeGame> {
         _awake = true;
         position.setValues(p.center.x - 360, p.center.y);
         _speed = 60;
-        game.once('chase${game.levelIndex}', S.of('chase'));
+        game.once('chase${game.levelIndex}', S.of('chase'), story: false);
         game.scare(1.0, slow: true);
         game.meetMyth('karabasan');
       }

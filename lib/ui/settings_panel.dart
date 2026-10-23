@@ -459,6 +459,24 @@ class _SettingsPanelState extends State<SettingsPanel> {
                       ),
                     ],
                   ),
+                  // Anlatım: ikinci oynayışta hikâyeyi yeniden okumak
+                  // istemeyen için.
+                  _switchRow(
+                    S.of('storyWhispers'),
+                    Settings.storyWhispers,
+                    (v) => Settings.storyWhispers = v,
+                    note: S.of('storyWhispersHint'),
+                  ),
+                  _switchRow(
+                    S.of('hintsSetting'),
+                    Settings.hints,
+                    (v) => Settings.hints = v,
+                  ),
+                  _switchRow(
+                    S.of('skipSeenPerde'),
+                    Settings.skipSeenPerde,
+                    (v) => Settings.skipSeenPerde = v,
+                  ),
                   const SizedBox(height: 4),
                   Row(
                     children: [
@@ -547,6 +565,52 @@ class _SettingsPanelState extends State<SettingsPanel> {
       ),
     );
   }
+
+  /// Açma/kapama satırı: değişince kaydedilir.
+  Widget _switchRow(
+    String text,
+    bool value,
+    void Function(bool) set, {
+    String? note,
+  }) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Row(
+        children: [
+          Expanded(
+            child: Text(
+              text,
+              style: const TextStyle(color: _text, fontSize: 14),
+            ),
+          ),
+          Switch(
+            value: value,
+            activeThumbColor: _accent,
+            inactiveThumbColor: _text.withValues(alpha: 0.6),
+            inactiveTrackColor: const Color(0x22EBDDCB),
+            trackOutlineColor: const WidgetStatePropertyAll(Color(0x55EBDDCB)),
+            onChanged: (v) {
+              set(v);
+              Settings.save();
+              setState(() {});
+            },
+          ),
+        ],
+      ),
+      if (note != null && !value)
+        Padding(
+          padding: const EdgeInsets.only(bottom: 6),
+          child: Text(
+            note,
+            style: TextStyle(
+              color: _text.withValues(alpha: 0.55),
+              fontSize: 11,
+              height: 1.45,
+            ),
+          ),
+        ),
+    ],
+  );
 
   Widget _label(String text, double value) => Row(
     children: [

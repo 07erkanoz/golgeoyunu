@@ -44,6 +44,19 @@ class Settings {
   static double brightness = defaultBrightness;
   static const defaultBrightness = 0.85;
 
+  /// Hikâye fısıltıları ekranda (kapalıyken yalnız "Az önce" panelinde;
+  /// oynanışı anlatan sözler yine söylenir). İkinci oynayış için.
+  static bool storyWhispers = true;
+
+  /// İpuçları ekranda (kapalıyken yalnız "Az önce" panelinde).
+  static bool hints = true;
+
+  /// Daha önce izlenen perdeler atlanır (ilk kez izlenen yine oynar).
+  static bool skipSeenPerde = false;
+
+  /// İzlenmiş perdeler: "prologue" ya da perdenin ardındaki bölümün sırası.
+  static final seenPerde = <String>{};
+
   /// Yazı büyüklüğü (0.8 – 1.6): fısıltı, ipucu, efsane kartı ve perde
   /// satırları bununla büyür.
   static double textScale = 1.0;
@@ -153,6 +166,13 @@ class Settings {
       texture = _read(() => p.getBool('texture')) ?? texture;
       realism = _read(() => p.getBool('realism')) ?? realism;
       perf = _read(() => p.getBool('perf')) ?? perf;
+      storyWhispers = _read(() => p.getBool('story_whispers')) ?? storyWhispers;
+      hints = _read(() => p.getBool('hints')) ?? hints;
+      skipSeenPerde =
+          _read(() => p.getBool('skip_seen_perde')) ?? skipSeenPerde;
+      seenPerde
+        ..clear()
+        ..addAll(_read(() => p.getStringList('seen_perde')) ?? const []);
       // Kayıtlı bir tercih yoksa cihazın dili: Türkçe değilse İngilizce.
       final lang = _read(() => p.getString('lang'));
       S.lang = switch (lang) {
@@ -226,6 +246,10 @@ class Settings {
       await p.setBool('realism', realism);
       await p.setBool('perf', perf);
       await p.setDouble('tone', tone);
+      await p.setBool('story_whispers', storyWhispers);
+      await p.setBool('hints', hints);
+      await p.setBool('skip_seen_perde', skipSeenPerde);
+      await p.setStringList('seen_perde', seenPerde.toList());
       await p.setInt('unlockedOrder', levelOrderVersion);
       await p.setInt('settings_v', _version);
     } catch (_) {

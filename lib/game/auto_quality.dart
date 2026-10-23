@@ -145,11 +145,11 @@ class AutoQuality {
   bool stepDown() {
     if (Realism.on && realismHere(game)) {
       Realism.on = false;
-      game.narration.whisper(S.of('autoQualityLight'));
+      game.narration.whisper(S.of('autoQualityLight'), story: false);
     } else if (!Settings.lowGraphics) {
       Settings.lowGraphics = true;
       Settings.autoLowered = true;
-      game.narration.whisper(S.of('autoQualityLow'));
+      game.narration.whisper(S.of('autoQualityLow'), story: false);
     } else {
       return false;
     }

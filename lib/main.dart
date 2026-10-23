@@ -7,6 +7,7 @@ import 'package:window_manager/window_manager.dart';
 import 'game/audio.dart';
 import 'display.dart';
 import 'game/golge_game.dart';
+import 'game/strings.dart';
 import 'settings.dart';
 import 'ui/main_menu.dart';
 import 'ui/recent_panel.dart';
@@ -219,6 +220,42 @@ class _GolgeAppState extends State<GolgeApp> with WindowListener {
                               ? const SizedBox.shrink()
                               : TouchControls(controls: _game.controls),
                         ),
+                      // Perde oynarken sağ altta "Atla": perdenin tamamı
+                      // geçilir (dokunmatikte de; klavyede Esc).
+                      ValueListenableBuilder<bool>(
+                        valueListenable: _game.narration.perdeOn,
+                        builder: (context, on, _) => !on
+                            ? const SizedBox.shrink()
+                            : Positioned(
+                                right: 16,
+                                bottom: 12,
+                                child: SafeArea(
+                                  child: TextButton(
+                                    onPressed: _game.narration.skipAll,
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: const Color(0xFFEBDDCB),
+                                      backgroundColor: const Color(0x66140C09),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 18,
+                                        vertical: 10,
+                                      ),
+                                      shape: const StadiumBorder(
+                                        side: BorderSide(
+                                          color: Color(0x66E0A15F),
+                                        ),
+                                      ),
+                                    ),
+                                    child: Text(
+                                      '${S.of('skipPerde')}  ›',
+                                      style: const TextStyle(
+                                        fontSize: 15,
+                                        letterSpacing: 1,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                      ),
                       // "i": az önceki hikâye ve ipucu (okumayı kaçıranlar
                       // için); dokunmatikte ateşböceği simgesinin solunda.
                       Positioned(

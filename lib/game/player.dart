@@ -61,6 +61,9 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
   bool onGround = false;
   bool crouching = false;
 
+  /// Bölüme girişte belirirken saydamlık (Ötüken: gölgeden çıkar).
+  double entranceAlpha = 1;
+
   /// Yel Ana'nın soluğu (px/sn, + sağa): her karede rüzgâr alanı yazar,
   /// oyuncu kullanıp sıfırlar. Yerde çömelen etkilenmez; süzülen en çok
   /// etkilenir.
@@ -1516,6 +1519,15 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       _renderBody(canvas, riding: true);
       canvas.restore();
       crouching = was;
+      return;
+    }
+    if (entranceAlpha < 1) {
+      canvas.saveLayer(
+        null,
+        Paint()..color = Color.fromRGBO(0, 0, 0, entranceAlpha.clamp(0, 1)),
+      );
+      _renderBody(canvas);
+      canvas.restore();
       return;
     }
     _renderBody(canvas);

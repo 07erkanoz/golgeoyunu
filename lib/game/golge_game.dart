@@ -12,6 +12,7 @@ import 'package:flutter/widgets.dart' show KeyEventResult;
 import 'atmosphere.dart';
 import 'audio.dart';
 import 'auto_quality.dart';
+import 'entrance.dart';
 import 'creatures.dart';
 import 'frame_pacer.dart';
 import 'mechanics.dart';
@@ -216,10 +217,10 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     GameAudio.instance.play('land', volume: 0.7);
     GameAudio.instance.play('gust', volume: 0.6);
     if (winged) {
-      once('tulparMount', S.of('tulparMount'));
+      once('tulparMount', S.of('tulparMount'), story: false);
       meetMyth('tulpar');
     } else {
-      once('calkuyruk', S.of('calkuyrukMount'));
+      once('calkuyruk', S.of('calkuyrukMount'), story: false);
       meetMyth('erTostuk');
     }
   }
@@ -456,6 +457,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     effects.setFade(1, kInk);
     effects.fadeTo(0, 1.4);
     _showLevelTitle();
+    _startEntrance();
   }
 
   /// Olay anahtarındaki bölüm ("event:ad:bölüm:…"); biçime uymayan eski
@@ -649,16 +651,40 @@ class GolgeGame extends FlameGame with KeyboardEvents {
   void _startPrologue() {
     cinematic = true;
     effects.setFade(1, kInk);
-    narration.playCinematic(
-      prologueText,
-      () {
-        cinematic = false;
-        effects.fadeTo(0, 1.8);
-        _showLevelTitle();
-      },
-      instantBlack: true,
-      scene: PerdeScene.prologue,
-    );
+    _playPerde('prologue', prologueText, PerdeScene.prologue, () {
+      cinematic = false;
+      effects.fadeTo(0, 1.8);
+      _showLevelTitle();
+      _startEntrance();
+    });
+  }
+
+  /// Bölüme ilk girişte giriş anı (düşüş, süzülüş, iniş, beliriş; yoksa
+  /// düz başlangıç). Yeniden doğarken ve "Devam" ile oynamaz.
+  void _startEntrance() {
+    final kind = entranceFor(levelIndex);
+    final start = _respawn;
+    if (kind == null || start == null || player == null) return;
+    world.add(Entrance(kind, start.clone()));
+  }
+
+  /// Testler için: bölümün giriş anını oynatır.
+  void debugEntrance() => _startEntrance();
+
+  /// Perde oynatılır ve izlenmiş sayılır; ayarlarda "gördüğüm perdeleri
+  /// atla" açıksa daha önce izlenmiş perde atlanır (Hikâye'de izlenebilir).
+  void _playPerde(
+    String key,
+    List<String> lines,
+    PerdeScene? scene,
+    VoidCallback done,
+  ) {
+    if (Settings.skipSeenPerde && Settings.seenPerde.contains(key)) {
+      done();
+      return;
+    }
+    if (Settings.seenPerde.add(key)) Settings.save();
+    narration.playCinematic(lines, done, instantBlack: true, scene: scene);
   }
 
   /// Testler ve geliştirme kısayolu için: hikâyeyi atlayıp bölümü yükler.
@@ -1599,6 +1625,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
             _transitioning = false;
             effects.fadeTo(0, 1.8);
             _showLevelTitle();
+            _startEntrance();
           }
 
           // Bölüm arasında perdede bir gölge oyunu oynanır.
@@ -1607,12 +1634,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
             enter();
           } else {
             effects.setFade(1, kInk);
-            narration.playCinematic(
-              interlude,
-              enter,
-              instantBlack: true,
-              scene: interludeScene(next),
-            );
+            _playPerde('$next', interlude, interludeScene(next), enter);
           }
           return;
         }
@@ -1660,7 +1682,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
   void collectWings() {
     wingsCollected = true;
     GameAudio.instance.play('memory');
-    narration.whisper(S.of('wings'));
+    narration.whisper(S.of('wings'), story: false);
   }
 
   double _shake = 0;
@@ -1830,14 +1852,16 @@ class GolgeGame extends FlameGame with KeyboardEvents {
   bool eventSeen(String key) => _whispersShown.contains('event:$key');
   void markEvent(String key) => _whispersShown.add('event:$key');
 
-  void once(String key, String text, {bool hint = false}) {
+  /// [story] false: oynanışı da anlatan söz (düzeneğin şiiri, kovalamaca,
+  /// binek); hikâye fısıltıları kapalıyken de söylenir.
+  void once(String key, String text, {bool hint = false, bool story = true}) {
     final id = 'once:$key';
     if (_whispersShown.contains(id)) return;
     _whispersShown.add(id);
     if (hint) {
       narration.hint(text, queue: true);
     } else {
-      narration.whisper(text);
+      narration.whisper(text, story: story);
     }
   }
 
@@ -1849,7 +1873,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     _whispersShown.add(id);
     narration.hint(Hints.text(key), queue: true);
     final poem = Hints.poem(key);
-    if (poem.isNotEmpty) once('poem:$key', poem);
+    if (poem.isNotEmpty) once('poem:$key', poem, story: false);
   }
 
   /// Bu bir kezlik söz söylendi mi (testler için)?
@@ -1880,7 +1904,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
           // Bazı düzeneklerin kuralı bir de şiirle, hikâyenin içinde
           // anlatılır.
           final poem = Hints.poem(key);
-          if (poem.isNotEmpty) once('poem:$key', poem);
+          if (poem.isNotEmpty) once('poem:$key', poem, story: false);
           // Düzeneğin ardındaki efsane Defter'e yazılır.
           final legend = _hintLegends[key];
           if (legend != null) meetMyth(legend);
@@ -2164,7 +2188,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     }
     if (!_darkWarned) {
       _darkWarned = true;
-      once('darkZone$levelIndex', S.of('darkZone'));
+      once('darkZone$levelIndex', S.of('darkZone'), story: false);
     }
     _darkT += dt;
     if (fireflies > 0) {

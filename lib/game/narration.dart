@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flame/components.dart';
+import 'package:flutter/foundation.dart' show ValueNotifier;
 import 'package:flutter/painting.dart';
 
 import '../settings.dart';
@@ -104,6 +105,19 @@ class Narration extends Component with HasGameReference<GolgeGame> {
 
   bool get inCinematic => _lines.isNotEmpty;
 
+  /// Perdeden dünyaya geçiş: perdenin son karesi (sahne, saati, ilerleyişi)
+  /// ve geçişin saati. Kamera perdenin içine, Sâye'nin durduğu yere dalar;
+  /// perde büyüyüp çözülürken altından bölüm açılır.
+  (PerdeScene, double, double)? _out;
+  double _outT = 0;
+  static const double outDuration = 1.7;
+
+  /// Geçiş sürüyor mu (testler için).
+  bool get inPerdeOut => _out != null;
+
+  /// Perde oynuyor mu: ekrandaki "Atla" düğmesi bunu dinler.
+  final perdeOn = ValueNotifier<bool>(false);
+
   void playCinematic(
     List<String> lines,
     VoidCallback onDone, {
@@ -111,6 +125,8 @@ class Narration extends Component with HasGameReference<GolgeGame> {
     PerdeScene? scene,
   }) {
     _lines = lines;
+    _out = null;
+    perdeOn.value = lines.isNotEmpty;
     _scene = lines.isEmpty ? null : scene;
     _sceneT = 0;
     GameAudio.instance.perde(_scene != null);
@@ -169,7 +185,16 @@ class Narration extends Component with HasGameReference<GolgeGame> {
     _area = null;
   }
 
-  void whisper(String text) => _whispers.add((text, _clock));
+  /// Hikâye fısıltısı. Ayarlardan kapatılmışsa ekrana gelmez, yalnız
+  /// "Az önce" paneline yazılır; [story] false olanlar (oynanışı da
+  /// anlatanlar) her zaman söylenir.
+  void whisper(String text, {bool story = true}) {
+    if (story && !Settings.storyWhispers) {
+      _remember(RecentKind.story, text);
+      return;
+    }
+    _whispers.add((text, _clock));
+  }
 
   /// Çok adımlı bir düzeneğin o anki adımı (yoksa null); her karede oyun
   /// belirler. Sol üstte küçük, kalıcı bir satır olarak yazılır.
@@ -236,11 +261,21 @@ class Narration extends Component with HasGameReference<GolgeGame> {
   /// Olay ipuçları ([queue]) sıraya girer.
   bool hint(String text, {bool queue = false, VoidCallback? onShown}) {
     if (queue) {
-      if (_hint != text && !_hints.contains(text)) _hints.add(text);
+      if (!Settings.hints) {
+        _remember(RecentKind.hint, text);
+      } else if (_hint != text && !_hints.contains(text)) {
+        _hints.add(text);
+      }
       return true;
     }
     if (!canHint) return false;
     if (_hint == text) return true;
+    // İpuçları kapalı: ekrana gelmez, "Az önce" panelinde okunur.
+    if (!Settings.hints) {
+      _remember(RecentKind.hint, text);
+      onShown?.call();
+      return true;
+    }
     if (_hints.isEmpty && _hintFree) {
       _showHint(text);
       onShown?.call();
@@ -291,6 +326,10 @@ class Narration extends Component with HasGameReference<GolgeGame> {
   @override
   void update(double dt) {
     _clock += dt;
+    if (_out != null) {
+      _outT += dt;
+      if (_outT >= outDuration || inCinematic) _out = null;
+    }
     if (inCinematic) {
       _backdrop = math.min(1, _backdrop + dt / 1.5);
       _lineT += dt;
@@ -300,8 +339,14 @@ class Narration extends Component with HasGameReference<GolgeGame> {
         _lineIndex++;
         if (_lineIndex >= _lines.length) {
           _lines = const [];
+          perdeOn.value = false;
           _backdrop = 0;
           if (_scene != null) GameAudio.instance.perde(false);
+          // Perdeden dünyaya geçiş: son kare büyüyerek dünyaya karışır.
+          if (_scene != null) {
+            _out = (_scene!, _sceneT, _lineIndex.toDouble());
+            _outT = 0;
+          }
           _scene = null;
           final cb = _onCinematicDone;
           _onCinematicDone = null;
@@ -514,6 +559,63 @@ class Narration extends Component with HasGameReference<GolgeGame> {
     tp.paint(canvas, Offset(left + 12, y + 5));
   }
 
+  /// Perdeden dünyaya: perdenin son karesi Sâye'nin ekrandaki yerine doğru
+  /// büyür (kamera perdeye dalar), kandilin ılık ışığı bir an parlar, perde
+  /// çözülür; altta bölüm karanlıktan açılır.
+  void _perdeOut(Canvas canvas, Size size, (PerdeScene, double, double) out) {
+    final k = (_outT / outDuration).clamp(0.0, 1.0);
+    // Yavaş başlar, hızlanır: perdeye dalış.
+    final e = k * k * (3 - 2 * k);
+    final r = PerdePainter.screenRect(size);
+    // Dalış noktası: Sâye'nin ekrandaki yeri (yoksa perdenin ortası).
+    var anchor = r.center;
+    final p = game.player;
+    if (p != null && p.isMounted) {
+      final g = game.camera.localToGlobal(p.center);
+      if (g.x.isFinite && g.y.isFinite) {
+        anchor = Offset(
+          g.x.clamp(0.0, size.width),
+          g.y.clamp(0.0, size.height),
+        );
+      }
+    }
+    // Perdenin ortası dalış noktasına kayarken perde ekranı aşacak kadar
+    // büyür.
+    final fill = math.max(size.width / r.width, size.height / r.height);
+    final scale = 1 + (fill * 1.8 - 1) * e;
+    final from = Offset.lerp(r.center, anchor, e)!;
+    final alpha = math.pow(1 - k, 1.6).toDouble();
+    canvas.save();
+    canvas.saveLayer(
+      Offset.zero & size,
+      Paint()..color = Color.fromRGBO(0, 0, 0, alpha),
+    );
+    canvas.translate(from.dx, from.dy);
+    canvas.scale(scale);
+    canvas.translate(-r.center.dx, -r.center.dy);
+    PerdePainter.paint(canvas, size, out.$1, out.$2 + _outT, out.$3, 1);
+    canvas.restore();
+    canvas.restore();
+    // Kandilin ışığı perdeden taşar: bir an ılık bir parıltı.
+    final glow = math.sin(math.pi * k) * 0.22;
+    if (glow > 0.01) {
+      canvas.drawRect(
+        Offset.zero & size,
+        Paint()
+          ..shader = ui.Gradient.radial(
+            anchor,
+            size.longestSide * 0.7,
+            [
+              Color.fromRGBO(255, 214, 150, glow),
+              Color.fromRGBO(255, 170, 90, glow * 0.4),
+              const Color(0x00000000),
+            ],
+            const [0, 0.4, 1],
+          ),
+      );
+    }
+  }
+
   /// İpucu şeridinin üst kenarı (yer adının altı; sol üstteki görev satırı
   /// ve ateşböceklerinin altında kalır).
   static double hintTop(double h) => math.max(h * 0.12, 88.0);
@@ -560,6 +662,8 @@ class Narration extends Component with HasGameReference<GolgeGame> {
     final w = size.x;
     final h = size.y;
     final unit = math.min(h, w * 0.6);
+    final out = _out;
+    if (out != null && !inCinematic) _perdeOut(canvas, Size(w, h), out);
 
     if (inCinematic) {
       canvas.drawRect(
@@ -610,13 +714,8 @@ class Narration extends Component with HasGameReference<GolgeGame> {
           maxWidth: w * 0.8,
         );
       }
-      _text(
-        canvas,
-        S.of('skipHint'),
-        Offset(w - 130, h - 30),
-        unit * 0.022,
-        0.25,
-      );
+      // Sağ altta "Atla" düğmesi var; satır geçme yolu solda yazar.
+      _text(canvas, S.of('skipHint'), Offset(130, h - 30), unit * 0.022, 0.25);
       return;
     }
 

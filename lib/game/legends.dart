@@ -1160,6 +1160,7 @@ class SimurgFeather extends PositionComponent
           .length;
       game.narration.whisper(
         left == 0 ? S.of('feathersAll') : '${S.of('feather')} · $left',
+        story: false,
       );
     }
   }

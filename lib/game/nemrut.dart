@@ -134,7 +134,7 @@ class StarStone extends PositionComponent
     final stones = game.world.children.whereType<StarStone>().toList();
     if (stones.every((s) => s.correct)) {
       GameAudio.instance.play('memory', volume: 0.7);
-      game.once('horoscope', S.of('horoscope'));
+      game.once('horoscope', S.of('horoscope'), story: false);
       Gate? best;
       var bestD = double.infinity;
       for (final g in game.world.children.whereType<Gate>()) {
