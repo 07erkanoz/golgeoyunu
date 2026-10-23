@@ -54,6 +54,16 @@ ROLE_VOICE = {
 
 PREFIX = re.compile(r"^(Hatıra|Memory)\s*·\s*")
 
+# Ozanın dizesini ozan kendisi söyler: "Ozan der ki:" ekranda kalır (kimin
+# konuştuğunu gösterir), seste okunmaz.
+BARD = re.compile(r"^(Ozan der ki|The bard says)\s*:\s*")
+
+
+def is_title(text: str) -> bool:
+    """Perde başlığı (tamamı büyük harf: "GÖLGE OYUNU", "V · AĞRI"):
+    seslendirilmez; göstermelik levhada görünür, o an ney çalar."""
+    return text == text.upper() and any(c.isalpha() for c in text)
+
 
 ROMAN = {"I": 1, "V": 5, "X": 10, "L": 50}
 ORD_TR = ["", "Birinci", "İkinci", "Üçüncü", "Dördüncü", "Beşinci", "Altıncı",
@@ -307,7 +317,12 @@ def main() -> None:
         spec = notes.get(e["id"], {})
         voice = spec.get("ses", ROLE_VOICE[e["role"]])
         note = spec.get("not", "")
+        if is_title(e["text"]):
+            continue
         text = spoken(PREFIX.sub("", e["text"]), a.dil)
+        if e["role"] == "ozan":
+            text = BARD.sub("", text)
+            text = text[:1].upper() + text[1:]
         if a.kuru:
             print(f"{e['id']} {voice:12} {text[:70]}")
             continue
