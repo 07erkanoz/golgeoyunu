@@ -2214,6 +2214,16 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     final pr = (p.center.y / kTile).floor();
     final maxR = math.min(level.height - 1, pr + (halfH * 2 / kTile).ceil());
     double? top;
+    // Vanayla dolup boşalan hazneler (Yerebatan'ın kuyusu): çekilen su da
+    // görünsün, dibe varıp vardığı seçilsin.
+    final x0 = (pc - 7) * kTile.toDouble();
+    final x1 = (pc + 8) * kTile.toDouble();
+    for (final b in world.children.whereType<WaterBasin>()) {
+      if (b.area.right < x0 || b.area.left > x1) continue;
+      if (b.surface < p.center.y) continue;
+      if (b.surface - p.center.y > halfH * 2) continue;
+      if (top == null || b.surface < top) top = b.surface;
+    }
     for (var c = pc - 7; c <= pc + 7; c++) {
       if (c < 0 || c >= level.width) continue;
       for (var r = math.max(0, pr); r <= maxR; r++) {

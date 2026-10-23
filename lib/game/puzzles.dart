@@ -387,9 +387,17 @@ class WaterBasin extends Component
   bool covers(Vector2 p) =>
       p.x > area.left && p.x < area.right && p.y > surface && p.y < area.bottom;
 
+  /// Su durduğu an: yüzeyde halkalar yayılır, kenar parlar (çekilmenin ya
+  /// da dolmanın bittiği küçük ekranda da görülsün, duyulsun).
+  double _settle = 0;
+
+  /// Su durdu mu (son hareketten beri, testler için).
+  bool get settledFlash => _settle > 0;
+
   @override
   void update(double dt) {
     _t += dt;
+    _settle = math.max(0, _settle - dt / 1.6);
     if (_delay > 0) {
       _delay -= dt;
     } else if (moving) {
@@ -397,6 +405,10 @@ class WaterBasin extends Component
       surface = (surface - target).abs() <= step
           ? target
           : surface + step * (target > surface ? 1 : -1);
+      if (!moving && !flooding) {
+        _settle = 1;
+        GameAudio.instance.play('splash', volume: 0.8);
+      }
     }
     final p = game.player;
     if (p != null && !p.isDead && covers(p.center + Vector2(0, -4))) {
@@ -408,25 +420,53 @@ class WaterBasin extends Component
   void render(Canvas canvas) {
     final body = Rect.fromLTRB(area.left, surface, area.right, area.bottom);
     if (body.height <= 0) return;
+    // Sarnıcın suyu gibi serin bir ton: taştan ayrılır.
     canvas.drawRect(
       body,
       Paint()
         ..shader = ui.Gradient.linear(body.topLeft, body.bottomLeft, [
-          const Color(0xFF2A160E).withValues(alpha: 0.85),
+          const Color(0xFF1A3034).withValues(alpha: 0.9),
           const Color(0xFF0C0605).withValues(alpha: 0.95),
         ]),
     );
-    // Yüzeyde ışıltılı halkalar; su hareket ederken çalkalanır.
-    final line = Paint()
-      ..color = const Color(0xFFE19A5A).withValues(alpha: moving ? 0.4 : 0.22)
-      ..strokeWidth = 1.2;
-    for (var x = area.left + 6; x < area.right - 6; x += 18) {
-      final wob = math.sin(_t * (moving ? 6 : 2) + x * 0.13) * (moving ? 2 : 1);
-      canvas.drawLine(
-        Offset(x, surface + 1 + wob),
-        Offset(x + 9, surface + 1 + wob),
-        line,
-      );
+    // Yüzey: dalgalı, parlak bir kenar; su hareket ederken çalkalanır,
+    // durduğu an bir kez parlar.
+    final glow = _settle;
+    final edge = Paint()
+      ..style = PaintingStyle.stroke
+      ..color = const Color(0xFFE6A066)
+          .withValues(alpha: (moving ? 0.75 : 0.6) + 0.25 * glow)
+      ..strokeWidth = 2 + glow;
+    final wave = Path()..moveTo(area.left, surface + 1);
+    for (var x = area.left + 4; x <= area.right; x += 4) {
+      final wob =
+          math.sin(_t * (moving ? 6 : 2) + x * 0.13) * (moving ? 2.2 : 1.2);
+      wave.lineTo(x, surface + 1 + wob);
+    }
+    canvas.drawPath(wave, edge);
+    canvas.drawRect(
+      Rect.fromLTRB(area.left, surface, area.right, surface + 6),
+      Paint()
+        ..color = const Color(0xFFE6A066).withValues(alpha: 0.16 + 0.2 * glow),
+    );
+    // Durunca yüzeyde ortadan yayılan halkalar.
+    if (glow > 0) {
+      final k = 1 - glow;
+      for (var i = 0; i < 2; i++) {
+        final r = (k * 1.4 - i * 0.3).clamp(0.0, 1.0);
+        if (r <= 0) continue;
+        canvas.drawOval(
+          Rect.fromCenter(
+            center: Offset(area.center.dx, surface + 2),
+            width: area.width * r,
+            height: 8 * r + 2,
+          ),
+          Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1.4
+            ..color = const Color(0xFFFFD8A8).withValues(alpha: 0.6 * (1 - r)),
+        );
+      }
     }
   }
 }
