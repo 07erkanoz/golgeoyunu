@@ -355,7 +355,7 @@ class Narration extends Component with HasGameReference<GolgeGame> {
   @override
   void update(double dt) {
     _clock += dt;
-    GameAudio.instance.updateVoice();
+    GameAudio.instance.updateVoice(dt);
     if (_out != null) {
       _outT += dt;
       if (_outT >= outDuration || inCinematic) _out = null;

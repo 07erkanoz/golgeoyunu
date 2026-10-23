@@ -99,6 +99,7 @@ class S {
         'Sen göz kapanınca yürü, açılınca dur.\n'
         'Şimdi o taş, senin basamağın.',
     'feather': 'Simurg\'un tüyü',
+    'scaleSolved': 'Eşler kefelerde buluştu; terazi denge buldu. Gemiye çift çift binilir.',
     'feathersAll': 'Tüyler tamam. Sunak seni bekliyor.',
     'horoscope': 'Gök, aslanın sırtındaki gibi dizildi. Taşlar yol veriyor.',
     'giantFell': 'Bir sivrisinek bir kralı yıktı; üç ateşböceği de bir devi.',
@@ -301,6 +302,7 @@ class S {
         'Walk when the eye closes; stop when it opens.\n'
         'Now that stone is your stair.',
     'feather': 'A feather of the Simurgh',
+    'scaleSolved': 'The pairs met on the scales; the balance is even. Into the ark they go, two by two.',
     'feathersAll': 'The feathers are whole. The altar is waiting.',
     'horoscope':
         'The sky is arranged as on the lion\'s back. The stones give way.',
@@ -383,17 +385,17 @@ class S {
     'storyIntro':
         'July 1660. Istanbul has been burning for two days. The Lamplighters\' Guild walks among the ashes, gathering every lamp, every candle, every light in every eye.\n\n'
         'Last, they come to Master Hayali\'s screen; they snuff his lamp and take him away. Before the light dies, a shadow falls from the screen: Saye.\n\n'
-        'Saye sets out to find his master, with only a jar of fireflies and a bird who knows the way: the Hoopoe.',
+        'Saye sets out to find her master, with only a jar of fireflies and a bird who knows the way: the Hoopoe.',
     'storyAct0': 'The First Veil · The City Whose Light Was Stolen',
-    'storyAct0Text': 'The dark waters of the cistern, the tower of Galata, Hezarfen\'s wings, a road of clouds, and Mount Qaf at the edge of the world. In the Simurgh\'s mirror, Saye sees what he is.',
+    'storyAct0Text': 'The dark waters of the cistern, the tower of Galata, Hezarfen\'s wings, a road of clouds, and Mount Qaf at the edge of the world. In the Simurgh\'s mirror, Saye sees what she is.',
     'storyAct1': 'The Second Veil · The Mountain',
     'storyAct1Text': 'The Lamplighters carried the master\'s lamp east. The glaciers of Ararat, Noah\'s ship turned to stone, the fallen gods of Nemrut. At every step Saye reaches a light; the Lamplighters are always one step ahead.',
     'storyAct2': 'The Third Veil · Snow',
-    'storyAct2Text': 'For a moment Saye sees his master: in the snow, in chains, his lamp shrunk to a candle\'s flame. While the dragons of Palandoken sleep he skis after the caravan; when the Dragon wakes, he races the avalanche.',
+    'storyAct2Text': 'For a moment Saye sees her master: in the snow, in chains, his lamp shrunk to a candle\'s flame. While the dragons of Palandoken sleep she skis after the caravan; when the Dragon wakes, she races the avalanche.',
     'storyAct3': 'The Fourth Veil · The Fairies',
     'storyAct3Text': 'In Cappadocia, fairies sleep atop the chimneys and giants beneath the earth. The Lamplighters go down to the depths of Derinkuyu; so does Saye.',
     'storyAct5': 'The Fifth Veil · Ötüken',
-    'storyAct5Text': 'Roots hanging from the bottom of Derinkuyu draw Saye up into the sacred forest of Ötüken: green for the first time, daylight for the first time. The Karabasan, on his trail since the cistern, attacks one last time; the White Deer shows the way, and the sun brought down from the top of the Tree of Life scatters it. The tree\'s roots carry Saye beneath the earth, into Erlik\'s realm. He escapes the dark on Er Töştük\'s horse, melts the iron mountain of Ergenekon, and rises to the layers of the sky on the shaman\'s drum; at Ülgen\'s gate a piece of the broken sun is waiting.',
+    'storyAct5Text': 'Roots hanging from the bottom of Derinkuyu draw Saye up into the sacred forest of Ötüken: green for the first time, daylight for the first time. The Karabasan, on her trail since the cistern, attacks one last time; the White Deer shows the way, and the sun brought down from the top of the Tree of Life scatters it. The tree\'s roots carry Saye beneath the earth, into Erlik\'s realm. She escapes the dark on Er Töştük\'s horse, melts the iron mountain of Ergenekon, and rises to the layers of the sky on the shaman\'s drum; at Ülgen\'s gate a piece of the broken sun is waiting.',
     'storyAct4': 'The Last Veil · The Wedding',
     'storyAct4Text': 'Konya, 17 December 1660: Sheb-i Arus. The Lamplighters have brought the master to Mevlana\'s wedding night. They believe that on the wedding night, light cannot die.',
     'storyLocked': 'This veil has not opened yet.',

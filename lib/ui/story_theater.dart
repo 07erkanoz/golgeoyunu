@@ -144,7 +144,7 @@ class _StoryTheaterState extends State<StoryTheater>
       _lineT += dt;
       if (_lineT > _lineLen) _nextLine();
     }
-    GameAudio.instance.updateVoice();
+    GameAudio.instance.updateVoice(dt);
     _tick.value++;
   }
 

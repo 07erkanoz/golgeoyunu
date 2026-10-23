@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:golge/game/hints.dart';
 import 'package:golge/game/levels.dart';
 import 'package:golge/game/strings.dart';
 import 'package:golge/game/voice.dart';
@@ -44,6 +45,14 @@ void main() {
       for (final l in epilogueText) {
         add(l, VoiceRole.perde, 'epilogue');
       }
+      // Oyunun içinden gelen sözler (fısıltı olarak): ziyaretçiler, olaylar,
+      // uyarılar ve düzeneklerin şiirleri. İpucu olanlar (simgede) yok.
+      for (final (key, role) in _sozler) {
+        add(S.of(key), role, 'soz:$key');
+      }
+      for (final key in ['giant', 'medusa', 'shield', 'umay']) {
+        add(Hints.poem(key), VoiceRole.ozan, 'siir:$key');
+      }
       Directory('build/ses').createSync(recursive: true);
       File('build/ses/satirlar_${lang.name}.json').writeAsStringSync(
         const JsonEncoder.withIndent(' ').convert(out),
@@ -51,3 +60,41 @@ void main() {
     }
   });
 }
+
+/// Oyun içi sözler ve okuyacak ses: anlatıcı (rivayet) ya da karanlık
+/// fısıltı (uyarı, kovalamaca).
+const _sozler = [
+  ('cameo_akAna', VoiceRole.rivayet),
+  ('cameo_albasti', VoiceRole.fisilti),
+  ('cameo_asena', VoiceRole.rivayet),
+  ('cameo_ayazAta', VoiceRole.rivayet),
+  ('cameo_basat', VoiceRole.ozan),
+  ('cameo_demirci', VoiceRole.rivayet),
+  ('cameo_erTostuk', VoiceRole.rivayet),
+  ('cameo_erlik', VoiceRole.rivayet),
+  ('cameo_gokKat', VoiceRole.rivayet),
+  ('cameo_kam', VoiceRole.rivayet),
+  ('cameo_suIyesi', VoiceRole.rivayet),
+  ('cameo_tulpar', VoiceRole.rivayet),
+  ('cameo_ulgen', VoiceRole.rivayet),
+  ('chase', VoiceRole.fisilti),
+  ('darkZone', VoiceRole.fisilti),
+  ('shadowLooked', VoiceRole.fisilti),
+  ('blizzard', VoiceRole.rivayet),
+  ('calkuyrukMount', VoiceRole.rivayet),
+  ('tulparMount', VoiceRole.rivayet),
+  ('giantFell', VoiceRole.rivayet),
+  ('guardStone', VoiceRole.rivayet),
+  ('horoscope', VoiceRole.rivayet),
+  ('medusaSealed', VoiceRole.rivayet),
+  ('nevruzStruck', VoiceRole.rivayet),
+  ('perdeSolved', VoiceRole.rivayet),
+  ('scaleSolved', VoiceRole.rivayet),
+  ('ventCrateBurn', VoiceRole.rivayet),
+  ('wings', VoiceRole.rivayet),
+  ('feathersAll', VoiceRole.rivayet),
+  ('forgeCold', VoiceRole.rivayet),
+  ('forgeFuel', VoiceRole.rivayet),
+  ('forgeLit', VoiceRole.rivayet),
+  ('forgeLitBeat', VoiceRole.rivayet),
+];

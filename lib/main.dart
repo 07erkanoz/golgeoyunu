@@ -212,7 +212,11 @@ class _GolgeAppState extends State<GolgeApp> with WindowListener {
                 valueListenable: _game.menuMode,
                 builder: (context, inMenu, _) {
                   if (inMenu) return const SizedBox.shrink();
+                  // Tam ekran: masaüstünde dokunmatik kontroller yokken de
+                  // köşedeki simgeler (ipucu, i, ayarlar) ekrana göre durur
+                  // (yoksa katman küçülüp simgeler ekran dışına düşüyordu).
                   return Stack(
+                    fit: StackFit.expand,
                     children: [
                       if (_isTouch)
                         ValueListenableBuilder<bool>(

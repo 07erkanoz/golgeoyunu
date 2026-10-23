@@ -367,7 +367,7 @@ const prologueEn = [
   'The screen went dark. But one shadow fell from it before the light died.',
   'Where it fell, a birch sapling had risen from the ashes, a single white strip of cloth tied to its branch. Umay stands beside every child who falls.',
   'SHADOW PLAY',
-  'Saye opened his eyes in a city beneath the water: the Basilica Cistern.',
+  'Saye opened her eyes in a city beneath the water: the Basilica Cistern.',
   'More than a thousand years ago the Byzantine emperor Justinian had a palace dug beneath the earth so the city would never go thirsty. Three hundred and thirty-six columns rose into the dark like a forest.',
   'The trunk of one column is always wet. They say it is the tears of the hundreds of slaves who died digging the cistern; the people call it the Weeping Column.',
   'In time the people of Istanbul forgot the cistern. They lowered buckets through the floors of their houses, drew water, caught fish; never knowing a city slept beneath them.',
@@ -397,7 +397,7 @@ const epilogue = [
 
 const epilogueEn = [
   'At the top of the Green Dome, under the snow, a lamp was trembling.',
-  'His master was there, grown old and small. The Lamplighters stood in a ring around him, holding their lanterns toward the lamp.',
+  'Her master was there, grown old and small. The Lamplighters stood in a ring around him, holding their lanterns toward the lamp.',
   '"You came," said the master. "I knew it. No prayer goes unanswered."',
   'The Lamplighters had gathered all the light, and so they had lost their shadows. The master\'s lamp was the only light that gave shadows life. When they had tried to hang the sun for themselves alone, the sun had broken; now they meant to kindle it again with this lamp.',
   '"They brought me here so my lamp would not go out," said the master. "To Mevlana\'s wedding night. They believe light cannot die tonight."',
@@ -409,8 +409,8 @@ const epilogueEn = [
   'Then a light was born from within Saye. The shadow had not vanished; it had joined the light.',
   'All the light the Lamplighters had hoarded for centuries turned toward that light and rose into the sky. The Lamplighters looked at their own shadows falling on the snow, and wept.',
   'The Hoopoe landed on Saye\'s shoulder: "Only one piece of the broken sun was here. The others are scattered to the four corners of the world."',
-  'Saye looked beyond the screen. As if the snow had only just fallen, a road stretched out before him.',
-  'In the wind, his master\'s voice: "Walk on, Saye. The road does not end; the one who walks it changes."',
+  'Saye looked beyond the screen. As if the snow had only just fallen, a road stretched out before her.',
+  'In the wind, her master\'s voice: "Walk on, Saye. The road does not end; the one who walks it changes."',
   'SAYE\'S JOURNEY WILL CONTINUE',
 ];
 
@@ -569,7 +569,7 @@ const interludes = <List<String>>[
 const interludesEn = <List<String>>[
   [],
   [
-    'When he left the cistern, the city was still burning. Out of the smoke rose the Galata Tower: the Genoese Tower of Christ, the highest eye of Istanbul.',
+    'When she left the cistern, the city was still burning. Out of the smoke rose the Galata Tower: the Genoese Tower of Christ, the highest eye of Istanbul.',
     'Thirty years ago, in the days of Sultan Murad, a man looked at the sky from this tower. His name was Hezarfen Ahmed Celebi: the one of a thousand sciences.',
     'First, at Okmeydani, he tested the wind with wings like an eagle\'s; nine times he fell, nine times he rose.',
     'Then one morning, when the south wind blew, he let himself go from the top of the tower. Evliya Celebi tells it: he glided over the Bosphorus and came down in Uskudar, on the Square of the Falconers. That day the whole city saw a man become a bird.',
@@ -577,7 +577,7 @@ const interludesEn = <List<String>>[
     'They say he hid his wings on the top floor of the tower, for someone who is not afraid to fall. Those who fly are exiled, Saye. Fly anyway.',
   ],
   [
-    'The wings carried him from the top of the tower into the clouds: the Sky Road, above Istanbul.',
+    'The wings carried her from the top of the tower into the clouds: the Sky Road, above Istanbul.',
     'Lagari Hasan Celebi, said to be Hezarfen\'s brother, once rose into the sky as well: at Sarayburnu he mounted a seven-branched rocket, and the fire of the powder hurled him into the clouds.',
     'When the fire ran out he fell into the sea, swam to the sultan, and laughed: "The Prophet Jesus sends you his greetings."',
     'The ancients say this road is a bridge seen only by birds and by the dead. At its end lies the edge of the world: Mount Qaf.',
@@ -624,7 +624,7 @@ const interludesEn = <List<String>>[
     'The bard says: the one-eyed giant Tepegöz was as fearsome as a giant of stone; Basat, who grew up among lions, defeated him.',
   ],
   [
-    'When Saye touched the light, for a moment he saw his master.',
+    'When Saye touched the light, for a moment she saw her master.',
     'He was walking in chains in the middle of a caravan, through the snow. His lamp was at his chest; its flame had shrunk to a candle\'s.',
     'With every light of the broken sun they gathered, the Lamplighters drew on the master\'s lamp. The caravan was heading north, to Erzurum.',
     'Erzurum: the Theodosiopolis of the Romans, the Erzen-i Rum of the Seljuks, the fortress of the east. Its winters are so harsh that travelers call it "the gate of winter".',
@@ -637,7 +637,7 @@ const interludesEn = <List<String>>[
     'The elders of Erzurum tell it: when the world was young, two dragon brothers lived on these peaks. In winter they came down to the plain and swallowed flocks and caravans.',
     'One night a dervish climbed to the summit and prayed. Snow fell for seven days and seven nights; the dragons fell asleep beneath it and became the peaks.',
     'Since then the storm is their breath, the fog their sleep. Whoever wakes them, the snow swallows.',
-    'The Lamplighters\' caravan was coming down the far slope. Saye had no burden to carry: a jar of light, and a name. Only by skiing could he catch it.',
+    'The Lamplighters\' caravan was coming down the far slope. Saye had no burden to carry: a jar of light, and a name. Only by skiing could she catch it.',
   ],
   [
     'On the slope of Little Dragon, the Lamplighters held their lanterns to the mountain\'s nose.',
@@ -662,7 +662,7 @@ const interludesEn = <List<String>>[
     'A muffled voice comes from the very bottom of the earth. They say Erlik\'s realm lies deeper still.',
   ],
   [
-    'When Tulpar brought him down through the clouds, the moon was in the sky, and before him lay an endless snowy plain.',
+    'When Tulpar brought her down through the clouds, the moon was in the sky, and before her lay an endless snowy plain.',
     'In the west the domes of a city were shining. The Lamplighters had taken the master there: to Konya, capital of the Seljuks, city of Mevlana.',
     'That night was the seventeenth of December. In Konya they call this night Sheb-i Arus: the wedding night.',
     'Almost four hundred years before, on this night, Mevlana had died. "Do not weep," he had said, "this is my wedding."',
@@ -696,11 +696,11 @@ const interludesEn = <List<String>>[
     'The Lamplighters had carried a piece of the broken sun to the highest layer of the sky. A shaman beat his drum, and Saye rose above the clouds.',
   ],
   [
-    'At the very bottom of Derinkuyu, roots hung between the stones. Saye grasped one; the root drew him upward, toward the light.',
-    'When he came out above the earth, day was breaking. Before him lay an endless forest: birches, pines, moss, birdsong.',
+    'At the very bottom of Derinkuyu, roots hung between the stones. Saye grasped one; the root drew her upward, toward the light.',
+    'When she came out above the earth, day was breaking. Before her lay an endless forest: birches, pines, moss, birdsong.',
     'The Kül Tigin inscription says: the place to hold the realm is the forest of Ötüken; there is no better place.',
     'In the middle of the forest a tree rises to the sky: the Tree of Life. Umay sits on its branches; the souls of children yet to be born perch there as birds.',
-    'But Saye was not alone. The thing that first saw him in the dark of the cistern, that crept after him in Derinkuyu, had come up too: the Karabasan.',
+    'But Saye was not alone. The thing that first saw her in the dark of the cistern, that crept after her in Derinkuyu, had come up too: the Karabasan.',
     'The Karabasan senses masterless shadows. It settles on them as it settles on a sleeper\'s chest, and devours them. A shadow without its master is the sweetest morsel of all.',
     'But it cannot enter the light. Every beam that slips between the leaves of Ötüken is a refuge for Saye.',
     'THE FIFTH VEIL · ÖTÜKEN',
@@ -856,91 +856,91 @@ const bridges = <List<String>>[
 const bridgesEn = <List<String>>[
   [
     'Saye walked through the forest of columns. A water spirit rose from the dark water and pointed her slender hand at a rusted valve.',
-    'At the foot of the columns lay Medusa\'s stone heads: one upside down, one on its side. He passed without letting his shadow touch their gaze.',
-    'On a raft he drifted through the dark channels. Where the water ended, a stair rose toward the burning city.',
+    'At the foot of the columns lay Medusa\'s stone heads: one upside down, one on its side. She passed without letting her shadow touch their gaze.',
+    'On a raft she drifted through the dark channels. Where the water ended, a stair rose toward the burning city.',
   ],
   [
-    'From the tower\'s cellar he climbed floor by floor. The Lamplighters\' watchmen swept every floor with cold lanterns; Saye slipped from shadow to shadow.',
-    'In Hezarfen\'s workshop he found a dusty chest. Inside lay two wings of eagle feathers.',
-    'He passed the bell floor and climbed to the top of the cone. Below, the Golden Horn shone like a mirror. Without fear, he let himself fall.',
+    'From the tower\'s cellar she climbed floor by floor. The Lamplighters\' watchmen swept every floor with cold lanterns; Saye slipped from shadow to shadow.',
+    'In Hezarfen\'s workshop she found a dusty chest. Inside lay two wings of eagle feathers.',
+    'She passed the bell floor and climbed to the top of the cone. Below, the Golden Horn shone like a mirror. Without fear, she let herself fall.',
   ],
   [
-    'On the wind road he spread his wings and left behind the islands of crows and the Lamplighters\' cloud camp.',
+    'On the wind road she spread her wings and left behind the islands of crows and the Lamplighters\' cloud camp.',
     'Over the storm islands lightning lit the screen. Saye flew across a bridge woven of shadow.',
     'Beyond the clouds Tulpar\'s mane flashed for a moment. Ahead, the gate of the sun was opening.',
   ],
   [
-    'He crossed the emerald bridge and glided past the Lamplighters\' sky outpost, giving his shadow to the wind.',
-    'One by one he found the Simurgh\'s three feathers; each time he touched one, a bird sang somewhere on the mountain.',
+    'She crossed the emerald bridge and glided past the Lamplighters\' sky outpost, giving her shadow to the wind.',
+    'One by one she found the Simurgh\'s three feathers; each time she touched one, a bird sang somewhere on the mountain.',
     'With the third feather, the door of the mirror hall opened.',
   ],
   [
-    'From the foot of the mountain he climbed along the ropes, the blizzard in his face. He rested in an abandoned sheepfold.',
-    'At Akori he passed the vineyard Noah is said to have planted. At Saint Hakob\'s monastery he walked past the white shadow of Ayaz Ata.',
+    'From the foot of the mountain she climbed along the ropes, the blizzard in her face. She rested in an abandoned sheepfold.',
+    'At Akori she passed the vineyard Noah is said to have planted. At Saint Hakob\'s monastery she walked past the white shadow of Ayaz Ata.',
     'At the bottom of the ice cave, the threshold of the Flood opened.',
   ],
   [
     'In the holds the shadows of lions, horses and birds were searching for their mates. Saye opened the locks; the pairs found each other.',
-    'At the bottom of the hold well, Ak Ana looked up at him from the water. The water rose and carried Saye to the deck.',
+    'At the bottom of the hold well, Ak Ana looked up at her from the water. The water rose and carried Saye to the deck.',
     'On the deck the place of the light was empty; the Lamplighters had long since taken it.',
   ],
   [
-    'On the western terrace he passed among the headless gods. Earthquake rifts opened and closed beneath his feet.',
-    'Through the eagle\'s eye and the stones of the tumulus he found a passage east.',
+    'On the western terrace she passed among the headless gods. Earthquake rifts opened and closed beneath her feet.',
+    'Through the eagle\'s eye and the stones of the tumulus she found a passage east.',
   ],
   [
     'On the eastern terrace the stone giant woke; the mountain shook with every step. Saye fled from one of its shadows to the next.',
-    'The moment the sun struck the stone faces, he reached for the light the Lamplighters were about to kindle.',
+    'The moment the sun struck the stone faces, she reached for the light the Lamplighters were about to kindle.',
   ],
   [
     'On the caravan road Gokboru walked ahead. Saye stepped in its tracks through the forest of wolves.',
-    'He crossed the frozen lake, passed an inn whose hearth had gone cold, and reached the foot of the dragon.',
+    'She crossed the frozen lake, passed an inn whose hearth had gone cold, and reached the foot of the dragon.',
   ],
   [
-    'In the shepherd\'s hut he found a wooden sled and let himself go down the dragon\'s back.',
-    'He slid beneath the lantern balloons and over the magnetic hill, flew from the dragon\'s leap and came down toward Erzurum.',
+    'In the shepherd\'s hut she found a wooden sled and let herself go down the dragon\'s back.',
+    'She slid beneath the lantern balloons and over the magnetic hill, flew from the dragon\'s leap and came down toward Erzurum.',
   ],
   [
     'The dragon woke; its white breath poured after Saye.',
-    'Gokboru ran ahead. Saye leapt from the broken ridge one last time and slipped into a shelter; the avalanche passed over his head.',
+    'Gokboru ran ahead. Saye leapt from the broken ridge one last time and slipped into a shelter; the avalanche passed over her head.',
   ],
   [
-    'From Mushkara he climbed the fairy chimneys. Among the dovecotes and rock churches he saw the fairies dance.',
-    'Albasti came with her red shadow to steal his light. Saye took refuge behind iron; Albasti fears iron.',
-    'As the moon rose he reached the top of Uchisar.',
+    'From Mushkara she climbed the fairy chimneys. Among the dovecotes and rock churches she saw the fairies dance.',
+    'Albasti came with her red shadow to steal her light. Saye took refuge behind iron; Albasti fears iron.',
+    'As the moon rose she reached the top of Uchisar.',
   ],
   [
-    'From the cellar to the chapel, through the air shafts, he went down into the deep well. The round stone doors let him in from the inside.',
-    'At the giants\' gate the sleeping giant woke and gave chase; in the dark, Gokboru\'s eyes showed him the way.',
+    'From the cellar to the chapel, through the air shafts, she went down into the deep well. The round stone doors let her in from the inside.',
+    'At the giants\' gate the sleeping giant woke and gave chase; in the dark, Gokboru\'s eyes showed her the way.',
     'At the very bottom, roots hung between the stones; a smell of leaves came from above.',
   ],
   [
-    'He walked from the plain of Konya to the old mound, through the gate of Iconium to the Hill of Alaeddin.',
-    'He passed beneath the starry dome of the Karatay, beside the Slender Minaret, past the well of Shams. In the semahane the semazens were turning.',
+    'She walked from the plain of Konya to the old mound, through the gate of Iconium to the Hill of Alaeddin.',
+    'She passed beneath the starry dome of the Karatay, beside the Slender Minaret, past the well of Shams. In the semahane the semazens were turning.',
     'Snow was falling. Saye climbed the Green Dome.',
   ],
   [
-    'He passed the black gate. On the ink bridges the Kormos sniffed at his light; Saye hid in the dark.',
-    'In the dungeon of kut he opened the cages; the stolen souls became birds and flew upward.',
-    'At the bottom of Chalkuyruk\'s well, Er Toshtuk\'s horse raised its head and showed him the way up.',
+    'She passed the black gate. On the ink bridges the Kormos sniffed at her light; Saye hid in the dark.',
+    'In the dungeon of kut she opened the cages; the stolen souls became birds and flew upward.',
+    'At the bottom of Chalkuyruk\'s well, Er Toshtuk\'s horse raised its head and showed her the way up.',
   ],
   [
-    'Through Kiyan Gorge he went down to the foot of the iron mountain. He pushed the coal crates into the forge and pressed the bellows in rhythm; the forge burned again.',
-    'Molten iron came in waves. He crossed the islets of the misty meadow; in Asena\'s cave the eyes of the grey wolf shone.',
-    'He opened a way through the iron mountain. He struck the Nevruz anvil three times; the gate opened.',
+    'Through Kiyan Gorge she went down to the foot of the iron mountain. She pushed the coal crates into the forge and pressed the bellows in rhythm; the forge burned again.',
+    'Molten iron came in waves. She crossed the islets of the misty meadow; in Asena\'s cave the eyes of the grey wolf shone.',
+    'She opened a way through the iron mountain. She struck the Nevruz anvil three times; the gate opened.',
   ],
   [
-    'With every beat of the shaman\'s drum he rose from the cloud gate to the moon layer, and from the moon layer to the star layer.',
-    'Holding on to the horses of the Iron Stake he slipped between the Seven Thieves; with a yada stone he told the Wind Mother which way to blow.',
+    'With every beat of the shaman\'s drum she rose from the cloud gate to the moon layer, and from the moon layer to the star layer.',
+    'Holding on to the horses of the Iron Stake she slipped between the Seven Thieves; with a yada stone she told the Wind Mother which way to blow.',
   ],
   [
-    'The roots brought him up from beneath the earth into the green of Ötüken. He walked in the light falling between the leaves; in the shadow the Karabasan\'s eyes opened and closed.',
-    'With every beat of the shaman\'s drum the roots rose; he swung on the vines across thorny ravines. A white deer followed the light of his fireflies and opened the root gates.',
+    'The roots brought her up from beneath the earth into the green of Ötüken. She walked in the light falling between the leaves; in the shadow the Karabasan\'s eyes opened and closed.',
+    'With every beat of the shaman\'s drum the roots rose; she swung on the vines across thorny ravines. A white deer followed the light of her fireflies and opened the root gates.',
     'In the Black Marsh the Karabasan attacked with all its strength. Saye climbed the Tree of Life and brought the sun down with mirrors; the light flowed to the roots, and the Karabasan scattered.',
   ],
   [
-    'The Huma\'s shadow fell upon him. By the light of Süge Toyon\'s lightning he stepped on the black clouds.',
-    'At Ülgen\'s gate, Tulpar was waiting for him.',
+    'The Huma\'s shadow fell upon her. By the light of Süge Toyon\'s lightning she stepped on the black clouds.',
+    'At Ülgen\'s gate, Tulpar was waiting for her.',
   ],
 ];
 
@@ -2162,8 +2162,8 @@ const levels = <LevelDef>[
       'Geyik ışığa karışmadan önce başıyla yarı gösterdi: yol sarmaşıklardan geçer. Ötüken\'in sarmaşıkları atalarını da taşımıştı.',
     ],
     whispersEn: [
-      'The roots brought Saye up into the world: Ötüken, the sacred forest of his forefathers.',
-      'But he is not alone. The Karabasan that first saw him in the cistern has come up too; it devours masterless shadows. It cannot enter the light.',
+      'The roots brought Saye up into the world: Ötüken, the sacred forest of her forefathers.',
+      'But she is not alone. The Karabasan that first saw her in the cistern has come up too; it devours masterless shadows. It cannot enter the light.',
       'When the wind blows, the light shifts. The leaves of Ötüken whisper first, then stir.',
       'A drum sounds from the grove. A shaman is calling Saye to the Tree of Life; his drum wakes the roots.',
       'Vines hang from the birches. The forefathers said: the forest opens its road to whoever holds on.',

@@ -1,0 +1,119 @@
+{
+ "_aciklama": "Satır kimliği → ses ve not. Not yalnız vurgu, durak ve tempo söyler; tonu (destansı anlatıcı) değiştirmez. Ses: Charon (hayali, usta, ozan, rivayet), Enceladus (karanlık fısıltı), Leda (Sâye), Leda+Charon (hatıra).",
+ "2c706120": {
+  "ses": "Charon",
+  "not": "Pause after '1660'. Weight on 'yanıyordu', lower at the end."
+ },
+ "592867ce": {
+  "ses": "Charon",
+  "not": "Build the list: 'her kandili, her mumu, her gözdeki ışığı', each a step heavier; 'gözdeki ışığı' darkest."
+ },
+ "a1834d28": {
+  "ses": "Charon",
+  "not": "Pause before 'Kandili söndürdüler'. 'ustayı götürdüler' lower and heavy."
+ },
+ "28e84525": {
+  "ses": "Charon",
+  "not": "'Perde karardı.' low. Lift slightly on 'Ama bir gölge'; stress 'bir gölge'."
+ },
+ "ff219fee": {
+  "ses": "Charon",
+  "not": "Stress 'tek bir ak çaput'. Pause before 'Umay'; the last sentence firm and reassuring."
+ },
+ "3c50a97f": {
+  "ses": "Charon",
+  "not": "Short pause before 'Yerebatan Sarnıcı'; name it with weight."
+ },
+ "71f49627": {
+  "ses": "Charon",
+  "not": "Stress 'Üç yüz otuz altı sütun'; 'bir orman gibi dikildi' broad and slow."
+ },
+ "23b8803f": {
+  "ses": "Charon",
+  "not": "'Derler ki' lower, like a rumour. Stress 'gözyaşıdır' and 'Ağlayan Sütun'."
+ },
+ "c5d1e5db": {
+  "ses": "Charon",
+  "not": "Even pace; the last phrase 'altlarında bir şehir uyuduğunu bilmeden' lower."
+ },
+ "e30e835a": {
+  "ses": "Charon",
+  "not": "Slow. Stress 'bir gölge'; 'yürüyor' low and final."
+ },
+ "53c344f1": {
+  "ses": "Charon",
+  "not": "The bard recites his own saying, first person. Pause at the semicolon; stress 'Umay korur' at the end."
+ },
+ "4cfaca07": {
+  "ses": "Enceladus",
+  "not": "'Sâye…' drawn out, then a pause. The question quiet and searching."
+ },
+ "e92cfdd3": {
+  "ses": "Enceladus",
+  "not": "Fearful warning. Stress 'Fener' and 'alır'. 'Karanlıkta kal.' low, urgent command."
+ },
+ "6504aa8d": {
+  "ses": "Enceladus",
+  "not": "Stress 'Taşa dönmesin'. Pause, then 'Bakmadan görmeyi öğren' as a riddle."
+ },
+ "a7838b49": {
+  "ses": "Enceladus",
+  "not": "Stress the contrast 'zorla değil, sabırla' with a pause between."
+ },
+ "82076661": {
+  "ses": "Enceladus",
+  "not": "Tense, very quiet. Stress 'uyandırma'. 'Her ses bir ihbardır.' sharp."
+ },
+ "ba49700a": {
+  "ses": "Enceladus",
+  "not": "Stress 'iner' and 'yükselsin' as opposites; the second sentence slower."
+ },
+ "d56c0910": {
+  "ses": "Enceladus",
+  "not": "Stress 'ışığa', pause, then 'karanlığa' lower."
+ },
+ "e262b177": {
+  "ses": "Enceladus",
+  "not": "Warning. Stress 'seni taşır', then 'Senden ağır olanı taşımaz' heavier."
+ },
+ "b62ca29a": {
+  "ses": "Enceladus",
+  "not": "Pause after 'kapıdır'; 'önce boşalır, sonra yükseltir' rising on 'yükseltir'."
+ },
+ "72fde766": {
+  "ses": "Charon",
+  "not": "Stress 'ters' and 'yan'. 'Bu ikisini düz bırakmışlar' slower, ominous."
+ },
+ "88d9e29e": {
+  "ses": "Charon",
+  "not": "Stress 'hiç doğrudan bakmadı'; the second sentence steady and brave."
+ },
+ "a81f92ec": {
+  "ses": "Charon",
+  "not": "Pause before 'Şimdi'; 'bir gölge taşıyor' low and haunting."
+ },
+ "1c09c1e7": {
+  "ses": "Leda+Charon",
+  "not": "Saye remembers with love. The master's words kind and wise."
+ },
+ "c7856eb5": {
+  "ses": "Leda+Charon",
+  "not": "Saye remembers fondly. The master's words 'Gölgeler korkar' tender, half joking."
+ },
+ "4f91d6e9": {
+  "ses": "Leda+Charon",
+  "not": "Saye curious and a little sad. The master's words firm and secretive."
+ },
+ "adff210d": {
+  "ses": "Leda+Charon",
+  "not": "Saye warm and proud. The master speaks with a soft laugh."
+ },
+ "e7e68828": {
+  "ses": "Leda+Charon",
+  "not": "Saye a little uneasy. The master's words grave, a warning."
+ },
+ "87d70448": {
+  "ses": "Leda",
+  "not": "Saye remembers a quiet night on the water, dreamy and slow."
+ }
+}

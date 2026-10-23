@@ -340,14 +340,23 @@ class GameAudio {
   SoundHandle? _voice;
   AudioSource? _voiceSrc;
 
-  /// Sırada bekleyen satırlar: metin, sıraya girdiği an, başlayınca
+  /// Sırada bekleyen satır (en çok bir: yenisi gelince eskisinin yerine
+  /// geçer, anlatım geride kalmaz): metin, sıraya girdiği an, başlayınca
   /// çağrılacak (süreyi saniye olarak alır).
   final _voiceQueue = <(String, int, void Function(double)?)>[];
 
   /// Bu kadar bekleyen satır çalınmaz (o an geçti).
-  static const _voiceStaleMs = 12000;
+  static const _voiceStaleMs = 8000;
 
   bool _voiceBusy = false;
+
+  /// Çalan satırın kalan süresi (oyun dururken azalmaz). Satırın bittiğini
+  /// motorun "geçerli mi" sorusuna bırakmıyoruz: diskten akan seste bu
+  /// erken "bitti" diyebiliyor, sıradaki satır üstüne biniyordu.
+  double _voiceLeft = 0;
+
+  /// Her susturmada artar: yüklenirken kesilen satır sonradan çalmaz.
+  int _voiceGen = 0;
 
   String _voicePath(String text) =>
       'assets/voice/${S.en ? 'en' : 'tr'}/${voiceId(text)}.mp3';
@@ -364,17 +373,18 @@ class GameAudio {
     void Function(double seconds)? onStart,
   }) {
     if (!_ready || !Settings.voice || !hasVoice(text)) return;
-    if (interrupt) {
-      _voiceQueue.clear();
-      stopVoice();
-    }
-    _voiceQueue.add((text, DateTime.now().millisecondsSinceEpoch, onStart));
+    if (interrupt) stopVoice();
+    _voiceQueue
+      ..clear()
+      ..add((text, DateTime.now().millisecondsSinceEpoch, onStart));
     _nextVoice();
   }
 
   /// Anlatımı susturur (perde atlanınca, menüye dönülünce).
   void stopVoice({bool clearQueue = false}) {
     if (clearQueue) _voiceQueue.clear();
+    _voiceGen++;
+    _voiceLeft = 0;
     final h = _voice;
     final src = _voiceSrc;
     _voice = null;
@@ -385,10 +395,10 @@ class GameAudio {
   }
 
   /// Her karede: biten satır bırakılır, sıradaki başlar.
-  void updateVoice() {
-    final h = _voice;
-    if (h != null && !_safe(() => _s.getIsValidVoiceHandle(h), false)) {
-      stopVoice();
+  void updateVoice(double dt) {
+    if (_voice != null) {
+      if (!_paused) _voiceLeft -= dt;
+      if (_voiceLeft <= 0) stopVoice();
     }
     _nextVoice();
   }
@@ -400,8 +410,14 @@ class GameAudio {
     if (_voiceQueue.isEmpty) return;
     final (text, _, onStart) = _voiceQueue.removeAt(0);
     _voiceBusy = true;
+    final gen = _voiceGen;
     try {
       final src = await _s.loadAsset(_voicePath(text), mode: LoadMode.disk);
+      if (gen != _voiceGen) {
+        // Yüklenirken susturuldu (perde satırı geçti): çalınmaz.
+        _safe(() => _s.disposeSource(src), null);
+        return;
+      }
       final h = _s.play(
         src,
         volume: Settings.voiceVolume.clamp(0.0, 1.0),
@@ -409,14 +425,18 @@ class GameAudio {
       );
       _voice = h;
       _voiceSrc = src;
+      final length = _s.getLength(src).inMilliseconds / 1000;
+      _voiceLeft = length + 0.1;
       _setBedVolume();
-      onStart?.call(_s.getLength(src).inMilliseconds / 1000);
+      onStart?.call(length);
       _log('anlatım ${voiceId(text)}');
     } catch (e) {
       _log('anlatım çalınamadı: $e');
     } finally {
       _voiceBusy = false;
     }
+    // Yüklenirken yeni satır geldiyse sırası şimdi.
+    if (_voice == null) _nextVoice();
   }
 
   /// Ses düzeyi ayardan değişince çalan satıra da uygulanır.

@@ -25,18 +25,24 @@ sys.path.insert(0, str(pathlib.Path(__file__).parent))
 import ses_deneme_gemini as g  # noqa: E402  (anahtar, istek, kota beklemesi)
 
 MODEL = "gemini-3.8-flash-tts"
-NOTES = pathlib.Path("tools/ses_notlari.json")
+NOTES = pathlib.Path("tools/ses_notlari")  # her bölüm grubu ayrı dosya
 
 # Seslerin kalıcı tarifi; satırın kendi notu bunun üstüne eklenir.
 PROFILE = {
+    # Tek ve sabit bir sicil: satır notları yalnız vurguyu, durağı ve
+    # tempoyu değiştirir; anlatıcı satırdan satıra mod değiştirmez.
     "Charon": (
-        "Voice: the old master of a Turkish shadow theatre (hayali), old and "
-        "wise, deep and resonant, calm authority. Pace: natural storytelling "
-        "speed, not slow; brief pauses only where noted."
+        "Voice: the old master of a Turkish shadow theatre (hayali) telling an "
+        "epic legend. Keep ONE consistent register in every line: epic, grave, "
+        "resonant, mythic storyteller with calm authority. Never switch into a "
+        "casual, chatty or soft 'poetry reading' mode; fear and excitement stay "
+        "inside the same epic voice (lower or faster, never a different "
+        "narrator). Pace: natural storytelling speed, not slow."
     ),
     "Enceladus": (
-        "Voice: a mysterious, breathy whisper from the shadows, close to the "
-        "listener. Pace: natural, not slow."
+        "Voice: a mythic, otherworldly whisper from the shadows, close to the "
+        "listener. Keep the same register in every line: grave and epic even "
+        "when quiet. Pace: natural, not slow."
     ),
     "Leda": (
         "Voice: Saye, a girl of about twelve, apprentice of an old shadow-play "
@@ -161,12 +167,27 @@ def dialogue(text: str) -> list[tuple[str, str]]:
         said = m.group(1).strip().rstrip(",")
         if said and said[-1] not in ".!?…":
             said += "."
-        parts.append(("Usta", said))
+        # Sâye'nin kendi sözü ("…" dedim / sordum; "Usta, …"): onun sesiyle.
+        after = text[m.end() : m.end() + 24].lower()
+        low = said.lower()
+        mine = (
+            re.match(r"\s*,?\s*(diye )?(dedim|sordum|i said|i asked)", after)
+            or low.startswith(("usta", "master"))
+            or re.search(r",\s*(usta|master)\s*[?.!…]*$", low)
+        )
+        parts.append(("Saye" if mine else "Usta", said))
         at = m.end()
     rest = text[at:].strip(" ,")
     if rest:
         parts.append(("Saye", rest))
-    return parts
+    # Art arda aynı konuşmacı: tek parça ("Kim bu?" dedim.).
+    merged: list[tuple[str, str]] = []
+    for who, line in parts:
+        if merged and merged[-1][0] == who:
+            merged[-1] = (who, merged[-1][1] + " " + line)
+        else:
+            merged.append((who, line))
+    return merged
 
 
 def body_dialogue(parts: list[tuple[str, str]], note: str) -> dict:
@@ -288,12 +309,16 @@ def main() -> None:
     ap.add_argument("--kimlik", nargs="*", help="yalnız bu satırlar")
     ap.add_argument("--yeniden", action="store_true", help="var olanı yeniden üret")
     ap.add_argument("--kuru", action="store_true", help="üretmeden listele")
+    ap.add_argument("--hatirasiz", action="store_true", help="hatıraları atla")
+    ap.add_argument("--hatiralar", action="store_true", help="yalnız hatıralar")
     a = ap.parse_args()
     global DIL
     DIL = a.dil
 
     lines = json.loads(pathlib.Path(f"build/ses/satirlar_{a.dil}.json").read_text())
-    notes = json.loads(NOTES.read_text()) if NOTES.exists() else {}
+    notes: dict = {}
+    for f in sorted(NOTES.glob("*.json")):
+        notes.update(json.loads(f.read_text()))
 
     def wanted(e: dict) -> bool:
         if a.kimlik:
@@ -314,13 +339,17 @@ def main() -> None:
         out = out_dir / f"{e['id']}.mp3"
         if out.exists() and not a.yeniden:
             continue
+        if a.hatirasiz and e["role"] == "hatira":
+            continue
+        if a.hatiralar and e["role"] != "hatira":
+            continue
         spec = notes.get(e["id"], {})
         voice = spec.get("ses", ROLE_VOICE[e["role"]])
         note = spec.get("not", "")
         if is_title(e["text"]):
             continue
         text = spoken(PREFIX.sub("", e["text"]), a.dil)
-        if e["role"] == "ozan":
+        if BARD.match(text):
             text = BARD.sub("", text)
             text = text[:1].upper() + text[1:]
         if a.kuru:

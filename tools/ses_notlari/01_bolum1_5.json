@@ -1,0 +1,375 @@
+{
+ "_aciklama": "Bölüm 1-5 (Galata, Gökyolu, Kaf, Ağrı, Nuh'un Gemisi). Satır kimliği → ses ve not. Not yalnız vurgu, durak ve tempo söyler; tonu (destansı anlatıcı) değiştirmez.",
+ "8fb6edab": {
+  "ses": "Charon",
+  "not": "Weight on 'hâlâ yanıyordu'. Pause before 'Galata Kulesi'; 'İstanbul'un en yüksek gözü' slower, final."
+ },
+ "1d0f2d43": {
+  "ses": "Charon",
+  "not": "Pause after 'Otuz yıl önce'. Name 'Hezarfen Ahmed Çelebi' with weight; pause, then 'bin fen bilen' lower."
+ },
+ "9529cbb3": {
+  "ses": "Charon",
+  "not": "Even pace to the semicolon. 'dokuz kez düştü, dokuz kez kalktı' two equal beats, stress 'kalktı'."
+ },
+ "2dda82a8": {
+  "ses": "Charon",
+  "not": "Stress 'kendini boşluğa bıraktı', short pause after. 'Evliya Çelebi anlatır' lower. Weight on 'bir insanın kuş olduğunu'."
+ },
+ "aac55a16": {
+  "ses": "Charon",
+  "not": "The Sultan's words grave, measured. Pause before 'Hezarfen'i Cezayir'e sürdüler'. 'gurbette öldü' low and final."
+ },
+ "8179afc7": {
+  "ses": "Charon",
+  "not": "'Derler ki' lower, like a rumour. Pause before 'Uçanlar sürgün edilir, Sâye'; then 'Yine de uç.' firm and short."
+ },
+ "55c861ff": {
+  "ses": "Charon",
+  "not": "The bard recites his own saying, first person. Pause at the semicolon; stress 'gölgesini yerde bırakandır' at the end."
+ },
+ "a822534a": {
+  "ses": "Enceladus",
+  "not": "Stress 'her şeyi hatırlar'. Pause at the semicolon; 'düşenleri de' lower, ominous."
+ },
+ "fa14ab84": {
+  "ses": "Enceladus",
+  "not": "Warning. Stress 'kopan'. 'Hiçbir yer seni uzun süre taşımaz' slower, stress 'uzun süre'."
+ },
+ "33e2ca02": {
+  "ses": "Enceladus",
+  "not": "Tense, very quiet. Stress 'Kandilci'. Pause, then 'Kargalar onun gözleridir' low and sharp."
+ },
+ "5a5932e7": {
+  "ses": "Enceladus",
+  "not": "Stress 'otuz yıldır'. Pause before 'Hezarfen gibi'; stress 'teslim ol' and 'lodos seni de taşır'."
+ },
+ "273f12ce": {
+  "ses": "Enceladus",
+  "not": "Stress 'ışığı toplayan camını'. Pause at the semicolon; 'Bir aynayla ışığı dilediğin göze çevir' as a riddle."
+ },
+ "9ff3b230": {
+  "ses": "Enceladus",
+  "not": "Stress 'yanıyor'. Pause; 'Alevin de bir nefesi var' slower; 'dinle' a short, quiet command."
+ },
+ "5ed7e2a8": {
+  "ses": "Enceladus",
+  "not": "Stress 'susturur'. Pause; 'Hangisini' stressed, 'iyi seç' slow and grave."
+ },
+ "9e0ecf12": {
+  "ses": "Enceladus",
+  "not": "Stress 'inler'. 'bir kez sen çal' even; pause, then 'Kandilciler sese gelir' fearful warning, low."
+ },
+ "bbaf04e5": {
+  "ses": "Leda+Charon",
+  "not": "Saye remembers fondly. The master's words slow; stress 'aynadır' and 'kendine orada bakar'."
+ },
+ "3630fd11": {
+  "ses": "Leda+Charon",
+  "not": "Saye remembers with longing. The master's words a promise; stress 'bütün perdeyi'."
+ },
+ "f5df403f": {
+  "ses": "Leda",
+  "not": "Saye uneasy, quiet. Stress 'soğuktur'; pause, then 'sevmez, sayar' with weight on 'sayar'."
+ },
+ "248c810f": {
+  "ses": "Leda+Charon",
+  "not": "Saye moved, a little proud. The master's memory slow; stress 'yüzüne' and 'Korkmuyordu'; the last sentence wistful."
+ },
+ "2e25bf2c": {
+  "ses": "Leda+Charon",
+  "not": "Saye remembers, thoughtful. The master's question slow and searching; stress 'gölgesi'."
+ },
+ "54cfc58d": {
+  "ses": "Charon",
+  "not": "Stress 'bulutların arasına'. Pause before 'Gökyolu'; name it with weight."
+ },
+ "a73c5792": {
+  "ses": "Charon",
+  "not": "Name 'Lagari Hasan Çelebi' with weight. Stress 'yedi kollu bir fişeğe'; 'bulutlara fırlattı' faster, lifting."
+ },
+ "7d4584eb": {
+  "ses": "Charon",
+  "not": "'denize düştü' plain; slight lift on 've güldü'. The quoted greeting proud, a touch of mischief in tempo."
+ },
+ "f6de70ac": {
+  "ses": "Charon",
+  "not": "Stress 'kuşlara ve ölülere'. Pause before 'Kaf Dağı'; name it slow and heavy."
+ },
+ "ffa641f0": {
+  "ses": "Charon",
+  "not": "Lower for the Hoopoe's words. Stress 'güneşi onlar kırdı'; pause, then 'Ustanın kandilini' heavier."
+ },
+ "279dd5fe": {
+  "ses": "Charon",
+  "not": "Slightly faster on 'dörtnala geçti'. Pause before 'Tulpar'; stress 'yiğidin yoldaşı'."
+ },
+ "c43cfe75": {
+  "ses": "Charon",
+  "not": "The bard recites his own saying, first person. 'Bulut yol olur, yiğit yolcu' two beats; stress 'önden bilir'."
+ },
+ "6593a6fe": {
+  "ses": "Enceladus",
+  "not": "Slow. Hold the pause after 'bir parçası…'; 'Sıcaklığı tanıdık' quiet, stress 'tanıdık'."
+ },
+ "c40bc3ce": {
+  "ses": "Enceladus",
+  "not": "Warning. Stress 'Burada da'. Pause; 'Gök bile onların' low and grave."
+ },
+ "c9a347e8": {
+  "ses": "Enceladus",
+  "not": "Short. Stress 'boş değil'; low at the end."
+ },
+ "124645aa": {
+  "ses": "Enceladus",
+  "not": "Stress 'taşır'. Pause at the semicolon; 'yeter ki bırakma' firm, stress 'bırakma'."
+ },
+ "a9080e9e": {
+  "ses": "Charon",
+  "not": "Stress 'balonlara'. Pause; 'Gökte de gözleri var' lower, ominous."
+ },
+ "22231698": {
+  "ses": "Enceladus",
+  "not": "Pause after 'Gölgeden bir köprü'. Stress 'dağılır'. 'Karanlığını kolla' low command."
+ },
+ "7273eca8": {
+  "ses": "Enceladus",
+  "not": "Quick on 'Şimşek çakınca bir an'; pause; 'önündeki yol da' slower, stress 'yol'."
+ },
+ "0e58ef8c": {
+  "ses": "Enceladus",
+  "not": "Stress 'Kırık güneşin kapısı'. Pause; 'kimseye açmaz' low and heavy."
+ },
+ "53662bb6": {
+  "ses": "Leda+Charon",
+  "not": "Saye remembers warmly. The master's words grave; stress 'Yol gösterene'."
+ },
+ "5f3743f0": {
+  "ses": "Leda+Charon",
+  "not": "The master's words a promise; stress 'geri getireceğiz'. Saye's last sentence slower, full of wonder."
+ },
+ "d62ab7b3": {
+  "ses": "Leda+Charon",
+  "not": "Saye remembers, a little awed. The master's words calm; stress 'kandildir'."
+ },
+ "766d225e": {
+  "ses": "Leda",
+  "not": "Saye remembers with a small smile, a little guilty. Stress 'pamukla'; 'cebime koyardım' quick."
+ },
+ "ad1f49ae": {
+  "ses": "Charon",
+  "not": "Stress 'dünyanın kıyısı'. Pause before 'Kaf'; name it short and heavy."
+ },
+ "d2473f3e": {
+  "ses": "Charon",
+  "not": "'Eskiler derdi ki' lower. Stress 'bir yüzük gibi sarar' and 'ne gece vardır ne gündüz'. Pause before 'Simurg'."
+ },
+ "ec5b10bc": {
+  "ses": "Charon",
+  "not": "Stress 'Hüdhüd yol gösterdi'. 'yolu bilen tek kuş' weighted; pause, then 'Şimdi senin rehberin' direct."
+ },
+ "1d14e929": {
+  "ses": "Charon",
+  "not": "Name the seven valleys slowly, a beat each; 'yokluk' lowest. Pause before 'Kaf'a yalnızca otuz kuş vardı'; stress 'otuz'."
+ },
+ "405b09c7": {
+  "ses": "Charon",
+  "not": "Stress 'üç tüyünü'. Pause; 'zirvedeki aynayı göremez' slower, stress 'aynayı'."
+ },
+ "bb65df03": {
+  "ses": "Charon",
+  "not": "The bard recites his own saying, first person. Stress 'zümrüt bir dağ'; pause at the semicolon; 'orada dinlenir' slow, final."
+ },
+ "426445f6": {
+  "ses": "Enceladus",
+  "not": "Slow. 'Burası Kaf.' with weight. Pause; stress 'bin yıl' and 'otuzu'."
+ },
+ "03957e47": {
+  "ses": "Charon",
+  "not": "Stress 'göğe de nöbetçi'. Pause; 'kimseyle bölüşmezler' low and hard."
+ },
+ "55ac2514": {
+  "ses": "Enceladus",
+  "not": "Warning on 'ışığa dayanmaz'. Pause; 'Ay ışığı da aynaya düşer' as a riddle, stress 'Ay ışığı'."
+ },
+ "8580fa95": {
+  "ses": "Enceladus",
+  "not": "Stress 'yolcudur'. Pause; 'Ona yaslanan düşmez' slow and certain."
+ },
+ "770233b2": {
+  "ses": "Enceladus",
+  "not": "'Üç ayna, bir ışık' two separate beats. Pause; stress 'yolunun sonunda'."
+ },
+ "1e021b32": {
+  "ses": "Charon",
+  "not": "Stress 'üç tüy'. Pause; 'aynayı göremez' slower, final."
+ },
+ "98b34c70": {
+  "ses": "Enceladus",
+  "not": "Tense, quiet. Stress 'iki göz'. 'kör noktası' at the end, with a short pause before."
+ },
+ "24d1f436": {
+  "ses": "Enceladus",
+  "not": "Stress 'nefes alır'; 'inip kalkarlar' slow, rhythmic. 'Onlarla birlikte yüksel' rising."
+ },
+ "eeab1895": {
+  "ses": "Leda+Charon",
+  "not": "Saye remembers, puzzled. The master's words slow; pause before 'Otuz kuş vardır'; 'ancak varan bilir' secretive."
+ },
+ "5c8d3bd8": {
+  "ses": "Leda",
+  "not": "Saye remembers quietly. Pause at the semicolon; stress 'ışığı anladım'."
+ },
+ "20e975fe": {
+  "ses": "Leda+Charon",
+  "not": "Saye thoughtful. The master's words measured; stress the contrast 'kendini' and 'ışığı'."
+ },
+ "facc5acc": {
+  "ses": "Leda+Charon",
+  "not": "Saye remembers with wonder. Stress 'otuz kuş' and 'tek bir'; pause before the master's 'İşte Simurg'."
+ },
+ "19d405b7": {
+  "ses": "Charon",
+  "not": "Stress 'kendilerini gördüler'. Pause before the last sentence; '\"otuz kuş\" demektir' slow, revealing."
+ },
+ "f35fb977": {
+  "ses": "Charon",
+  "not": "Short sentences, a pause after each. 'Bir gölge vardı' low; 'Sâye: eski dilde gölge' slow, final."
+ },
+ "120b2791": {
+  "ses": "Charon",
+  "not": "Stress 'Kaf'ta değildi'. 'tufandan beri sönmeyen ışığın' weighted; pause, then 'Ağrı'ya' heavy."
+ },
+ "3b0fd87a": {
+  "ses": "Charon",
+  "not": "Names 'Masis' and 'Çiyayê Agirî' clear and unhurried. Stress 'gemi onun omzuna oturmuş'; 'yeniden doğmuş' lower."
+ },
+ "46d804ca": {
+  "ses": "Charon",
+  "not": "'Zirvesine çıkılmaz' firm. Stress 'yıllarca' and 'dağın eteğinde'. The angel's words grave, with a pause at the comma."
+ },
+ "1a058b4b": {
+  "ses": "Charon",
+  "not": "Stress 'ak sakallı bir ihtiyar'. Pause before 'Ayaz Ata'; 'Kışın ağırlığı' slow and heavy."
+ },
+ "239ae07b": {
+  "ses": "Charon",
+  "not": "The bard recites his own saying, first person. Stress 'sırrını söylemez'; pause at the semicolon; 'bir çan çalar' final."
+ },
+ "243792e6": {
+  "ses": "Charon",
+  "not": "Stress 'zirveye'. Pause; 'Her sabah yeniden' slower, 'dağın eteğinde uyanmış' low."
+ },
+ "5fdd6510": {
+  "ses": "Enceladus",
+  "not": "Warning. Stress 'geri iter'. Pause; 'ip, kanattan sadıktır' slow, stress 'sadıktır'."
+ },
+ "be433789": {
+  "ses": "Charon",
+  "not": "Stress 'bırakıp gitmiş'. Pause; 'kuzular bile susar' quiet and tense."
+ },
+ "1b3bd58a": {
+  "ses": "Charon",
+  "not": "Stress 'bir melek'. The angel's words 'Daha yukarı çıkma' slow and firm."
+ },
+ "82188382": {
+  "ses": "Enceladus",
+  "not": "Very quiet. Pauses at the commas; stress 'tahtadan bir gövde'; 'uyuyor' low."
+ },
+ "640a992b": {
+  "ses": "Charon",
+  "not": "'Akori'de derler ki' lower, like a rumour. Stress 'ilk asmayı'; 'kökleri hâlâ sıcak' slower."
+ },
+ "9b3a12ba": {
+  "ses": "Enceladus",
+  "not": "Name 'Aziz Hakob'un manastırı' slowly. 'yanından koşarsan çalar' faster; 'Kandilciler sese gelir' fearful warning."
+ },
+ "46f0f54a": {
+  "ses": "Leda",
+  "not": "Saye remembers with delight. Stress 'un serperdi'; 'Karı ilk orada gördüm' slower."
+ },
+ "e136aff2": {
+  "ses": "Leda+Charon",
+  "not": "Saye remembers fondly. The master's words calm; stress 'çok yavaş'."
+ },
+ "d6f66994": {
+  "ses": "Leda",
+  "not": "Saye remembers happily. 'ikişer ikişer' rhythmic; 'ben gölgelerini saydım' proud."
+ },
+ "2345b417": {
+  "ses": "Leda+Charon",
+  "not": "Saye remembers warmly. The master's words slow; stress 'ilk sevinç'."
+ },
+ "569cb22f": {
+  "ses": "Leda+Charon",
+  "not": "Saye remembers respectfully, quieter. The master's words low; stress 'saygı'."
+ },
+ "241a2bfe": {
+  "ses": "Charon",
+  "not": "Stress 'taşa dönmüş kocaman bir gövde'. Pause before 'Nuh'un Gemisi'; name it with weight."
+ },
+ "816af74a": {
+  "ses": "Charon",
+  "not": "Stress 'kırk gün kırk gece'. 'karanlık sularda sürüklenmiş' slower. Pause; 'dağın omzuna oturmuş' final."
+ },
+ "c0d2cb0b": {
+  "ses": "Charon",
+  "not": "'kuzgun dönmemiş' low. Pause; slight lift on 'güvercin'; stress 'zeytin dalıyla' and 'yeniden yeşeriyordu'."
+ },
+ "9107a84a": {
+  "ses": "Charon",
+  "not": "Stress 'hiç sönmeyen bir ışık'. Pause; the second sentence darker, stress 'eşlerinden ayırıp' and 'kilitlediler'."
+ },
+ "dadaa6f5": {
+  "ses": "Charon",
+  "not": "Slow. Stress 'birbirini arıyor'; pause after 'Sâye'; 'Onları kavuştur' firm."
+ },
+ "4618a5f9": {
+  "ses": "Charon",
+  "not": "Stress 'ak bir ışık'. Pause before 'Ak Ana'; 'İlk su da böyle kıpırdamıştı' slower, lower."
+ },
+ "c2bb4980": {
+  "ses": "Charon",
+  "not": "The bard recites his own saying, first person. 'Su yükselir, gemi kalkar' two beats; stress 'ilk suyun anası'."
+ },
+ "ba8d8a7d": {
+  "ses": "Charon",
+  "not": "Stress 'aylarca karanlık sularda'. Pause; 'hiç sönmeyen bir ışık' slow."
+ },
+ "e70ae506": {
+  "ses": "Enceladus",
+  "not": "Stress 'eşiyle'. Pause; 'Eşini yitirenin gölgesi' slower; 'hâlâ onu bekliyor' low."
+ },
+ "810ce76d": {
+  "ses": "Enceladus",
+  "not": "Riddle. Stress 'Önce' and 'sonra' with a pause between. 'geri dönemez' warning, low."
+ },
+ "38bf26d0": {
+  "ses": "Charon",
+  "not": "Stress 'burada asılıydı'. Pause; 'onları da toplamış' low."
+ },
+ "a2640604": {
+  "ses": "Enceladus",
+  "not": "'Su hatırlar.' slow, then pause. Stress 'bir daha yükselir'."
+ },
+ "fafeda18": {
+  "ses": "Charon",
+  "not": "Stress 'zeytin dalıyla'. Pause; 'Hüdhüd onu tanıdı' quiet, final."
+ },
+ "82a4b4e5": {
+  "ses": "Charon",
+  "not": "'Işık burada değil' firm. Pause; stress 'güneşin doğduğu dağa'; name 'Nemrut' with weight."
+ },
+ "bba2bfd4": {
+  "ses": "Leda+Charon",
+  "not": "Saye remembers, a little awed. The master's words slow; pause before 'en büyüğü', stressed."
+ },
+ "4469fccf": {
+  "ses": "Leda+Charon",
+  "not": "Saye remembers, wistful. The master's words low; stress 'tamamını'."
+ },
+ "4731679e": {
+  "ses": "Leda+Charon",
+  "not": "Saye remembers it deeply. Pause between the master's sentences; 'Bir kalp yeter' slow, stressed."
+ }
+}
