@@ -1,0 +1,233 @@
+/// Anlatımın yeri: her bölüm fısıltısı oyunda nerede söylenir. Hepsi
+/// seslendirilince oyun "sürekli anlatılan bir sese" dönüşüyordu; şimdi
+/// oynanış sırasında az ve yerinde söz, rivayetler Umay ağacında (oyuncu
+/// durup dinlerse), fazlası Defter'de.
+///
+/// tools/anlatim_plani.py üretir (build/ses/dagitim_*.json'dan); elle
+/// değiştirmeyin.
+library;
+
+enum WhisperPlace {
+  /// Oynanış sırasında yazı (sesi yok).
+  yazi,
+
+  /// Tehlike anında kısa, sesli uyarı.
+  tehlike,
+
+  /// Umay ağacında, oyuncu durup dinlerse anlatılır (sesli).
+  agac,
+
+  /// Oyunda çıkmaz; Defter'de okunur.
+  defter,
+}
+
+/// Bölüm → fısıltı sırası → (yer, anlatılacağı ağacın sütunu).
+const whisperPlan = <int, Map<int, (WhisperPlace, int?)>>{
+  0: {
+    0: (WhisperPlace.yazi, null),
+    1: (WhisperPlace.yazi, null),
+    2: (WhisperPlace.agac, 19),
+    3: (WhisperPlace.agac, 50),
+    4: (WhisperPlace.tehlike, null),
+    5: (WhisperPlace.yazi, null),
+    6: (WhisperPlace.agac, 108),
+    7: (WhisperPlace.tehlike, null),
+    8: (WhisperPlace.yazi, null),
+    9: (WhisperPlace.agac, 174),
+    10: (WhisperPlace.agac, 174),
+    11: (WhisperPlace.agac, 225),
+  },
+  1: {
+    0: (WhisperPlace.agac, 3),
+    1: (WhisperPlace.tehlike, null),
+    2: (WhisperPlace.tehlike, null),
+    3: (WhisperPlace.yazi, null),
+    4: (WhisperPlace.agac, 12),
+    5: (WhisperPlace.yazi, null),
+    6: (WhisperPlace.yazi, null),
+    7: (WhisperPlace.yazi, null),
+  },
+  2: {
+    0: (WhisperPlace.agac, 132),
+    1: (WhisperPlace.tehlike, null),
+    2: (WhisperPlace.yazi, null),
+    3: (WhisperPlace.yazi, null),
+    4: (WhisperPlace.tehlike, null),
+    5: (WhisperPlace.yazi, null),
+    6: (WhisperPlace.yazi, null),
+    7: (WhisperPlace.agac, 275),
+  },
+  3: {
+    0: (WhisperPlace.agac, 17),
+    1: (WhisperPlace.agac, 29),
+    2: (WhisperPlace.yazi, null),
+    3: (WhisperPlace.defter, null),
+    4: (WhisperPlace.yazi, null),
+    5: (WhisperPlace.yazi, null),
+    6: (WhisperPlace.yazi, null),
+    7: (WhisperPlace.agac, 123),
+  },
+  4: {
+    0: (WhisperPlace.agac, 32),
+    1: (WhisperPlace.yazi, null),
+    2: (WhisperPlace.yazi, null),
+    3: (WhisperPlace.agac, 101),
+    4: (WhisperPlace.yazi, null),
+    5: (WhisperPlace.agac, 137),
+    6: (WhisperPlace.yazi, null),
+  },
+  5: {
+    0: (WhisperPlace.yazi, null),
+    1: (WhisperPlace.agac, 60),
+    2: (WhisperPlace.yazi, null),
+    3: (WhisperPlace.yazi, null),
+    4: (WhisperPlace.tehlike, null),
+    5: (WhisperPlace.agac, 232),
+    6: (WhisperPlace.yazi, null),
+  },
+  6: {
+    0: (WhisperPlace.yazi, null),
+    1: (WhisperPlace.agac, 22),
+    2: (WhisperPlace.agac, 42),
+    3: (WhisperPlace.agac, 128),
+    4: (WhisperPlace.yazi, null),
+    5: (WhisperPlace.agac, 195),
+    6: (WhisperPlace.tehlike, null),
+    7: (WhisperPlace.yazi, null),
+  },
+  7: {
+    0: (WhisperPlace.agac, 48),
+    1: (WhisperPlace.yazi, null),
+    2: (WhisperPlace.yazi, null),
+    3: (WhisperPlace.tehlike, null),
+    4: (WhisperPlace.yazi, null),
+    5: (WhisperPlace.yazi, null),
+  },
+  8: {
+    0: (WhisperPlace.agac, 52),
+    1: (WhisperPlace.agac, 52),
+    2: (WhisperPlace.yazi, null),
+    3: (WhisperPlace.yazi, null),
+    4: (WhisperPlace.tehlike, null),
+    5: (WhisperPlace.yazi, null),
+    6: (WhisperPlace.agac, 258),
+    7: (WhisperPlace.yazi, null),
+  },
+  9: {
+    0: (WhisperPlace.defter, null),
+    1: (WhisperPlace.yazi, null),
+    2: (WhisperPlace.agac, 218),
+    3: (WhisperPlace.yazi, null),
+    4: (WhisperPlace.agac, 861),
+    5: (WhisperPlace.yazi, null),
+    6: (WhisperPlace.yazi, null),
+    7: (WhisperPlace.tehlike, null),
+  },
+  10: {
+    0: (WhisperPlace.agac, 86),
+    1: (WhisperPlace.yazi, null),
+    2: (WhisperPlace.agac, 86),
+    3: (WhisperPlace.tehlike, null),
+    4: (WhisperPlace.tehlike, null),
+    5: (WhisperPlace.yazi, null),
+  },
+  11: {
+    0: (WhisperPlace.agac, 32),
+    1: (WhisperPlace.agac, 32),
+    2: (WhisperPlace.agac, 105),
+    3: (WhisperPlace.agac, 105),
+    4: (WhisperPlace.yazi, null),
+    5: (WhisperPlace.agac, 153),
+    6: (WhisperPlace.agac, 203),
+    7: (WhisperPlace.yazi, null),
+    8: (WhisperPlace.yazi, null),
+  },
+  12: {
+    0: (WhisperPlace.agac, 40),
+    1: (WhisperPlace.yazi, null),
+    2: (WhisperPlace.yazi, null),
+    3: (WhisperPlace.yazi, null),
+    4: (WhisperPlace.agac, 99),
+    5: (WhisperPlace.yazi, null),
+    6: (WhisperPlace.agac, 264),
+    7: (WhisperPlace.agac, 322),
+  },
+  13: {
+    0: (WhisperPlace.agac, 35),
+    1: (WhisperPlace.agac, 35),
+    2: (WhisperPlace.agac, 88),
+    3: (WhisperPlace.agac, 88),
+    4: (WhisperPlace.defter, null),
+    5: (WhisperPlace.agac, 125),
+    6: (WhisperPlace.agac, 125),
+    7: (WhisperPlace.agac, 177),
+    8: (WhisperPlace.agac, 177),
+    9: (WhisperPlace.yazi, null),
+    10: (WhisperPlace.agac, 306),
+    11: (WhisperPlace.agac, 306),
+    12: (WhisperPlace.yazi, null),
+    13: (WhisperPlace.yazi, null),
+  },
+  14: {
+    0: (WhisperPlace.yazi, null),
+    1: (WhisperPlace.yazi, null),
+    2: (WhisperPlace.tehlike, null),
+    3: (WhisperPlace.yazi, null),
+    4: (WhisperPlace.tehlike, null),
+    5: (WhisperPlace.yazi, null),
+    6: (WhisperPlace.agac, 220),
+    7: (WhisperPlace.agac, 258),
+    8: (WhisperPlace.agac, 258),
+  },
+  15: {
+    0: (WhisperPlace.agac, 32),
+    1: (WhisperPlace.yazi, null),
+    2: (WhisperPlace.yazi, null),
+    3: (WhisperPlace.yazi, null),
+    4: (WhisperPlace.agac, 146),
+    5: (WhisperPlace.yazi, null),
+    6: (WhisperPlace.tehlike, null),
+    7: (WhisperPlace.agac, 296),
+  },
+  16: {
+    0: (WhisperPlace.agac, 42),
+    1: (WhisperPlace.yazi, null),
+    2: (WhisperPlace.yazi, null),
+    3: (WhisperPlace.agac, 110),
+    4: (WhisperPlace.yazi, null),
+    5: (WhisperPlace.agac, 160),
+    6: (WhisperPlace.yazi, null),
+    7: (WhisperPlace.agac, 245),
+    8: (WhisperPlace.agac, 284),
+  },
+  17: {
+    0: (WhisperPlace.agac, 102),
+    1: (WhisperPlace.yazi, null),
+    2: (WhisperPlace.yazi, null),
+    3: (WhisperPlace.agac, 102),
+    4: (WhisperPlace.agac, 202),
+    5: (WhisperPlace.agac, 202),
+    6: (WhisperPlace.tehlike, null),
+    7: (WhisperPlace.agac, 264),
+    8: (WhisperPlace.agac, 264),
+    9: (WhisperPlace.yazi, null),
+    10: (WhisperPlace.tehlike, null),
+    11: (WhisperPlace.agac, 627),
+    12: (WhisperPlace.agac, 627),
+    13: (WhisperPlace.yazi, null),
+    14: (WhisperPlace.agac, 377),
+  },
+  18: {
+    0: (WhisperPlace.yazi, null),
+    1: (WhisperPlace.yazi, null),
+    2: (WhisperPlace.agac, 92),
+    3: (WhisperPlace.yazi, null),
+    4: (WhisperPlace.agac, 126),
+    5: (WhisperPlace.tehlike, null),
+    6: (WhisperPlace.yazi, null),
+  },
+};
+
+/// Fısıltının yeri (planda yoksa oynanış sırasında yazı).
+(WhisperPlace, int?) whisperPlace(int level, int index) =>
+    whisperPlan[level]?[index] ?? (WhisperPlace.yazi, null);

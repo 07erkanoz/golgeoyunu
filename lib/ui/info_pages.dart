@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../game/anlatim_plani.dart';
 import '../game/levels.dart';
 import '../game/myth_cards.dart';
 import '../game/strings.dart';
@@ -57,6 +58,17 @@ TextStyle get _body =>
     TextStyle(color: _text.withValues(alpha: 0.82), fontSize: 13, height: 1.55);
 
 // ========================================================== Hatıra defteri
+
+/// Bölümün rivayetleri: Umay ağacında anlatılan ve Defter'e kalan sözler.
+List<String> _tales(int level) {
+  final texts = levels[level].whisperTexts;
+  return [
+    for (var i = 0; i < texts.length; i++)
+      if (whisperPlace(level, i).$1 == WhisperPlace.agac ||
+          whisperPlace(level, i).$1 == WhisperPlace.defter)
+        texts[i],
+  ];
+}
 
 /// Bulunan hatıraların defteri: açılmış her bölümün hatıraları sırayla;
 /// bulunmayanların yerinde boş bir satır.
@@ -130,7 +142,7 @@ class MemoryBookPage extends StatelessWidget {
             ),
           ),
           for (final l in open)
-            if (levels[l].memoryTexts.isNotEmpty) ...[
+            if (levels[l].memoryTexts.isNotEmpty || _tales(l).isNotEmpty) ...[
               const SizedBox(height: 16),
               Row(
                 children: [
@@ -175,6 +187,24 @@ class MemoryBookPage extends StatelessWidget {
                           ),
                         ),
                 ),
+              // Rivayetler: Umay ağaçlarında anlatılan ve Defter'e kalan
+              // sözler (açılmış bölümde hep okunur).
+              if (_tales(l).isNotEmpty) ...[
+                const SizedBox(height: 10),
+                Text(
+                  S.upper(S.of('talesTitle')),
+                  style: TextStyle(
+                    color: _accent.withValues(alpha: 0.75),
+                    fontSize: 10,
+                    letterSpacing: 2,
+                  ),
+                ),
+                for (final t in _tales(l))
+                  Padding(
+                    padding: const EdgeInsets.only(top: 6),
+                    child: Text(t, style: _body),
+                  ),
+              ],
             ],
         ],
         if (showLegends) ...[

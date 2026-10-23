@@ -1,0 +1,18 @@
+{
+ "_aciklama": "Perde ve köprü sahnelerinin oyunculuk tarifi: 'sahne' kim anlatıyor, ne anlatıyor, ne hissediyor; 'oyun' satır kimliği → o paragrafın duygusu ve sesin nerede kırılacağı. tools/seslendir.py --sahne okur.",
+ "prologue": {
+  "sahne": "Late at night, alone behind the lamp-lit screen, the very old master Hayali tells the children the darkest night of his life: the Great Fire of Istanbul, when the Lamplighters came, put out his master's lamp and dragged his master away; and how, from that darkness, a shadow fell and a child was saved. He has never forgotten it. His voice is deep, old and weary; it carries grief, anger held back, wonder and, at the end, a quiet hope.",
+  "oyun": {
+   "2c706120": "Open the tale gravely, as a terrible memory. 'İstanbul...' slow, a breath; the date heavy; 'Şehir... iki gündür yanıyordu' with dread, the last word sinking.",
+   "592867ce": "Growing menace and contempt for the Lamplighters. Build the list 'her kandili, her mumu, her gözdeki ışığı' step by step; 'gözdeki ışığı' cold and terrible.",
+   "a1834d28": "The darkest moment. First sentence tense, slowing. Long pause. 'Kandili söndürdüler' heavy, the voice nearly breaking. Pause. 'ustayı götürdüler' almost a whisper, crushed by grief.",
+   "28e84525": "Silence after the loss: 'Perde karardı...' hollow and quiet. Then a spark: 'Ama bir gölge' with sudden wonder; 'perdeden düştü' like a held breath.",
+   "ff219fee": "Wonder and tenderness of a miracle: the birch rising from the ashes, 'tek bir ak çaput' with awe. The last sentence 'Umay, düşen her çocuğun yanındadır' warm, a blessing, firm with faith.",
+   "3c50a97f": "A new beginning, mysterious and hushed: a child waking under the water. Pause before 'Yerebatan Sarnıcı', named with reverence.",
+   "71f49627": "Epic history, grand and proud: an emperor's palace dug under the earth. 'Üç yüz otuz altı sütun' with weight; 'bir orman gibi dikildi' broad and majestic.",
+   "23b8803f": "A sorrowful legend told low, like a secret. 'Derler ki' hushed; 'gözyaşıdır' with pity; 'Ağlayan Sütun' mournful.",
+   "c5d1e5db": "A wistful, slightly bitter irony: people forgot. Lighter in the middle (fishing through the floors); the last phrase 'altlarında bir şehir uyuduğunu bilmeden' slows, mysterious.",
+   "e30e835a": "The curtain rises on the adventure: ominous and inviting. 'Şimdi...' a breath; 'bir gölge' stressed; 'yürüyor' low, final, full of promise."
+  }
+ }
+}

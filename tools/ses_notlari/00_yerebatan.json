@@ -1,8 +1,9 @@
 {
- "_aciklama": "Satır kimliği → ses ve not. Not yalnız vurgu, durak ve tempo söyler; tonu (destansı anlatıcı) değiştirmez. Ses: Charon (hayali, usta, ozan, rivayet), Enceladus (karanlık fısıltı), Leda (Sâye), Leda+Charon (hatıra).",
+ "_aciklama": "Satır kimliği → ses ve not. Not yalnız vurgu, durak ve tempo söyler; tonu (destansı anlatıcı) değiştirmez. Ses: Charon (hayali, usta, ozan, rivayet), Enceladus (karanlık fısıltı), Leda (Sâye), Leda+Charon (hatıra). 'metin': okunacak biçim (duraklar için üç nokta); ekrandaki yazı değişmez.",
  "2c706120": {
   "ses": "Charon",
-  "not": "Pause after '1660'. Weight on 'yanıyordu', lower at the end."
+  "not": "Pause after '1660'. Weight on 'yanıyordu', lower at the end.",
+  "metin": "İstanbul... Temmuz, bin altı yüz altmış. Şehir... iki gündür yanıyordu."
  },
  "592867ce": {
   "ses": "Charon",
@@ -10,11 +11,13 @@
  },
  "a1834d28": {
   "ses": "Charon",
-  "not": "Pause before 'Kandili söndürdüler'. 'ustayı götürdüler' lower and heavy."
+  "not": "Pause before 'Kandili söndürdüler'. 'ustayı götürdüler' lower and heavy.",
+  "metin": "Son olarak Hayali Usta'nın perdesine geldiler. Kandili söndürdüler... ustayı götürdüler."
  },
  "28e84525": {
   "ses": "Charon",
-  "not": "'Perde karardı.' low. Lift slightly on 'Ama bir gölge'; stress 'bir gölge'."
+  "not": "'Perde karardı.' low. Lift slightly on 'Ama bir gölge'; stress 'bir gölge'.",
+  "metin": "Perde karardı... Ama bir gölge, ışık sönmeden önce, perdeden düştü."
  },
  "ff219fee": {
   "ses": "Charon",
@@ -22,7 +25,8 @@
  },
  "3c50a97f": {
   "ses": "Charon",
-  "not": "Short pause before 'Yerebatan Sarnıcı'; name it with weight."
+  "not": "Short pause before 'Yerebatan Sarnıcı'; name it with weight.",
+  "metin": "Sâye gözlerini suyun altındaki bir şehirde açtı... Yerebatan Sarnıcı."
  },
  "71f49627": {
   "ses": "Charon",
@@ -38,7 +42,8 @@
  },
  "e30e835a": {
   "ses": "Charon",
-  "not": "Slow. Stress 'bir gölge'; 'yürüyor' low and final."
+  "not": "Slow. Stress 'bir gölge'; 'yürüyor' low and final.",
+  "metin": "Şimdi... o sularda bir gölge yürüyor."
  },
  "53c344f1": {
   "ses": "Charon",

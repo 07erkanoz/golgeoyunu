@@ -12,6 +12,7 @@ import 'package:flutter/widgets.dart' show KeyEventResult;
 import 'atmosphere.dart';
 import 'audio.dart';
 import 'auto_quality.dart';
+import 'anlatim_plani.dart';
 import 'entrance.dart';
 import 'creatures.dart';
 import 'frame_pacer.dart';
@@ -1766,7 +1767,11 @@ class GolgeGame extends FlameGame with KeyboardEvents {
       final key = '$levelIndex:$i';
       if (_whispersShown.contains(key) || !near(cell, 48, 80)) continue;
       _whispersShown.add(key);
-      if (i < level.def.whisperTexts.length) {
+      // Yalnız oynanış sırasındaki sözler burada söylenir; rivayetler Umay
+      // ağacında, fazlası Defter'de.
+      final place = whisperPlace(levelIndex, i).$1;
+      if (i < level.def.whisperTexts.length &&
+          (place == WhisperPlace.yazi || place == WhisperPlace.tehlike)) {
         narration.whisper(level.def.whisperTexts[i]);
       }
     }
@@ -1828,6 +1833,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
       _updateTension(p, dt);
       _updateHints(p, dt);
       _updateBard(dt);
+      _updateTreeTales(p, dt);
     } else {
       threat = math.max(0, threat - dt * 2);
       hideAmount = math.max(0, hideAmount - dt * 2);
@@ -1874,6 +1880,61 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     narration.hint(Hints.text(key), queue: true);
     final poem = Hints.poem(key);
     if (poem.isNotEmpty) once('poem:$key', poem, story: false);
+  }
+
+  // ------------------------------------------------- Umay ağacı rivayetleri
+
+  /// Oyuncunun ağacın yanında kıpırdamadan durduğu süre.
+  double _still = 0;
+
+  /// Rivayet anlatan ağaç (uzaklaşınca anlatım kısılır).
+  Vector2? _tellingTree;
+
+  /// Bu bölümde ağaçlarda anlatılacak rivayetler: (fısıltı sırası, ağaç
+  /// sütunu).
+  Iterable<(int, int)> get _tales sync* {
+    final plan = whisperPlan[levelIndex];
+    if (plan == null) return;
+    for (final MapEntry(key: i, value: (place, col)) in plan.entries) {
+      if (place == WhisperPlace.agac && col != null) yield (i, col);
+    }
+  }
+
+  /// Sâye bir Umay ağacının yanında bir süre durursa ağaç o yerin
+  /// rivayetini anlatır (sırayla, her biri bir kez); uzaklaşınca susar.
+  void _updateTreeTales(Player p, double dt) {
+    final told = _tellingTree;
+    if (told != null && (told.x + kTile / 2 - p.center.x).abs() > 6 * kTile) {
+      GameAudio.instance.stopVoice(clearQueue: true);
+      _tellingTree = null;
+    }
+    Vector2? tree;
+    for (final cell in level.checkpointCells) {
+      if ((cell.x + kTile / 2 - p.center.x).abs() < 2.5 * kTile &&
+          (cell.y - p.center.y).abs() < 3 * kTile) {
+        tree = cell;
+      }
+    }
+    final moving = p.velocity.x.abs() > 20 || !p.onGround;
+    _still = tree == null || moving ? 0 : _still + dt;
+    if (tree == null) return;
+    final col = (tree.x / kTile).round();
+    final waiting = [
+      for (final (i, c) in _tales)
+        if ((c - col).abs() <= 1 &&
+            !_whispersShown.contains('$levelIndex:tale:$i'))
+          i,
+    ]..sort();
+    if (waiting.isEmpty) return;
+    // İlk kez: ağacın yanında durunca anlatacağı söylenir (ipucu simgesi).
+    _queueHint('treeTale');
+    if (_still < 1.2 || GameAudio.instance.voiceBusy) return;
+    final i = waiting.first;
+    if (i >= level.def.whisperTexts.length) return;
+    _whispersShown.add('$levelIndex:tale:$i');
+    narration.whisper(level.def.whisperTexts[i]);
+    _tellingTree = tree;
+    _still = 0.6;
   }
 
   /// Bu bir kezlik söz söylendi mi (testler için)?

@@ -143,6 +143,8 @@ class Hints {
     'crate': 'Sandığı it · üstüne çıkıp yüksel',
     'lever': '{up} Kolu çek',
     'umay': 'Umay ağacı · dokun: düştüğünde buradan yeniden başlarsın',
+    'treeTale':
+        'Umay ağacının yanında dur: ağaç sana bu yerin rivayetini anlatır',
     'drum': 'Kam\'ın davulu · her vuruşta bir bulut takımı belirir, öbürü söner · vuruşu bekle, sonra atla',
     'scorch':
         'Gün katının ışığı yakar · Hüma\'nın gölgesinde, onunla birlikte yürü',
@@ -229,6 +231,8 @@ class Hints {
     'crate': 'Push the crate · climb it to reach higher',
     'lever': '{up} Pull the lever',
     'umay': 'Umay tree · touch it: if you fall, you rise here again',
+    'treeTale':
+        'Stand by the Umay tree: it will tell you the legend of this place',
     'drum': 'Kam\'s drum · on each beat one set of clouds appears and the other fades · wait for the beat, then jump',
     'scorch': 'The light of the sun layer burns · walk in the Huma\'s shadow, along with it',
     'tulpar': 'Tulpar · climb on his back · jump in the air to beat his wings: {jump}',

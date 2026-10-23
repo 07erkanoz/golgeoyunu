@@ -1,0 +1,148 @@
+{
+ "_aciklama": "Hikâye tiyatrosu köprü sahnelerinin oyunculuk tarifi: her köprü (kopru:N) bir bölümde Sâye'nin yürüdüğü yol. 'sahne' kim anlatıyor, ne anlatıyor, ne hissediyor; 'oyun' satır kimliği → o paragrafın duygusu, temposu ve sesin nerede kırılacağı. tools/seslendir.py --sahne okur.",
+ "kopru:0": {
+  "sahne": "Late at night, behind the lamp-lit screen, the very old master Hayali tells how Saye, a little fallen shadow-girl, first walked through the drowned forest of columns under Istanbul. The cistern is black, cold and ancient; every drip echoes. He tells it hushed and spellbound, with a shiver of dread at the stone heads and a growing pull toward the burning city above.",
+  "oyun": {
+   "cd8a2fa3": "Mysterious, as if leaning closer to the children. 'sütunların ormanında' slow and wide, echoing. A held pause; 'bir su iyesi belirdi' with eerie wonder. 'paslı bir vanayı' heavy, a secret revealed.",
+   "c77a3311": "Dread creeps in. 'Medusa'nın taş başları' dark and low; 'biri baş aşağı, biri yan' measured, unsettling. Last sentence almost a whisper, holding the breath: 'gölgesini değdirmeden geçti'.",
+   "ef20264c": "Drifting, hypnotic, the raft gliding on black water. Pause before 'Suyun bittiği yerde'; then the voice rises with foreboding: 'yanan şehre' hot and urgent, the stair waiting."
+  }
+ },
+ "kopru:1": {
+  "sahne": "Late at night, behind the lamp-lit screen, the very old master Hayali tells how Saye climbed the Galata Tower floor by floor while the Lamplighters' sentries swept every stair with cold lanterns. It is a story of stealth and held breath, then of a marvellous find, and finally of a fearless leap into the open sky. His voice moves from tense whisper to awe to pride.",
+  "oyun": {
+   "845f0a5b": "Tense and stealthy. 'kat kat yukarı' climbing, step by step. 'soğuk fenerleriyle' cold and menacing, slower. Then quick and low, sliding: 'gölgeden gölgeye geçti', a whisper of escape.",
+   "bd79cf28": "Discovery and wonder. 'Hezarfen'in atölyesinde' with reverence for the legend. Dusty hush; a pause; 'kartal tüyünden iki kanat' opened slowly, full of awe, like lifting a treasure.",
+   "7ee1f5d8": "Building upward, breathless with height. 'bir ayna gibi parlıyordu' broad and shining, dizzying. Long pause. 'Korkmadan kendini boşluğa bıraktı' bold, proud, the voice ringing with courage."
+  }
+ },
+ "kopru:2": {
+  "sahne": "Late at night, behind the lamp-lit screen, the very old master Hayali tells how Saye flew on eagle-feather wings over the islands of crows, the Lamplighters' cloud camp and the storm isles. It is a flight of exhilaration and danger, lightning cracking the screen, and at the end a glimpse of something holy. He tells it soaring, the old voice swept up by the wind.",
+  "oyun": {
+   "4154ab28": "Exhilarated, lifting off. 'kanatlarını açtı' wide and rising. The list of places rushes forward with momentum; 'geride bıraktı' firm and triumphant, leaving danger behind.",
+   "1c0d788d": "Sudden danger: 'şimşek perdeyi yaktı' sharp, bright, like a crack of thunder. Then breathless and quick: 'gölgeden örülmüş bir köprünün' strange and wondrous, 'uçtu' lifting.",
+   "08117f3d": "Awe. 'Tulpar'ın yelesi' hushed with reverence; 'bir an parladı' quick, a flash. Pause. 'güneşin kapısı açılıyordu' grand, slow, the voice opening like dawn."
+  }
+ },
+ "kopru:3": {
+  "sahne": "Late at night, behind the lamp-lit screen, the very old master Hayali tells how Saye slipped past the Lamplighters' sky outpost on the Emerald Bridge and searched Mount Kaf for the three feathers of the Simurgh. It is a tale of daring stealth, then patient sacred seeking, ending at a door of mirrors. His voice turns from sly tension to reverent wonder.",
+  "oyun": {
+   "3082920a": "Daring stealth. 'Zümrüt köprüden' bright with wonder; then the voice drops, tense: 'gök karakolunun önünden'. 'gölgesini rüzgâra verip süzüldü' light, gliding, a held breath slipping past.",
+   "0b78a532": "Sacred, patient search. 'Simurg'un üç tüyünü' with deep reverence; 'birer birer' slow, each counted. 'bir kuş öttü' softer and bright, a small miracle answering.",
+   "32b201d2": "A solemn threshold. 'Üçüncü tüyle' weighty, the last one. Pause. 'ayna salonunun kapısı açıldı' grand, slow, the voice hushed with awe at the mystery inside."
+  }
+ },
+ "kopru:4": {
+  "sahne": "Late at night, behind the lamp-lit screen, the very old master Hayali tells how Saye climbed the frozen slopes of Mount Ararat through the blizzard, past Noah's vineyard and the ruined monastery, down into an ice cave. It is a tale of hardship and cold, of ancient holy ground, and of a fearful door opening. His voice is strained with effort, then hushed with awe, then grave.",
+  "oyun": {
+   "35373bce": "Struggle and cold. 'iplere tutunarak tırmandı' effortful, hand over hand. 'tipi yüzüne vuruyordu' harsh, biting. Then the voice softens with relief, a breath of rest: 'soluklandı'.",
+   "e6279178": "Like an old legend, reverent. 'Nuh'un diktiği söylenen bağın' told with wonder. Pause. 'Ayaz Ata'nın ak gölgesi' hushed, chilling and holy, the voice nearly a whisper.",
+   "b7520f61": "Ominous and grave. 'Buz mağarasının dibinde' low, descending. 'tufanın eşiği' heavy with dread; 'açıldı' deep and final, a door to something vast."
+  }
+ },
+ "kopru:5": {
+  "sahne": "Late at night, behind the lamp-lit screen, the very old master Hayali tells how Saye went down into the holds of Noah's Ark, where the shadows of beasts searched for their mates in the dark. It is a tale of tenderness and reunion, of a sacred apparition in the water, and of a bitter loss on the empty deck. His voice is warm, then awed, then heavy with sorrow.",
+  "oyun": {
+   "00ba1e73": "Pity, then joy. 'gölgeleri eşlerini arıyordu' aching, lonely. Pause. 'Sâye kilitleri açtı' resolute; 'eşler birbirine kavuştu' warm, glowing, the voice full of tenderness.",
+   "11e366c4": "Holy apparition. 'Ak Ana' named with deep reverence; 'sudan ona baktı' slow, awestruck. Then 'Su yükseldi' swelling and rising, carrying her upward with wonder.",
+   "1c814f11": "Grief and bitterness. Low and heavy. 'ışığın yeri boştu' hollow, a pause after it. 'çoktan götürmüştü' grave, anger held back, the voice sinking."
+  }
+ },
+ "kopru:6": {
+  "sahne": "Late at night, behind the lamp-lit screen, the very old master Hayali tells how Saye crossed the western terrace of Mount Nemrut among the fallen headless gods while the earth cracked beneath her. It is a tale of eerie danger and quick feet, then of a clever discovery. His voice is tense and uneasy, then quietly triumphant.",
+  "oyun": {
+   "1a46a40e": "Eerie, then dangerous. 'başsız tanrıların' dark and uncanny. Then tense and fast: 'Deprem yarıkları' sharp; 'açılıp kapandı' rhythmic, jolting, like the earth snapping its jaws.",
+   "344907a6": "A clever discovery, rising hope. 'Kartalın gözünden' with mystery; measured through the stones; 'doğuya bir geçit buldu' bright and satisfied, a door found."
+  }
+ },
+ "kopru:7": {
+  "sahne": "Late at night, behind the lamp-lit screen, the very old master Hayali tells how a stone giant woke on Nemrut's eastern terrace and hunted Saye while the mountain shook, and how she snatched the light at sunrise before the Lamplighters could burn it. It is a chase full of terror and speed, ending in a daring triumph. His voice pounds, races, then rings out.",
+  "oyun": {
+   "e6f9714d": "Terror. 'taştan dev uyandı' strong and sudden. 'her adımında dağ sarsıldı' heavy, pounding beats. Last sentence fast and breathless, fleeing: 'gölgesinden gölgesine kaçtı'.",
+   "fc6d8443": "Tension building to the moment. 'Güneş taş yüzlere vurduğu an' rising, bright. Faster through the Lamplighters. 'ışığa uzandı' decisive, triumphant, the voice reaching out."
+  }
+ },
+ "kopru:8": {
+  "sahne": "Late at night, behind the lamp-lit screen, the very old master Hayali tells how the sky-wolf Gokboru led Saye along the caravan road through the wolves' forest, over a frozen lake, to the foot of the sleeping dragon mountain. It is a journey of trust and cold wilderness, ending in a shiver of foreboding. His voice is steady and loyal, then low and ominous.",
+  "oyun": {
+   "efde90ec": "Trust and companionship. 'Gökbörü önden yürüdü' proud, with love. Second sentence steady, careful, stepping into tracks; 'kurtların ormanını' dark and deep, wild.",
+   "f5825d58": "A cold, lonely journey: 'Donmuş gölün', 'ocağı sönmüş bir hanın' bleak and hollow. Then slower, ominous: 'ejderin eteğine vardı', the last word low with dread."
+  }
+ },
+ "kopru:9": {
+  "sahne": "Late at night, behind the lamp-lit screen, the very old master Hayali tells how Saye found a wooden sled and threw herself down the dragon's back, flying under the lamp balloons toward Erzurum. It is a wild, thrilling ride, all speed and daring. His old voice laughs and rushes with the wind, then lands softly.",
+  "oyun": {
+   "5afe313c": "Daring. 'tahtadan bir kızak' with a sly smile. Short pause. 'kendini ejderin sırtından aşağı bıraktı' bold, gathering speed, the voice tipping over the edge.",
+   "8d30bb7b": "Fast and exhilarating, rushing through the list. 'ejderin sıçrayışından uçup' leaping high. Then slowing, landing with relief: 'Erzurum'a doğru indi'."
+  }
+ },
+ "kopru:10": {
+  "sahne": "Late at night, behind the lamp-lit screen, the very old master Hayali tells how the dragon woke and its white breath poured after Saye, and how she raced with Gokboru across a broken ridge while the avalanche thundered down. It is a breathless chase of pure danger and a narrow escape. His voice is urgent and fast, then drops into trembling relief.",
+  "oyun": {
+   "1d93c31b": "Alarm! 'Ejder uyandı' sharp and loud, a jolt. Then fast and tense, a chase: 'beyaz nefesi Sâye'nin ardından aktı', the voice pursuing.",
+   "76b05aa0": "Racing, breathless. 'Gökbörü önde koştu' urgent. 'son kez atladı' a leap, strong. Pause. 'çığ başının üstünden geçip gitti' rolling, thundering past, then a sigh of relief."
+  }
+ },
+ "kopru:11": {
+  "sahne": "Late at night, behind the lamp-lit screen, the very old master Hayali tells how Saye climbed the fairy chimneys of Cappadocia and saw the fairies dance, until the red-shadowed Albasti came to steal her light. It is a tale of enchantment turned to menace, and of old wisdom that saves her. His voice is dreamy and delighted, then dark, then calm and settled.",
+  "oyun": {
+   "6149c459": "Enchantment. 'peri bacalarına tırmandı' bright, wondering. Slower through the dovecotes and rock churches; 'perilerin dansını gördü' dreamy, spellbound, almost smiling.",
+   "4053c9b8": "Menace. 'Albastı kızıl gölgesiyle' low and sinister; 'ışığını çalmaya geldi' creeping. Then quick: 'demirin ardına sığındı'. 'Albastı demirden korkar' firm and knowing, old lore.",
+   "a844b3eb": "Peace after fear. 'Ay doğarken' soft, silvery. 'Uçhisar'ın tepesine vardı' slow and settled, a long exhale."
+  }
+ },
+ "kopru:12": {
+  "sahne": "Late at night, behind the lamp-lit screen, the very old master Hayali tells how Saye went down and down into the underground city, where a sleeping giant woke and chased her through the dark until Gokboru's eyes showed her the way. It is a tale of deep descent, terror and rescue, ending with a scent of hope. His voice sinks, races, then lifts gently.",
+  "oyun": {
+   "6bfe2a4f": "Descending: each place lower and darker, sinking to 'derin kuyuya indi'. Pause. 'onu içeriden kabul etti' hushed, mysterious, as if the stone itself breathed.",
+   "edfdecda": "Terror and rescue. 'uyuyan dev uyandı ve peşine düştü' tense, faster, hunted. Then steady and loving: 'Gökbörü'nün gözleri ona yolu gösterdi', a light in the dark.",
+   "03ac1c69": "Quiet discovery. 'En dipte' low. 'kökler sarkıyordu' strange and wondering. Pause. 'yaprak kokusu geliyordu' rising with hope, the voice brightening."
+  }
+ },
+ "kopru:13": {
+  "sahne": "Late at night, behind the lamp-lit screen, the very old master Hayali tells how Saye walked through old Konya, past its holy domes and minarets, where the whirling dervishes turned, and climbed the Green Dome in the falling snow. It is a pilgrimage of reverence and stillness, with a quiet resolve at its end. His voice is solemn, devout and moved.",
+  "oyun": {
+   "cb8cf397": "A stately pilgrimage. 'Konya ovasından' broad; 'İkonion kapısından' ancient, proud; 'Alâeddin Tepesi'ne' arriving with dignity.",
+   "8d1c606b": "Devout wonder. 'yıldızlı kubbesinin' glittering; 'Şems'in kuyusundan' hushed, aching with old sorrow. Last sentence slow, swaying: 'semâzenler dönüyordu', solemn and moved.",
+   "7fa197a5": "Stillness. 'Kar yağıyordu.' very quiet, falling. Long pause. 'Yeşil Kubbe'ye tırmandı' firm, resolute, a little girl's courage."
+  }
+ },
+ "kopru:14": {
+  "sahne": "Late at night, behind the lamp-lit screen, the very old master Hayali tells how Saye passed the black gate into the underworld, hid from the Kormos spirits who sniffed for her light, freed the stolen souls from their cages, and was shown the way up by Er Tostuk's horse. It is a tale of dread and darkness turning to liberation. His voice is menacing, then soaring, then full of hope.",
+  "oyun": {
+   "7316fa10": "Dark dread. 'Kara kapıdan' heavy, final. 'Körmösler ışığını kokladı' slow, menacing, sniffing. Then quick and low, holding breath: 'karanlığa saklandı'.",
+   "8951f7fb": "Liberation. 'kafesleri açtı' resolute. Rising joy: 'çalınan canlar kuş olup yukarı uçtu', the voice lifting and soaring at the end.",
+   "db800323": "Mystery, then hope. 'Er Töştük'ün atı' with reverence; 'başını kaldırdı' slow, a pause after. 'yukarı giden yolu gösterdi' rising, hopeful."
+  }
+ },
+ "kopru:15": {
+  "sahne": "Late at night, behind the lamp-lit screen, the very old master Hayali tells how Saye went down into the iron mountain, relit its forge, fled the waves of molten iron, and struck the Nevruz anvil to open the way out, as in the Ergenekon legend. It is a tale of labour, fire, danger and a proud breakthrough. His voice hammers, rolls, then rings out in triumph.",
+  "oyun": {
+   "fa3e901b": "Driving labour. 'Kömür sandıklarını ocağa itti' pushing; 'körükleri ritimle bastı' in strong beats like strokes. 'ocak yeniden yandı' triumphant, blazing.",
+   "7211c821": "Danger: 'Akan demir dalga dalga geldi' heavy, rolling, hot. Then softer, misty. 'Asena'nın mağarasında' reverent; 'boz kurdun gözleri parladı' with awe.",
+   "164fb106": "Breakthrough. 'Demir dağın içinden' determined. 'üç kez vurdu' with three hammer beats. Pause. 'kapı açıldı' triumphant, ringing, final."
+  }
+ },
+ "kopru:16": {
+  "sahne": "Late at night, behind the lamp-lit screen, the very old master Hayali tells how the shaman's drum lifted Saye through the layers of the sky, and how she held on to the horses of the Iron Pole star and turned the Wind Mother with a rain stone. It is a tale of ecstatic ascent and bold command. His voice climbs with the drum and swells with power.",
+  "oyun": {
+   "e98e39c1": "Ecstatic ascent, rhythmic like the drum. Each layer a step higher: 'ay katına', then 'yıldız katına yükseldi' at the peak, the voice soaring.",
+   "27362936": "Bold and mythic. 'Demir Kazık'ın atlarına' gripping, strong; 'Yedi Karakçı'nın arasından' dangerous, slipping. 'Yel Ana'ya yön verdi' commanding, proud."
+  }
+ },
+ "kopru:17": {
+  "sahne": "Late at night, behind the lamp-lit screen, the very old master Hayali tells how Saye came up into the green forests of Otuken, where Karabasan's eyes watched from the shadows, and how she climbed the Tree of Life and brought the sun down to scatter the nightmare. It is the great battle: wonder, rising threat, the beat of the drum, and a blazing victory. His voice builds from awe to fury to triumph.",
+  "oyun": {
+   "e5e0154e": "Wonder, then dread. 'Ötüken'in yeşiline' bright, a breath of joy. Through dappled light, softer. Then low and chilling: 'Karabasan'ın gözleri açılıp kapandı'.",
+   "40ec64e2": "Driving with the drum. 'kökler kalktı' strong. Climbing, effortful, over thorns. Then reverent: 'Ak bir geyik'; 'kök kapılarını açtı' firm, a sacred door.",
+   "c6cec08d": "Climax! 'bütün gücüyle saldırdı' fierce and fast. Build through the climb and the mirrors, rising. 'ışık köklere aktı' blazing. 'Karabasan dağıldı' triumphant, final, ringing."
+  }
+ },
+ "kopru:18": {
+  "sahne": "Late at night, behind the lamp-lit screen, the very old master Hayali tells how the shadow of the Huma bird fell upon Saye's head, how she stepped on black storm clouds by the light of Suge Toyon's lightning, and how the sky-horse Tulpar waited at Ulgen's gate. It is the last road, holy and blessed. His voice is filled with awe, bold courage, and at the end a deep, moved warmth.",
+  "oyun": {
+   "af48975d": "Blessing and courage. 'Hüma'nın gölgesi' hushed, awestruck, a blessing. Then 'yıldırımlarının ışığında' sharp and bright; 'kara bulutlara bastı' bold, fearless.",
+   "86bed1ba": "Arrival, deeply moved. 'Ülgen'in kapısında' slow and solemn. Pause. 'Tulpar onu bekliyordu' warm, tender, the voice nearly breaking with joy."
+  }
+ }
+}

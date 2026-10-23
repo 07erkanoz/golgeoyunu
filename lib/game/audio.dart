@@ -361,6 +361,9 @@ class GameAudio {
   String _voicePath(String text) =>
       'assets/voice/${S.en ? 'en' : 'tr'}/${voiceId(text)}.mp3';
 
+  /// Anlatım konuşuyor ya da sırada satır var mı.
+  bool get voiceBusy => _voice != null || _voiceBusy || _voiceQueue.isNotEmpty;
+
   /// Bu satırın sesi var mı.
   bool hasVoice(String text) => _voiceFiles.contains(_voicePath(text));
 

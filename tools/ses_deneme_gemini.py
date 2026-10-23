@@ -97,7 +97,7 @@ def key() -> str:
     )
 
 
-def call(path: str, body: dict | None = None, tries: int = 4) -> dict:
+def call(path: str, body: dict | None = None, tries: int = 6) -> dict:
     req = urllib.request.Request(
         API + path,
         data=None if body is None else json.dumps(body).encode(),
@@ -112,6 +112,11 @@ def call(path: str, body: dict | None = None, tries: int = 4) -> dict:
         msg = e.read().decode(errors="replace")
         # Ücretsiz katman dakikada birkaç istek: söylenen süre beklenir.
         wait = re.search(r"retry in ([0-9.]+)s", msg)
+        # Sunucu tarafında geçici hata: biraz bekleyip yeniden denenir.
+        if e.code in (500, 502, 503, 504) and tries > 1:
+            print(f"  sunucu hatası {e.code}: 10 sn sonra yeniden", flush=True)
+            time.sleep(10)
+            return call(path, body, tries - 1)
         if e.code == 429 and wait and tries > 1:
             secs = float(wait.group(1)) + 1
             print(f"  kota: {secs:.0f} sn bekleniyor…", flush=True)
