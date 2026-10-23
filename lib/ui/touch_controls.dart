@@ -10,9 +10,17 @@ import '../settings.dart';
 /// kol çek), solunda ↓ (çömel). Küçük düğmeler: ateşböceği ve parmak ucu
 /// (mobilde basılı tutulmaz, açılıp kapanır).
 class TouchControls extends StatefulWidget {
-  const TouchControls({super.key, required this.controls});
+  const TouchControls({
+    super.key,
+    required this.controls,
+    this.hideHelp = false,
+  });
 
   final Controls controls;
+
+  /// Alt köşelerdeki "sürükle: yürü / dokun: zıpla" açıklamaları gizli
+  /// (perde oynarken: perdenin yazısı ve "Atla" düğmesiyle çakışmasın).
+  final bool hideHelp;
 
   @override
   State<TouchControls> createState() => _TouchControlsState();
@@ -32,7 +40,10 @@ class _TouchControlsState extends State<TouchControls> {
   @override
   Widget build(BuildContext context) {
     if (Settings.touchGestures) {
-      return _GestureControls(controls: widget.controls);
+      return _GestureControls(
+        controls: widget.controls,
+        hideHelp: widget.hideHelp,
+      );
     }
     return Opacity(opacity: Settings.touchOpacity, child: _buttons(context));
   }
@@ -246,9 +257,10 @@ class _PadState extends State<_Pad> {
 /// zıpla (basılı tut: yüksek zıplama, kanatla süzülme). Ateşböceği
 /// köşedeki ✨ simgesiyle salınır. Köşelerde yalnızca iki küçük silik simge kalır.
 class _GestureControls extends StatefulWidget {
-  const _GestureControls({required this.controls});
+  const _GestureControls({required this.controls, this.hideHelp = false});
 
   final Controls controls;
+  final bool hideHelp;
 
   @override
   State<_GestureControls> createState() => _GestureControlsState();
@@ -355,7 +367,7 @@ class _GestureControlsState extends State<_GestureControls> {
               right: Settings.leftHanded ? 28 : null,
               bottom: 22,
               child: AnimatedOpacity(
-                opacity: _hintAlpha * alpha,
+                opacity: widget.hideHelp ? 0 : _hintAlpha * alpha,
                 duration: const Duration(seconds: 2),
                 child: _hint(Icons.swipe, S.of('hintMove')),
               ),
@@ -365,7 +377,7 @@ class _GestureControlsState extends State<_GestureControls> {
               left: Settings.leftHanded ? 28 : null,
               bottom: 22,
               child: AnimatedOpacity(
-                opacity: _hintAlpha * alpha,
+                opacity: widget.hideHelp ? 0 : _hintAlpha * alpha,
                 duration: const Duration(seconds: 2),
                 child: _hint(Icons.touch_app_outlined, S.of('hintJump')),
               ),

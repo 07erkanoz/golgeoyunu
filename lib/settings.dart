@@ -51,6 +51,9 @@ class Settings {
   /// İpuçları ekranda (kapalıyken yalnız "Az önce" panelinde).
   static bool hints = true;
 
+  /// İpucu simgesinin yeri bir kez gösterildi (ilk yanışta balon).
+  static bool hintIntroSeen = false;
+
   /// Daha önce izlenen perdeler atlanır (ilk kez izlenen yine oynar).
   static bool skipSeenPerde = false;
 
@@ -168,6 +171,8 @@ class Settings {
       perf = _read(() => p.getBool('perf')) ?? perf;
       storyWhispers = _read(() => p.getBool('story_whispers')) ?? storyWhispers;
       hints = _read(() => p.getBool('hints')) ?? hints;
+      hintIntroSeen =
+          _read(() => p.getBool('hint_intro_seen')) ?? hintIntroSeen;
       skipSeenPerde =
           _read(() => p.getBool('skip_seen_perde')) ?? skipSeenPerde;
       seenPerde
@@ -248,6 +253,7 @@ class Settings {
       await p.setDouble('tone', tone);
       await p.setBool('story_whispers', storyWhispers);
       await p.setBool('hints', hints);
+      await p.setBool('hint_intro_seen', hintIntroSeen);
       await p.setBool('skip_seen_perde', skipSeenPerde);
       await p.setStringList('seen_perde', seenPerde.toList());
       await p.setInt('unlockedOrder', levelOrderVersion);

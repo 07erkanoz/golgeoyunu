@@ -8,7 +8,6 @@ import 'package:flame_test/flame_test.dart';
 import 'package:golge/game/golge_game.dart';
 import 'package:golge/game/level.dart';
 import 'package:golge/game/palette.dart';
-import 'package:golge/game/realism.dart';
 import 'package:golge/game/player.dart';
 
 void main() {

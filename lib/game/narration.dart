@@ -59,7 +59,7 @@ class Narration extends Component with HasGameReference<GolgeGame> {
   final _myths = <(String, String)>[];
   (String, String)? _myth;
   double _mythT = 0;
-  double _mythLen = 6.5;
+  double _mythLen = 5.0;
 
   /// Şu an gösterilen efsane kartının adı (testler için).
   String? get debugMyth => _myth?.$1;
@@ -246,62 +246,60 @@ class Narration extends Component with HasGameReference<GolgeGame> {
     _whispers.clear();
     _whisper = null;
     _prev = null;
-    _hints.clear();
     _hint = null;
-    _pending = null;
+    _ready = null;
+    _lastHint = null;
+    hintReady.value = false;
     _area = null;
   }
 
-  /// Kullanım istemi: üstte, yer adının altında sabit şeritte; hikâye
-  /// fısıltısıyla yarışmaz.
-  /// Yer ipuçları sırayı beklemez: ekran boşsa hemen, doluysa ekrandaki
-  /// ipucu okunacak kadar kaldıktan sonra onun yerine geçer; oyuncu o arada
-  /// uzaklaşsa da gösterilir (hızlı ilerleyen oyuncu da görür). Gösterildiği
-  /// an [onShown] çağrılır. Yalnız perde sırasında `false`.
-  /// Olay ipuçları ([queue]) sıraya girer.
+  /// İpucu: ekrana kendiliğinden yazılmaz. Sâye ipucu gerektiren bir yere
+  /// gelince ipucu simgesi yanar ("ben buradayım" diye ara sıra kıpırdar);
+  /// oyuncu simgeye dokununca (klavyede H) ipucu kısa bir süre üstte,
+  /// yer adının altında görünür. Her ipucu "Az önce" panelinde de durur.
+  /// Yeni gelen ipucu bekleyenin yerine geçer (oyuncunun şu an olduğu yer).
+  /// [onShown] ipucu hazır olunca çağrılır. Yalnız perde sırasında `false`.
   bool hint(String text, {bool queue = false, VoidCallback? onShown}) {
-    if (queue) {
-      if (!Settings.hints) {
-        _remember(RecentKind.hint, text);
-      } else if (_hint != text && !_hints.contains(text)) {
-        _hints.add(text);
-      }
-      return true;
-    }
-    if (!canHint) return false;
+    if (!queue && !canHint) return false;
+    _remember(RecentKind.hint, text);
+    onShown?.call();
+    // İpuçları kapalı: simge yanmaz, yalnız panelde okunur.
+    if (!Settings.hints) return true;
     if (_hint == text) return true;
-    // İpuçları kapalı: ekrana gelmez, "Az önce" panelinde okunur.
-    if (!Settings.hints) {
-      _remember(RecentKind.hint, text);
-      onShown?.call();
-      return true;
-    }
-    if (_hints.isEmpty && _hintFree) {
-      _showHint(text);
-      onShown?.call();
-    } else if (_pending?.$1 != text) {
-      // Bekleyen tek yer ipucu: en yenisi (oyuncunun şu an olduğu yer).
-      _pending = (text, onShown);
-    }
+    _ready = text;
+    _lastHint = text;
+    hintReady.value = true;
     return true;
   }
 
-  void _showHint(String text) {
+  /// Simge yanınca bekleyen ipucu; okunan son ipucu (simgeye yeniden
+  /// dokununca tekrar gösterilir).
+  String? _ready;
+  String? _lastHint;
+
+  /// İpucu simgesi yanık mı (bekleyen ipucu var).
+  final hintReady = ValueNotifier<bool>(false);
+
+  /// Simgeye dokunuldu: bekleyen ipucu (yoksa son okunan) gösterilir;
+  /// ekrandaysa kapanır.
+  void revealHint() {
+    if (inCinematic) return;
+    final text = _ready ?? (_hint == null ? _lastHint : null);
+    if (text == null) {
+      _hint = null;
+      return;
+    }
     _hint = text;
-    _remember(RecentKind.hint, text);
     _hintT = 0;
+    _ready = null;
+    hintReady.value = false;
   }
-
-  /// Ekrandaki ipucu en az bu kadar kalır, sonra yeni yerin ipucu gelir.
-  static const double minHintShow = 2.2;
-
-  bool get _hintFree => _hint == null || _hintT >= minHintShow;
-
-  /// Sırasını bekleyen yer ipucu.
-  (String, VoidCallback?)? _pending;
 
   /// Şu an yeni bir ipucu gösterilebilir mi?
   bool get canHint => !inCinematic;
+
+  /// Bekleyen (simgede duran) ipucu (testler için).
+  String? get debugReadyHint => _ready;
 
   String? get debugWhisper => _whisper;
 
@@ -309,10 +307,9 @@ class Narration extends Component with HasGameReference<GolgeGame> {
   List<String> get debugWhispers => [?_prev, ?_whisper];
   String? get debugHint => _hint;
 
-  final _hints = <String>[];
   String? _hint;
   double _hintT = 0;
-  double _hintDuration(String s) => 2.6 + s.length * 0.04;
+  double _hintDuration(String s) => 3.5 + s.length * 0.05;
 
   void pulseCounter() => _counterT = 0;
 
@@ -368,7 +365,7 @@ class Narration extends Component with HasGameReference<GolgeGame> {
         _remember(RecentKind.legend, '${_myth!.$1}\n${_myth!.$2}');
         _mythT = 0;
         // Arka arkaya kart bekliyorsa her biri okunacak kadar kalır.
-        _mythLen = _myths.isEmpty ? 6.5 : 4.5;
+        _mythLen = _myths.isEmpty ? 5.0 : 4.0;
       }
     } else {
       _mythT += dt;
@@ -378,18 +375,6 @@ class Narration extends Component with HasGameReference<GolgeGame> {
     if (_hint != null) {
       _hintT += dt;
       if (_hintT > _hintDuration(_hint!)) _hint = null;
-    }
-    // Ekrandaki ipucu okunacak kadar kaldıysa sıradaki gelir: önce olay
-    // ipuçları (ölümden sonraki ilişki, çözüm), sonra bekleyen yer ipucu.
-    if (_hintFree && !inCinematic && !game.menuMode.value) {
-      final pending = _pending;
-      if (_hints.isNotEmpty) {
-        _showHint(_hints.removeAt(0));
-      } else if (pending != null) {
-        _pending = null;
-        _showHint(pending.$1);
-        pending.$2?.call();
-      }
     }
     _counterT += dt;
     _fireflyT += dt;
@@ -756,8 +741,8 @@ class Narration extends Component with HasGameReference<GolgeGame> {
     if (myth != null) {
       final a = _envelope(_mythT, 1.0, _mythLen - 2.3, 1.3);
       final k = Settings.textScale;
-      final nameSize = math.max(20.0, unit * 0.046) * k;
-      final whoSize = math.max(14.0, unit * 0.026) * k;
+      final nameSize = math.max(16.0, unit * 0.036) * k;
+      final whoSize = math.max(13.0, unit * 0.022) * k;
       final noteSize = math.max(10.0, unit * 0.016) * k;
       // Sabit yeri: ipucu şeridinin altında, ekranın ortasında.
       final top = math.max(h * 0.3, hintTop(h) + 44);
@@ -776,8 +761,8 @@ class Narration extends Component with HasGameReference<GolgeGame> {
               band.bottomCenter,
               [
                 const Color(0x00000000),
-                Color.fromRGBO(6, 3, 2, 0.55 * a),
-                Color.fromRGBO(6, 3, 2, 0.55 * a),
+                Color.fromRGBO(6, 3, 2, 0.38 * a),
+                Color.fromRGBO(6, 3, 2, 0.38 * a),
                 const Color(0x00000000),
               ],
               const [0, 0.3, 0.7, 1],

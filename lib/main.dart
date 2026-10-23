@@ -9,6 +9,7 @@ import 'display.dart';
 import 'game/golge_game.dart';
 import 'game/strings.dart';
 import 'settings.dart';
+import 'ui/hint_button.dart';
 import 'ui/main_menu.dart';
 import 'ui/recent_panel.dart';
 import 'ui/settings_panel.dart';
@@ -218,7 +219,13 @@ class _GolgeAppState extends State<GolgeApp> with WindowListener {
                           valueListenable: _game.settingsOpen,
                           builder: (context, open, _) => open
                               ? const SizedBox.shrink()
-                              : TouchControls(controls: _game.controls),
+                              : ValueListenableBuilder<bool>(
+                                  valueListenable: _game.narration.perdeOn,
+                                  builder: (context, perde, _) => TouchControls(
+                                    controls: _game.controls,
+                                    hideHelp: perde,
+                                  ),
+                                ),
                         ),
                       // Perde oynarken sağ altta "Atla": perdenin tamamı
                       // geçilir (dokunmatikte de; klavyede Esc).
@@ -255,6 +262,15 @@ class _GolgeAppState extends State<GolgeApp> with WindowListener {
                                   ),
                                 ),
                               ),
+                      ),
+                      // İpucu simgesi: ipucu gerektiren yerde yanar,
+                      // dokununca ipucu görünür (klavyede H).
+                      Positioned(
+                        top: 4,
+                        right: _isTouch ? 164 : 100,
+                        child: SafeArea(
+                          child: HintButton(game: _game, touch: _isTouch),
+                        ),
                       ),
                       // "i": az önceki hikâye ve ipucu (okumayı kaçıranlar
                       // için); dokunmatikte ateşböceği simgesinin solunda.

@@ -2401,13 +2401,13 @@ void main() {
       'ilk Kandilci\'de ateşböceği, gölge tahtasında çömelme anlatılır',
       GolgeGame.new,
       (game) async {
-        // Sütunun ardında çömel: önce saklanma, ekran boşalınca Kandilci
-        // ipucu gelir; ikisi aynı anda gösterilmez.
+        // Sütunun ardında çömel: saklanma ve Kandilci ipuçları simgede
+        // hazır olur (en yenisi bekler, ekrana kendiliğinden yazılmaz).
         final p = await place(game, 0, 26, 13);
         keys(game).down = true;
         run(game, 0.6);
         expect(game.hintShown('hide'), isTrue);
-        expect(game.hintShown('guard'), isFalse);
+        expect(game.narration.debugHint, isNull);
         for (var i = 0; i < _hz * 20 && !game.hintShown('guard'); i++) {
           game.update(_dt);
         }

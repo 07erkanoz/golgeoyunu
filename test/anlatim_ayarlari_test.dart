@@ -44,6 +44,35 @@ void main() {
   );
 
   testWithGame<GolgeGame>(
+    'ipucu simgede bekler: kendiliğinden yazılmaz, dokununca görünür',
+    GolgeGame.new,
+    (game) async {
+      game.debugLoadLevel(0);
+      await game.ready();
+      game.narration.resetScene();
+      game.narration.hint('Çömel.');
+      game.narration.hint('Işıkta kal.');
+      game.update(0.5);
+      expect(game.narration.debugHint, isNull, reason: 'ekran boş kalır');
+      expect(game.narration.hintReady.value, isTrue, reason: 'simge yanar');
+      expect(game.narration.debugReadyHint, 'Işıkta kal.', reason: 'en yenisi');
+      game.narration.revealHint();
+      expect(game.narration.debugHint, 'Işıkta kal.');
+      expect(game.narration.hintReady.value, isFalse);
+      for (var i = 0; i < 60 * 8; i++) {
+        game.update(1 / 60);
+      }
+      expect(game.narration.debugHint, isNull, reason: 'okunup kapanır');
+      game.narration.revealHint();
+      expect(
+        game.narration.debugHint,
+        'Işıkta kal.',
+        reason: 'simgeye yeniden dokununca son ipucu',
+      );
+    },
+  );
+
+  testWithGame<GolgeGame>(
     'ipuçları kapalı: ekrana gelmez, panelde okunur, gösterilmiş sayılır',
     GolgeGame.new,
     (game) async {
@@ -56,6 +85,7 @@ void main() {
       game.narration.hint('Sıradaki.', queue: true);
       game.update(0.1);
       expect(game.narration.debugHint, isNull);
+      expect(game.narration.hintReady.value, isFalse, reason: 'simge yanmaz');
       expect(shown, isTrue);
       final hints = game.narration.recent
           .where((l) => l.kind == RecentKind.hint)

@@ -2384,6 +2384,11 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         toggleRecent();
         return KeyEventResult.handled;
       }
+      // H: ipucu simgesi (yanıksa bekleyen ipucu, değilse son ipucu).
+      if (event.logicalKey == LogicalKeyboardKey.keyH) {
+        narration.revealHint();
+        return KeyEventResult.handled;
+      }
       if (esc && narration.inCinematic && !_settingsShown) {
         narration.skipAll();
         return KeyEventResult.handled;
