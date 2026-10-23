@@ -53,6 +53,51 @@ ROLE_VOICE = {
 }
 
 PREFIX = re.compile(r"^(Hatıra|Memory)\s*·\s*")
+
+
+ROMAN = {"I": 1, "V": 5, "X": 10, "L": 50}
+ORD_TR = ["", "Birinci", "İkinci", "Üçüncü", "Dördüncü", "Beşinci", "Altıncı",
+          "Yedinci", "Sekizinci", "Dokuzuncu", "Onuncu", "On birinci",
+          "On ikinci", "On üçüncü", "On dördüncü", "On beşinci", "On altıncı",
+          "On yedinci", "On sekizinci", "On dokuzuncu", "Yirminci"]
+NUM_EN = ["", "one", "two", "three", "four", "five", "six", "seven", "eight",
+          "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen",
+          "sixteen", "seventeen", "eighteen", "nineteen", "twenty"]
+
+
+def roman(word: str) -> int | None:
+    if not word or any(c not in ROMAN for c in word):
+        return None
+    n = 0
+    for i, c in enumerate(word):
+        v = ROMAN[c]
+        n += -v if i + 1 < len(word) and ROMAN[word[i + 1]] > v else v
+    return n if 0 < n < len(ORD_TR) else None
+
+
+def spoken(text: str, lang: str = "tr") -> str:
+    """Okunacak biçim: tamamı büyük harfli perde başlıkları ("GÖLGE OYUNU",
+    "V · AĞRI") Türkçe kurala göre küçültülür; büyük harfi model harf harf
+    ya da tuhaf okuyordu. " · " duraklama olur."""
+    if text != text.upper() or not any(c.isalpha() for c in text):
+        return text
+    # Başta Roma rakamı: bölümün sırası söylenir.
+    head, sep, tail = text.partition(" · ")
+    n = roman(head.strip()) if sep else None
+    if n:
+        lead = f"{ORD_TR[n]} bölüm" if lang == "tr" else f"Chapter {NUM_EN[n]}"
+        return lead + ", " + spoken(tail, lang).rstrip(".") + "."
+    low = text.replace("I", "ı").replace("İ", "i").lower() if lang == "tr" else text.lower()
+    words = []
+    for w in low.split(" "):
+        if w and w[0] == "i":
+            w = "İ" + w[1:]
+        elif w and w[0] == "ı":
+            w = "I" + w[1:]
+        elif w:
+            w = w[0].upper() + w[1:]
+        words.append(w)
+    return " ".join(words).replace(" · ", ", ") + "."
 QUOTE = re.compile(r"[\"“”]([^\"“”]+)[\"“”]")
 
 
@@ -248,7 +293,7 @@ def main() -> None:
         spec = notes.get(e["id"], {})
         voice = spec.get("ses", ROLE_VOICE[e["role"]])
         note = spec.get("not", "")
-        text = PREFIX.sub("", e["text"])
+        text = spoken(PREFIX.sub("", e["text"]), a.dil)
         if a.kuru:
             print(f"{e['id']} {voice:12} {text[:70]}")
             continue
