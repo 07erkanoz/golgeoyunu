@@ -1503,8 +1503,9 @@ ot.fill(268,F-4,268,F-1,'H')                                       # alt geçidi
 ot.fill(282,F-9,284,F-9,'='); ot.put(283,F-10,'M')
 ot.fill(297,F-6,297,F-1,'|')                                       # üst yoldan iniş
 # Işıksız yol: geyik karanlığa girmez; ateşböceği ışığı köprü olur.
-ot.put(298,F-1,'K'); ot.put(300,F-1,'('); ot.put(302,F-1,'F'); ot.put(304,F-1,'c'); ot.put(318,F-1,'c')
-ot.put(311,F-1,'F')
+ot.put(298,F-1,'K'); ot.put(300,F-1,'('); ot.put(301,F-1,'F')
+for c in (302,310,318,325): ot.put(c,F-1,'c')      # her ara bir ateşböceği: üç yeter
+ot.put(312,F-1,'F')
 ot.put(326,F-1,'d')
 ot.fill(330,F-14,330,F-5,'#'); ot.fill(330,F-4,330,F-1,'H')
 # D) Kara Bataklık: Karabasan kovalar

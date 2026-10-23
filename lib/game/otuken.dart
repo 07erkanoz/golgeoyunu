@@ -573,6 +573,35 @@ class AkGeyik extends PositionComponent
     return false;
   }
 
+  /// İki kare içinde (kısa bir karanlığın hemen ardında) ışık var mı?
+  bool _lightJustAhead(double x, int dir) {
+    for (var k = 1; k <= 4; k++) {
+      final at = x + dir * (0.9 + k * 0.5) * kTile;
+      if (!_darkAt(at)) return true;
+    }
+    return false;
+  }
+
+  /// Yakındaki en yakın aydınlık yer (8 kare içinde); eşitse [prefer]'e
+  /// doğru olan.
+  double? _nearestLight(double prefer) {
+    double? best;
+    var bestD = double.infinity;
+    for (var k = 1; k <= 32; k++) {
+      for (final dir in [1, -1]) {
+        final x = position.x + dir * k * 0.25 * kTile;
+        if (_darkAt(x) || _groundAt(x) == null) continue;
+        final d = (x - position.x).abs() + ((prefer - x).sign == dir ? 0 : 8);
+        if (d < bestD) {
+          bestD = d;
+          best = x + dir * 0.6 * kTile;
+        }
+      }
+      if (best != null) break;
+    }
+    return best;
+  }
+
   @override
   void update(double dt) {
     super.update(dt);
@@ -637,6 +666,17 @@ class AkGeyik extends PositionComponent
       fast = dx.abs() > 4 * kTile;
     }
     if (farewell) target = null;
+    // Karanlıkta kaldıysa (ateşböceği söndü) en yakın ışığa kaçar; Sâye'nin
+    // yanındaki ışık öncelikli.
+    var fleeing = false;
+    if (target == null && !farewell && _darkAt(position.x)) {
+      final light = _nearestLight(p.center.x);
+      if (light != null) {
+        target = light;
+        fast = true;
+        fleeing = true;
+      }
+    }
     moving = false;
     _alert = math.max(0, _alert - dt);
     if (target != null && (target - position.x).abs() > 0.35 * kTile) {
@@ -648,8 +688,9 @@ class AkGeyik extends PositionComponent
       final ground = _groundAt(lead);
       if (_blocked(lead) || ground == null) {
         _alert = 1;
-      } else if (_darkAt(lead)) {
-        // Karanlığa adım atmaz: durur, ürker.
+      } else if (!fleeing && _darkAt(lead) && !_lightJustAhead(nx, dir)) {
+        // Karanlığa adım atmaz: durur, ürker. (Bir buçuk kareden kısa bir
+        // karanlığın ardında ışık varsa sıçrar geçer.)
         _balk = 1;
         _alert = 1;
       } else {

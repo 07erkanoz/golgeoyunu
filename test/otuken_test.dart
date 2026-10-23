@@ -429,23 +429,26 @@ void main() {
         'GEYIK geçitten sonra: ${(deer.position.x / kTile).toStringAsFixed(1)}',
       );
       expect(deer.position.x, greaterThan(290 * kTile));
-      // 3) Işıksız yol: geyik karanlığa girmez.
-      walkTo(game, p, 305);
-      _run(game, 4);
+      // 3) Işıksız yol: kısa karanlıktan ışığa sıçrar, uzun karanlığa girmez.
+      walkTo(game, p, 302);
+      _run(game, 3);
+      expect(deer.position.x, greaterThan(299.5 * kTile));
+      walkTo(game, p, 309.8);
+      _run(game, 3);
       // ignore: avoid_print
       print(
         'GEYIK karanlık önü: ${(deer.position.x / kTile).toStringAsFixed(2)} sâye ${(p.center.x / kTile).toStringAsFixed(2)} ölü=${p.isDead}',
       );
-      expect(deer.position.x, lessThan(300 * kTile));
+      expect(deer.position.x, lessThan(304.5 * kTile));
+      walkTo(game, p, 302);
       // Ateşböcekleriyle ışık köprüsü kur: her ışığa önce Sâye yürür.
-      game.fireflies = 5;
-      // Sâye ateşböceğini salar, ışığın altına yürür, geyiği bekler.
-      walkTo(game, p, 298);
-      for (final at in [304.0, 310.0, 316.0, 322.0, 328.0]) {
-        lure(game, p, 1);
-        _run(game, 0.6);
+      // Üç ateşböceği yeter: Sâye ışıktan ışığa yürür, her birinde birini salar.
+      game.fireflies = 3;
+      for (final at in [302.0, 310.0, 318.0]) {
         walkTo(game, p, at);
-        _run(game, 1.6);
+        _run(game, 1.5);
+        lure(game, p, 1);
+        _run(game, 2.5);
         // ignore: avoid_print
         print(
           'GEYIK köprü $at: geyik ${(deer.position.x / kTile).toStringAsFixed(2)} sâye ${(p.center.x / kTile).toStringAsFixed(2)} ölü=${p.isDead} ${p.deathCause}',
@@ -455,6 +458,9 @@ void main() {
       print(
         'GEYIK sonda: ${(deer.position.x / kTile).toStringAsFixed(1)} ölü=${p.isDead}',
       );
+      // Sâye kapıya yürür; geyik ardından köke basar.
+      walkTo(game, p, 329);
+      _run(game, 3);
       expect(gateAt(game, 330).solid, isFalse);
       walkTo(game, p, 333);
       _run(game, 4);
@@ -629,13 +635,13 @@ void main() {
       final p = await _place(game, 299, 39);
       game.fireflies = 0;
       final swarm = game.world.children.whereType<FireflySwarm>().firstWhere(
-        (f) => (f.position.x / kTile).floor() == 302,
+        (f) => (f.position.x / kTile).floor() == 301,
       );
       p.position.setFrom(swarm.position - Vector2(Player.w / 2, Player.h / 2));
       _run(game, 0.5);
       expect(game.fireflies, 1);
       p.position.setFrom(
-        Level.standOn(Vector2(304 * kTile, 39 * kTile), Player.w, Player.h),
+        Level.standOn(Vector2(303 * kTile, 39 * kTile), Player.w, Player.h),
       );
       _run(game, 10.5);
       expect(swarm.isMounted, isTrue);
