@@ -85,6 +85,9 @@ class Level {
   final deerCells = <Vector2>[];
   final deerPlateCells = <Vector2>[];
 
+  /// Göğün katları: yada taşları (`c`).
+  final yadaCells = <Vector2>[];
+
   /// Ergenekon: demir damarları (`d` dikey dizisi: sütun, üst, alt).
   final ironVeins = <(int, int, int)>[];
   double? chaseStart;
@@ -362,6 +365,8 @@ class Level {
             icicleCells.add(cell);
           case '/':
             thinIceCells.add(cell);
+          case 'c' when def.theme == LevelTheme.heavens:
+            yadaCells.add(cell);
           case 'c' when def.theme == LevelTheme.forest:
             gladeBeamCells.add(cell);
           case 'c':

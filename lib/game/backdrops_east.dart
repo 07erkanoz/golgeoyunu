@@ -2028,8 +2028,143 @@ extension _EastBackdrops on Backdrop {
   /// Göğün katları: önce ay katı (soğuk, yumuşak, büyük ay: Ay Ata), sonra
   /// gün katı (sıcak, yakıcı: Gün Ana), Ülgen'in kapısında kırık güneşin
   /// parçası; en sonda Erlik'in fırtınası.
+  /// Göğün katlarının renkleri (LevelDef.skies türleri sırasıyla): üst,
+  /// orta, alt, bulut gövdesi, bulut ışığı.
+  static const _skyTones = [
+    [0xFF101A3A, 0xFF2A3A6A, 0xFF4A5A8A, 0xFF2A3460, 0xFFB8C8F0],
+    [0xFF04071A, 0xFF0E1534, 0xFF1C264C, 0xFF141C38, 0xFF5A6A9A],
+    [0xFF3A5A8A, 0xFF9AB4D0, 0xFFD0DCE8, 0xFFB8C8D8, 0xFFF0F4FA],
+    [0xFF6AA0E0, 0xFFE8C890, 0xFFF0D8A8, 0xFFE8D8C8, 0xFFFFF8EC],
+    [0xFF6AA0E0, 0xFFE8C890, 0xFFF0D8A8, 0xFFE8D8C8, 0xFFFFF8EC],
+    [0xFF1A1028, 0xFF3A2440, 0xFF4A3048, 0xFF2A1C34, 0xFF6A4A80],
+  ];
+
+  /// Kameranın sütununa göre katların ağırlıkları (iki komşu kat arasında
+  /// on kare boyunca geçiş).
+  List<double> _skyWeights(List<(int, int)> skies, double col) {
+    final out = List.filled(_skyTones.length, 0.0);
+    var i = 0;
+    while (i + 1 < skies.length && col >= skies[i + 1].$1) {
+      i++;
+    }
+    final (c0, k0) = skies[i];
+    if (i + 1 < skies.length) {
+      final (c1, k1) = skies[i + 1];
+      final k = ((col - (c1 - 10)) / 10).clamp(0.0, 1.0);
+      out[k0] += 1 - k;
+      out[k1] += k;
+    } else {
+      out[k0] = 1;
+    }
+    if (col < c0) out[k0] = 1;
+    return out;
+  }
+
+  void _layeredHeavens(
+    Canvas canvas,
+    double w,
+    double h,
+    Vector2 cam,
+    List<(int, int)> skies,
+  ) {
+    // Kameranın sol kenarı + yarım ekran (yaklaşık 18 kare).
+    final wt = _skyWeights(skies, cam.x / 32 + 18);
+    Color mix(int idx) {
+      var r = 0.0, g = 0.0, b = 0.0;
+      for (var k = 0; k < wt.length; k++) {
+        final c = Color(_skyTones[k][idx]);
+        r += c.r * wt[k];
+        g += c.g * wt[k];
+        b += c.b * wt[k];
+      }
+      return Color.from(alpha: 1, red: r, green: g, blue: b);
+    }
+
+    _gradient(canvas, Rect.fromLTWH(0, 0, w, h), [mix(0), mix(1), mix(2)]);
+    final night = wt[0] + wt[1];
+    if (night > 0) {
+      _stars(canvas, w, h, (70 * wt[0] + 180 * wt[1]).round(), cam.x);
+    }
+    if (wt[1] > 0) {
+      // Kuş Yolu: göğü çaprazlama kesen soluk ışık kuşağı.
+      final band = Path()
+        ..moveTo(-w * 0.1, h * 0.75)
+        ..quadraticBezierTo(w * 0.45, h * 0.2, w * 1.1, -h * 0.05)
+        ..lineTo(w * 1.1, h * 0.12)
+        ..quadraticBezierTo(w * 0.5, h * 0.42, -w * 0.1, h * 0.95)
+        ..close();
+      canvas.drawPath(
+        band,
+        Paint()
+          ..color = const Color(0xFFC8D4FF).withValues(alpha: 0.08 * wt[1])
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 30),
+      );
+    }
+    if (wt[0] > 0) {
+      canvas.saveLayer(
+        Rect.fromLTWH(0, 0, w, h),
+        Paint()..color = Color.fromRGBO(0, 0, 0, wt[0]),
+      );
+      _moon(canvas, Offset(w * 0.3, h * 0.26), h * 0.12, const Color(0xFFCFE0FF));
+      canvas.restore();
+    }
+    final day = wt[3] + wt[4];
+    if (day > 0) {
+      final c = Offset(w * 0.68, h * 0.24);
+      _lightLeak(canvas, c, h * 1.2, 0.5 * day, const Color(0xFFFFE8B0));
+      if (wt[4] > wt[3]) {
+        _brokenSun(canvas, c, h * 0.11);
+      } else {
+        canvas.drawCircle(
+          c,
+          h * 0.1,
+          Paint()..color = const Color(0xFFFFF6DA).withValues(alpha: day),
+        );
+      }
+    }
+    final windy = wt[2];
+    for (var k = 0; k < 3; k++) {
+      _cloudBank(
+        canvas,
+        w,
+        h,
+        offset: cam.x * (0.08 + k * 0.1) + _t * (3 + k * 3) * (1 + 6 * windy),
+        base: h * (0.58 + k * 0.14),
+        size: 70.0 - k * 10,
+        body: mix(3).withValues(alpha: 0.75 + k * 0.08),
+        lit: mix(4).withValues(alpha: 0.8),
+        seed: 31 + k,
+      );
+    }
+    // Yel katında göğü çizen uzun rüzgâr çizgileri.
+    if (windy > 0) {
+      final streak = Paint()
+        ..color = const Color(0xFFFFFFFF).withValues(alpha: 0.18 * windy)
+        ..strokeWidth = 1.4
+        ..strokeCap = StrokeCap.round;
+      for (var i = 0; i < 24; i++) {
+        final y = h * (0.1 + (i * 0.037) % 0.7);
+        final len = 60.0 + (i % 5) * 30;
+        final x = w - ((_t * (300 + i * 17) + i * 97) % (w + len * 2)) + len;
+        canvas.drawLine(Offset(x, y), Offset(x + len, y), streak);
+      }
+    }
+    final storm = wt[5];
+    if (storm > 0 && (_t * 0.7) % 1 < 0.04) {
+      canvas.drawRect(
+        Rect.fromLTWH(0, 0, w, h),
+        Paint()
+          ..color = const Color(0xFFE8E0FF).withValues(alpha: 0.25 * storm),
+      );
+    }
+  }
+
   void _heavens(Canvas canvas, double w, double h, Vector2 cam) {
     final lv = game.level;
+    if (lv.def.skies.isNotEmpty) {
+      _layeredHeavens(canvas, w, h, cam, lv.def.skies);
+      return;
+    }
     final u = (cam.x / lv.pixelWidth).clamp(0.0, 1.0);
     final day = ((u - 0.3) / 0.15).clamp(0.0, 1.0);
     final storm = ((u - 0.74) / 0.08).clamp(0.0, 1.0);

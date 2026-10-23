@@ -92,6 +92,7 @@ PerdeScene? interludeScene(int level) => switch (level) {
   15 => PerdeScene.ergenekon,
   16 => PerdeScene.gok,
   17 => PerdeScene.otuken,
+  18 => PerdeScene.gok,
   _ => null,
 };
 

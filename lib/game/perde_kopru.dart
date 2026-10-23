@@ -104,6 +104,8 @@ void _bridgeStage(Canvas c, int level, double time, double u, int n) {
       _bSky(c, time, u, nn);
     case 17:
       _bOtuken(c, time, u, nn);
+    case 18:
+      _bSky(c, time, u, nn);
   }
 }
 

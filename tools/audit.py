@@ -38,7 +38,7 @@ LEVELS = [
     ('kMapPalandoken', None, 0), ('kMapCig', None, 0), ('kMapPeri', True, 0),
     ('kMapDerinkuyu', True, 0), ('kMapKonya', True, 0),
     ('kMapErlik', False, 0), ('kMapErgenekon', False, 0), ('kMapGok', True, 0),
-    ('kMapOtuken', False, 0),
+    ('kMapOtuken', False, 0), ('kMapGok2', True, 0),
 ]
 
 # Ötüken Ormanı: `a` Ak Geyik, `d` geyik kökü (üstüne basılmaz). Geyik
@@ -49,11 +49,47 @@ FOREST = {'kMapOtuken'}
 # Göğün katları: `W` Tulpar'dır (kanat değil). Ona varılınca Tulpar'la uçulur;
 # uçuş benzetilmez: Tulpar'ın sağındaki hedefler varılmış sayılır (yaklaşık,
 # oyun içi sınamayla doğrulanır).
-FLYING = {'kMapGok'}
+FLYING = {'kMapGok2'}
 
 # Ergenekon: `d` demir damarı kapı gibi kapalıdır; ona bağlı bütün körüklere
 # (LevelDef.bellows, sırası > 0, en yakın damara bağlı) varılınca erir.
 VEINS = {'kMapErgenekon'}
+
+
+def _def_block(name):
+    src = open('lib/game/levels.dart', encoding='utf-8').read()
+    i = src.index('map: %s,' % name)
+    j = src.rindex('LevelDef(', 0, i)
+    return src[j:i]
+
+
+def heavens_extras(name):
+    """Göğün katlarının harita dışı düzenekleri (levels.dart): yıldız
+    çarklarının yolu ve şimşek basamakları basılabilir yer sayılır (yaklaşık:
+    çarkın her açısı); Yel Ana'nın alanlarında süzülüş soluğun gücüyle uzar
+    (yada taşı yönü çevirdiğinden iki yöne de)."""
+    b = _def_block(name)
+    cells, zones = set(), []
+    m = re.search(r'wheels:\s*\[(.*?)\],', b, re.S)
+    if m:
+        for c, r, rad in re.findall(r'\((\d+),\s*(\d+),\s*([\d.]+),', m.group(1)):
+            c, r, rad = int(c), int(r), float(rad)
+            for k in range(48):
+                a = k / 48 * 2 * math.pi
+                x = c + 0.5 + math.cos(a) * rad
+                y = r + 0.5 + math.sin(a) * rad
+                cells.add((int(x - 1), int(y)))
+                cells.add((int(x), int(y)))
+    m = re.search(r'stormSteps:\s*\[(.*?)\],', b, re.S)
+    if m:
+        for c, r, n in re.findall(r'\((\d+),\s*(\d+),\s*(\d+)\)', m.group(1)):
+            for k in range(int(n)):
+                cells.add((int(c) + k, int(r)))
+    m = re.search(r'yel:\s*\[(.*?)\],', b, re.S)
+    if m:
+        for t in re.findall(r'\((\d+),\s*(\d+),\s*(\d+),\s*(\d+),\s*-?\d+\)', m.group(1)):
+            zones.append(tuple(int(v) for v in t))
+    return cells, zones
 
 
 def bellows_of(name):
@@ -109,6 +145,7 @@ class Map:
         self.w = len(rows[0])
         self.underworld = underworld
         self.forest = False
+        self.yel = []
         self.jump_k = jump_k
         self.run_k = 1.4 if jump_k > 1 else 1.0          # atın koşusu
         self.wings = (wings or any('W' in r for r in rows)) and not underworld
@@ -258,7 +295,11 @@ def simulate(m, x, y, vx0, glide, swing=None, release=None):
         if gliding:
             vy = min(vy + G * 0.3 * DT, GLIDE_FALL)
             if vx0:
-                vx = (1 if vx0 > 0 else -1) * m.glide_x
+                gx = m.glide_x
+                cc0, cr0 = (x + W_P / 2) / T, (y + H_P / 2) / T
+                if any(a <= cc0 <= c and b <= cr0 <= d for a, b, c, d in m.yel):
+                    gx += 230 * 1.5
+                vx = (1 if vx0 > 0 else -1) * gx
         else:
             vy = min(vy + G * DT, MAXFALL)
         cc = int((x + W_P / 2) // T)
@@ -501,6 +542,10 @@ def audit(idx):
                 underworld=under or name in FLYING,
                 jump_k=HORSE_JUMP if horse else 1.0)
         m.forest = name in FOREST
+        hx_cells, hx_zones = heavens_extras(name)
+        m.extra |= hx_cells
+        m.generous |= hx_cells
+        m.yel = hx_zones
         AIR.clear()
         seen, edges, escapes = search(m, start)
         reach = near_cells(seen)

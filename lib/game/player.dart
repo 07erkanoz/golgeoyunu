@@ -60,6 +60,11 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
   int facing = 1;
   bool onGround = false;
   bool crouching = false;
+
+  /// Yel Ana'nın soluğu (px/sn, + sağa): her karede rüzgâr alanı yazar,
+  /// oyuncu kullanıp sıfırlar. Yerde çömelen etkilenmez; süzülen en çok
+  /// etkilenir.
+  double windX = 0;
   bool inShadow = false;
   bool hidden = false;
 
@@ -354,7 +359,13 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
           : velocity.y - 1100 * dt;
     }
     pushing = false;
-    _moveX(velocity.x * dt, dir);
+    final wind = windX == 0
+        ? 0.0
+        : (crouching
+              ? 0.0
+              : windX * (gliding ? 1.5 : (onGround ? 0.85 : 1.0)));
+    windX = 0;
+    _moveX((velocity.x + wind) * dt, dir);
     // Kare hızından bağımsız yörünge: yerçekimi/süzülme/rüzgâr ivmesi için
     // küçük bir düzeltme, her kare hızında 60 FPS'teki eğrinin aynısını
     // çizdirir (30 FPS'te zıplayış alçalmaz, 144'te yükselmez).

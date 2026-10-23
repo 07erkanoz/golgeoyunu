@@ -122,6 +122,13 @@ class Hints {
   static bool has(String key) => _tr.containsKey(key);
 
   static const _tr = {
+    'starWheel': 'Yıldız kazığının çevresinde döner · üstüne zıpla, seni taşır · istediğin yerde {jump} ile atla',
+    'karakci':
+        'Yedi Karakçı · kara yıldızlara değme · dönüşlerini izle, aradan geç',
+    'yel': 'Yel Ana üfleyecek · çizgiler sıklaşınca {down} çömel · arkadan eserken süzül: {glide}',
+    'yada': '{up} Yada taşına dokun · Yel Ana\'nın soluğu yön değiştirir',
+    'lightning':
+        'Yer kızarırsa çekil · yıldırımın ışığında bulut basamaklarını ezberle',
     'glade': 'Işık lekelerinde yürü · gölgede Karabasan bekler · ışık yoksa {firefly} ateşböceği sal',
     'rootDrum': 'Kam\'ın davulu · her vuruşta bir sıra kök kalkar, öbürü suya iner · ayağının altındaki titreyince atla',
     'deer': 'Ak Geyik ışığa gelir · {firefly} ateşböceğini önüne sal, peşinden yürür · karanlığa girmez',
@@ -202,6 +209,12 @@ class Hints {
   };
 
   static const _en = {
+    'starWheel': 'The star turns around its stake · jump on, it carries you · leap off when you like: {jump}',
+    'karakci': 'The Seven Thieves · do not touch the black stars · watch them turn and slip between',
+    'yel': 'The Wind Mother will blow · when the lines thicken, crouch: {down} · with the wind at your back, glide: {glide}',
+    'yada':
+        'Touch the yada stone: {up} · the Wind Mother\'s breath turns around',
+    'lightning': 'If the ground glows red, step away · in the lightning\'s flash, memorise the cloud steps',
     'glade': 'Walk in the patches of light · the Karabasan waits in the shadow · no light? Release a firefly: {firefly}',
     'rootDrum': 'The shaman\'s drum · each beat raises one row of roots and sinks the other · jump when the one beneath you trembles',
     'deer': 'The White Deer comes to the light · release a firefly ahead of it: {firefly} · it will not enter darkness',
@@ -290,6 +303,10 @@ class Hints {
       (S.en ? _solutionEn : _solutionTr)[key] ?? '';
 
   static const _relationTr = {
+    'starWheel': 'Yıldız çark gibi döner: altta alçalır, tepede yükselir; en yüksek yerde bırakan en yükseğe varır.',
+    'karakci': 'Yedi Karakçı yavaş ama durmadan döner; geçtiği yer bir süre boş kalır.',
+    'yel': 'Yel Ana önce çizgiyle uyarır, sonra eser; çömelen yerinden kımıldamaz, süzülen en çok sürüklenir.',
+    'lightning': 'Yıldırım hep aynı yerlere düşer; her düşüşte göğü aydınlatıp gizli basamakları gösterir.',
     'glade': 'Karabasan ışığa giremez; huzme kayınca ya da sönünce gölge de yer değiştirir.',
     'rootDrum': 'Kökler davulun vuruşuna bağlı: biri kalkarken komşusu iner; inmeden önce titrer.',
     'deer': 'Ak Geyik en yakın ateşböceğine yürür ama karanlığa adım atmaz.',
@@ -310,6 +327,10 @@ class Hints {
   };
 
   static const _relationEn = {
+    'starWheel': 'The star turns like a wheel: low at the bottom, high at the top; leap off at the top to reach the highest ledge.',
+    'karakci': 'The Seven Thieves turn slowly but never stop; where they have passed stays empty for a while.',
+    'yel': 'The Wind Mother warns with lines, then blows; whoever crouches stays put, whoever glides is carried furthest.',
+    'lightning': 'Lightning always strikes the same places; each strike lights the sky and shows the hidden steps.',
     'glade': 'The Karabasan cannot enter the light; when a beam shifts or fades, the shadow moves with it.',
     'rootDrum': 'The roots follow the drum: as one rises its neighbour sinks; it trembles before it sinks.',
     'deer': 'The White Deer walks to the nearest firefly, but it will not step into darkness.',
@@ -326,6 +347,10 @@ class Hints {
   };
 
   static const _solutionTr = {
+    'starWheel': 'Yıldız sana en yakın geçtiğinde üstüne zıpla. Tepeye çıkınca hedefe doğru bak ve atla; gerekirse süzül.',
+    'karakci': 'Kara yıldızlar uzaklaşıp kepçe dönünce atlara geç; atın üstünde kazığın öbür yanına dön, Karakçılar yine uzaktayken atla.',
+    'yel': 'Önden eserken çizgiler sıklaşır sıklaşmaz çömel, soluk dinince koş. Geniş boşlukta soluk arkadan eserken atla ve süzül.',
+    'lightning': 'Kızaran yerden çekil, yıldırımı bekle. Çaktığı an basamakları gör, ışık sönmeden ilk iki basamağa geç; sonrakini bir sonraki yıldırımla gör.',
     'glade': 'Bir huzmenin içinde dur ve izle. Rüzgârlı yerde yapraklar hışırdayınca huzme kayar: onunla birlikte yürü. Sönen huzmeler sırayla söner; titreyeni bırak, yanan komşusuna geç. Gölgede kalırsan ateşböceği sal: ışığı seni korur.',
     'rootDrum': 'Davulu dinle. Ayağının altındaki kök titreyince bir sonrakine atla; kalkacak kökün uçlarını suyun yüzünde önceden görürsün.',
     'deer': 'Geyiği yukarıdan yönetiyorsan ateşböceğini kökün hizasına sal. Karanlık yolda ateşböceklerini sırayla sal: biri sönmeden öbürünü ileri at; geyik ışıktan ışığa yürür.',
@@ -342,6 +367,10 @@ class Hints {
   };
 
   static const _solutionEn = {
+    'starWheel': 'Jump on when the star passes closest to you. At the top, face your goal and leap; glide if you must.',
+    'karakci': 'When the black stars are far and the dipper has turned away, step onto a horse; ride to the far side of the stake and leap while the Thieves are still away.',
+    'yel': 'Against the wind, crouch as soon as the lines thicken and run when the breath dies. Over a wide gap, jump and glide while it blows at your back.',
+    'lightning': 'Step off the glowing spot and wait for the bolt. The moment it strikes, see the steps and cross the first two before the light fades; see the next with the next bolt.',
     'glade': 'Stand inside a beam and watch. Where the wind blows, the leaves rustle before the beam shifts: walk along with it. Fading beams go out in turn; leave the trembling one for its lit neighbour. Caught in shadow? Release a firefly: its light protects you.',
     'rootDrum': 'Listen to the drum. When the root beneath you trembles, jump to the next; you can see the tips of the rising roots on the water beforehand.',
     'deer': 'Guiding the deer from above? Release the firefly right over the root. On the dark path release fireflies one after another: throw the next before the last fades, and the deer walks from light to light.',

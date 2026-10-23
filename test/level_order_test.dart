@@ -31,4 +31,12 @@ void main() {
     expect(levelOrder[migrateOrderPosition(12, 4)], 12);
     expect(levelOrder[migrateOrderPosition(16, 4)], 13);
   });
+
+  test('Göğün Katları II (Ülgen\'in Kapısı) I ile Konya arasına girer', () {
+    expect(levelOrder.indexOf(18), levelOrder.indexOf(16) + 1);
+    expect(levelOrder.indexOf(13), levelOrder.indexOf(18) + 1);
+    // 5. sürümde Konya'ya (yer 17) varmış kayıt yine Konya'da kalır.
+    expect(levelOrder[migrateOrderPosition(17, 5)], 13);
+    expect(levelOrder[migrateOrderPosition(16, 5)], 16);
+  });
 }

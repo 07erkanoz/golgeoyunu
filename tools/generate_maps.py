@@ -1442,7 +1442,60 @@ for c,(t,b) in ((254,(0,18)),(264,(22,39)),(274,(0,15)),(284,(20,39)),(294,(0,19
     gk.fill(c,t,c+2,b,'#')
 island(266,268,F-11,F-10); island(288,290,12,12); gk.put(289,11,'M')
 island(310,331); gk.put(316,F,'Z'); gk.put(318,F,'8'); gk.put(320,F,'K'); gk.put(328,F,'E')
-lvl_gok=gk.rows()
+lvl_gok_eski=gk.rows()
+
+# --- Göğün Katları ikiye ayrılır (docs/UZATMA_PLANI.md).
+# I: Bulut Kapısı, Ay Katı (eski haritanın 0-120. sütunları, üstte 8 satır
+# boşluk) + Yıldız Katı + Yel Katı. Çarklar, Yedi Karakçı ve Yel Ana'nın
+# soluğu LevelDef'te (wheels, karakci, yel); `c` yada taşı.
+G1W,G1H=304,48
+g1=G(G1W,G1H)
+for r,row in enumerate(lvl_gok_eski):
+    for c in range(121):
+        ch=row[c]
+        if ch=='4': ch='.'          # eski "gün katı" fısıltısı II'ye geçti
+        if ch!='.': g1.g[r+8][c]=ch
+def isl1(c0,c1,top,th=2): g1.fill(c0,top,c1,top+th-1,'#')
+# Yıldız Katı: tek çark, ters dönen iki çark, Demir Kazık'ın atları.
+isl1(121,126,31); g1.put(122,30,'p'); g1.put(123,30,'4'); g1.put(125,30,'K')
+isl1(135,143,22); g1.put(137,21,'5')
+isl1(159,167,9);  g1.put(160,8,'K'); g1.put(161,8,'6'); g1.put(164,8,'M')
+isl1(182,192,9);  g1.put(184,8,'K')
+# Yel Katı: arkadan soluk, önden soluk (çömel), yada taşıyla yön.
+g1.put(188,8,'p'); g1.put(190,8,'7')
+isl1(212,218,13); g1.put(214,12,'K')
+for c0,c1 in ((222,227),(230,234),(237,242)): isl1(c0,c1,16,1)
+isl1(244,248,16); g1.put(245,15,'K'); g1.put(246,15,'c'); g1.put(247,15,'8')
+isl1(270,280,20); g1.put(276,19,'M')
+isl1(282,303,24); g1.put(284,23,'K'); g1.put(286,23,'9'); g1.put(300,23,'E')
+lvl_gok=g1.rows()
+
+# II: Gün Katı (eski 121-200) + Şimşek Katı (yeni) + Ülgen'in Kapısı ve
+# Tulpar (eski 201-331). Kara bulut basamakları ve yıldırımlar LevelDef'te
+# (stormSteps, strikes).
+SIM=60
+G2W=10+80+SIM+131
+g2=G(G2W,40)
+F2=30
+g2.fill(0,F2+1,9,F2+2,'#'); g2.put(2,F2,'P'); g2.put(3,F2,'1'); g2.put(6,F2,'K')
+REN={'5':'2','6':'5','7':'6','8':'7'}       # eski fısıltılar bu bölümde
+def cp(src0,src1,dst0):
+    for r,row in enumerate(lvl_gok_eski):
+        for k,c in enumerate(range(src0,src1+1)):
+            ch=row[c]
+            if ch=='P': ch='.'
+            g2.g[r][dst0+k]=REN.get(ch,ch)
+cp(121,200,10)
+# Gün Katı'nın eski fısıltıları: 5 (Hüma) → 2; 4 → bu bölümün 1'i.
+x0=10+80
+# Şimşek Katı: yıldırımlar ve yalnızca şimşekte görünen kara bulut basamakları.
+g2.fill(x0,F2+1,x0+7,F2+2,'#'); g2.put(x0+1,F2,'p'); g2.put(x0+2,F2,'K'); g2.put(x0+4,F2,'3')
+g2.fill(x0+18,F2+1,x0+24,F2+2,'#'); g2.put(x0+20,F2,'4')
+g2.fill(x0+34,F2-5,x0+40,F2-4,'#'); g2.put(x0+36,F2-6,'K'); g2.put(x0+38,F2-6,'M')
+g2.fill(x0+52,F2+1,x0+SIM-1,F2+2,'#')
+g2.put(x0,1,'<'); g2.put(x0+SIM-1,38,'>')       # sağanak: kanat ıslanır
+cp(201,331,x0+SIM)
+lvl_gok2=g2.rows()
 
 # ------------------------------------------------------------ XIV · ÖTÜKEN ORMANI (Ötüken)
 # Yeşil, kutlu orman. `c` yaprak arasından düşen ışık huzmesi (LevelDef.glades
@@ -1587,7 +1640,7 @@ for at, ins in sorted(OTUKEN_INS, reverse=True):
     rows = [r[:at] + x + r[at:] for r, x in zip(rows, ins)]
 lvl_otuken=rows
 
-MAPS = [('kMapYerebatan', lvl1), ('kMapKule', lvl2), ('kMapGokyolu', lvl3), ('kMapKaf', lvl4), ('kMapAgri', lvl5), ('kMapGemi', lvl6), ('kMapNemrut', lvl7), ('kMapGunDogumu', lvl8), ('kMapKarYolu', lvl9), ('kMapPalandoken', lvl10), ('kMapCig', lvl11), ('kMapPeri', lvl12), ('kMapDerinkuyu', lvl13), ('kMapKonya', lvl14), ('kMapErlik', lvl_erlik), ('kMapErgenekon', lvl_ergenekon), ('kMapGok', lvl_gok), ('kMapOtuken', lvl_otuken)]
+MAPS = [('kMapYerebatan', lvl1), ('kMapKule', lvl2), ('kMapGokyolu', lvl3), ('kMapKaf', lvl4), ('kMapAgri', lvl5), ('kMapGemi', lvl6), ('kMapNemrut', lvl7), ('kMapGunDogumu', lvl8), ('kMapKarYolu', lvl9), ('kMapPalandoken', lvl10), ('kMapCig', lvl11), ('kMapPeri', lvl12), ('kMapDerinkuyu', lvl13), ('kMapKonya', lvl14), ('kMapErlik', lvl_erlik), ('kMapErgenekon', lvl_ergenekon), ('kMapGok', lvl_gok), ('kMapOtuken', lvl_otuken), ('kMapGok2', lvl_gok2)]
 
 out = ['// Bu dosya tools/generate_maps.py ile üretilir; elle düzenleme.',
        '// Gösterim: lib/game/level.dart başındaki açıklamaya bakın.', '']

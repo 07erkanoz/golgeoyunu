@@ -185,3 +185,37 @@ biçim geçer; hiçbiri geçilmez değil.
 
 Ölçü: sarmaşıktan ilk salınışta bırakan 3-7, pompalayıp bırakan 7-11 kare
 ileri iner (tools/preview/ip_inis_test.dart).
+
+## Göğün Katları · ikiye ayrılır (tasarım, 2026-10-23)
+
+Bugünkü bölüm (kimlik 16) ikiye bölünür. **Göğün Katları I** Bulut Kapısı
+ve Ay Katı'yla başlar, iki yeni katla sürer. **Göğün Katları II** (yeni,
+kimlik 18) Gün Katı'yla başlar, yeni Şimşek Katı'ndan Ülgen'in Kapısı'na,
+oradan Tulpar'la fırtına kaçışına gider. Kimlikler değişmez; II sıraya I'in
+hemen ardından girer.
+
+| Kat | Efsane | Düzenek | Üç adım |
+|---|---|---|---|
+| **Yıldız Katı** (I) | Göğün direği **Demir Kazık** (Kutup Yıldızı); ona bağlı iki at, **Ak Boz At** ile **Kök Boz At**; atları çalmak için çevresinde dönen **Yedi Karakçı** (Büyük Ayı). Atlar çalınırsa dünyanın sonu gelir (Kazak, Kırgız, Altay anlatıları). | **Yıldız çarkları:** yıldızlar bir kazığın çevresinde döner; üstlerine basılır, Sâye'yi taşır. Yedi Karakçı dış halkada döner, değeni düşürür. | Tek yavaş çark → ters dönen iki çark, aktarma → Demir Kazık'ın büyük çarkı, Karakçılar arasında |
+| **Yel Katı** (I) | **Yel Ana:** rüzgârın anası; kamlar ondan yol ister. | **Yel soluğu:** Yel Ana ritimle üfler; önce bulutlar çizgilenir ve uğultu yükselir. Arkadan esen soluk süzülüşü uzatır; önden esen düşürür, **yel taşının** ardında çömelen kalır. Yukarı akımlar (var) da kullanılır. | Arkadan soluk, geniş boşluk → önden soluk, yel taşları → ikisi ve yukarı akımlar birlikte |
+| Gün Katı (II) | Hüma (var) | Hüma'nın gölgesi (var) | Var |
+| **Şimşek Katı** (II) | Yakut inancında gök gürültüsünün efendisi **Süge Toyon**, kötü ruhlara yıldırım indirir. | **Şimşekle görünen yol:** kara bulut basamakları yalnızca şimşek çakınca ve ardından bir an görünür, ezberlenir. Yıldırımın düşeceği yer önceden kızarır. | Görünen yol ezberi → yıldırım düşen yerler → ikisi birlikte |
+| Ülgen'in Kapısı, Tulpar (II) | Var | Var | Var |
+
+Süre hedefi: iki bölüm de 10-15 dakika. Her katın başında Umay ağacı.
+
+### Yapılan (2026-10-23): Göğün Katları ikiye ayrıldı
+
+- **Göğün Katları I** (kimlik 16, harita 304 kare): Bulut Kapısı, Ay Katı,
+  **Yıldız Katı** (tek çark → ters dönen iki çark → Demir Kazık'ın atları,
+  Yedi Karakçı), **Yel Katı** (arkadan soluk → önden soluk, çömel → yada
+  taşıyla yön). lib/game/gok_katlari.dart.
+- **Ülgen'in Kapısı** (Göğün Katları II, kimlik 18, harita 281 kare): Gün
+  Katı (Hüma), **Şimşek Katı** (sağanak, yıldırımın ışığında görünen kara
+  bulut basamakları), Ülgen'in Kapısı, Tulpar'la fırtına kaçışı.
+- Göğün katlarının gökleri kat kat (LevelDef.skies): ay gecesi, yıldız
+  gecesi ve Kuş Yolu, gümüşi yel sabahı, gün, fırtına.
+- Defter: Demir Kazık ve Yedi Karakçı, Yel Ana ve Yada Taşı (Kaşgarlı
+  Mahmud'un "yat"ı), Süge Toyon. İpuçları ve basamakları.
+- Sıra sürümü 6; Konya artık XIX. Botlar yedi yeni kesiti baştan sona geçer
+  (test/gok_katlari_bot_test.dart).

@@ -153,6 +153,12 @@ class LevelDef {
     this.noWings = false,
     this.scorch = const [],
     this.glades = const [],
+    this.wheels = const [],
+    this.skies = const [],
+    this.yel = const [],
+    this.stormSteps = const [],
+    this.strikes = const [],
+    this.karakci = const [],
     this.lifeTree,
     this.legends = const [],
     this.gokboruRun = false,
@@ -173,6 +179,31 @@ class LevelDef {
   /// Karabasan bekler. Rüzgâr: 0 durgun, 1 huzmeler kayar, 2 huzmeler
   /// sırayla söner.
   final List<(int, int, int, int, int)> glades;
+
+  /// Yıldız Katı: dönen yıldız çarkları (kazık sütunu, satırı, yarıçap
+  /// (kare), yıldız sayısı, bir tur (sn; eksi: ters yön), tür: 0 yıldız,
+  /// 1 Demir Kazık'a bağlı iki at).
+  final List<(int, int, double, int, double, int)> wheels;
+
+  /// Göğün katlarının gökleri: (sütun, tür) sırayla; kamera o sütuna
+  /// gelince gök o türe döner. Tür: 0 ay gecesi, 1 yıldız gecesi, 2 yel
+  /// (gümüşi sabah), 3 gün, 4 kırık güneşli gün, 5 fırtına. Boşsa gök
+  /// bölümün yüzdesine göre değişir.
+  final List<(int, int)> skies;
+
+  /// Yel Katı: Yel Ana'nın soluğu esen alanlar (sol, üst, sağ, alt,
+  /// yön: +1 sağa, -1 sola). Haritadaki `c` göklerde yada taşıdır.
+  final List<(int, int, int, int, int)> yel;
+
+  /// Şimşek Katı: yalnızca şimşek çakınca görünen kara bulut basamakları
+  /// (sütun, satır, genişlik) ve yıldırımın düştüğü yerler (sütun, satır,
+  /// evre (sn)). Her yıldırım göğü aydınlatıp basamakları gösterir.
+  final List<(int, int, int)> stormSteps;
+  final List<(int, int, double)> strikes;
+
+  /// Yedi Karakçı: kazığın çevresinde dönen Büyük Ayı (kazık sütunu,
+  /// satırı, uzaklık (kare), bir tur (sn)).
+  final List<(int, int, double, double)> karakci;
 
   /// Ötüken: Hayat Ağacı'nın gövdesi (sol, üst, sağ, alt sütun/satır); ak
   /// kayın olarak çizilir, tacı üstünde açılır.
@@ -512,8 +543,8 @@ const interludes = <List<String>>[
   [
     'Ozan der ki: Altay\'da kamlar davullarını çalınca canları göğe yükselirmiş. Göğün kat kat olduğunu onlar anlatır.',
     'En yüksek katta Ülgen oturur: iyiliğin ve aydınlığın kaynağı. Erlik onun karşıtıdır.',
-    'Bir katında ay soğuk ve yumuşak yanar; bir katında güneş yakar.',
-    'Derler ki Hüma\'nın gölgesi kimin başına düşerse ona kut getirir. Tulpar ise yiğidi göğün katları arasında taşır.',
+    'Bir katında ay soğuk ve yumuşak yanar; bir katında yıldızlar Demir Kazık\'ın çevresinde döner.',
+    'Kazığa iki at bağlıdır; Yedi Karakçı onları çalmak ister. Katların arasında Yel Ana eser.',
     'Kandilciler kırık güneşin bir parçasını göğün en yüksek katına götürmüştü. Bir kam davulunu çaldı; Sâye bulutların üstüne yükseldi.',
   ],
   [
@@ -525,6 +556,13 @@ const interludes = <List<String>>[
     'Karabasan sahipsiz gölgeleri sezer. Uyuyanın göğsüne çöker gibi onlara çöker, onları yer. Ustası olmayan bir gölge, onun için en tatlı lokmadır.',
     'Ama ışığa giremez. Ötüken\'in yaprakları arasından süzülen her huzme, Sâye için bir sığınaktır.',
     'BEŞİNCİ PERDE · ÖTÜKEN',
+  ],
+  [
+    'Yel Ana Sâye\'yi gün katının eşiğine bıraktı. Kam\'ın davulu artık duyulmuyordu.',
+    'Gün katının ötesinde Ülgen\'in kapısı vardı; kırık güneşin parçası orada bekliyordu.',
+    'Gün katında güneş yakar. Ama göğün bu yüksekliğinde bile Erlik\'in fırtınası kaynıyordu.',
+    'Derler ki Hüma\'nın gölgesi kimin başına düşerse ona kut getirir. Tulpar ise yiğidi göğün katları arasında taşır.',
+    'Yakutlar gök gürültüsünü Süge Toyon\'un sesi bilir; yıldırımı kötü ruhlara indirir. O gece gök gürlüyordu.',
   ],
 ];
 
@@ -653,8 +691,8 @@ const interludesEn = <List<String>>[
   [
     'The bard says: in the Altai, when shamans beat their drums their souls rose into the sky. It is they who tell that the sky has many layers.',
     'In the highest layer dwells Ülgen: the source of goodness and light. Erlik is his opposite.',
-    'In one layer the moon burns cold and soft; in another the sun scorches.',
-    'They say the shadow of the Huma brings kut to whomever it falls on. And Tulpar carries the hero between the layers of the sky.',
+    'In one layer the moon burns cold and soft; in another the stars turn around the Iron Stake.',
+    'Two horses are tied to the stake; the Seven Thieves want to steal them. Between the layers blows the Wind Mother.',
     'The Lamplighters had carried a piece of the broken sun to the highest layer of the sky. A shaman beat his drum, and Saye rose above the clouds.',
   ],
   [
@@ -667,18 +705,25 @@ const interludesEn = <List<String>>[
     'But it cannot enter the light. Every beam that slips between the leaves of Ötüken is a refuge for Saye.',
     'THE FIFTH VEIL · ÖTÜKEN',
   ],
+  [
+    'The Wind Mother set Saye down at the threshold of the sun layer. The shaman\'s drum could no longer be heard.',
+    'Beyond the sun layer stood Ülgen\'s gate; the piece of the broken sun was waiting there.',
+    'In the sun layer the sun burns. Yet even this high in the sky, Erlik\'s storm was boiling.',
+    'They say the shadow of the Huma brings kut to whomever it falls on. And Tulpar carries the hero between the layers of the sky.',
+    'The Yakuts know thunder as the voice of Süge Toyon, who hurls lightning at evil spirits. That night the sky was thundering.',
+  ],
 ];
 
 /// Oynanış sırası. Bölümün kimliği `levels` listesindeki yeridir ve hiç
 /// değişmez (kayıt, hatıralar, görülen olaylar bu kimlikle tutulur); yeni
 /// bölümler listenin sonuna eklenir, oynanıştaki yerlerine bu sırada girer.
 const levelOrder = <int>[
-  0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 17, 14, 15, 16, 13, //
+  0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 17, 14, 15, 16, 18, 13, //
 ];
 
 /// Sıra değişince artar: kayıttaki "açılan en ileri bölüm" (sıradaki yer)
 /// eski sıradan yenisine çevrilir.
-const levelOrderVersion = 5;
+const levelOrderVersion = 6;
 
 /// Eski sıra sürümlerinde her yerdeki bölüm kimliği (1. sürüm: kimlik =
 /// yer).
@@ -688,6 +733,7 @@ const _levelOrderHistory = <int, List<int>>{
   3: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 13],
   4: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 16, 13],
   5: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 17, 14, 15, 16, 13],
+  6: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 17, 14, 15, 16, 18, 13],
 };
 
 /// Bölümün oynanış sırasındaki yeri (yoksa -1).
@@ -793,13 +839,17 @@ const bridges = <List<String>>[
     'Demir dağın içinden yol açtı. Nevruz örsüne üç kez vurdu; kapı açıldı.',
   ],
   [
-    'Kamın davulu çaldıkça bulut kapısından ay katına, ay katından gün katına yükseldi.',
-    'Hüma\'nın gölgesi başına düştü. Ülgen\'in kapısında Tulpar onu bekliyordu.',
+    'Kamın davulu çaldıkça bulut kapısından ay katına, ay katından yıldız katına yükseldi.',
+    'Demir Kazık\'ın atlarına tutunup Yedi Karakçı\'nın arasından geçti; yada taşıyla Yel Ana\'ya yön verdi.',
   ],
   [
     'Kökler onu yerin altından Ötüken\'in yeşiline çıkardı. Yaprakların arasından düşen ışıkta yürüdü; gölgede Karabasan\'ın gözleri açılıp kapandı.',
     'Kam\'ın davulu vurdukça kökler kalktı; sarmaşıklara tutunup dikenli yarları aştı. Ak bir geyik ateşböceklerinin ışığını izleyip kök kapılarını açtı.',
     'Kara Bataklık\'ta Karabasan bütün gücüyle saldırdı. Sâye Hayat Ağacı\'na tırmandı, güneşi aynalarla aşağı indirdi; ışık köklere aktı, Karabasan dağıldı.',
+  ],
+  [
+    'Hüma\'nın gölgesi başına düştü. Süge Toyon\'un yıldırımlarının ışığında kara bulutlara bastı.',
+    'Ülgen\'in kapısında Tulpar onu bekliyordu.',
   ],
 ];
 
@@ -880,13 +930,17 @@ const bridgesEn = <List<String>>[
     'He opened a way through the iron mountain. He struck the Nevruz anvil three times; the gate opened.',
   ],
   [
-    'As the kam\'s drum beat, he rose from the cloud gate to the layer of the moon, and from the moon to the layer of the sun.',
-    'The Huma\'s shadow fell on his head. At Ulgen\'s gate, Tulpar was waiting for him.',
+    'With every beat of the shaman\'s drum he rose from the cloud gate to the moon layer, and from the moon layer to the star layer.',
+    'Holding on to the horses of the Iron Stake he slipped between the Seven Thieves; with a yada stone he told the Wind Mother which way to blow.',
   ],
   [
     'The roots brought him up from beneath the earth into the green of Ötüken. He walked in the light falling between the leaves; in the shadow the Karabasan\'s eyes opened and closed.',
     'With every beat of the shaman\'s drum the roots rose; he swung on the vines across thorny ravines. A white deer followed the light of his fireflies and opened the root gates.',
     'In the Black Marsh the Karabasan attacked with all its strength. Saye climbed the Tree of Life and brought the sun down with mirrors; the light flowed to the roots, and the Karabasan scattered.',
+  ],
+  [
+    'The Huma\'s shadow fell upon him. By the light of Süge Toyon\'s lightning he stepped on the black clouds.',
+    'At Ülgen\'s gate, Tulpar was waiting for him.',
   ],
 ];
 
@@ -1757,7 +1811,7 @@ const levels = <LevelDef>[
     map: kMapDerinkuyu,
   ),
   LevelDef(
-    title: 'XVIII · ŞEB-İ ARÛS',
+    title: 'XIX · ŞEB-İ ARÛS',
     legends: ['sebiArus'],
     bard: 'Ozan der ki: Dönen döner, gölge düşer; kim dönerse yolunu bulur.',
     bardEn: 'The bard says: the whirling turn, the shadows fall; whoever turns finds the way.',
@@ -1765,7 +1819,7 @@ const levels = <LevelDef>[
     subtitle: 'Bu gece ölüm bir düğündür.',
     theme: LevelTheme.konya,
     wings: true,
-    titleEn: 'XVIII · SHEB-I ARUS',
+    titleEn: 'XIX · SHEB-I ARUS',
     subtitleEn: 'Tonight, death is a wedding.',
     place: 'Konya · 17 Aralık 1660, Şeb-i Arûs gecesi',
     placeEn: 'Konya · 17 December 1660, the night of Sheb-i Arus',
@@ -1991,48 +2045,59 @@ const levels = <LevelDef>[
     titleEn: 'XVII · THE LAYERS OF THE SKY',
     subtitleEn: 'Each layer brighter than the last.',
     theme: LevelTheme.heavens,
-    bard: 'Ozan der ki: Gök kat kattır; davul vurdukça basamak olur, kanat çırptıkça yol.',
-    bardEn: 'The bard says: the sky is layer upon layer; each drumbeat a step, each wingbeat a road.',
+    bard: 'Ozan der ki: Gök kat kattır; davul vurdukça basamak olur, yıldız döndükçe merdiven.',
+    bardEn: 'The bard says: the sky is layer upon layer; each drumbeat a step, each turning star a stair.',
     place: 'Ötüken · Göğün katları',
     placeEn: 'Ötüken · The layers of the sky',
-    scorch: [(121, 18, 199, 31)],
-    cameos: [('kam', 12, 30), ('gokKat', 84, 22), ('ulgen', 222, 30)],
-    areas: ['Bulut Kapısı', 'Ay Katı', 'Gün Katı', 'Ülgen\'in Kapısı'],
+    wings: true,
+    cameos: [('kam', 12, 38), ('gokKat', 84, 30)],
+    skies: [(0, 0), (121, 1), (198, 2)],
+    wheels: [
+      (131, 26, 4, 3, 9, 0),
+      (147, 17, 3.5, 3, 9, 0),
+      (154, 12, 3.5, 3, -9, 0),
+      (174, 9, 3, 2, 8, 1),
+    ],
+    karakci: [(174, 9, 5.2, -18)],
+    yel: [(186, 2, 215, 16, 1), (221, 6, 243, 17, -1), (244, 4, 272, 22, -1)],
+    areas: ['Bulut Kapısı', 'Ay Katı', 'Yıldız Katı', 'Yel Katı'],
     areasEn: [
       'The Cloud Gate',
       'The Moon Layer',
-      'The Sun Layer',
-      'Ülgen\'s Gate',
+      'The Star Layer',
+      'The Wind Layer',
     ],
     whispers: [
       'Kam\'ın davulu seni göğe taşıdı. Göğün katları üst üste; her biri bir öncekinden aydınlık.',
       'Davulun her vuruşunda bir bulut belirir, öbürü söner. Vuruşu say.',
       'Ay katı: ışık soğuk ve yumuşak. Burada hem ışık hem gölge yol olur.',
-      'Yukarısı gün katı: ışık yakar. Biri gölgesini sana uzatacak.',
-      'Hüma! Gölgesi kimin başına düşerse... Gölgesinden çıkma.',
-      'Ülgen\'in kapısı. Işık burada konuşmaz; görünür.',
-      'Fırtına! Erlik göğe de uzandı. Tulpar seni bekliyor.',
-      'Tulpar seni bulutların arasından aşağı, karlı bir ovaya indirdi. Uzakta bir şehrin kubbeleri.',
+      'Ay katının üstünde gece daha derin. Atalar derdi ki gök bir çadırdır, yıldızlar onun delikleri; ışık oradan sızar.',
+      'Her yıldız bir kazığa bağlıdır, çevresinde döner. Döneni tutan onunla yükselir.',
+      'Göğün ortasında Demir Kazık: göğün direği. Ona iki at bağlı, Ak Boz At ile Kök Boz At. Yedi Karakçı onları çalmak için döner durur; atlar çalınırsa dünyanın sonu gelir.',
+      'Yel Katı. Yel Ana burada soluk alır; kamlar ondan yol ister. Soluğu arkana al.',
+      'Bu bir yada taşı. Kamlar onunla yağmuru, karı, rüzgârı çağırır. Taşa dokunan, Yel Ana\'ya yön söyler.',
+      'Yelin ucunda göğün rengi değişiyor: yukarıda gün katı. Işık orada yakar.',
     ],
     whispersEn: [
       'The shaman\'s drum carried you into the sky. The layers of the sky lie one above another, each brighter than the last.',
       'With every drumbeat one cloud appears and the other fades. Count the beat.',
       'The moon layer: the light is cold and soft. Here both light and shadow become a road.',
-      'Above is the sun layer: its light burns. Someone will lend you their shadow.',
-      'The Huma! Whoever its shadow falls on... Do not leave its shadow.',
-      'Ülgen\'s gate. Here light does not speak; it shows itself.',
-      'A storm! Erlik has reached into the sky as well. Tulpar is waiting for you.',
-      'Tulpar brought you down through the clouds to a snowy plain. In the distance, the domes of a city.',
+      'Above the moon layer the night is deeper. The forefathers said the sky is a tent and the stars are its holes; the light seeps through them.',
+      'Every star is tied to a stake and turns around it. Whoever holds the turning star rises with it.',
+      'At the middle of the sky stands the Iron Stake: the pillar of the sky. Two horses are tied to it, the White-Grey Horse and the Blue-Grey Horse. The Seven Thieves circle forever to steal them; if the horses are stolen, the world will end.',
+      'The Wind Layer. Here the Wind Mother breathes; shamans ask her for a road. Keep her breath at your back.',
+      'This is a yada stone. With it shamans call rain, snow and wind. Whoever touches it tells the Wind Mother which way to blow.',
+      'At the end of the wind the colour of the sky changes: above lies the sun layer. Its light burns.',
     ],
     memories: [
-      'Hatıra · "Bir gün gökte de bir perde açacağım," derdi ustam. "Bulutlar tasvir olacak."',
+      'Hatıra · Ustam geceleri bana Demir Kazık\'ı gösterirdi. "Yolunu yitirirsen ona bak," derdi, "o hiç yerinden oynamaz."',
+      'Hatıra · Rüzgârlı gecelerde perdenin bezi dalgalanırdı. Ustam kızmazdı: "Yel de oynamak ister," derdi.',
       'Hatıra · Ay ışığında perde başka türlü yanar. "Soğuk ışık da ışıktır," demişti ustam.',
-      'Hatıra · "Usta, güneşi kim kırdı?" "Ona tek başına sahip olmak isteyen, Sâye."',
     ],
     memoriesEn: [
-      'Memory · "One day I will open a screen in the sky too," my master used to say. "The clouds will be the puppets."',
+      'Memory · At night my master would show me the Iron Stake. "If you lose your way, look at it," he said. "It never moves."',
+      'Memory · On windy nights the cloth of the screen would ripple. My master never minded: "The wind wants to play too," he said.',
       'Memory · In moonlight the screen glows differently. "Cold light is light as well," my master had said.',
-      'Memory · "Master, who broke the sun?" "Someone who wanted it all to himself, Saye."',
     ],
     map: kMapGok,
   ),
@@ -2128,5 +2193,63 @@ const levels = <LevelDef>[
       'Memory · "A tree\'s shadow falls longer than the tree, Saye," he had said. "So do its roots: unseen, yet they carry the branches."',
     ],
     map: kMapOtuken,
+  ),
+  LevelDef(
+    title: 'XVIII · ÜLGEN\'İN KAPISI',
+    subtitle: 'Işığın kaynağına, fırtınanın içinden.',
+    titleEn: 'XVIII · ÜLGEN\'S GATE',
+    subtitleEn: 'To the source of light, through the storm.',
+    theme: LevelTheme.heavens,
+    bard: 'Ozan der ki: Gün katında gölge bir sığınaktır; şimşek bir fener.',
+    bardEn: 'The bard says: in the sun layer a shadow is a shelter; lightning, a lantern.',
+    place: 'Ötüken · Göğün en yüksek katları',
+    placeEn: 'Ötüken · The highest layers of the sky',
+    wings: true,
+    legends: ['sugeToyon'],
+    scorch: [(10, 18, 88, 31)],
+    cameos: [('ulgen', 171, 30)],
+    skies: [(0, 4), (90, 5), (150, 3), (186, 5)],
+    stormSteps: [
+      (100, 30, 2),
+      (103, 29, 2),
+      (116, 29, 2),
+      (119, 27, 2),
+      (121, 25, 2),
+      (133, 26, 2),
+      (137, 28, 2),
+      (140, 30, 1),
+    ],
+    strikes: [(95, 30, 0), (111, 30, 1.6), (127, 24, 3.0), (145, 30, 0.8)],
+    areas: ['Gün Katı', 'Şimşek Katı', 'Ülgen\'in Kapısı'],
+    areasEn: ['The Sun Layer', 'The Lightning Layer', 'Ülgen\'s Gate'],
+    whispers: [
+      'Yukarısı gün katı: ışık yakar. Biri gölgesini sana uzatacak.',
+      'Hüma! Gölgesi kimin başına düşerse... Gölgesinden çıkma.',
+      'Şimşek Katı. Yakutlar derdi ki gök gürültüsünün efendisi Süge Toyon kötü ruhlara yıldırım indirir. Bu gece Erlik\'in gölgeleri göğe sızmış.',
+      'Yıldırım her çaktığında kara bulutlar bir an görünür. Gördüğünü unutma.',
+      'Ülgen\'in kapısı. Işık burada konuşmaz; görünür.',
+      'Fırtına! Erlik göğe de uzandı. Tulpar seni bekliyor.',
+      'Tulpar seni bulutların arasından aşağı, karlı bir ovaya indirdi. Uzakta bir şehrin kubbeleri.',
+    ],
+    whispersEn: [
+      'Above is the sun layer: its light burns. Someone will lend you their shadow.',
+      'The Huma! Whoever its shadow falls on... Do not leave its shadow.',
+      'The Lightning Layer. The Yakuts said that Süge Toyon, lord of thunder, hurls lightning at evil spirits. Tonight Erlik\'s shades have crept into the sky.',
+      'Each time lightning strikes, the black clouds show for a moment. Do not forget what you saw.',
+      'Ülgen\'s gate. Here light does not speak; it shows itself.',
+      'A storm! Erlik has reached into the sky as well. Tulpar is waiting for you.',
+      'Tulpar brought you down through the clouds to a snowy plain. In the distance, the domes of a city.',
+    ],
+    memories: [
+      'Hatıra · "Bir gün gökte de bir perde açacağım," derdi ustam. "Bulutlar tasvir olacak."',
+      'Hatıra · Yıldırım düşünce korkup ustamın arkasına saklanırdım. "Işık bazen bağırır," derdi, "ama yine de ışıktır."',
+      'Hatıra · "Usta, güneşi kim kırdı?" "Ona tek başına sahip olmak isteyen, Sâye."',
+    ],
+    memoriesEn: [
+      'Memory · "One day I will open a screen in the sky too," my master used to say. "The clouds will be the puppets."',
+      'Memory · When lightning struck I used to hide behind my master. "Sometimes light shouts," he said, "but it is still light."',
+      'Memory · "Master, who broke the sun?" "Someone who wanted it all to himself, Saye."',
+    ],
+    map: kMapGok2,
   ),
 ];

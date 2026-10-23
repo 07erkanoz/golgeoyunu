@@ -34,6 +34,7 @@ import 'hints.dart';
 import 'legends.dart';
 import 'umay.dart';
 import 'giant_puppet.dart';
+import 'gok_katlari.dart';
 import 'gokboru.dart';
 import 'cameos.dart';
 import 'erlik.dart';
@@ -793,6 +794,11 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     'karabasan': 'karabasan',
     'deer': 'akGeyik',
     'rootDrum': 'kam',
+    'starWheel': 'demirKazik',
+    'karakci': 'demirKazik',
+    'yel': 'yelAna',
+    'yada': 'yelAna',
+    'lightning': 'sugeToyon',
   };
 
   void _updateBard(double dt) {
@@ -1002,6 +1008,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
             ),
           ),
         ..._otuken(),
+        ..._gokKatlari(),
         for (final (c0, r0, c1, r1) in level.def.mists)
           MistZone(
             Rect.fromLTRB(
@@ -1283,6 +1290,56 @@ class GolgeGame extends FlameGame with KeyboardEvents {
 
   /// Ergenekon: demir damarları ve onlara bağlı körükler (her körük en
   /// yakın damara).
+  /// Göğün Katları: Yıldız Katı'nın çarkları ve Yedi Karakçı.
+  Iterable<Component> _gokKatlari() sync* {
+    Vector2 at(int c, int r) =>
+        Vector2((c + 0.5) * kTile, (r + 0.5) * kTile.toDouble());
+    for (final (c, r, radius, count, period, kind) in level.def.wheels) {
+      final pivot = at(c, r);
+      final n = kind == 1 ? 2 : count;
+      yield StarPivot(pivot, great: kind == 1);
+      for (var i = 0; i < n; i++) {
+        yield StarPlatform(
+          pivot: pivot,
+          radius: radius * kTile,
+          period: period,
+          phase: i * 2 * math.pi / n,
+          horse: kind == 1 ? i : null,
+        );
+      }
+    }
+    for (final (c0, r0, c1, r1, dir) in level.def.yel) {
+      yield YelZone(
+        Rect.fromLTRB(
+          c0 * kTile.toDouble(),
+          r0 * kTile.toDouble(),
+          (c1 + 1) * kTile.toDouble(),
+          (r1 + 1) * kTile.toDouble(),
+        ),
+        dir: dir,
+      );
+    }
+    for (final c in level.yadaCells) {
+      yield YadaStone(c);
+    }
+    if (level.def.stormSteps.isNotEmpty || level.def.strikes.isNotEmpty) {
+      yield StormSky();
+    }
+    for (final (c, r, n) in level.def.stormSteps) {
+      yield StormStep(at(c, r) - Vector2.all(kTile / 2), n);
+    }
+    for (final (c, r, phase) in level.def.strikes) {
+      yield LightningStrike(at(c, r) - Vector2.all(kTile / 2), phase: phase);
+    }
+    for (final (c, r, radius, period) in level.def.karakci) {
+      yield YediKarakci(
+        pivot: at(c, r),
+        radius: radius * kTile,
+        period: period,
+      );
+    }
+  }
+
   /// Ötüken: yaprak arasından ışık düşen alanlar, Ak Geyik ve kökleri,
   /// Hayat Ağacı'nın sonunda dağılan Karabasan.
   Iterable<Component> _otuken() sync* {
@@ -1885,6 +1942,17 @@ class GolgeGame extends FlameGame with KeyboardEvents {
                 .contains(Offset(p.center.x, p.center.y)) =>
           'glade',
         AkGeyik g when near(g, 8, 5) && !g.leaving => 'deer',
+        StarPlatform k when near(k, 5, 5) => 'starWheel',
+        YediKarakci k when (k.pivot - p.center).length < 10 * kTile =>
+          'karakci',
+        YelZone z
+            when z.area
+                .inflate(2 * kTile)
+                .contains(Offset(p.center.x, p.center.y)) =>
+          'yel',
+        YadaStone y when near(y, 4, 3) => 'yada',
+        LightningStrike l when near(l, 8, 6) => 'lightning',
+        StormStep k when near(k, 6, 5) => 'lightning',
         DeerPlate d when near(d, 6, 5) && !d.woke => 'deerPlate',
         Karabasan k when k.awake => 'karabasan',
         ScorchZone z
