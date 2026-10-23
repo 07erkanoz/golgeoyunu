@@ -33,6 +33,7 @@ enum DepthKind {
   underworld,
   ergenekon,
   heavens,
+  forest,
 }
 
 /// Bu bölümün derinlik türü (kayak bölümlerinde yok: hız ve okunurluk).
@@ -51,6 +52,8 @@ DepthKind? depthKind(Level lv) => switch (lv.def.theme) {
   LevelTheme.underworld => DepthKind.underworld,
   LevelTheme.ergenekon => DepthKind.ergenekon,
   LevelTheme.heavens => DepthKind.heavens,
+  // Orman: tepeden sarkan kökler ve sarmaşıklar (Kule'nin yakın katmanı).
+  LevelTheme.forest => DepthKind.forest,
 };
 
 /// Bu bölümde ışık ve derinlik denemesi çizilsin mi.
@@ -342,6 +345,7 @@ class NearLayer extends Component with HasGameReference<GolgeGame> {
     DepthKind.underworld => _underworld(),
     DepthKind.ergenekon => _ergenekon(),
     DepthKind.heavens => _heavens(),
+    DepthKind.forest => _forest(),
   };
 
   // ------------------------------------------------------------ Yerebatan
@@ -891,6 +895,74 @@ class NearLayer extends Component with HasGameReference<GolgeGame> {
     ];
   }
 
+  // ------------------------------------------------------------ Ötüken
+
+  /// Orman: tepeden sarkan yapraklı dallar ve yerde eğrelti öbekleri (ikisi
+  /// de küçük: Sâye'yi ve düşmanı örtmesin).
+  static List<_Row> _forest() {
+    const ink = Color(0xFF06100A);
+    return [
+      _Row([_bough(ink, 1), _bough(ink, 2)], 21, 5),
+      _Row(
+        [_fern(ink, 3), _fern(ink, 4)],
+        17,
+        11,
+        at: _Anchor.ground,
+      ),
+    ];
+  }
+
+  /// Tepeden sarkan, ucunda yaprak salkımları olan dal.
+  static _Shape _bough(Color ink, int seed) {
+    final r = math.Random(seed);
+    return _bake(const Rect.fromLTRB(-260, -40, 260, 200), (c) {
+      final fill = _inkOf(ink, 3);
+      final wood = _lineOf(ink, 9, 2);
+      final branch = Path()..moveTo(-250, -20);
+      branch.quadraticBezierTo(-40, 40 + r.nextDouble() * 30, 240, -10);
+      c.drawPath(branch, wood);
+      for (var k = 0; k < 7; k++) {
+        final x = -200 + k * 64 + r.nextDouble() * 20;
+        final len = 50 + r.nextDouble() * 90;
+        final y0 = 10 + 30 * math.sin((x + 250) / 500 * math.pi);
+        c.drawLine(Offset(x, y0), Offset(x + 6, y0 + len), _lineOf(ink, 2.5, 1));
+        for (var j = 0; j < 5; j++) {
+          final ly = y0 + len * (0.3 + j * 0.16);
+          final side = j.isEven ? 1.0 : -1.0;
+          c.save();
+          c.translate(x + 4, ly);
+          c.rotate(side * 0.8);
+          c.drawOval(Rect.fromLTWH(side > 0 ? 0 : -22, -6, 22, 12), fill);
+          c.restore();
+        }
+      }
+    });
+  }
+
+  /// Yerde eğrelti öbeği: kıvrık yapraklar.
+  static _Shape _fern(Color ink, int seed) {
+    final r = math.Random(seed);
+    return _bakeGround(const Rect.fromLTRB(-140, -130, 140, 10), (c) {
+      final stem = _lineOf(ink, 3, 1);
+      final leaf = _inkOf(ink, 2);
+      for (var k = 0; k < 6; k++) {
+        final a = -math.pi / 2 + (k - 2.5) * 0.32 + (r.nextDouble() - 0.5) * 0.1;
+        final len = 70 + r.nextDouble() * 50;
+        final tip = Offset(math.cos(a) * len, math.sin(a) * len);
+        final p = Path()
+          ..moveTo(0, 0)
+          ..quadraticBezierTo(tip.dx * 0.4, tip.dy * 0.8, tip.dx, tip.dy);
+        c.drawPath(p, stem);
+        for (var j = 1; j < 7; j++) {
+          final t = j / 7;
+          final at = Offset(tip.dx * t, tip.dy * (0.8 * t + 0.2 * t * t));
+          final w = 16 * (1 - t) + 4;
+          c.drawOval(Rect.fromCenter(center: at, width: w, height: 6), leaf);
+        }
+      }
+    });
+  }
+
   // ------------------------------------------------------------ Gökyolu
 
   static List<_Row> _sky() => [
@@ -1150,6 +1222,7 @@ class NearLayer extends Component with HasGameReference<GolgeGame> {
     DepthKind.underworld => const Color(0x997050B0),
     DepthKind.ergenekon => const Color(0x806A7898),
     DepthKind.heavens => const Color(0x80A8B8E8),
+    DepthKind.forest => const Color(0x80B8D878),
     _ => null,
   };
   final _dotPaint = Paint()..filterQuality = FilterQuality.low;
@@ -1294,6 +1367,14 @@ class NearLayer extends Component with HasGameReference<GolgeGame> {
         4.0,
         0.6,
         -6.0,
+      ),
+      // Yaprak arasından süzülen ışıkta ağır ağır yükselen polen.
+      DepthKind.forest => (
+        _dot(const Color(0xFFF2EAA0), 3),
+        28,
+        -6.0,
+        0.6,
+        6.0,
       ),
       DepthKind.cistern => null,
     };

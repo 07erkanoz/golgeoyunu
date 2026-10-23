@@ -1450,3 +1450,258 @@ void _gokScene(Canvas canvas, double time, double u) {
     );
   }
 }
+
+/// Ötüken: Sâye köklerden yukarı tırmanır, orman açılır; Kül Tigin'in taşı,
+/// Hayat Ağacı ve dallarındaki can kuşları; Karabasan sürünür, yapraklardan
+/// süzülen ışıktan geri çekilir.
+void _otukenScene(Canvas canvas, double time, double u) {
+  _P._c = canvas;
+  const g = PerdePainter._ground;
+  // 0: yerin altı. Tavandan kökler sarkar, Sâye birine tutunup yükselir.
+  final under = 1 - _span(u, 0.85, 1.1);
+  final forest = _span(u, 0.9, 1.4);
+  if (under > 0) {
+    canvas.drawRect(const Rect.fromLTWH(0, 0, 780, 70), _ink(under));
+    final root = _ink(under)
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+    for (var i = 0; i < 9; i++) {
+      final x = 50.0 + i * 85;
+      root.strokeWidth = 7 - (i % 3) * 1.5;
+      final path = Path()..moveTo(x, 60);
+      for (var y = 60.0; y < 300 - (i % 4) * 40; y += 20) {
+        path.lineTo(x + math.sin(y / 30 + i) * 10, y);
+      }
+      canvas.drawPath(path, root);
+    }
+    final climb = _span(u, 0.1, 0.9);
+    _P._puppet(
+      canvas,
+      Offset(390 + math.sin(time * 2) * 3, 330 - climb * 220),
+      time,
+      1,
+      under,
+      (ink, hole) => _P._saye(ink, hole, time),
+      scale: 0.5,
+      rod: false,
+    );
+    // Yukarıdan sızan ilk ışık.
+    canvas.drawCircle(
+      const Offset(400, 40),
+      30 + 10 * climb,
+      _hole(0.4 * climb * under),
+    );
+  }
+  if (forest <= 0) return;
+  // Uzak orman: kayınlar ve çamlar, arada kuşlar.
+  for (var i = 0; i < 12; i++) {
+    final x = 20.0 + i * 68 + (i % 3) * 9;
+    final h = 150.0 + (i * 37 % 60);
+    final a = forest * (0.45 + (i % 2) * 0.2);
+    if (i.isEven) {
+      // Çam: üst üste üçgenler.
+      for (var k = 0; k < 4; k++) {
+        final y = g - h + k * h / 5;
+        canvas.drawPath(
+          Path()
+            ..moveTo(x, y)
+            ..lineTo(x - 18 - k * 6, y + h / 4)
+            ..lineTo(x + 18 + k * 6, y + h / 4)
+            ..close(),
+          _ink(a),
+        );
+      }
+    } else {
+      // Kayın: ince gövde, salkım dallar; gövdede delik izler.
+      canvas.drawRect(Rect.fromLTWH(x - 4, g - h, 8, h), _ink(a));
+      for (var k = 0; k < 4; k++) {
+        canvas.drawRect(
+          Rect.fromLTWH(x - 3, g - h + 20 + k * 30, 5, 2.5),
+          _hole(0.5 * a),
+        );
+      }
+      canvas.drawOval(
+        Rect.fromCenter(center: Offset(x, g - h), width: 70, height: 60),
+        _ink(a * 0.8),
+      );
+    }
+  }
+  canvas.drawRect(Rect.fromLTWH(0, g, 780, 50), _ink(forest));
+  // Kuşlar uçuşur.
+  for (var i = 0; i < 4; i++) {
+    final k = (time * 0.06 + i / 4) % 1;
+    _shape(
+      canvas,
+      i.isEven ? MythShapes.birdGlide : MythShapes.birdFlap,
+      Offset(k * 820 - 20, 80 + i * 22 + math.sin(time + i) * 6),
+      12,
+      _ink(forest * 0.8),
+    );
+  }
+  // 2: Kül Tigin'in taşı, üstünde oyma yazı.
+  final stone = _line(u, 2);
+  if (stone > 0) {
+    final rr = RRect.fromRectAndCorners(
+      Rect.fromLTWH(600, g - 150, 70, 150),
+      topLeft: const Radius.circular(26),
+      topRight: const Radius.circular(26),
+    );
+    canvas.drawRRect(rr, _ink(stone));
+    for (var row = 0; row < 7; row++) {
+      for (var col = 0; col < 4; col++) {
+        final h = (row * 7 + col * 13) % 5;
+        final at = Offset(612.0 + col * 14, g - 120 + row * 16.0);
+        canvas.drawPath(
+          Path()
+            ..moveTo(at.dx, at.dy)
+            ..lineTo(at.dx + 4 + h, at.dy + 6)
+            ..lineTo(at.dx + (h.isEven ? 0 : 8), at.dy + 11),
+          _hole(stone * 0.8)
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 2,
+        );
+      }
+    }
+  }
+  // 3-7: Hayat Ağacı ortada yükselir; dallarında can kuşları.
+  final tree = _span(u, 3.0, 3.6);
+  if (tree > 0) {
+    final trunk = Path()
+      ..moveTo(360, g)
+      ..quadraticBezierTo(372, g - 120 * tree, 380, g - 230 * tree)
+      ..lineTo(400, g - 230 * tree)
+      ..quadraticBezierTo(408, g - 120 * tree, 422, g)
+      ..close();
+    canvas.drawPath(trunk, _ink(tree));
+    // Kökler toprağın altına iner.
+    final root = _ink(tree)
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeWidth = 5;
+    for (final dx in [-60.0, -25.0, 20.0, 55.0]) {
+      canvas.drawPath(
+        Path()
+          ..moveTo(390, g)
+          ..quadraticBezierTo(390 + dx, g + 10, 390 + dx * 1.6, g + 40),
+        root,
+      );
+    }
+    final branch = _ink(tree)
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+    final perch = <Offset>[];
+    for (var i = 0; i < 6; i++) {
+      final side = i.isEven ? -1.0 : 1.0;
+      final y = g - 110 - i * 22.0;
+      final len = (130 - i * 14) * tree;
+      branch.strokeWidth = 8.0 - i;
+      final end = Offset(390 + side * len, y - 40 - i * 4);
+      canvas.drawPath(
+        Path()
+          ..moveTo(390, y)
+          ..quadraticBezierTo(390 + side * len * 0.5, y - 4, end.dx, end.dy),
+        branch,
+      );
+      perch.add(end + const Offset(0, -6));
+    }
+    canvas.drawOval(
+      Rect.fromCenter(
+        center: Offset(390, g - 270 * tree),
+        width: 300 * tree,
+        height: 90 * tree,
+      ),
+      _ink(tree * 0.85),
+    );
+    // Dallarda can kuşları (delik ışık); Umay en tepede süzülür.
+    final birds = _span(u, 3.3, 3.8);
+    for (var i = 0; i < perch.length; i++) {
+      final b = perch[i];
+      canvas.drawOval(
+        Rect.fromCenter(center: b, width: 12, height: 8),
+        _hole(birds * (0.6 + 0.3 * math.sin(time * 2 + i))),
+      );
+    }
+    if (birds > 0) {
+      canvas.save();
+      canvas.translate(390 + math.sin(time * 0.5) * 80, 45);
+      canvas.scale(0.5);
+      canvas.drawPath(MythShapes.birdGlide.shift(const Offset(-52, -20)), _ink(birds));
+      canvas.restore();
+    }
+  }
+  // 4-6: Karabasan soldan sürünür; 6'da ışık huzmeleri onu geri iter.
+  final dark = _span(u, 4.0, 4.5) * (1 - _span(u, 6.3, 6.9));
+  final beams = _span(u, 6.0, 6.4);
+  if (beams > 0) {
+    for (var i = 0; i < 4; i++) {
+      final x = 140.0 + i * 150;
+      canvas.drawPath(
+        Path()
+          ..moveTo(x - 10, 0)
+          ..lineTo(x + 18, 0)
+          ..lineTo(x + 60, g)
+          ..lineTo(x + 10, g)
+          ..close(),
+        _hole(beams * 0.35),
+      );
+    }
+  }
+  if (dark > 0) {
+    final creep = _span(u, 4.0, 5.8);
+    final back = _span(u, 6.1, 6.8);
+    final cx = 40 + creep * 170 - back * 160;
+    final c = Offset(cx, g - 50);
+    final blob = Path();
+    for (var i = 0; i <= 20; i++) {
+      final a = i / 20 * math.pi * 2;
+      final r = 62 + 12 * math.sin(time * 3 + i * 1.7);
+      final p = c + Offset(math.cos(a) * r * 1.2, math.sin(a) * r * 0.75);
+      i == 0 ? blob.moveTo(p.dx, p.dy) : blob.lineTo(p.dx, p.dy);
+    }
+    canvas.drawPath(blob..close(), _ink(dark));
+    final arm = _ink(dark)
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+    for (var i = 0; i < 4; i++) {
+      arm.strokeWidth = 7.0 - i;
+      final reach = 70 + 20 * math.sin(time * 2.4 + i) - back * 60;
+      canvas.drawPath(
+        Path()
+          ..moveTo(c.dx + 50, c.dy - 30 + i * 18)
+          ..quadraticBezierTo(
+            c.dx + 50 + reach * 0.5,
+            c.dy - 50 + i * 20,
+            c.dx + 50 + reach,
+            c.dy - 20 + i * 14,
+          ),
+        arm,
+      );
+    }
+    final blink = (time % 4) < 0.15 ? 0.2 : 1.0;
+    for (final dx in [-14.0, 14.0]) {
+      canvas.drawOval(
+        Rect.fromCenter(center: c + Offset(dx + 20, -16), width: 14, height: 6 * blink),
+        _hole(dark),
+      );
+    }
+    // Sâye ışığa doğru kaçar.
+    _P._puppet(
+      canvas,
+      Offset(250 + creep * 120 + back * 60, g),
+      time,
+      3,
+      dark,
+      (ink, hole) => _P._saye(ink, hole, time),
+      scale: 0.5,
+    );
+  }
+  // Ak Geyik: ışıkta, ağacın yanında belirir (son satırlarda).
+  final deer = _span(u, 6.4, 6.9);
+  if (deer > 0) {
+    canvas.save();
+    canvas.translate(520, g);
+    canvas.scale(-0.75, 0.75);
+    canvas.drawPath(DeerRig.frame(0, still: true, alert: 1).shape, _ink(deer));
+    canvas.restore();
+  }
+}

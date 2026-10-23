@@ -11,7 +11,7 @@ void main() {
     Directory('build/preview/lines').createSync(recursive: true);
     final acts = <(String, PerdeScene, int)>[
       ('00prolog', PerdeScene.prologue, prologue.length),
-      for (var lv = 1; lv < 17; lv++)
+      for (var lv = 1; lv < levels.length; lv++)
         if (interludeScene(lv) != null)
           (
             '${lv.toString().padLeft(2, '0')}${interludeScene(lv)!.name}',

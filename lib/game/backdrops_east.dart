@@ -1648,6 +1648,191 @@ extension _EastBackdrops on Backdrop {
   /// Ergenekon: dört yanı aşılmaz dağlarla çevrili, çayırlı, ırmaklı, meyve
   /// ağaçlı vadi; ortada pas renkli, kızıl damarlı demir dağ. Bölümde
   /// ilerledikçe şafak söker: çıkışta Nevruz güneşi doğar.
+  /// Ötüken Ormanı: kutlu ormanlı dağ. Yaprak örtüsünün arasından altın
+  /// yeşil ışık süzülür; uzakta ormanla kaplı yuvarlak dağlar (Ötüken yış),
+  /// ortada ak gövdeli kayınlar ve koyu ağaçlar, tepede yaprak tavanı.
+  void _forest(Canvas canvas, double w, double h, Vector2 cam) {
+    final rect = Rect.fromLTWH(0, 0, w, h);
+    final dy = -cam.y * 0.04;
+    _gradient(canvas, rect, const [
+      Color(0xFF1E3A2E),
+      Color(0xFF6E9466),
+      Color(0xFFD2DCA0),
+    ]);
+    // Yaprakların ardındaki güneş.
+    final sun = Offset(w * 0.68 - (cam.x * 0.01) % (w * 0.2), h * 0.22);
+    _lightLeak(canvas, sun, h * 0.9, 0.5, const Color(0xFFFFF0B8));
+    // Uzakta Ötüken'in ormanlı, yuvarlak dağları.
+    _ridge(
+      canvas,
+      w,
+      h,
+      offset: cam.x * 0.04,
+      base: h * 0.5 + dy,
+      amp: 60,
+      freq: 0.004,
+      seed: 31,
+      color: const Color(0xFF7FA088),
+    );
+    _pines(
+      canvas,
+      w,
+      offset: cam.x * 0.06,
+      base: h * 0.58 + dy,
+      size: 0.45,
+      color: const Color(0xFF5E8470),
+      salt: 3,
+    );
+    _ridge(
+      canvas,
+      w,
+      h,
+      offset: cam.x * 0.1,
+      base: h * 0.62 + dy,
+      amp: 36,
+      freq: 0.007,
+      seed: 7,
+      color: const Color(0xFF4E7458),
+    );
+    // Gövdeler: koyu ağaçlar ve aralarında ak kayınlar (Umay'ın ağacı).
+    _trunks(
+      canvas,
+      w,
+      h,
+      cam.x * 0.22,
+      dy,
+      scale: 0.75,
+      dark: const Color(0xFF2E4A34),
+      salt: 4,
+    );
+    // Işık huzmeleri: yaprak aralarından eğik iner, toz içinde parlar.
+    for (var i = 0; i < 6; i++) {
+      final span = w + 700;
+      final x = ((i * 290 + 120 - cam.x * 0.15) % span + span) % span - 250;
+      final pulse = 0.65 + 0.35 * math.sin(_t * 0.5 + i * 1.7);
+      final top = 0.0;
+      final beam = Path()
+        ..moveTo(x, top)
+        ..lineTo(x + 34 + i % 3 * 14, top)
+        ..lineTo(x + 230, h)
+        ..lineTo(x + 120, h)
+        ..close();
+      canvas.drawPath(
+        beam,
+        Paint()
+          ..blendMode = BlendMode.plus
+          ..shader = ui.Gradient.linear(Offset(x, 0), Offset(x + 160, h), [
+            const Color(0xFFFFF2B0).withValues(alpha: 0.2 * pulse),
+            const Color(0xFFFFF2B0).withValues(alpha: 0),
+          ]),
+      );
+    }
+    _trunks(
+      canvas,
+      w,
+      h,
+      cam.x * 0.42,
+      dy,
+      scale: 1.15,
+      dark: const Color(0xFF1A3020),
+      salt: 9,
+    );
+    // Yaprak tavanı: tepeden sarkan, dalgalı koyu yeşil örtü.
+    _ridge(
+      canvas,
+      w,
+      h,
+      offset: cam.x * 0.5,
+      base: h * 0.1,
+      amp: 70,
+      freq: 0.012,
+      seed: 17,
+      color: const Color(0xFF143022),
+      fromTop: true,
+    );
+    final leaf = Paint()..color = const Color(0xFF1C3A28);
+    _repeat(w, cam.x * 0.5, 70, (x, rnd) {
+      for (var k = 0; k < 3; k++) {
+        canvas.drawCircle(
+          Offset(
+            x + rnd.nextDouble() * 50,
+            h * (0.08 + rnd.nextDouble() * 0.1),
+          ),
+          18 + rnd.nextDouble() * 22,
+          leaf,
+        );
+      }
+    }, salt: 21);
+  }
+
+  /// Ağaç gövdeleri: koyu ağaçlar ve ak kayınlar (kara benekli ak gövde,
+  /// dallarında ak ve al çaputlar).
+  void _trunks(
+    Canvas canvas,
+    double w,
+    double h,
+    double offset,
+    double dy, {
+    required double scale,
+    required Color dark,
+    required int salt,
+  }) {
+    final darkP = Paint()..color = dark;
+    final birch = Paint()
+      ..color = Color.lerp(const Color(0xFFE8E6D8), dark, 0.35 - scale * 0.15)!;
+    final mark = Paint()
+      ..color = Color.lerp(dark, const Color(0xFF000000), 0.3)!;
+    _repeat(w, offset, 120 * scale, (x, rnd) {
+      if (rnd.nextDouble() < 0.25) return;
+      final isBirch = rnd.nextDouble() < 0.4;
+      final tw = (isBirch ? 10 : 16 + rnd.nextDouble() * 12) * scale;
+      final bx = x + rnd.nextDouble() * 40 * scale;
+      final base = h * 0.92 + dy;
+      // Gövde hafif eğik, tepeye doğru incelir.
+      final lean = (rnd.nextDouble() - 0.5) * 20 * scale;
+      final trunk = Path()
+        ..moveTo(bx - tw, base)
+        ..lineTo(bx - tw * 0.6 + lean, 0)
+        ..lineTo(bx + tw * 0.6 + lean, 0)
+        ..lineTo(bx + tw, base)
+        ..close();
+      canvas.drawPath(trunk, isBirch ? birch : darkP);
+      if (isBirch) {
+        // Kayının kara benekleri.
+        for (var k = 0; k < 9; k++) {
+          final yy = base - (k + rnd.nextDouble()) * h * 0.1;
+          final xx =
+              bx + lean * (1 - yy / base) + (rnd.nextDouble() - 0.5) * tw;
+          canvas.drawRect(
+            Rect.fromCenter(
+              center: Offset(xx, yy),
+              width: tw * 0.9,
+              height: 2.5 * scale,
+            ),
+            mark,
+          );
+        }
+        // Dalına bağlı çaputlar.
+        final cy = h * (0.28 + rnd.nextDouble() * 0.25);
+        final cx = bx + lean * (1 - cy / base);
+        for (final (dx, col) in const [
+          (-1.0, Color(0xFFF2EEE0)),
+          (1.0, Color(0xFFC0302A)),
+        ]) {
+          final sway = math.sin(_t * 1.6 + x * 0.01 + dx) * 3;
+          canvas.drawPath(
+            Path()
+              ..moveTo(cx + dx * tw * 0.4, cy)
+              ..lineTo(cx + dx * tw * 0.4 + 3 * scale + sway, cy + 14 * scale)
+              ..lineTo(cx + dx * tw * 0.4 - 2 * scale + sway, cy + 13 * scale)
+              ..close(),
+            Paint()..color = col.withValues(alpha: 0.85),
+          );
+        }
+      }
+    }, salt: salt);
+  }
+
   void _ergenekon(Canvas canvas, double w, double h, Vector2 cam) {
     final lv = game.level;
     final dawn = (cam.x / lv.pixelWidth).clamp(0.0, 1.0);

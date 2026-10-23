@@ -11,6 +11,7 @@ import 'creatures.dart';
 import 'entities.dart';
 import 'golge_game.dart';
 import 'level.dart';
+import 'levels.dart';
 import 'mechanics.dart';
 import 'palette.dart';
 import 'perde.dart';
@@ -1586,10 +1587,60 @@ class SwingRope extends Component with HasGameReference<GolgeGame> {
       path.quadraticBezierTo(_pts[i].dx, _pts[i].dy, m.dx, m.dy);
     }
     path.lineTo(_pts.last.dx, _pts.last.dy);
+    if (game.level.def.theme == LevelTheme.forest) {
+      _renderVine(canvas, path);
+      return;
+    }
     canvas.drawPath(path, rope);
     // Bağlantı halkası ve uçtaki düğüm.
     canvas.drawCircle(anchor.toOffset(), 3.5, Paint()..color = kInk);
     canvas.drawCircle(_pts.last, 3, Paint()..color = const Color(0xFF2A1C14));
+  }
+
+  /// Ötüken'de ip bir sarmaşıktır: bir dala sarılı, yer yer yapraklı.
+  void _renderVine(Canvas canvas, Path path) {
+    final a = anchor.toOffset();
+    // Dal: bağlandığı yerden iki yana uzanan kalın, eğri bir kol.
+    final branch = Paint()
+      ..color = const Color(0xFF1C140C)
+      ..strokeWidth = 7
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke;
+    canvas.drawPath(
+      Path()
+        ..moveTo(a.dx - 46, a.dy - 10)
+        ..quadraticBezierTo(a.dx - 8, a.dy + 4, a.dx + 30, a.dy - 4),
+      branch,
+    );
+    canvas.drawPath(
+      Path()
+        ..moveTo(a.dx + 12, a.dy)
+        ..quadraticBezierTo(a.dx + 26, a.dy - 14, a.dx + 40, a.dy - 22),
+      branch..strokeWidth = 3.5,
+    );
+    canvas.drawPath(
+      path,
+      Paint()
+        ..color = const Color(0xFF26301A)
+        ..strokeWidth = 3
+        ..strokeCap = StrokeCap.round
+        ..style = PaintingStyle.stroke,
+    );
+    final leaf = Paint()..color = const Color(0xFF4E6B2E);
+    final dark = Paint()..color = const Color(0xFF2E4220);
+    for (var i = 2; i < _pts.length; i += 2) {
+      final p = _pts[i];
+      final side = i % 4 == 0 ? 1.0 : -1.0;
+      canvas.save();
+      canvas.translate(p.dx, p.dy);
+      canvas.rotate(side * 0.7 + math.sin(_t * 1.3 + i) * 0.15);
+      canvas.drawOval(
+        Rect.fromLTWH(side > 0 ? 0 : -9, -2.5, 9, 5),
+        i % 3 == 0 ? dark : leaf,
+      );
+      canvas.restore();
+    }
+    canvas.drawCircle(_pts.last, 3, Paint()..color = const Color(0xFF26301A));
   }
 }
 

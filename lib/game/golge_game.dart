@@ -41,6 +41,7 @@ import 'ergenekon.dart';
 import 'heavens.dart';
 import 'myth_cards.dart';
 import 'nemrut.dart';
+import 'otuken.dart';
 import 'ski.dart';
 import 'wind.dart';
 import 'winter.dart';
@@ -771,6 +772,10 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     'feather': 'simurg',
     'ring': 'peri',
     'semazen': 'sebiArus',
+    'glade': 'karabasan',
+    'karabasan': 'karabasan',
+    'deer': 'akGeyik',
+    'rootDrum': 'kam',
   };
 
   void _updateBard(double dt) {
@@ -944,9 +949,13 @@ class GolgeGame extends FlameGame with KeyboardEvents {
               math.min(2, n - k),
               shade: true,
             ),
-        if (level.def.theme == LevelTheme.heavens) KamDrum(),
+        if (level.def.theme == LevelTheme.heavens ||
+            (level.def.theme == LevelTheme.forest &&
+                level.rottenRuns.isNotEmpty))
+          KamDrum(),
         for (final (c, r, n) in level.rottenRuns)
-          if (level.def.theme == LevelTheme.heavens)
+          if (level.def.theme == LevelTheme.heavens ||
+              level.def.theme == LevelTheme.forest)
             DrumCloud(
               Vector2(c * kTile.toDouble(), r * kTile.toDouble()),
               n,
@@ -971,6 +980,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
               (r1 + 1) * kTile.toDouble(),
             ),
           ),
+        ..._otuken(),
         for (final (c0, r0, c1, r1) in level.def.mists)
           MistZone(
             Rect.fromLTRB(
@@ -1252,6 +1262,54 @@ class GolgeGame extends FlameGame with KeyboardEvents {
 
   /// Ergenekon: demir damarları ve onlara bağlı körükler (her körük en
   /// yakın damara).
+  /// Ötüken: yaprak arasından ışık düşen alanlar, Ak Geyik ve kökleri,
+  /// Hayat Ağacı'nın sonunda dağılan Karabasan.
+  Iterable<Component> _otuken() sync* {
+    if (level.def.theme != LevelTheme.forest) return;
+    for (final (c0, r0, c1, r1, wind) in level.def.glades) {
+      final area = Rect.fromLTRB(
+        c0 * kTile.toDouble(),
+        r0 * kTile.toDouble(),
+        (c1 + 1) * kTile.toDouble(),
+        (r1 + 1) * kTile.toDouble(),
+      );
+      yield GladeZone(area, [
+        for (final b in level.gladeBeamCells)
+          if (area.contains(Offset(b.x + kTile / 2, b.y + kTile / 2)))
+            b.x + kTile / 2,
+      ], wind: wind);
+    }
+    for (final c in level.deerCells) {
+      yield AkGeyik(c);
+    }
+    final plates = [...level.deerPlateCells]
+      ..sort((a, b) => a.x.compareTo(b.x));
+    for (var i = 0; i < plates.length; i++) {
+      yield DeerPlate(plates[i], last: i == plates.length - 1);
+    }
+    final tree = level.def.lifeTree;
+    if (tree != null) {
+      final (c0, r0, c1, r1) = tree;
+      final rect = Rect.fromLTRB(
+        c0 * kTile.toDouble(),
+        r0 * kTile.toDouble(),
+        (c1 + 1) * kTile.toDouble(),
+        (r1 + 1) * kTile.toDouble(),
+      );
+      yield TreeOfLife(rect);
+      yield TreeCrown(
+        Offset(rect.center.dx + 2 * kTile, rect.top - 9 * kTile),
+        11 * kTile,
+      );
+    }
+    if (level.lockCells.isNotEmpty && level.def.glades.isNotEmpty) {
+      final (c0, _, c1, r1, _) = level.def.glades.last;
+      yield KarabasanEnd(
+        Vector2((c0 + c1 + 1) / 2 * kTile, (r1 + 1) * kTile.toDouble()),
+      );
+    }
+  }
+
   Iterable<Component> _forges() sync* {
     final veins = [for (final (c, t, b) in level.ironVeins) IronVein(c, t, b)];
     if (veins.isEmpty) return;
@@ -1795,7 +1853,18 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         Bellows b when near(b, 4, 3) && b.order > 0 => 'bellows',
         NevruzAnvil n when near(n, 5, 3) => 'nevruz',
         MoltenChannel m when near(m, 4, 3) => 'molten',
+        DrumCloud d
+            when near(d, 4, 3) && level.def.theme == LevelTheme.forest =>
+          'rootDrum',
         DrumCloud d when near(d, 4, 3) => 'drum',
+        GladeZone z
+            when z.area
+                .inflate(kTile)
+                .contains(Offset(p.center.x, p.center.y)) =>
+          'glade',
+        AkGeyik g when near(g, 8, 5) && !g.leaving => 'deer',
+        DeerPlate d when near(d, 6, 5) && !d.woke => 'deerPlate',
+        Karabasan k when k.awake => 'karabasan',
         ScorchZone z
             when z.area
                 .inflate(2 * kTile)

@@ -2197,7 +2197,7 @@ void main() {
       'fenerli köprü: oyukta bekle, fener uzaklaşınca çömelerek geç',
       GolgeGame.new,
       (game) async {
-        expect(levels[14].title, 'XIV · ERLİK\'İN KATI');
+        expect(levels[14].title, 'XV · ERLİK\'İN KATI');
         final p = await place(game, 14, 54, 29);
         for (final k in game.world.children.whereType<Kormos>().toList()) {
           k.removeFromParent();

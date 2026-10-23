@@ -35,6 +35,11 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
         0.92,
       );
 
+  /// Karanlığın rengi: ormanda serin yeşil, öbür yerlerde is kahvesi.
+  static Color shadowInk(LevelTheme theme) => theme == LevelTheme.forest
+      ? const Color(0xFF020805)
+      : const Color(0xFF040201);
+
   static double _baseDarkness(LevelTheme theme) => switch (theme) {
     // Görsel deneme: renk dili okunsun diye sarnıç çok daha aydınlık.
     LevelTheme.cistern => Cartoon.on ? Cartoon.darkness : 0.48,
@@ -50,6 +55,8 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
     LevelTheme.underworld => 0.42,
     LevelTheme.ergenekon => 0.2,
     LevelTheme.heavens => 0.12,
+    // Ötüken Ormanı: oyunun aydınlık, yeşil yeri.
+    LevelTheme.forest => 0.16,
   };
 
   final _cut = Paint()..blendMode = BlendMode.dstOut;
@@ -98,13 +105,13 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
       if (!z.overlaps(view)) continue;
       const edge = 96.0;
       final paint = Paint()
-        ..color = const Color(0xFF040201).withValues(alpha: 0.5);
+        ..color = shadowInk(game.level.def.theme).withValues(alpha: 0.5);
       canvas.drawRect(z.deflate(edge / 2), paint);
       // Kenarlarda yumuşak geçiş: iç içe birkaç saydam kuşak.
       for (var i = 1; i <= 4; i++) {
         canvas.drawRect(
           z.deflate(edge / 2 - i * edge / 8),
-          Paint()..color = const Color(0xFF040201).withValues(alpha: 0.1),
+          Paint()..color = shadowInk(game.level.def.theme).withValues(alpha: 0.1),
         );
       }
     }
@@ -122,7 +129,7 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
     canvas.drawRect(
       rect,
       Paint()
-        ..color = const Color(0xFF040201).withValues(
+        ..color = shadowInk(game.level.def.theme).withValues(
           alpha: darknessFor(game.level.def.theme) * (1 - game.lightning),
         ),
     );
@@ -274,7 +281,7 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
     // Ön plandaki sütunlar ve direkler ışığın önünde durur: üstlerine düşen
     // fener ve kandil ışığı geri örtülür, ışık arkalarından geçiyormuş gibi.
     final shade = Paint()
-      ..color = const Color(0xFF040201).withValues(
+      ..color = shadowInk(game.level.def.theme).withValues(
         alpha: darknessFor(game.level.def.theme) * 0.85 * (1 - game.lightning),
       );
     for (final col in game.level.frontColumns) {
@@ -293,7 +300,7 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
   /// Düşük grafik: ara katman olmadan tek geçişte karanlık. Işık yalnızca
   /// oyuncunun çevresinden gelir.
   void _renderCheap(Canvas canvas, Rect rect) {
-    final dark = const Color(0xFF040201)
+    final dark = shadowInk(game.level.def.theme)
         .withValues(alpha: darknessFor(game.level.def.theme));
     final p = game.player;
     if (p == null || !p.isMounted || p.isDead) {
@@ -304,7 +311,7 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
       if (z.overlaps(rect)) {
         canvas.drawRect(
           z,
-          Paint()..color = const Color(0xFF040201).withValues(alpha: 0.45),
+          Paint()..color = shadowInk(game.level.def.theme).withValues(alpha: 0.45),
         );
       }
     }

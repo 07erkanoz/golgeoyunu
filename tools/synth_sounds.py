@@ -63,7 +63,9 @@ CC0 = {'crow', 'step_1', 'step_2', 'step_3', 'step_4', 'step_wood_1', 'step_wood
        'step_snow_3', 'step_snow_4', 'drum', 'growl', 'chain', 'grind', 'breath',
        'amb_snow', 'amb_cave',
        # tools/import_ark.py
-       'amb_ark'}
+       'amb_ark',
+       # tools/import_forest.py
+       'amb_forest', 'bird_1', 'bird_2', 'bird_3', 'bird_4'}
 
 
 def save(name, data, gain=0.9):

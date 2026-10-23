@@ -457,6 +457,47 @@ void _topDressing(
     }
     return;
   }
+  if (theme == LevelTheme.forest) {
+    // Orman: yosunlu üst kenar, gür ot, eğrelti yaprakları, ak çiçekler.
+    final moss = Paint()..color = const Color(0xFF3E6A2A);
+    canvas.drawRect(Rect.fromLTWH(x - 0.5, y - 1, kTile + 1, 4), moss);
+    final grass = Paint()
+      ..color = const Color(0xFF4E8030)
+      ..strokeWidth = 1.4
+      ..strokeCap = StrokeCap.round;
+    for (var i = 0; i < 7; i++) {
+      final gx = x + rnd.nextDouble() * kTile;
+      final gh = 4 + rnd.nextDouble() * 8;
+      canvas.drawLine(
+        Offset(gx, y + 1),
+        Offset(gx + (rnd.nextDouble() - 0.5) * 5, y - gh),
+        grass,
+      );
+    }
+    if (rnd.nextDouble() < 0.35) {
+      // Eğrelti: kavisli sap, iki yanında yaprakçıklar.
+      final fx = x + rnd.nextDouble() * kTile;
+      final fern = Paint()
+        ..color = const Color(0xFF2E5A24)
+        ..strokeWidth = 1.2
+        ..style = PaintingStyle.stroke;
+      final dir = rnd.nextBool() ? 1.0 : -1.0;
+      for (var k = 0; k < 6; k++) {
+        final t = k / 6;
+        final p0 = Offset(fx + dir * t * 12, y - t * 14 + t * t * 6);
+        canvas.drawLine(p0, p0 + Offset(-4 + dir * 2, -4), fern);
+        canvas.drawLine(p0, p0 + Offset(4 + dir * 2, -3), fern);
+      }
+    }
+    if (rnd.nextDouble() < 0.2) {
+      canvas.drawCircle(
+        Offset(x + rnd.nextDouble() * kTile, y - 5),
+        1.6,
+        Paint()..color = const Color(0xFFF2EEDA),
+      );
+    }
+    return;
+  }
   if (theme == LevelTheme.ark) {
     // Taşlaşmış ahşap: tahta birleşim çizgileri.
     final seam = Paint()
@@ -1172,6 +1213,9 @@ Picture _buildForeground(Level lv, int c0, int c1, int r0, int r1) {
 class WaterComponent extends Component with HasGameReference<GolgeGame> {
   bool get _cartoon => Cartoon.on && level.def.theme == LevelTheme.cistern;
 
+  /// Ötüken'in bataklığı: koyu yeşil su, yosun yeşili parıltı.
+  bool get _bog => level.def.theme == LevelTheme.forest;
+
   WaterComponent(this.level) : super(priority: 26) {
     for (var c = 0; c < level.width; c++) {
       for (var r = 0; r < level.height; r++) {
@@ -1297,8 +1341,18 @@ class WaterComponent extends Component with HasGameReference<GolgeGame> {
         top + (_cartoon ? 0.25 + Cartoon.toneStep * 0.1 : 0),
         () => Paint()
           ..shader = ui.Gradient.linear(Offset(0, top), Offset(0, top + 90), [
-            if (_cartoon) Cartoon.water else const Color(0xF0381A10),
-            if (_cartoon) Cartoon.waterDeep else const Color(0xFF0A0504),
+            if (_cartoon)
+              Cartoon.water
+            else if (_bog)
+              const Color(0xF0263A22)
+            else
+              const Color(0xF0381A10),
+            if (_cartoon)
+              Cartoon.waterDeep
+            else if (_bog)
+              const Color(0xFF060C06)
+            else
+              const Color(0xFF0A0504),
           ]),
       );
       canvas.drawRect(rect, body);
@@ -1317,10 +1371,15 @@ class WaterComponent extends Component with HasGameReference<GolgeGame> {
         final y = top + 3 + i * 9 + math.sin(phase) * 1.5;
         final len = 6 + 6 * (0.5 + 0.5 * math.sin(phase * 1.3));
         final gx = x + ((c * 13 + i * 11) % 24) + math.sin(_t * 0.5 + c) * 3;
-        glint.color = (_cartoon ? Cartoon.glint : const Color(0xFFE8915A))
-            .withValues(
-              alpha: (0.35 - i * 0.1) * (0.6 + 0.4 * math.sin(phase * 2)),
-            );
+        glint.color =
+            (_cartoon
+                    ? Cartoon.glint
+                    : _bog
+                    ? const Color(0xFFD8E8A0)
+                    : const Color(0xFFE8915A))
+                .withValues(
+                  alpha: (0.35 - i * 0.1) * (0.6 + 0.4 * math.sin(phase * 2)),
+                );
         canvas.drawLine(Offset(gx, y), Offset(gx + len, y), glint);
       }
     }
@@ -1341,9 +1400,13 @@ class WaterComponent extends Component with HasGameReference<GolgeGame> {
     // Su yüzünün ince ışığı: yalnız suyun olduğu sütunlarda (önceden bütün
     // bölüm boyunca, kayaların üstünden de geçen bir çizgiydi).
     final edge = Paint()
-      ..color = (_cartoon ? Cartoon.lip : const Color(0xFFC0703A)).withValues(
-        alpha: _cartoon ? 0.5 : 0.25,
-      )
+      ..color =
+          (_cartoon
+                  ? Cartoon.lip
+                  : _bog
+                  ? const Color(0xFF9AB870)
+                  : const Color(0xFFC0703A))
+              .withValues(alpha: _cartoon ? 0.5 : 0.25)
       ..strokeWidth = _cartoon ? 1.5 : 1;
     for (final MapEntry(key: c, value: top) in visible) {
       canvas.drawLine(
@@ -1369,6 +1432,7 @@ Color _surfaceTint(LevelTheme t) => switch (t) {
   LevelTheme.underworld => const Color(0xFF8A6AC0),
   LevelTheme.ergenekon => const Color(0xFF8AA070),
   LevelTheme.heavens => const Color(0xFFE8E0F0),
+  LevelTheme.forest => const Color(0xFFA8D27A),
 };
 
 /// Üst yüzün ışığı ve ince taş dokusu.
@@ -1569,6 +1633,7 @@ void _cartoonColumn(
   LevelTheme.sky => (const Color(0xFF26140F), const Color(0xFF46281C)),
   LevelTheme.heavens => (const Color(0xFF131828), const Color(0xFF2A3450)),
   LevelTheme.cistern => (Cartoon.stone, Cartoon.seam),
+  LevelTheme.forest => (const Color(0xFF16200F), const Color(0xFF2C3E1E)),
 };
 
 /// Doku denemesi (kayak bölümleri hariç): karonun gövdesi bölümün malzemesiyle (yüzeyden derine
@@ -1666,7 +1731,7 @@ void _themedBody(
           Paint()..color = kInk.withValues(alpha: 0.9),
         );
       }
-    case LevelTheme.snow || LevelTheme.cliffs:
+    case LevelTheme.snow || LevelTheme.cliffs || LevelTheme.forest:
       // Kaya: köşeli, kırık çatlaklar.
       for (var i = 0; i < 2; i++) {
         if (rnd.nextDouble() < 0.35) continue;

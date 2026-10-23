@@ -70,6 +70,10 @@ class GameAudio {
     'howl',
     'drum',
     'thunder',
+    'bird_1',
+    'bird_2',
+    'bird_3',
+    'bird_4',
   ];
 
   /// Uzun döngüler diskten akar (belleği şişirmesin); kısa efektler bellekte.
@@ -81,13 +85,19 @@ class GameAudio {
     'amb_ark.wav',
     'amb_konya.wav',
     'amb_cave.wav',
+    'amb_forest.wav',
     'karabasan.wav',
     'heartbeat.wav',
     'murmur.wav',
   ];
 
   /// Tekdüze olmasın diye birden çok varyasyonu olan sesler.
-  static const _variants = {'step': 4, 'step_wood': 3, 'step_snow': 4};
+  static const _variants = {
+    'step': 4,
+    'step_wood': 3,
+    'step_snow': 4,
+    'bird': 4,
+  };
   final _rnd = math.Random();
   final _lastVariant = <String, int>{};
   final _lastPlayed = <String, int>{};
@@ -185,6 +195,7 @@ class GameAudio {
       LevelTheme.sky || LevelTheme.kaf || LevelTheme.heavens => 'amb_sky',
       LevelTheme.snow || LevelTheme.nemrut => 'amb_snow',
       LevelTheme.konya => 'amb_konya',
+      LevelTheme.forest => 'amb_forest',
     };
     _updateBed();
   }

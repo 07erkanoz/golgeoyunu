@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/painting.dart';
 
+import 'deer_rig.dart';
 import 'myth_figures.dart';
 import 'myth_shapes.dart';
 import 'palette.dart';
@@ -49,7 +50,11 @@ enum PerdeScene {
   /// Derinkuyu'nun kesiti: inen fenerler, uyuyan dev.
   underground,
 
-  /// Ötüken açılışı: ilk su, sudan yükselen Ak Ana, çamurdan kalkan dünya,
+  /// Ötüken ormanı: köklerden yukarı, yeşil orman, Hayat Ağacı ve Umay'ın
+  /// kuşları, peşteki Karabasan, yapraktan süzülen ışık.
+  otuken,
+
+  /// Erlik'in katı: ilk su, sudan yükselen Ak Ana, çamurdan kalkan dünya,
   /// yerin altına sürülen Erlik.
   akAna,
 
@@ -86,6 +91,7 @@ PerdeScene? interludeScene(int level) => switch (level) {
   14 => PerdeScene.akAna,
   15 => PerdeScene.ergenekon,
   16 => PerdeScene.gok,
+  17 => PerdeScene.otuken,
   _ => null,
 };
 
@@ -211,6 +217,8 @@ class PerdePainter {
           _fairiesScene(canvas, time, progress);
         case PerdeScene.underground:
           _fairiesScene(canvas, time, progress, underground: true);
+        case PerdeScene.otuken:
+          _otukenScene(canvas, time, progress);
         case PerdeScene.akAna:
           _akAnaScene(canvas, time, progress);
         case PerdeScene.ergenekon:

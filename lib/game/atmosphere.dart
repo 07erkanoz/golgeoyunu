@@ -6,6 +6,7 @@ import 'dart:ui' as ui;
 import 'package:flame/components.dart';
 
 import 'ark_animals.dart';
+import 'audio.dart';
 import 'fairy_chimney.dart';
 import 'golge_game.dart';
 import 'levels.dart';
@@ -35,8 +36,25 @@ class Backdrop extends Component with HasGameReference<GolgeGame> {
   double? _holdBottom;
   double _holdT = 0;
 
+  /// Ormanda ara ara bir kuş öter (uzakta ya da yakında).
+  double _birdT = 3;
+  final _birdRnd = math.Random();
+
   @override
-  void update(double dt) => _t += dt;
+  void update(double dt) {
+    _t += dt;
+    if (game.level.def.theme == LevelTheme.forest && !game.paused) {
+      _birdT -= dt;
+      if (_birdT <= 0) {
+        _birdT = 3 + _birdRnd.nextDouble() * 6;
+        GameAudio.instance.play(
+          'bird',
+          volume: 0.18 + _birdRnd.nextDouble() * 0.35,
+          minGapMs: 900,
+        );
+      }
+    }
+  }
 
   @override
   void render(Canvas canvas) {
@@ -141,6 +159,8 @@ class Backdrop extends Component with HasGameReference<GolgeGame> {
           seed: 4,
           color: const Color(0xFF2A140D),
         );
+      case LevelTheme.forest:
+        _forest(canvas, w, h, cam);
       case LevelTheme.ergenekon:
         _ergenekon(canvas, w, h, cam);
       case LevelTheme.heavens:
@@ -330,6 +350,8 @@ class Backdrop extends Component with HasGameReference<GolgeGame> {
             DepthKind.underworld => const Color(0x1E281838),
             DepthKind.ergenekon => const Color(0x1A303850),
             DepthKind.heavens => const Color(0x1A3A4A80),
+            // Ormanın uzağına inen yeşil, ışıklı pus.
+            DepthKind.forest => const Color(0x1E4A6A3A),
           },
       );
     }
@@ -784,8 +806,12 @@ class ScreenEffects extends Component with HasGameReference<GolgeGame> {
           ((i * 211.0 + math.sin(_t * 0.7 + i) * 30 - cam.x * 0.3) % w + w) % w;
       final y = h * (1 - k);
       final flicker = 0.5 + 0.5 * math.sin(_t * 9 + i * 2.3);
-      ember.color = (theme == LevelTheme.kaf ? const Color(0xFF9FF0C8) : kEmber)
-          .withValues(alpha: (1 - k) * (0.35 + 0.5 * flicker));
+      ember.color = (switch (theme) {
+        LevelTheme.kaf => const Color(0xFF9FF0C8),
+        // Ormanda havada süzülen polen.
+        LevelTheme.forest => const Color(0xFFF2E8A0),
+        _ => kEmber,
+      }).withValues(alpha: (1 - k) * (0.35 + 0.5 * flicker));
       canvas.drawCircle(Offset(x, y), 1.1 + (i % 3) * 0.5, ember);
     }
     if (!theme.indoor) {
@@ -1043,6 +1069,7 @@ class ScreenEffects extends Component with HasGameReference<GolgeGame> {
       LevelTheme.underworld => (const Color(0xFF8A6AC8), 0.06),
       LevelTheme.ergenekon => (const Color(0xFFDCE8DC), 0.1),
       LevelTheme.heavens => (const Color(0xFFF0F0FF), 0.08),
+      LevelTheme.forest => (const Color(0xFFE6F0C0), 0.09),
     };
     if (!Settings.lowGraphics) {
       for (var i = 0; i < 5; i++) {

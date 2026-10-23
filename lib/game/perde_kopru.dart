@@ -102,6 +102,8 @@ void _bridgeStage(Canvas c, int level, double time, double u, int n) {
       _bErgenekon(c, time, u, nn);
     case 16:
       _bSky(c, time, u, nn);
+    case 17:
+      _bOtuken(c, time, u, nn);
   }
 }
 
@@ -1604,4 +1606,122 @@ void _bSky(Canvas c, double time, double u, double n) {
     _wings(c, const Offset(596, 240), 70, 0.3 + math.sin(time * 2) * 0.1, a1);
   }
   _sayeAt(c, Offset(x, y), time);
+}
+
+// ---------------------------------------------------------------- Ötüken
+
+void _bOtuken(Canvas c, double time, double u, double n) {
+  // Orman: arkada kayınlar ve çamlar, önde yosunlu zemin.
+  for (var i = 0; i < 11; i++) {
+    final x = 30.0 + i * 74;
+    final h = 170.0 + (i * 41 % 70);
+    if (i.isEven) {
+      c.drawRect(Rect.fromLTWH(x - 4, _gb - h, 8, h), _far(1));
+      c.drawOval(
+        Rect.fromCenter(center: Offset(x, _gb - h), width: 80, height: 64),
+        _far(1),
+      );
+    } else {
+      for (var k = 0; k < 4; k++) {
+        final y = _gb - h + k * h / 5;
+        c.drawPath(
+          Path()
+            ..moveTo(x, y)
+            ..lineTo(x - 18 - k * 7, y + h / 4)
+            ..lineTo(x + 18 + k * 7, y + h / 4)
+            ..close(),
+          _far(1),
+        );
+      }
+    }
+  }
+  _floor(c, 1);
+  final x = _walkX(u, n, 90, 560);
+  // 0: yapraklardan ışık; gölgede gözler.
+  final a0 = _heroA(u, 0);
+  if (a0 > 0) {
+    for (var i = 0; i < 4; i++) {
+      final bx = 120.0 + i * 160;
+      c.drawPath(
+        Path()
+          ..moveTo(bx - 12, 0)
+          ..lineTo(bx + 14, 0)
+          ..lineTo(bx + 46, _gb)
+          ..lineTo(bx + 4, _gb)
+          ..close(),
+        _hole(0.35 * a0),
+      );
+      final blink = ((time * 0.4 + i * 0.3) % 1) < 0.5 ? 1.0 : 0.15;
+      for (final dx in [-6.0, 6.0]) {
+        c.drawOval(
+          Rect.fromCenter(
+            center: Offset(bx + 90 + dx, _gb - 70),
+            width: 7,
+            height: 3 * blink,
+          ),
+          _hole(0.8 * a0),
+        );
+      }
+    }
+  }
+  // 1: davul kökleri ve sarmaşık; ışığa yürüyen Ak Geyik.
+  final a1 = _heroA(u, 1);
+  if (a1 > 0) {
+    final beat = ((time * 0.7).floor()) % 2;
+    for (var i = 0; i < 4; i++) {
+      final up = (i % 2) == beat;
+      c.drawRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromLTWH(200 + i * 70.0, _gb - (up ? 14 : 0), 54, 12),
+          const Radius.circular(6),
+        ),
+        _ink(a1 * (up ? 1 : 0.4)),
+      );
+    }
+    c.drawPath(
+      Path()
+        ..moveTo(470, 30)
+        ..quadraticBezierTo(470 + math.sin(time) * 30, 150, 480, 240),
+      _stroke(_ink(a1), 3),
+    );
+    final dk = _span(u, 1.1, 1.9);
+    c.save();
+    c.translate(560 + dk * 120, _gb);
+    c.scale(0.9);
+    c.drawPath(
+      DeerRig.frame(time * 0.8, alert: 0.5).shape,
+      _ink(a1),
+    );
+    c.restore();
+    c.drawCircle(Offset(640 + dk * 120, _gb - 90), 10, _hole(0.8 * a1));
+  }
+  // 2: Kara Bataklık ve Hayat Ağacı; ışık köklere akar, Karabasan dağılır.
+  final a2 = _heroA(u, 2);
+  if (a2 > 0) {
+    c.drawPath(
+      Path()
+        ..moveTo(600, _gb)
+        ..quadraticBezierTo(610, 160, 620, 0)
+        ..lineTo(680, 0)
+        ..quadraticBezierTo(690, 160, 700, _gb)
+        ..close(),
+      _ink(a2),
+    );
+    final flow = _span(u, 2.3, 2.9);
+    c.drawRect(
+      Rect.fromLTWH(632, 0, 36, _gb * flow),
+      _hole(0.75 * a2),
+    );
+    final scatter = _span(u, 2.5, 2.95);
+    for (var i = 0; i < 14; i++) {
+      final ang = i / 14 * math.pi * 2;
+      final d = 30 + scatter * 160;
+      c.drawCircle(
+        Offset(560 + math.cos(ang) * d, _gb - 60 + math.sin(ang) * d * 0.6),
+        16 * (1 - scatter * 0.8),
+        _ink(a2 * (1 - scatter)),
+      );
+    }
+  }
+  _sayeAt(c, Offset(x, _gb + 12), time);
 }

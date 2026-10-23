@@ -7,6 +7,7 @@ import 'package:flame/components.dart';
 import 'audio.dart';
 import 'golge_game.dart';
 import 'level.dart';
+import 'levels.dart';
 import 'mechanics.dart';
 import 'myth_figures.dart';
 import 'myth_shapes.dart';
@@ -87,6 +88,10 @@ class DrumCloud extends Deck {
 
   @override
   void render(Canvas canvas) {
+    if (game.level.def.theme == LevelTheme.forest) {
+      _renderRoots(canvas);
+      return;
+    }
     final d = drum;
     final phase = d?.phase ?? 0;
     // Sönmek üzereyken titrer; sırası gelecekken silik görünür.
@@ -120,6 +125,94 @@ class DrumCloud extends Deck {
           ..strokeWidth = 1.2
           ..color = const Color(0xFFFFFFFF)
               .withValues(alpha: 0.6 * (1 - phase * 4)),
+      );
+    }
+  }
+
+  /// Ötüken'in davul kökleri: vuruşta bataklıktan kıvrılarak kalkar, öbür
+  /// vuruşta suya çekilir. İnmeden önce titrer; kalkmadan önce uçları
+  /// suyun yüzünde kıpırdar.
+  void _renderRoots(Canvas canvas) {
+    final d = drum;
+    final phase = d?.phase ?? 0;
+    final w = size.x;
+    final sink = (1 - _show) * 26;
+    final shake = on && phase > 0.78 ? math.sin(phase * 90) * 1.6 : 0.0;
+    canvas.save();
+    canvas.translate(shake, sink);
+    final a = 0.35 + 0.65 * _show;
+    final bark = Paint()
+      ..color = Color.lerp(
+        const Color(0xFF1A120A),
+        const Color(0xFF3A2A18),
+        _show,
+      )!.withValues(alpha: a);
+    final dark = Paint()
+      ..color = const Color(0xFF0C0805).withValues(alpha: a)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.4;
+    // Kalın, kıvrık gövde: üstü düzce (basılır), altı yumru yumru.
+    final top = Path()..moveTo(-4, 6);
+    for (var x = 0.0; x <= w + 4; x += 8) {
+      top.lineTo(x, 1.5 + math.sin(x * 0.37) * 1.2);
+    }
+    for (var x = w + 4; x >= -4; x -= 6) {
+      top.lineTo(x, 10 + math.sin(x * 0.9 + 1) * 2.5 + (x % 18 < 6 ? 3 : 0));
+    }
+    top.close();
+    canvas.drawPath(top, bark);
+    canvas.drawPath(top, dark);
+    // Aşağı sarkan kökçükler.
+    final hair = Paint()
+      ..color = bark.color
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+    for (var i = 0; i < (w / 9).floor(); i++) {
+      final x = 4 + i * 9.0;
+      hair.strokeWidth = 2.6 - (i % 3) * 0.6;
+      canvas.drawPath(
+        Path()
+          ..moveTo(x, 9)
+          ..quadraticBezierTo(x + 4, 16, x - 1 + (i % 2) * 3, 22 + (i % 4) * 3),
+        hair,
+      );
+    }
+    // Yosun: kalkık kökün üstü yeşerir.
+    if (_show > 0.4) {
+      final moss = Paint()
+        ..color = const Color(0xFF7FA650).withValues(alpha: 0.7 * _show);
+      for (var x = 3.0; x < w; x += 7) {
+        canvas.drawCircle(Offset(x, 1.6 + math.sin(x) * 0.8), 2.2, moss);
+      }
+    }
+    canvas.restore();
+    // Sırası gelince suyun yüzünde uçları kıpırdar; vuruşta halka açılır.
+    if (!on && phase > 0.6) {
+      final k = (phase - 0.6) / 0.4;
+      final tip = Paint()
+        ..color = const Color(0xFF3A2A18).withValues(alpha: 0.4 + 0.5 * k)
+        ..strokeWidth = 3
+        ..strokeCap = StrokeCap.round;
+      for (var x = 6.0; x < w; x += 14) {
+        canvas.drawLine(
+          Offset(x, 30),
+          Offset(x + math.sin(phase * 30 + x) * 2, 30 - 8 * k),
+          tip,
+        );
+      }
+    }
+    if (on && phase < 0.25) {
+      canvas.drawOval(
+        Rect.fromCenter(
+          center: Offset(w / 2, 8),
+          width: w + phase * 90,
+          height: 10 + phase * 14,
+        ),
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.2
+          ..color = const Color(0xFFD8E8B0)
+              .withValues(alpha: 0.5 * (1 - phase * 4)),
       );
     }
   }

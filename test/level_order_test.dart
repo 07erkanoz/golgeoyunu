@@ -22,4 +22,13 @@ void main() {
     expect(migrateOrderPosition(-3, 1), 0);
     expect(levelOrder[migrateOrderPosition(99, 1)], 13);
   });
+
+  test('Ötüken Derinkuyu ile Erlik arasına girer; kayıtlar kaymaz', () {
+    expect(levelOrder.indexOf(17), levelOrder.indexOf(12) + 1);
+    expect(levelOrder.indexOf(14), levelOrder.indexOf(17) + 1);
+    // 4. sürümde Erlik'e (yer 13) varmış kayıt yine Erlik'te kalır.
+    expect(levelOrder[migrateOrderPosition(13, 4)], 14);
+    expect(levelOrder[migrateOrderPosition(12, 4)], 12);
+    expect(levelOrder[migrateOrderPosition(16, 4)], 13);
+  });
 }

@@ -1444,7 +1444,104 @@ island(266,268,F-11,F-10); island(288,290,12,12); gk.put(289,11,'M')
 island(310,331); gk.put(316,F,'Z'); gk.put(318,F,'8'); gk.put(320,F,'K'); gk.put(328,F,'E')
 lvl_gok=gk.rows()
 
-MAPS = [('kMapYerebatan', lvl1), ('kMapKule', lvl2), ('kMapGokyolu', lvl3), ('kMapKaf', lvl4), ('kMapAgri', lvl5), ('kMapGemi', lvl6), ('kMapNemrut', lvl7), ('kMapGunDogumu', lvl8), ('kMapKarYolu', lvl9), ('kMapPalandoken', lvl10), ('kMapCig', lvl11), ('kMapPeri', lvl12), ('kMapDerinkuyu', lvl13), ('kMapKonya', lvl14), ('kMapErlik', lvl_erlik), ('kMapErgenekon', lvl_ergenekon), ('kMapGok', lvl_gok)]
+# ------------------------------------------------------------ XIV · ÖTÜKEN ORMANI (Ötüken)
+# Yeşil, kutlu orman. `c` yaprak arasından düşen ışık huzmesi (LevelDef.glades
+# alanında: gölgede Karabasan bekler), `u` davul kökleri (Kam'ın davuluyla
+# kalkar, iner), `a` Ak Geyik, `d` geyik kökü (Ak Geyik basınca en yakın
+# kapıyı tutar), `z`/`Z` Kara Bataklık'ta Karabasan, tepede güneş kilidi.
+# İpler 8 kare arayla, 8 kare boyunda (kanatsız sınandı: ip_olcum_test).
+W,H=446,50
+ot=G(W,H)
+F=40
+def og(c0,c1,top=F): ot.fill(c0,top,c1,H-1,'#')
+def bog(c0,c1): ot.fill(c0,F+2,c1,H-1,'w')
+def thorns(c0,c1): ot.fill(c0,H-2,c1,H-1,'^')
+def ropes(cols,n=6):
+    for c in cols: ot.fill(c,F-n-1,c,F-2,'S')
+def roots(cols,r=F):
+    for c in cols: ot.fill(c,r,c+2,r,'u')
+# A) Orman Eşiği: ışık lekeleri (durgun), dere ve ilk ip, rüzgârlı lekeler
+og(0,19); ot.put(2,F-1,'P'); ot.put(3,F-1,'p'); ot.put(5,F-1,'1')
+og(11,12,F-1)                                   # yosunlu taş
+ot.put(16,F-4,'e')                              # karanlıkta iki göz
+og(20,60); ot.put(21,F-1,'2')
+for c in (23,31,39,47,55): ot.put(c,F-1,'c')
+og(35,36,F-2)                                   # devrik kütük
+ot.fill(37,F-4,40,F-4,'='); ot.put(39,F-5,'M')  # kütükten dala: hatıra
+bog(61,68); ropes((62,),8)                      # dere: ilk sarmaşık
+og(69,104); ot.put(71,F-1,'3')
+for c in (74,82,90,98): ot.put(c,F-1,'c')
+og(84,86,F-2); ot.put(85,F-3,'F')
+ot.put(102,F-1,'K')
+# B) Kam'ın Korusu: davul kökleri, sarmaşık zinciri, kök merdiveni
+og(105,111); ot.put(106,F-1,'p'); ot.put(108,F-1,'4')
+bog(112,127); roots((112,116,120,124))
+og(128,134); ot.put(130,F-1,'5')
+thorns(135,149); ropes((136,141,146),8)         # dikenli yar: üç sarmaşık
+og(150,170); ot.put(158,F-1,'K'); ot.put(162,F-1,'F')
+ot.fill(160,F-3,161,F-3,'='); ot.fill(164,F-5,167,F-5,'='); ot.put(166,F-6,'M')
+ot.put(168,F-1,'6')
+bog(171,187)
+for c,r in ((172,F),(176,F-2),(180,F-4),(184,F-6)): roots((c,),r)
+og(188,200,F-7); ot.put(189,F-8,'K'); ot.put(191,F-8,'7')
+for c in (190,196,203,211,216): ot.put(c,F-8,'c')
+ot.fill(201,F-7,212,F-7,'.'); roots((201,205,209),F-7)   # kökler ve ışık birlikte
+bog(201,212)
+og(213,218,F-7)
+# C) Ak Geyik
+og(219,330); ot.put(220,F-1,'K'); ot.put(221,F-1,'p'); ot.put(223,F-1,'8')
+ot.put(226,F-1,'a'); ot.put(230,F-1,'F'); ot.put(233,F-1,'F')
+ot.put(237,F-1,'d')
+ot.fill(242,F-14,242,F-5,'#'); ot.fill(242,F-4,242,F-1,'H')        # kök duvarı ve kapısı
+# Üst yol (Sâye) ve alt geçit (geyik): yukarıdan ateşböceğiyle yol gösterilir.
+ot.fill(250,F-6,296,F-5,'#'); ot.fill(249,F-6,249,F-1,'|'); ot.put(247,F-1,'9')
+ot.put(252,F-7,'F')
+ot.put(257,F-1,'d')
+ot.fill(260,F-16,260,F-11,'#'); ot.fill(260,F-10,260,F-7,'H')     # üst kapı: geyik tutar
+ot.put(276,F-7,'L')                                                # alt kapıyı açan kol
+ot.fill(268,F-4,268,F-1,'H')                                       # alt geçidin kapısı
+ot.fill(282,F-9,284,F-9,'='); ot.put(283,F-10,'M')
+ot.fill(297,F-6,297,F-1,'|')                                       # üst yoldan iniş
+# Işıksız yol: geyik karanlığa girmez; ateşböceği ışığı köprü olur.
+ot.put(298,F-1,'K'); ot.put(300,F-1,'('); ot.put(302,F-1,'F'); ot.put(304,F-1,'c'); ot.put(318,F-1,'c')
+ot.put(311,F-1,'F')
+ot.put(326,F-1,'d')
+ot.fill(330,F-14,330,F-5,'#'); ot.fill(330,F-4,330,F-1,'H')
+# D) Kara Bataklık: Karabasan kovalar
+og(331,338); ot.put(333,F-1,'K'); ot.put(335,F-1,'p'); ot.put(336,F-1,')'); ot.put(338,F-1,'z')
+bog(339,340); og(341,345); bog(346,347); og(348,352,F-1)
+ot.put(343,F-1,'F')
+bog(353,364)
+for c in (354,358,362): ot.put(c,F,'O')            # çöken kayalar: durma
+og(365,370); thorns(371,381); ropes((372,378),8)
+og(382,398); ot.put(396,F-1,'Z')
+# E) Hayat Ağacı: ışık sırayla düşer; tepede güneş aynalarla indirilir.
+ot.put(399,F-1,'K'); ot.put(401,F-1,'p'); ot.put(402,F-1,'[')
+og(399,412)
+Ft=17
+og(414,421,Ft+1)                                # gövde
+for i,r in enumerate(range(F-2,Ft,-2)):         # dallar: sağ ve sol sırayla
+    c0 = 408 if i%2==0 else 403
+    ot.fill(c0,r,c0+3,r,'=')
+for c in (404,410): ot.put(c,F-1,'c')
+ot.put(404,23,'M')
+# Tepede ayna salonu (Kaf'taki düzenin aynısı; zemin dal, altı gövde).
+x=413
+ot.fill(x,Ft,x+25,Ft,'#')
+ot.fill(x,Ft-16,x+25,Ft-15,'#')
+ot.fill(x,Ft-8,x,Ft-5,'#')
+ot.fill(x+1,Ft-2,x+1,Ft-1,'#')
+ot.fill(x+2,Ft-4,x+13,Ft-4,'#')
+ot.fill(x+15,Ft-4,x+16,Ft-4,'#')
+ot.put(x+4,Ft-14,'j'); ot.put(x+4,Ft-5,'m'); ot.put(x+14,Ft-5,'m'); ot.put(x+14,Ft-1,'m')
+ot.put(x+16,Ft-1,'C'); ot.put(x+17,Ft,'.',force=True)
+ot.fill(x+17,Ft+1,x+17,Ft+1,'#')
+ot.put(x+22,Ft-1,'t'); ot.put(x+6,Ft-1,']')
+ot.fill(x+25,Ft-14,x+25,Ft-7,'#'); ot.fill(x+25,Ft-6,x+25,Ft-1,'H')
+ot.fill(x+26,Ft,445,Ft,'#'); ot.put(x+27,Ft-1,'{'); ot.put(443,Ft-1,'E')
+lvl_otuken=ot.rows()
+
+MAPS = [('kMapYerebatan', lvl1), ('kMapKule', lvl2), ('kMapGokyolu', lvl3), ('kMapKaf', lvl4), ('kMapAgri', lvl5), ('kMapGemi', lvl6), ('kMapNemrut', lvl7), ('kMapGunDogumu', lvl8), ('kMapKarYolu', lvl9), ('kMapPalandoken', lvl10), ('kMapCig', lvl11), ('kMapPeri', lvl12), ('kMapDerinkuyu', lvl13), ('kMapKonya', lvl14), ('kMapErlik', lvl_erlik), ('kMapErgenekon', lvl_ergenekon), ('kMapGok', lvl_gok), ('kMapOtuken', lvl_otuken)]
 
 out = ['// Bu dosya tools/generate_maps.py ile üretilir; elle düzenleme.',
        '// Gösterim: lib/game/level.dart başındaki açıklamaya bakın.', '']

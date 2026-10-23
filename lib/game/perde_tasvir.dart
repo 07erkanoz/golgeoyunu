@@ -1104,8 +1104,12 @@ void _heroOverlay(Canvas canvas, PerdeScene scene, double time, double u) {
         _tasvirSaye(canvas, const Offset(390, g + 12), 2.0, time, a);
       });
       _chaseBeat(canvas, time, u, 4);
-    case PerdeScene.prologue || PerdeScene.ergenekon || PerdeScene.epilogue:
-      // Önsöz ve son kendi tasvirleriyle; Ergenekon sahnenin içinde.
+    case PerdeScene.prologue ||
+        PerdeScene.ergenekon ||
+        PerdeScene.otuken ||
+        PerdeScene.epilogue:
+      // Önsöz ve son kendi tasvirleriyle; Ergenekon ve Ötüken sahnenin
+      // içinde.
       break;
   }
 }

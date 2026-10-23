@@ -212,7 +212,7 @@ class StoryPage extends StatelessWidget {
 
   /// Perdeler oynanış sırasıyla: (metin numarası, perdenin ilk bölümünün
   /// kimliği). Yer, `levelOrder`'daki sıradan bulunur (bölüm kimliği değil).
-  static const _acts = [(0, 0), (1, 4), (2, 8), (3, 11), (5, 14), (4, 13)];
+  static const _acts = [(0, 0), (1, 4), (2, 8), (3, 11), (5, 17), (4, 13)];
 
   @override
   Widget build(BuildContext context) {

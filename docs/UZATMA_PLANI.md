@@ -37,7 +37,7 @@ akan bölümlerle gelir.
 | 2-8 | Kule … Gün Doğumu | Var; derinleşecek |
 | 9-11 | Kar Yolu, Palandöken, Çığ | Var; kayak kalır |
 | 12-13 | Peri Bacaları, Derinkuyu | Var; Derinkuyu'da Karabasan yeniden belirir |
-| **14** | **Ötüken Ormanı** (yeni, yeşil) | Ötüken perdesinin girişi. Türk mitolojisinde Ötüken, kutlu ormanlı dağdır (Ötüken Yış). Karabasan bütün bölüm boyunca avlar; sonunda Umay'ın ak kayını, yani Hayat Ağacı'nın ışığıyla durdurulur |
+| **14** | **Ötüken Ormanı** (yeni, yeşil; yapıldı, kimlik 17) | Ötüken perdesinin girişi. Türk mitolojisinde Ötüken, kutlu ormanlı dağdır (Ötüken Yış). Karabasan bütün bölüm boyunca avlar; sonunda Umay'ın ak kayını, yani Hayat Ağacı'nın ışığıyla durdurulur |
 | 15-17 | Erlik, Ergenekon | Var |
 | 18 | Göğün Katları I | Var; genişler: Yıldız Katı, Yel Katı |
 | **19** | **Göğün Katları II** (yeni) | Gün Katı (canlı Hüma), Şimşek Katı, Ülgen'in Kapısı; sonu Tulpar'la fırtına kaçışı |
@@ -108,7 +108,9 @@ kandırır, tuzağa çeker, ortamı ona karşı kullanır. Bizde karşılığı:
 ## Uygulama sırası
 
 1. **Küçük düzeltmeler:** Hüma, güneşin yakması, Karabasan'ın görünürlüğü.
-2. **Ötüken Ormanı:** Yeşil bölüm ve Karabasan'ın sonu.
+2. **Ötüken Ormanı:** Yeşil bölüm ve Karabasan'ın sonu. *(Yapıldı:
+   lib/game/otuken.dart, test/otuken_test.dart; anlatım kuralları
+   docs/ANLATIM_DUZENI.md.)*
 3. **Göğün Katları:** I'in genişlemesi ve II.
 4. **Tulpar:** Tulpar'ın Yolu ve Tuz Gölü.
 5. **Yeşil Kubbe:** Final.
@@ -118,3 +120,52 @@ kandırır, tuzağa çeker, ortamı ona karşı kullanır. Bizde karşılığı:
 Her bölümde önce önizleme görseli gösterilir, sonra uygulanır. Yeni alan
 haritası `tools/audit.py` ile denetlenir. Her düzenek için kural testi, her
 bölüm için bot geçiş testi yazılır.
+
+## Ötüken Ormanı · bölüm tasarımı (taslak)
+
+**Yer:** Derinkuyu'dan sonra, Ötüken perdesinin girişi. Sâye yeraltından
+yukarı çıkar ve oyunda ilk kez gün ışığını, yeşili görür.
+
+**Hikâye:** Karabasan, Yerebatan'dan beri Sâye'nin peşinde. Kâbus, gölgeden
+beslenir; ışığa giremez. Ötüken'in kutlu ormanında son kez saldırır. Sonunda
+Sâye, Hayat Ağacı'nın tepesinden güneşi aşağı indirir ve Karabasan dağılır.
+Bu ağaç, açılıştaki küllerden yükselen kayın fidanının büyümüş halidir:
+"Umay, düşen her çocuğun yanındadır."
+
+**Süre hedefi:** 12-15 dakika. Her alanın başında bir Umay ağacı; kovalamanın
+tam başında bir tane daha.
+
+| Alan | Düzenek | Üç adım |
+|---|---|---|
+| 1 · Orman Eşiği | **Işık lekeleri:** yaprak arasından düşen huzmeler güvenlidir; Karabasan gölgede bekler, ışığa giremez. Rüzgâr esmeden önce yapraklar hışırdar, huzmeler kayar | Durgun lekeler (öğret) → rüzgârla kayan lekeler (birleştir) → kısalan lekeler (sına) |
+| 2 · Kam'ın Korusu | **Davul kökleri:** şaman davulunun her vuruşunda bir sıra kök yerden kalkar, öbürü iner (Göğün Katları'nın davulu) | Tek sıra → iki sıra ve kuyu → kökler ve ışık lekeleri birlikte |
+| 3 · Ak Geyik | **Yol gösteren geyik** (Abe's Oddysee gibi arkadaş): Ak Maral ateşböceği ışığını izler. Oyuncu onu basma köklerine götürür, ağırlığıyla kök kapılar açılır. Karabasan geyiği korkutur; geyik ışıkla korunur | Geyiği bir kapıya götür → iki kapı ve sıra → Karabasan yaklaşırken |
+| 4 · Kara Bataklık | **Kovalama:** Karabasan bütün gücüyle kovalar; öğrenilen ışık lekeleri ve davul kökleri birlikte, hızlı | Tek uzun kaçış; ölünce kovalamanın başından |
+| 5 · Hayat Ağacı | **Tırmanış ve güneş:** dev kayına tırmanılır, Karabasan aşağıdan yükselir. Tepede dallar itilip ak çaputlar açılır; güneş ışığı aynalarla aşağı iner | Bir ayna → iki ayna ve sıra → son: ışık Karabasan'ı dağıtır |
+
+**Yeni kodlanacaklar:**
+
+- Işık lekeleri.
+- Gölgede bekleyen Karabasan.
+- Davul köklerinin görünüşü; düzenek var, DrumCloud.
+- Ak Geyik arkadaşı. En büyük yeni iş.
+- Hayat Ağacı tırmanışı; ayna ve ışık kilidi var.
+- Kuş sesli orman ortam sesi.
+
+### Yapılan (2026-10-23)
+
+- **Harita:** 446×50, beş alan, 7 kayıt noktası; 4 hatıra, 14 fısıltı. Kanat yok.
+- **Işık lekeleri** (`GladeZone`): durgun, rüzgârla kayan (önce yapraklar
+  hışırdar), sırayla sönen (önce titrer). Gölgede 1,6 sn (ilk kez 3 sn)
+  kalan yutulur; ateşböceği ve Ak Geyik de ışıktır.
+- **Davul kökleri:** Göğün Katları'nın davulu, kök görünüşüyle.
+- **Sarmaşıklar:** ip ölçümüyle (tools/preview/ip_olcum_test.dart) 8 kare
+  boy, 5-6 kare ara; her bırakış açısında geçiliyor.
+- **Ak Geyik:** en taze ateşböceğini izler, karanlığa girmez, geyik
+  köklerini uyandırır; son kökte ışığa sıçrayıp vedalaşır.
+- **Kara Bataklık:** Karabasan kovalaması; çöken kayalar, iki sarmaşık.
+- **Hayat Ağacı:** ak kayın gövde, sırayla düşen ışıkta dal dal tırmanış;
+  tepede üç ayna ve sandık; güneş kilide inince Karabasan dağılır.
+- **Hikâye:** Ötüken perdesi (BEŞİNCİ PERDE kartı buraya geçti), köprü
+  sahnesi, Derinkuyu'nun son fısıltısı köklere bağlandı, Erlik perdesi
+  köklerden iner, Hikâye sayfası ve Defter (Ötüken, Ak Geyik, Hayat Ağacı).

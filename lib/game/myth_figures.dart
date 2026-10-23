@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'dart:ui' as ui;
 
 import 'myth_shapes.dart';
+import 'deer_rig.dart';
 import 'wolf_rig.dart';
 
 /// Gökbörü'nün duruşları; her biri gerçek bir kurt çiziminden alınmış
@@ -203,6 +204,49 @@ class MythFigures {
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
     );
     _wolfBody(c, t, WolfRig.frame(WolfGait.walk, phase), alpha);
+  }
+
+  /// Ak Geyik (Ötüken): sabah ışığı gibi ak, içinde yaprak ışıltıları
+  /// kıpırdayan bir ruh geyik. [phase] yürüyüş evresi.
+  static void akGeyik(
+    Canvas c,
+    double t,
+    double phase, {
+    double alpha = 1,
+    double leap = 0,
+    double graze = 0,
+    double alert = 0,
+    bool still = false,
+  }) {
+    c.drawOval(
+      Rect.fromCenter(center: const Offset(0, 0), width: 100, height: 8),
+      Paint()
+        ..color = const Color(0xFFF2EEC8)
+            .withValues(alpha: 0.4 * alpha * (1 - leap))
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
+    );
+    final f = DeerRig.frame(
+      phase,
+      leap: leap,
+      graze: graze,
+      alert: alert,
+      still: still,
+    );
+    _skyBody(
+      c,
+      f.shape,
+      t,
+      top: const Color(0xFFFFFDF4),
+      bottom: const Color(0xFFC8D6A8),
+      glow: const Color(0xFFF4F0C8),
+      star: const Color(0xFFFFF6C8),
+      alpha: alpha,
+      stars: 22,
+    );
+    c.drawOval(
+      Rect.fromCenter(center: f.eye, width: 3.8, height: 2.2),
+      Paint()..color = const Color(0xFF26301C).withValues(alpha: alpha),
+    );
   }
 
   static void _wolfBody(Canvas c, double t, WolfFrame f, double alpha) {

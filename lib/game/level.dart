@@ -42,6 +42,7 @@ const double kTile = 32;
 /// - Kayak bölümlerinde (`skiSurface`): `%` kaya, `=` kütük çit, `z`/`Z`
 ///   çığın başı/sonu.
 /// - Sağanak: `<` sol üst ve `>` sağ alt köşe (kanatlar ıslanır, süzülünmez).
+/// - Ötüken (orman): `c` ışık huzmesi, `a` Ak Geyik, `d` geyik kökü.
 /// - Bölgeler: `x` sol üst ve `X` sağ alt köşeleriyle karanlık bölge (ışığı
 ///   yer, ateşböcekleri birer birer söner).
 /// - Bulmacalar: `l` ışık tahtası, `n` gölge tahtası, `u` çürük tahta,
@@ -77,6 +78,12 @@ class Level {
 
   /// Erlik'in katı: hapsedilmiş kut kafesleri (`a`).
   final kutCells = <Vector2>[];
+
+  /// Ötüken: yaprak arasından düşen ışık huzmelerinin yere değdiği hücreler
+  /// (`c`), Ak Geyik (`a`) ve geyik kökleri (`d`).
+  final gladeBeamCells = <Vector2>[];
+  final deerCells = <Vector2>[];
+  final deerPlateCells = <Vector2>[];
 
   /// Ergenekon: demir damarları (`d` dikey dizisi: sütun, üst, alt).
   final ironVeins = <(int, int, int)>[];
@@ -355,6 +362,8 @@ class Level {
             icicleCells.add(cell);
           case '/':
             thinIceCells.add(cell);
+          case 'c' when def.theme == LevelTheme.forest:
+            gladeBeamCells.add(cell);
           case 'c':
             bellCells.add(cell);
           case '&':
@@ -369,6 +378,10 @@ class Level {
             semazenCells.add(cell);
           case 'a' when def.theme == LevelTheme.underworld:
             kutCells.add(cell);
+          case 'a' when def.theme == LevelTheme.forest:
+            deerCells.add(cell);
+          case 'd' when def.theme == LevelTheme.forest:
+            deerPlateCells.add(cell);
           case 'd' when def.theme == LevelTheme.ergenekon:
             // Demir damarı: üst üste hücreler tek damar.
             if (r == 0 || _rows[r - 1].padRight(width, '.')[c] != 'd') {

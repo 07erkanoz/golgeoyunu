@@ -90,7 +90,11 @@ enum LevelTheme {
   ergenekon,
 
   /// Göğün katları: ay katı, gün katı, Ülgen'in kapısı; bulutlar.
-  heavens;
+  heavens,
+
+  /// Ötüken Ormanı: kutlu ormanlı dağ; ak kayınlar, yaprak arasından süzülen
+  /// ışık, yosun. Oyunun tek yeşil yeri.
+  forest;
 
   /// Kapalı mekân: tavanın üstü kaya, uzaktan zincir sesleri.
   bool get indoor =>
@@ -148,6 +152,8 @@ class LevelDef {
     this.interiors = const [],
     this.noWings = false,
     this.scorch = const [],
+    this.glades = const [],
+    this.lifeTree,
     this.legends = const [],
     this.gokboruRun = false,
   });
@@ -161,6 +167,16 @@ class LevelDef {
   /// Gün katı: yakıcı ışık alanları (sol, üst, sağ, alt); Umay kuşunun
   /// gölgesinde yürünür.
   final List<(int, int, int, int)> scorch;
+
+  /// Ötüken: yaprak arasından ışık düşen orman alanları (sol, üst, sağ,
+  /// alt, rüzgâr). Huzmeler alandaki `c` işaretlerinden iner; gölgede
+  /// Karabasan bekler. Rüzgâr: 0 durgun, 1 huzmeler kayar, 2 huzmeler
+  /// sırayla söner.
+  final List<(int, int, int, int, int)> glades;
+
+  /// Ötüken: Hayat Ağacı'nın gövdesi (sol, üst, sağ, alt sütun/satır); ak
+  /// kayın olarak çizilir, tacı üstünde açılır.
+  final (int, int, int, int)? lifeTree;
 
   /// Ergenekon: deri körükler (sütun, satır, sıra); her biri en yakın demir
   /// damarına bağlanır, sırası üstündeki çentiklerle gösterilir.
@@ -476,14 +492,13 @@ const interludes = <List<String>>[
     'SON PERDE · DÜĞÜN',
   ],
   [
-    'Derinkuyu\'nun en dibinde, taşın altında bir ses vardı. Sâye kulağını taşa dayadı: su sesi.',
+    'Hayat Ağacı\'nın kökleri yerin en dibine iner. Sâye köklerin arasından aşağı süzüldü; en dipte bir ses vardı: su sesi.',
     'Ozan der ki: Başlangıçta yalnız su vardı. Kayra Han suyun üstünde yalnızdı; ne yaratacağını bilmiyordu.',
     'Sudan ak bir ana yükseldi: Ak Ana. "Yarat," dedi, ve yeniden suya döndü.',
     'Kayra Han yarattı. Ama yarattıklarından biri, Erlik, kendini ondan büyük sandı; yerin altına sürüldü.',
     'Kandilcilerin çaldığı ışıklar yerin altına, Erlik\'in katına akıyordu. Usta da o yoldan geçirilmişti.',
     'Ozan der ki: Bir zaman Er Töştük adında bir yiğit de yerin altına düşmüştü. Konuşan atı Çalkuyruk ona yol gösterdi.',
     'Yerin altında Erlik\'in gölgeleri dolaşır: Körmösler. Işığa gelirler; çalınan canları, kutları kafeslerde tutarlar.',
-    'BEŞİNCİ PERDE · ÖTÜKEN',
   ],
   [
     'Ozan der ki: Bir zaman Türklerin ataları büyük bir savaşta yenildi; yalnız iki yiğit, Kıyan ile Nüküz, eşleriyle kurtuldu.',
@@ -500,6 +515,16 @@ const interludes = <List<String>>[
     'Bir katında ay soğuk ve yumuşak yanar; bir katında güneş yakar.',
     'Derler ki Hüma\'nın gölgesi kimin başına düşerse ona kut getirir. Tulpar ise yiğidi göğün katları arasında taşır.',
     'Kandilciler kırık güneşin bir parçasını göğün en yüksek katına götürmüştü. Bir kam davulunu çaldı; Sâye bulutların üstüne yükseldi.',
+  ],
+  [
+    'Derinkuyu\'nun en dibinde taşın arasından kökler sarkıyordu. Sâye bir köke tutundu; kök onu yukarı, ışığa doğru çekti.',
+    'Toprağın üstüne çıktığında gün ağarıyordu. Önünde uçsuz bucaksız bir orman: kayınlar, çamlar, yosun, kuş sesi.',
+    'Kül Tigin Yazıtı der ki: İli tutacak yer Ötüken ormanıdır; ondan iyisi yoktur.',
+    'Ormanın ortasında bir ağaç göğe dek yükselir: Hayat Ağacı. Umay dallarında oturur; doğacak çocukların canları kuş olup konar.',
+    'Ama Sâye yalnız değildi. Sarnıcın karanlığında onu ilk gören, Derinkuyu\'da ardından sürünen şey de yukarı çıkmıştı: Karabasan.',
+    'Karabasan sahipsiz gölgeleri sezer. Uyuyanın göğsüne çöker gibi onlara çöker, onları yer. Ustası olmayan bir gölge, onun için en tatlı lokmadır.',
+    'Ama ışığa giremez. Ötüken\'in yaprakları arasından süzülen her huzme, Sâye için bir sığınaktır.',
+    'BEŞİNCİ PERDE · ÖTÜKEN',
   ],
 ];
 
@@ -608,14 +633,13 @@ const interludesEn = <List<String>>[
     'THE LAST VEIL · THE WEDDING',
   ],
   [
-    'At the very bottom of Derinkuyu there was a sound beneath the stone. Saye pressed his ear to the rock: running water.',
+    'The roots of the Tree of Life reach to the very bottom of the earth. Saye slipped down between them; at the very bottom there was a sound: running water.',
     'The bard says: in the beginning there was only water. Kayra Khan was alone above it; he did not know what to create.',
     'A white mother rose from the water: Ak Ana. "Create," she said, and went back into the water.',
     'Kayra Khan created. But one of his creatures, Erlik, thought himself greater; he was cast beneath the earth.',
     'The light the Lamplighters stole was flowing beneath the earth, to Erlik\'s realm. The master had been taken that way too.',
     'The bard says: once a hero named Er Töştük had fallen beneath the earth too. His talking horse Çalkuyruk showed him the way.',
     'Erlik\'s shades roam beneath the earth: the Körmös. They come to the light, and keep stolen lives, the kuts, in cages.',
-    'THE FIFTH VEIL · ÖTÜKEN',
   ],
   [
     'The bard says: once the forefathers of the Turks were defeated in a great war; only two heroes, Kıyan and Nüküz, escaped with their wives.',
@@ -633,18 +657,28 @@ const interludesEn = <List<String>>[
     'They say the shadow of the Huma brings kut to whomever it falls on. And Tulpar carries the hero between the layers of the sky.',
     'The Lamplighters had carried a piece of the broken sun to the highest layer of the sky. A shaman beat his drum, and Saye rose above the clouds.',
   ],
+  [
+    'At the very bottom of Derinkuyu, roots hung between the stones. Saye grasped one; the root drew him upward, toward the light.',
+    'When he came out above the earth, day was breaking. Before him lay an endless forest: birches, pines, moss, birdsong.',
+    'The Kül Tigin inscription says: the place to hold the realm is the forest of Ötüken; there is no better place.',
+    'In the middle of the forest a tree rises to the sky: the Tree of Life. Umay sits on its branches; the souls of children yet to be born perch there as birds.',
+    'But Saye was not alone. The thing that first saw him in the dark of the cistern, that crept after him in Derinkuyu, had come up too: the Karabasan.',
+    'The Karabasan senses masterless shadows. It settles on them as it settles on a sleeper\'s chest, and devours them. A shadow without its master is the sweetest morsel of all.',
+    'But it cannot enter the light. Every beam that slips between the leaves of Ötüken is a refuge for Saye.',
+    'THE FIFTH VEIL · ÖTÜKEN',
+  ],
 ];
 
 /// Oynanış sırası. Bölümün kimliği `levels` listesindeki yeridir ve hiç
 /// değişmez (kayıt, hatıralar, görülen olaylar bu kimlikle tutulur); yeni
 /// bölümler listenin sonuna eklenir, oynanıştaki yerlerine bu sırada girer.
 const levelOrder = <int>[
-  0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 16, 13, //
+  0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 17, 14, 15, 16, 13, //
 ];
 
 /// Sıra değişince artar: kayıttaki "açılan en ileri bölüm" (sıradaki yer)
 /// eski sıradan yenisine çevrilir.
-const levelOrderVersion = 4;
+const levelOrderVersion = 5;
 
 /// Eski sıra sürümlerinde her yerdeki bölüm kimliği (1. sürüm: kimlik =
 /// yer).
@@ -653,6 +687,7 @@ const _levelOrderHistory = <int, List<int>>{
   2: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 13],
   3: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 13],
   4: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 16, 13],
+  5: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 17, 14, 15, 16, 13],
 };
 
 /// Bölümün oynanış sırasındaki yeri (yoksa -1).
@@ -740,7 +775,7 @@ const bridges = <List<String>>[
   [
     'Mahzenden şapele, havalandırma bacalarından derin kuyuya indi. Yuvarlak taş kapılar onu içeriden kabul etti.',
     'Devlerin kapısında uyuyan dev uyandı ve peşine düştü; karanlıkta Gökbörü\'nün gözleri ona yolu gösterdi.',
-    'En dipte taşın altından bir uğultu geliyordu.',
+    'En dipte taşın arasından kökler sarkıyordu; yukarıdan yaprak kokusu geliyordu.',
   ],
   [
     'Konya ovasından eski höyüğe, İkonion kapısından Alâeddin Tepesi\'ne yürüdü.',
@@ -760,6 +795,11 @@ const bridges = <List<String>>[
   [
     'Kamın davulu çaldıkça bulut kapısından ay katına, ay katından gün katına yükseldi.',
     'Hüma\'nın gölgesi başına düştü. Ülgen\'in kapısında Tulpar onu bekliyordu.',
+  ],
+  [
+    'Kökler onu yerin altından Ötüken\'in yeşiline çıkardı. Yaprakların arasından düşen ışıkta yürüdü; gölgede Karabasan\'ın gözleri açılıp kapandı.',
+    'Kam\'ın davulu vurdukça kökler kalktı; sarmaşıklara tutunup dikenli yarları aştı. Ak bir geyik ateşböceklerinin ışığını izleyip kök kapılarını açtı.',
+    'Kara Bataklık\'ta Karabasan bütün gücüyle saldırdı. Sâye Hayat Ağacı\'na tırmandı, güneşi aynalarla aşağı indirdi; ışık köklere aktı, Karabasan dağıldı.',
   ],
 ];
 
@@ -822,7 +862,7 @@ const bridgesEn = <List<String>>[
   [
     'From the cellar to the chapel, through the air shafts, he went down into the deep well. The round stone doors let him in from the inside.',
     'At the giants\' gate the sleeping giant woke and gave chase; in the dark, Gokboru\'s eyes showed him the way.',
-    'At the very bottom a hum was rising from beneath the stone.',
+    'At the very bottom, roots hung between the stones; a smell of leaves came from above.',
   ],
   [
     'He walked from the plain of Konya to the old mound, through the gate of Iconium to the Hill of Alaeddin.',
@@ -842,6 +882,11 @@ const bridgesEn = <List<String>>[
   [
     'As the kam\'s drum beat, he rose from the cloud gate to the layer of the moon, and from the moon to the layer of the sun.',
     'The Huma\'s shadow fell on his head. At Ulgen\'s gate, Tulpar was waiting for him.',
+  ],
+  [
+    'The roots brought him up from beneath the earth into the green of Ötüken. He walked in the light falling between the leaves; in the shadow the Karabasan\'s eyes opened and closed.',
+    'With every beat of the shaman\'s drum the roots rose; he swung on the vines across thorny ravines. A white deer followed the light of his fireflies and opened the root gates.',
+    'In the Black Marsh the Karabasan attacked with all its strength. Saye climbed the Tree of Life and brought the sun down with mirrors; the light flowed to the roots, and the Karabasan scattered.',
   ],
 ];
 
@@ -1685,7 +1730,7 @@ const levels = <LevelDef>[
       'Bacalar şehri nefes aldırır. Aşağıdan sıcak bir rüzgâr eser; derler ki devlerin nefesidir.',
       'Kuyunun suyu en dipten gelir. Dipteki vanayı çeviren, suyu yukarı çağırır.',
       'Peri Padişahı devleri yeraltına sürmüştü. Derinkuyu\'nun en dibinde hâlâ uyurlar; uykuları ışığı yer. Ateşböceklerini sakla, onlar senin nefesin.',
-      'Yukarıda ay doğmuş. Batıda Konya\'nın kubbeleri karla örtülü. Kandilciler bir düğün gecesine yetişmeye çalışıyor.',
+      'Kuyunun en dibinde taşın arasından kökler sarkıyor. Yukarıdan reçine ve yaprak kokusu geliyor; bu kokuyu hiç bilmiyordun.',
     ],
     whispersEn: [
       'There is a city beneath the earth; no one knows when it was dug. Some say the Phrygians, some say older still. Today no one remembers it.',
@@ -1695,7 +1740,7 @@ const levels = <LevelDef>[
       'The shafts let the city breathe. A warm wind rises from below; they say it is the giants\' breath.',
       'The well\'s water comes from the very bottom. Whoever turns the valve below calls the water up.',
       'The Fairy King drove the giants underground. At the very bottom of Derinkuyu they sleep still, and their sleep devours light. Guard your fireflies; they are your breath.',
-      'Above, the moon has risen. In the west, Konya\'s domes lie under snow. The Lamplighters are racing to reach a wedding night.',
+      'At the very bottom of the well, roots hang between the stones. From above comes a smell of resin and leaves, a smell you have never known.',
     ],
     memories: [
       'Hatıra · Ustam bir gece yerin altında bir şehir olduğunu anlattı. İnanmadım. "İnanmadığın her yer," dedi, "bir gün seni bekler."',
@@ -1712,7 +1757,7 @@ const levels = <LevelDef>[
     map: kMapDerinkuyu,
   ),
   LevelDef(
-    title: 'XVII · ŞEB-İ ARÛS',
+    title: 'XVIII · ŞEB-İ ARÛS',
     legends: ['sebiArus'],
     bard: 'Ozan der ki: Dönen döner, gölge düşer; kim dönerse yolunu bulur.',
     bardEn: 'The bard says: the whirling turn, the shadows fall; whoever turns finds the way.',
@@ -1720,7 +1765,7 @@ const levels = <LevelDef>[
     subtitle: 'Bu gece ölüm bir düğündür.',
     theme: LevelTheme.konya,
     wings: true,
-    titleEn: 'XVII · SHEB-I ARUS',
+    titleEn: 'XVIII · SHEB-I ARUS',
     subtitleEn: 'Tonight, death is a wedding.',
     place: 'Konya · 17 Aralık 1660, Şeb-i Arûs gecesi',
     placeEn: 'Konya · 17 December 1660, the night of Sheb-i Arus',
@@ -1797,9 +1842,9 @@ const levels = <LevelDef>[
     map: kMapKonya,
   ),
   LevelDef(
-    title: 'XIV · ERLİK\'İN KATI',
+    title: 'XV · ERLİK\'İN KATI',
     subtitle: 'Yerin altında ışık tehlikeli, karanlık güvenlidir.',
-    titleEn: 'XIV · ERLIK\'S REALM',
+    titleEn: 'XV · ERLIK\'S REALM',
     subtitleEn: 'Beneath the earth, light is danger and darkness is safety.',
     theme: LevelTheme.underworld,
     bard: 'Ozan der ki: Yerin altında ışık düşmandır; karanlık, sırtını dayayacağın duvardır.',
@@ -1857,9 +1902,9 @@ const levels = <LevelDef>[
     map: kMapErlik,
   ),
   LevelDef(
-    title: 'XV · ERGENEKON',
+    title: 'XVI · ERGENEKON',
     subtitle: 'Dört yanı dağ; çıkış demirin içinden.',
-    titleEn: 'XV · ERGENEKON',
+    titleEn: 'XVI · ERGENEKON',
     subtitleEn: 'Mountains on every side; the way out runs through iron.',
     theme: LevelTheme.ergenekon,
     bard: 'Ozan der ki: Dağ demirse demir erir; sabreden boyun önü açılır.',
@@ -1941,9 +1986,9 @@ const levels = <LevelDef>[
     map: kMapErgenekon,
   ),
   LevelDef(
-    title: 'XVI · GÖĞÜN KATLARI',
+    title: 'XVII · GÖĞÜN KATLARI',
     subtitle: 'Her kat bir öncekinden aydınlık.',
-    titleEn: 'XVI · THE LAYERS OF THE SKY',
+    titleEn: 'XVII · THE LAYERS OF THE SKY',
     subtitleEn: 'Each layer brighter than the last.',
     theme: LevelTheme.heavens,
     bard: 'Ozan der ki: Gök kat kattır; davul vurdukça basamak olur, kanat çırptıkça yol.',
@@ -1990,5 +2035,87 @@ const levels = <LevelDef>[
       'Memory · "Master, who broke the sun?" "Someone who wanted it all to himself, Saye."',
     ],
     map: kMapGok,
+  ),
+  LevelDef(
+    title: 'XIV · ÖTÜKEN ORMANI',
+    subtitle: 'Yeşilin ilk görüldüğü yer; karanlık da ardından geldi.',
+    titleEn: 'XIV · THE FOREST OF ÖTÜKEN',
+    subtitleEn:
+        'Where green is seen for the first time; and the dark came after.',
+    theme: LevelTheme.forest,
+    noWings: true,
+    legends: ['otuken'],
+    bard: 'Ozan der ki: Ötüken\'de ağaç ağaca kök verir; kök tutanı karanlık tutamaz.',
+    bardEn: 'The bard says: in Ötüken, tree lends root to tree; whoever holds a root, the dark cannot hold.',
+    place: 'Ötüken Yış · Kutlu orman',
+    placeEn: 'Ötüken Yış · The sacred forest',
+    cameos: [('kam', 109, 39)],
+    glades: [
+      (20, 26, 60, 40, 0),
+      (70, 26, 100, 40, 1),
+      (188, 18, 218, 33, 2),
+      (299, 26, 329, 40, 0),
+      (400, 18, 413, 39, 2),
+    ],
+    lifeTree: (414, 18, 421, 39),
+    areas: [
+      'Orman Eşiği',
+      'Kam\'ın Korusu',
+      'Ak Geyik',
+      'Kara Bataklık',
+      'Hayat Ağacı',
+    ],
+    areasEn: [
+      'The Forest\'s Edge',
+      'The Shaman\'s Grove',
+      'The White Deer',
+      'The Black Marsh',
+      'The Tree of Life',
+    ],
+    whispers: [
+      'Kökler Sâye\'yi yerin altından yukarı itti. Gözlerini kıstı: ilk kez yeşil gördü. Burası Ötüken; atalar ona kutlu orman derdi.',
+      'Yaprakların arasından ışık düşüyor. Gölgenin içinde bir şey nefes alıyor; sarnıçtan beri peşinde. Karabasan ışığa giremez.',
+      'Rüzgâr dalları oynatınca ışık da yer değiştirir. Ötüken\'in yaprakları önce fısıldar, sonra kıpırdar.',
+      'Korunun içinden bir davul sesi. Altay\'da kamın davulu göğe de yere de yol açar; burada kökleri uyandırıyor.',
+      'Ötüken\'in sarmaşıkları kayınlardan iner. Atalar derdi ki: orman, yolu ona tutunana açar.',
+      'Kökler de kam gibi sırayla konuşur: biri kalkar, öbürü iner.',
+      'Burada hem ışık hem davul. Ötüken kimseyi beklemez.',
+      'Ağaçların arasında ak bir geyik. Hun avcılarını bataklıktan geçiren de böyle bir geyikti derler. Işığa gelir; ateşböceğini izler.',
+      'Geyik aşağıdan yürür, sen yukarıdan bakarsın. Ak Geyik\'e yolu ışık gösterir.',
+      'Ak Geyik karanlığa adım atmaz. Işığı sen taşı.',
+      'Kara Bataklık. Geyik yolu gösterdi ve ışığa karıştı. Arkanda dallar kırılıyor: Karabasan geldi. Koş!',
+      'Hayat Ağacı. Kökleri yerin altına, dalları göğe uzanır; Umay dallarında oturur. Işık dallarına sırayla düşer.',
+      'Tepede güneş yaprakları deliyor. Ustanın perdesindeki gibi: ışığı çeviren, karanlığı kovar.',
+      'Işık gövdeden köklere aktı; Karabasan bir çığlıkla dağıldı. Ağacın kökleri derine, Erlik\'in katına iniyor. Ustanın sesi oradan geliyor.',
+    ],
+    whispersEn: [
+      'The roots pushed Saye up from beneath the earth. He squinted: for the first time he saw green. This is Ötüken; the forefathers called it the sacred forest.',
+      'Light falls between the leaves. Something is breathing inside the shadow; it has followed you since the cistern. The Karabasan cannot enter the light.',
+      'When the wind stirs the branches, the light moves too. The leaves of Ötüken whisper first, then stir.',
+      'A drum sounds deep in the grove. In the Altai the shaman\'s drum opens roads to the sky and beneath the earth; here it wakes the roots.',
+      'The vines of Ötüken hang down from the birches. The forefathers said: the forest opens its road to whoever holds on.',
+      'The roots speak in turn, like the shaman: one rises, the other sinks.',
+      'Here there is both light and drum. Ötüken waits for no one.',
+      'A white deer among the trees. They say a deer like this led the Hun hunters across the marsh. It comes to the light; it follows the fireflies.',
+      'The deer walks below, you watch from above. Light shows the White Deer its way.',
+      'The White Deer will not step into darkness. You carry the light.',
+      'The Black Marsh. The deer showed the way and vanished into the light. Behind you branches are snapping: the Karabasan has come. Run!',
+      'The Tree of Life. Its roots reach beneath the earth, its branches to the sky; Umay sits on its boughs. The light falls on its branches in turn.',
+      'At the top the sun pierces the leaves. As on the master\'s screen: whoever turns the light drives out the dark.',
+      'The light flowed from the trunk down to the roots; the Karabasan scattered with a scream. The tree\'s roots go deep, down to Erlik\'s realm. The master\'s voice is coming from there.',
+    ],
+    memories: [
+      'Hatıra · Ustam bir kayın dalına ak bir çaput bağlamıştı. "Ne diledin?" dedim. "Dilemedim," dedi, "teşekkür ettim."',
+      'Hatıra · Bir gece perdeye bir geyik tasviri koydu. "Geyik yol bilir," dedi. "Ama önüne ışık tutmazsan yürümez."',
+      'Hatıra · Kâbus görüp uyandığımda ustam kandili başucuma koyardı. "Karabasan ışıkta oturamaz," derdi. "Göğsün hafifler, görürsün."',
+      'Hatıra · "Ağacın gölgesi ağaçtan uzun düşer, Sâye," demişti. "Kökü de öyle: görünmez, ama dalı o taşır."',
+    ],
+    memoriesEn: [
+      'Memory · My master had tied a white strip of cloth to a birch branch. "What did you wish for?" I asked. "I did not wish," he said. "I gave thanks."',
+      'Memory · One night he set a deer figure on the screen. "A deer knows the way," he said. "But unless you hold a light before it, it will not walk."',
+      'Memory · When I woke from a nightmare my master would set the lamp beside my head. "The Karabasan cannot sit in the light," he would say. "Your chest will lighten, you\'ll see."',
+      'Memory · "A tree\'s shadow falls longer than the tree, Saye," he had said. "So do its roots: unseen, yet they carry the branches."',
+    ],
+    map: kMapOtuken,
   ),
 ];

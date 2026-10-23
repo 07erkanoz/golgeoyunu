@@ -1196,6 +1196,9 @@ class FireflyLure extends PositionComponent with HasGameReference<GolgeGame> {
   Vector2? pull;
 
   bool get glowing => _t < life - 0.6;
+
+  /// Salındığından beri geçen süre.
+  double get age => _t;
   double get strength =>
       (1 - ((_t - (life - 1.2)) / 1.2).clamp(0.0, 1.0)) *
       (0.85 + 0.15 * math.sin(_t * 13));

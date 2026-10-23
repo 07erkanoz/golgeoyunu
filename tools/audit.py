@@ -38,7 +38,13 @@ LEVELS = [
     ('kMapPalandoken', None, 0), ('kMapCig', None, 0), ('kMapPeri', True, 0),
     ('kMapDerinkuyu', True, 0), ('kMapKonya', True, 0),
     ('kMapErlik', False, 0), ('kMapErgenekon', False, 0), ('kMapGok', True, 0),
+    ('kMapOtuken', False, 0),
 ]
+
+# Ötüken Ormanı: `a` Ak Geyik, `d` geyik kökü (üstüne basılmaz). Geyik
+# ateşböceğiyle köke götürülür: köke varılınca en yakın kapı açılır
+# (geyiğin yürüyüşü benzetilmez, oyun içi sınamayla doğrulanır).
+FOREST = {'kMapOtuken'}
 
 # Göğün katları: `W` Tulpar'dır (kanat değil). Ona varılınca Tulpar'la uçulur;
 # uçuş benzetilmez: Tulpar'ın sağındaki hedefler varılmış sayılır (yaklaşık,
@@ -102,6 +108,7 @@ class Map:
         self.h = len(rows)
         self.w = len(rows[0])
         self.underworld = underworld
+        self.forest = False
         self.jump_k = jump_k
         self.run_k = 1.4 if jump_k > 1 else 1.0          # atın koşusu
         self.wings = (wings or any('W' in r for r in rows)) and not underworld
@@ -207,6 +214,8 @@ class Map:
         if ch == 'H' and (c, r) in self.opened:
             return '.'
         if self.underworld and ch in 'ab':
+            return '.'
+        if self.forest and ch in 'ad':
             return '.'
         return ch
 
@@ -390,9 +399,13 @@ def search(m, start):
             rope = m.cell(c, r) == 'S'
             top = m.cell(c, r - 1) not in '|S'
             ys = (r * T, r * T - 13) if top else (r * T,)
-            for vx in (-RUN, RUN, -300, 300) if rope else (-RUN * m.run_k, RUN * m.run_k):
+            # Kanatsız ormanda ip tek yoldur: oyunun ip fiziğiyle ölçülen
+            # salınım (tools/preview/ip_olcum_test.dart: pompalayıp 0.8
+            # radyanda bırakınca ~380 px/sn ileri, ~560 px/sn yukarı).
+            fast = rope and m.forest
+            for vx in ((-RUN, RUN, -300, 300, -380, 380) if fast else (-RUN, RUN, -300, 300)) if rope else (-RUN * m.run_k, RUN * m.run_k):
                 for glide in (False, True):
-                    vy = -400 if rope else -JUMP * 0.85
+                    vy = (-560 if abs(vx) > 300 else -400) if rope else -JUMP * 0.85
                     for y in ys:
                         res, died = simulate(m, c * T + 9, y, vx, glide, swing=vy)
                         if died:
@@ -487,6 +500,7 @@ def audit(idx):
                 konya=name == 'kMapKonya',
                 underworld=under or name in FLYING,
                 jump_k=HORSE_JUMP if horse else 1.0)
+        m.forest = name in FOREST
         AIR.clear()
         seen, edges, escapes = search(m, start)
         reach = near_cells(seen)
@@ -520,6 +534,10 @@ def audit(idx):
         for c in cells(rows, 'J') if eyes else []:
             if c in reach and all(e in reach for e in eyes) and ('J', c) not in used:
                 new.append((('J', c), nearest_gate(gs, opened_gates, c, right_only=True)))
+        if name in FOREST:
+            for c in cells(rows, 'd'):
+                if c in reach and ('d', c) not in used:
+                    new.append((('d', c), nearest_gate(gs, opened_gates, c)))
         if name == 'kMapGemi':
             # Hayvan kaideleri: ilerleyiş sırasıyla eşleşir; her kaideye
             # varılınca (sandık itilebilir sayılır) en yakın kapı açılır.

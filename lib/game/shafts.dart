@@ -29,6 +29,8 @@ class LightShafts extends Component with HasGameReference<GolgeGame> {
     LevelTheme.cave => (const Color(0xFFFFE2B0), 0.2),
     // Semâhane pencerelerinden kış ayı.
     LevelTheme.konya => (const Color(0xFFC8D8FF), 0.1),
+    // Ötüken: yaprakların arasından sabah güneşi.
+    LevelTheme.forest => (const Color(0xFFF6EBA8), 0.08),
     _ => null,
   };
 

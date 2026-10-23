@@ -122,6 +122,11 @@ class Hints {
   static bool has(String key) => _tr.containsKey(key);
 
   static const _tr = {
+    'glade': 'Işık lekelerinde yürü · gölgede Karabasan bekler · ışık yoksa {firefly} ateşböceği sal',
+    'rootDrum': 'Kam\'ın davulu · her vuruşta bir sıra kök kalkar, öbürü suya iner · ayağının altındaki titreyince atla',
+    'deer': 'Ak Geyik ışığa gelir · {firefly} ateşböceğini önüne sal, peşinden yürür · karanlığa girmez',
+    'deerPlate': 'Geyik kökü · Ak Geyik basınca uyanır, kapı açılır · senin ağırlığın yetmez',
+    'karabasan': 'Karabasan arkanda · durma, koş · {firefly} ateşböceği onu bir an geri iter',
     'fireflyPickup': 'Ateşböceklerine dokun · kavanoza girerler',
     'hide': '{down} Çömel ya da gölgede dur · saklanırsın',
     'guard': '{firefly} Ateşböceği sal · Kandilci ışığa gider',
@@ -197,6 +202,11 @@ class Hints {
   };
 
   static const _en = {
+    'glade': 'Walk in the patches of light · the Karabasan waits in the shadow · no light? Release a firefly: {firefly}',
+    'rootDrum': 'The shaman\'s drum · each beat raises one row of roots and sinks the other · jump when the one beneath you trembles',
+    'deer': 'The White Deer comes to the light · release a firefly ahead of it: {firefly} · it will not enter darkness',
+    'deerPlate': 'A deer root · it wakes under the White Deer\'s hoof and the gate opens · your weight is not enough',
+    'karabasan': 'The Karabasan is behind you · don\'t stop, run · a firefly pushes it back for a moment: {firefly}',
     'fireflyPickup': 'Touch the fireflies · they fly into your jar',
     'hide': '{down} Crouch or stand in shadow · you are hidden',
     'guard': '{firefly} Release a firefly · the Lamplighter follows it',
@@ -280,6 +290,11 @@ class Hints {
       (S.en ? _solutionEn : _solutionTr)[key] ?? '';
 
   static const _relationTr = {
+    'glade': 'Karabasan ışığa giremez; huzme kayınca ya da sönünce gölge de yer değiştirir.',
+    'rootDrum': 'Kökler davulun vuruşuna bağlı: biri kalkarken komşusu iner; inmeden önce titrer.',
+    'deer': 'Ak Geyik en yakın ateşböceğine yürür ama karanlığa adım atmaz.',
+    'karabasan':
+        'Karabasan hızlanır ama ateşböceğinin ışığında bir an geri çekilir.',
     'guard':
         'Kandilci önce sese ve ışığa döner; arkasındaki boşluk o zaman açılır.',
     'watcher':
@@ -295,6 +310,10 @@ class Hints {
   };
 
   static const _relationEn = {
+    'glade': 'The Karabasan cannot enter the light; when a beam shifts or fades, the shadow moves with it.',
+    'rootDrum': 'The roots follow the drum: as one rises its neighbour sinks; it trembles before it sinks.',
+    'deer': 'The White Deer walks to the nearest firefly, but it will not step into darkness.',
+    'karabasan': 'The Karabasan gathers speed, but a firefly\'s light drives it back for a moment.',
     'guard': 'A Lamplighter turns first toward sound and light; that is when the way behind him opens.',
     'watcher': 'The Watcher\'s light sweeps back and forth; it cannot see near and far at once.',
     'bell': 'The bell draws nearby Lamplighters; they look where the sound came from.',
@@ -307,6 +326,10 @@ class Hints {
   };
 
   static const _solutionTr = {
+    'glade': 'Bir huzmenin içinde dur ve izle. Rüzgârlı yerde yapraklar hışırdayınca huzme kayar: onunla birlikte yürü. Sönen huzmeler sırayla söner; titreyeni bırak, yanan komşusuna geç. Gölgede kalırsan ateşböceği sal: ışığı seni korur.',
+    'rootDrum': 'Davulu dinle. Ayağının altındaki kök titreyince bir sonrakine atla; kalkacak kökün uçlarını suyun yüzünde önceden görürsün.',
+    'deer': 'Geyiği yukarıdan yönetiyorsan ateşböceğini kökün hizasına sal. Karanlık yolda ateşböceklerini sırayla sal: biri sönmeden öbürünü ileri at; geyik ışıktan ışığa yürür.',
+    'karabasan': 'Duraksama. Kökün kalkmasını beklerken ateşböceği sal; Karabasan geri çekilir. İplerde en uçta bırak, ileri fırla.',
     'guard': 'Ateşböceğini Kandilci\'nin ardına sal ya da yakındaki çanı çal. Başını çevirince sütunun ardından geç. Görüldüysen aynı sütunda bekleme; bir sonrakine geç.',
     'watcher': 'Işığın uçtan uca gidişini bir kez izle. Işık senden uzağa döndüğü anda koş, sıradaki siperde dur. Ateşböceği salarsan Gözcü ışığını ona çevirir.',
     'bell': 'Çana ateşböceği sal ya da altından koşarak geç. Kandilci sese yürürken sütunun ardında çömel; o geçince öbür yana ilerle.',
@@ -319,6 +342,10 @@ class Hints {
   };
 
   static const _solutionEn = {
+    'glade': 'Stand inside a beam and watch. Where the wind blows, the leaves rustle before the beam shifts: walk along with it. Fading beams go out in turn; leave the trembling one for its lit neighbour. Caught in shadow? Release a firefly: its light protects you.',
+    'rootDrum': 'Listen to the drum. When the root beneath you trembles, jump to the next; you can see the tips of the rising roots on the water beforehand.',
+    'deer': 'Guiding the deer from above? Release the firefly right over the root. On the dark path release fireflies one after another: throw the next before the last fades, and the deer walks from light to light.',
+    'karabasan': 'Do not hesitate. While waiting for a root to rise, release a firefly; the Karabasan draws back. On the vines let go at the far end and fly forward.',
     'guard': 'Release a firefly behind the Lamplighter or ring a nearby bell. When he turns his head, slip past behind the column. If you were seen, do not wait at the same column; move to the next.',
     'watcher': 'Watch the light sweep end to end once. Run the moment it turns away from you and stop at the next cover. A firefly makes the Watcher turn its light to it.',
     'bell': 'Release a firefly at the bell or run beneath it. While the Lamplighter walks to the sound, crouch behind a column; once he has passed, go the other way.',
