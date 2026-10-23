@@ -2204,6 +2204,28 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     }
   }
 
+  /// Kameranın suyu göstermek için indiği pay (yumuşatılmış).
+  double _waterLook = 0;
+
+  /// Sâye'nin altında, ekranın genişliği içinde ve bir ekran boyu yakında
+  /// suyun yüzeyi (yoksa null).
+  double? _waterBelow(Player p, double halfH) {
+    final pc = (p.center.x / kTile).floor();
+    final pr = (p.center.y / kTile).floor();
+    final maxR = math.min(level.height - 1, pr + (halfH * 2 / kTile).ceil());
+    double? top;
+    for (var c = pc - 7; c <= pc + 7; c++) {
+      if (c < 0 || c >= level.width) continue;
+      for (var r = math.max(0, pr); r <= maxR; r++) {
+        if (level.cell(c, r) != 'w') continue;
+        final y = r * kTile.toDouble();
+        if (top == null || y < top) top = y;
+        break;
+      }
+    }
+    return top;
+  }
+
   void _updateCamera(Player p, double dt) {
     final view = camera.viewport.size;
     if (view.x == 0 || view.y == 0) return;
@@ -2249,6 +2271,18 @@ class GolgeGame extends FlameGame with KeyboardEvents {
       _camFloor = y - band * 0.5;
     }
     final target = Vector2(p.center.x + _lookAhead, _camFloor - 20);
+    // Altta su varsa (sarnıç, bataklık, tufan) yüzeyi ekranın altında
+    // görünsün: alçak ekranlarda (telefon) yolun kenarı boşluğa değil suya
+    // açılır. Sâye ekranın üst yarısından çıkmaz.
+    final water = _waterBelow(p, halfH);
+    var wantDown = 0.0;
+    if (water != null) {
+      final need = water + kTile * 1.4 - (target.y + halfH);
+      final room = p.center.y - kTile * 2.5 - (target.y - halfH);
+      wantDown = need.clamp(0.0, math.max(0.0, room));
+    }
+    _waterLook = approach(_waterLook, wantDown, dt, 0.5);
+    target.y += _waterLook;
     if (ski != null) {
       // Kayakta: önündeki yamaca bakar; Sâye ekranın sol üst üçte birinde,
       // gideceği iniş görünür.

@@ -1237,6 +1237,9 @@ class WaterComponent extends Component with HasGameReference<GolgeGame> {
     }
   }
 
+  /// Sarnıç suyunun serin tonu (yeşile çalan koyu mavi).
+  static const _cool = Color(0xF0173236);
+
   final Level level;
   final _surface = <int, double>{};
   final _floor = <int, double>{};
@@ -1341,12 +1344,14 @@ class WaterComponent extends Component with HasGameReference<GolgeGame> {
         top + (_cartoon ? 0.25 + Cartoon.toneStep * 0.1 : 0),
         () => Paint()
           ..shader = ui.Gradient.linear(Offset(0, top), Offset(0, top + 90), [
+            // Sarnıcın suyu taşın sıcak renginden serin bir tonla ayrılır:
+            // küçük ekranda da zeminle karışmaz.
             if (_cartoon)
-              Cartoon.water
+              Color.lerp(Cartoon.water, _cool, 0.6)!
             else if (_bog)
               const Color(0xF0263A22)
             else
-              const Color(0xF0381A10),
+              Color.lerp(const Color(0xF0381A10), _cool, 0.55)!,
             if (_cartoon)
               Cartoon.waterDeep
             else if (_bog)
@@ -1406,14 +1411,29 @@ class WaterComponent extends Component with HasGameReference<GolgeGame> {
                   : _bog
                   ? const Color(0xFF9AB870)
                   : const Color(0xFFC0703A))
-              .withValues(alpha: _cartoon ? 0.5 : 0.25)
-      ..strokeWidth = _cartoon ? 1.5 : 1;
+              .withValues(alpha: _cartoon ? 0.8 : 0.55)
+      ..strokeWidth = 2;
+    // Kenarın altında ince bir ışık ve dalgalanan yüzey: telefonda da
+    // suyun nerede başladığı seçilir, taş zeminle karışmaz.
+    final sheen = Paint()
+      ..color = edge.color.withValues(alpha: _cartoon ? 0.22 : 0.16);
+    edge.style = PaintingStyle.stroke;
+    final runs = <(double, double, double)>[];
     for (final MapEntry(key: c, value: top) in visible) {
-      canvas.drawLine(
-        Offset(c * kTile.toDouble(), top),
-        Offset((c + 1) * kTile.toDouble(), top),
-        edge,
-      );
+      final x0 = c * kTile.toDouble();
+      canvas.drawRect(Rect.fromLTWH(x0, top, kTile.toDouble(), 6), sheen);
+      if (runs.isNotEmpty && runs.last.$3 == top && runs.last.$2 == x0) {
+        runs[runs.length - 1] = (runs.last.$1, x0 + kTile, top);
+      } else {
+        runs.add((x0, x0 + kTile, top));
+      }
+    }
+    for (final (x0, x1, top) in runs) {
+      final wave = Path()..moveTo(x0, top + 1);
+      for (var x = x0 + 4; x <= x1; x += 4) {
+        wave.lineTo(x, top + 1 + math.sin(x * 0.13 + _t * 2.2) * 1.3);
+      }
+      canvas.drawPath(wave, edge);
     }
   }
 }
