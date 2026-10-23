@@ -114,11 +114,16 @@ class PerdePainter {
   /// Göstermelik: Karagöz'de oyundan önce perdeye konan süslü deri levha.
   /// Perdenin ve bölümün adı böyle görünür: koyu levhanın içinde harfler
   /// oyuktur, kandilin ışığı onlardan geçer; kenarı zımbayla delinmiştir;
-  /// altında tutma çubuğu vardır. [k] 0 iken levha perdeden uzaktadır
+  /// Tasviri perdenin ortasını dolduran sahnelerde ([_asideScenes]) levha
+  /// boş göğün bir yanına asılır. [k] 0 iken levha perdeden uzaktadır
   /// (bulanık, iri), 1 iken perdeye dayanmıştır (keskin).
   /// Başlık " · " ile ikiye bölünür: üstte küçük satır, altta büyük ad.
   /// Önizleme araçları için yazı tipi ailesi (oyunda sistemin yazı tipi).
   static String? debugFontFamily;
+
+  /// En son çizilen sahne: göstermelik onun tasvirine göre yer seçer.
+  static PerdeScene? _lastScene;
+  static const _asideScenes = {PerdeScene.mirror};
 
   static void gostermelik(
     Canvas canvas,
@@ -128,6 +133,11 @@ class PerdePainter {
     double k,
   ) {
     if (k <= 0.01) return;
+    // Kandil biraz kısılır: sahne geride kalır, levha öne çıkar.
+    canvas.drawRect(
+      screen,
+      Paint()..color = const Color(0xFF1A0B05).withValues(alpha: 0.42 * k),
+    );
     final parts = title.split(' · ');
     final top = parts.length > 1 ? parts.first : '';
     final main = parts.length > 1 ? parts.sublist(1).join(' · ') : parts.first;
@@ -146,23 +156,31 @@ class PerdePainter {
       textAlign: TextAlign.center,
       textDirection: TextDirection.ltr,
     )..layout(maxWidth: screen.width * 0.8);
-    var mainSize = h * 0.085;
+    var mainSize = h * 0.07;
     var big = cut(main, mainSize, mainSize * 0.18);
     if (big.width > screen.width * 0.45) {
       mainSize *= screen.width * 0.45 / big.width;
       big = cut(main, mainSize, mainSize * 0.18);
     }
-    final small = top.isEmpty ? null : cut(top, h * 0.04, h * 0.015);
-    final pw = math.max(big.width, small?.width ?? 0) + h * 0.16;
-    final ph = big.height + (small?.height ?? 0) + h * 0.15;
+    final small = top.isEmpty ? null : cut(top, h * 0.036, h * 0.014);
+    // Kısa adlarda bile levha dar kalmaz (altındaki tasvirle karışmasın).
+    final aside = _asideScenes.contains(_lastScene);
+    final pw = math.max(
+      math.max(big.width, small?.width ?? 0) + h * 0.16,
+      screen.width * (aside ? 0.26 : 0.42),
+    );
+    final ph = big.height + (small?.height ?? 0) + h * 0.1;
     // Yaklaşırken iri ve bulanık, perdeye dayanınca keskin; çubukta sallanır.
     final grow = 1 + (1 - k) * 0.18;
     final blur = (1 - k) * 9;
     final sway = math.sin(time * 1.1) * 0.012;
     // Perdenin üst kısmında: sahne altta görünür kalır.
     final c = Offset(
-      screen.center.dx,
-      screen.top + h * 0.1 + ph / 2 + math.sin(time * 1.7) * 1.5,
+      aside ? screen.left + screen.width * 0.8 : screen.center.dx,
+      screen.top +
+          h * (aside ? 0.12 : 0.025) +
+          ph / 2 +
+          math.sin(time * 1.7) * 1.5,
     );
     canvas.save();
     canvas.translate(c.dx, c.dy);
@@ -175,15 +193,6 @@ class PerdePainter {
       layerPaint.imageFilter = ui.ImageFilter.blur(sigmaX: blur, sigmaY: blur);
     }
     canvas.saveLayer(plate.inflate(h * 0.3), layerPaint);
-    // Tutma çubuğu.
-    canvas.drawLine(
-      Offset(0, plate.bottom - 4),
-      Offset(h * 0.02, plate.bottom + h * 0.7),
-      Paint()
-        ..color = _ink
-        ..strokeWidth = math.max(2, h * 0.012)
-        ..strokeCap = StrokeCap.round,
-    );
     // Levha: üstü kemerli, kenarları dalgalı deri.
     final arch = h * 0.06;
     final body = Path()
@@ -201,11 +210,20 @@ class PerdePainter {
       ..quadraticBezierTo(plate.right, plate.top, plate.right, plate.top + arch)
       ..lineTo(plate.right, plate.bottom)
       ..close();
+    // Kenarından sızan kandil ışığı: levha arkadaki tasvirden ayrılır.
+    canvas.drawPath(
+      body,
+      Paint()
+        ..color = const Color(0xFFF2B46A).withValues(alpha: 0.55)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = math.max(2, h * 0.008)
+        ..maskFilter = MaskFilter.blur(BlurStyle.normal, h * 0.006),
+    );
     canvas.drawPath(body, Paint()..color = _ink);
     final hole = Paint()..blendMode = BlendMode.clear;
     // Zımba delikleri: kenarı izleyen nokta dizisi ve tepedeki yıldız.
-    final inset = plate.deflate(h * 0.045);
-    final step = h * 0.035;
+    final inset = plate.deflate(h * 0.025);
+    final step = h * 0.03;
     for (var x = inset.left; x <= inset.right; x += step) {
       canvas.drawCircle(Offset(x, inset.top), h * 0.007, hole);
       canvas.drawCircle(Offset(x, inset.bottom), h * 0.007, hole);
@@ -228,7 +246,7 @@ class PerdePainter {
     // İnce oyma çizgi: harflerin çevresinde ışıklı çerçeve.
     canvas.drawRRect(
       RRect.fromRectAndRadius(
-        plate.deflate(h * 0.075),
+        plate.deflate(h * 0.045),
         Radius.circular(h * 0.02),
       ),
       Paint()
@@ -243,7 +261,7 @@ class PerdePainter {
         Color(0xFFFFE2B0),
         Color(0xFFF2B46A),
       ]);
-    var y = plate.top + h * 0.075;
+    var y = plate.top + h * 0.05;
     void glow(TextPainter tp, double at) {
       canvas.saveLayer(null, Paint());
       tp.paint(canvas, Offset(-tp.width / 2, at));
@@ -345,6 +363,7 @@ class PerdePainter {
     canvas.translate(r.left, r.top);
     final k = r.width / _vw;
     canvas.scale(k, r.height / _vh);
+    _lastScene = bridge == null ? scene : null;
     if (bridge != null) {
       // Köprü: Sâye'nin bölümde yürüdüğü yol (Hikâye tiyatrosu).
       _bridgeStage(canvas, bridge, time, progress, bridgeLines);
