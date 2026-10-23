@@ -111,6 +111,160 @@ class PerdePainter {
   static const _ink = Color(0xFF1A0B05);
   static const _hole = kWarmLight;
 
+  /// Göstermelik: Karagöz'de oyundan önce perdeye konan süslü deri levha.
+  /// Perdenin ve bölümün adı böyle görünür: koyu levhanın içinde harfler
+  /// oyuktur, kandilin ışığı onlardan geçer; kenarı zımbayla delinmiştir;
+  /// altında tutma çubuğu vardır. [k] 0 iken levha perdeden uzaktadır
+  /// (bulanık, iri), 1 iken perdeye dayanmıştır (keskin).
+  /// Başlık " · " ile ikiye bölünür: üstte küçük satır, altta büyük ad.
+  /// Önizleme araçları için yazı tipi ailesi (oyunda sistemin yazı tipi).
+  static String? debugFontFamily;
+
+  static void gostermelik(
+    Canvas canvas,
+    Rect screen,
+    String title,
+    double time,
+    double k,
+  ) {
+    if (k <= 0.01) return;
+    final parts = title.split(' · ');
+    final top = parts.length > 1 ? parts.first : '';
+    final main = parts.length > 1 ? parts.sublist(1).join(' · ') : parts.first;
+    final h = screen.height;
+    TextPainter cut(String t, double size, double spacing) => TextPainter(
+      text: TextSpan(
+        text: t,
+        style: TextStyle(
+          color: const Color(0xFF000000),
+          fontFamily: debugFontFamily,
+          fontSize: size,
+          fontWeight: FontWeight.w900,
+          letterSpacing: spacing,
+        ),
+      ),
+      textAlign: TextAlign.center,
+      textDirection: TextDirection.ltr,
+    )..layout(maxWidth: screen.width * 0.8);
+    var mainSize = h * 0.085;
+    var big = cut(main, mainSize, mainSize * 0.18);
+    if (big.width > screen.width * 0.45) {
+      mainSize *= screen.width * 0.45 / big.width;
+      big = cut(main, mainSize, mainSize * 0.18);
+    }
+    final small = top.isEmpty ? null : cut(top, h * 0.04, h * 0.015);
+    final pw = math.max(big.width, small?.width ?? 0) + h * 0.16;
+    final ph = big.height + (small?.height ?? 0) + h * 0.15;
+    // Yaklaşırken iri ve bulanık, perdeye dayanınca keskin; çubukta sallanır.
+    final grow = 1 + (1 - k) * 0.18;
+    final blur = (1 - k) * 9;
+    final sway = math.sin(time * 1.1) * 0.012;
+    // Perdenin üst kısmında: sahne altta görünür kalır.
+    final c = Offset(
+      screen.center.dx,
+      screen.top + h * 0.1 + ph / 2 + math.sin(time * 1.7) * 1.5,
+    );
+    canvas.save();
+    canvas.translate(c.dx, c.dy);
+    canvas.rotate(sway);
+    canvas.scale(grow);
+    final plate = Rect.fromCenter(center: Offset.zero, width: pw, height: ph);
+    final layerPaint = Paint()
+      ..color = Color.fromRGBO(0, 0, 0, (0.15 + 0.85 * k).clamp(0.0, 1.0));
+    if (blur > 0.3) {
+      layerPaint.imageFilter = ui.ImageFilter.blur(sigmaX: blur, sigmaY: blur);
+    }
+    canvas.saveLayer(plate.inflate(h * 0.3), layerPaint);
+    // Tutma çubuğu.
+    canvas.drawLine(
+      Offset(0, plate.bottom - 4),
+      Offset(h * 0.02, plate.bottom + h * 0.7),
+      Paint()
+        ..color = _ink
+        ..strokeWidth = math.max(2, h * 0.012)
+        ..strokeCap = StrokeCap.round,
+    );
+    // Levha: üstü kemerli, kenarları dalgalı deri.
+    final arch = h * 0.06;
+    final body = Path()
+      ..moveTo(plate.left, plate.bottom)
+      ..lineTo(plate.left, plate.top + arch)
+      ..quadraticBezierTo(
+        plate.left,
+        plate.top,
+        plate.left + arch * 2,
+        plate.top,
+      )
+      ..lineTo(-arch * 1.6, plate.top)
+      ..quadraticBezierTo(0, plate.top - arch * 1.4, arch * 1.6, plate.top)
+      ..lineTo(plate.right - arch * 2, plate.top)
+      ..quadraticBezierTo(plate.right, plate.top, plate.right, plate.top + arch)
+      ..lineTo(plate.right, plate.bottom)
+      ..close();
+    canvas.drawPath(body, Paint()..color = _ink);
+    final hole = Paint()..blendMode = BlendMode.clear;
+    // Zımba delikleri: kenarı izleyen nokta dizisi ve tepedeki yıldız.
+    final inset = plate.deflate(h * 0.045);
+    final step = h * 0.035;
+    for (var x = inset.left; x <= inset.right; x += step) {
+      canvas.drawCircle(Offset(x, inset.top), h * 0.007, hole);
+      canvas.drawCircle(Offset(x, inset.bottom), h * 0.007, hole);
+    }
+    for (var y = inset.top + step; y < inset.bottom; y += step) {
+      canvas.drawCircle(Offset(inset.left, y), h * 0.007, hole);
+      canvas.drawCircle(Offset(inset.right, y), h * 0.007, hole);
+    }
+    final star = Path();
+    for (var i = 0; i < 16; i++) {
+      final r = i.isEven ? arch * 0.55 : arch * 0.22;
+      final a = i * math.pi / 8;
+      final p = Offset(
+        math.cos(a) * r,
+        plate.top - arch * 0.35 + math.sin(a) * r,
+      );
+      i == 0 ? star.moveTo(p.dx, p.dy) : star.lineTo(p.dx, p.dy);
+    }
+    canvas.drawPath(star..close(), hole);
+    // İnce oyma çizgi: harflerin çevresinde ışıklı çerçeve.
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        plate.deflate(h * 0.075),
+        Radius.circular(h * 0.02),
+      ),
+      Paint()
+        ..blendMode = BlendMode.clear
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = math.max(1, h * 0.004),
+    );
+    // Oyuk harfler: içlerinden kandilin sıcak ışığı geçer (arkadaki sahne
+    // harflerin içine girmez, ad okunur).
+    final light = Paint()
+      ..shader = ui.Gradient.radial(Offset.zero, plate.width * 0.6, const [
+        Color(0xFFFFE2B0),
+        Color(0xFFF2B46A),
+      ]);
+    var y = plate.top + h * 0.075;
+    void glow(TextPainter tp, double at) {
+      canvas.saveLayer(null, Paint());
+      tp.paint(canvas, Offset(-tp.width / 2, at));
+      canvas.drawRect(
+        plate,
+        Paint()
+          ..shader = light.shader
+          ..blendMode = BlendMode.srcIn,
+      );
+      canvas.restore();
+    }
+
+    if (small != null) {
+      glow(small, y);
+      y += small.height + h * 0.005;
+    }
+    glow(big, y);
+    canvas.restore();
+    canvas.restore();
+  }
+
   /// Perdenin ekrandaki yeri (yazı altında kalır).
   static Rect screenRect(Size size) {
     final sw = math.min(size.width * 0.78, size.height * 1.35);

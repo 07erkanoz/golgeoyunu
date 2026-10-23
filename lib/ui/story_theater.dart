@@ -269,22 +269,8 @@ class _TheaterPainter extends CustomPainter {
       // Perdenin adı.
       final a =
           math.min(1.0, s._card / 0.4) * math.min(1.0, (1.6 - s._card) / 0.4);
-      // Perdenin önüne ışık iner: ad, sahnedeki tasvirlerin (ayna, kule)
-      // altında kalmadan okunur.
-      canvas.drawRect(
-        r,
-        Paint()..color = const Color(0xFFE6A15A).withValues(alpha: 0.82 * a),
-      );
-      _write(
-        canvas,
-        S.upper(title),
-        r.center.translate(0, -r.height * 0.18),
-        r.height * 0.08,
-        a,
-        spacing: 8,
-        maxWidth: r.width,
-        color: const Color(0xFF1A0B05),
-      );
+      // Bölümün adı perdeye bir göstermelik olarak konur.
+      PerdePainter.gostermelik(canvas, r, S.upper(title), s._sceneT, a);
       return;
     }
     final line = lines[s._line];
@@ -298,20 +284,7 @@ class _TheaterPainter extends CustomPainter {
         : 1.0;
     final isEnd = line == line.toUpperCase();
     if (isEnd) {
-      canvas.drawRect(
-        r,
-        Paint()..color = const Color(0xFFE6A15A).withValues(alpha: 0.78 * a),
-      );
-      _write(
-        canvas,
-        line,
-        r.center.translate(0, -r.height * 0.18),
-        r.height * 0.1,
-        a,
-        spacing: 10,
-        maxWidth: r.width,
-        color: const Color(0xFF1A0B05),
-      );
+      PerdePainter.gostermelik(canvas, r, line, s._sceneT, a);
     } else {
       _write(
         canvas,

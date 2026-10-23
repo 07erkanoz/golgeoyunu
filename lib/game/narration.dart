@@ -508,23 +508,8 @@ class Narration extends Component with HasGameReference<GolgeGame> {
         );
         final r = PerdePainter.screenRect(Size(w, h));
         if (isEnd) {
-          // Başlık perdedeki tasvirlerin (ayna, kule) altında kalmasın.
-          canvas.drawRect(
-            r,
-            Paint()
-              ..color = const Color(0xFFE6A15A).withValues(alpha: 0.78 * a),
-          );
-          _text(
-            canvas,
-            line,
-            r.center.translate(0, -r.height * 0.18),
-            r.height * 0.1,
-            a,
-            spacing: 10,
-            maxWidth: r.width,
-            color: const Color(0xFF1A0B05),
-            shadow: false,
-          );
+          // Perdenin adı perdeye bir göstermelik olarak konur.
+          PerdePainter.gostermelik(canvas, r, line, _sceneT, a);
         } else {
           _text(
             canvas,
