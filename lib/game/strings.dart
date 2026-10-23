@@ -186,8 +186,9 @@ class S {
     'aboutGame': 'Gölge Oyunu, hayal perdesinin ardında geçen bir yolculuk: bir kandil, bir gölge ve Anadolu\'nun gün yüzüne çıkmayı bekleyen efsaneleri.',
     'aboutRole': 'Tasarım ve geliştirme',
     'aboutDev':
-        'Erkan Öz avukat ve arabulucudur. Gündüzleri insanların hikâyelerini dinler, geceleri onları anlatacak araçlar yapar. '
-        'Gölge Oyunu, çocukluğundaki Karagöz perdesine ve Anadolu\'nun yarım bırakılmış efsanelerine bir selamdır: bir gölgenin, bir kandilin ve uzun bir yolun hikâyesi.',
+        'Bu oyun, çocukken izlenen bir Karagöz perdesinin hatırasından doğdu. Kandil yandı, gölgeler konuştu; perde kapandığında bile hikâye sürdü. '
+        'Gölge Oyunu, o perdeye ve Anadolu\'nun yarım kalmış efsanelerine bir selam: bir gölgenin, bir kandilin ve uzun bir yolun hikâyesi. '
+        'Her bölümü önce çocuklar oynadı; oyun onların sorularıyla büyüdü.',
     'aboutSite': 'Kişisel sayfa',
     'aboutGamePage': 'Oyunun sayfası · LifeOS ailesinin bir parçası',
     'aboutMusic': 'Müzik ve sesler',
@@ -374,8 +375,9 @@ class S {
     'aboutGame': 'Shadow Play is a journey behind the shadow-play screen: a lamp, a shadow, and the legends of Anatolia waiting to come to light.',
     'aboutRole': 'Design and development',
     'aboutDev':
-        'Erkan Öz is a lawyer and mediator. By day he listens to people\'s stories; by night he builds tools to tell them. '
-        'Shadow Play is a greeting to the Karagöz screen of his childhood and to the half-told legends of Anatolia: the story of a shadow, a lamp, and a long road.',
+        'This game was born from the memory of a Karagöz screen watched as a child. The lamp was lit, the shadows spoke; even when the screen went dark, the story went on. '
+        'Shadow Play is a greeting to that screen and to Anatolia\'s unfinished legends: the story of a shadow, a lamp and a long road. '
+        'Children played every chapter first; the game grew with their questions.',
     'aboutSite': 'Personal site',
     'aboutGamePage': 'The game\'s page · part of the LifeOS family',
     'aboutMusic': 'Music and sound',
