@@ -809,6 +809,7 @@ class _AboutBody extends StatelessWidget {
             _credit(S.of('creditMusic'), S.of('creditMusicText')),
             _credit(S.of('creditSounds'), S.of('creditSoundsText')),
             _credit(S.of('creditArt'), S.of('creditArtText')),
+            _credit(S.of('creditThanks'), S.of('creditThanksText')),
             SizedBox(height: 24 * k),
             Wrap(
               alignment: WrapAlignment.center,
