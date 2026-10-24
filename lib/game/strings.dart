@@ -146,7 +146,7 @@ class S {
     'hayali': 'Hayalî',
     'hayaliRole': 'tasarım · hikâye · yazılım',
     'creditMusic': 'Müzik',
-    'creditMusicText': 'Menü müziği: "Turkish Maqam Soundscape", vjgalaxy (Pixabay İçerik Lisansı)',
+    'creditMusicText': 'Menü müziği: "Turkish Maqam Soundscape", vjgalaxy; girişteki kibrit: "Strike a match", spinopel (Pixabay İçerik Lisansı)',
     'creditSounds': 'Sesler',
     'creditSoundsText': 'Kenney, OpenGameArt ve Wikimedia Commons\'taki kamu malı kayıtlar (CC0); orman sesleri Spring Spring ve Oona Räisänen. Öbür sesler bu oyun için sentezlendi.',
     'creditThanks': 'Teşekkürler',
@@ -223,7 +223,8 @@ class S {
     'artLicense': 'Peri bacası silueti: "Cappadocia Fairy chimneys", Nevit Dilmen, Wikimedia Commons, CC BY-SA 3.0. Oyundaki uyarlaması da CC BY-SA 3.0.',
     'musicLicense':
         'Menü müziği: "Turkish Maqam Soundscape", vjgalaxy (Pixabay). '
-        'Pixabay İçerik Lisansı ile kullanılmaktadır.\n'
+        'Girişteki kibrit sesi: "Strike a match", spinopel (Pixabay). '
+        'İkisi de Pixabay İçerik Lisansı ile kullanılmaktadır.\n'
         'Efektler ve ortam sesleri: Kenney, OpenGameArt ve Wikimedia Commons\'taki kamu malı (CC0) kayıtlar. '
         'Efsane varlıklarının siluetleri PhyloPic\'teki kamu malı çizimlerden uyarlanmıştır. '
         'Nemrut heykel başları Wikimedia Commons\'taki Dosseman, Bernard Gagnon, Carole Raddato ve Vincent Vega fotoğraflarından yeniden çizilmiştir (CC BY-SA 4.0). '
@@ -359,7 +360,7 @@ class S {
     'hayali': 'Hayali · the puppeteer',
     'hayaliRole': 'design · story · code',
     'creditMusic': 'Music',
-    'creditMusicText': 'Menu music: "Turkish Maqam Soundscape" by vjgalaxy (Pixabay Content License)',
+    'creditMusicText': 'Menu music: "Turkish Maqam Soundscape" by vjgalaxy; the match in the opening: "Strike a match" by spinopel (Pixabay Content License)',
     'creditSounds': 'Sound',
     'creditSoundsText': 'Public-domain recordings (CC0) from Kenney, OpenGameArt and Wikimedia Commons; forest sounds by Spring Spring and Oona Räisänen. Other sounds were synthesized for this game.',
     'creditThanks': 'Thanks',
@@ -436,8 +437,9 @@ class S {
     'aboutArt': 'Art sources',
     'artLicense': 'Fairy chimney silhouette: "Cappadocia Fairy chimneys" by Nevit Dilmen, Wikimedia Commons, CC BY-SA 3.0. The in-game adaptation is CC BY-SA 3.0 as well.',
     'musicLicense':
-        'Menu music: "Turkish Maqam Soundscape" by vjgalaxy (Pixabay), '
-        'used under the Pixabay Content License.\n'
+        'Menu music: "Turkish Maqam Soundscape" by vjgalaxy (Pixabay); '
+        'the match in the opening: "Strike a match" by spinopel (Pixabay); '
+        'both used under the Pixabay Content License.\n'
         'Effects and ambiences: public-domain (CC0) recordings from Kenney, OpenGameArt and Wikimedia Commons. '
         'The silhouettes of the legendary beings are adapted from public-domain drawings on PhyloPic. '
         'The Nemrut statue heads are redrawn from photos by Dosseman, Bernard Gagnon, Carole Raddato and Vincent Vega on Wikimedia Commons (CC BY-SA 4.0). '
