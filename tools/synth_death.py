@@ -6,6 +6,7 @@
               (melodi gibi tıngırdamaz), kandil boğuk bir "puf"la söner.
 
   python3 tools/synth_death.py assets/audio
+  python3 tools/sesleri_sikistir.py   # death.wav → assets_src, death.ogg
 """
 import math
 import os

@@ -82,18 +82,22 @@ class GameAudio {
   ];
 
   /// Uzun döngüler diskten akar (belleği şişirmesin); kısa efektler bellekte.
+  /// Uzun efektler Ogg Vorbis (asılları assets_src/audio; bkz.
+  /// tools/sesleri_sikistir.py). Kısa efektler WAV.
+  static const _ogg = {'thunder', 'howl', 'sting', 'memory', 'death', 'gust'};
+
   static const _streamed = [
-    'amb_cistern.wav',
-    'amb_wind.wav',
-    'amb_sky.wav',
-    'amb_snow.wav',
-    'amb_ark.wav',
-    'amb_konya.wav',
-    'amb_cave.wav',
-    'amb_forest.wav',
-    'karabasan.wav',
-    'heartbeat.wav',
-    'murmur.wav',
+    'amb_cistern.ogg',
+    'amb_wind.ogg',
+    'amb_sky.ogg',
+    'amb_snow.ogg',
+    'amb_ark.ogg',
+    'amb_konya.ogg',
+    'amb_cave.ogg',
+    'amb_forest.ogg',
+    'karabasan.ogg',
+    'heartbeat.ogg',
+    'murmur.ogg',
   ];
 
   /// Tekdüze olmasın diye birden çok varyasyonu olan sesler.
@@ -484,10 +488,10 @@ class GameAudio {
 
     // Önce menü müziği ve perde: açılışta hemen duyulsun.
     await load('menu_theme.mp3', LoadMode.disk);
-    await load('perde_ney.wav', LoadMode.disk);
+    await load('perde_ney.ogg', LoadMode.disk);
     _updateBed();
     for (final e in _effects) {
-      await load('$e.wav', LoadMode.memory);
+      await load(_ogg.contains(e) ? '$e.ogg' : '$e.wav', LoadMode.memory);
     }
     for (final f in _streamed) {
       await load(f, LoadMode.disk);

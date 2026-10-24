@@ -105,9 +105,6 @@ flutter:
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
 
-# Ses motoru (flutter_soloud): yalnızca WAV ve MP3 kullanılır; Ogg/Opus/FLAC
-# kitaplıkları gerekmez (derlemede ek indirme yapılmaz, uygulama küçülür).
-hooks:
-  user_defines:
-    flutter_soloud:
-      no_xiph_libs: true
+# Ses motoru (flutter_soloud): WAV, MP3 ve Ogg Vorbis. Uzun ortam sesleri
+# ve efektler Ogg (27 MB → 3 MB; asılları assets_src/audio, bkz.
+# tools/sesleri_sikistir.py); bunun için Xiph (Ogg/Vorbis) kitaplıkları açık.
