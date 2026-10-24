@@ -351,6 +351,8 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
       // Görünen ışık kavanozun çizildiği yerden çıkar (sallanırken de).
       final (_, radius) = p.light;
       _occluded(canvas, p.lightVisual.toOffset(), radius);
+      // Yol gösteren gölge karanlıkta da seçilsin.
+      if (p.shadowGuiding) _light(canvas, p.guideGlow.toOffset(), 80, 0.6);
     }
     canvas.restore();
   }

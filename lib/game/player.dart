@@ -183,12 +183,14 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       for (final lever in game.world.children.whereType<Lever>()) {
         if (!lever.pulled && lever.near(center)) {
           lever.pull();
+          game.guide.markUsed(lever);
           _prevUp = true;
         }
       }
       for (final u in game.world.children.whereType<Usable>().toList()) {
         if (u.canUse(center)) {
           u.use();
+          game.guide.markUsed(u);
           _prevUp = true;
           break;
         }
@@ -1401,6 +1403,87 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     _shadowFade = 1;
   }
 
+  // ------------------------------------------------- yol gösteren gölge
+  // Takılan oyuncuya gölge sıradaki adımı gösterir (guide.dart): Sâye'den
+  // ayrılır, o yere yürür (gerekirse duvarda yukarı süzülür), orada iki kez
+  // zıplar, sonra hızla döner.
+
+  Vector2 _guideTo = Vector2.zero();
+  int _guidePhase = 0; // 0 gider, 1 gösterir, 2 döner
+
+  /// Gölge yol gösteriyor mu.
+  bool get shadowGuiding => _mood == _ShadowMood.guide;
+
+  /// Yol gösteren gölgenin göğsü (dünya): karanlıkta ışık katmanı için.
+  Vector2 get guideGlow => Vector2(_shadowX, _shadowY - h * 1.2);
+
+  /// Gölgeyi [stand] noktasına (ayak) gönderir; gölge serbest değilse false.
+  bool guideShadow(Vector2 stand) {
+    if (isDead || (_mood != _ShadowMood.follow && _mood != _ShadowMood.lag)) {
+      return false;
+    }
+    _mood = _ShadowMood.guide;
+    _moodT = 0;
+    _guidePhase = 0;
+    _guideTo = stand.clone();
+    _shadowX = center.x - facing * 16;
+    _shadowY = position.y + h;
+    _shadowFacing = stand.x >= center.x ? 1 : -1;
+    _shadowFade = 1;
+    return true;
+  }
+
+  /// Gölgenin zıplayışı (gösterirken): ayak noktasının yukarı kalkışı.
+  double _guideHop = 0;
+
+  void _updateGuide(double dt) {
+    switch (_guidePhase) {
+      case 0:
+        // Yürür; hedef yukarıdaysa duvarda süzülerek çıkar.
+        final d = _guideTo - Vector2(_shadowX, _shadowY);
+        final dist = d.length;
+        final step = 150 * dt;
+        if (dist <= step || _moodT > 9) {
+          _shadowX = _guideTo.x;
+          _shadowY = _guideTo.y;
+          _guidePhase = 1;
+          _moodT = 0;
+          game.focus(_guideTo - Vector2(0, h), hold: 2.2);
+        } else {
+          _shadowX += d.x / dist * step;
+          _shadowY += d.y / dist * step;
+          if (d.x.abs() > 2) _shadowFacing = d.x > 0 ? 1 : -1;
+          _shadowGait += step / 30;
+        }
+      case 1:
+        // Gösterir: iki kez zıplar ("burası"), sonra Sâye'ye döner.
+        final t = _moodT;
+        final hop = t < 1.6 ? (t % 0.8) / 0.8 : 0.0;
+        _guideHop = math.sin(hop * math.pi) * 22;
+        _shadowFacing = center.x >= _shadowX ? 1 : -1;
+        if (t > 2.2) {
+          _guideHop = 0;
+          _guidePhase = 2;
+          _moodT = 0;
+        }
+      default:
+        final tx = center.x - facing * 20;
+        final ty = position.y + h;
+        final d = Vector2(tx - _shadowX, ty - _shadowY);
+        final dist = d.length;
+        final step = 320 * dt;
+        if (dist <= step || _moodT > 6) {
+          _mood = _ShadowMood.follow;
+          _moodT = 0;
+        } else {
+          _shadowX += d.x / dist * step;
+          _shadowY += d.y / dist * step;
+          _shadowFacing = d.x >= 0 ? 1 : -1;
+          _shadowGait += step / 30;
+        }
+    }
+  }
+
   /// Kandilci gölgeyi gördü: gölge yürümeyi sürdürür (Kandilciyi peşinden
   /// yoldan çeker), durduğu yerde daha uzun oyalanır.
   bool _sentSeen = false;
@@ -1590,6 +1673,8 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
         if (_moodT > 4.5) _mood = _ShadowMood.follow;
       case _ShadowMood.sent:
         _updateSent(dt);
+      case _ShadowMood.guide:
+        _updateGuide(dt);
       case _ShadowMood.shy:
         _updateShy(dt);
       case _ShadowMood.astray:
@@ -1618,7 +1703,10 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
   void _wallShadow(Canvas canvas, {bool plain = false}) {
     final mood = _mood;
     // Duvara düşen gölge kapalı mekânlarda; gönderilen gölge her yerde.
-    if (!jarStyle || (!level.def.theme.indoor && mood != _ShadowMood.sent)) {
+    if (!jarStyle ||
+        (!level.def.theme.indoor &&
+            mood != _ShadowMood.sent &&
+            mood != _ShadowMood.guide)) {
       return;
     }
     // Saklanırken gölge yok; ama korku anında gölge kendi başına kalabilir.
@@ -1657,12 +1745,19 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
         dirFacing = _shadowFacing;
         walking = _sentPhase != 1;
         alpha *= 1.7;
+      case _ShadowMood.guide:
+        // Yol gösteren gölge: seçik; gösterirken zıplar.
+        foot = Offset(_shadowX - position.x, _shadowY - position.y - _guideHop);
+        dirFacing = _shadowFacing;
+        walking = _guidePhase != 1;
+        alpha *= 1.9;
     }
     // Gölgenin kendi duruşu: ayrıldığında yürür, Sâye dursa bile.
     final saved = (facing, velocity.x, _gait, onGround, state);
     if (mood == _ShadowMood.astray ||
         mood == _ShadowMood.sent ||
-        mood == _ShadowMood.shy) {
+        mood == _ShadowMood.shy ||
+        mood == _ShadowMood.guide) {
       facing = dirFacing;
       state = PlayerState.normal;
       onGround = true;
@@ -1681,15 +1776,17 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     );
     // Gönderilen gölge seçik ve Sâye boyuna yakın: Kandilci de oyuncu da
     // onu bir çocuk sanmalı.
-    final sent = mood == _ShadowMood.sent || mood == _ShadowMood.shy;
+    final sent =
+        mood == _ShadowMood.sent ||
+        mood == _ShadowMood.shy ||
+        mood == _ShadowMood.guide;
     // Bulanıklık filtresi yok: her karede ara katmanı bulanıklaştırmak
     // telefonda (Skia) sürekli yüktü. Yumuşaklık ucuz yoldan: önce biraz
     // büyütülmüş, yarı saydam bir kopya (kenarda yarı gölge), üstüne asıl
     // siluet; sonra gölge yukarı doğru söner (ışık aşağıda).
     canvas.saveLayer(
       bounds,
-      Paint()
-        ..color = Color.fromRGBO(0, 0, 0, (alpha * 1.7).clamp(0.0, 0.85)),
+      Paint()..color = Color.fromRGBO(0, 0, 0, (alpha * 1.7).clamp(0.0, 0.85)),
     );
     void figure(double grow) {
       canvas.save();
@@ -1706,6 +1803,19 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       canvas.restore();
     }
 
+    // Yol gösteren gölge karanlıkta da seçilsin: kenarında ılık bir hâle
+    // (biraz büyük, ışık renginde bir kopya; üstüne koyu siluet).
+    if (mood == _ShadowMood.guide) {
+      final pulse = 0.75 + 0.25 * math.sin(_moodT * 5);
+      _fill.color = kWarmLight.withValues(alpha: pulse);
+      _limb.color = _fill.color;
+      canvas.save();
+      canvas.translate(0, 1.5);
+      figure(0.16);
+      canvas.restore();
+      _fill.color = const Color(0xFF000000);
+      _limb.color = _fill.color;
+    }
     if (!sent && !plain) {
       _fill.color = const Color(0x50000000);
       _limb.color = _fill.color;
@@ -1783,7 +1893,9 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     if (!ski && !isDead && !riding) {
       if (!Settings.lowGraphics) {
         _drawShadows(canvas);
-      } else if (_mood == _ShadowMood.sent || _mood == _ShadowMood.shy) {
+      } else if (_mood == _ShadowMood.sent ||
+          _mood == _ShadowMood.shy ||
+          _mood == _ShadowMood.guide) {
         // Düşük grafikte süs gölgeleri yok; ama gönderilen gölge oynanışın
         // parçası (utangaç gölge de bir sır): bulanıklıksız düz siluet.
         _wallShadow(canvas, plain: true);
@@ -2620,4 +2732,4 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
   }
 }
 
-enum _ShadowMood { follow, lag, astray, sent, shy }
+enum _ShadowMood { follow, lag, astray, sent, shy, guide }

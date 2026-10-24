@@ -17,6 +17,7 @@ import 'entrance.dart';
 import 'feedback.dart';
 import 'shadow_decoy.dart';
 import 'golgehane.dart';
+import 'guide.dart';
 import 'surprises.dart';
 import 'vistas.dart';
 import 'creatures.dart';
@@ -128,6 +129,9 @@ class GolgeGame extends FlameGame with KeyboardEvents {
 
   /// Cihaz zorlanırsa ağır görselleri kendiliğinden kapatır.
   final frameMeter = FrameMeter();
+
+  /// Takılan oyuncuya yol gösterme (kamera, sonra gölge): guide.dart.
+  late final guide = Guide(this);
 
   /// Masaüstünde kare sınırı (bkz. [FramePacer]).
   late final FramePacer pacer = FramePacer(this);
@@ -1617,6 +1621,8 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     if (_transitioning) return;
     _transitioning = true;
     _hintStep();
+    final dead = player;
+    if (dead != null) guide.onDeath(dead.center);
     GameAudio.instance.silenceLoops();
     void respawn() {
       _buildLevel(levelIndex, respawn: true);
@@ -1897,6 +1903,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
       _updateBard(dt);
       _updateTreeTales(p, dt);
       _updateSurprises(p);
+      guide.update(dt);
     } else {
       threat = math.max(0, threat - dt * 2);
       hideAmount = math.max(0, hideAmount - dt * 2);
