@@ -3,6 +3,7 @@ import 'dart:ui';
 
 import 'package:flame/components.dart';
 
+import '../settings.dart';
 import 'audio.dart';
 import 'golge_game.dart';
 import 'level.dart';
@@ -644,13 +645,18 @@ class Avalanche extends PositionComponent with HasGameReference<GolgeGame> {
         const Rect.fromLTRB(-1100, -240, -60, 500),
         const Radius.circular(140),
       ),
-      back..maskFilter = const MaskFilter.blur(BlurStyle.normal, 24),
+      // Düşük grafikte bulanıklık yok (degrade yine yumuşatır).
+      Settings.lowGraphics
+          ? back
+          : (back..maskFilter = const MaskFilter.blur(BlurStyle.normal, 24)),
     );
     for (var layer = 0; layer < 3; layer++) {
       final col = Color.lerp(lt.snowLit, lt.snowShade, 0.5 - layer * 0.22)!;
       final paint = Paint()
-        ..color = col.withValues(alpha: (0.55 + layer * 0.15) * a)
-        ..maskFilter = MaskFilter.blur(BlurStyle.normal, 10.0 - layer * 3);
+        ..color = col.withValues(alpha: (0.55 + layer * 0.15) * a);
+      if (!Settings.lowGraphics) {
+        paint.maskFilter = MaskFilter.blur(BlurStyle.normal, 10.0 - layer * 3);
+      }
       for (var i = 0; i < 9; i++) {
         final k = i / 8;
         // Önden geriye: öndekiler küçük ve alçak, ortadakiler en yüksek.

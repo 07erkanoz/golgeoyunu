@@ -180,8 +180,10 @@ extension _SkiBackdrop on Backdrop {
       final ch = (far ? 26 : 34) + rnd.nextDouble() * 18;
       final a = (storm ? 0.55 : 0.3) * (1 - lt.night * 0.55);
       final lit = Color.lerp(lt.sun, const Color(0xFFFFFFFF), 0.45)!;
-      final paint = Paint()
-        ..maskFilter = MaskFilter.blur(BlurStyle.normal, ch * 0.45);
+      final paint = Paint();
+      if (!Settings.lowGraphics) {
+        paint.maskFilter = MaskFilter.blur(BlurStyle.normal, ch * 0.45);
+      }
       // Gövde ve ışık alan üst kenar.
       paint.color = Color.lerp(lt.skyMid, lt.skyLow, 0.4)!.withValues(alpha: a);
       canvas.drawOval(

@@ -13,6 +13,7 @@ import 'palette.dart';
 import 'perde.dart';
 import 'player.dart';
 import 'puzzles.dart' show Usable;
+import '../settings.dart';
 import 'strings.dart';
 
 // ================================================ S2a · Unutulmuş Gölgehane
@@ -105,8 +106,18 @@ class GolgehaneKapi extends PositionComponent with HasGameReference<GolgeGame> {
     }
   }
 
+  /// Çizdiği her şeyin sınırı (yerel): maske sağa, yansıma aşağı taşar.
+  Rect get _drawn =>
+      Rect.fromLTWH(-8, 0, size.x + 16 * kTile + 8, 3 * kTile + 66);
+
   @override
   void render(Canvas canvas) {
+    // Ekran dışındayken hiç çizilmez.
+    if (!game.camera.visibleWorldRect.overlaps(
+      _drawn.shift(position.toOffset()),
+    )) {
+      return;
+    }
     _drawReflection(canvas);
     if (open < 1) {
       _drawMask(canvas);
@@ -206,16 +217,31 @@ class GolgehaneKapi extends PositionComponent with HasGameReference<GolgeGame> {
       4 * kTile.toDouble(),
     );
     canvas.drawRect(r, Paint()..color = stone.withValues(alpha: a));
-    final joint = Paint()
-      ..color = deep.withValues(alpha: 0.7 * a)
-      ..strokeWidth = 1;
+    canvas.drawPath(
+      _joints ??= _jointsFor(r),
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..color = deep.withValues(alpha: 0.7 * a)
+        ..strokeWidth = 1,
+    );
+  }
+
+  /// Boyalı taş derzleri: bir kez kurulan tek yol.
+  Path? _joints;
+  static Path _jointsFor(Rect r) {
+    final path = Path();
     for (var row = 0; row < 8; row++) {
       final y = r.top + row * 16.0;
-      canvas.drawLine(Offset(r.left, y), Offset(r.right, y), joint);
+      path
+        ..moveTo(r.left, y)
+        ..lineTo(r.right, y);
       for (var x = r.left + (row.isEven ? 0 : 16); x < r.right; x += 32) {
-        canvas.drawLine(Offset(x, y), Offset(x, y + 16), joint);
+        path
+          ..moveTo(x, y)
+          ..lineTo(x, y + 16);
       }
     }
+    return path;
   }
 
   /// Suda, gerçekte olmayan kemer: ters dönmüş, dalgayla titreyen bir
@@ -224,10 +250,59 @@ class GolgehaneKapi extends PositionComponent with HasGameReference<GolgeGame> {
   void _drawReflection(Canvas canvas) {
     final w = size.x;
     final top = _water.toDouble();
-    const depth = 62.0;
     final pulse = 0.85 + 0.15 * math.sin(_t * 1.3);
-    // Kemer (yansımada ters: yayı aşağıda): dış halka taş, iç açıklık ılık;
-    // ortada kandilin yansıyan alevi.
+    final (inner, ring, joints) = _arch ??= _archPaths(w, top);
+    final rim = Cartoon.on ? Cartoon.lip : const Color(0xFF8A5A34);
+    _archLight.shader = ui.Gradient.radial(Offset(w / 2, top + 26), 30, [
+      const Color(0xFFFFD59A).withValues(alpha: (0.6 + 0.3 * _call) * pulse),
+      const Color(0xFF6A2A12).withValues(alpha: 0.75),
+    ]);
+    void draw(double fade) {
+      // Derinde biraz söner: boyanın saydamlığı (ara katman yok).
+      _archLight.color = Color.fromRGBO(0, 0, 0, fade);
+      canvas.drawPath(inner, _archLight);
+      canvas.drawPath(
+        ring,
+        Paint()..color = rim.withValues(alpha: 0.85 * fade),
+      );
+      canvas.drawPath(
+        joints,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.2
+          ..color = _ink.withValues(alpha: 0.7 * fade),
+      );
+    }
+
+    const depth = 62.0;
+    if (Settings.lowGraphics) {
+      // Düşük grafikte dalgasız tek geçiş: sır yine görünür.
+      canvas.save();
+      canvas.clipRect(Rect.fromLTWH(-8, top, w + 16, depth));
+      draw(0.8);
+      canvas.restore();
+    } else {
+      // Dalga: altı yatay şerit kendi payında kayar, derinde söner.
+      const strip = depth / 6;
+      for (var k = 0; k < 6; k++) {
+        final y = k * strip;
+        final dx = math.sin(_t * 2.1 + y * 0.35) * (1 + y * 0.05);
+        canvas.save();
+        canvas.clipRect(Rect.fromLTWH(-8, top + y, w + 16, strip + 0.5));
+        canvas.translate(dx, 0);
+        draw(1 - 0.55 * (y + strip / 2) / depth);
+        canvas.restore();
+      }
+    }
+    glowDot(canvas, Offset(w / 2, top + 26), 30, kWarmLight, 0.16 * pulse);
+  }
+
+  final _archLight = Paint();
+  (Path, Path, Path)? _arch;
+
+  /// Kemerin yolları (yansımada ters: yayı aşağıda): iç açıklık, taş halka,
+  /// derzler. Bir kez kurulur.
+  static (Path, Path, Path) _archPaths(double w, double top) {
     Path arch(double inset) => Path()
       ..moveTo(inset, top)
       ..lineTo(inset, top + 22)
@@ -240,40 +315,18 @@ class GolgehaneKapi extends PositionComponent with HasGameReference<GolgeGame> {
       ..close();
     final inner = arch(10);
     final ring = Path.combine(PathOperation.difference, arch(3), inner);
-    final rim = Cartoon.on ? Cartoon.lip : const Color(0xFF8A5A34);
-    final light = Paint()
-      ..shader = ui.Gradient.radial(Offset(w / 2, top + 26), 30, [
-        const Color(0xFFFFD59A).withValues(alpha: (0.6 + 0.3 * _call) * pulse),
-        const Color(0xFF6A2A12).withValues(alpha: 0.75),
-      ]);
-    final joint = Paint()
-      ..color = _ink.withValues(alpha: 0.7)
-      ..strokeWidth = 1.2;
+    final joints = Path();
     final c = Offset(w / 2, top + 22);
-    canvas.save();
-    canvas.clipRect(Rect.fromLTWH(-8, top, w + 16, depth));
-    // Dalga: her yatay şerit kendi payında kayar, derinde biraz söner.
-    for (var y = 0.0; y < depth; y += 3) {
-      final dx = math.sin(_t * 2.1 + y * 0.35) * (1 + y * 0.05);
-      final fade = 1 - 0.55 * y / depth;
-      canvas.saveLayer(
-        Rect.fromLTWH(-8, top + y, w + 16, 3.2),
-        Paint()..color = Color.fromRGBO(0, 0, 0, fade),
-      );
-      canvas.clipRect(Rect.fromLTWH(-8, top + y, w + 16, 3.2));
-      canvas.translate(dx, 0);
-      canvas.drawPath(inner, light);
-      canvas.drawPath(ring, Paint()..color = rim.withValues(alpha: 0.85));
-      // Kemer taşlarının derzleri.
-      for (var i = 0; i <= 6; i++) {
-        final ang = math.pi * i / 6;
-        final d = Offset(math.cos(ang), math.sin(ang));
-        canvas.drawLine(c + d * (w / 2 - 10), c + d * (w / 2 - 3), joint);
-      }
-      canvas.restore();
+    for (var i = 0; i <= 6; i++) {
+      final ang = math.pi * i / 6;
+      final d = Offset(math.cos(ang), math.sin(ang));
+      final a = c + d * (w / 2 - 10);
+      final b = c + d * (w / 2 - 3);
+      joints
+        ..moveTo(a.dx, a.dy)
+        ..lineTo(b.dx, b.dy);
     }
-    canvas.restore();
-    glowDot(canvas, Offset(w / 2, top + 26), 30, kWarmLight, 0.16 * pulse);
+    return (inner, ring, joints);
   }
 }
 
@@ -388,6 +441,7 @@ class GolgehaneSahne extends PositionComponent
 
   @override
   void render(Canvas canvas) {
+    if (!game.camera.visibleWorldRect.overlaps(toRect().inflate(16))) return;
     _drawRoom(canvas);
     _drawScreen(canvas);
     _drawLamp(canvas);

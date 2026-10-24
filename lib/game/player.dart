@@ -1465,15 +1465,15 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
   double _stoppedT = 0;
 
   /// Testler için: ayrılan gölgenin yeri ve hâli.
-  String get debugShadow => '${_mood.name} x=${_shadowX.toStringAsFixed(0)} t=${_moodT.toStringAsFixed(2)}';
+  String get debugShadow =>
+      '${_mood.name} x=${_shadowX.toStringAsFixed(0)} t=${_moodT.toStringAsFixed(2)}';
 
   /// Gölge utangaç sürprizi oynar; gölge serbest değilse (korkudan geride
   /// kalıyor, gönderilmiş…) oynamaz ve false döner.
   bool shadowShy() {
     // Hafif korkuda geriden gelen gölge de (sarnıçta karanlıktaki gözler
     // yakınken hep öyle) oynar; ayrılıp gitmiş ya da gönderilmiş gölge değil.
-    if (isDead ||
-        (_mood != _ShadowMood.follow && _mood != _ShadowMood.lag)) {
+    if (isDead || (_mood != _ShadowMood.follow && _mood != _ShadowMood.lag)) {
       return false;
     }
     _mood = _ShadowMood.shy;
@@ -1615,7 +1615,7 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     }
   }
 
-  void _wallShadow(Canvas canvas) {
+  void _wallShadow(Canvas canvas, {bool plain = false}) {
     final mood = _mood;
     // Duvara düşen gölge kapalı mekânlarda; gönderilen gölge her yerde.
     if (!jarStyle || (!level.def.theme.indoor && mood != _ShadowMood.sent)) {
@@ -1683,12 +1683,12 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     // onu bir çocuk sanmalı.
     final sent = mood == _ShadowMood.sent || mood == _ShadowMood.shy;
     final blur = sent ? 0.7 : 2.2;
-    canvas.saveLayer(
-      bounds,
-      Paint()
-        ..color = Color.fromRGBO(0, 0, 0, (alpha * 1.7).clamp(0.0, 0.85))
-        ..imageFilter = ui.ImageFilter.blur(sigmaX: blur, sigmaY: blur),
-    );
+    final layer = Paint()
+      ..color = Color.fromRGBO(0, 0, 0, (alpha * 1.7).clamp(0.0, 0.85));
+    if (!plain) {
+      layer.imageFilter = ui.ImageFilter.blur(sigmaX: blur, sigmaY: blur);
+    }
+    canvas.saveLayer(bounds, layer);
     canvas.save();
     // Işık yakında ve aşağıda: gölge ayaklardan büyüyerek yukarı uzanır.
     canvas.translate(foot.dx, foot.dy);
@@ -1752,8 +1752,14 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       canvas.translate(-w / 2, -h);
       drawSpray(canvas, Offset(w / 2 - 12, h), onGround ? _skiSpeed : 0, _anim);
     }
-    if (!ski && !isDead && !riding && !Settings.lowGraphics) {
-      _drawShadows(canvas);
+    if (!ski && !isDead && !riding) {
+      if (!Settings.lowGraphics) {
+        _drawShadows(canvas);
+      } else if (_mood == _ShadowMood.sent || _mood == _ShadowMood.shy) {
+        // Düşük grafikte süs gölgeleri yok; ama gönderilen gölge oynanışın
+        // parçası (utangaç gölge de bir sır): bulanıklıksız düz siluet.
+        _wallShadow(canvas, plain: true);
+      }
     }
     if (jarStyle && !hidden && !crouching && !isDead && !Settings.lowGraphics) {
       // Kenar ışığı: kavanozun sıcak ışığı siluetin önünü ve tepesini yalar.

@@ -62,35 +62,60 @@ List<_Chunk> _chunked(
   return out;
 }
 
-/// Son kurulan bölümün dilimleri. Arazi yalnızca haritaya bağlı: ölüp yeniden
-/// doğunca (aynı bölüm) yeniden çizilmez, bölüm değişince eskisi bırakılır.
+/// Bölümlerin dilimleri: en çok iki bölüm (oynanan ve perde altında önceden
+/// hazırlanan sıradaki). Arazi yalnızca haritaya bağlı: ölüp yeniden doğunca
+/// (aynı bölüm) yeniden çizilmez. Eskiden tek yuvaydı: perdenin altında eski
+/// bölüm çizildikçe sıradakinin hazırlığı silinip geçişte yeniden çiziliyordu.
 class _ChunkCache {
-  static LevelDef? _def;
   static bool _cartoon = false;
   static double _tone = -1;
-  static final _lists = <String, List<_Chunk>>{};
+
+  /// Bölüm → (tür → dilimler); sıra son kullanımı izler (sondaki en yeni).
+  static final _levels = <LevelDef, Map<String, List<_Chunk>>>{};
+  static const _slots = 2;
+
+  static void _release(Map<String, List<_Chunk>> lists) {
+    for (final list in lists.values) {
+      for (final c in list) {
+        c.picture.dispose();
+      }
+    }
+  }
 
   static List<_Chunk> of(
     String kind,
     Level lv,
     Picture Function(Level, int c0, int c1, int r0, int r1) build,
   ) {
-    if (!identical(_def, lv.def) ||
-        _cartoon != Cartoon.on ||
-        (Cartoon.on && _tone != Cartoon.toneStep)) {
+    if (_cartoon != Cartoon.on || (Cartoon.on && _tone != Cartoon.toneStep)) {
       _cartoon = Cartoon.on;
       _tone = Cartoon.toneStep;
-      for (final list in _lists.values) {
-        for (final c in list) {
-          c.picture.dispose();
-        }
-      }
-      _lists.clear();
-      _def = lv.def;
+      _levels.values.forEach(_release);
+      _levels.clear();
     }
-    return _lists[kind] ??= _chunked(lv, build);
+    var lists = _levels[lv.def];
+    if (lists == null) {
+      while (_levels.length >= _slots) {
+        final oldest = _levels.keys.first;
+        _release(_levels.remove(oldest)!);
+      }
+      lists = _levels[lv.def] = {};
+    } else if (!identical(_levels.keys.last, lv.def)) {
+      // En yeni kullanılan sona.
+      _levels.remove(lv.def);
+      _levels[lv.def] = lists;
+    }
+    return lists[kind] ??= _chunked(lv, build);
   }
+
+  /// Testler için: bir bölümün dilim listesi.
+  static List<_Chunk>? debugList(LevelDef def, String kind) =>
+      _levels[def]?[kind];
 }
+
+/// Testler için: [def]'in arazi dilimleri önbellekte mi (aynı nesne).
+Object? debugTerrainChunks(LevelDef def) =>
+    _ChunkCache.debugList(def, 'terrain');
 
 /// Bölümün arazi ve ön plan dilimlerini önceden çizer (perde öncesi, ekran
 /// kapalıyken): bölüm kurulurken çizmek geçişi takıltıyordu.

@@ -101,7 +101,7 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
   void _occluded(Canvas canvas, Offset c, double radius, [double s = 1]) {
     if (radius <= 0 || s <= 0) return;
     if (!_view.overlaps(Rect.fromCircle(center: c, radius: radius))) return;
-    final shape = game.level.visibility(c, radius);
+    final shape = _visible(c, radius);
     if (shape == null) {
       // Hiçbir yerde kaya yok: düz daire (daha ucuz).
       _light(canvas, c, radius, s);
@@ -120,13 +120,35 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
     for (var i = 0; i < n; i++) {
       final a = i * 2 * math.pi / n + 0.3;
       final o = c + Offset(math.cos(a), math.sin(a)) * spread;
-      final sh = game.level.visibility(o, radius);
+      final sh = _visible(o, radius);
       if (sh == null) {
         _light(canvas, o, radius, each);
         continue;
       }
       _light(canvas, o, radius, each, sh);
     }
+  }
+
+  /// Görsel ışığın kayada kesilmiş şekilleri: merkez iki birime, yarıçap
+  /// dört birime yuvarlanıp saklanır. Duran ya da az kıpırdayan ışık (yumuşak
+  /// kenar için yedi tarama) her karede yeniden taranmaz. Oynanıştaki ışık
+  /// sorguları bunu kullanmaz.
+  final _shapes = <(int, int, int), Path?>{};
+  Level? _shapesOf;
+
+  Path? _visible(Offset c, double radius) {
+    final lv = game.level;
+    if (!identical(_shapesOf, lv)) {
+      _shapes.clear();
+      _shapesOf = lv;
+    }
+    final key = ((c.dx / 2).round(), (c.dy / 2).round(), (radius / 4).round());
+    if (_shapes.containsKey(key)) return _shapes[key];
+    if (_shapes.length > 160) _shapes.clear();
+    return _shapes[key] = lv.visibility(
+      Offset(key.$1 * 2.0, key.$2 * 2.0),
+      key.$3 * 4.0,
+    );
   }
 
   /// Karanlık bölgeler örtünün altında daha da kararır; kenarları yumuşak.
