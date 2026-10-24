@@ -22,7 +22,7 @@ void main() {
     await tester.pumpWidget(const GolgeApp());
     await wait(tester, 1);
     expect(find.byType(IntroOverlay), findsOneWidget);
-    // Ses motoru testte yok: giriş en çok 2,5 sn bekleyip başlar.
+    // Ses motoru testte yok: giriş en çok 4 sn bekleyip başlar.
     await wait(tester, 3);
     await tester.tap(find.textContaining(S.of('skipPerde')));
     await wait(tester, 2.5);
@@ -38,7 +38,7 @@ void main() {
     Settings.debugReopen();
     SharedPreferences.setMockInitialValues({});
     await tester.pumpWidget(const GolgeApp());
-    await wait(tester, 2.5 + 13);
+    await wait(tester, 4 + 13);
     expect(find.byType(IntroOverlay), findsNothing);
     expect(find.text(S.of('newGame')), findsOneWidget);
   });

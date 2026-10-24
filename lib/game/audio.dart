@@ -122,8 +122,41 @@ class GameAudio {
 
   bool _ready = false;
 
-  /// Ses motoru ve efektler yüklendi mi (giriş ilk sesini bekler).
+  /// Ses motoru hazır mı (efektler ardından yüklenir; bkz. [has]).
   bool get ready => _ready;
+
+  /// Bu ses yüklendi mi.
+  bool has(String name) => _src.containsKey(name);
+
+  /// Açılış girişinin efektleri: ses motoru bunları ilk yükler.
+  static const introEffects = [
+    'match',
+    'fire',
+    'breath',
+    'gust',
+    'fizzle',
+    'firefly',
+  ];
+
+  /// Girişin sesleri yüklendi mi (giriş başlamadan bekler).
+  bool get introReady => _ready && has('perde_ney') && introEffects.every(has);
+
+  /// Arka plan sesini (müzik, ney) geçici olarak kısar: 0 normal, 1 sessiz.
+  /// Girişte Kandilci geçerken ney susmaz, uzaklaşır (yeniden başlarsa
+  /// ney iki kez giriyormuş gibi duyuluyordu).
+  void dipBed(double k) {
+    _dip = k.clamp(0.0, 1.0);
+    final h = _bed;
+    final name = _bedName;
+    if (h == null || name == null) return;
+    _safe(
+      () =>
+          _s.fadeVolume(h, _bedVolume(name), const Duration(milliseconds: 700)),
+      null,
+    );
+  }
+
+  double _dip = 0;
 
   /// Yüklenemeyen ses dosyaları (tanı için).
   final failed = <String>[];
@@ -155,7 +188,8 @@ class GameAudio {
           ? Settings.music
           : _ambientVolume) *
       // Anlatım konuşurken müzik ve ortam sesi geri çekilir.
-      (_voice != null ? 0.5 : 1);
+      (_voice != null ? 0.5 : 1) *
+      (1 - _dip);
 
   static const _fadeIn = Duration(milliseconds: 900);
   static const _fadeOut = Duration(milliseconds: 600);
@@ -576,7 +610,13 @@ class GameAudio {
     await load('menu_theme.mp3', LoadMode.disk);
     await load('perde_ney.ogg', LoadMode.disk);
     _updateBed();
+    // Açılış girişinin sesleri önce: giriş onları bekler (kibrit listenin
+    // sonundaydı, giriş başladığında henüz yüklenmemiş oluyordu).
+    for (final e in introEffects) {
+      await load(_ogg.contains(e) ? '$e.ogg' : '$e.wav', LoadMode.memory);
+    }
     for (final e in _effects) {
+      if (_src.containsKey(e)) continue;
       await load(_ogg.contains(e) ? '$e.ogg' : '$e.wav', LoadMode.memory);
     }
     for (final f in _streamed) {

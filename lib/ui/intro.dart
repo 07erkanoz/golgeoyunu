@@ -6,6 +6,7 @@ import '../game/audio.dart';
 import '../game/perde.dart';
 import '../game/strings.dart';
 import '../settings.dart';
+import 'quiet_skip.dart';
 
 /// Açılış girişi: ilk açılışta ana menünün üstünde bir kez oynar (bkz.
 /// perde_giris.dart). Dokununca ya da bir tuşla atlanır; sonunda perde
@@ -34,9 +35,9 @@ class _IntroOverlayState extends State<IntroOverlay>
   /// çizimi menüdekiyle aynı anda (Hüdhüd aynı yerde) görünsün.
   double _menuTime = 0;
 
-  /// Saat ses motoru hazır olunca başlar (kibrit sesi kaybolmasın); en
+  /// Saat girişin sesleri yüklenince başlar (kibrit sesi kaybolmasın); en
   /// çok bu kadar beklenir.
-  static const _maxWait = 2.5;
+  static const _maxWait = 4.0;
   Duration? _start;
   double _offset = 0;
   bool _done = false;
@@ -53,7 +54,7 @@ class _IntroOverlayState extends State<IntroOverlay>
     _menuTime = d.inMicroseconds / 1e6;
     if (_start == null) {
       final waited = d.inMicroseconds / 1e6;
-      if (!GameAudio.instance.ready && waited < _maxWait) return;
+      if (!GameAudio.instance.introReady && waited < _maxWait) return;
       _start = d;
     }
     final t = (d - _start!).inMicroseconds / 1e6 + _offset;
@@ -71,20 +72,31 @@ class _IntroOverlayState extends State<IntroOverlay>
 
     at(IntroBeats.strike, 'kibrit', () => a.play('match', volume: 0.9));
     at(IntroBeats.lampUp, 'alev', () => a.play('fire', volume: 0.25));
-    at(IntroBeats.sayeIn, 'ney', () => a.perde(true));
+    // Ney bir kez girer, girişin sonuna dek sürer; Kandilci geçerken
+    // uzaklaşır, kandil sönünce neredeyse susar, ateşböceğiyle geri gelir.
+    at(IntroBeats.sayeIn, 'ney', () {
+      a.dipBed(0);
+      a.perde(true);
+    });
     at(IntroBeats.shadowStep, 'adım', () => a.play('breath', volume: 0.3));
     at(IntroBeats.lamplighter, 'kandilci', () {
-      a.perde(false);
+      a.dipBed(0.7);
       a.play('gust', volume: 0.35);
       a.dread(0.45);
     });
     at(IntroBeats.lampOut, 'söndü', () {
       a.play('fizzle', volume: 0.5);
       a.dread(0);
+      a.dipBed(0.85);
     });
-    at(IntroBeats.firefly, 'ateşböceği', () => a.play('firefly', volume: 0.5));
-    at(IntroBeats.title, 'başlık', () => a.perde(true));
-    at(IntroBeats.relight, 'yeniden', () => a.play('fire', volume: 0.3));
+    at(IntroBeats.firefly, 'ateşböceği', () {
+      a.play('firefly', volume: 0.5);
+      a.dipBed(0.3);
+    });
+    at(IntroBeats.relight, 'yeniden', () {
+      a.play('fire', volume: 0.3);
+      a.dipBed(0);
+    });
     at(IntroBeats.toMenu, 'menü', () {
       a.perde(false);
       a.menuMusic(true);
@@ -111,14 +123,14 @@ class _IntroOverlayState extends State<IntroOverlay>
       'kandilci',
       'söndü',
       'ateşböceği',
-      'başlık',
       'yeniden',
     ]) {
       _played.add(k);
     }
     GameAudio.instance
       ..perde(false)
-      ..dread(0);
+      ..dread(0)
+      ..dipBed(0);
   }
 
   void _finish() {
@@ -130,6 +142,7 @@ class _IntroOverlayState extends State<IntroOverlay>
     GameAudio.instance
       ..perde(false)
       ..dread(0)
+      ..dipBed(0)
       ..menuMusic(true);
     widget.onDone();
   }
@@ -173,37 +186,17 @@ class _IntroOverlayState extends State<IntroOverlay>
                   widget.menuPerde,
                 ),
               ),
-              // Atla: perdedeki gibi sağ altta.
+              // Atla: perdedeki gibi sağ altta, küçük ve soluk.
               Positioned(
-                right: 16,
-                bottom: 12,
+                right: 10,
+                bottom: 6,
                 child: SafeArea(
                   child: ValueListenableBuilder<double>(
                     valueListenable: _time,
                     builder: (context, t, _) => AnimatedOpacity(
                       opacity: t < IntroBeats.toMenu ? 1 : 0,
                       duration: const Duration(milliseconds: 300),
-                      child: TextButton(
-                        onPressed: _skip,
-                        style: TextButton.styleFrom(
-                          foregroundColor: const Color(0xFFEBDDCB),
-                          backgroundColor: const Color(0x66140C09),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 18,
-                            vertical: 10,
-                          ),
-                          shape: const StadiumBorder(
-                            side: BorderSide(color: Color(0x66E0A15F)),
-                          ),
-                        ),
-                        child: Text(
-                          '${S.of('skipPerde')}  ›',
-                          style: const TextStyle(
-                            fontSize: 15,
-                            letterSpacing: 1,
-                          ),
-                        ),
-                      ),
+                      child: QuietSkip(onPressed: _skip),
                     ),
                   ),
                 ),
