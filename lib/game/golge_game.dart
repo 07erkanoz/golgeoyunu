@@ -11,7 +11,7 @@ import 'package:flutter/widgets.dart' show KeyEventResult;
 
 import 'atmosphere.dart';
 import 'audio.dart';
-import 'auto_quality.dart';
+import 'frame_meter.dart';
 import 'anlatim_plani.dart';
 import 'entrance.dart';
 import 'feedback.dart';
@@ -127,7 +127,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
   late final Narration narration;
 
   /// Cihaz zorlanırsa ağır görselleri kendiliğinden kapatır.
-  late final AutoQuality autoQuality = AutoQuality(this);
+  final frameMeter = FrameMeter();
 
   /// Masaüstünde kare sınırı (bkz. [FramePacer]).
   late final FramePacer pacer = FramePacer(this);
@@ -314,7 +314,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     effects = ScreenEffects();
     narration = Narration();
     camera.viewport.addAll([effects, narration]);
-    autoQuality.attach();
+    frameMeter.attach();
     pacer.apply();
     _enterMenu();
     // Geliştirici ölçümü: doğrudan bir bölümle açılır (DEV ve START_LEVEL).
@@ -347,7 +347,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         ? 'Impeller'
         : 'Skia';
     perfText =
-        '$fps kare/sn · çizim ${autoQuality.workMs.toStringAsFixed(1)} ms · '
+        '$fps kare/sn · çizim ${frameMeter.workMs.toStringAsFixed(1)} ms · '
         'bellek $mb MB · çizici $renderer · grafik $gfx · $light\n'
         'anlatım ${GameAudio.instance.voiceStatus}';
   }
@@ -364,7 +364,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
 
   @override
   void onRemove() {
-    autoQuality.detach();
+    frameMeter.detach();
     pacer.dispose();
     super.onRemove();
   }
@@ -868,7 +868,6 @@ class GolgeGame extends FlameGame with KeyboardEvents {
 
   void _buildLevel(int index, {bool respawn = false, bool withPlayer = true}) {
     world.removeAll(world.children.toList());
-    autoQuality.restart();
     // Yeni bir bölüme geçerken (ölüp yeniden doğmada değil) eski bölümün
     // bekleyen metinleri atılır.
     if (!respawn || index != levelIndex) {
@@ -1859,8 +1858,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     // parçalara bölünür; böylece düşük FPS'te Kandilci oyuncudan hızlı
     // yaşamaz. Uygulama kesintisi gibi çok uzun boşluk telafi edilmez.
     if (!dt.isFinite || dt < 0) dt = 0;
-    autoQuality.tick(dt);
-    autoQuality.countStep();
+    frameMeter.countStep();
     if (perfShown) _updatePerf(dt);
     if (_autoWalk && !menuMode.value) {
       _autoT += dt;
@@ -2798,7 +2796,6 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         Realism.on = !Realism.on;
         Settings.realism = Realism.on;
         Settings.save();
-        if (Realism.on) AutoQuality.userChose = true;
       }
       // Deneme yapısında K karikatürize görsel denemesini açar/kapar
       // (şimdilik yalnız Yerebatan).

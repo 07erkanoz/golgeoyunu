@@ -23,19 +23,10 @@ class Settings {
   /// dahili ekran kartları için. Varsayılan yüksek.
   static bool lowGraphics = false;
 
-  /// Düşük grafiği otomatik kalite açtı (oyuncu seçmedi): o oturuma özgüdür,
-  /// kaydedilmez; bir sonraki açılışta oyuncunun seçimi geri gelir.
-  static bool autoLowered = false;
-
   /// Yüksek yenileme hızı (Android, 90/120 Hz ve üstü ekranlarda): açıkken
   /// telefonun en yüksek hızı istenir (daha akıcı, pil biraz daha çabuk
   /// biter). Oyunun fiziği 120 ve 144 Hz'de de sınanır.
   static bool highRefresh = false;
-
-  /// Otomatik kalite: cihaz zorlanırsa ağır görseller kendiliğinden kapanır.
-  /// Varsayılan kapalı: oyuncunun seçtiği ışık ve grafik kendiliğinden
-  /// değişmesin; ayarlardan açılabilir.
-  static bool autoQuality = false;
 
   /// Dokunmatik kontrol: düğmeler ya da hareket (sürükle / dokun).
   static bool touchGestures = true;
@@ -179,7 +170,6 @@ class Settings {
       calmEffects = _read(() => p.getBool('calm_effects')) ?? calmEffects;
       leftHanded = _read(() => p.getBool('left_handed')) ?? leftHanded;
       highRefresh = _read(() => p.getBool('high_refresh')) ?? highRefresh;
-      autoQuality = _read(() => p.getBool('auto_quality')) ?? autoQuality;
       finished = _read(() => p.getBool('finished')) ?? finished;
       allOpen = _read(() => p.getBool('all_open')) ?? allOpen;
       texture = _read(() => p.getBool('texture')) ?? texture;
@@ -215,14 +205,12 @@ class Settings {
     final fromFile = SaveData.decode(await SaveGame._readFile());
     SaveGame.current = SaveData.newer(fromPrefs, fromFile);
     // Eski kayıt: görüntü ayarları yeni varsayılanlara (renk tonu 35,
-    // parlaklık 85, ışık ve derinlik açık, grafik yüksek, otomatik kalite
-    // kapalı) bir kez çekilir.
+    // parlaklık 85, ışık ve derinlik açık, grafik yüksek) bir kez çekilir.
     final version = p == null ? null : _read(() => p.getInt('settings_v'));
     if ((version ?? 0) < _version) {
       tone = defaultTone;
       brightness = defaultBrightness;
       lowGraphics = false;
-      autoQuality = false;
       texture = Cartoon.trialBuild;
       realism = Cartoon.trialBuild;
     }
@@ -254,12 +242,11 @@ class Settings {
       await p.setDouble('music', music);
       await p.setDouble('effects', effects);
       await p.setBool('fullscreen', fullscreen);
-      await p.setBool('low_graphics', lowGraphics && !autoLowered);
+      await p.setBool('low_graphics', lowGraphics);
       await p.setBool('touch_gestures', touchGestures);
       await p.setBool('calm_effects', calmEffects);
       await p.setBool('left_handed', leftHanded);
       await p.setBool('high_refresh', highRefresh);
-      await p.setBool('auto_quality', autoQuality);
       await p.setDouble('touch_scale', touchScale);
       await p.setDouble('touch_opacity', touchOpacity);
       await p.setDouble('brightness', brightness);

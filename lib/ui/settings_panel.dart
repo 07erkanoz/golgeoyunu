@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../game/audio.dart';
-import '../game/auto_quality.dart';
 import '../game/golge_game.dart';
 import '../game/hints.dart';
 import '../game/palette.dart';
@@ -176,17 +175,8 @@ class _SettingsPanelState extends State<SettingsPanel> {
       _segments<bool>(
         {false: S.of('gfxHigh'), true: S.of('gfxLow')},
         Settings.lowGraphics,
-        (v) {
-          Settings.lowGraphics = v;
-          Settings.autoLowered = false;
-          if (!v) AutoQuality.userChose = true;
-        },
+        (v) => Settings.lowGraphics = v,
       ),
-    ),
-    _switch(
-      S.of('autoQuality'),
-      Settings.autoQuality,
-      (v) => Settings.autoQuality = v,
     ),
     // Yüksek yenileme hızı: Android'de 90/120 Hz istenir; masaüstünde
     // kapalıyken kareler 60 dolayında sınırlanır (açıkken ekranın hızı).
@@ -206,7 +196,6 @@ class _SettingsPanelState extends State<SettingsPanel> {
         (v) {
           Realism.on = v;
           Settings.realism = v;
-          if (v) AutoQuality.userChose = true;
         },
         note: Settings.lowGraphics ? S.of('lightDepthLow') : null,
         noteAlways: true,

@@ -65,7 +65,7 @@ void main() {
         'flutter.low_graphics': true,
         'flutter.realism': false,
         'flutter.music': 0.2,
-      'flutter.auto_quality': true,
+        'flutter.auto_quality': true,
       });
       await Settings.load();
       expect(Settings.tone, closeTo(0.35, 1e-9));
@@ -73,7 +73,6 @@ void main() {
       expect(Settings.lowGraphics, isFalse);
       expect(Settings.realism, Cartoon.trialBuild);
       expect(Settings.music, closeTo(0.2, 1e-9));
-      expect(Settings.autoQuality, isFalse);
       // Oyuncu yeniden değiştirir: artık her açılışta seçimi gelir.
       Settings.tone = 0.6;
       Settings.brightness = 1.1;
@@ -88,19 +87,6 @@ void main() {
       expect(Settings.lowGraphics, isTrue);
     },
   );
-
-  test('otomatik kalitenin düşürdüğü grafik kaydedilmez', () async {
-    Settings.debugReopen();
-    SharedPreferences.setMockInitialValues({});
-    await Settings.load();
-    expect(Settings.lowGraphics, isFalse);
-    Settings.lowGraphics = true;
-    Settings.autoLowered = true;
-    await Settings.save();
-    Settings.autoLowered = false;
-    await Settings.load();
-    expect(Settings.lowGraphics, isFalse);
-  });
 
   test('her şey açıkken Hikâye tiyatrosu son perdeye dek oynar', () {
     Settings.finished = false;

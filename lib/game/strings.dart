@@ -54,11 +54,6 @@ class S {
     'gfxHigh': 'Yüksek',
     'gfxLow': 'Düşük',
     'calmEffects': 'Sarsıntı ve parlamayı azalt',
-    'autoQuality': 'Otomatik kalite',
-    'autoQualityLight':
-        'Cihaz zorlandı: ışık ve derinlik kapandı (Ayarlar\'dan açılabilir)',
-    'autoQualityLow':
-        'Cihaz zorlandı: düşük grafiğe geçildi (Ayarlar\'dan değişir)',
     'touchScale': 'Düğme boyutu',
     'leftHanded': 'Sol elle oyna',
     'touchControls': 'Dokunmatik',
@@ -273,11 +268,6 @@ class S {
     'gfxHigh': 'High',
     'gfxLow': 'Low',
     'calmEffects': 'Reduce shake and flashes',
-    'autoQuality': 'Automatic quality',
-    'autoQualityLight':
-        'Device struggling: light and depth turned off (see Settings)',
-    'autoQualityLow':
-        'Device struggling: switched to low graphics (see Settings)',
     'touchScale': 'Button size',
     'leftHanded': 'Left-handed',
     'touchControls': 'Touch',

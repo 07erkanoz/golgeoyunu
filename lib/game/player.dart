@@ -1682,22 +1682,50 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     // Gönderilen gölge seçik ve Sâye boyuna yakın: Kandilci de oyuncu da
     // onu bir çocuk sanmalı.
     final sent = mood == _ShadowMood.sent || mood == _ShadowMood.shy;
-    final blur = sent ? 0.7 : 2.2;
-    final layer = Paint()
-      ..color = Color.fromRGBO(0, 0, 0, (alpha * 1.7).clamp(0.0, 0.85));
-    if (!plain) {
-      layer.imageFilter = ui.ImageFilter.blur(sigmaX: blur, sigmaY: blur);
+    // Bulanıklık filtresi yok: her karede ara katmanı bulanıklaştırmak
+    // telefonda (Skia) sürekli yüktü. Yumuşaklık ucuz yoldan: önce biraz
+    // büyütülmüş, yarı saydam bir kopya (kenarda yarı gölge), üstüne asıl
+    // siluet; sonra gölge yukarı doğru söner (ışık aşağıda).
+    canvas.saveLayer(
+      bounds,
+      Paint()
+        ..color = Color.fromRGBO(0, 0, 0, (alpha * 1.7).clamp(0.0, 0.85)),
+    );
+    void figure(double grow) {
+      canvas.save();
+      // Işık yakında ve aşağıda: gölge ayaklardan büyüyerek yukarı uzanır.
+      canvas.translate(foot.dx, foot.dy);
+      canvas.scale(
+        (sent ? 1.15 : 1.45) * (1 + grow),
+        (sent ? 1.3 : 1.7) * (1 + grow * 0.6),
+      );
+      canvas.translate(-w / 2, -h);
+      canvas.translate((w - _artW * _artScale) / 2, 0);
+      canvas.scale(_artScale);
+      _renderJar(canvas);
+      canvas.restore();
     }
-    canvas.saveLayer(bounds, layer);
-    canvas.save();
-    // Işık yakında ve aşağıda: gölge ayaklardan büyüyerek yukarı uzanır.
-    canvas.translate(foot.dx, foot.dy);
-    canvas.scale(sent ? 1.15 : 1.45, sent ? 1.3 : 1.7);
-    canvas.translate(-w / 2, -h);
-    canvas.translate((w - _artW * _artScale) / 2, 0);
-    canvas.scale(_artScale);
-    _renderJar(canvas);
-    canvas.restore();
+
+    if (!sent && !plain) {
+      _fill.color = const Color(0x50000000);
+      _limb.color = _fill.color;
+      figure(0.09);
+      _fill.color = const Color(0xFF000000);
+      _limb.color = _fill.color;
+    }
+    figure(0);
+    if (!sent && !plain) {
+      canvas.drawRect(
+        bounds,
+        Paint()
+          ..blendMode = BlendMode.dstIn
+          ..shader = ui.Gradient.linear(
+            Offset(0, foot.dy),
+            Offset(0, bounds.top),
+            const [Color(0xFF000000), Color(0x8C000000)],
+          ),
+      );
+    }
     canvas.restore();
     _rimPass = false;
     facing = saved.$1;
