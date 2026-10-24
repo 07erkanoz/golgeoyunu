@@ -296,6 +296,18 @@ class NearLayer extends Component with HasGameReference<GolgeGame> {
   static List<_Row> _rowsOf(DepthKind kind) =>
       _rows.putIfAbsent(kind, () => _withRim(kind, _buildRows(kind)));
 
+  /// Bir türün şekillerini önceden pişirir (ekran kapalıyken, perde öncesi):
+  /// ilk karede pişirmek perdeden oyuna geçişi takıltıyordu.
+  static void warm(DepthKind kind) {
+    _rowsOf(kind);
+    if (kind == DepthKind.snow ||
+        kind == DepthKind.konya ||
+        kind == DepthKind.nemrut) {
+      _flakeShape;
+    }
+    if (kind == DepthKind.peri) _moteShape;
+  }
+
   /// Koyu ortamda kenar ışığı şeklin resmine bir kez işlenir (her karede
   /// ikinci bir renkli kopya çizmek pahalıydı).
   static List<_Row> _withRim(DepthKind kind, List<_Row> rows) {

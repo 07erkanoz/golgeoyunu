@@ -174,23 +174,27 @@ extension _EastBackdrops on Backdrop {
       body: const [Color(0xFF2A6A5A), Color(0xFF184A40), Color(0xFF0A2420)],
       snowCols: const [Color(0xFFD8FFF0), Color(0xFF9AE0C4), Color(0xFF4A9A80)],
     );
-    // Bulut kuşağı.
+    // Bulut kuşağı: yumuşak kenarlı ovaller. Bulanıklık filtresi yerine
+    // radyal degrade (her karede dokuz büyük bulanık oval telefonda Kaf'ı
+    // takıltıyordu; görüntü aynı).
     final belt = Paint();
+    final bw = w * 0.16 / 2 + 14;
+    final bh = h * 0.05 / 2 + 14;
+    belt.shader = ui.Gradient.radial(
+      Offset.zero,
+      1,
+      const [Color(0x33CFF0E4), Color(0x26CFF0E4), Color(0x00CFF0E4)],
+      const [0, 0.55, 1],
+    );
     for (var i = 0; i < 9; i++) {
       final u = i / 8 * 2 - 1;
       final x = kx + u * w * 0.34 + math.sin(_t * 0.2 + i) * 14;
       final y = kb - h * 0.36 + math.sin(i * 1.7) * 8;
-      belt
-        ..color = const Color(0xFFCFF0E4).withValues(alpha: 0.2)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10);
-      canvas.drawOval(
-        Rect.fromCenter(
-          center: Offset(x, y),
-          width: w * 0.16,
-          height: h * 0.05,
-        ),
-        belt,
-      );
+      canvas.save();
+      canvas.translate(x, y);
+      canvas.scale(bw, bh);
+      canvas.drawCircle(Offset.zero, 1, belt);
+      canvas.restore();
     }
     // Yakın sıradağlar ve sis.
     canvas.drawRect(

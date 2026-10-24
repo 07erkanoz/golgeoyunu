@@ -126,12 +126,20 @@ class PhasePlank extends Deck {
           Rect.fromLTWH(0, 0, w, 8),
           const Radius.circular(3),
         );
+        // Hale: bulanıklık filtresi yerine dikey degrade (her yanan tahta
+        // için her karede bulanıklık telefonda pahalıydı).
+        final halo = Rect.fromLTWH(-5, -7, w + 10, 22);
+        final hc = const Color(0xFFFFD08A)
+            .withValues(alpha: (cold ? 0.5 : 0.28) * _show);
         canvas.drawRRect(
-          body.inflate(5),
+          RRect.fromRectAndRadius(halo, const Radius.circular(9)),
           Paint()
-            ..color = const Color(0xFFFFD08A)
-                .withValues(alpha: (cold ? 0.5 : 0.28) * _show)
-            ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6),
+            ..shader = ui.Gradient.linear(
+              halo.topCenter,
+              halo.bottomCenter,
+              [hc.withValues(alpha: 0), hc, hc, hc.withValues(alpha: 0)],
+              const [0, 0.35, 0.65, 1],
+            ),
         );
         canvas.drawRRect(
           body,

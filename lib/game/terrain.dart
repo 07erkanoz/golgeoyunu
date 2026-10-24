@@ -92,6 +92,13 @@ class _ChunkCache {
   }
 }
 
+/// Bölümün arazi ve ön plan dilimlerini önceden çizer (perde öncesi, ekran
+/// kapalıyken): bölüm kurulurken çizmek geçişi takıltıyordu.
+void warmTerrain(Level lv) {
+  _ChunkCache.of('terrain', lv, _buildTerrain);
+  _ChunkCache.of('fore', lv, _buildForeground);
+}
+
 void _drawVisible(Canvas canvas, List<_Chunk> chunks, Rect view) {
   for (final c in chunks) {
     if (c.bounds.overlaps(view)) canvas.drawPicture(c.picture);
@@ -1908,14 +1915,21 @@ void _themedBody(
           py += 5 + rnd.nextDouble() * 4;
           p.lineTo(px, py);
         }
-        canvas.drawPath(
-          p,
-          Paint()
-            ..color = glow.withValues(alpha: 0.18 * fade)
-            ..strokeWidth = 5
-            ..style = PaintingStyle.stroke
-            ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.5),
-        );
+        // Parıltı bulanıklık filtresiyle değil, üst üste iki geniş, soluk
+        // çizgiyle: kaya karolarının yarısında bulunan bu damarlar her
+        // karede yeniden oynatılıyor; yüzlerce bulanıklık telefonda Kaf'ı,
+        // Erlik'i, Ergenekon'u takıltıyordu.
+        for (final (width, a) in const [(6.0, 0.07), (3.4, 0.11)]) {
+          canvas.drawPath(
+            p,
+            Paint()
+              ..color = glow.withValues(alpha: a * fade)
+              ..strokeWidth = width
+              ..strokeCap = StrokeCap.round
+              ..strokeJoin = StrokeJoin.round
+              ..style = PaintingStyle.stroke,
+          );
+        }
         canvas.drawPath(
           p,
           Paint()

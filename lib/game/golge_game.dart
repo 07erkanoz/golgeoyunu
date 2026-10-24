@@ -675,6 +675,20 @@ class GolgeGame extends FlameGame with KeyboardEvents {
   /// Testler için: bölümün giriş anını oynatır.
   void debugEntrance() => _startEntrance();
 
+  /// Bölümün pahalı önbellekleri (arazi dilimleri, yakın katman şekilleri)
+  /// ekran kapalıyken hazırlanır.
+  void _prewarm(int index) {
+    final lv = Level(levels[index]);
+    warmTerrain(lv);
+    final kind = depthKind(lv);
+    if (kind != null && Realism.on && !Settings.lowGraphics) {
+      NearLayer.warm(kind);
+    }
+  }
+
+  /// Testler için: önceden hazırlama.
+  void debugPrewarm(int index) => _prewarm(index);
+
   /// Perde oynatılır ve izlenmiş sayılır; ayarlarda "gördüğüm perdeleri
   /// atla" açıksa daha önce izlenmiş perde atlanır (Hikâye'de izlenebilir).
   void _playPerde(
@@ -1673,6 +1687,9 @@ class GolgeGame extends FlameGame with KeyboardEvents {
             enter();
           } else {
             effects.setFade(1, kInk);
+            // Ekran kapalıyken yeni bölümün araziyi ve yakın katmanı önceden
+            // hazırlanır: perdeden oyuna geçiş takılmasın.
+            _prewarm(next);
             _playPerde('$next', interlude, interludeScene(next), enter);
           }
           return;
