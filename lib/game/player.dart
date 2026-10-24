@@ -6,6 +6,7 @@ import 'package:flame/components.dart';
 
 import 'entities.dart';
 import 'erlik.dart';
+import 'feedback.dart';
 import 'audio.dart';
 import 'golge_game.dart';
 import 'level.dart';
@@ -380,6 +381,15 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     final quiet = sneaking || crouching;
     if (onGround && !wasOnGround) {
       if (impact > 420) _landDip = 0.16;
+      // Sert inişte zeminden toz (karda kar tozu): iniş noktası seçilir.
+      if (impact > 380) {
+        final snow = game.level.def.theme == LevelTheme.snow;
+        game.dust(
+          Vector2(center.x, position.y + h),
+          color: snow ? const Color(0xFFE8EEF4) : null,
+          count: (impact / 60).clamp(6, 14).round(),
+        );
+      }
       if (impact > 420 && !quiet) _noise(220);
       if (impact > 250) {
         GameAudio.instance.play(
@@ -1520,6 +1530,10 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       canvas.restore();
       crouching = was;
       return;
+    }
+    // Ayak altında ılık ışık: koyu sahnede durduğu yer seçilir.
+    if (onGround && !isDead && entranceAlpha > 0.5) {
+      drawFootGlow(canvas, const Offset(w / 2, h), 1);
     }
     if (entranceAlpha < 1) {
       canvas.saveLayer(

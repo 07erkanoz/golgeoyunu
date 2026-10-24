@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 
 import 'package:flame/components.dart';
 
+import 'feedback.dart';
 import 'audio.dart';
 import 'golge_game.dart';
 import 'levels.dart';
@@ -1798,6 +1799,12 @@ class Lever extends PositionComponent
       }
     }
     best?.opening = true;
+    if (best != null) {
+      // Hangi kolun hangi kapıyı açtığı görülsün: ışık akar, kamera bakar.
+      final gate = best.position + Vector2(best.size.x / 2, best.size.y / 2);
+      game.world.add(LinkPulse(position - Vector2(0, 18), gate));
+      game.peek(gate);
+    }
   }
 
   @override

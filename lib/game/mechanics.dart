@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 
 import 'package:flame/components.dart';
 
+import 'feedback.dart';
 import 'audio.dart';
 import 'entities.dart';
 import 'golge_game.dart';
@@ -195,6 +196,13 @@ class CrumbleRock extends Deck {
     if (_shake < 0 && _fall < 0 && stoodOn) {
       _shake = 0;
       GameAudio.instance.play('crumble', volume: 0.8);
+      // Kırıntı dökülür: kayanın kopacağı görülür.
+      game.dust(
+        position + Vector2(size.x / 2, size.y),
+        color: const Color(0xFF7A6A58),
+        count: 8,
+        falling: true,
+      );
     }
     stoodOn = false;
     if (_shake >= 0 && _fall < 0) {

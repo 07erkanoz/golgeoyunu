@@ -12,8 +12,9 @@ import 'package:golge/game/strings.dart';
 import 'package:golge/game/voice.dart';
 
 void main() {
-  test('harita', () {
-    S.lang = Lang.tr;
+  for (final lang in Lang.values) {
+  test('harita ${lang.name}', () {
+    S.lang = lang;
     final out = <Map<String, Object?>>[];
     for (final i in levelOrder) {
       final def = levels[i];
@@ -50,8 +51,9 @@ void main() {
       });
     }
     Directory('build/ses').createSync(recursive: true);
-    File('build/ses/harita.json').writeAsStringSync(
-      const JsonEncoder.withIndent(' ').convert(out),
-    );
+    File(
+      'build/ses/harita${lang == Lang.tr ? '' : '_${lang.name}'}.json',
+    ).writeAsStringSync(const JsonEncoder.withIndent(' ').convert(out));
   });
+  }
 }

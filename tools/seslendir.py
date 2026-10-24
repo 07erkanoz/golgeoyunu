@@ -152,7 +152,7 @@ QUOTE = re.compile(r"[\"“”]([^\"“”]+)[\"“”]")
 # tahmin ediyor, İngilizce sanıyordu.
 LANG = {
     "tr": ("tr-TR", "Language: Turkish. Native Turkish pronunciation and intonation."),
-    "en": ("en-US", "Language: English."),
+    "en": ("en-US", "Language: English. Natural English narration."),
 }
 DIL = "tr"
 
@@ -487,8 +487,9 @@ def transcribe(wav: bytes) -> str:
                     "parts": [
                         {"inlineData": {"mimeType": "audio/wav",
                                         "data": base64.b64encode(wav).decode()}},
-                        {"text": "Bu ses kaydını harfi harfine yazıya dök. "
-                                 "Yalnızca dökümü yaz; ses yoksa boş bırak."},
+                        {"text": "Transcribe this audio recording verbatim, in "
+                                 "its original language. Output only the "
+                                 "transcript; leave it empty if there is no speech."},
                     ]
                 }
             ]
@@ -502,8 +503,10 @@ def transcribe(wav: bytes) -> str:
 
 
 def _norm(t: str) -> str:
-    # Dökümdeki rakamlar yazıya çevrilir ("1660" = "bin altı yüz altmış").
-    t = re.sub(r"\d+", lambda m: tr_number(int(m.group())), t)
+    # Dökümdeki rakamlar yazıya çevrilir ("1660" = "bin altı yüz altmış";
+    # yalnız Türkçede: İngilizce metinlerde rakam yazıldığı gibi kalır).
+    if DIL == "tr":
+        t = re.sub(r"\d+", lambda m: tr_number(int(m.group())), t)
     t = t.replace("I", "ı").replace("İ", "i").lower()
     return re.sub(r"[^\wçğıöşüâîû ]+", " ", t)
 
@@ -625,6 +628,7 @@ def make_scene(lines: list[dict], where: str, notes: dict, lang: str, out_dir: p
     scenes: dict = {}
     for f in sorted(SCENES.glob("*.json")):
         scenes.update(json.loads(f.read_text()))
+    borrow_from_turkish(lang, lines, {}, scenes)
     spec = scenes.get(where) or {"sahne": DEFAULT_SCENES.get(where.split(":")[0], "")}
     ok = True
     for e, text, note in items:
@@ -698,6 +702,44 @@ def clean_existing(lang: str) -> None:
     print(f"{n} dosyada kalıntı silindi")
 
 
+def borrow_from_turkish(lang: str, lines: list[dict], notes: dict, scenes: dict) -> None:
+    """İngilizce satırlara Türkçe eşlerinin notlarını ve oyunculuk
+    tariflerini verir (aynı yerdeki aynı sıradaki satır). Notlardaki tek
+    tırnaklı Türkçe vurgu sözleri çıkarılır; duygu ve tempo tarifi kalır."""
+    if lang == "tr":
+        return
+    tr = json.loads(pathlib.Path("build/ses/satirlar_tr.json").read_text())
+    by_where: dict[str, list[str]] = {}
+    for e in tr:
+        by_where.setdefault(e["where"], []).append(e["id"])
+    seen: dict[str, int] = {}
+    pairs = {}
+    for e in lines:
+        k = seen.get(e["where"], 0)
+        seen[e["where"]] = k + 1
+        ids = by_where.get(e["where"], [])
+        if k < len(ids):
+            pairs[e["id"]] = ids[k]
+
+    def strip(n: str) -> str:
+        return re.sub(r"'[^']*'", "the matching words", n)
+
+    for en_id, tr_id in pairs.items():
+        if tr_id in notes:
+            spec = dict(notes[tr_id])
+            if "not" in spec:
+                spec["not"] = strip(spec["not"])
+            spec.pop("metin", None)
+            notes[en_id] = spec
+    for sc in scenes.values():
+        if not isinstance(sc, dict):
+            continue
+        oyun = sc.get("oyun", {})
+        for en_id, tr_id in pairs.items():
+            if tr_id in oyun:
+                oyun[en_id] = strip(oyun[tr_id])
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--dil", default="tr")
@@ -722,6 +764,7 @@ def main() -> None:
     notes: dict = {}
     for f in sorted(NOTES.glob("*.json")):
         notes.update(json.loads(f.read_text()))
+    borrow_from_turkish(a.dil, lines, notes, {})
 
     def wanted(e: dict) -> bool:
         if a.kimlik:

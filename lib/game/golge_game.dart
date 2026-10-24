@@ -2265,6 +2265,17 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     }
   }
 
+  /// Kameranın kısa bakışı: kol çekilince açılan kapıya bakar, sonra döner.
+  Vector2? _peekAt;
+  double _peekT = 0;
+  static const _peekLen = 1.4;
+
+  /// Kamera bir an [at] noktasına bakar (oyuncu yürümeyi sürdürür).
+  void peek(Vector2 at) {
+    _peekAt = at.clone();
+    _peekT = _peekLen;
+  }
+
   /// Kameranın suyu göstermek için indiği pay (yumuşatılmış).
   double _waterLook = 0;
 
@@ -2367,6 +2378,19 @@ class GolgeGame extends FlameGame with KeyboardEvents {
       target
         ..x = p.center.x + _lookAhead * 1.6
         ..y = _skiCamY - halfH * 0.32;
+    }
+    final peekAt = _peekAt;
+    if (peekAt != null && _peekT > 0) {
+      _peekT -= dt;
+      // Git, bekle, dön: 0 → 1 → 0.
+      final k = _peekT / _peekLen;
+      final w = k > 0.75
+          ? (1 - k) / 0.25
+          : k < 0.3
+          ? k / 0.3
+          : 1.0;
+      target.setFrom(target + (peekAt - target) * (w * w * (3 - 2 * w)));
+      if (_peekT <= 0) _peekAt = null;
     }
     target.x = level.pixelWidth <= halfW * 2
         ? level.pixelWidth / 2

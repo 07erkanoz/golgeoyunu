@@ -6,6 +6,7 @@ import 'dart:ui' as ui;
 import 'package:flame/components.dart';
 
 import 'ark_animals.dart';
+import 'feedback.dart';
 import 'audio.dart';
 import 'creatures.dart';
 import 'entities.dart';
@@ -182,6 +183,9 @@ class RottenPlank extends Deck {
   double _fall = 0;
   double _creak = 0;
 
+  /// Üstünde yürünen süreyle büyüyen çatlak (0 – 1).
+  double _strain = 0;
+
   @override
   bool get active => !broken;
 
@@ -195,9 +199,18 @@ class RottenPlank extends Deck {
     final p = game.player;
     if (p != null && p.riding == this && p.velocity.x.abs() > 20) {
       _creak -= dt;
+      // Basıldıkça çatlak büyür: tahtanın kırılabileceği görülür (yalnız
+      // Kandilci'nin ağırlığı kırar).
+      _strain = math.min(1, _strain + dt * 0.5);
       if (_creak <= 0) {
         _creak = 0.7;
         GameAudio.instance.play('creak', volume: 0.5);
+        game.dust(
+          Vector2(p.center.x, position.y + 9),
+          color: const Color(0xFF6A5236),
+          count: 4,
+          falling: true,
+        );
       }
     }
     for (final g in game.world.children.whereType<Guard>()) {
@@ -228,6 +241,25 @@ class RottenPlank extends Deck {
     if (!broken) {
       for (var i = 0; i < tiles; i++) {
         _board(canvas, i * kTile.toDouble(), i);
+      }
+      // Çatlaklar: basıldıkça uzar.
+      if (_strain > 0.05) {
+        final crack = Paint()
+          ..color = const Color(0xFF0E0906).withValues(alpha: 0.85)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.2;
+        for (var i = 0; i < tiles; i++) {
+          final x = i * kTile + kTile * 0.5;
+          final len = 3 + 9 * _strain;
+          canvas.drawPath(
+            Path()
+              ..moveTo(x - len, 2)
+              ..lineTo(x - len * 0.3, 5)
+              ..lineTo(x + len * 0.2, 3)
+              ..lineTo(x + len, 7),
+            crack,
+          );
+        }
       }
       // İki uçta paslı çivi ve sarkan kopuk ip.
       final rope = Paint()
