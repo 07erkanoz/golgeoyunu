@@ -215,6 +215,10 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
           _light(canvas, u.glowCenter, u.glowRadius, 0.45 + 0.4 * u.lit);
         case Bird b:
           _light(canvas, b.position.toOffset().translate(0, -6), 60, 0.6);
+        case Gate g:
+          for (final at in g.litLamps) {
+            _light(canvas, at, 64, 0.55);
+          }
         case Lever l when !l.pulled:
           _light(canvas, l.position.toOffset().translate(0, -14), 46, 0.5);
         case Watcher w when w.dazzled > 0:

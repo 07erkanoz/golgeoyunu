@@ -137,6 +137,7 @@ class Guard extends PositionComponent
     final dip = 1 - 0.04 * math.sin(math.pi * u);
     return (u < 0.5 ? -mag : mag, dip);
   }
+
   int _drawnFacing = -1;
   double _life = 0;
 
@@ -1678,6 +1679,7 @@ class Gate extends PositionComponent
       _lift = _height;
       _announced = true;
       _strain = strainTime;
+      _lampT = 9;
     }
     return [this];
   }
@@ -1694,6 +1696,22 @@ class Gate extends PositionComponent
   /// kapı kalkarken zincir makaraya sarılır, makara döner.
   static const strainTime = 0.55;
   double _strain = 0;
+
+  /// Kurtarılan ışık: kapı tam açılınca iki yanındaki kandiller sırayla
+  /// tutuşur ve yanık kalır (kayıtla açık gelen kapıda da). Bulmacanın
+  /// dünyada izi.
+  double _lampT = -1;
+  static const lampOffsets = [Offset(-15, 6), Offset(31, 6)];
+
+  /// Yanan kandillerin dünyadaki yerleri (ışık katmanı için).
+  Iterable<Offset> get litLamps sync* {
+    for (var i = 0; i < 2; i++) {
+      if (_lampT >= i * 0.4 + 0.3) {
+        yield Offset(position.x, position.y) + lampOffsets[i];
+      }
+    }
+  }
+
   double _t = 0;
   double _chainLen = 3 * kTile.toDouble();
 
@@ -1715,6 +1733,21 @@ class Gate extends PositionComponent
   void update(double dt) {
     super.update(dt);
     _t += dt;
+    if (_lampT >= 0 && _lampT < 9) {
+      final was = _lampT;
+      _lampT += dt;
+      for (var i = 0; i < 2; i++) {
+        final at = i * 0.4 + 0.3;
+        if (was < at && _lampT >= at) {
+          game.world.add(
+            LightAbsorb(
+              (position + Vector2(lampOffsets[i].dx, lampOffsets[i].dy)),
+            ),
+          );
+          GameAudio.instance.play('firefly', volume: 0.35);
+        }
+      }
+    }
     if (opening && _lift == 0 && _strain < strainTime) {
       if (_strain == 0) {
         // Kamera kapıya odaklanır; açılış bitip yolda ışık akana dek kalır.
@@ -1734,6 +1767,7 @@ class Gate extends PositionComponent
       // ışık (ne değişti, nereye gidilir).
       if (_lift >= _height && !_announced) {
         _announced = true;
+        _lampT = 0;
         GameAudio.instance.play('solve', volume: 0.8);
         final p = game.player;
         final dir = p == null || p.center.x < position.x + size.x / 2 ? 1 : -1;
@@ -1778,7 +1812,11 @@ class Gate extends PositionComponent
         );
       } else {
         canvas.drawLine(Offset(x, y - 3.6), Offset(x, y + 3.6), link);
-        canvas.drawLine(Offset(x - 0.7, y - 2.4), Offset(x - 0.7, y + 2.4), shine);
+        canvas.drawLine(
+          Offset(x - 0.7, y - 2.4),
+          Offset(x - 0.7, y + 2.4),
+          shine,
+        );
       }
     }
     // Makara.
@@ -1798,17 +1836,52 @@ class Gate extends PositionComponent
       ..color = const Color(0xFF6A5444);
     for (var k = 0; k < 3; k++) {
       final a = turn + k * math.pi / 1.5;
-      canvas.drawLine(
-        hub,
-        hub + Offset(math.cos(a), math.sin(a)) * 4.6,
-        spoke,
+      canvas.drawLine(hub, hub + Offset(math.cos(a), math.sin(a)) * 4.6, spoke);
+    }
+  }
+
+  /// Lentonun iki yanındaki asılı kandiller: sönükken kararmış pirinç,
+  /// yanınca titreyen alev.
+  void _lamps(Canvas canvas) {
+    final brass = Paint()..color = const Color(0xFF5A4028);
+    final hook = Paint()
+      ..strokeWidth = 0.9
+      ..color = const Color(0xFF2A2018);
+    for (var i = 0; i < 2; i++) {
+      final o = lampOffsets[i];
+      final lit = (_lampT - i * 0.4 - 0.3).clamp(0.0, 1.0);
+      canvas.drawLine(Offset(o.dx, -8), Offset(o.dx, o.dy - 3), hook);
+      canvas.drawPath(
+        Path()
+          ..moveTo(o.dx - 4.5, o.dy - 2)
+          ..quadraticBezierTo(o.dx, o.dy + 5, o.dx + 4.5, o.dy - 2)
+          ..close(),
+        brass,
       );
+      if (lit > 0) {
+        final f = 0.85 + 0.15 * math.sin(_t * 13 + i * 2) * math.sin(_t * 5.3);
+        glowDot(canvas, Offset(o.dx, o.dy - 5), 16, kWarmLight, 0.6 * lit * f);
+        canvas.drawPath(
+          Path()
+            ..moveTo(o.dx - 1.6, o.dy - 2.5)
+            ..quadraticBezierTo(
+              o.dx - 1.2,
+              o.dy - 6,
+              o.dx + math.sin(_t * 7 + i) * 0.6,
+              o.dy - 9 * f,
+            )
+            ..quadraticBezierTo(o.dx + 1.2, o.dy - 6, o.dx + 1.6, o.dy - 2.5)
+            ..close(),
+          Paint()..color = const Color(0xFFFFE0A0).withValues(alpha: lit),
+        );
+      }
     }
   }
 
   @override
   void render(Canvas canvas) {
     _chain(canvas);
+    _lamps(canvas);
     // Taş lento: iki iri yonu taşı, kapı onun içine kalkar.
     for (final (x, w) in const [(-10.0, 18.0), (8.0, 18.0)]) {
       final r = Rect.fromLTWH(x, -11, w, 11);
