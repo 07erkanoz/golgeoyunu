@@ -1890,6 +1890,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
       _updateHints(p, dt);
       _updateBard(dt);
       _updateTreeTales(p, dt);
+      _updateSurprises(p);
     } else {
       threat = math.max(0, threat - dt * 2);
       hideAmount = math.max(0, hideAmount - dt * 2);
@@ -1913,6 +1914,27 @@ class GolgeGame extends FlameGame with KeyboardEvents {
   /// yeniden oynamaz.
   bool eventSeen(String key) => _whispersShown.contains('event:$key');
   void markEvent(String key) => _whispersShown.add('event:$key');
+
+  // ---------------------------------------------------- sırlar, sürprizler
+  // Küçük sürprizler oyun başına bir kez olur (kayıtla); bulunan sırlar
+  // oyundan oyuna kalır, Defter'de sayılır (bkz. docs/SIRLAR_PLANI.md).
+
+  /// Bu oyunda bu sürpriz oldu mu.
+  bool secretSeen(String name) => eventSeen('sir:$levelIndex:$name');
+
+  /// Sürpriz oldu: bu oyunda bir daha olmaz, sır sayacına eklenir.
+  void foundSecret(String name) {
+    markEvent('sir:$levelIndex:$name');
+    if (Settings.secrets.add('$levelIndex:$name')) Settings.save();
+  }
+
+  /// Şu an sürpriz için güvenli mi: tehlike yok, perde ya da giriş yok.
+  bool get calmMoment =>
+      !cinematic &&
+      threat < 0.1 &&
+      !world.children.whereType<Guard>().any(
+        (g) => g.state == GuardState.alert || g.state == GuardState.chase,
+      );
 
   /// [story] false: oynanışı da anlatan söz (düzeneğin şiiri, kovalamaca,
   /// binek); hikâye fısıltıları kapalıyken de söylenir.
@@ -1956,6 +1978,36 @@ class GolgeGame extends FlameGame with KeyboardEvents {
 
   /// Sâye bir Umay ağacının yanında bir süre durursa ağaç o yerin
   /// rivayetini anlatır (sırayla, her biri bir kez); uzaklaşınca susar.
+  /// Küçük sürprizler (S1): sakin anlarda, bölüm başına bir kez.
+  void _updateSurprises(Player p) {
+    if (!calmMoment || p.isDead) return;
+    // S1a · Utangaç gölge: Yerebatan'da, ilk kontrol noktasından sonra,
+    // koşarken birden durunca.
+    if (level.def.theme == LevelTheme.cistern &&
+        p.justStoppedRunning &&
+        !p.hidden &&
+        !secretSeen('utangac') &&
+        level.checkpointCells.isNotEmpty &&
+        p.center.x > level.checkpointCells.first.x + 4 * kTile &&
+        _clearAhead(p, 3 * kTile)) {
+      if (p.shadowShy()) foundSecret('utangac');
+    }
+  }
+
+  /// Sâye'nin önü (baktığı yönde) [reach] boyunca ön plan sütunu ya da duvar
+  /// olmadan açık mı: önden geçen gölge sürprizi görünsün.
+  bool _clearAhead(Player p, double reach) {
+    final row = ((p.position.y + Player.h / 2) / kTile).floor();
+    for (var d = 0.0; d <= reach; d += kTile / 2) {
+      final c = ((p.center.x + p.facing * d) / kTile).floor();
+      for (final r in [row - 1, row]) {
+        final ch = level.cell(c, r);
+        if (ch == 'I' || ch == '#') return false;
+      }
+    }
+    return true;
+  }
+
   void _updateTreeTales(Player p, double dt) {
     final told = _tellingTree;
     if (told != null && (told.x + kTile / 2 - p.center.x).abs() > 6 * kTile) {

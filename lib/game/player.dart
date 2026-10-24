@@ -1453,6 +1453,55 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     }
   }
 
+  // ------------------------------------------------- utangaç gölge
+  // Sürpriz: Sâye koşarken birden durunca gölgesi iki adım daha gider, durur,
+  // dönüp ona bakar, utangaçça geri koşup yerine girer.
+
+  /// Koşma süresi (durunca sürpriz için).
+  double _runFor = 0;
+
+  /// Sâye koşarken az önce durdu mu (sürprizi tetiklemek için).
+  bool get justStoppedRunning => _stoppedT > 0;
+  double _stoppedT = 0;
+
+  /// Testler için: ayrılan gölgenin yeri ve hâli.
+  String get debugShadow => '${_mood.name} x=${_shadowX.toStringAsFixed(0)} t=${_moodT.toStringAsFixed(2)}';
+
+  /// Gölge utangaç sürprizi oynar; gölge serbest değilse (korkudan geride
+  /// kalıyor, gönderilmiş…) oynamaz ve false döner.
+  bool shadowShy() {
+    if (isDead || _mood != _ShadowMood.follow) return false;
+    _mood = _ShadowMood.shy;
+    _moodT = 0;
+    _shadowX = center.x - facing * 20;
+    _shadowY = position.y + h;
+    _shadowFacing = facing;
+    _shadowFade = 1;
+    return true;
+  }
+
+  void _updateShy(double dt) {
+    final home = center.x - facing * 20;
+    if (_moodT < 0.6) {
+      // Durmayı kaçırır: iki adım daha (yaklaşık 60 piksel), yavaşlayarak.
+      final v = _moodT < 0.35 ? 130.0 : 130.0 * (1 - (_moodT - 0.35) / 0.25);
+      final step = math.max(0.0, v) * dt;
+      _shadowX += _shadowFacing * step;
+      _shadowGait += step / 26;
+    } else if (_moodT > 1.0 && _moodT < 1.7) {
+      // Fark eder, döner, Sâye'ye bakar.
+      _shadowFacing = home >= _shadowX ? 1 : -1;
+    } else if (_moodT >= 1.7) {
+      // Utangaçça koşup yerine girer.
+      final dx = home - _shadowX;
+      final step = 190 * dt;
+      _shadowFacing = dx >= 0 ? 1 : -1;
+      _shadowX += dx.abs() < step ? dx : dx.sign * step;
+      _shadowGait += step / 20;
+      if (dx.abs() < 2 || _moodT > 4) _mood = _ShadowMood.follow;
+    }
+  }
+
   /// Korku anında gölgenin tepkisi: güçlü korkuda ayrılıp gider, hafifte
   /// geriden gelir.
   void shadowFright(double amount) {
@@ -1515,6 +1564,15 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
   Vector2 get lightVisual => _jarWorld ?? light.$1;
 
   void _updateShadow(double dt) {
+    // Koşup birden durmayı algıla (utangaç gölge sürprizi için).
+    final speed = velocity.x.abs();
+    _stoppedT = math.max(0, _stoppedT - dt);
+    if (onGround && state == PlayerState.normal && speed > runSpeed * 0.75) {
+      _runFor += dt;
+    } else if (speed < 8) {
+      if (_runFor > 0.35 && onGround) _stoppedT = 0.3;
+      _runFor = 0;
+    }
     _trail.add((_anim, center.x, position.y + h));
     while (_trail.length > 2 && _anim - _trail.first.$1 > 1.2) {
       _trail.removeAt(0);
@@ -1527,6 +1585,8 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
         if (_moodT > 4.5) _mood = _ShadowMood.follow;
       case _ShadowMood.sent:
         _updateSent(dt);
+      case _ShadowMood.shy:
+        _updateShy(dt);
       case _ShadowMood.astray:
         // 0–0.6 sn donar; sonra ters yöne yürüyüp solar; 2.6'da durur,
         // 3.2'de döner ve bakar; 4.0'dan sonra hızla geri gelir.
@@ -1580,6 +1640,12 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
         dirFacing = _shadowFacing;
         walking = (_moodT > 0.6 && _moodT < 2.6) || _moodT >= 4.0;
         alpha *= _shadowFade * 1.5;
+      case _ShadowMood.shy:
+        // Utangaç gölge: şaka okunsun diye koyu ve seçik.
+        foot = Offset(_shadowX - position.x, _shadowY - position.y);
+        dirFacing = _shadowFacing;
+        walking = _moodT < 0.6 || _moodT >= 1.7;
+        alpha *= 1.7;
       case _ShadowMood.sent:
         // Gönderilen gölge: koyu ve seçik (Kandilci onu görecek).
         foot = Offset(_shadowX - position.x, _shadowY - position.y);
@@ -1589,7 +1655,9 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     }
     // Gölgenin kendi duruşu: ayrıldığında yürür, Sâye dursa bile.
     final saved = (facing, velocity.x, _gait, onGround, state);
-    if (mood == _ShadowMood.astray || mood == _ShadowMood.sent) {
+    if (mood == _ShadowMood.astray ||
+        mood == _ShadowMood.sent ||
+        mood == _ShadowMood.shy) {
       facing = dirFacing;
       state = PlayerState.normal;
       onGround = true;
@@ -1608,7 +1676,7 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     );
     // Gönderilen gölge seçik ve Sâye boyuna yakın: Kandilci de oyuncu da
     // onu bir çocuk sanmalı.
-    final sent = mood == _ShadowMood.sent;
+    final sent = mood == _ShadowMood.sent || mood == _ShadowMood.shy;
     final blur = sent ? 0.7 : 2.2;
     canvas.saveLayer(
       bounds,
@@ -2513,4 +2581,4 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
   }
 }
 
-enum _ShadowMood { follow, lag, astray, sent }
+enum _ShadowMood { follow, lag, astray, sent, shy }

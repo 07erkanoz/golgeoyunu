@@ -71,6 +71,10 @@ class Settings {
   /// İzlenmiş perdeler: "prologue" ya da perdenin ardındaki bölümün sırası.
   static final seenPerde = <String>{};
 
+  /// Bulunan sırlar ve sürprizler ("bölüm:ad"): oyundan oyuna kalır;
+  /// Defter'de kaç tanesinin bulunduğu görünür (yerleri söylenmez).
+  static final secrets = <String>{};
+
   /// Yazı büyüklüğü (0.8 – 1.6): fısıltı, ipucu, efsane kartı ve perde
   /// satırları bununla büyür.
   static double textScale = 1.0;
@@ -192,6 +196,9 @@ class Settings {
       seenPerde
         ..clear()
         ..addAll(_read(() => p.getStringList('seen_perde')) ?? const []);
+      secrets
+        ..clear()
+        ..addAll(_read(() => p.getStringList('secrets')) ?? const []);
       // Kayıtlı bir tercih yoksa cihazın dili: Türkçe değilse İngilizce.
       final lang = _read(() => p.getString('lang'));
       S.lang = switch (lang) {
@@ -273,6 +280,7 @@ class Settings {
       await p.setBool('hint_intro_seen', hintIntroSeen);
       await p.setBool('skip_seen_perde', skipSeenPerde);
       await p.setStringList('seen_perde', seenPerde.toList());
+      await p.setStringList('secrets', secrets.toList());
       await p.setInt('unlockedOrder', levelOrderVersion);
       await p.setInt('settings_v', _version);
     } catch (_) {
