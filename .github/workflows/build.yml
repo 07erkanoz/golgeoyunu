@@ -1,9 +1,17 @@
-name: Derleme (Windows, Android, Linux)
+name: Derleme (Android; istenirse Windows ve Linux)
 
+# Her gönderimde yalnız Android derlenir (GitHub'ın ücretsiz Actions
+# depolaması 0,5 GB; her derlemenin ara dosyaları onu dolduruyordu).
+# Windows ve Linux elle: Actions → Derleme → Run workflow → masaustu: true.
 on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      masaustu:
+        description: Windows ve Linux da derlensin
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -22,6 +30,7 @@ env:
 
 jobs:
   windows:
+    if: ${{ inputs.masaustu }}
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -40,6 +49,8 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: windows
+          # Ara dosya: sürüm sayfasına konunca gereksiz; bir gün tutulur.
+          retention-days: 1
           path: GolgeOyunu-windows.zip
 
   android:
@@ -93,9 +104,12 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: android
+          # Ara dosya: sürüm sayfasına konunca gereksiz; bir gün tutulur.
+          retention-days: 1
           path: GolgeOyunu-android-arm64.apk
 
   linux:
+    if: ${{ inputs.masaustu }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -132,6 +146,8 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: linux
+          # Ara dosya: sürüm sayfasına konunca gereksiz; bir gün tutulur.
+          retention-days: 1
           path: GolgeOyunu-linux-x64.tar.gz
 
   # Testler derlemeyi beklemez, yanında üç parça hâlinde aynı anda koşar:
@@ -170,6 +186,8 @@ jobs:
   # aynı sürüme eklenir (Linux'un paket indirmesi takılırsa ötekiler beklemez).
   release:
     needs: [windows, android]
+    # Windows derlenmediyse (atlandıysa) yalnız Android yayımlanır.
+    if: ${{ !cancelled() && needs.android.result == 'success' && needs.windows.result != 'failure' }}
     runs-on: ubuntu-latest
     outputs:
       tag: ${{ steps.tag.outputs.name }}
