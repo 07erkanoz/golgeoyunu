@@ -69,7 +69,7 @@ class _IntroOverlayState extends State<IntroOverlay>
       if (t >= beat && _played.add(key)) play();
     }
 
-    at(IntroBeats.strike, 'kibrit', () => a.play('match', volume: 0.8));
+    at(IntroBeats.strike, 'kibrit', () => a.play('match', volume: 0.6));
     at(IntroBeats.lampUp, 'alev', () => a.play('fire', volume: 0.25));
     at(IntroBeats.sayeIn, 'ney', () => a.perde(true));
     at(IntroBeats.shadowStep, 'adım', () => a.play('breath', volume: 0.3));
