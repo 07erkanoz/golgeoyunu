@@ -15,6 +15,7 @@ import 'auto_quality.dart';
 import 'anlatim_plani.dart';
 import 'entrance.dart';
 import 'feedback.dart';
+import 'shadow_decoy.dart';
 import 'creatures.dart';
 import 'frame_pacer.dart';
 import 'mechanics.dart';
@@ -996,6 +997,8 @@ class GolgeGame extends FlameGame with KeyboardEvents {
           if (level.eyeStoneCells.isNotEmpty) PerdeCord(c - Vector2(kTile, 0)),
         ],
         for (final c in level.eyeStoneCells) EyeStone(c),
+        for (final (c, r) in level.def.shadowStones)
+          ShadowStone(Vector2(c * kTile.toDouble(), r * kTile.toDouble())),
         for (final (c, r, n) in level.glowRuns)
           PhasePlank(Vector2(c * kTile, r * kTile.toDouble()), n, shade: false),
         // Gölge köprüsü ikişer karelik parçalardan: ışık yalnızca değdiği
@@ -2052,6 +2055,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         TulparMount t when near(t, 5, 4) && !onHorse => 'tulpar',
         Valve v when near(v, 4, 3) => 'valve',
         PerdeCord k when near(k, 4, 3) => 'cord',
+        ShadowStone k when near(k, 4, 3) => 'shadowStone',
         ArkScale s when near(s.lift.a, 6, 4) || near(s.lift.b, 6, 4) => 'scale',
         EyeStone e when near(e, 5, 3) => 'eyeStone',
         Mirror m when near(m, 5, 4) => 'mirror',

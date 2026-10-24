@@ -5,6 +5,7 @@ import 'dart:ui' as ui;
 import 'package:flame/components.dart';
 
 import 'feedback.dart';
+import 'shadow_decoy.dart';
 import 'audio.dart';
 import 'golge_game.dart';
 import 'levels.dart';
@@ -48,7 +49,7 @@ class Guard extends PositionComponent
   double _lost = 0;
   double _lastSeenX = 0;
   double? _investigateX;
-  FireflyLure? _lure;
+  Lure? _lure;
 
   Level get level => game.level;
 
@@ -327,6 +328,23 @@ class Guard extends PositionComponent
       _setState(GuardState.investigate);
       // Kandilci ışığı fark etti: feneriyle ona bakar (kısa bir bakış çizgisi).
       game.world.add(GazeLine(_lantern.clone(), lure));
+      return;
+    }
+    // Gönderilen gölge: yalnız fenerin baktığı yerde görülür.
+    for (final d in game.world.children.whereType<ShadowDecoy>()) {
+      if (!d.glowing || identical(_lure, d)) continue;
+      final dx = d.position.x - center.x;
+      final dy = d.position.y - _lantern.y;
+      if (dx * facing < 0) continue;
+      if (dx.abs() > viewDistance * 1.15) continue;
+      if (dy.abs() > dx.abs() * 0.5 + 60) continue;
+      if (!level.lineOfSight(_lantern, d.position)) continue;
+      _lure = d;
+      _investigateX = null;
+      suspicion = 0;
+      _setState(GuardState.investigate);
+      game.world.add(GazeLine(_lantern.clone(), d));
+      d.noticed(this);
       return;
     }
   }
@@ -1223,7 +1241,14 @@ class ExitPortal extends PositionComponent with HasGameReference<GolgeGame> {
 
 /// Kavanozdan salınan ateşböceği: ileri uçar, bir süre havada süzülüp parlar.
 /// Kandilciler ışığını görünce ona yönelir.
-class FireflyLure extends PositionComponent with HasGameReference<GolgeGame> {
+/// Kandilcinin dikkatini çeken şey (ateşböceği ışığı, gönderilen gölge):
+/// parladığı sürece Kandilci ona dalar, çocuğu görmez.
+mixin Lure on PositionComponent {
+  bool get glowing;
+}
+
+class FireflyLure extends PositionComponent
+    with HasGameReference<GolgeGame>, Lure {
   FireflyLure(Vector2 from, int direction)
     : _vel = Vector2(direction * 380.0, -80),
       super(position: from.clone(), priority: 22);
@@ -1246,6 +1271,7 @@ class FireflyLure extends PositionComponent with HasGameReference<GolgeGame> {
     removeFromParent();
   }
 
+  @override
   bool get glowing => _t < life - 0.6;
 
   /// Salındığından beri geçen süre.

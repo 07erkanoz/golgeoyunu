@@ -162,7 +162,11 @@ class LevelDef {
     this.lifeTree,
     this.legends = const [],
     this.gokboruRun = false,
+    this.shadowStones = const [],
   });
+
+  /// Gölge taşları (sütun, satır): üstünde ↑ ile gölge önden gönderilir.
+  final List<(int, int)> shadowStones;
 
   /// Kayak bölümünde çığ uyanınca Gökbörü önde koşup güvenli hattı gösterir.
   final bool gokboruRun;
@@ -1809,6 +1813,8 @@ const levels = <LevelDef>[
       'Memory · One night my master answered a question I had never asked: "You are not my shadow, Saye. You are my prayer."',
     ],
     map: kMapDerinkuyu,
+    // İki Kandilcinin koridoru: gölge önden gider, onlar ona bakarken geçilir.
+    shadowStones: [(206, 23)],
   ),
   LevelDef(
     title: 'XIX · ŞEB-İ ARÛS',

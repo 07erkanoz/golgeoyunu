@@ -170,6 +170,7 @@ class Hints {
     'valve': '{up} Vanayı çevir',
     'scale': 'Terazi · eşleri iki kefeye koy · ağırlıklar denk gelmeli · {up} kol teraziyi boşaltır',
     'cord': '{up} İpi çek · kandil perdenin ardında kayar',
+    'shadowStone': '{up} Gölgeni önden gönder · Kandilciler ona bakarken geç',
     'eyeStone': 'Dev gölgenin başı perdedeki göze · kavanozunun ışığı taştaki göze · ikisi birden: kapı açılır',
     'lift': 'Bir kefeye sandık koy · öteki yükselir',
     'rotten': 'Çürük tahta seni taşır · Kandilci\'yi taşımaz',
@@ -258,6 +259,7 @@ class Hints {
     'scale':
         'The scales · put the pair on the two pans · the weights must match',
     'cord': '{up} Pull the cord · the lamp slides behind the screen',
+    'shadowStone': '{up} Send your shadow ahead · slip past while the Lamplighters watch it',
     'eyeStone': 'The giant shadow\'s head on the eye in the screen · your jar\'s light on the eye in the stone · both at once: the gate opens',
     'lift': 'Put a crate on one pan · the other rises',
     'rotten': 'Rotten planks hold you · not a Lamplighter',
