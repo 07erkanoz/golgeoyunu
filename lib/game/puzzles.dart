@@ -1423,7 +1423,7 @@ class PerdeCord extends PositionComponent
 
   @override
   bool canUse(Vector2 p) =>
-      (p - position).x.abs() < 24 && (p - position).y.abs() < 44;
+      (p - position).x.abs() < 30 && (p - position).y.abs() < 44;
 
   @override
   void use() {
@@ -1438,7 +1438,12 @@ class PerdeCord extends PositionComponent
     }
     best?.pull();
     _tug = 1;
+    _pulled = true;
   }
+
+  /// İlk çekilene dek ip kendini belli eder: püskülde ılık ışık, ipten
+  /// aşağı süzülen bir ışık tanesi.
+  bool _pulled = false;
 
   @override
   void update(double dt) {
@@ -1456,7 +1461,34 @@ class PerdeCord extends PositionComponent
     final rope = Paint()
       ..color = kInk
       ..strokeWidth = 1.6;
-    canvas.drawLine(const Offset(0, -6 * kTile), end, rope);
+    const top = Offset(0, -6 * kTile);
+    if (!_pulled) {
+      final pulse = 0.6 + 0.4 * math.sin(_t * 3);
+      final c = end + const Offset(0, 5);
+      canvas.drawCircle(
+        c,
+        28,
+        Paint()
+          ..shader = ui.Gradient.radial(c, 28, [
+            const Color(0xFFFFC27A).withValues(alpha: 0.5 * pulse),
+            const Color(0x00FFC27A),
+          ]),
+      );
+      // Koyu taşta ip seçilsin: yanında ince ılık bir parlaklık.
+      canvas.drawLine(
+        top + const Offset(1.2, 0),
+        end + const Offset(1.2, 0),
+        Paint()
+          ..color = const Color(0xFFC89A62).withValues(alpha: 0.45)
+          ..strokeWidth = 1,
+      );
+      final k = (_t % 2.6) / 1.6;
+      if (k < 1) {
+        final bead = Offset.lerp(top, end, k * k)!;
+        glowDot(canvas, bead, 7, kWarmLight, 0.8 * math.sin(k * math.pi));
+      }
+    }
+    canvas.drawLine(top, end, rope);
     canvas.drawPath(
       Path()
         ..moveTo(end.dx - 1.5, end.dy)
@@ -1464,7 +1496,8 @@ class PerdeCord extends PositionComponent
         ..lineTo(end.dx + 3.5, end.dy + 9)
         ..lineTo(end.dx - 3.5, end.dy + 9)
         ..close(),
-      Paint()..color = const Color(0xFF6A3A1E),
+      Paint()
+        ..color = _pulled ? const Color(0xFF6A3A1E) : const Color(0xFFC0782E),
     );
     canvas.drawCircle(end, 2.4, Paint()..color = kInk);
   }

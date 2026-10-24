@@ -881,6 +881,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
       restorePuzzle([
         TerrainComponent(level),
         if (SurfaceEdge.wants(level.def.theme)) SurfaceEdge(level),
+        UsePrompt(),
         LightingLayer(),
         LightShafts(),
         RealismLayer(),
@@ -1880,8 +1881,6 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     if (_whispersShown.contains(id)) return;
     _whispersShown.add(id);
     narration.hint(Hints.text(key), queue: true);
-    final poem = Hints.poem(key);
-    if (poem.isNotEmpty) once('poem:$key', poem, story: false);
   }
 
   // ------------------------------------------------- Umay ağacı rivayetleri
@@ -1964,10 +1963,6 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         Hints.text(key),
         onShown: () {
           if (!_whispersShown.add(id)) return;
-          // Bazı düzeneklerin kuralı bir de şiirle, hikâyenin içinde
-          // anlatılır.
-          final poem = Hints.poem(key);
-          if (poem.isNotEmpty) once('poem:$key', poem, story: false);
           // Düzeneğin ardındaki efsane Defter'e yazılır.
           final legend = _hintLegends[key];
           if (legend != null) meetMyth(legend);

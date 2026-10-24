@@ -381,8 +381,9 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     final quiet = sneaking || crouching;
     if (onGround && !wasOnGround) {
       if (impact > 420) _landDip = 0.16;
-      // Sert inişte zeminden toz (karda kar tozu): iniş noktası seçilir.
-      if (impact > 380) {
+      // Yalnız yüksekten inişte zeminden birkaç zerre (karda kar tozu); düz
+      // zıplayıştan inişte toz kalkmaz.
+      if (impact > 680) {
         // Taşta toz, karda kar tozu, sarnıcın ıslak taşında su damlası.
         final theme = game.level.def.theme;
         game.dust(
@@ -392,7 +393,7 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
               : theme == LevelTheme.cistern && !_onWalkway
               ? const Color(0xFF9FC4C8)
               : null,
-          count: (impact / 60).clamp(6, 14).round(),
+          count: (impact / 120).clamp(4, 7).round(),
         );
       }
       if (impact > 420 && !quiet) _noise(220);

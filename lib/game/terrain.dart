@@ -1171,13 +1171,32 @@ Picture _buildForeground(Level lv, int c0, int c1, int r0, int r1) {
       }
       if (lv.cell(c, r) == 'I') {
         final top = _ceilingBottom(lv, c);
-        _column(
-          canvas,
-          c * kTile + kTile / 2,
-          top + 40,
-          _floorTop(lv, c, r + 1),
-          cartoon: Cartoon.on && lv.def.theme == LevelTheme.cistern,
-        );
+        final floor = _floorTop(lv, c, r + 1);
+        final fr = (floor / kTile).round();
+        final cx = c * kTile + kTile / 2;
+        final cartoon = Cartoon.on && lv.def.theme == LevelTheme.cistern;
+        if (fr < lv.height && lv.cell(c, fr) == 'w') {
+          // Sudaki sütun yüzeyde bitmez, suya girer ve derinde solar: salın
+          // (ve üstündeki Sâye'nin) önünde kalır, ikisi birlikte ardında
+          // saklanır.
+          const depth = 44.0;
+          final area = Rect.fromLTRB(cx - 40, top, cx + 40, floor + depth);
+          canvas.saveLayer(area, Paint());
+          _column(canvas, cx, top + 40, floor + depth, cartoon: cartoon);
+          canvas.drawRect(
+            area,
+            Paint()
+              ..blendMode = BlendMode.dstIn
+              ..shader = ui.Gradient.linear(
+                Offset(cx, floor),
+                Offset(cx, floor + depth),
+                const [Color(0xFF000000), Color(0x00000000)],
+              ),
+          );
+          canvas.restore();
+          continue;
+        }
+        _column(canvas, cx, top + 40, floor, cartoon: cartoon);
         continue;
       }
       if (lv.cell(c, r) != '~') continue;

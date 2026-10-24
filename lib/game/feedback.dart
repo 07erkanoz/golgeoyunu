@@ -4,9 +4,12 @@ import 'dart:ui' as ui;
 import 'package:flame/components.dart';
 import 'package:flutter/painting.dart';
 
+import 'entities.dart';
 import 'golge_game.dart';
 import 'level.dart';
 import 'levels.dart';
+import 'player.dart';
+import 'puzzles.dart' show Usable;
 
 /// Oyuncuya "ne oldu, neden oldu, ne değişti" diyen küçük görsel tepkiler:
 /// inişte toz, kopacak taştan dökülen kırıntı, koldan kapıya akan ışık.
@@ -34,8 +37,8 @@ class DustPuff extends Component {
                 side * (spread * 0.4 + rnd.nextDouble() * spread),
                 -(8 + rnd.nextDouble() * 26),
               ),
-        0.5 + rnd.nextDouble() * 0.4,
-        1.5 + rnd.nextDouble() * 2.5,
+        0.4 + rnd.nextDouble() * 0.35,
+        0.8 + rnd.nextDouble() * 1.1,
       ));
     }
   }
@@ -63,8 +66,9 @@ class DustPuff extends Component {
       final slow = falling ? _t : (1 - math.exp(-_t * 4)) / 4;
       final p =
           _at + o + v * slow + Offset(0, falling ? 90 * _t * _t : 20 * _t * _t);
-      paint.color = color.withValues(alpha: 0.75 * (1 - k));
-      canvas.drawCircle(p, r * (falling ? 0.9 : 1.2 + k * 2), paint);
+      // Ayrı ayrı zerreler: büyüyüp bulut olmazlar.
+      paint.color = color.withValues(alpha: 0.6 * (1 - k));
+      canvas.drawCircle(p, r * (falling ? 0.9 : 1 + k * 0.5), paint);
     }
   }
 }
@@ -265,7 +269,7 @@ class PathLight extends Component {
     );
     canvas.drawCircle(
       head,
-      16,
+      20,
       Paint()
         ..shader = ui.Gradient.radial(head, 16, [
           warm.withValues(alpha: 0.6 * fade),
@@ -335,6 +339,84 @@ class SurfaceEdge extends Component with HasGameReference<GolgeGame> {
         canvas.drawLine(Offset(x, y + 0.8), Offset(x + kTile, y + 0.8), line);
       }
     }
+  }
+}
+
+/// Kullanılabilen bir nesnenin (ip, kol, vana…) önüne gelince Sâye'nin başı
+/// hizasında, nesnenin üstünde beliren küçük "↑" düğmesi: ne yapılacağı
+/// yazısız anlaşılsın. Klavyede ↑, dokunmatikte yukarı düğmesiyle aynı işaret.
+class UsePrompt extends Component with HasGameReference<GolgeGame> {
+  UsePrompt() : super(priority: 30);
+
+  double _a = 0;
+  double _t = 0;
+  double _x = 0;
+
+  /// Şu an kullanılabilecek nesnenin dünya x'i; yoksa null.
+  double? _target() {
+    final p = game.player;
+    if (p == null || p.isDead || p.state != PlayerState.normal || !p.onGround) {
+      return null;
+    }
+    final c = p.center;
+    for (final l in game.world.children.whereType<Lever>()) {
+      if (!l.pulled && l.near(c)) return l.position.x;
+    }
+    for (final u in game.world.children.whereType<Usable>()) {
+      if (u.canUse(c)) return u.position.x;
+    }
+    return null;
+  }
+
+  @override
+  void update(double dt) {
+    _t += dt;
+    final x = _target();
+    if (x != null) _x = _a < 0.05 ? x : _x + (x - _x) * math.min(1, dt * 12);
+    _a = (_a + (x != null ? dt * 4 : -dt * 5)).clamp(0.0, 1.0);
+  }
+
+  @override
+  void render(Canvas canvas) {
+    final p = game.player;
+    if (_a <= 0.01 || p == null) return;
+    final bob = math.sin(_t * 3.2) * 2;
+    final at = Offset(_x, p.position.y - 18 + bob);
+    final pulse = 0.75 + 0.25 * math.sin(_t * 4.4);
+    canvas.drawCircle(
+      at,
+      20,
+      Paint()
+        ..shader = ui.Gradient.radial(at, 20, [
+          const Color(0xFFFFD9A0).withValues(alpha: 0.35 * _a * pulse),
+          const Color(0x00FFD9A0),
+        ]),
+    );
+    canvas.drawCircle(
+      at,
+      10,
+      Paint()..color = const Color(0xFF1A100A).withValues(alpha: 0.8 * _a),
+    );
+    canvas.drawCircle(
+      at,
+      10,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.3
+        ..color = const Color(0xFFFFD9A0).withValues(alpha: 0.9 * _a),
+    );
+    canvas.drawPath(
+      Path()
+        ..moveTo(at.dx - 4.2, at.dy + 1.9)
+        ..lineTo(at.dx, at.dy - 2.9)
+        ..lineTo(at.dx + 4.2, at.dy + 1.9),
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.8
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round
+        ..color = const Color(0xFFFFE9C4).withValues(alpha: _a),
+    );
   }
 }
 

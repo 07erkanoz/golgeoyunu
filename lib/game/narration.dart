@@ -220,9 +220,46 @@ class Narration extends Component with HasGameReference<GolgeGame> {
   /// Hikâye fısıltısı. Ayarlardan kapatılmışsa ekrana gelmez, yalnız
   /// "Az önce" paneline yazılır; [story] false olanlar (oynanışı da
   /// anlatanlar) her zaman söylenir.
+  /// Uzun yazıyı ekranda tek tek akacak parçalara böler: önce satırlara,
+  /// sonra cümlelere; kısa cümleler [max] harfi aşmadan birleşir.
+  static List<String> chunks(String text, {int max = 80}) {
+    final out = <String>[];
+    for (final line in text.split('\n')) {
+      final l = line.trim();
+      if (l.isEmpty) continue;
+      if (l.length <= max) {
+        out.add(l);
+        continue;
+      }
+      final parts = l.split(RegExp(r'(?<=[.!?…;])\s+'));
+      var cur = '';
+      for (final p in parts) {
+        if (cur.isEmpty) {
+          cur = p;
+        } else if (cur.length + 1 + p.length <= max) {
+          cur = '$cur $p';
+        } else {
+          out.add(cur);
+          cur = p;
+        }
+      }
+      if (cur.isNotEmpty) out.add(cur);
+    }
+    return out;
+  }
+
   void whisper(String text, {bool story = true}) {
     if (story && !Settings.storyWhispers) {
       _remember(RecentKind.story, text);
+      return;
+    }
+    // Yazı ekranı kaplamasın: seslendirilmeyecek uzun yazı (düzeneğin şiiri,
+    // olay anlatımı) satır satır, cümle cümle akar; her parça en çok iki
+    // satır, ekranda en çok iki satır kalır.
+    if (!GameAudio.instance.speaks(text)) {
+      for (final l in chunks(text)) {
+        _whispers.add((l, _clock));
+      }
       return;
     }
     _whispers.add((text, _clock));
@@ -913,8 +950,12 @@ class Narration extends Component with HasGameReference<GolgeGame> {
       final above = prev == null || shownW == null
           ? 0.0
           : _measure(shownW, size, w * 0.64) + size * 0.5;
+      // Ekranda en çok iki satır: sığmazsa önceki gizlenir ("Az önce"
+      // panelinde okunur); Sâye ve yol görünür kalsın.
+      final prevH = prev == null ? 0.0 : _measure(prev, size, w * 0.64);
       if (prev != null &&
-          bottom - above - _measure(prev, size, w * 0.64) >= stackLimit) {
+          bottom - above - prevH >= stackLimit &&
+          above + prevH <= size * 3.4) {
         final e = 1 - math.pow(1 - _shift, 3).toDouble();
         _text(
           canvas,
@@ -929,12 +970,15 @@ class Narration extends Component with HasGameReference<GolgeGame> {
         );
       }
       if (shownW != null) {
+        // Önceki satır yukarı kayarken yenisi altında belirir; üst üste
+        // binmesinler.
         _text(
           canvas,
           shownW,
           Offset(w / 2, bottom),
           size,
-          _envelope(_whisperT, 0.6, _whisperLen - 1.4, 0.8),
+          _envelope(_whisperT, 0.6, _whisperLen - 1.4, 0.8) *
+              (prev == null ? 1 : _shift * _shift),
           italic: true,
           maxWidth: w * 0.64,
           weight: FontWeight.w400,
