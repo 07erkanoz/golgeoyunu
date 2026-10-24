@@ -10,6 +10,7 @@ import 'level.dart';
 import 'mechanics.dart';
 import 'myth_shapes.dart';
 import 'player.dart';
+import 'palette.dart';
 import 'puzzles.dart' show Usable;
 
 // Göğün Katları'nın yeni katları (docs/UZATMA_PLANI.md): Yıldız Katı'nda
@@ -355,6 +356,7 @@ class YelZone extends PositionComponent with HasGameReference<GolgeGame> {
     if (!_awake) return;
     final view = game.camera.visibleWorldRect;
     if (!view.overlaps(area)) return;
+    _bendGrass(canvas, view);
     final k = warning ? 0.35 : (blowing ? 0.4 + 0.6 * strength : 0.08);
     final n = warning ? 14 : (blowing ? 40 : 6);
     final speed = blowing ? 900.0 : 380.0;
@@ -371,6 +373,55 @@ class YelZone extends PositionComponent with HasGameReference<GolgeGame> {
       line.color = const Color(0xFFF4F8FF)
           .withValues(alpha: k * (0.4 + (h % 3) * 0.2));
       canvas.drawLine(Offset(x, y), Offset(x - dir * len, y), line);
+    }
+  }
+}
+
+/// Yel'in otları: alanın içindeki zeminlerde ince ot öbekleri. Durgunda
+/// hafifçe salınır; uyarıda soluğun geleceği yöne eğilmeye başlar (soluk
+/// gelmeden okunur), eserken yatar ve titrer.
+extension on YelZone {
+  void _bendGrass(Canvas canvas, Rect view) {
+    final lv = game.level;
+    final r = area.intersect(view.inflate(kTile));
+    if (r.isEmpty) return;
+    final double bend;
+    if (warning) {
+      final k = (_ph - YelZone.calm) / YelZone.warn;
+      bend = 0.2 + 0.5 * k;
+    } else if (blowing) {
+      bend = 0.75 + 0.35 * strength + 0.08 * math.sin(_t * 23);
+    } else {
+      bend = 0.08 * math.sin(_t * 1.7);
+    }
+    final blade = Paint()
+      ..color = kInk
+      ..strokeCap = StrokeCap.round;
+    final c0 = (r.left / kTile).floor();
+    final c1 = (r.right / kTile).ceil();
+    final r0 = math.max(1, (r.top / kTile).floor());
+    final r1 = (r.bottom / kTile).ceil();
+    for (var c = c0; c <= c1; c++) {
+      for (var row = r0; row <= r1; row++) {
+        if (!lv.solid(c, row) || lv.solid(c, row - 1)) continue;
+        final y = row * kTile.toDouble();
+        for (var i = 0; i < 4; i++) {
+          final h = ((c * 73856093) ^ (row * 19349663) ^ (i * 83492791)) & 0xffff;
+          final x = c * kTile + 2 + (h % 28).toDouble();
+          final len = 10 + (h % 6).toDouble();
+          // Her ot biraz gecikmeyle eğilir: dalga gibi geçer.
+          final lag = math.sin(_t * 3 + x * 0.05) * 0.06;
+          final a = dir * (bend + lag) * (0.8 + (h % 3) * 0.1);
+          blade.strokeWidth = 1.2 + (h % 2) * 0.5;
+          final tip = Offset(x + math.sin(a) * len, y - math.cos(a) * len);
+          canvas.drawPath(
+            Path()
+              ..moveTo(x, y + 1)
+              ..quadraticBezierTo(x, y - len * 0.5, tip.dx, tip.dy),
+            blade..style = PaintingStyle.stroke,
+          );
+        }
+      }
     }
   }
 }

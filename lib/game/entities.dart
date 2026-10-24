@@ -1651,6 +1651,7 @@ class Gate extends PositionComponent
       opening = true;
       _lift = _height;
       _announced = true;
+      _strain = strainTime;
     }
     return [this];
   }
@@ -1662,9 +1663,40 @@ class Gate extends PositionComponent
   /// Açılış duyuruldu mu (kayıttan açık gelen kapı duyurulmaz).
   bool _announced = false;
 
+  /// Kapıyı kaldıran zincir: lentodan yukarıdaki makaraya. Kol çekilince
+  /// önce gerilir ve titrer ([strainTime]), lentodan toz dökülür; sonra
+  /// kapı kalkarken zincir makaraya sarılır, makara döner.
+  static const strainTime = 0.55;
+  double _strain = 0;
+  double _t = 0;
+  double _chainLen = 3 * kTile.toDouble();
+
+  @override
+  void onMount() {
+    super.onMount();
+    // Makara tavanda (yoksa üç kare yukarıda).
+    final c = ((position.x + size.x / 2) / kTile).floor();
+    final top = (position.y / kTile).floor();
+    for (var r = top - 1; r >= math.max(0, top - 6); r--) {
+      if (game.level.solid(c, r)) {
+        _chainLen = math.max(kTile * 0.6, position.y - 11 - (r + 1) * kTile);
+        return;
+      }
+    }
+  }
+
   @override
   void update(double dt) {
     super.update(dt);
+    _t += dt;
+    if (opening && _lift == 0 && _strain < strainTime) {
+      if (_strain == 0) {
+        GameAudio.instance.play('chain', volume: 0.5);
+        game.dust(position + Vector2(size.x / 2, -11), falling: true, count: 6);
+      }
+      _strain += dt;
+      return;
+    }
     if (opening && _lift < _height) {
       _lift = math.min(_height, _lift + dt * 70);
       // Tam açıldı: tek, tanınır "çözüldü" sesi ve açılan yolda ilerleyen
@@ -1684,8 +1716,68 @@ class Gate extends PositionComponent
     }
   }
 
+  /// Lentodan makaraya çıkan zincir. Boşken hafif salınır; gerilince
+  /// dümdüz olur ve titrer; kapı kalkarken halkalar yukarı akar.
+  void _chain(Canvas canvas) {
+    const cx = 8.0;
+    const bottom = -11.0;
+    final top = bottom - _chainLen;
+    final straining = opening && _lift == 0 && _strain < strainTime;
+    final taut = opening ? 1.0 : 0.0;
+    final shake = straining ? math.sin(_t * 70) * 0.7 : 0.0;
+    final link = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.7
+      ..color = const Color(0xFF3A322C);
+    final shine = Paint()
+      ..strokeWidth = 0.7
+      ..color = const Color(0xFFC89A72).withValues(alpha: 0.6);
+    const step = 6.0;
+    final scroll = _lift % (step * 2);
+    var i = 0;
+    for (var y = bottom - step + scroll; y > top + 4; y -= step, i++) {
+      final k = (bottom - y) / _chainLen;
+      final sway =
+          (1 - taut) * 1.6 * math.sin(k * math.pi) * math.sin(_t * 1.3 + k * 3);
+      final x = cx + sway + shake;
+      if (i.isEven) {
+        canvas.drawOval(
+          Rect.fromCenter(center: Offset(x, y), width: 4, height: 7.4),
+          link,
+        );
+      } else {
+        canvas.drawLine(Offset(x, y - 3.6), Offset(x, y + 3.6), link);
+        canvas.drawLine(Offset(x - 0.7, y - 2.4), Offset(x - 0.7, y + 2.4), shine);
+      }
+    }
+    // Makara.
+    final hub = Offset(cx + 4, top);
+    canvas.drawCircle(hub, 5.5, Paint()..color = const Color(0xFF1E1814));
+    canvas.drawCircle(
+      hub,
+      5.5,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1
+        ..color = const Color(0xFF6A5444),
+    );
+    final turn = _lift / 5.5;
+    final spoke = Paint()
+      ..strokeWidth = 1
+      ..color = const Color(0xFF6A5444);
+    for (var k = 0; k < 3; k++) {
+      final a = turn + k * math.pi / 1.5;
+      canvas.drawLine(
+        hub,
+        hub + Offset(math.cos(a), math.sin(a)) * 4.6,
+        spoke,
+      );
+    }
+  }
+
   @override
   void render(Canvas canvas) {
+    _chain(canvas);
     // Taş lento: iki iri yonu taşı, kapı onun içine kalkar.
     for (final (x, w) in const [(-10.0, 18.0), (8.0, 18.0)]) {
       final r = Rect.fromLTWH(x, -11, w, 11);
@@ -1710,7 +1802,11 @@ class Gate extends PositionComponent
       Paint()..color = const Color(0xFFC08458).withValues(alpha: 0.55),
     );
     canvas.save();
-    canvas.translate(0, -_lift);
+    // Zincir gerilirken kapı yerinde sarsılır.
+    final jolt = opening && _lift == 0 && _strain < strainTime
+        ? math.sin(_t * 55) * 0.8
+        : 0.0;
+    canvas.translate(jolt, -_lift);
     // Dövme demir parmaklıklar: yuvarlak çubuklar (bir yanı parlar), yatay
     // lamalarda perçin, uçları sivri; yer yer pas.
     const bars = [0.0, 4.6, 9.2, 13.8];

@@ -64,9 +64,9 @@ void main() {
     );
     run(1.5);
     game.world.children.whereType<Lever>().first.pull();
-    run(0.35);
+    run(0.3);
     await shot('3_kol');
-    run(0.5);
+    run(0.9);
     await shot('4_kapi');
     run(2.0);
     // 5: çürük tahtada yürüyüş: çatlaklar ve talaş.
