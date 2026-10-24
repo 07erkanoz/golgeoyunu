@@ -57,6 +57,8 @@ class GameAudio {
     'solve',
     // Gizli alkış: perdenin ardında seyirci.
     'clap',
+    // Açılış girişi: perdenin kandili yakılır.
+    'match',
     'crumble',
     'death',
     'splash',
@@ -119,6 +121,9 @@ class GameAudio {
   final _src = <String, AudioSource>{};
 
   bool _ready = false;
+
+  /// Ses motoru ve efektler yüklendi mi (giriş ilk sesini bekler).
+  bool get ready => _ready;
 
   /// Yüklenemeyen ses dosyaları (tanı için).
   final failed = <String>[];

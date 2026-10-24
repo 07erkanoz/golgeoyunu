@@ -395,7 +395,8 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     );
     effects.setFade(1, kInk);
     effects.fadeTo(0, 1.6);
-    GameAudio.instance.menuMusic(true);
+    // İlk açılışta önce giriş oynar; menü müziği onun sonunda gelir.
+    if (Settings.introSeen) GameAudio.instance.menuMusic(true);
     overlays.remove(settingsOverlay);
     overlays.remove(recentOverlay);
     _settingsShown = false;

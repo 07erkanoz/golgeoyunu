@@ -8,6 +8,7 @@ import '../game/perde.dart';
 import '../game/strings.dart';
 import '../settings.dart';
 import 'info_pages.dart';
+import 'intro.dart';
 import 'page_frame.dart';
 import 'story_theater.dart';
 
@@ -66,6 +67,27 @@ class _MainMenuState extends State<MainMenu>
   /// Defter'in açık sekmesi: 0 Hikâye, 1 Hatıralar, 2 Efsaneler.
   int _bookTab = 0;
 
+  /// Açılış girişi: ilk açılışta, oturumda bir kez.
+  static bool _introPlayed = false;
+  late bool _intro = !Settings.introSeen && !_introPlayed;
+  final _perdeKey = GlobalKey();
+
+  /// Menüdeki perdenin (bezin) bu katmandaki yeri: giriş sonda oraya kayar.
+  Rect? _menuPerdeRect() {
+    final box = _perdeKey.currentContext?.findRenderObject() as RenderBox?;
+    final me = context.findRenderObject() as RenderBox?;
+    if (box == null || me == null || !box.hasSize || !me.hasSize) return null;
+    final tl = me.globalToLocal(box.localToGlobal(Offset.zero));
+    final w = box.size.width;
+    // PerdePainter.paintMenu'deki bez dikdörtgeni.
+    return Rect.fromLTWH(
+      tl.dx + w * 0.06,
+      tl.dy + w * 0.11,
+      w * 0.88,
+      w * 0.88 * 0.62,
+    );
+  }
+
   @override
   void dispose() {
     _fade.dispose();
@@ -88,7 +110,7 @@ class _MainMenuState extends State<MainMenu>
     final savedLevel = save == null
         ? null
         : levels[save.level.clamp(0, levels.length - 1)].titleText;
-    return FadeTransition(
+    final menu = FadeTransition(
       opacity: CurvedAnimation(parent: _fade, curve: Curves.easeOut),
       child: Stack(
         children: [
@@ -115,6 +137,7 @@ class _MainMenuState extends State<MainMenu>
                       child: AspectRatio(
                         aspectRatio: 1 / 0.8,
                         child: _MenuPerde(
+                          key: _perdeKey,
                           title: S.of('gameTitle'),
                           tagline: S.of('menuTagline'),
                         ),
@@ -314,6 +337,22 @@ class _MainMenuState extends State<MainMenu>
         ],
       ),
     );
+    if (!_intro) return menu;
+    // Giriş menünün belirmesinden bağımsız (menü onun ardında kurulur).
+    return Stack(
+      children: [
+        menu,
+        Positioned.fill(
+          child: IntroOverlay(
+            menuPerde: _menuPerdeRect,
+            onDone: () {
+              _introPlayed = true;
+              if (mounted) setState(() => _intro = false);
+            },
+          ),
+        ),
+      ],
+    );
   }
 
   Future<void> _open(Uri uri) async {
@@ -456,7 +495,7 @@ class _MenuItemState extends State<_MenuItem> {
 
 /// Kandille aydınlanan menü perdesi: titreyen ışık, sallanan tasvirler.
 class _MenuPerde extends StatefulWidget {
-  const _MenuPerde({required this.title, required this.tagline});
+  const _MenuPerde({super.key, required this.title, required this.tagline});
 
   final String title;
   final String tagline;

@@ -77,6 +77,10 @@ class Settings {
   /// yetmez: Hikâye tiyatrosu sonu ancak bu doğruysa oynar.
   static bool finished = false;
 
+  /// Açılış girişi izlendi (ya da atlandı): sonraki açılışlarda doğrudan
+  /// menü gelir.
+  static bool introSeen = false;
+
   /// Gizli dokunuşla her şey açıldı: bütün bölümler, Hikâye'nin bütün
   /// perdeleri (son dahil) ve Defter'in bütün hatıraları ve efsaneleri.
   static bool allOpen = false;
@@ -171,6 +175,7 @@ class Settings {
       leftHanded = _read(() => p.getBool('left_handed')) ?? leftHanded;
       highRefresh = _read(() => p.getBool('high_refresh')) ?? highRefresh;
       finished = _read(() => p.getBool('finished')) ?? finished;
+      introSeen = _read(() => p.getBool('intro_seen')) ?? introSeen;
       allOpen = _read(() => p.getBool('all_open')) ?? allOpen;
       texture = _read(() => p.getBool('texture')) ?? texture;
       realism = _read(() => p.getBool('realism')) ?? realism;
@@ -254,6 +259,7 @@ class Settings {
       await p.setString('lang', S.en ? 'en' : 'tr');
       await p.setInt('unlocked', unlocked);
       await p.setBool('finished', finished);
+      await p.setBool('intro_seen', introSeen);
       await p.setBool('all_open', allOpen);
       await p.setBool('texture', texture);
       await p.setBool('realism', realism);

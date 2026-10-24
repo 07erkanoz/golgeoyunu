@@ -9,6 +9,7 @@ import 'myth_shapes.dart';
 import 'palette.dart';
 
 part 'perde_east.dart';
+part 'perde_giris.dart';
 part 'perde_tasvir.dart';
 part 'perde_kisi.dart';
 part 'perde_kopru.dart';
@@ -444,6 +445,66 @@ class PerdePainter {
     if (u < 3.0) return 1 - 0.85 * _ease((u - 2.7) / 0.3);
     if (u < 4.0) return 0.15 + 0.2 * _ease((u - 3.0) / 1.0);
     return 0.35 + 0.35 * _ease((u - 4.0) / 0.6);
+  }
+
+  /// Menünün başlığı: oyunun adı (gölge harfler, kenarlarında kandilin
+  /// sızan ışığı), süs çizgisi ve alt yazı; 780×484'lük sanal perdede.
+  /// Giriş de aynısını çizer (geçişte fark olmasın).
+  static void _menuHeading(
+    Canvas canvas,
+    double flicker,
+    String title,
+    String tagline,
+  ) {
+    // Oyunun adı: gölge harfler, kenarlarında kandilin sızan ışığı.
+    final titleTp = TextPainter(
+      text: TextSpan(
+        text: title,
+        style: TextStyle(
+          fontFamily: 'Roboto',
+          fontSize: 70,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 12,
+          color: _ink.withValues(alpha: 0.95),
+          shadows: [
+            Shadow(
+              color: const Color(0xFFFFF0C8).withValues(alpha: 0.5 * flicker),
+              blurRadius: 18,
+            ),
+          ],
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    titleTp.paint(canvas, Offset(390 - titleTp.width / 2, 70));
+    // Süs çizgisi: ortada bir lale.
+    final line = _inkPaint(0.8)..strokeWidth = 2;
+    canvas.drawLine(const Offset(210, 172), const Offset(370, 172), line);
+    canvas.drawLine(const Offset(410, 172), const Offset(570, 172), line);
+    canvas.drawPath(
+      Path()
+        ..moveTo(390, 160)
+        ..quadraticBezierTo(380, 168, 384, 180)
+        ..lineTo(390, 174)
+        ..lineTo(396, 180)
+        ..quadraticBezierTo(400, 168, 390, 160)
+        ..close(),
+      _inkPaint(0.9),
+    );
+    final tagTp = TextPainter(
+      text: TextSpan(
+        text: tagline,
+        style: TextStyle(
+          fontFamily: 'Roboto',
+          fontSize: 22,
+          fontStyle: FontStyle.italic,
+          letterSpacing: 1.5,
+          color: _ink.withValues(alpha: 0.85),
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout(maxWidth: 680);
+    tagTp.paint(canvas, Offset(390 - tagTp.width / 2, 192));
   }
 
   static void _frame(Canvas canvas, Rect r, double lamp) {
@@ -1521,6 +1582,26 @@ class PerdePainter {
 
   /// Ana menünün perdesi: kandille aydınlanan bez, oymalı çerçeve, gölge
   /// harflerle oyunun adı, önünde Sâye ve Hüdhüd.
+  /// Oyunun ilk açılışındaki giriş (bkz. perde_giris.dart): [t] saniye;
+  /// [target] menüdeki perdenin ekrandaki yeri (sonda oraya kayar).
+  static void paintIntro(
+    Canvas canvas,
+    Size size,
+    double t,
+    String title,
+    String tagline, {
+    Rect? target,
+    double? menuTime,
+  }) => _paintIntro(
+    canvas,
+    size,
+    t,
+    title,
+    tagline,
+    target: target,
+    menuTime: menuTime,
+  );
+
   static void paintMenu(
     Canvas canvas,
     Size size,
@@ -1576,55 +1657,7 @@ class PerdePainter {
     canvas.translate(0, 84);
     _city(canvas, 0.55);
     canvas.restore();
-    // Oyunun adı: gölge harfler, kenarlarında kandilin sızan ışığı.
-    final titleTp = TextPainter(
-      text: TextSpan(
-        text: title,
-        style: TextStyle(
-          fontFamily: 'Roboto',
-          fontSize: 70,
-          fontWeight: FontWeight.w900,
-          letterSpacing: 12,
-          color: _ink.withValues(alpha: 0.95),
-          shadows: [
-            Shadow(
-              color: const Color(0xFFFFF0C8).withValues(alpha: 0.5 * flicker),
-              blurRadius: 18,
-            ),
-          ],
-        ),
-      ),
-      textDirection: TextDirection.ltr,
-    )..layout();
-    titleTp.paint(canvas, Offset(390 - titleTp.width / 2, 70));
-    // Süs çizgisi: ortada bir lale.
-    final line = _inkPaint(0.8)..strokeWidth = 2;
-    canvas.drawLine(const Offset(210, 172), const Offset(370, 172), line);
-    canvas.drawLine(const Offset(410, 172), const Offset(570, 172), line);
-    canvas.drawPath(
-      Path()
-        ..moveTo(390, 160)
-        ..quadraticBezierTo(380, 168, 384, 180)
-        ..lineTo(390, 174)
-        ..lineTo(396, 180)
-        ..quadraticBezierTo(400, 168, 390, 160)
-        ..close(),
-      _inkPaint(0.9),
-    );
-    final tagTp = TextPainter(
-      text: TextSpan(
-        text: tagline,
-        style: TextStyle(
-          fontFamily: 'Roboto',
-          fontSize: 22,
-          fontStyle: FontStyle.italic,
-          letterSpacing: 1.5,
-          color: _ink.withValues(alpha: 0.85),
-        ),
-      ),
-      textDirection: TextDirection.ltr,
-    )..layout(maxWidth: 680);
-    tagTp.paint(canvas, Offset(390 - tagTp.width / 2, 192));
+    _menuHeading(canvas, flicker, title, tagline);
     // Sâye ve Hüdhüd.
     _puppet(canvas, const Offset(200, 470), time, 0.7, 1, (ink, hole) {
       _saye(ink, hole, time);
