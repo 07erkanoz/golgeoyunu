@@ -1926,7 +1926,6 @@ class GolgeGame extends FlameGame with KeyboardEvents {
   // Küçük sürprizler oyun başına bir kez olur (kayıtla); bulunan sırlar
   // oyundan oyuna kalır, Defter'de sayılır (bkz. docs/SIRLAR_PLANI.md).
 
-  /// Bu oyunda bu sürpriz oldu mu.
   /// S2a · Gölgehane: taş gibi boyanmış perde ([c], [r] sahanlığın üstü),
   /// ardındaki oda (dört sütun sağda, 14×4 hücre) ve raftaki tasvirler.
   List<Component> _golgehane(int c, int r) {
@@ -1940,6 +1939,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     return [kapi, sahne, for (var i = 0; i < 3; i++) GolgehaneTasvir(sahne, i)];
   }
 
+  /// Bu oyunda bu sürpriz oldu mu.
   bool secretSeen(String name) => eventSeen('sir:$levelIndex:$name');
 
   /// Sürpriz oldu: bu oyunda bir daha olmaz, sır sayacına eklenir.
@@ -2004,25 +2004,29 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     // S1a · Utangaç gölge: Yerebatan'da, ilk kontrol noktasından sonra,
     // koşarken birden durunca.
     if (level.def.theme == LevelTheme.cistern &&
+        // Sütunun gölgesinde durup saklanmış olsa da: gölge saklanmayı da
+        // kaçırır, ortaya fırlar.
         p.justStoppedRunning &&
-        !p.hidden &&
         !secretSeen('utangac') &&
         level.checkpointCells.isNotEmpty &&
         p.center.x > level.checkpointCells.first.x + 4 * kTile &&
-        _clearAhead(p, 3 * kTile)) {
+        _clearAhead(p, 2 * kTile)) {
       if (p.shadowShy()) foundSecret('utangac');
     }
   }
 
-  /// Sâye'nin önü (baktığı yönde) [reach] boyunca ön plan sütunu ya da duvar
-  /// olmadan açık mı: önden geçen gölge sürprizi görünsün.
+  /// Sâye'nin önü (baktığı yönde) [reach] boyunca duvarsız mı: gölge iki
+  /// adım ileri gidebilsin. Sarnıcın sütunları (beş karede bir) engel
+  /// sayılmaz; sayılınca sürpriz neredeyse hiç çıkmıyordu, gölge sütunun
+  /// ardından geçse de görünür.
   bool _clearAhead(Player p, double reach) {
     final row = ((p.position.y + Player.h / 2) / kTile).floor();
     for (var d = 0.0; d <= reach; d += kTile / 2) {
       final c = ((p.center.x + p.facing * d) / kTile).floor();
-      for (final r in [row - 1, row]) {
-        final ch = level.cell(c, r);
-        if (ch == 'I' || ch == '#') return false;
+      if (level.cell(c, row) == '#') return false;
+      // Uçurum: gölge boşluğa yürümesin.
+      if (!level.solid(c, row + 1) && level.cell(c, row + 1) != '=') {
+        return false;
       }
     }
     return true;

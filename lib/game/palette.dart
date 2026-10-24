@@ -41,6 +41,19 @@ class SoftEdge {
     }
     paint.color = paint.color.withValues(alpha: a);
   }
+
+  /// [beam] gibi, ama katmanların yolları hazır (ör. kayada kesilmiş).
+  static void paths(Canvas canvas, List<Path> layers, Paint paint) {
+    if (layers.isEmpty) return;
+    final a = paint.color.a;
+    paint.color = paint.color.withValues(
+      alpha: math.min(1.0, a * 1.3 / layers.length),
+    );
+    for (final p in layers) {
+      canvas.drawPath(p, paint);
+    }
+    paint.color = paint.color.withValues(alpha: a);
+  }
 }
 
 Color lerpColor(int a, int b, double t) =>

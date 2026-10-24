@@ -64,7 +64,13 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
 
   Rect _view = Rect.zero;
 
-  void _light(Canvas canvas, Offset c, double radius, [double strength = 1]) {
+  void _light(
+    Canvas canvas,
+    Offset c,
+    double radius, [
+    double strength = 1,
+    Path? shape,
+  ]) {
     if (radius <= 0 || strength <= 0) return;
     // Ekran dışındaki ışıklar hiç çizilmez.
     if (!_view.overlaps(Rect.fromCircle(center: c, radius: radius))) return;
@@ -78,7 +84,14 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
       ],
       const [0, 0.45, 1],
     );
-    canvas.drawCircle(c, radius, _cut);
+    // Kayada kesilmiş ışık: kırpma yerine görünür bölgenin yolu doğrudan
+    // boyanır (telefonda her karede kırpma maskesi pahalı; degrade kenarda
+    // sıfıra indiği için çokgenin köşeleri görünmez).
+    if (shape != null) {
+      canvas.drawPath(shape, _cut);
+    } else {
+      canvas.drawCircle(c, radius, _cut);
+    }
   }
 
   /// Kaya duvarda kesilen ışık: ışık merkezden ışınlarla taranır, ilk kaya
@@ -95,10 +108,7 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
       return;
     }
     if (!SoftEdge.on) {
-      canvas.save();
-      canvas.clipPath(shape);
-      _light(canvas, c, radius, s);
-      canvas.restore();
+      _light(canvas, c, radius, s, shape);
       return;
     }
     // Kayanın gölgesi keskin bir çizgiyle değil, yarı gölgeyle başlar:
@@ -115,10 +125,7 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
         _light(canvas, o, radius, each);
         continue;
       }
-      canvas.save();
-      canvas.clipPath(sh);
-      _light(canvas, o, radius, each);
-      canvas.restore();
+      _light(canvas, o, radius, each, sh);
     }
   }
 
@@ -176,11 +183,7 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
             const [Color(0xB0000000), Color(0x60000000), Color(0x00000000)],
             const [0, 0.45, 1],
           );
-          final seen = g.coneShape;
-          canvas.save();
-          if (seen != null) canvas.clipPath(seen);
-          SoftEdge.beam(canvas, g.beamShape, _cut);
-          canvas.restore();
+          SoftEdge.paths(canvas, g.litBeams, _cut);
         case ExitPortal e:
           _light(
             canvas,

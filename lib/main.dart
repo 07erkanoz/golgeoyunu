@@ -164,6 +164,12 @@ class _GolgeAppState extends State<GolgeApp> with WindowListener {
     }
   }
 
+  /// Perde oynarken köşe simgeleri (ipucu, hatıra) görünmez.
+  Widget _hiddenInPerde(Widget child) => ValueListenableBuilder<bool>(
+    valueListenable: _game.narration.perdeOn,
+    builder: (context, perde, _) => perde ? const SizedBox.shrink() : child,
+  );
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -225,10 +231,18 @@ class _GolgeAppState extends State<GolgeApp> with WindowListener {
                               ? const SizedBox.shrink()
                               : ValueListenableBuilder<bool>(
                                   valueListenable: _game.narration.perdeOn,
-                                  builder: (context, perde, _) => TouchControls(
-                                    controls: _game.controls,
-                                    hideHelp: perde,
-                                  ),
+                                  // Perde oynarken düğmeler gizlenir (yalnız
+                                  // "Atla" kalır); basılı kalan düğme
+                                  // perdeden sonra Sâye'yi yürütmesin.
+                                  builder: (context, perde, _) {
+                                    if (perde) {
+                                      _game.controls.resetAll();
+                                      return const SizedBox.shrink();
+                                    }
+                                    return TouchControls(
+                                      controls: _game.controls,
+                                    );
+                                  },
                                 ),
                         ),
                       // Perde oynarken sağ altta "Atla": perdenin tamamı
@@ -273,7 +287,9 @@ class _GolgeAppState extends State<GolgeApp> with WindowListener {
                         top: 8,
                         right: _isTouch ? 164 : 104,
                         child: SafeArea(
-                          child: HintButton(game: _game, touch: _isTouch),
+                          child: _hiddenInPerde(
+                            HintButton(game: _game, touch: _isTouch),
+                          ),
                         ),
                       ),
                       // "i": az önceki hikâye ve ipucu (okumayı kaçıranlar
@@ -282,12 +298,14 @@ class _GolgeAppState extends State<GolgeApp> with WindowListener {
                         top: 8,
                         right: _isTouch ? 116 : 56,
                         child: SafeArea(
-                          child: IconButton(
-                            tooltip: 'I',
-                            onPressed: _game.toggleRecent,
-                            icon: Icon(
-                              Icons.info_outline,
-                              color: Colors.white.withValues(alpha: 0.35),
+                          child: _hiddenInPerde(
+                            IconButton(
+                              tooltip: 'I',
+                              onPressed: _game.toggleRecent,
+                              icon: Icon(
+                                Icons.info_outline,
+                                color: Colors.white.withValues(alpha: 0.35),
+                              ),
                             ),
                           ),
                         ),

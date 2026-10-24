@@ -124,7 +124,14 @@ class PhasePlank extends Deck {
     } else {
       // Işık tahtası: sönükken yalnızca noktalı bir iz, ışıkta parlar.
       // Kandilci yolu aynı biçimde, soğuk camgöbeği.
-      if (cold) canvas.saveLayer(null, Paint()..colorFilter = _coldTint);
+      // Katman tahtanın çevresiyle sınırlı (sınırsız katman her karede
+      // bütün ekran kadar çizim demekti).
+      if (cold) {
+        canvas.saveLayer(
+          Rect.fromLTWH(-10, -14, w + 20, 34),
+          Paint()..colorFilter = _coldTint,
+        );
+      }
       if (_show < 0.98) {
         final dot = Paint()
           ..color = kWarmLight.withValues(alpha: cold ? 0.3 : 0.18);

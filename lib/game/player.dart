@@ -1470,7 +1470,12 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
   /// Gölge utangaç sürprizi oynar; gölge serbest değilse (korkudan geride
   /// kalıyor, gönderilmiş…) oynamaz ve false döner.
   bool shadowShy() {
-    if (isDead || _mood != _ShadowMood.follow) return false;
+    // Hafif korkuda geriden gelen gölge de (sarnıçta karanlıktaki gözler
+    // yakınken hep öyle) oynar; ayrılıp gitmiş ya da gönderilmiş gölge değil.
+    if (isDead ||
+        (_mood != _ShadowMood.follow && _mood != _ShadowMood.lag)) {
+      return false;
+    }
     _mood = _ShadowMood.shy;
     _moodT = 0;
     _shadowX = center.x - facing * 20;

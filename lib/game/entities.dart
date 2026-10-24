@@ -447,6 +447,26 @@ class Guard extends PositionComponent
   Path? _cone;
   double _coneAt = -1;
 
+  /// Kayada kesilmiş huzme katmanları ([SoftEdge.widths] sırasıyla), karede
+  /// bir kez. Kırpma yerine yol kesişimi: telefonda (Skia) her karede
+  /// değişen yumuşak kenarlı kırpma maskesi fener önünde takılma yapıyordu.
+  List<Path> get litBeams {
+    if (_beamsAt != _life) {
+      _beamsAt = _life;
+      final seen = coneShape;
+      _beams = [
+        for (final k in SoftEdge.widths)
+          seen == null
+              ? beamShape(k)
+              : Path.combine(PathOperation.intersect, beamShape(k), seen),
+      ];
+    }
+    return _beams;
+  }
+
+  List<Path> _beams = const [];
+  double _beamsAt = -1;
+
   /// Fener huzmesinin dünyadaki şekli (görüş alanı); [k] yanlara açılışın
   /// oranı (yumuşak kenar katmanları için). Kayada kesilmesi [coneShape].
   Path beamShape([double k = 1]) {
@@ -534,12 +554,12 @@ class Guard extends PositionComponent
           ? viewDistance * 1.4
           : viewDistance;
       final l = _lantern.toOffset();
-      final seen = coneShape;
-      if (seen != null) canvas.clipPath(seen);
+      final beams = litBeams;
       // Tehlikeli ışık yalnız rengiyle değil desenle de seçilir: fenerden
-      // dışa akan tarama halkaları (sıcak, güvenli ışıkta yok).
+      // dışa akan tarama halkaları (sıcak, güvenli ışıkta yok). Kırpma
+      // kenar yumuşatmasız: ince halkalarda fark edilmez, telefonda ucuz.
       canvas.save();
-      canvas.clipPath(beamShape());
+      canvas.clipPath(beams.first, doAntiAlias: false);
       final ring = Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1.4;
@@ -554,9 +574,9 @@ class Guard extends PositionComponent
         canvas.drawCircle(l, range * k, ring);
       }
       canvas.restore();
-      SoftEdge.beam(
+      SoftEdge.paths(
         canvas,
-        beamShape,
+        beams,
         Paint()
           ..shader = ui.Gradient.radial(
             l,

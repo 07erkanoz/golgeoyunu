@@ -510,7 +510,7 @@ class Watcher extends PositionComponent with HasGameReference<GolgeGame> {
     // Tehlikeli ışığın deseni: dışa akan tarama halkaları.
     if (dazzled <= 0) {
       canvas.save();
-      canvas.clipPath(beamPath());
+      canvas.clipPath(beamPath(), doAntiAlias: false);
       final ring = Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1.4;
