@@ -313,6 +313,8 @@ class Guard extends PositionComponent
       _investigateX = null;
       suspicion = 0;
       _setState(GuardState.investigate);
+      // Kandilci ışığı fark etti: feneriyle ona bakar (kısa bir bakış çizgisi).
+      game.world.add(GazeLine(_lantern.clone(), lure));
       return;
     }
   }
@@ -1210,6 +1212,17 @@ class FireflyLure extends PositionComponent with HasGameReference<GolgeGame> {
   /// Bir şey onu kendine çekiyorsa (sönmüş ocak): oraya süzülür.
   Vector2? pull;
 
+  /// Uçuş izi: son konumlar (dünya koordinatı).
+  final _trail = <Vector2>[];
+
+  /// Hedefe ulaştı (dev, ocak, fener...): ışığı hedefe akar, söner. Hangi
+  /// ateşböceğinin neyi etkilediği görülsün.
+  void absorb() {
+    if (!isMounted) return;
+    game.world.add(LightAbsorb(position.clone()));
+    removeFromParent();
+  }
+
   bool get glowing => _t < life - 0.6;
 
   /// Salındığından beri geçen süre.
@@ -1222,6 +1235,8 @@ class FireflyLure extends PositionComponent with HasGameReference<GolgeGame> {
   void update(double dt) {
     super.update(dt);
     _t += dt;
+    _trail.insert(0, position.clone());
+    if (_trail.length > 10) _trail.removeLast();
     final target = pull;
     if (target != null) {
       final d = target - position;
@@ -1253,6 +1268,17 @@ class FireflyLure extends PositionComponent with HasGameReference<GolgeGame> {
   @override
   void render(Canvas canvas) {
     final a = strength.clamp(0.0, 1.0);
+    // Uçuş izi: hızlıyken görünür, süzülürken kısalır.
+    for (var i = 1; i < _trail.length; i++) {
+      final p = _trail[i] - position;
+      canvas.drawCircle(
+        Offset(p.x, p.y),
+        2.0 * (1 - i / _trail.length),
+        Paint()
+          ..color = const Color(0xFFFFE6A8)
+              .withValues(alpha: 0.55 * a * (1 - i / _trail.length)),
+      );
+    }
     canvas.drawCircle(
       Offset.zero,
       26,
@@ -1601,6 +1627,7 @@ class Gate extends PositionComponent
     if (state == 1) {
       opening = true;
       _lift = _height;
+      _announced = true;
     }
     return [this];
   }
@@ -1609,10 +1636,29 @@ class Gate extends PositionComponent
   Rect toRect() =>
       Rect.fromLTWH(position.x, position.y - _lift, size.x, size.y);
 
+  /// Açılış duyuruldu mu (kayıttan açık gelen kapı duyurulmaz).
+  bool _announced = false;
+
   @override
   void update(double dt) {
     super.update(dt);
-    if (opening && _lift < _height) _lift = math.min(_height, _lift + dt * 70);
+    if (opening && _lift < _height) {
+      _lift = math.min(_height, _lift + dt * 70);
+      // Tam açıldı: tek, tanınır "çözüldü" sesi ve açılan yolda ilerleyen
+      // ışık (ne değişti, nereye gidilir).
+      if (_lift >= _height && !_announced) {
+        _announced = true;
+        GameAudio.instance.play('solve', volume: 0.8);
+        final p = game.player;
+        final dir = p == null || p.center.x < position.x + size.x / 2 ? 1 : -1;
+        game.world.add(
+          PathLight(
+            position + Vector2(size.x / 2, size.y - 20),
+            dir.toDouble(),
+          ),
+        );
+      }
+    }
   }
 
   @override

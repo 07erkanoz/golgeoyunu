@@ -735,7 +735,7 @@ class StoneGiant extends PositionComponent
       // Sendelerken kulağını korur: yanına gelen ışıkları savurur. Yoksa
       // bekleyen ışıklar sendeleme biter bitmez hep birden giriyordu.
       for (final l in game.world.children.whereType<FireflyLure>().toList()) {
-        if (l.glowing && (l.position - ear).length < 46) l.removeFromParent();
+        if (l.glowing && (l.position - ear).length < 46) l.absorb();
       }
       return;
     }
@@ -818,7 +818,7 @@ class StoneGiant extends PositionComponent
   void _guardEar() {
     for (final l in game.world.children.whereType<FireflyLure>().toList()) {
       if (l.glowing && (l.position - ear).length < 62) {
-        l.removeFromParent();
+        l.absorb();
         _swat = swatTime;
         GameAudio.instance.play('fizzle', volume: 0.7);
         game.once('giantGuard', S.of('giantGuard'), hint: true);
@@ -837,7 +837,7 @@ class StoneGiant extends PositionComponent
   void _shieldEar() {
     for (final l in game.world.children.whereType<FireflyLure>().toList()) {
       if (l.glowing && (l.position - ear).length < 54) {
-        l.removeFromParent();
+        l.absorb();
         GameAudio.instance.play('fizzle', volume: 0.6);
       }
     }
@@ -905,7 +905,7 @@ class StoneGiant extends PositionComponent
   void _checkLures() {
     for (final l in game.world.children.whereType<FireflyLure>().toList()) {
       if (l.glowing && (l.position - ear).length < 46) {
-        l.removeFromParent();
+        l.absorb();
         hits++;
         _stagger = 2.4;
         _flinch.kick(-_dir * 9);

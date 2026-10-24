@@ -53,6 +53,8 @@ class GameAudio {
     'crow',
     'lever',
     'gate',
+    // Düzenek çözüldü: hicaz dizisinden yükselen üç nota (her düzenekte aynı).
+    'solve',
     'crumble',
     'death',
     'splash',

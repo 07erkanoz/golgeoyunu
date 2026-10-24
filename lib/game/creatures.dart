@@ -652,6 +652,9 @@ class Karabasan extends PositionComponent with HasGameReference<GolgeGame> {
 
   bool get awake => _awake && !_gone;
 
+  /// Yakınlık (0 uzak – 1 ensede): ekran kenarı ve zerreler buna göre.
+  double menace = 0;
+
   @override
   void update(double dt) {
     super.update(dt);
@@ -699,7 +702,10 @@ class Karabasan extends PositionComponent with HasGameReference<GolgeGame> {
     position.y += (p.center.y - position.y) * math.min(1, dt * 1.5);
 
     final gap = p.center.x - position.x;
-    game.shake(((260 - gap) / 260).clamp(0.0, 1.0) * 5);
+    // Gerilim mesafeyle artar: ekranın onun yanı kararır, zerreler ona
+    // çekilir (sürekli sarsıntı yerine; sarsıntı yalnız çok yakında, hafif).
+    menace = ((420 - gap) / 340).clamp(0.0, 1.0);
+    game.shake(((160 - gap) / 160).clamp(0.0, 1.0) * 2.5);
     GameAudio.instance.dread(((520 - gap) / 420).clamp(0.15, 1.0));
     if (gap < 46 && (p.center.y - position.y).abs() < 90) {
       p.die(cause: DeathCause.dark);
@@ -710,6 +716,19 @@ class Karabasan extends PositionComponent with HasGameReference<GolgeGame> {
   void render(Canvas canvas) {
     if (!_awake) return;
     final a = _fade;
+    // Çevredeki ışık zerreleri ona doğru dönerek çekilir.
+    for (var i = 0; i < 16; i++) {
+      final k = ((_t * 0.45 + i / 16) % 1.0);
+      final ang = i * 2.4 + k * 3.0;
+      final r = 160 * (1 - k);
+      canvas.drawCircle(
+        Offset(math.cos(ang) * r, math.sin(ang) * r * 0.6),
+        1.4 + 1.2 * k,
+        Paint()
+          ..color = const Color(0xFFFFC98A)
+              .withValues(alpha: 0.5 * a * (1 - k) * (0.4 + 0.6 * menace)),
+      );
+    }
     final ink = Paint()
       ..color = const Color(0xFF020101).withValues(alpha: 0.96 * a);
     // Kaynayan gövde: tek parça, kenarları nefes alan bir karanlık. Sırtı

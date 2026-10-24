@@ -383,10 +383,15 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       if (impact > 420) _landDip = 0.16;
       // Sert inişte zeminden toz (karda kar tozu): iniş noktası seçilir.
       if (impact > 380) {
-        final snow = game.level.def.theme == LevelTheme.snow;
+        // Taşta toz, karda kar tozu, sarnıcın ıslak taşında su damlası.
+        final theme = game.level.def.theme;
         game.dust(
           Vector2(center.x, position.y + h),
-          color: snow ? const Color(0xFFE8EEF4) : null,
+          color: theme.snowy
+              ? const Color(0xFFE8EEF4)
+              : theme == LevelTheme.cistern && !_onWalkway
+              ? const Color(0xFF9FC4C8)
+              : null,
           count: (impact / 60).clamp(6, 14).round(),
         );
       }
@@ -413,6 +418,15 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
         minGapMs: 90,
       );
       if (loud && halfStep.isEven) _noise(_onWalkway ? 210 : 140);
+      // Karda ayak izi: bir süre kalır, sonra kar örter.
+      if (level.def.theme.snowy && !_onWalkway && !skiing) {
+        game.world.add(
+          Footprint(
+            Vector2(center.x + facing * 3, position.y + h),
+            halfStep.isEven,
+          ),
+        );
+      }
     }
     _lastHalfStep = halfStep;
 

@@ -223,7 +223,7 @@ class IronVein extends Gate {
         if (d < 10) {
           lit = true;
           _flash = 1;
-          l.removeFromParent();
+          l.absorb();
           GameAudio.instance.play('fire', volume: 0.8);
           game.shake(3);
           game.once(

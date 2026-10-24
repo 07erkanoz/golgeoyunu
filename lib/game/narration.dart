@@ -7,6 +7,7 @@ import 'package:flutter/painting.dart';
 
 import '../settings.dart';
 import 'audio.dart';
+import 'creatures.dart';
 import 'golge_game.dart';
 import 'palette.dart';
 import 'perde.dart';
@@ -954,6 +955,47 @@ class Narration extends Component with HasGameReference<GolgeGame> {
     }
 
     if (game.menuMode.value) return;
+
+    // Karabasan yaklaşınca ekranın onun geldiği yanı kararır, ışık kenarları
+    // daralır (mesafeye bağlı gerilim).
+    for (final k in game.world.children.whereType<Karabasan>()) {
+      final m = k.menace;
+      if (m <= 0.01 || !k.awake) continue;
+      final left = k.position.x < (game.player?.center.x ?? 0);
+      final band = Rect.fromLTWH(
+        left ? 0 : w * (1 - 0.45 * m),
+        0,
+        w * 0.45 * m,
+        h,
+      );
+      canvas.drawRect(
+        band,
+        Paint()
+          ..shader = ui.Gradient.linear(
+            left ? band.centerLeft : band.centerRight,
+            left ? band.centerRight : band.centerLeft,
+            [Color.fromRGBO(2, 1, 1, 0.75 * m), const Color(0x00020101)],
+          ),
+      );
+      // Üst ve alt kenar da daralır.
+      for (final top in [true, false]) {
+        final r = Rect.fromLTWH(
+          0,
+          top ? 0 : h * (1 - 0.12 * m),
+          w,
+          h * 0.12 * m,
+        );
+        canvas.drawRect(
+          r,
+          Paint()
+            ..shader = ui.Gradient.linear(
+              top ? r.topCenter : r.bottomCenter,
+              top ? r.bottomCenter : r.topCenter,
+              [Color.fromRGBO(2, 1, 1, 0.5 * m), const Color(0x00020101)],
+            ),
+        );
+      }
+    }
 
     // Görev satırı: çok adımlı düzenekte o anki adım (sol üstte, kalıcı).
     final goal = objective;

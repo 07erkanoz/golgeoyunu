@@ -14,6 +14,7 @@ import 'audio.dart';
 import 'auto_quality.dart';
 import 'anlatim_plani.dart';
 import 'entrance.dart';
+import 'feedback.dart';
 import 'creatures.dart';
 import 'frame_pacer.dart';
 import 'mechanics.dart';
@@ -879,6 +880,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     world.addAll(
       restorePuzzle([
         TerrainComponent(level),
+        if (SurfaceEdge.wants(level.def.theme)) SurfaceEdge(level),
         LightingLayer(),
         LightShafts(),
         RealismLayer(),
