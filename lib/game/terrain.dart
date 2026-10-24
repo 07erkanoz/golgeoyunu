@@ -337,6 +337,95 @@ Picture _buildTerrain(Level lv, int c0, int c1, int r0, int r1) {
               ),
               Paint()..color = _snowCap,
             );
+          } else if (theme == LevelTheme.nemrut) {
+            // Kırık kaide taşı: yontulmuş, kenarı kopuk, üstü düz (basılan
+            // yüzey öteki tahtalarla aynı yerde).
+            final left = lv.cell(c - 1, r) != '=';
+            final right = lv.cell(c + 1, r) != '=';
+            final slab = Path()
+              ..moveTo(x - 0.5, y)
+              ..lineTo(x + kTile + 0.5, y)
+              ..lineTo(x + kTile + 0.5 - (right ? 3 : 0), y + 9)
+              ..lineTo(x + kTile * 0.6, y + 10 + rnd.nextDouble() * 2)
+              ..lineTo(x + kTile * 0.25, y + 9 + rnd.nextDouble() * 2)
+              ..lineTo(x - 0.5 + (left ? 3 : 0), y + 9)
+              ..close();
+            canvas.drawPath(slab, Paint()..color = const Color(0xFF3A2C34));
+            canvas.drawLine(
+              Offset(x - 0.5, y + 0.8),
+              Offset(x + kTile + 0.5, y + 0.8),
+              Paint()
+                ..color = const Color(0xFF8A7480)
+                ..strokeWidth = 1.2,
+            );
+            // Çatlak ve oyma çizgi.
+            line
+              ..strokeWidth = 0.9
+              ..color = const Color(0xFF1A1218);
+            final cx = x + 6 + rnd.nextDouble() * (kTile - 12);
+            canvas.drawPath(
+              Path()
+                ..moveTo(cx, y + 1.5)
+                ..lineTo(cx + 2, y + 5)
+                ..lineTo(cx - 1, y + 9),
+              line,
+            );
+            line.color = kInk;
+          } else if (theme == LevelTheme.forest) {
+            // Yaşayan dal: kabuklu, hafif kıvrık; uçlarında filiz.
+            final left = lv.cell(c - 1, r) != '=';
+            final right = lv.cell(c + 1, r) != '=';
+            final bark = Paint()..color = const Color(0xFF2A1E14);
+            canvas.drawRRect(
+              RRect.fromRectAndRadius(
+                Rect.fromLTWH(x - 0.5, y, kTile + 1, 7),
+                Radius.circular(left || right ? 3.5 : 1),
+              ),
+              bark,
+            );
+            canvas.drawLine(
+              Offset(x, y + 0.8),
+              Offset(x + kTile, y + 0.8),
+              Paint()
+                ..color = const Color(0xFF6A5A38)
+                ..strokeWidth = 1,
+            );
+            line
+              ..strokeWidth = 0.8
+              ..color = const Color(0xFF140E08);
+            for (var i = 0; i < 2; i++) {
+              final bx = x + 4 + rnd.nextDouble() * (kTile - 8);
+              canvas.drawLine(Offset(bx, y + 2.5), Offset(bx + 5, y + 4), line);
+            }
+            line.color = kInk;
+            final leaf = Paint()..color = const Color(0xFF4E7A3A);
+            for (final end in [if (left) x + 2, if (right) x + kTile - 2]) {
+              canvas.drawLine(
+                Offset(end, y + 3),
+                Offset(end + (end < x + 16 ? -5 : 5), y - 4),
+                Paint()
+                  ..color = const Color(0xFF2A1E14)
+                  ..strokeWidth = 1.2,
+              );
+              canvas.drawOval(
+                Rect.fromCenter(
+                  center: Offset(end + (end < x + 16 ? -6 : 6), y - 5),
+                  width: 6,
+                  height: 3.4,
+                ),
+                leaf,
+              );
+            }
+            if (rnd.nextDouble() < 0.4) {
+              canvas.drawOval(
+                Rect.fromCenter(
+                  center: Offset(x + 8 + rnd.nextDouble() * 16, y + 9),
+                  width: 5,
+                  height: 3,
+                ),
+                leaf,
+              );
+            }
           } else if (theme == LevelTheme.sky || theme == LevelTheme.heavens) {
             for (var i = 0; i < 4; i++) {
               canvas.drawCircle(
