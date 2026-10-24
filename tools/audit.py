@@ -57,10 +57,12 @@ VEINS = {'kMapErgenekon'}
 
 
 def _def_block(name):
+    """Bölüm tanımının tamamı (map satırından sonrakiler de: coldRuns…)."""
     src = open('lib/game/levels.dart', encoding='utf-8').read()
     i = src.index('map: %s,' % name)
     j = src.rindex('LevelDef(', 0, i)
-    return src[j:i]
+    k = src.find('LevelDef(', i)
+    return src[j:k if k > 0 else len(src)]
 
 
 def heavens_extras(name):
@@ -81,6 +83,14 @@ def heavens_extras(name):
                 cells.add((int(x - 1), int(y)))
                 cells.add((int(x), int(y)))
     m = re.search(r'stormSteps:\s*\[(.*?)\],', b, re.S)
+    if m:
+        for c, r, n in re.findall(r'\((\d+),\s*(\d+),\s*(\d+)\)', m.group(1)):
+            for k in range(int(n)):
+                cells.add((int(c) + k, int(r)))
+    # Kandilci yolu (coldRuns): yalnız Kandilcinin feneriyle belirir; burada
+    # basılır sayılır (ateşböceğiyle kandırılan Kandilci oyun içi sınamayla
+    # doğrulanır: test/kandilci_yolu_test.dart).
+    m = re.search(r'coldRuns:\s*\[(.*?)\],', b, re.S)
     if m:
         for c, r, n in re.findall(r'\((\d+),\s*(\d+),\s*(\d+)\)', m.group(1)):
             for k in range(int(n)):
