@@ -165,7 +165,11 @@ class LevelDef {
     this.shadowStones = const [],
     this.coldRuns = const [],
     this.vistas = const [],
+    this.surprises = const [],
   });
+
+  /// Küçük sürprizler (ad, sütun, satır): bkz. surprises.dart.
+  final List<(String, int, int)> surprises;
 
   /// Manzara anları (sütun, satır, tür): Sâye oraya ilk gelince.
   final List<(int, int, String)> vistas;
@@ -1460,6 +1464,7 @@ const levels = <LevelDef>[
       'Memory · Whenever he told the tale of Nemrud, he laughed: "The great king was beaten by a gnat. The small always surprise the great."',
     ],
     map: kMapNemrut,
+    surprises: [('tasBekci', 26, 19)],
   ),
   LevelDef(
     title: 'VIII · GÜN DOĞUMU',

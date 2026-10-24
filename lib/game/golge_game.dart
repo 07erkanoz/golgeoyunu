@@ -16,6 +16,7 @@ import 'anlatim_plani.dart';
 import 'entrance.dart';
 import 'feedback.dart';
 import 'shadow_decoy.dart';
+import 'surprises.dart';
 import 'vistas.dart';
 import 'creatures.dart';
 import 'frame_pacer.dart';
@@ -1013,6 +1014,9 @@ class GolgeGame extends FlameGame with KeyboardEvents {
           if (level.eyeStoneCells.isNotEmpty) PerdeCord(c - Vector2(kTile, 0)),
         ],
         for (final c in level.eyeStoneCells) EyeStone(c),
+        for (final (name, c, r) in level.def.surprises)
+          if (name == 'tasBekci')
+            TasBekci(Vector2(c * kTile.toDouble(), r * kTile.toDouble())),
         for (final (c, r, kind) in level.def.vistas)
           VistaPoint(
             Vector2((c + 0.5) * kTile, (r + 0.5) * kTile.toDouble()),
