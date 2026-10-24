@@ -781,16 +781,25 @@ void _person(
   c.save();
   c.translate(3 * w, -76);
   c.rotate(armA);
-  c.drawPath(
-    Path()
-      ..moveTo(-sleeve, 0)
-      ..lineTo(sleeve, 0)
-      ..lineTo(3, 26)
-      ..lineTo(-3, 26)
-      ..close(),
-    ink,
-  );
+  final armPath = Path()
+    ..moveTo(-sleeve, 0)
+    ..lineTo(sleeve, 0)
+    ..lineTo(3, 26)
+    ..lineTo(-3, 26)
+    ..close();
+  c.drawPath(armPath, ink);
   c.drawCircle(const Offset(0, 27), 2.8, ink);
+  // Kol ayrı bir deri parçası: çevresindeki ince ışık kesiği onu gövdenin
+  // (ya da kanadın) önünde de seçik kılar; yoksa mürekkep üstüne mürekkep
+  // düşüp kol kayboluyordu.
+  c.drawPath(
+    armPath,
+    Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.9
+      ..strokeJoin = StrokeJoin.round
+      ..color = PerdePainter._hole.withValues(alpha: 0.45 * a),
+  );
   final hand = const Offset(0, 28);
   switch (l.prop) {
     case _Prop.staff:

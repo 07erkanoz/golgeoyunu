@@ -318,25 +318,41 @@ void _tasvirHudhud(Canvas c, Offset at, double s, double time, double a) {
   c.scale(s);
   const body = Color(0xFFC8784A);
   const crest = Color(0xFFE0A030);
-  // Kanat: kara-ak çizgili.
-  final flap = math.sin(time * 9) * 0.35;
-  c.save();
-  c.rotate(-0.4 + flap);
-  final wing = Path()
-    ..moveTo(-4, -2)
-    ..quadraticBezierTo(-30, -26, -52, -12)
-    ..quadraticBezierTo(-30, 2, -4, 4)
+  // Kanatlar: geniş, yuvarlak uçlu, kara-ak alaca (Hüdhüd'ün kanadı).
+  // Uzaktaki kanat gövdenin ardında, yakındaki önünde; ikisi birlikte
+  // çırpar (uzaktaki biraz gecikmeli).
+  final flap = math.sin(time * 9);
+  // Uzun, yuvarlak uçlu kanat: omuzdan geriye ve yukarı.
+  Path wingPath() => Path()
+    ..moveTo(2, -4)
+    ..cubicTo(-14, -22, -38, -40, -60, -40)
+    ..cubicTo(-68, -40, -68, -32, -60, -28)
+    ..cubicTo(-40, -18, -20, -4, -2, 4)
     ..close();
-  _fillRim(c, wing, const Color(0xFF2A2420), a);
-  for (var i = 0; i < 4; i++) {
-    final x = -14.0 - i * 9;
-    c.drawLine(
-      Offset(x, -12 + i * 2.0),
-      Offset(x - 4, 0),
-      _hole(0.8 * a)..strokeWidth = 2.4,
+  void wing(double angle, double tone) {
+    c.save();
+    c.rotate(angle);
+    final path = wingPath();
+    _fillRim(
+      c,
+      path,
+      Color.lerp(const Color(0xFF2A2420), const Color(0xFF14100E), tone)!,
+      a,
     );
+    // Ak bantlar: kanadı enine kesen ince alaca çizgiler.
+    c.save();
+    c.clipPath(path);
+    final band = _hole(0.6 * a)..strokeWidth = 1.8;
+    for (var i = 0; i < 4; i++) {
+      final x = -22.0 - i * 10;
+      c.drawLine(Offset(x + 10, -46), Offset(x - 2, 0), band);
+    }
+    c.restore();
+    c.restore();
   }
-  c.restore();
+
+  // Uzaktaki kanat: gövdenin ardında, biraz gecikmeli.
+  wing(0.15 + math.sin(time * 9 - 0.7) * 0.4, 1);
   _fillRim(
     c,
     Path()
@@ -356,6 +372,8 @@ void _tasvirHudhud(Canvas c, Offset at, double s, double time, double a) {
     const Color(0xFF2A2420),
     a,
   );
+  // Yakındaki kanat: gövdenin önünde, yukarı çırpar.
+  wing(0.05 + flap * 0.45, 0);
   // Baş, uzun ince gaga, yelpaze tepelik.
   _fillRim(
     c,
@@ -438,7 +456,7 @@ void _chaseBeat(Canvas canvas, double time, double u, double k) {
   _tasvirKandilci(canvas, Offset(500 + go * 340, g + 12), 1.3, time, a);
   // Sâye ve Hüdhüd ardından.
   _tasvirSaye(canvas, Offset(170 + go * 130, g + 12), 2.4, time, a);
-  _tasvirHudhud(canvas, Offset(215 + go * 140, g - 218), 1.7, time, a);
+  _tasvirHudhud(canvas, Offset(250 + go * 140, g - 285), 1.7, time, a);
 }
 
 /// Ana iplikte yalnız Sâye ve Hüdhüd (Kandilci yok): yola bakar, yürür.
@@ -449,7 +467,7 @@ void _sayeBeat(Canvas canvas, double time, double u, double k) {
   const g = PerdePainter._ground;
   final go = _span(u, k + 0.3, k + 0.95);
   _tasvirSaye(canvas, Offset(260 + go * 140, g + 12), 2.4, time, a);
-  _tasvirHudhud(canvas, Offset(320 + go * 150, g - 220), 1.7, time, a);
+  _tasvirHudhud(canvas, Offset(355 + go * 150, g - 285), 1.7, time, a);
 }
 
 // ------------------------------------------------------------ yardımcılar
@@ -618,14 +636,24 @@ void _heroOverlay(Canvas canvas, PerdeScene scene, double time, double u) {
     case PerdeScene.galata:
       // Hezarfen: kanatlarıyla kulede; sonra Boğaz'ın üstünden süzülür.
       stage(1, (a) {
+        // Kanatlar kollarına bağlı: kolunu kaldırıp kanadın ön kenarını
+        // tutar (kanatlar sırtta değil, elde).
         _wings(c, const Offset(372, g - 175), 150, 0.1, a);
-        _person(c, const Offset(370, g + 12), 230, a, _hezarfenFly);
+        _person(c, const Offset(370, g + 12), 230, a, _hezarfenFly, arm: -2.5);
       });
       stage(3, (a) {
         final k = _span(u, 3.1, 3.95);
         final at = Offset(640 - k * 470, 150 + k * 60);
         _wings(c, at, 170, 0.55 + math.sin(time * 1.5) * 0.05, a);
-        _person(c, at + const Offset(0, 60), 120, a, _hezarfenFly, rot: -1.45);
+        _person(
+          c,
+          at + const Offset(0, 60),
+          120,
+          a,
+          _hezarfenFly,
+          rot: -1.45,
+          arm: -1.5,
+        );
       });
       _sayeBeat(canvas, time, u, 5);
     case PerdeScene.skyroad:
@@ -1453,7 +1481,7 @@ void _heroExtra(Canvas canvas, PerdeScene scene, double time, double u) {
         final y = g + 12 - math.sin(hop * math.pi) * 90;
         final x = 260 + hop * 260;
         _wings(c, Offset(x, y - 160), 120, 0.3 + math.sin(time * 6) * 0.2, a);
-        _person(c, Offset(x, y), 170, a, _hezarfenFly);
+        _person(c, Offset(x, y), 170, a, _hezarfenFly, arm: -2.5);
         final p = _hole(0.5 * a);
         for (var i = 0; i < 9; i++) {
           c.drawCircle(Offset(240 + i * 34.0, g + 4), 3, p);
@@ -1470,6 +1498,8 @@ void _heroExtra(Canvas canvas, PerdeScene scene, double time, double u) {
           _hezarfenFly,
           flip: true,
           rot: 0.25,
+          // Padişahın uzattığı keseye elini uzatır.
+          arm: -1.1,
         );
         _ship(c, Offset(560 + 160 * _span(u, 4.4, 5.0), g - 10), 1.6, a);
       });

@@ -950,15 +950,18 @@ class PerdePainter {
       ink,
     );
     if (flying) {
-      final f = math.sin(time * 9) * 14;
-      c.drawPath(
-        Path()
-          ..moveTo(-6, -3)
-          ..quadraticBezierTo(-10, -18 - f, 2, -30 - f)
-          ..quadraticBezierTo(8, -16 - f, 6, -3)
-          ..close(),
-        ink,
-      );
+      // İki kanat: yakındaki ve biraz gecikmeli uzaktaki.
+      for (final (lag, dx) in [(0.7, -5.0), (0.0, 0.0)]) {
+        final f = math.sin(time * 9 - lag) * 14;
+        c.drawPath(
+          Path()
+            ..moveTo(-6 + dx, -3)
+            ..quadraticBezierTo(-12 + dx, -18 - f, 0 + dx, -30 - f)
+            ..quadraticBezierTo(8 + dx, -16 - f, 6 + dx, -3)
+            ..close(),
+          ink,
+        );
+      }
     }
   }
 

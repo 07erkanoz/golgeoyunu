@@ -519,6 +519,22 @@ def _sim(a: str, b: str) -> float:
     return difflib.SequenceMatcher(None, _norm(a), _norm(b), autojunk=False).ratio()
 
 
+def extra_words(heard: str, text: str) -> list[str]:
+    """Dökümde olup metinde olmayan sözler (okunmuş talimat: "with
+    admiration, a smile in the voice" gibi). Ek ve yazım farkları sayılmaz:
+    sözün ilk dört harfi metindeki bir sözle eşleşiyorsa metindendir."""
+    words = _norm(text).split()
+    stems = {w[:4] for w in words}
+    return [w for w in _norm(heard).split() if w[:4] not in stems and len(w) > 1]
+
+
+def heard_ok(heard: str, text: str) -> float:
+    """Benzerlik; üç ya da daha çok fazladan söz varsa 0 (yeniden üretilir)."""
+    if len(extra_words(heard, text)) >= 3:
+        return 0.0
+    return _sim(heard, text)
+
+
 def split_scene(raw: bytes, paras: list[str]) -> list[bytes] | None:
     """Sahneyi paragraflara böler. Kayıt bütün sessizliklerden küçük
     parçalara ayrılır, her parça yazıya dökülür, parçalar sırayla
@@ -647,7 +663,7 @@ def make_scene(lines: list[dict], where: str, notes: dict, lang: str, out_dir: p
                     w = pathlib.Path(d) / "x.wav"
                     g.save_wav(w, raw)
                     wav = w.read_bytes()
-            score = _sim(transcribe(wav), text)
+            score = heard_ok(transcribe(wav), text)
             if best is None or score > best[0]:
                 best = (score, raw)
             if score >= 0.8:
