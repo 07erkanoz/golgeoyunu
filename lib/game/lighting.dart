@@ -191,7 +191,7 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
 
     for (final c in game.world.children) {
       switch (c) {
-        case Guard g:
+        case Guard g when _view.overlaps(g.drawnArea):
           final lantern = g.lanternWorld;
           _light(canvas, lantern.toOffset(), 90, 0.9);
           // Fenerin konisi de karanlığı yarar.
@@ -205,7 +205,7 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
             const [Color(0xB0000000), Color(0x60000000), Color(0x00000000)],
             const [0, 0.45, 1],
           );
-          SoftEdge.paths(canvas, g.litBeams, _cut);
+          SoftEdge.paths(canvas, g.litBeams, _cut, antiAlias: false);
         case ExitPortal e:
           _light(
             canvas,
@@ -438,10 +438,10 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
           );
         case Watcher w when w.dazzled <= 0:
           final o = w.lamp.toOffset();
-          glow(o, 50, cold, 0.2);
+          glow(o, 50, kWatch, 0.2);
           final path = w.beamPath();
           final b = path.getBounds();
-          beam(path, o, b.center, cold, 0.14);
+          beam(path, o, b.center, kWatch, 0.14);
         case LanternBalloon b:
           final o = b.lanternAt.toOffset().translate(0, -10);
           glow(o, 50, kWarmLight, 0.2);

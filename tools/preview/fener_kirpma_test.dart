@@ -41,7 +41,7 @@ void main() {
       game.render(c);
       final img = await rec.endRecording().toImage(870, 391);
       final png = await img.toByteData(format: ui.ImageByteFormat.png);
-      File('build/preview/fener_$name.png')
+      File('build/preview/fener_${Platform.environment['SURUM'] ?? 'yeni'}_$name.png')
           .writeAsBytesSync(png!.buffer.asUint8List());
     }
 

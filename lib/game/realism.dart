@@ -62,6 +62,7 @@ bool realismHere(GolgeGame game) =>
 
 const _cyan = Color(0xFF5AEBDC);
 const _amber = Color(0xFFFFB050);
+const _violet = Color(0xFFB09AFF);
 
 /// Işığa bakan taş kenarları ve ışıkların çevresine taşan parlama: karanlık
 /// katmanının üstüne eklenir (ışık topluyormuş gibi).
@@ -109,7 +110,7 @@ class RealismLayer extends Component with HasGameReference<GolgeGame> {
           if (view.inflate(300).contains(l)) out.add((l, _cyan, 320));
         case Watcher w:
           final l = w.lamp.toOffset();
-          if (view.inflate(300).contains(l)) out.add((l, _cyan, 300));
+          if (view.inflate(300).contains(l)) out.add((l, _violet, 300));
       }
     }
     final p = game.player;

@@ -41,6 +41,32 @@ abstract final class ShadowArt {
     if (p != null) c.drawPicture(p);
   }
 
+  /// Bekçinin parçası, bütün boyaları tek opak renge çevrilmiş (saydamlık
+  /// ve degrade saydamlığı korunur). Ara katman + renk filtresiyle aynı
+  /// sonuç (renk opakken birebir), ama her karede ara katman açmadan.
+  /// Renk başına bir kez kaydedilir.
+  static void guardTinted(Canvas c, String id, Color color) {
+    final set = _tinted.putIfAbsent(color, () {
+      if (_tinted.length > 4) _tinted.clear();
+      final out = <String, ui.Picture>{};
+      final src = _data!['guard'] as Map<String, dynamic>;
+      final parts = src['parts'] as Map<String, dynamic>;
+      _tint = ColorFilter.mode(color, BlendMode.srcIn);
+      for (final id in parts.keys) {
+        final rec = ui.PictureRecorder();
+        _node(ui.Canvas(rec), parts[id], 1, src);
+        out[id] = rec.endRecording();
+      }
+      _tint = null;
+      return out;
+    });
+    final p = set[id];
+    if (p != null) c.drawPicture(p);
+  }
+
+  static final _tinted = <Color, Map<String, ui.Picture>>{};
+  static ColorFilter? _tint;
+
   static void medusa(Canvas c, String id) {
     final p = _medusa[id];
     if (p != null) c.drawPicture(p);
@@ -106,7 +132,9 @@ abstract final class ShadowArt {
     double opacity,
     Map<String, dynamic> src,
   ) {
-    final paint = Paint()..isAntiAlias = true;
+    final paint = Paint()
+      ..isAntiAlias = true
+      ..colorFilter = _tint;
     if (!value.startsWith('url(')) return paint..color = _hex(value, opacity);
     final g = src['gradients'][value.substring(5, value.length - 1)];
     final a = g['a'];
@@ -251,12 +279,18 @@ void drawShadowGuard(
   body();
   c.translate(10, 8);
   c.restore();
-  c.saveLayer(
-    bounds,
-    Paint()..colorFilter = ColorFilter.mode(ink, BlendMode.srcIn),
-  );
-  body();
-  c.restore();
+  // Gövde: koyu renk opak, ara katmansız aynı sonuç (Skia'da her karede
+  // renk filtreli ara katman telefonda pahalıydı). Opak değilse eski yol.
+  if (ink.a >= 1) {
+    _guardBody(c, phase, weight, run, lean, lampAngle, doubt, tint: ink);
+  } else {
+    c.saveLayer(
+      bounds,
+      Paint()..colorFilter = ColorFilter.mode(ink, BlendMode.srcIn),
+    );
+    body();
+    c.restore();
+  }
   // Başlığın karanlığında iki göz.
   c.save();
   _headFrame(c, phase, weight, run, lean, doubt);
@@ -346,11 +380,18 @@ void _headFrame(
   c.translate(-neck.dx + doubt * 14, -neck.dy);
 }
 
-void _bone(Canvas c, Offset a, Offset b, double r1, double r2) {
+void _bone(
+  Canvas c,
+  Offset a,
+  Offset b,
+  double r1,
+  double r2, [
+  Color color = const Color(0xFF000000),
+]) {
   final v = b - a;
   final l = math.max(.001, v.distance);
   final n = Offset(-v.dy / l, v.dx / l);
-  final paint = Paint()..color = const Color(0xFF000000);
+  final paint = Paint()..color = color;
   c.drawPath(
     Path()..addPolygon([a + n * r1, b + n * r2, b - n * r2, a - n * r1], true),
     paint,
@@ -366,8 +407,16 @@ void _guardBody(
   double run,
   double lean,
   double lampAngle,
-  double doubt,
-) {
+  double doubt, {
+  Color? tint,
+}) {
+  // [tint]: parçalar doğrudan bu renkte çizilir (ara katman yok).
+  void part(String id) => tint == null
+      ? ShadowArt.guard(c, id)
+      : ShadowArt.guardTinted(c, id, tint);
+  void bone(Offset a, Offset b, double r1, double r2) =>
+      _bone(c, a, b, r1, r2, tint ?? const Color(0xFF000000));
+
   final bob = _bob(phase, weight);
   final hipY = 588 + bob;
   // Bacaklar (kalçadan bileğe iki kemik, çizilmiş çizme).
@@ -377,11 +426,11 @@ void _guardBody(
     final ankle = foot - const Offset(0, 46);
     final hip = Offset(hipX, hipY);
     final (knee, end) = solveLimb(hip, ankle, 94, 90, bend: 1);
-    _bone(c, hip, knee, 14, 12);
-    _bone(c, knee, end, 12, 9);
+    bone(hip, knee, 14, 12);
+    bone(knee, end, 12, 9);
     c.save();
     c.translate(end.dx - bootX, end.dy + 46 - 777);
-    ShadowArt.guard(c, boot);
+    part(boot);
     c.restore();
   }
 
@@ -397,38 +446,38 @@ void _guardBody(
   c.translate(192, 350);
   c.rotate(-.06 * math.sin(2 * math.pi * phase) * weight - run * 0.2);
   c.translate(-192, -350);
-  ShadowArt.guard(c, 'arm-back');
+  part('arm-back');
   c.restore();
   for (final id in ['torso', 'belt-and-pouch', 'coat-wear']) {
-    ShadowArt.guard(c, id);
+    part(id);
   }
   c.save();
   c.translate(251, 459);
   c.rotate(.08 * math.sin(2 * math.pi * phase + .5) * weight);
   c.translate(-251, -459);
-  ShadowArt.guard(c, 'keys');
+  part('keys');
   c.restore();
   c.save();
   const neck = Offset(305, 282);
   c.translate(neck.dx, neck.dy);
   c.rotate(-0.22 * doubt);
   c.translate(-neck.dx + doubt * 14, -neck.dy);
-  ShadowArt.guard(c, 'head');
+  part('head');
   c.restore();
   final shift = _shift(phase, weight);
   const shoulder = Offset(301, 341);
   final wrist = const Offset(440, 350) + shift;
   final (elbow, end) = solveLimb(shoulder, wrist, 90, 87, bend: -1);
-  _bone(c, shoulder, elbow, 17, 15);
-  _bone(c, elbow, end, 14, 11);
+  bone(shoulder, elbow, 17, 15);
+  bone(elbow, end, 14, 11);
   c.save();
   c.translate(shift.dx, shift.dy);
-  ShadowArt.guard(c, 'staff');
-  ShadowArt.guard(c, 'hand-front');
+  part('staff');
+  part('hand-front');
   c.translate(guardLampPivot.dx, guardLampPivot.dy);
   c.rotate(lampAngle);
   c.translate(-guardLampPivot.dx, -guardLampPivot.dy);
-  ShadowArt.guard(c, 'lantern');
+  part('lantern');
   c.restore();
   c.restore();
 }

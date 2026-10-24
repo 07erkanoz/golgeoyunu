@@ -426,59 +426,73 @@ class Guard extends PositionComponent
   double get _probeAngle => _probe * math.sin(_life * 1.3) * 0.32;
 
   /// Fener konisinin kayada kesilmiş görünür bölgesi (dünya koordinatı);
-  /// koni hiçbir kayaya değmiyorsa null. Karede bir kez hesaplanır.
+  /// koni hiçbir kayaya değmiyorsa null. [litBeams] ile birlikte kurulur.
   Path? get coneShape {
-    if (_coneAt != _life) {
-      _coneAt = _life;
-      final l = _lantern;
-      final range = coneRange * 1.05;
-      final mid = facing > 0 ? 0.0 : math.pi;
-      _cone = level.visibility(
-        Offset(l.x, l.y),
-        range,
-        from: mid - 0.8,
-        to: mid + 0.8,
-        rays: 28,
-      );
-    }
+    litBeams;
     return _cone;
   }
 
   Path? _cone;
-  double _coneAt = -1;
 
-  /// Kayada kesilmiş huzme katmanları ([SoftEdge.widths] sırasıyla), karede
-  /// bir kez. Kırpma yerine yol kesişimi: telefonda (Skia) her karede
-  /// değişen yumuşak kenarlı kırpma maskesi fener önünde takılma yapıyordu.
+  /// Kayada kesilmiş huzme katmanları ([SoftEdge.widths] sırasıyla). Kırpma
+  /// yerine yol kesişimi: telefonda (Skia) her karede değişen yumuşak
+  /// kenarlı kırpma maskesi fener önünde takılma yapıyordu. Şekil fenerin
+  /// piksele yuvarlanmış yerine, yönüne ve menziline bağlı: fener yalnız
+  /// piksel altı sallanınca yeniden kurulmaz (gözle fark edilmez).
   List<Path> get litBeams {
-    if (_beamsAt != _life) {
-      _beamsAt = _life;
-      final seen = coneShape;
+    final l = _lantern;
+    final key = (
+      l.x.round(),
+      l.y.round(),
+      facing,
+      coneRange.round(),
+      SoftEdge.widths.length,
+    );
+    if (key != _beamsKey) {
+      _beamsKey = key;
+      final at = Offset(key.$1.toDouble(), key.$2.toDouble());
+      final mid = facing > 0 ? 0.0 : math.pi;
+      _cone = level.visibility(
+        at,
+        coneRange * 1.05,
+        from: mid - 0.8,
+        to: mid + 0.8,
+        rays: 28,
+      );
+      final seen = _cone;
       _beams = [
         for (final k in SoftEdge.widths)
           seen == null
-              ? beamShape(k)
-              : Path.combine(PathOperation.intersect, beamShape(k), seen),
+              ? _beamAt(at, k)
+              : Path.combine(PathOperation.intersect, _beamAt(at, k), seen),
       ];
     }
     return _beams;
   }
 
   List<Path> _beams = const [];
-  double _beamsAt = -1;
+  Object? _beamsKey;
+
+  /// Fenerin ve huzmesinin bütün çizim alanı (dünya): ekran dışındaysa
+  /// Kandilci de ışığı da çizilmez (yürüyüşü ve görüşü sürer).
+  Rect get drawnArea => Rect.fromCircle(
+    center: _lantern.toOffset(),
+    radius: coneRange * 1.15,
+  ).expandToInclude(toRect().inflate(24));
 
   /// Fener huzmesinin dünyadaki şekli (görüş alanı); [k] yanlara açılışın
   /// oranı (yumuşak kenar katmanları için). Kayada kesilmesi [coneShape].
-  Path beamShape([double k = 1]) {
-    final l = _lantern;
+  Path beamShape([double k = 1]) => _beamAt(_lantern.toOffset(), k);
+
+  Path _beamAt(Offset l, double k) {
     final f = facing.toDouble();
     final range = state == GuardState.chase ? viewDistance * 1.4 : viewDistance;
     final spread = (range * 0.5 + 34) * k;
     return Path()
-      ..moveTo(l.x, l.y - 3)
-      ..lineTo(l.x + f * range, l.y - spread)
-      ..lineTo(l.x + f * range, l.y + spread)
-      ..lineTo(l.x, l.y + 3)
+      ..moveTo(l.dx, l.dy - 3)
+      ..lineTo(l.dx + f * range, l.dy - spread)
+      ..lineTo(l.dx + f * range, l.dy + spread)
+      ..lineTo(l.dx, l.dy + 3)
       ..close();
   }
 
@@ -515,6 +529,7 @@ class Guard extends PositionComponent
 
   @override
   void render(Canvas canvas) {
+    if (!game.camera.visibleWorldRect.overlaps(drawnArea)) return;
     final alert = state == GuardState.alert || state == GuardState.chase;
     canvas.save();
     if (facing < 0) {
@@ -577,6 +592,7 @@ class Guard extends PositionComponent
       SoftEdge.paths(
         canvas,
         beams,
+        antiAlias: false,
         Paint()
           ..shader = ui.Gradient.radial(
             l,

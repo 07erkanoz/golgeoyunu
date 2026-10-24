@@ -1,6 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application
-        android:label="Gölge Oyunu"
+        android:label="${appLabel}"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
@@ -34,10 +34,11 @@
         <!-- Çizici: Skia (OpenGL). Impeller oyunun bulanıklık ve ara katman
              çizimlerinde her biri için ekran dışı geçiş açıyor, Kaf gibi
              bölümler telefonda takılıyordu; Windows'ta da aynı nedenle Skia
-             kullanılıyor (windows/runner/main.cpp). -->
+             kullanılıyor (windows/runner/main.cpp). Karşılaştırma derlemesi
+             (GOLGE_IMPELLER=true, bkz. build.gradle.kts) Impeller'la çizer. -->
         <meta-data
             android:name="io.flutter.embedding.android.EnableImpeller"
-            android:value="false" />
+            android:value="${impeller}" />
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

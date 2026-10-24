@@ -87,10 +87,24 @@ jobs:
             || { echo "::error::APK kalıcı anahtarla imzalanmamış"; exit 1; }
       - name: Yeniden adlandır
         run: cp build/app/outputs/flutter-apk/app-release.apk GolgeOyunu-android-arm64.apk
+      # Karşılaştırma: aynı oyun Impeller çizicisiyle (ayrı uygulama, yan yana
+      # kurulur). Kandilci ışığındaki takılmanın çiziciden mi geldiğini ayırmak
+      # için.
+      - name: Android için derle (Impeller karşılaştırması)
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          GOLGE_IMPELLER: "true"
+        run: |
+          flutter build apk --release --target-platform android-arm64 --build-number=${{ github.run_number }} --dart-define=CARTOON=true
+          cp build/app/outputs/flutter-apk/app-release.apk GolgeOyunu-android-arm64-impeller.apk
       - uses: actions/upload-artifact@v4
         with:
           name: android
-          path: GolgeOyunu-android-arm64.apk
+          path: |
+            GolgeOyunu-android-arm64.apk
+            GolgeOyunu-android-arm64-impeller.apk
 
   linux:
     runs-on: ubuntu-latest
@@ -186,12 +200,15 @@ jobs:
           files: |
             GolgeOyunu-windows.zip
             GolgeOyunu-android-arm64.apk
+            GolgeOyunu-android-arm64-impeller.apk
           body: |
             Otomatik derleme (commit ${{ github.sha }}).
 
             **Windows:** `GolgeOyunu-windows.zip` dosyasını bir klasöre çıkar, `golge.exe`'yi çalıştır.
 
             **Android:** `GolgeOyunu-android-arm64.apk` dosyasını telefona indir ve aç. "Bilinmeyen kaynaklardan yükleme" izni istenirse ver.
+
+            **Android karşılaştırma:** `GolgeOyunu-android-arm64-impeller.apk` aynı oyunun Impeller çizicili hâli; "Gölge (Impeller)" adıyla ayrı kurulur, kaydı ayrıdır.
 
             **Linux (Arch):** (paket, Linux derlemesi bitince birkaç dakika sonra eklenir)
             ```

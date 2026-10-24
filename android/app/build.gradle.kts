@@ -21,6 +21,11 @@ fun signing(name: String, env: String): String? =
 
 val releaseStore = signing("storeFile", "ANDROID_KEYSTORE_PATH")
 
+// Karşılaştırma derlemesi (GOLGE_IMPELLER=true): aynı oyun Impeller çizicisiyle,
+// ayrı uygulama kimliği ve adla yan yana kurulur (kendi kaydı olur). Normal
+// derleme Skia ile çizer.
+val impeller = System.getenv("GOLGE_IMPELLER") == "true"
+
 android {
     namespace = "com.erkanoz.golge"
     compileSdk = flutter.compileSdkVersion
@@ -44,6 +49,10 @@ android {
         // flag during build.
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        manifestPlaceholders["impeller"] = impeller.toString()
+        manifestPlaceholders["appLabel"] =
+            if (impeller) "Gölge (Impeller)" else "Gölge Oyunu"
+        if (impeller) applicationIdSuffix = ".impeller"
     }
 
     signingConfigs {

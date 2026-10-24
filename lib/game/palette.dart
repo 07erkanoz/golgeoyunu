@@ -12,6 +12,10 @@ const kEmber = Color(0xFFE0703A);
 const kWarmLight = Color(0xFFFFD9A0);
 const kCold = Color(0xFF7FE6D2);
 
+/// Gözcü'nün projektörü: Kandilci fenerinin nane yeşilinden ayrı, soluk mor
+/// (ikisi farklı düzenek; renkten seçilsin).
+const kWatch = Color(0xFFB9A2FF);
+
 /// Işık kenarı yumuşaklığı: huzmelerin yanı ve kayada kesildiği yer cetvel
 /// gibi değil, ışık gibi dağılsın. Bulanıklık filtresi yok (pahalı ve
 /// cihazdan cihaza farklı): huzme giderek daralan katmanlarla, kayadaki
@@ -43,9 +47,18 @@ class SoftEdge {
   }
 
   /// [beam] gibi, ama katmanların yolları hazır (ör. kayada kesilmiş).
-  static void paths(Canvas canvas, List<Path> layers, Paint paint) {
+  /// [antiAlias] false: kenar yumuşatmasız (katmanların kenarı zaten
+  /// degradeyle söner; Skia'da girintili yolu yumuşatmak pahalı).
+  static void paths(
+    Canvas canvas,
+    List<Path> layers,
+    Paint paint, {
+    bool antiAlias = true,
+  }) {
     if (layers.isEmpty) return;
     final a = paint.color.a;
+    final aa = paint.isAntiAlias;
+    paint.isAntiAlias = antiAlias;
     paint.color = paint.color.withValues(
       alpha: math.min(1.0, a * 1.3 / layers.length),
     );
@@ -53,6 +66,7 @@ class SoftEdge {
       canvas.drawPath(p, paint);
     }
     paint.color = paint.color.withValues(alpha: a);
+    paint.isAntiAlias = aa;
   }
 }
 

@@ -497,14 +497,14 @@ class Watcher extends PositionComponent with HasGameReference<GolgeGame> {
       beamPath,
       Paint()
         ..shader = ui.Gradient.linear(o.toOffset(), far, [
-          Color.lerp(kCold, const Color(0xFFF2FFFC), suspicion)!.withValues(
+          Color.lerp(kWatch, const Color(0xFFF6F2FF), suspicion)!.withValues(
             alpha:
                 (0.26 + 0.3 * suspicion) *
                 (suspicion > 0.6 ? 0.8 + 0.2 * math.sin(_t * 29) : 1) *
                 // Gözü kamaşınca projektörünü kapatıp yüzünü siper eder.
                 (dazzled > 0 ? 0.12 : 1),
           ),
-          kCold.withValues(alpha: 0),
+          kWatch.withValues(alpha: 0),
         ]),
     );
     // Tehlikeli ışığın deseni: dışa akan tarama halkaları.
@@ -516,7 +516,7 @@ class Watcher extends PositionComponent with HasGameReference<GolgeGame> {
         ..strokeWidth = 1.4;
       for (var i = 0; i < 3; i++) {
         final k = (_t * 0.45 + i / 3) % 1.0;
-        ring.color = kCold.withValues(
+        ring.color = kWatch.withValues(
           alpha: 0.35 * (1 - k) * math.min(1, k * 6),
         );
         canvas.drawCircle(o.toOffset(), beamLength * k, ring);
@@ -557,7 +557,7 @@ class Watcher extends PositionComponent with HasGameReference<GolgeGame> {
       Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 0.7
-        ..color = kCold.withValues(alpha: 0.25 + 0.2 * suspicion),
+        ..color = kWatch.withValues(alpha: 0.25 + 0.2 * suspicion),
     );
     canvas.drawRect(
       const Rect.fromLTWH(4.2, 31, 15, 1.8),
@@ -595,7 +595,7 @@ class Watcher extends PositionComponent with HasGameReference<GolgeGame> {
       Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 0.6
-        ..color = kCold.withValues(alpha: 0.3 + 0.2 * suspicion),
+        ..color = kWatch.withValues(alpha: 0.3 + 0.2 * suspicion),
     );
     canvas.drawOval(
       Rect.fromCenter(
@@ -603,7 +603,7 @@ class Watcher extends PositionComponent with HasGameReference<GolgeGame> {
         width: 3,
         height: 1.2 * (1 - dazed * 0.8),
       ),
-      Paint()..color = kCold.withValues(alpha: 0.6 + 0.4 * suspicion),
+      Paint()..color = kWatch.withValues(alpha: 0.6 + 0.4 * suspicion),
     );
     canvas.restore();
     // Projektör: ışının çıktığı yerden döner (gövdesi arkada, camı önde).
@@ -620,7 +620,7 @@ class Watcher extends PositionComponent with HasGameReference<GolgeGame> {
     );
     canvas.drawRect(
       const Rect.fromLTWH(-1, -3.5, 2.6, 7),
-      Paint()..color = kCold.withValues(alpha: dazed > 0 ? 0.3 : 0.95),
+      Paint()..color = kWatch.withValues(alpha: dazed > 0 ? 0.3 : 0.95),
     );
     canvas.restore();
     // Kol projektörün sapını tutar; gözü kamaşınca öbür el yüzünü siper eder.
