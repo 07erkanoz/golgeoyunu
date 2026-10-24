@@ -578,6 +578,11 @@ class Valve extends PositionComponent with HasGameReference<GolgeGame>, Usable {
     GameAudio.instance.play('gate', volume: 0.6);
     // Dolarken su bir an gurlar, sonra yükselir: tahtaya binmeye vakit kalır.
     b.setTarget(fill ? b.high : b.low, delay: fill ? 1.3 : 0.3);
+    // Kamera hazneye: suyun yükselişi ya da çekilişi görünsün.
+    game.focus(
+      Vector2(b.area.center.dx, (fill ? b.high : b.low) - kTile),
+      hold: fill ? 2.6 : 2.0,
+    );
   }
 
   @override
@@ -1439,6 +1444,10 @@ class PerdeCord extends PositionComponent
     best?.pull();
     _tug = 1;
     _pulled = true;
+    // Kamera perdeye: kandil kayar, dev gölge yer değiştirir.
+    if (best != null) {
+      game.focus(best.position + best.size / 2 - Vector2(0, kTile), hold: 1.3);
+    }
   }
 
   /// İlk çekilene dek ip kendini belli eder: püskülde ılık ışık, ipten

@@ -2262,16 +2262,47 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     }
   }
 
-  /// Kameranın kısa bakışı: kol çekilince açılan kapıya bakar, sonra döner.
-  Vector2? _peekAt;
-  double _peekT = 0;
-  static const _peekLen = 1.4;
+  // ------------------------------------------------------- kamera odağı
+  // "Ne yaptım, ne değişti": oyuncu bir düzeneği oynatınca kamera sonucu
+  // gösterir. İkisi bir ekrana sığıyorsa (ip ve perde, kol ve kapı) kamera
+  // aralarına geçip hafifçe açılır: sebep ve sonuç tek karede. Sığmıyorsa
+  // sonuca gider, sonuç bitene dek bekler (kapı açılıp yolda ışık akana
+  // dek), Sâye'ye döner. Oyuncu bu arada yürümeyi sürdürür. Kovalamacada,
+  // Karabasan yakındayken odak yok.
+  Vector2? _focusAt;
+  double _focusT = 0;
+  double _focusLen = 0;
+  static const _focusIn = 0.45;
+  static const _focusOut = 0.55;
 
-  /// Kamera bir an [at] noktasına bakar (oyuncu yürümeyi sürdürür).
-  void peek(Vector2 at) {
-    _peekAt = at.clone();
-    _peekT = _peekLen;
+  /// Odak sürerken istenen yakınlaştırma çarpanı (1: değişmez).
+  double _focusZoom = 1;
+  double _focusZoomS = 1;
+
+  /// Kamera [at] noktasına odaklanır; [hold] orada kalış süresi.
+  void focus(Vector2 at, {double hold = 0.9}) {
+    final p = player;
+    if (p == null || p.isDead || cinematic) return;
+    if (threat > 0.3) return;
+    if (world.children.whereType<Guard>().any(
+          (g) => g.state == GuardState.chase,
+        )) {
+      return;
+    }
+    // Aynı yere süren odak yeniden başlamaz, yalnız uzar.
+    final cur = _focusAt;
+    if (cur != null && _focusT > 0 && (cur - at).length < kTile * 2) {
+      _focusT = math.max(_focusT, hold + _focusOut);
+      _focusLen = math.max(_focusLen, _focusT);
+      return;
+    }
+    _focusAt = at.clone();
+    _focusLen = _focusIn + hold + _focusOut;
+    _focusT = _focusLen;
   }
+
+  /// Eski ad (kol): kapıya bakış.
+  void peek(Vector2 at) => focus(at);
 
   /// Kameranın suyu göstermek için indiği pay (yumuşatılmış).
   double _waterLook = 0;
@@ -2328,7 +2359,10 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     _zoomS = _snapCamera || _zoomS <= 0
         ? want
         : approach(_zoomS, want, dt, 0.3);
-    final zoom = _zoomS;
+    // Odakta sebep ve sonuç birlikte görünsün diye hafif açılış (bir önceki
+    // karenin isteği; titremesin diye yumuşatılır).
+    _focusZoomS = approach(_focusZoomS, _focusZoom, dt, 0.25);
+    final zoom = _zoomS * _focusZoomS;
     camera.viewfinder.zoom = zoom;
 
     // Gidilen yöne doğru ileriyi gösterir; hızlandıkça daha çok.
@@ -2376,18 +2410,36 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         ..x = p.center.x + _lookAhead * 1.6
         ..y = _skiCamY - halfH * 0.32;
     }
-    final peekAt = _peekAt;
-    if (peekAt != null && _peekT > 0) {
-      _peekT -= dt;
-      // Git, bekle, dön: 0 → 1 → 0.
-      final k = _peekT / _peekLen;
-      final w = k > 0.75
-          ? (1 - k) / 0.25
-          : k < 0.3
-          ? k / 0.3
+    final focusAt = _focusAt;
+    _focusZoom = 1;
+    if (focusAt != null && _focusT > 0) {
+      _focusT -= dt;
+      // Git, bekle, dön: 0 → 1 → 0, yumuşak.
+      final gone = _focusLen - _focusT;
+      final w = gone < _focusIn
+          ? gone / _focusIn
+          : _focusT < _focusOut
+          ? math.max(0.0, _focusT) / _focusOut
           : 1.0;
-      target.setFrom(target + (peekAt - target) * (w * w * (3 - 2 * w)));
-      if (_peekT <= 0) _peekAt = null;
+      final e = w * w * (3 - 2 * w);
+      // İkisi birlikte sığar mı: Sâye ile sonucun arası, kenarlardan pay.
+      final mid = (p.center + focusAt) / 2;
+      final needW = (p.center.x - focusAt.x).abs() / 2 + kTile * 3;
+      final needH = (p.center.y - focusAt.y).abs() / 2 + kTile * 3;
+      // Odağın açılışından önceki görüşe göre (yoksa açıldıkça sığar
+      // görünür, kamera salınırdı).
+      final fit = math.min(
+        view.x / _zoomS / 2 / needW,
+        view.y / _zoomS / 2 / needH,
+      );
+      if (fit >= 0.78) {
+        // Sebep ve sonuç tek karede; gerekirse biraz açılır.
+        target.setFrom(target + (mid - target) * e);
+        _focusZoom = 1 + (math.min(1.0, fit) - 1) * e;
+      } else {
+        target.setFrom(target + (focusAt - target) * e);
+      }
+      if (_focusT <= 0) _focusAt = null;
     }
     target.x = level.pixelWidth <= halfW * 2
         ? level.pixelWidth / 2

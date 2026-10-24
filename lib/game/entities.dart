@@ -1691,6 +1691,11 @@ class Gate extends PositionComponent
     _t += dt;
     if (opening && _lift == 0 && _strain < strainTime) {
       if (_strain == 0) {
+        // Kamera kapıya odaklanır; açılış bitip yolda ışık akana dek kalır.
+        game.focus(
+          position + Vector2(size.x / 2, size.y / 2),
+          hold: strainTime + _height / 70 + 0.4,
+        );
         GameAudio.instance.play('chain', volume: 0.5);
         game.dust(position + Vector2(size.x / 2, -11), falling: true, count: 6);
       }
@@ -1968,7 +1973,6 @@ class Lever extends PositionComponent
       // Hangi kolun hangi kapıyı açtığı görülsün: ışık akar, kamera bakar.
       final gate = best.position + Vector2(best.size.x / 2, best.size.y / 2);
       game.world.add(LinkPulse(position - Vector2(0, 18), gate));
-      game.peek(gate);
     }
   }
 
