@@ -768,6 +768,10 @@ class AkGeyik extends PositionComponent
       graze: _graze,
       alert: math.max(_alert, _balk),
       still: !moving && _leave == 0,
+      // Dururken ara sıra bir kulağı sese döner.
+      ear: !moving && _leave == 0 && _t % 3.7 < 0.3
+          ? math.sin((_t % 3.7) / 0.3 * math.pi)
+          : 0,
     );
     canvas.restore();
   }

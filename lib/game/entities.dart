@@ -158,6 +158,14 @@ class Guard extends PositionComponent
     }
     _turnT = math.max(0, _turnT - dt);
     _life += dt;
+    _probe = approach(
+      _probe,
+      state == GuardState.pause || state == GuardState.investigate && !distracted
+          ? 1
+          : 0,
+      dt,
+      0.35,
+    );
     final run = (_speedS / chaseSpeed).clamp(0.0, 1.0);
     // Fener asanın ucunda geride kalır, durunca öne sallanır.
     _swingS.update((-accel * 0.0016).clamp(-3.5, 3.5) - run * 1.2, dt);
@@ -412,6 +420,10 @@ class Guard extends PositionComponent
 
   double get _lanternSway => _swingS.value + math.sin(_life * 1.9 + 1) * 0.6;
 
+  /// Durunca fenerini kaldırıp karanlığı yoklar (yalnız çizim; görüş aynı).
+  double _probe = 0;
+  double get _probeAngle => _probe * math.sin(_life * 1.3) * 0.32;
+
   /// Fener konisinin kayada kesilmiş görünür bölgesi (dünya koordinatı);
   /// koni hiçbir kayaya değmiyorsa null. Karede bir kez hesaplanır.
   Path? get coneShape {
@@ -523,6 +535,24 @@ class Guard extends PositionComponent
       final l = _lantern.toOffset();
       final seen = coneShape;
       if (seen != null) canvas.clipPath(seen);
+      // Tehlikeli ışık yalnız rengiyle değil desenle de seçilir: fenerden
+      // dışa akan tarama halkaları (sıcak, güvenli ışıkta yok).
+      canvas.save();
+      canvas.clipPath(beamShape());
+      final ring = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.4;
+      for (var i = 0; i < 3; i++) {
+        final k = (_life * 0.55 + i / 3) % 1.0;
+        ring.color = beam.withValues(
+          alpha: (beamAlpha * 1.4 * (1 - k) * math.min(1, k * 6)).clamp(
+            0.0,
+            1.0,
+          ),
+        );
+        canvas.drawCircle(l, range * k, ring);
+      }
+      canvas.restore();
       SoftEdge.beam(
         canvas,
         beamShape,
@@ -565,7 +595,7 @@ class Guard extends PositionComponent
         weight: _amt,
         run: _run,
         lean: _leanS,
-        lampAngle: -_lanternSway / 9.5,
+        lampAngle: -_lanternSway / 9.5 + _probeAngle,
         doubt: doubt,
         ink: toon ? Cartoon.char : kInk,
         rim: beam.withValues(alpha: (toon ? 0.6 : 0.35) + 0.25 * doubt),

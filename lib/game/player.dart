@@ -380,7 +380,8 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     // Sesler: koşarken adımlar, sert inişler. Tahta iskele daha çok gıcırdar.
     final quiet = sneaking || crouching;
     if (onGround && !wasOnGround) {
-      if (impact > 420) _landDip = 0.16;
+      // Yüksekten inişte daha derin çöker, toparlanır.
+      if (impact > 420) _landDip = impact > 680 ? 0.21 : 0.16;
       // Yalnız yüksekten inişte zeminden birkaç zerre (karda kar tozu); düz
       // zıplayıştan inişte toz kalkmaz.
       if (impact > 680) {

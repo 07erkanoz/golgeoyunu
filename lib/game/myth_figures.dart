@@ -217,6 +217,7 @@ class MythFigures {
     double graze = 0,
     double alert = 0,
     bool still = false,
+    double ear = 0,
   }) {
     c.drawOval(
       Rect.fromCenter(center: const Offset(0, 0), width: 100, height: 8),
@@ -231,6 +232,7 @@ class MythFigures {
       graze: graze,
       alert: alert,
       still: still,
+      ear: ear,
     );
     _skyBody(
       c,

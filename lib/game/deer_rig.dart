@@ -110,6 +110,7 @@ class DeerRig {
     double graze = 0,
     double alert = 0,
     bool still = false,
+    double ear = 0,
   }) {
     final th = phase % 1.0;
     final pi2 = 2 * math.pi;
@@ -236,11 +237,15 @@ class DeerRig {
       ]),
     );
     // Yaprak biçimli kulaklar: dikkat kesilince dikleşir.
+    // [ear]: dururken bir kulak bir an sese döner (canlı durur).
+    var first = true;
     for (final (base, tipBack, tipUp) in [
       (hp(-3, -5), hp(-14, -9), hp(-6, -16)),
       (hp(-6, -4), hp(-16, -6), hp(-10, -14)),
     ]) {
-      final tip = _lerp(tipBack, tipUp, alert);
+      var tip = _lerp(tipBack, tipUp, alert);
+      if (first) tip += (hp(4, -18) - tip) * (0.55 * ear);
+      first = false;
       final side = Offset(-(tip - base).dy, (tip - base).dx) * 0.22;
       parts.add(
         Path()

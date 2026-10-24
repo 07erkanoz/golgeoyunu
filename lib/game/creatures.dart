@@ -507,6 +507,22 @@ class Watcher extends PositionComponent with HasGameReference<GolgeGame> {
           kCold.withValues(alpha: 0),
         ]),
     );
+    // Tehlikeli ışığın deseni: dışa akan tarama halkaları.
+    if (dazzled <= 0) {
+      canvas.save();
+      canvas.clipPath(beamPath());
+      final ring = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.4;
+      for (var i = 0; i < 3; i++) {
+        final k = (_t * 0.45 + i / 3) % 1.0;
+        ring.color = kCold.withValues(
+          alpha: 0.35 * (1 - k) * math.min(1, k * 6),
+        );
+        canvas.drawCircle(o.toOffset(), beamLength * k, ring);
+      }
+      canvas.restore();
+    }
     canvas.restore();
 
     canvas.save();
