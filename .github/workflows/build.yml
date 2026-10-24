@@ -16,9 +16,8 @@ concurrency:
 
 env:
   FLUTTER_VERSION: 3.47.7
-  # Android çizicisi (skia ya da impeller): Kandilci ışığındaki takılmayı
-  # aynı cihazda iki çiziciyle karşılaştırmak için derlemeden derlemeye
-  # değiştirilir. APK aynı uygulama, kayıtlar korunur.
+  # Android çizicisi: impeller (kalıcı). Karşılaştırma gerekirse "skia";
+  # APK aynı uygulama, kayıtlar korunur.
   GOLGE_RENDERER: impeller
 
 jobs:

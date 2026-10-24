@@ -31,11 +31,12 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
-        <!-- Çizici: Skia (OpenGL). Impeller oyunun bulanıklık ve ara katman
-             çizimlerinde her biri için ekran dışı geçiş açıyor, Kaf gibi
-             bölümler telefonda takılıyordu; Windows'ta da aynı nedenle Skia
-             kullanılıyor (windows/runner/main.cpp). Derleme hattında
-             GOLGE_RENDERER=impeller ise Impeller (bkz. build.gradle.kts). -->
+        <!-- Çizici: Impeller (Vulkan). Bir dönem Skia'ya geçilmişti (Kaf'taki
+             bulanıklıklar Impeller'da takılıyordu; o bulanıklıklar sonra
+             degradeyle değiştirildi), ama Skia'da Kandilci feneri takılıyordu.
+             Derleme hattında GOLGE_RENDERER=skia ile Skia'lı karşılaştırma
+             derlemesi alınabilir (bkz. build.gradle.kts). Windows Skia
+             kullanır (windows/runner/main.cpp). -->
         <meta-data
             android:name="io.flutter.embedding.android.EnableImpeller"
             android:value="${impeller}" />

@@ -21,10 +21,11 @@ fun signing(name: String, env: String): String? =
 
 val releaseStore = signing("storeFile", "ANDROID_KEYSTORE_PATH")
 
-// Android çizicisi: GOLGE_RENDERER=impeller ise Impeller, yoksa Skia (bkz.
-// AndroidManifest.xml). Aynı uygulama: kayıtlar korunarak üstüne kurulur;
-// iki çiziciyi aynı cihazda sırayla karşılaştırmak için.
-val impeller = System.getenv("GOLGE_RENDERER") == "impeller"
+// Android çizicisi: Impeller (varsayılan). GOLGE_RENDERER=skia ile Skia'lı
+// karşılaştırma derlemesi alınabilir; aynı uygulama, kayıtlar korunur.
+// Skia'da Kandilci feneri ilk görüşte ve ekranda kaldıkça takılıyordu
+// (RedMagic 8 Pro); Impeller'la düzeldi.
+val impeller = System.getenv("GOLGE_RENDERER") != "skia"
 
 android {
     namespace = "com.erkanoz.golge"
