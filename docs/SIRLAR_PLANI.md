@@ -47,7 +47,26 @@ denenince hiçbir şey olmaz; şakanın tadı buradan gelir.
 Her oda ana parkurdan farklı bir duygu verir: oyuncak, müzik, rahat hareket,
 hafıza. Her birinde bir **tasvir parçası** bulunur (S3).
 
-### S2a · Yerebatan · Unutulmuş Gölgehane (ilk deneme)
+### S2a · Yerebatan · Unutulmuş Gölgehane (ilk deneme) ✅
+
+Uygulanan (`lib/game/golgehane.dart`, haritada sütun 45–62, satır 15–18):
+
+- Yürüme yolunun sonundaki iki karelik boşluğun dibi taş değil, taş gibi
+  boyanmış bir perde. Eskiden boşluğa düşen suda ölürdü; şimdi sahanlığa
+  konar, perde aralanır. Suyun kendisi yine öldürür.
+- Su, sahanlığın altında gerçekte olmayan kemeri ve içindeki kandil alevini
+  dalgalanarak gösterir (gerçekçilik kapalıyken de).
+- Yaklaşana (4,5 kare) içeriden kısık bir çan, dikişte bir parıltı: en çok
+  15 saniyede bir, tehlike yokken.
+- Aralanana dek oda dışarıdan taş görünür; ışığı sızmaz.
+- İçeride: itilen kandil (yakın: dev gölge, uzak: küçük), rafta kuş, at,
+  ejder; ↑ ile perdede canlanır. Üçü oynayınca ustanın tasvirinden parça
+  belirir; alınınca sır ve hatıra satırı.
+- Testler: `test/golgehane_test.dart`; önizleme
+  `tools/preview/golgehane_test.dart`.
+
+Özgün plan:
+
 
 - **Keşif:** su yansıması, duvarda gerçekte görünmeyen bir kemeri gösterir.
   Yansıma zaten çiziliyor; kemer yalnız yansımada çizilir ("gölgede görünen ama

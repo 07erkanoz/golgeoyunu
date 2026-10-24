@@ -1069,6 +1069,9 @@ const levels = <LevelDef>[
       (177, 10, RockProfile(period: 5, pause: 1.2, phase: 0)),
       (180, 10, RockProfile(period: 5, pause: 1.2, phase: 0.5)),
     ],
+    // S2a · Unutulmuş Gölgehane: yolun sonundaki boşluğun dibinde taş gibi
+    // boyanmış perde (sahanlığın sol üst hücresi); ardında ustanın odası.
+    surprises: [('golgehane', 45, 15)],
   ),
   LevelDef(
     title: 'II · KULE',

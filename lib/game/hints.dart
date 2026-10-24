@@ -170,6 +170,7 @@ class Hints {
     'valve': '{up} Vanayı çevir',
     'scale': 'Terazi · eşleri iki kefeye koy · ağırlıklar denk gelmeli · {up} kol teraziyi boşaltır',
     'cord': '{up} İpi çek · kandil perdenin ardında kayar',
+    'golgehane': '{up} Tasvire dokun · perdede canlanır · kandili iterek gölgeni büyüt, küçült',
     'shadowStone': '{up} Gölgeni önden gönder · Kandilciler ona bakarken geç',
     'coldBridge': '{firefly} Kandilci yolu yalnız onların feneriyle belirir · ateşböceği at, Kandilci ona dalınca ışığında geç',
     'eyeStone': 'Dev gölgenin başı perdedeki göze · kavanozunun ışığı taştaki göze · ikisi birden: kapı açılır',
@@ -260,6 +261,7 @@ class Hints {
     'scale':
         'The scales · put the pair on the two pans · the weights must match',
     'cord': '{up} Pull the cord · the lamp slides behind the screen',
+    'golgehane': '{up} Touch a figure · it comes alive on the screen · push the lamp to grow or shrink your shadow',
     'shadowStone': '{up} Send your shadow ahead · slip past while the Lamplighters watch it',
     'coldBridge': '{firefly} The Lamplighters\' path shows only in their lanterns · throw a firefly, cross in the light while one stares at it',
     'eyeStone': 'The giant shadow\'s head on the eye in the screen · your jar\'s light on the eye in the stone · both at once: the gate opens',

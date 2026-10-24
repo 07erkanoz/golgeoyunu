@@ -16,6 +16,7 @@ import 'anlatim_plani.dart';
 import 'entrance.dart';
 import 'feedback.dart';
 import 'shadow_decoy.dart';
+import 'golgehane.dart';
 import 'surprises.dart';
 import 'vistas.dart';
 import 'creatures.dart';
@@ -1016,7 +1017,9 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         for (final c in level.eyeStoneCells) EyeStone(c),
         for (final (name, c, r) in level.def.surprises)
           if (name == 'tasBekci')
-            TasBekci(Vector2(c * kTile.toDouble(), r * kTile.toDouble())),
+            TasBekci(Vector2(c * kTile.toDouble(), r * kTile.toDouble()))
+          else if (name == 'golgehane')
+            ..._golgehane(c, r),
         for (final (c, r, kind) in level.def.vistas)
           VistaPoint(
             Vector2((c + 0.5) * kTile, (r + 0.5) * kTile.toDouble()),
@@ -1924,6 +1927,19 @@ class GolgeGame extends FlameGame with KeyboardEvents {
   // oyundan oyuna kalır, Defter'de sayılır (bkz. docs/SIRLAR_PLANI.md).
 
   /// Bu oyunda bu sürpriz oldu mu.
+  /// S2a · Gölgehane: taş gibi boyanmış perde ([c], [r] sahanlığın üstü),
+  /// ardındaki oda (dört sütun sağda, 14×4 hücre) ve raftaki tasvirler.
+  List<Component> _golgehane(int c, int r) {
+    final cell = Vector2(c * kTile.toDouble(), r * kTile.toDouble());
+    final sahne = GolgehaneSahne(
+      cell + Vector2(4 * kTile.toDouble(), 0),
+      Vector2(14 * kTile.toDouble(), 4 * kTile.toDouble()),
+    );
+    final kapi = GolgehaneKapi(cell);
+    sahne.kapi = kapi;
+    return [kapi, sahne, for (var i = 0; i < 3; i++) GolgehaneTasvir(sahne, i)];
+  }
+
   bool secretSeen(String name) => eventSeen('sir:$levelIndex:$name');
 
   /// Sürpriz oldu: bu oyunda bir daha olmaz, sır sayacına eklenir.
@@ -2396,8 +2412,8 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     if (p == null || p.isDead || cinematic) return;
     if (threat > 0.3) return;
     if (world.children.whereType<Guard>().any(
-          (g) => g.state == GuardState.chase,
-        )) {
+      (g) => g.state == GuardState.chase,
+    )) {
       return;
     }
     // Aynı yere süren odak yeniden başlamaz, yalnız uzar.

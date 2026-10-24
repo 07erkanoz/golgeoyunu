@@ -50,6 +50,12 @@ y.fill(53,11,56,13,'#')
 # Rafın sağ yüzünde zincir: kolu çekmeden aşağı inen geri tırmanabilsin
 # (kapı ile raf arasında sıkışıp kalmasın).
 y.fill(57,10,57,13,'|')
+# S2a · Unutulmuş Gölgehane: yolun sonundaki boşluğun dibinde taş gibi
+# boyanmış bir perde (levels.dart'ta 'golgehane'); ardında kayaya oyulmuş,
+# ustanın eski çalışma odası. Sahanlık ve basamaklar bir zıplamada aşılır.
+y.fill(45,16,46,17,'#')                      # perdenin sahanlığı
+y.fill(47,15,62,18,'.')                      # oda
+y.fill(47,16,47,18,'#'); y.fill(48,17,48,18,'#')   # dar geçit, basamak
 y.fill(0,0,W-1,1,'#'); y.fill(W-1,0,W-1,H-1,'#')
 # 4) yarasa galerisi
 y.fill(67,14,96,19,'#')

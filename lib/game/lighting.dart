@@ -14,6 +14,7 @@ import 'palette.dart';
 import 'puzzles.dart';
 import 'umay.dart';
 import 'gokboru.dart';
+import 'golgehane.dart';
 import 'cameos.dart';
 import 'erlik.dart';
 import 'ergenekon.dart';
@@ -247,6 +248,10 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
           _light(canvas, s.position.toOffset().translate(0, -24), 50, 0.6);
         case GiantPerde g:
           _light(canvas, g.glowCenter, g.glowRadius, 0.75);
+        case GolgehaneSahne s when s.lit:
+          _light(canvas, s.lampAt, 190, 0.9);
+        case GolgehaneKapi k:
+          _light(canvas, k.glowCenter, 46, 0.45);
         case SunBeam b:
           for (final (a, z) in b.segments) {
             final len = (z - a).distance;
@@ -474,6 +479,8 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
           }
         case GiantPerde g:
           glow(g.glowCenter, g.glowRadius, kWarmLight, 0.18);
+        case GolgehaneSahne s when s.lit:
+          glow(s.lampAt, 120, kWarmLight, 0.16);
       }
     }
   }
