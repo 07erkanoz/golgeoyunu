@@ -171,7 +171,7 @@ class _IntroOverlayState extends State<IntroOverlay>
         child: ValueListenableBuilder<double>(
           valueListenable: _time,
           builder: (context, t, child) {
-            final fade = ((t - 11.6) / 0.6).clamp(0.0, 1.0);
+            final fade = ((t - (introLength - 0.6)) / 0.6).clamp(0.0, 1.0);
             return Opacity(opacity: 1 - fade, child: child);
           },
           child: Stack(
@@ -228,6 +228,8 @@ class _IntroPainter extends CustomPainter {
     tagline,
     target: target(),
     menuTime: menuTime(),
+    creditLabel: S.of('hayali'),
+    creditName: 'Erkan Öz',
   );
 
   @override

@@ -28,6 +28,8 @@ void main() {
         'GÖLGE OYUNU',
         'Hayal perdesinde bir gölgenin yolculuğu',
         target: menu,
+        creditLabel: 'Hayalî',
+        creditName: 'Erkan Öz',
       );
       final img = await rec.endRecording().toImage(870, 391);
       final png = await img.toByteData(format: ui.ImageByteFormat.png);

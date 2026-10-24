@@ -38,7 +38,7 @@ void main() {
     Settings.debugReopen();
     SharedPreferences.setMockInitialValues({});
     await tester.pumpWidget(const GolgeApp());
-    await wait(tester, 4 + 13);
+    await wait(tester, 4 + 15);
     expect(find.byType(IntroOverlay), findsNothing);
     expect(find.text(S.of('newGame')), findsOneWidget);
   });

@@ -1592,6 +1592,8 @@ class PerdePainter {
     String tagline, {
     Rect? target,
     double? menuTime,
+    String? creditLabel,
+    String? creditName,
   }) => _paintIntro(
     canvas,
     size,
@@ -1600,6 +1602,8 @@ class PerdePainter {
     tagline,
     target: target,
     menuTime: menuTime,
+    creditLabel: creditLabel,
+    creditName: creditName,
   );
 
   static void paintMenu(

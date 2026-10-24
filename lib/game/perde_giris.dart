@@ -2,7 +2,8 @@ part of 'perde.dart';
 
 // ================================================================ Giriş
 //
-// Oyunun ilk açılışı (yaklaşık 12 saniye, sözsüz):
+// Oyunun ilk açılışı (yaklaşık 14 saniye, sözsüz):
+//  0. Karanlıkta Karagöz geleneğindeki gibi perdeyi oynatan anılır: hayalî.
 //  1. Karanlık. Kibrit çakılır, perdenin ardında kandil yanar; deri dokulu
 //     perde belirir.
 //  2. Sâye'nin tasviri ışığa yaklaşır, gölgesi büyür. Sâye durur; gölgesi
@@ -14,23 +15,26 @@ part of 'perde.dart';
 //  5. Ateşböceği kandile iner, kandil yeniden yanar; perde ana menünün
 //     perdesine dönüşür.
 
+/// Girişin başında karanlıkta hayalînin adı (saniye): kibrit ondan sonra.
+const introCredit = 1.8;
+
 /// Girişin süresi (saniye): bundan sonra menü kalır.
-const introLength = 12.2;
+const introLength = introCredit + 12.2;
 
 /// Girişin anları (saniye): oynatıcı sesleri bunlara göre çalar.
 abstract final class IntroBeats {
-  static const strike = 0.5;
-  static const lampUp = 1.3;
-  static const sayeIn = 2.3;
-  static const sayeStop = 4.6;
-  static const shadowStep = 4.7;
-  static const lamplighter = 5.6;
-  static const lampOut = 7.7;
-  static const firefly = 8.3;
-  static const title = 8.9;
-  static const relight = 10.3;
-  static const toMenu = 10.9;
-  static const morph = 11.2;
+  static const strike = introCredit + 0.5;
+  static const lampUp = introCredit + 1.3;
+  static const sayeIn = introCredit + 2.3;
+  static const sayeStop = introCredit + 4.6;
+  static const shadowStep = introCredit + 4.7;
+  static const lamplighter = introCredit + 5.6;
+  static const lampOut = introCredit + 7.7;
+  static const firefly = introCredit + 8.3;
+  static const title = introCredit + 8.9;
+  static const relight = introCredit + 10.3;
+  static const toMenu = introCredit + 10.9;
+  static const morph = introCredit + 11.2;
 }
 
 double _sayeX(double t) {
@@ -96,9 +100,12 @@ void _paintIntro(
   String tagline, {
   Rect? target,
   double? menuTime,
+  String? creditLabel,
+  String? creditName,
 }) {
   final p = PerdePainter._span;
   canvas.drawRect(Offset.zero & size, Paint()..color = const Color(0xFF050302));
+
   // Perde: ekranın ortasında; sonda menüdeki yerine kayar.
   var w = size.height * 0.74 * 780 / 484;
   if (w > size.width * 0.84) w = size.width * 0.84;
@@ -107,7 +114,11 @@ void _paintIntro(
     width: w,
     height: w * 484 / 780,
   );
-  final r = Rect.lerp(mid, target ?? mid, p(t, IntroBeats.morph, 12.0))!;
+  final r = Rect.lerp(
+    mid,
+    target ?? mid,
+    p(t, IntroBeats.morph, introLength - 0.2),
+  )!;
   final k = r.width / 780;
   Offset scr(Offset v) => r.topLeft + v * k;
 
@@ -337,4 +348,67 @@ void _paintIntro(
     );
     canvas.restore();
   }
+  // Hayalînin adı: perdenin önünde, karanlıkta.
+  if (creditName != null && t < introCredit) {
+    _paintCredit(canvas, size, t, creditLabel ?? '', creditName);
+  }
+}
+
+/// Hayalînin adı: karanlıkta, perdenin çerçevesine vuran kor ışığı renginde,
+/// küçük ve soluk; belirir, durur, söner.
+void _paintCredit(
+  Canvas canvas,
+  Size size,
+  double t,
+  String label,
+  String name,
+) {
+  final a = math.min(
+    PerdePainter._span(t, 0.2, 0.7),
+    1 - PerdePainter._span(t, introCredit - 0.55, introCredit - 0.1),
+  );
+  if (a <= 0) return;
+  final k = (size.height / 400).clamp(0.7, 1.6);
+  const ember = Color(0xFFE0A15F);
+  final top = TextPainter(
+    text: TextSpan(
+      text: label.toUpperCase(),
+      style: TextStyle(
+        fontFamily: 'Roboto',
+        fontSize: 11 * k,
+        letterSpacing: 5 * k,
+        color: ember.withValues(alpha: 0.6 * a),
+      ),
+    ),
+    textDirection: TextDirection.ltr,
+  )..layout();
+  // Ad, oyunun adıyla aynı yazı biçiminde (kalın, aralıklı büyük harfler);
+  // karanlıkta harflerin oyuklarından kandil ışığı sızıyormuş gibi.
+  final big = TextPainter(
+    text: TextSpan(
+      text: name.toUpperCase(),
+      style: TextStyle(
+        fontFamily: 'Roboto',
+        fontSize: 34 * k,
+        fontWeight: FontWeight.w900,
+        letterSpacing: 7 * k,
+        color: const Color(0xFFFFE6B8).withValues(alpha: 0.85 * a),
+        shadows: [
+          Shadow(
+            color: const Color(0xFFFFB46A).withValues(alpha: 0.6 * a),
+            blurRadius: 14 * k,
+          ),
+        ],
+      ),
+    ),
+    textDirection: TextDirection.ltr,
+  )..layout();
+  final c = size.center(Offset.zero);
+  final gap = 8 * k;
+  final h = top.height + gap + big.height;
+  top.paint(canvas, Offset(c.dx - top.width / 2, c.dy - h / 2));
+  big.paint(
+    canvas,
+    Offset(c.dx - big.width / 2, c.dy - h / 2 + top.height + gap),
+  );
 }
