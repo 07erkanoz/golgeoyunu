@@ -2408,6 +2408,12 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     return top;
   }
 
+  /// Dev perdenin önünde kamera perdeyi bütünüyle çerçeveler (0 – 1) ve
+  /// gerekirse açılır: telefonun basık ekranında perdenin üstü kesiliyordu.
+  double _perdeFrame = 0;
+  double _perdeZoom = 1;
+  Rect? _perdeRect;
+
   void _updateCamera(Player p, double dt) {
     if (vistaKind != null) {
       vistaT += dt;
@@ -2415,6 +2421,22 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     }
     final view = camera.viewport.size;
     if (view.x == 0 || view.y == 0) return;
+    Rect? perde;
+    for (final g in world.children.whereType<GiantPerde>()) {
+      final r = Rect.fromLTWH(
+        g.position.x,
+        g.position.y - g.size.y,
+        g.size.x,
+        g.size.y,
+      );
+      if (p.center.x > r.left - 2 * kTile &&
+          p.center.x < r.right + 2 * kTile &&
+          (p.center.y - r.bottom).abs() < 3 * kTile) {
+        perde = r;
+      }
+    }
+    if (perde != null) _perdeRect = perde;
+    _perdeFrame = approach(_perdeFrame, perde != null ? 1 : 0, dt, 0.45);
     // Limbo gibi uzak bir kamera: ekranda yaklaşık 20 kare yükseklik.
     // Kayakta hız ve havada kalış görüşü açar (Alto gibi): yamaç önünde
     // uzar, atlayışın inişi görünür.
@@ -2440,7 +2462,16 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     _focusZoomS = approach(_focusZoomS, _focusZoom, dt, 0.25);
     // Manzara anında kamera açılır.
     final vista = vistaKind == null ? 0.0 : vistaEnvelope(vistaT);
-    final zoom = _zoomS * _focusZoomS * (1 - 0.2 * vista);
+    // Perdenin boyu ve altında bir kare zemin ekrana sığsın.
+    final pr = _perdeRect;
+    if (pr != null) {
+      final fit = math.min(
+        1.0,
+        view.y / _zoomS / 2 / (pr.height / 2 + 1.4 * kTile),
+      );
+      _perdeZoom = 1 + (fit - 1) * _perdeFrame;
+    }
+    final zoom = _zoomS * _focusZoomS * (1 - 0.2 * vista) * _perdeZoom;
     camera.viewfinder.zoom = zoom;
 
     // Gidilen yöne doğru ileriyi gösterir; hızlandıkça daha çok.
@@ -2472,8 +2503,13 @@ class GolgeGame extends FlameGame with KeyboardEvents {
       final room = p.center.y - kTile * 2.5 - (target.y - halfH);
       wantDown = need.clamp(0.0, math.max(0.0, room));
     }
-    _waterLook = approach(_waterLook, wantDown, dt, 0.5);
+    // Perdenin önünde suya bakılmaz; perde çerçevelenir.
+    _waterLook = approach(_waterLook, wantDown * (1 - _perdeFrame), dt, 0.5);
     target.y += _waterLook;
+    if (pr != null && _perdeFrame > 0) {
+      final e = _perdeFrame * _perdeFrame * (3 - 2 * _perdeFrame);
+      target.y += (pr.center.dy + 0.6 * kTile - target.y) * e;
+    }
     if (ski != null) {
       // Kayakta: önündeki yamaca bakar; Sâye ekranın sol üst üçte birinde,
       // gideceği iniş görünür.
