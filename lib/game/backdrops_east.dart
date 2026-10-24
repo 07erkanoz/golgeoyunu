@@ -689,6 +689,9 @@ extension _EastBackdrops on Backdrop {
     return (toScreen(top), toScreen(bottom));
   }
 
+  /// Gemi ambarının iç gövdesinin kayma hızı (kameraya oranla).
+  static const _arkWall = 0.3;
+
   /// Nuh'un Gemisi'nin ambarı: bindirme kalaslı iç gövde, eğri postalar,
   /// güverteyi taşıyan kirişler, aralıklarından sızan gün ışığı; fenerlerin
   /// önünden geçen hayvanların gölgeleri gövdeye perde gibi düşer.
@@ -704,7 +707,11 @@ extension _EastBackdrops on Backdrop {
     // İç gövde: yatay bindirme kalaslar. Her kalas kendi tonunda; altında
     // bindirmenin gölgesi, üstünde ince ışık; lifler ve ağaç çiviler.
     const plank = 22.0;
-    final wallX = cam.x * 0.25;
+    // Ambarın iç gövdesi tek bir yüzey: kalaslar, postalar, lombozlar,
+    // kandiller, sızan ışık, yük ve duvara düşen gölgeler aynı hızda kayar.
+    // (Eskiden 0,25 / 0,5 / 0,62 gibi ayrı hızlardaydı; yürürken direkler,
+    // kandiller birbirinin ve kalasların üstünden kayıyor, göz yoruyordu.)
+    final wallX = cam.x * _arkWall;
     final y0 = top - ((top / plank).ceil() + 1) * plank;
     final tones = [
       for (var k = 0; k < 4; k++)
@@ -763,7 +770,7 @@ extension _EastBackdrops on Backdrop {
 
     // Fenerlerin gövdeye vurduğu sıcak ışık halkaları.
     const lampGap = 380.0;
-    final lampX = cam.x * 0.5;
+    final lampX = wallX;
     _repeat(w, lampX, lampGap, (x, rnd) {
       _lightLeak(
         canvas,
@@ -781,7 +788,8 @@ extension _EastBackdrops on Backdrop {
     // Hayvan gölgeleri: ikişer ikişer geminin içinde yürüyen hayvanların
     // fener ışığıyla duvara düşen gölgeleri. Fenerden uzaklaştıkça gölge
     // uzar ve yana yatar, kandil titredikçe kıpırdar; kenarları yumuşak.
-    final walk = _t * 16;
+    // Yavaş, sakin yürüyüş: duvarda sürekli kıpırtı göz yormasın.
+    final walk = _t * 8;
     final scale = (hold / 220).clamp(0.6, 1.5);
     _repeat(w, wallX - walk, 560, (x, rnd) {
       final kind = ArkAnimal.kinds[rnd.nextInt(ArkAnimal.kinds.length)];
@@ -790,6 +798,7 @@ extension _EastBackdrops on Backdrop {
         // En yakın fener: gölge ondan uzağa düşer.
         final lamp = ((gx + lampX) / lampGap).round() * lampGap - lampX;
         final off = ((gx - lamp) / lampGap).clamp(-0.6, 0.6);
+        // Kandil titremesi yalnız gölgenin koyuluğunda (boyu sabit).
         final flick =
             0.94 +
             0.04 * math.sin(_t * 5.3 + gx) +
@@ -797,16 +806,13 @@ extension _EastBackdrops on Backdrop {
         final alpha = (0.72 - off.abs() * 0.3) * flick;
         canvas.save();
         canvas.translate(gx, bottom - 2);
-        canvas.scale(
-          scale * (1.15 + off.abs() * 0.5) * flick,
-          scale * 1.15 * flick,
-        );
-        // Yürüyüş: başla birlikte inip kalkar.
-        canvas.translate(0, -math.sin(_t * 3 + ph).abs() * 2.2);
+        canvas.scale(scale * (1.15 + off.abs() * 0.25), scale * 1.15);
+        // Yürüyüş: başla birlikte hafifçe inip kalkar.
+        canvas.translate(0, -math.sin(_t * 1.8 + ph).abs() * 0.8);
         canvas.transform(
           Float64List.fromList([
             1, 0, 0, 0, //
-            -off * 0.6, 1, 0, 0, //
+            -off * 0.35, 1, 0, 0, //
             0, 0, 1, 0, //
             0, 0, 0, 1,
           ]),
@@ -823,7 +829,7 @@ extension _EastBackdrops on Backdrop {
 
     // Postalar: tabandan yükselen, tavana doğru içe kıvrılan kalın kaburgalar;
     // tepede güverte kirişine bir dizle bağlanır.
-    final frameX = cam.x * 0.5;
+    final frameX = wallX;
     const frameGap = 260.0;
     final frame = Paint()..color = const Color(0xFF1A0F08);
     final frameEdge = Paint()
@@ -854,7 +860,7 @@ extension _EastBackdrops on Backdrop {
       Paint()..color = const Color(0xFF120A06),
     );
     final slit = Paint();
-    _repeat(w, cam.x * 0.5, 97, (x, rnd) {
+    _repeat(w, wallX, 97, (x, rnd) {
       final a = 0.25 + 0.25 * math.sin(_t * 0.7 + x * 0.05);
       slit.color = const Color(0xFFE8D6B0).withValues(alpha: a);
       canvas.drawRect(
@@ -896,7 +902,7 @@ extension _EastBackdrops on Backdrop {
     }, salt: 4);
 
     // Zemindeki yük: fıçılar, halat yumakları, saman balyaları.
-    _cargo(canvas, w, cam.x * 0.62, bottom, (hold / 230).clamp(0.6, 1.3));
+    _cargo(canvas, w, wallX, bottom, (hold / 230).clamp(0.6, 1.3));
   }
 
   /// Gövdedeki lumbuzlar: içinde tufanın gece denizi, yağmur, arada şimşek;
