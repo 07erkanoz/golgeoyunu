@@ -78,6 +78,7 @@ class S {
         'Esc: menü · ← → yürü · Boşluk zıpla · ↑ tırman / kol çek\n'
         '↓ çömel · Shift parmak ucu · F ateşböceği · R yeniden dene',
     'memoryCounter': 'hatıra',
+    'secretsTally': 'Sırlar {n}  ·  daha fazlası saklı',
     'skipHint': 'boşluk / dokun: sonraki satır',
     'skipPerde': 'Atla',
     'hintHereTouch': 'İpucu burada · dokun',
@@ -295,6 +296,7 @@ class S {
         'Esc: menu · ← → walk · Space jump · ↑ climb / pull lever\n'
         '↓ crouch · Shift tiptoe · F firefly · R retry',
     'memoryCounter': 'memories',
+    'secretsTally': 'Secrets {n}  ·  more are hidden',
     'skipHint': 'space / tap: next line',
     'skipPerde': 'Skip',
     'hintHereTouch': 'Hint here · tap',

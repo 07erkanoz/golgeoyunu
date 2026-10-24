@@ -27,18 +27,19 @@ Durum: ✅ yapıldı · 🔶 kısmen · ⏳ sırada
 6. **Ses ve yazı az:** sürprizler sözsüz anlatılır (hareket, ışık, kısa ses).
    Gizli odalarda en çok bir kısa satır.
 7. **Kayıt:** bulunan sırlar `Settings.secrets` kümesinde (`bölüm:ad`); Defter'de
-   "Sırlar" sayacı (kaç tanesi bulundu, yerleri söylenmez).
+   "Sırlar n · daha fazlası saklı" (ilk sırdan sonra görünür; yer ve toplam
+   söylenmez) ✅.
 
-## Paket S1 · Küçük sürprizler (dünya karşılık verir)
+## Paket S1 · Küçük sürprizler (dünya karşılık verir) 🔶 (a, b, c ✅)
 
 Birkaç saniyelik, gülümseten anlar. Hepsi bir kez olur (kayıtla), tekrar
 denenince hiçbir şey olmaz; şakanın tadı buradan gelir.
 
 | # | Sürpriz | Yer ve tetik | Ne olur | Altyapı | Emek |
 |---|---|---|---|---|---|
-| S1a | Söz dinlemeyen gölge | Yerebatan, ilk kontrol noktasından sonra düz bir taş yol; Sâye koşarken birden durur | Gölge iki adım daha gider, durur, Sâye'ye döner, utangaçça geri koşup yerine girer | Gölgenin ayrılıp dönmesi zaten var (`_ShadowMood.astray`); yeni bir "utangaç" hâli | Az |
-| S1b | Taş bekçi | Nemrut, devin terasından önce küçük bir taş figür (kaide üstünde) | Sâye arkasını dönünce figür poz değiştirir; üçüncü bakışta Sâye'nin duruşunu taklit eder (kavanoz tutan el) | Yeni küçük figür; Sâye'nin yönüne göre durum | Az–orta |
-| S1c | Gizli alkış | Boş bir hayal perdesinin önünde (Yerebatan'ın süs perdesi) zıpla, sonra çömel | Perdenin ardında birkaç seyirci gölgesi belirir, alkışlar (kısa alkış sesi), kaybolur | Dev perde ve gölge izdüşümü var; seyirci tasvirleri `perde_kisi.dart` kadrosundan | Az |
+| S1a | Söz dinlemeyen gölge | Yerebatan, ilk kontrol noktasından sonra; Sâye koşarken birden durur (önü üç kare açıksa, sakin anda) | Gölge iki adım daha gider, durur, Sâye'ye döner, utangaçça geri koşup yerine girer | Gölgenin ayrılıp dönmesi zaten var (`_ShadowMood.astray`); yeni bir "utangaç" hâli | ✅ |
+| S1b | Taş bekçi | Nemrut, ilk kontrol noktasının yanında (26. sütun): ölüp dönen oyuncu her seferinde başka pozda bulur | Sâye arkasını dönünce figür poz değiştirir; üçüncü bakışta Sâye'nin duruşunu taklit eder (kavanoz tutan el) | Yeni küçük figür; Sâye'nin yönüne göre durum | ✅ |
+| S1c | Gizli alkış | Oyunda tek dev perde var (Yerebatan); bulmaca çözülünce sahne boşalır: perdenin önünde zıpla, sonra çömel (seyirciye selam) | Perdenin ardında kavuklu, fesli seyirci gölgeleri belirir, alkışlar (`clap.wav`), kaybolur | `GiantPerde` | ✅ |
 | S1d | Meraklı kedi (sonra) | Yerebatan, bir oyukta iki göz | Ateşböceği bırakılırsa kedi çıkar, ışığı kovalar, erişilmesi zor bir yere oturur (orada küçük bir hatıra) | Yeni hayvan çizimi ve kısa yol izleme | Orta |
 
 ## Paket S2 · Gizli odalar (içeride başka bir keyif)

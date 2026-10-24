@@ -55,6 +55,8 @@ class GameAudio {
     'gate',
     // Düzenek çözüldü: hicaz dizisinden yükselen üç nota (her düzenekte aynı).
     'solve',
+    // Gizli alkış: perdenin ardında seyirci.
+    'clap',
     'crumble',
     'death',
     'splash',

@@ -141,6 +141,21 @@ class MemoryBookPage extends StatelessWidget {
               letterSpacing: 1,
             ),
           ),
+          // Bulunan sırlar: yalnız sayı (yerleri ve toplamı söylenmez);
+          // ilk sır bulununca görünür.
+          if (Settings.secrets.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              S
+                  .of('secretsTally')
+                  .replaceAll('{n}', '${Settings.secrets.length}'),
+              style: const TextStyle(
+                color: _accent,
+                fontSize: 12,
+                letterSpacing: 1,
+              ),
+            ),
+          ],
           for (final l in open)
             if (levels[l].memoryTexts.isNotEmpty || _tales(l).isNotEmpty) ...[
               const SizedBox(height: 16),

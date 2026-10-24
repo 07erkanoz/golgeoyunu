@@ -1344,8 +1344,7 @@ class GiantPerde extends PositionComponent
       canvas.drawCircle(
         c,
         r,
-        Paint()
-          ..color = on ? const Color(0xFFFFE6B0) : const Color(0xFF3A2414),
+        Paint()..color = on ? const Color(0xFFFFE6B0) : const Color(0xFF3A2414),
       );
       canvas.drawCircle(
         c,
@@ -1373,6 +1372,105 @@ class GiantPerde extends PositionComponent
         Rect.fromCenter(center: Offset(x + dx, -2.5), width: 9, height: 4.5),
         foot,
       );
+    }
+  }
+
+  // ----------------------------------------------- gizli alkış (S1c)
+  // Oyun bitince sahne boş kalır. Sâye perdenin önünde zıplayıp hemen
+  // çömelirse (seyirciye selam), perdenin ardında Karagöz seyircisinin
+  // gölgeleri belirip alkışlar. Bir kez.
+
+  double _jumpedT = 99;
+
+  /// Alkışın başından beri geçen süre (-1: yok).
+  double clapT = -1;
+  static const _clapLen = 3.4;
+
+  void _updateApplause(double dt, Player p, bool inFront) {
+    if (clapT >= 0) {
+      clapT += dt;
+      if (clapT > _clapLen) clapT = -1;
+      return;
+    }
+    if (!inFront) {
+      _jumpedT = 99;
+      return;
+    }
+    if (!p.onGround && p.velocity.y < -150) {
+      _jumpedT = 0;
+    } else {
+      _jumpedT += dt;
+    }
+    if ((solved || !puzzle) &&
+        p.onGround &&
+        p.crouching &&
+        _jumpedT < 2 &&
+        game.calmMoment &&
+        !game.secretSeen('alkis')) {
+      clapT = 0;
+      GameAudio.instance.play('clap', volume: 0.7);
+      game.foundSecret('alkis');
+    }
+  }
+
+  /// Seyirci: baş ve omuz gölgeleri (kavuklu, fesli, başı açık), elleri
+  /// göğüslerinde birleşip ayrılır.
+  void _drawAudience(Canvas canvas, double w, double h) {
+    if (clapT < 0) return;
+    final a =
+        math.min(1.0, clapT / 0.4) * math.min(1.0, (_clapLen - clapT) / 0.7);
+    if (a <= 0) return;
+    final ink = Paint()
+      ..color = const Color(0xFF2A1208).withValues(alpha: 0.72 * a);
+    const people = [
+      (0.16, 1.0, 1),
+      (0.3, 0.86, 0),
+      (0.44, 1.08, 2),
+      (0.6, 0.92, 1),
+      (0.74, 1.0, 0),
+    ];
+    for (var i = 0; i < people.length; i++) {
+      final (fx, s0, hat) = people[i];
+      final size = s0 * 1.4;
+      final x = w * fx;
+      final top = h - 46 * size;
+      // Omuzlar.
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromLTRB(x - 16 * size, top + 16 * size, x + 16 * size, h + 4),
+          Radius.circular(10 * size),
+        ),
+        ink,
+      );
+      // Baş.
+      canvas.drawCircle(Offset(x, top + 8 * size), 8 * size, ink);
+      switch (hat) {
+        case 1: // kavuk
+          canvas.drawOval(
+            Rect.fromCenter(
+              center: Offset(x, top - 2 * size),
+              width: 18 * size,
+              height: 12 * size,
+            ),
+            ink,
+          );
+        case 2: // fes
+          canvas.drawPath(
+            Path()
+              ..moveTo(x - 6 * size, top + 1 * size)
+              ..lineTo(x - 4 * size, top - 8 * size)
+              ..lineTo(x + 4 * size, top - 8 * size)
+              ..lineTo(x + 6 * size, top + 1 * size)
+              ..close(),
+            ink,
+          );
+      }
+      // Eller: göğüste birleşip ayrılır (herkes kendi hızında).
+      final beat = math.sin(clapT * math.pi * 2 * (3.6 + i * 0.4) + i);
+      final gap = 3 + 6 * (0.5 + 0.5 * beat) * size;
+      final hy = top + 26 * size;
+      canvas.drawCircle(Offset(x - gap, hy - 6 * size), 3.4 * size, ink);
+      canvas.drawCircle(Offset(x + gap, hy - 6 * size), 3.4 * size, ink);
     }
   }
 
@@ -1416,6 +1514,8 @@ class GiantPerde extends PositionComponent
     final inFront =
         rel > 0 && rel < 1 && (p.position.y + Player.h - position.y).abs() < 12;
     if (puzzle) _updatePuzzle(dt, p, inFront);
+    // Selam zıplamayla başlar: havadayken de "önünde" sayılır.
+    _updateApplause(dt, p, rel > 0 && rel < 1);
     if (lagT < 0) {
       // Ortada durup beklerse: bir kez.
       if (inFront && rel > 0.35 && rel < 0.65 && p.velocity.x.abs() < 5) {
@@ -1543,6 +1643,7 @@ class GiantPerde extends PositionComponent
       _drawMark(canvas, w);
       _drawStops(canvas, w, h);
     }
+    _drawAudience(canvas, w, h);
     canvas.restore();
 
     // Yırtıklardan sızan ışık ve üst kalas.
