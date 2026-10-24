@@ -1135,14 +1135,28 @@ class ScreenEffects extends Component with HasGameReference<GolgeGame> {
           ),
       );
     }
-    // Saklanırken renkler solar: soğuk gri bir örtü. (Önceden doygunluk
-    // karışımıyla yapılıyordu; o karışım telefon ekran kartlarında her karede
-    // bütün ekranı yeniden okutuyor, saklanırken kare hızı düşüyordu.)
+    // Saklanırken dünya kararır: Sâye'nin çevresi seçilir kalır, kenarlar
+    // gölgeye gömülür (gri örtü soluk ve yanlış duruyordu). Tek düz çizim:
+    // doygunluk karışımı telefonda her karede pahalıydı.
     final hide = game.hideAmount;
     if (hide > 0.02) {
+      final p = game.player;
+      final at = p == null
+          ? Offset(w / 2, h / 2)
+          : game.camera.localToGlobal(p.center).toOffset();
       canvas.drawRect(
         Rect.fromLTWH(0, 0, w, h),
-        Paint()..color = const Color(0xFF2E3036).withValues(alpha: 0.3 * hide),
+        Paint()
+          ..shader = ui.Gradient.radial(
+            at,
+            math.max(w, h) * 0.75,
+            [
+              kInk.withValues(alpha: 0.28 * hide),
+              kInk.withValues(alpha: 0.5 * hide),
+              kInk.withValues(alpha: 0.72 * hide),
+            ],
+            const [0.0, 0.35, 1.0],
+          ),
       );
     }
 

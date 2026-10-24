@@ -270,8 +270,8 @@ class _GolgeAppState extends State<GolgeApp> with WindowListener {
                       // İpucu simgesi: ipucu gerektiren yerde yanar,
                       // dokununca ipucu görünür (klavyede H).
                       Positioned(
-                        top: 4,
-                        right: _isTouch ? 164 : 100,
+                        top: 8,
+                        right: _isTouch ? 164 : 104,
                         child: SafeArea(
                           child: HintButton(game: _game, touch: _isTouch),
                         ),

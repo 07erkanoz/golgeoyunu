@@ -344,10 +344,7 @@ save('crumble', env(mix(
     (lowpass(noise(0.7), 1600), 0.8),
     (lowpass(brown(0.7), 150), 8.0),
 ), 0.005, 0.5), 0.6)
-save('death', env(mix(
-    (sine(lambda q: 220 - 120 * q, 1.4), 0.4),
-    (lowpass(brown(1.4), 200), 6.0),
-), 0.2, 0.9), 0.55)
+# death: tools/synth_death.py (burada üzerine yazılmaz).
 spl = env(highpass(noise(0.7), 600), 0.002, 0.6)
 for k in range(6):
     place(spl, decay(sine(lambda q, f0=rnd.uniform(500, 900): f0 + 1200 * q, 0.08), 0.03), 0.1 + k * 0.07, 0.25)
@@ -450,7 +447,7 @@ def chain():
 
 save('heartbeat', heartbeat_loop(), 0.8)
 save('murmur', loop(murmur_loop(), 1), 0.4)
-save('shatter', shatter(), 0.7)
+# shatter: tools/synth_death.py (burada üzerine yazılmaz).
 save('breath', breath(), 0.6)
 save('fizzle', fizzle(), 0.4)
 save('chain', chain(), 0.45)

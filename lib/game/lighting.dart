@@ -93,10 +93,32 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
       _light(canvas, c, radius, s);
       return;
     }
-    canvas.save();
-    canvas.clipPath(shape);
-    _light(canvas, c, radius, s);
-    canvas.restore();
+    if (!SoftEdge.on) {
+      canvas.save();
+      canvas.clipPath(shape);
+      _light(canvas, c, radius, s);
+      canvas.restore();
+      return;
+    }
+    // Kayanın gölgesi keskin bir çizgiyle değil, yarı gölgeyle başlar:
+    // ışık birkaç komşu noktadan gelir, her biri kendi gölgesini düşürür;
+    // gölge kenarı uzaklaştıkça genişleyen yumuşak bir geçiş olur.
+    final spread = (radius * 0.05).clamp(6.0, 12.0);
+    const n = 6;
+    final each = math.min(1.0, s * 1.5 / n);
+    for (var i = 0; i < n; i++) {
+      final a = i * 2 * math.pi / n + 0.3;
+      final o = c + Offset(math.cos(a), math.sin(a)) * spread;
+      final sh = game.level.visibility(o, radius);
+      if (sh == null) {
+        _light(canvas, o, radius, each);
+        continue;
+      }
+      canvas.save();
+      canvas.clipPath(sh);
+      _light(canvas, o, radius, each);
+      canvas.restore();
+    }
   }
 
   /// Karanlık bölgeler örtünün altında daha da kararır; kenarları yumuşak.
@@ -122,6 +144,7 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
   void render(Canvas canvas) {
     final rect = game.camera.visibleWorldRect.inflate(80);
     _view = rect;
+    SoftEdge.on = SoftEdge.force ?? !Settings.lowGraphics;
     if (Settings.lowGraphics) {
       _renderCheap(canvas, rect);
       return;
@@ -142,27 +165,21 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
           final lantern = g.lanternWorld;
           _light(canvas, lantern.toOffset(), 90, 0.9);
           // Fenerin konisi de karanlığı yarar.
+          // Fenerin konisi de karanlığı yarar: kayada kesilir (fener duvarın
+          // ardını aydınlatmaz), ucu düz değil, uzaklıkla söner; kenarı
+          // yumuşak.
           final range = g.coneRange;
-          final f = g.facing.toDouble();
-          final cone = Path()
-            ..moveTo(lantern.x, lantern.y - 3)
-            ..lineTo(lantern.x + f * range, lantern.y - range * 0.5 - 34)
-            ..lineTo(lantern.x + f * range, lantern.y + range * 0.5 + 34)
-            ..lineTo(lantern.x, lantern.y + 3)
-            ..close();
-          _cut.shader = ui.Gradient.linear(
+          _cut.shader = ui.Gradient.radial(
             lantern.toOffset(),
-            Offset(lantern.x + f * range, lantern.y),
-            const [Color(0xB0000000), Color(0x00000000)],
+            range * 1.12,
+            const [Color(0xB0000000), Color(0x60000000), Color(0x00000000)],
+            const [0, 0.45, 1],
           );
-          // Koni kayada kesilir (fener duvarın ardını aydınlatmaz).
           final seen = g.coneShape;
-          if (seen != null) {
-            canvas.save();
-            canvas.clipPath(seen);
-          }
-          canvas.drawPath(cone, _cut);
-          if (seen != null) canvas.restore();
+          canvas.save();
+          if (seen != null) canvas.clipPath(seen);
+          SoftEdge.beam(canvas, g.beamShape, _cut);
+          canvas.restore();
         case ExitPortal e:
           _light(
             canvas,
@@ -209,7 +226,7 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
             Watcher.beamLength,
             [const Color(0xC0000000), const Color(0x00000000)],
           );
-          canvas.drawPath(w.beamPath(), _cut);
+          SoftEdge.beam(canvas, (k) => w.beamPath(k), _cut);
         case WingsPickup k:
           _light(canvas, k.position.toOffset().translate(0, -10), 110, 0.9);
         case FireVent v when v.burning:
@@ -250,10 +267,13 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
           _light(canvas, g.position.toOffset(), 90, 0.9);
           canvas.save();
           canvas.translate(g.position.x, g.position.y);
-          _cut.shader = null;
-          _cut.color = const Color(0xA0000000);
+          _cut.shader = ui.Gradient.radial(
+            Offset.zero,
+            GreatLamp.reach,
+            const [Color(0xA0000000), Color(0x80000000), Color(0x00000000)],
+            const [0, 0.6, 1],
+          );
           canvas.drawPath(g.beamPath(), _cut);
-          _cut.color = const Color(0xFF000000);
           canvas.restore();
         case LightFlood f when f.awake && !f.dark:
           final top = f.surface - 60;

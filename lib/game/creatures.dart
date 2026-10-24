@@ -463,10 +463,12 @@ class Watcher extends PositionComponent with HasGameReference<GolgeGame> {
   }
 
   /// Aydınlatma katmanı ve çizim için ışık üçgeni (dünya koordinatlarında).
-  Path beamPath() {
+  /// Projektör huzmesi; [k] yanlara açılışın oranı (yumuşak kenar
+  /// katmanları için).
+  Path beamPath([double k = 1]) {
     final o = lamp;
-    final a1 = _angle - beamHalf;
-    final a2 = _angle + beamHalf;
+    final a1 = _angle - beamHalf * k;
+    final a2 = _angle + beamHalf * k;
     return Path()
       ..moveTo(o.x, o.y)
       ..lineTo(
@@ -490,8 +492,9 @@ class Watcher extends PositionComponent with HasGameReference<GolgeGame> {
       o.x + facing * math.cos(_angle) * beamLength,
       o.y + math.sin(_angle) * beamLength,
     );
-    canvas.drawPath(
-      beamPath(),
+    SoftEdge.beam(
+      canvas,
+      beamPath,
       Paint()
         ..shader = ui.Gradient.linear(o.toOffset(), far, [
           Color.lerp(kCold, const Color(0xFFF2FFFC), suspicion)!.withValues(

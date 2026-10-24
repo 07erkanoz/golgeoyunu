@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:ui';
 import 'dart:ui' as ui;
 
@@ -10,6 +11,37 @@ const kText = Color(0xFFEBDDCB);
 const kEmber = Color(0xFFE0703A);
 const kWarmLight = Color(0xFFFFD9A0);
 const kCold = Color(0xFF7FE6D2);
+
+/// Işık kenarı yumuşaklığı: huzmelerin yanı ve kayada kesildiği yer cetvel
+/// gibi değil, ışık gibi dağılsın. Bulanıklık filtresi yok (pahalı ve
+/// cihazdan cihaza farklı): huzme giderek daralan katmanlarla, kayadaki
+/// gölge birkaç komşu noktadan gelen ışıkla (yarı gölge) çizilir. Düşük
+/// grafikte tek katman.
+class SoftEdge {
+  static bool on = true;
+
+  /// Önizleme ve testler için zorla aç/kapat.
+  static bool? force;
+
+  /// Huzme katmanlarının genişliği (tam huzmeye oranla).
+  static List<double> get widths =>
+      on ? const [1.0, 0.84, 0.68, 0.52] : const [1.0];
+
+  /// Huzmeyi katman katman çizer: [shape] verilen genişlik oranında şekli
+  /// kurar; [paint]'in saydamlığı katmanlara bölünür, toplamı aynı kalır.
+  static void beam(Canvas canvas, Path Function(double k) shape, Paint paint) {
+    final ws = widths;
+    final a = paint.color.a;
+    // Katmanlar üst üste bindikçe saydamlık birikir: ortada tek katmanlı
+    // eski huzmeye yakın, kenara doğru kademe kademe söner.
+    final each = math.min(1.0, a * 1.3 / ws.length);
+    paint.color = paint.color.withValues(alpha: each);
+    for (final k in ws) {
+      canvas.drawPath(shape(k), paint);
+    }
+    paint.color = paint.color.withValues(alpha: a);
+  }
+}
 
 Color lerpColor(int a, int b, double t) =>
     Color.lerp(Color(a), Color(b), t.clamp(0.0, 1.0))!;

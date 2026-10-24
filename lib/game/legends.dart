@@ -190,16 +190,18 @@ class MedusaHead extends PositionComponent
       final open = 0.4 + 0.6 * e;
       final spread = halfHeight * open;
       final knee = math.min(flare, len);
-      final beam = Path()
-        ..moveTo(facing * 6.0, -gazeHalf(6) * open)
-        ..lineTo(facing * knee, -gazeHalf(knee) * open)
-        ..lineTo(far, -gazeHalf(len) * open)
-        ..lineTo(far, gazeHalf(len) * open)
-        ..lineTo(facing * knee, gazeHalf(knee) * open)
-        ..lineTo(facing * 6.0, gazeHalf(6) * open)
+      // Kenarı yumuşak: giderek daralan katmanlar.
+      Path beam(double k) => Path()
+        ..moveTo(facing * 6.0, -gazeHalf(6) * open * k)
+        ..lineTo(facing * knee, -gazeHalf(knee) * open * k)
+        ..lineTo(far, -gazeHalf(len) * open * k)
+        ..lineTo(far, gazeHalf(len) * open * k)
+        ..lineTo(facing * knee, gazeHalf(knee) * open * k)
+        ..lineTo(facing * 6.0, gazeHalf(6) * open * k)
         ..close();
       final shimmer = 0.85 + 0.15 * math.sin(_t * 9);
-      canvas.drawPath(
+      SoftEdge.beam(
+        canvas,
         beam,
         Paint()
           ..shader = ui.Gradient.linear(

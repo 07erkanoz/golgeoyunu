@@ -124,6 +124,18 @@ class Guard extends PositionComponent
   final _hemS = Spring(stiffness: 45, damping: 5);
   double _leanS = 0;
   double _turnT = 0;
+  static const _turnLen = 0.26;
+
+  /// Dönüş: kâğıt gibi incelip açılmaz. Beden ilk yarıda eski yönüne bakarak
+  /// biraz daralır ve ağırlığını indirir, ortada yeni yöne geçer, sonra
+  /// açılır. (genişlik, yükseklik) ölçeği; eksi genişlik eski yön.
+  (double, double) get _turnScale {
+    if (_turnT <= 0) return (1, 1);
+    final u = 1 - _turnT / _turnLen;
+    final mag = 0.82 + 0.18 * math.cos(math.pi * u).abs();
+    final dip = 1 - 0.04 * math.sin(math.pi * u);
+    return (u < 0.5 ? -mag : mag, dip);
+  }
   int _drawnFacing = -1;
   double _life = 0;
 
@@ -138,7 +150,7 @@ class Guard extends PositionComponent
     if (facing != _drawnFacing) {
       // Döner: fener ve etek savrulur, beden bir an yan döner.
       _drawnFacing = facing;
-      _turnT = 0.2;
+      _turnT = _turnLen;
       _swingS.kick(-28);
       _hemS.kick(-14);
     }
@@ -403,6 +415,21 @@ class Guard extends PositionComponent
   Path? _cone;
   double _coneAt = -1;
 
+  /// Fener huzmesinin dünyadaki şekli (görüş alanı); [k] yanlara açılışın
+  /// oranı (yumuşak kenar katmanları için). Kayada kesilmesi [coneShape].
+  Path beamShape([double k = 1]) {
+    final l = _lantern;
+    final f = facing.toDouble();
+    final range = state == GuardState.chase ? viewDistance * 1.4 : viewDistance;
+    final spread = (range * 0.5 + 34) * k;
+    return Path()
+      ..moveTo(l.x, l.y - 3)
+      ..lineTo(l.x + f * range, l.y - spread)
+      ..lineTo(l.x + f * range, l.y + spread)
+      ..lineTo(l.x, l.y + 3)
+      ..close();
+  }
+
   bool _canSee(Player p) {
     if (p.isDead || p.hidden) return false;
     final eye = _lantern;
@@ -462,39 +489,38 @@ class Guard extends PositionComponent
         flicker *
         (toon ? Cartoon.beam : 1);
 
-    // Işık konisi: kayada kesilir.
-    final seen = coneShape;
-    if (seen != null) {
+    // Işık konisi: kayada kesilir; ucu düz bir çizgi değil, uzaklıkla
+    // söner; kenarları yumuşak. Dünya koordinatında çizilir.
+    {
       canvas.save();
-      // Kesme şekli dünya koordinatında; çizim yerel ve yöne çevrili.
       if (facing < 0) {
         canvas.scale(-1, 1);
         canvas.translate(-gw, 0);
       }
       canvas.translate(-position.x, -position.y);
-      canvas.clipPath(seen);
-      canvas.translate(position.x, position.y);
-      if (facing < 0) {
-        canvas.translate(gw, 0);
-        canvas.scale(-1, 1);
-      }
+      final range = state == GuardState.chase
+          ? viewDistance * 1.4
+          : viewDistance;
+      final l = _lantern.toOffset();
+      final seen = coneShape;
+      if (seen != null) canvas.clipPath(seen);
+      SoftEdge.beam(
+        canvas,
+        beamShape,
+        Paint()
+          ..shader = ui.Gradient.radial(
+            l,
+            range * 1.12,
+            [
+              beam.withValues(alpha: beamAlpha),
+              beam.withValues(alpha: beamAlpha * 0.5),
+              beam.withValues(alpha: 0),
+            ],
+            const [0, 0.45, 1],
+          ),
+      );
+      canvas.restore();
     }
-    final range = state == GuardState.chase ? viewDistance * 1.4 : viewDistance;
-    final cone = Path()
-      ..moveTo(lantern.dx, lantern.dy - 3)
-      ..lineTo(lantern.dx + range, lantern.dy - range * 0.5 - 34)
-      ..lineTo(lantern.dx + range, lantern.dy + range * 0.5 + 34)
-      ..lineTo(lantern.dx, lantern.dy + 3)
-      ..close();
-    canvas.drawPath(
-      cone,
-      Paint()
-        ..shader = ui.Gradient.linear(lantern, lantern + Offset(range, 0), [
-          beam.withValues(alpha: beamAlpha),
-          beam.withValues(alpha: 0),
-        ]),
-    );
-    if (seen != null) canvas.restore();
     final halo = 30 + doubt * 14 + (alert ? 22 : 0);
     canvas.drawCircle(
       lantern,
@@ -508,13 +534,11 @@ class Guard extends PositionComponent
 
     if (ShadowArt.ready) {
       // Paketteki bekçi: karanlık siluet, kandil ışığıyla çizilen kenar.
-      final squash = _turnT > 0
-          ? 1 - 0.55 * math.sin(math.pi * _turnT / 0.2)
-          : 1.0;
+      final (sx, sy) = _turnScale;
       canvas.save();
-      canvas.translate(gw / 2, 0);
-      canvas.scale(squash, 1);
-      canvas.translate(-gw / 2, 0);
+      canvas.translate(gw / 2, gh);
+      canvas.scale(sx, sy);
+      canvas.translate(-gw / 2, -gh);
       drawShadowGuard(
         canvas,
         feet: const Offset(gw / 2, gh),
@@ -537,13 +561,12 @@ class Guard extends PositionComponent
     }
     // Dönerken beden bir an yan döner (ince görünür), sonra yeni yöne açılır.
     // Asa ve fener yerinde kalır (ışık oradan çıkar).
-    final squash = _turnT > 0
-        ? 1 - 0.55 * math.sin(math.pi * _turnT / 0.2)
-        : 1.0;
+    final (tx, ty) = _turnScale;
+    final squash = tx.abs();
     canvas.save();
-    canvas.translate(gw / 2, 0);
-    canvas.scale(squash, 1);
-    canvas.translate(-gw / 2, 0);
+    canvas.translate(gw / 2, gh);
+    canvas.scale(tx, ty);
+    canvas.translate(-gw / 2, -gh);
 
     // Bacaklar: adımlar yürünen yola bağlı; basan ayak yerde durur, kalkan
     // ayak paltonun altından öne savrulur. Kovalarken adım uzar, beden

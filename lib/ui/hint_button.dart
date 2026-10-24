@@ -79,8 +79,8 @@ class _HintButtonState extends State<HintButton>
     final ready = widget.game.narration.hintReady.value;
     // Balon simgenin altına taşar; simgenin yerini oynatmaz.
     return SizedBox(
-      width: 64,
-      height: 64,
+      width: 48,
+      height: 48,
       child: Stack(
         clipBehavior: Clip.none,
         children: [
@@ -104,15 +104,15 @@ class _HintButtonState extends State<HintButton>
                 // Kıpırdayışla birlikte dışa yayılan halka.
                 final ring = ready && t < 0.3 ? t / 0.3 : 1.0;
                 return SizedBox(
-                  width: 64,
-                  height: 64,
+                  width: 48,
+                  height: 48,
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
                       if (ring < 1)
                         Container(
-                          width: 44 + ring * 26,
-                          height: 44 + ring * 26,
+                          width: 32 + ring * 16,
+                          height: 32 + ring * 16,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             border: Border.all(
@@ -124,10 +124,10 @@ class _HintButtonState extends State<HintButton>
                       Transform.rotate(
                         angle: wiggle,
                         child: Transform.scale(
-                          scale: 1 + 0.25 * nudge,
+                          scale: 1 + 0.12 * nudge,
                           child: Container(
-                            width: 44,
-                            height: 44,
+                            width: 32,
+                            height: 32,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               color: ready
@@ -143,13 +143,13 @@ class _HintButtonState extends State<HintButton>
                                 if (ready)
                                   BoxShadow(
                                     color: _warm.withValues(alpha: 0.45 * glow),
-                                    blurRadius: 14 + 8 * glow,
+                                    blurRadius: 6 + 5 * glow,
                                   ),
                               ],
                             ),
                             child: Icon(
                               ready ? Icons.lightbulb : Icons.lightbulb_outline,
-                              size: 24,
+                              size: 18,
                               color: ready
                                   ? const Color(0xFFFFE2B0)
                                   : Colors.white.withValues(alpha: 0.35),
@@ -165,7 +165,7 @@ class _HintButtonState extends State<HintButton>
           ),
           // İlk yanışta: ipucunun yeri gösterilir (ok simgeyi gösterir).
           Positioned(
-            top: 58,
+            top: 44,
             right: -8,
             child: AnimatedOpacity(
               opacity: _intro && ready ? 1 : 0,
@@ -176,7 +176,7 @@ class _HintButtonState extends State<HintButton>
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Padding(
-                      padding: const EdgeInsets.only(right: 32),
+                      padding: const EdgeInsets.only(right: 24),
                       child: CustomPaint(
                         size: const Size(16, 8),
                         painter: _Arrow(),

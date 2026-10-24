@@ -20,6 +20,9 @@ Durum: ✅ yapıldı · 🔶 kısmen · ⏳ sırada
 | E5 | Karabasan yaklaşıyor | Zerreler ona dönerek çekilir; ekranın onun yanı ve üst/alt kenarlar mesafeyle kararır; sarsıntı yalnız çok yakında ve hafif | ✅ |
 | E6 | Yeni yol açılıyor | Kapı açılınca çözüldü sesi ve açılan yol boyunca ileri akan ışık | ✅ |
 | V1 | Karakter–zemin ayrımı | Ayak altında ılık ışık; uçurum ve mağara temalarında (Kule, Derinkuyu…) basılabilir yüzeyin üst kenarı; öteki temalarda kenar zaten seçiliyordu (tarandı) | ✅ |
+| E1b | Rüzgâr geliyor | Yel'den önce otlar ve sarmaşıklar rüzgârın yönüne eğilir | ⏳ |
+| E2c | Kol ile kapı bağlı | Kol çekilince kapının zinciri gerilir, sonra kapı kalkar | ⏳ |
+| L1 | Yumuşak ışık | Sâye'nin ışığı kayada yarı gölgeyle kesilir; fenerci, gözcü, Medusa huzmeleri uzaklıkla söner, kenarları kademeli | ✅ |
 | E7 | Ne yapılacağı belli olsun | Kullanılabilen nesnenin (ip, kol, vana, körük…) önüne gelince Sâye'nin başı hizasında, nesnenin üstünde "↑" işareti; Yerebatan perde ipi ilk çekilene dek turuncu püskül ve ipten süzülen ışık tanesiyle kendini gösterir | ✅ |
 | K1 | Kamera geçişleri | Kol/kapı bakışı ✅; manzara anlarında kısa yön gösterme (V6) ⏳; yeni yol açılınca yola bakış ⏳ | 🔶 |
 

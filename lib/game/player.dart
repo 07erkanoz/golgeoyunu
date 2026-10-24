@@ -1241,15 +1241,16 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     deathCause = cause;
     final water = level.cellAt(center.x, position.y + h + 4) == 'w';
     if (water) deathCause = DeathCause.water;
-    // Işıkla yakalanmada cam sesi, fener ışığı taşınca gelir.
-    if (deathCause != DeathCause.light) {
-      GameAudio.instance.play(switch (deathCause) {
-        DeathCause.water => 'splash',
-        DeathCause.dark => 'breath',
-        DeathCause.stone => 'grind',
-        _ => 'death',
-      });
-    }
+    // Her ölümde aynı hüzünlü ney cümlesi; nedenin kendi sesi de üstüne
+    // (ışıkla yakalanmada cam sesi, fener ışığı taşınca gelir).
+    GameAudio.instance.play('death');
+    final own = switch (deathCause) {
+      DeathCause.water => 'splash',
+      DeathCause.dark => 'breath',
+      DeathCause.stone => 'grind',
+      _ => null,
+    };
+    if (own != null) GameAudio.instance.play(own, volume: 0.7);
     _fell = fell;
     crouching = false;
     velocity.x = 0;

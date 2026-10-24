@@ -318,6 +318,7 @@ class Narration extends Component with HasGameReference<GolgeGame> {
     _prev = null;
     _hint = null;
     _ready = null;
+    _readyAt = null;
     _lastHint = null;
     hintReady.value = false;
     _area = null;
@@ -338,8 +339,25 @@ class Narration extends Component with HasGameReference<GolgeGame> {
     if (_hint == text) return true;
     _ready = text;
     _lastHint = text;
+    _readyAt = game.player?.center.clone();
     hintReady.value = true;
     return true;
+  }
+
+  /// Simge yandığında Sâye'nin durduğu yer: oradan uzaklaşınca simge söner
+  /// (ipucu o yerin ipucu; okunmadıysa "Az önce" panelinde durur).
+  Vector2? _readyAt;
+  static const double hintReach = 320; // on kare
+
+  void _expireHint() {
+    final at = _readyAt;
+    final p = game.player;
+    if (_ready == null || at == null || p == null) return;
+    if ((p.center - at).length > hintReach) {
+      _ready = null;
+      _readyAt = null;
+      hintReady.value = false;
+    }
   }
 
   /// Simge yanınca bekleyen ipucu; okunan son ipucu (simgeye yeniden
@@ -394,6 +412,7 @@ class Narration extends Component with HasGameReference<GolgeGame> {
   void update(double dt) {
     _clock += dt;
     GameAudio.instance.updateVoice(dt);
+    _expireHint();
     if (_out != null) {
       _outT += dt;
       if (_outT >= outDuration || inCinematic) _out = null;
