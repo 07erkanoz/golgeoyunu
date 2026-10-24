@@ -206,6 +206,11 @@ k.fill(27, 11, 27, 25, '|')
 k.fill(20, 9, 26, 10, '#'); k.put(21, 8, 'B'); k.put(24, 8, 'p')
 k.put(17, 7, 'O')
 k.fill(11, 4, 16, 4, '#'); k.fill(12, 5, 15, 5, '#'); k.put(14, 3, 'E'); k.put(12, 3, 'B')
+# Uzun zincir tırmanışlarında dinlenme balkonları: tırmanış bölünsün
+# (yalnız ekleme; yol değişmez; çan yok, ses Kandilciyi çağırırdı).
+for (bc0, bc1, br) in [(4, 6, 137), (23, 25, 158), (24, 26, 18)]:
+    if all(k.g[br][c] == '.' for c in range(bc0, bc1 + 1)):
+        k.fill(bc0, br, bc1, br, '=')
 H = k.H
 lvl2=k.rows()
 
