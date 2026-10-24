@@ -16,6 +16,7 @@ import 'anlatim_plani.dart';
 import 'entrance.dart';
 import 'feedback.dart';
 import 'shadow_decoy.dart';
+import 'vistas.dart';
 import 'creatures.dart';
 import 'frame_pacer.dart';
 import 'mechanics.dart';
@@ -997,6 +998,11 @@ class GolgeGame extends FlameGame with KeyboardEvents {
           if (level.eyeStoneCells.isNotEmpty) PerdeCord(c - Vector2(kTile, 0)),
         ],
         for (final c in level.eyeStoneCells) EyeStone(c),
+        for (final (c, r, kind) in level.def.vistas)
+          VistaPoint(
+            Vector2((c + 0.5) * kTile, (r + 0.5) * kTile.toDouble()),
+            kind,
+          ),
         for (final (c, r) in level.def.shadowStones)
           ShadowStone(Vector2(c * kTile.toDouble(), r * kTile.toDouble())),
         for (final (c, r, n) in level.glowRuns)
@@ -2335,6 +2341,24 @@ class GolgeGame extends FlameGame with KeyboardEvents {
   /// Eski ad (kol): kapıya bakış.
   void peek(Vector2 at) => focus(at);
 
+  // ------------------------------------------------------- manzara anı
+  /// Süren manzara (yoksa null) ve başlangıcından beri geçen süre.
+  String? vistaKind;
+  double vistaT = 0;
+
+  /// Büyük manzara: kamera açılıp yukarı bakar, uzakta yerin manzarası
+  /// belirir, yer adı yazılır (vistas.dart).
+  void startVista(String kind, Vector2 at) {
+    if (vistaKind != null) return;
+    final id = 'vista:$levelIndex:$kind';
+    if (!_whispersShown.add(id)) return;
+    vistaKind = kind;
+    vistaT = 0;
+    narration.showArea(vistaCaption(kind));
+    GameAudio.instance.play('memory', volume: 0.45);
+    focus(at - Vector2(0, 5 * kTile), hold: vistaLength - 1.2);
+  }
+
   /// Kameranın suyu göstermek için indiği pay (yumuşatılmış).
   double _waterLook = 0;
 
@@ -2368,6 +2392,10 @@ class GolgeGame extends FlameGame with KeyboardEvents {
   }
 
   void _updateCamera(Player p, double dt) {
+    if (vistaKind != null) {
+      vistaT += dt;
+      if (vistaT > vistaLength) vistaKind = null;
+    }
     final view = camera.viewport.size;
     if (view.x == 0 || view.y == 0) return;
     // Limbo gibi uzak bir kamera: ekranda yaklaşık 20 kare yükseklik.
@@ -2393,7 +2421,9 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     // Odakta sebep ve sonuç birlikte görünsün diye hafif açılış (bir önceki
     // karenin isteği; titremesin diye yumuşatılır).
     _focusZoomS = approach(_focusZoomS, _focusZoom, dt, 0.25);
-    final zoom = _zoomS * _focusZoomS;
+    // Manzara anında kamera açılır.
+    final vista = vistaKind == null ? 0.0 : vistaEnvelope(vistaT);
+    final zoom = _zoomS * _focusZoomS * (1 - 0.2 * vista);
     camera.viewfinder.zoom = zoom;
 
     // Gidilen yöne doğru ileriyi gösterir; hızlandıkça daha çok.

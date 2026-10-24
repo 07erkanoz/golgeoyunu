@@ -164,7 +164,11 @@ class LevelDef {
     this.gokboruRun = false,
     this.shadowStones = const [],
     this.coldRuns = const [],
+    this.vistas = const [],
   });
+
+  /// Manzara anları (sütun, satır, tür): Sâye oraya ilk gelince.
+  final List<(int, int, String)> vistas;
 
   /// Kandilci yolu (sütun, satır, uzunluk): soğuk ışık tahtaları.
   final List<(int, int, int)> coldRuns;
@@ -1129,6 +1133,7 @@ const levels = <LevelDef>[
       'The Top of the Cone',
     ],
     map: kMapKule,
+    vistas: [(12, 3, 'halic')],
   ),
   LevelDef(
     title: 'III · GÖKYOLU',
@@ -1507,6 +1512,7 @@ const levels = <LevelDef>[
       'Memory · At sunrise we took down the screen. "No more shadow play," he said. "Now the real play begins."',
     ],
     map: kMapGunDogumu,
+    vistas: [(192, 13, 'sunrise')],
   ),
   LevelDef(
     title: 'IX · KAR YOLU',
@@ -2207,6 +2213,7 @@ const levels = <LevelDef>[
       'Memory · "A tree\'s shadow falls longer than the tree, Saye," he had said. "So do its roots: unseen, yet they carry the branches."',
     ],
     map: kMapOtuken,
+    vistas: [(234, 32, 'valley')],
   ),
   LevelDef(
     title: 'XVIII · ÜLGEN\'İN KAPISI',

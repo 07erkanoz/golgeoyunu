@@ -15,6 +15,7 @@ import 'nemrut.dart' show NemrutArt, NemrutHead;
 import 'palette.dart';
 import 'realism.dart';
 import 'ski_light.dart';
+import 'vistas.dart';
 import '../settings.dart';
 
 part 'backdrops_east.dart';
@@ -58,6 +59,16 @@ class Backdrop extends Component with HasGameReference<GolgeGame> {
 
   @override
   void render(Canvas canvas) {
+    _renderTheme(canvas);
+    // Manzara anı: temanın üstünde, dünyanın arkasında.
+    final kind = game.vistaKind;
+    if (kind != null) {
+      final size = game.camera.viewport.size;
+      paintVista(canvas, size.x, size.y, kind, game.vistaT);
+    }
+  }
+
+  void _renderTheme(Canvas canvas) {
     final size = game.camera.viewport.size;
     final w = size.x;
     final h = size.y;
