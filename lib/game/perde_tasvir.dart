@@ -734,23 +734,22 @@ void _heroOverlay(Canvas canvas, PerdeScene scene, double time, double u) {
         c.scale(3.6, 3.6 * (1 + k));
         c.drawPath(MythShapes.birdGlide, _ink(a));
         c.restore();
-        // Uzun kuyruk tüyleri.
-        for (var i = 0; i < 4; i++) {
-          final y0 = 210 - 30 + i * 12.0;
+        // Uzun kuyruk tüyleri: üç tane (perde "üç tüyünü bu dağa bırakmış"
+        // der; oyunda da üç tüy toplanır).
+        for (var i = 0; i < 3; i++) {
+          // Kuyruğun ucundan çıkar, dağa doğru aşağı dalgalanır.
+          final x0 = 380 + i * 10.0;
+          final sway = math.sin(time * 1.3 + i) * 10;
+          final end = Offset(400 + i * 64 + sway, 268 + i * 34);
           c.drawPath(
             Path()
-              ..moveTo(330, y0)
-              ..quadraticBezierTo(
-                220,
-                y0 + 40 + i * 10 + math.sin(time + i) * 8,
-                110,
-                y0 + 10 + i * 18,
-              )
-              ..quadraticBezierTo(220, y0 + 30 + i * 10, 330, y0 + 8)
+              ..moveTo(x0 - 4, 198)
+              ..quadraticBezierTo(x0 + 20 + sway, 262, end.dx, end.dy)
+              ..quadraticBezierTo(x0 + 30 + sway, 256, x0 + 4, 198)
               ..close(),
             _ink(a),
           );
-          c.drawCircle(Offset(118, y0 + 12 + i * 18), 5, _hole(0.8 * a));
+          c.drawCircle(end + const Offset(-4, -4), 5, _hole(0.8 * a));
         }
         _rosette(c, const Offset(400, 196), 8, a);
       });
