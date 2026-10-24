@@ -519,17 +519,33 @@ def _sim(a: str, b: str) -> float:
     return difflib.SequenceMatcher(None, _norm(a), _norm(b), autojunk=False).ratio()
 
 
+def _plain(w: str) -> str:
+    return w.translate(str.maketrans("âîû", "aiu"))
+
+
 def extra_words(heard: str, text: str) -> list[str]:
-    """Dökümde olup metinde olmayan sözler (okunmuş talimat: "with
-    admiration, a smile in the voice" gibi). Ek ve yazım farkları sayılmaz:
-    sözün ilk dört harfi metindeki bir sözle eşleşiyorsa metindendir."""
-    words = _norm(text).split()
-    stems = {w[:4] for w in words}
-    return [w for w in _norm(heard).split() if w[:4] not in stems and len(w) > 1]
+    """Dökümde art arda gelen, metinde olmayan en uzun söz dizisi (okunmuş
+    talimat: "with admiration, a smile in the voice" gibi). Ek, yazım ve
+    düzeltme işareti farkları sayılmaz: sözün ilk dört harfi metindeki bir
+    sözle eşleşiyorsa metindendir. Tek tük yanlış duyulan söz dizi kurmaz."""
+    stems = {_plain(w)[:4] for w in _norm(text).split()}
+    best: list[str] = []
+    run: list[str] = []
+    for w in _norm(heard).split():
+        if len(w) <= 1:
+            continue
+        if _plain(w)[:4] in stems:
+            run = []
+            continue
+        run.append(w)
+        if len(run) > len(best):
+            best = list(run)
+    return best
 
 
 def heard_ok(heard: str, text: str) -> float:
-    """Benzerlik; üç ya da daha çok fazladan söz varsa 0 (yeniden üretilir)."""
+    """Benzerlik; art arda üç ya da daha çok fazladan söz varsa 0 (yeniden
+    üretilir)."""
     if len(extra_words(heard, text)) >= 3:
         return 0.0
     return _sim(heard, text)
