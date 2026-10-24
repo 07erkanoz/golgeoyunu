@@ -306,11 +306,14 @@ class GameAudio {
 
   /// Ayarlar açıkken ya da uygulama arka plandayken her şey bekler.
   void pauseAll() {
+    if (!_paused) _pausedAt = _clockNow;
     _paused = true;
     _pauseHandles(true);
   }
 
   void resumeAll() {
+    // Durakladığı süre kadar satırın bitişi ertelenir.
+    if (_paused && _voice != null) _voiceEndsAt += _clockNow - _pausedAt;
     _paused = false;
     _pauseHandles(false);
   }
@@ -356,10 +359,24 @@ class GameAudio {
 
   bool _voiceBusy = false;
 
-  /// Çalan satırın kalan süresi (oyun dururken azalmaz). Satırın bittiğini
+  /// Çalan satırın bitiş anı (ses saatinde, saniye). Satırın bittiğini
   /// motorun "geçerli mi" sorusuna bırakmıyoruz: diskten akan seste bu
-  /// erken "bitti" diyebiliyor, sıradaki satır üstüne biniyordu.
-  double _voiceLeft = 0;
+  /// erken "bitti" diyebiliyor, sıradaki satır üstüne biniyordu. Kalan süre
+  /// kare kare azaltılmıyor: oyun ve Hikâye oynatıcısı birlikte
+  /// güncelleyince süre iki kat hızlı tükeniyor, satır yarıda kesiliyordu.
+  double _voiceEndsAt = 0;
+
+  /// Ses saati: monoton, kim güncellerse güncellesin aynı.
+  final _voiceClock = Stopwatch()..start();
+  double get _clockNow => _voiceClock.elapsedMicroseconds / 1e6;
+  double _pausedAt = 0;
+
+  /// Ses dosyalarının listesi okundu mu (okunmadan gelen istekler sırada
+  /// bekler, liste gelince çalınır).
+  bool _indexReady = false;
+
+  /// Yüklenemeyen ya da çalınamayan satırlar: yazıları gizlenmez.
+  final _voiceFailed = <String>{};
 
   /// Her susturmada artar: yüklenirken kesilen satır sonradan çalmaz.
   int _voiceGen = 0;
@@ -367,13 +384,20 @@ class GameAudio {
   String _voicePath(String text) =>
       'assets/voice/${S.en ? 'en' : 'tr'}/${voiceId(text)}.mp3';
 
+  /// Şu an bir anlatım satırı çalıyor mu (yükleme ve sıra hariç).
+  bool get voicePlaying => _voice != null;
+
   /// Anlatım konuşuyor ya da sırada satır var mı.
   bool get voiceBusy => _voice != null || _voiceBusy || _voiceQueue.isNotEmpty;
 
   /// Bu satır şimdi seslendirilecek mi (anlatım açık, ses düzeyi sıfır
   /// değil, sesi var): öyleyse yazısı gösterilmez (altyazı açık değilse).
   bool speaks(String text) =>
-      _ready && Settings.voice && Settings.voiceVolume > 0.02 && hasVoice(text);
+      _ready &&
+      Settings.voice &&
+      Settings.voiceVolume > 0.02 &&
+      hasVoice(text) &&
+      !_voiceFailed.contains(text);
 
   /// Bu satırın sesi var mı.
   bool hasVoice(String text) => _voiceFiles.contains(_voicePath(text));
@@ -391,12 +415,17 @@ class GameAudio {
     void Function(double seconds)? onStart,
   }) {
     final id = voiceId(text);
-    if (!_ready) {
-      voiceStatus = '$id: ses motoru hazır değil';
-      return;
-    }
     if (!Settings.voice) {
       voiceStatus = '$id: anlatım kapalı';
+      return;
+    }
+    if (!_ready || !_indexReady) {
+      // Ses motoru ya da dosya listesi henüz hazır değil (uygulama yeni
+      // açıldı): istek bekler, hazır olunca çalınır; kaybolmaz.
+      voiceStatus = '$id: bekliyor (ses motoru hazırlanıyor)';
+      _voiceQueue
+        ..clear()
+        ..add((text, DateTime.now().millisecondsSinceEpoch, onStart));
       return;
     }
     if (!hasVoice(text)) {
@@ -411,11 +440,15 @@ class GameAudio {
   }
 
   /// Anlatımı susturur (perde atlanınca, menüye dönülünce).
-  void stopVoice({bool clearQueue = false}) {
+  void stopVoice({bool clearQueue = false, String reason = 'durduruldu'}) {
     if (clearQueue) _voiceQueue.clear();
     _voiceGen++;
-    _voiceLeft = 0;
+    _voiceEndsAt = 0;
     final h = _voice;
+    if (h != null) {
+      final id = voiceStatus.split(':').first;
+      voiceStatus = '$id: $reason';
+    }
     final src = _voiceSrc;
     _voice = null;
     _voiceSrc = null;
@@ -426,14 +459,14 @@ class GameAudio {
 
   /// Her karede: biten satır bırakılır, sıradaki başlar.
   void updateVoice(double dt) {
-    if (_voice != null) {
-      if (!_paused) _voiceLeft -= dt;
-      if (_voiceLeft <= 0) stopVoice();
+    if (_voice != null && !_paused && _clockNow >= _voiceEndsAt) {
+      stopVoice(reason: 'bitti');
     }
     _nextVoice();
   }
 
   Future<void> _nextVoice() async {
+    if (!_ready || !_indexReady) return;
     if (_voice != null || _voiceBusy || _voiceQueue.isEmpty) return;
     final now = DateTime.now().millisecondsSinceEpoch;
     for (final e in _voiceQueue) {
@@ -444,6 +477,10 @@ class GameAudio {
     _voiceQueue.removeWhere((e) => now - e.$2 > _voiceStaleMs);
     if (_voiceQueue.isEmpty) return;
     final (text, _, onStart) = _voiceQueue.removeAt(0);
+    if (!hasVoice(text)) {
+      voiceStatus = '${voiceId(text)}: sesi yok (${_voiceFiles.length} dosya)';
+      return;
+    }
     _voiceBusy = true;
     final gen = _voiceGen;
     final id = voiceId(text);
@@ -465,7 +502,7 @@ class GameAudio {
       _voice = h;
       _voiceSrc = src;
       final length = _s.getLength(src).inMilliseconds / 1000;
-      _voiceLeft = length + 0.1;
+      _voiceEndsAt = _clockNow + length + 0.1;
       _setBedVolume();
       onStart?.call(length);
       voiceStatus =
@@ -473,6 +510,7 @@ class GameAudio {
           '(yükleme ${DateTime.now().millisecondsSinceEpoch - loadStart} ms)';
       _log('anlatım ${voiceId(text)}');
     } catch (e) {
+      _voiceFailed.add(text);
       voiceStatus = '$id: çalınamadı: $e';
       _log('anlatım çalınamadı: $e');
     } finally {
@@ -505,6 +543,18 @@ class GameAudio {
       return;
     }
     _ready = true;
+    // Anlatım dosyalarının listesi hemen okunur: açılışta başlayan perdenin
+    // ilk satırları efektlerin yüklenmesini beklemez.
+    try {
+      final m = await AssetManifest.loadFromAssetBundle(rootBundle);
+      _voiceFiles.addAll(
+        m.listAssets().where((a) => a.startsWith('assets/voice/')),
+      );
+    } catch (e) {
+      _log('anlatım listesi okunamadı: $e');
+    }
+    _indexReady = true;
+    _nextVoice();
     Future<void> load(String file, LoadMode mode) async {
       final name = file.substring(0, file.lastIndexOf('.'));
       try {
@@ -528,15 +578,6 @@ class GameAudio {
     // Yükleme sürerken istenmiş olanlar şimdi başlar.
     _updateBed();
     applyVolumes();
-    // Anlatım sesleri çalınırken yüklenir; burada yalnız hangileri var.
-    try {
-      final m = await AssetManifest.loadFromAssetBundle(rootBundle);
-      _voiceFiles.addAll(
-        m.listAssets().where((a) => a.startsWith('assets/voice/')),
-      );
-    } catch (e) {
-      _log('anlatım listesi okunamadı: $e');
-    }
   }
 }
 

@@ -103,7 +103,8 @@ class _StoryTheaterState extends State<StoryTheater>
       _lines[_line],
       interrupt: true,
       onStart: (d) {
-        if (_spoken == key) _lineVoice = d;
+        // Ses geç başladıysa (yükleme) satır o kadar uzar.
+        if (_spoken == key) _lineVoice = _lineT + d;
       },
     );
   }
@@ -144,6 +145,9 @@ class _StoryTheaterState extends State<StoryTheater>
       _lineT += dt;
       if (_lineT > _lineLen) _nextLine();
     }
+    // Ses saati duvar saatine bağlı: oyunun da güncellemesi süreyi
+    // kısaltmaz (önceden iki döngü birlikte azaltıyor, satır yarıda
+    // kesiliyordu).
     GameAudio.instance.updateVoice(dt);
     _tick.value++;
   }

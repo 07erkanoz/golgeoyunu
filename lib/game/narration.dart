@@ -49,7 +49,9 @@ class Narration extends Component with HasGameReference<GolgeGame> {
       _lines[index],
       interrupt: true,
       onStart: (d) {
-        if (_lineIndex == index && inCinematic) _lineVoice = d;
+        // Ses geç başladıysa (yükleme) satır o kadar uzar: sesin bittiği
+        // an satır başından sayılır.
+        if (_lineIndex == index && inCinematic) _lineVoice = _lineT + d;
       },
     );
   }
