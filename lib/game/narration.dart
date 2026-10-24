@@ -825,6 +825,17 @@ class Narration extends Component with HasGameReference<GolgeGame> {
       // Sağ altta "Atla" düğmesi var; satır geçme yolu sol altta, perdenin
       // satırının altında yazar.
       _text(canvas, S.of('skipHint'), Offset(110, h - 12), unit * 0.022, 0.25);
+      // Ölçüm göstergesi perdede de: anlatım sesinin durumu görünsün.
+      if (game.perfShown && game.perfText.isNotEmpty) {
+        _text(
+          canvas,
+          game.perfText,
+          Offset(w / 2, h * 0.035),
+          unit * 0.018,
+          0.9,
+          maxWidth: w * 0.9,
+        );
+      }
       return;
     }
 

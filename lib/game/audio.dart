@@ -381,12 +381,28 @@ class GameAudio {
   /// Anlatım satırını seslendirir (sesi varsa ve anlatım açıksa). Başka
   /// satır konuşuyorsa sıraya girer; [interrupt] ile (perde) onu keser.
   /// [onStart] ses başlayınca süresiyle çağrılır (yazı o kadar kalsın).
+  /// Anlatımın son durumu (ölçüm göstergesinde görünür; telefonda sessiz
+  /// kalan satırın nedenini bulmak için).
+  String voiceStatus = '-';
+
   void speak(
     String text, {
     bool interrupt = false,
     void Function(double seconds)? onStart,
   }) {
-    if (!_ready || !Settings.voice || !hasVoice(text)) return;
+    final id = voiceId(text);
+    if (!_ready) {
+      voiceStatus = '$id: ses motoru hazır değil';
+      return;
+    }
+    if (!Settings.voice) {
+      voiceStatus = '$id: anlatım kapalı';
+      return;
+    }
+    if (!hasVoice(text)) {
+      voiceStatus = '$id: sesi yok (${_voiceFiles.length} dosya)';
+      return;
+    }
     if (interrupt) stopVoice();
     _voiceQueue
       ..clear()
@@ -420,15 +436,24 @@ class GameAudio {
   Future<void> _nextVoice() async {
     if (_voice != null || _voiceBusy || _voiceQueue.isEmpty) return;
     final now = DateTime.now().millisecondsSinceEpoch;
+    for (final e in _voiceQueue) {
+      if (now - e.$2 > _voiceStaleMs) {
+        voiceStatus = '${voiceId(e.$1)}: bekledi, eskidi';
+      }
+    }
     _voiceQueue.removeWhere((e) => now - e.$2 > _voiceStaleMs);
     if (_voiceQueue.isEmpty) return;
     final (text, _, onStart) = _voiceQueue.removeAt(0);
     _voiceBusy = true;
     final gen = _voiceGen;
+    final id = voiceId(text);
+    voiceStatus = '$id: yükleniyor';
+    final loadStart = DateTime.now().millisecondsSinceEpoch;
     try {
       final src = await _s.loadAsset(_voicePath(text), mode: LoadMode.disk);
       if (gen != _voiceGen) {
         // Yüklenirken susturuldu (perde satırı geçti): çalınmaz.
+        voiceStatus = '$id: yüklenirken geçildi';
         _safe(() => _s.disposeSource(src), null);
         return;
       }
@@ -443,8 +468,12 @@ class GameAudio {
       _voiceLeft = length + 0.1;
       _setBedVolume();
       onStart?.call(length);
+      voiceStatus =
+          '$id: çalıyor ${length.toStringAsFixed(1)} sn '
+          '(yükleme ${DateTime.now().millisecondsSinceEpoch - loadStart} ms)';
       _log('anlatım ${voiceId(text)}');
     } catch (e) {
+      voiceStatus = '$id: çalınamadı: $e';
       _log('anlatım çalınamadı: $e');
     } finally {
       _voiceBusy = false;

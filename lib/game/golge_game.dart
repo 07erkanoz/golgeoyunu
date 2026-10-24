@@ -346,7 +346,8 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         : 'Skia';
     perfText =
         '$fps kare/sn · çizim ${autoQuality.workMs.toStringAsFixed(1)} ms · '
-        'bellek $mb MB · çizici $renderer · grafik $gfx · $light';
+        'bellek $mb MB · çizici $renderer · grafik $gfx · $light\n'
+        'anlatım ${GameAudio.instance.voiceStatus}';
   }
 
   static const _startLevel = int.fromEnvironment(
