@@ -2410,25 +2410,28 @@ class GolgeGame extends FlameGame with KeyboardEvents {
   double _focusZoomS = 1;
 
   /// Kamera [at] noktasına odaklanır; [hold] orada kalış süresi.
-  void focus(Vector2 at, {double hold = 0.9}) {
+  /// Kamerayı bir an [at]a çevirip geri getirir. Tehlike varken çevrilmez:
+  /// o zaman false döner (bir kez gösterilecek şey sonraya kalsın).
+  bool focus(Vector2 at, {double hold = 0.9}) {
     final p = player;
-    if (p == null || p.isDead || cinematic) return;
-    if (threat > 0.3) return;
+    if (p == null || p.isDead || cinematic) return false;
+    if (threat > 0.3) return false;
     if (world.children.whereType<Guard>().any(
       (g) => g.state == GuardState.chase,
     )) {
-      return;
+      return false;
     }
     // Aynı yere süren odak yeniden başlamaz, yalnız uzar.
     final cur = _focusAt;
     if (cur != null && _focusT > 0 && (cur - at).length < kTile * 2) {
       _focusT = math.max(_focusT, hold + _focusOut);
       _focusLen = math.max(_focusLen, _focusT);
-      return;
+      return true;
     }
     _focusAt = at.clone();
     _focusLen = _focusIn + hold + _focusOut;
     _focusT = _focusLen;
+    return true;
   }
 
   /// Eski ad (kol): kapıya bakış.

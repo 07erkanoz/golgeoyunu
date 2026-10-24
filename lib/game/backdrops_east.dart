@@ -732,8 +732,12 @@ extension _EastBackdrops on Backdrop {
       ..strokeWidth = 0.6
       ..style = PaintingStyle.stroke;
     final peg = Paint()..color = const Color(0xFF1A0E07);
+    // Sıranın deseni (ek yerleri, ton) duvarın tepesine göre sayılır, ekrana
+    // göre değil: kamera yukarı aşağı bir piksel oynayınca sıralar komşu
+    // sıranın desenine atlıyordu; zıplarken duvar titreyip kayıyordu.
+    final firstRow = ((y0 - top) / plank).round();
     for (var y = y0, i = 0; y < h; y += plank, i++) {
-      final row = ((y + wallX * 0) / plank).round();
+      final row = firstRow + i;
       // Kalaslar farklı boyda; ek yerleri sıradan sıraya kayar.
       const span = 720.0;
       final rowShift = (row * 263) % span;

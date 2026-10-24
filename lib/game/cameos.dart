@@ -287,6 +287,7 @@ class WaterFace extends Component with HasGameReference<GolgeGame> {
 
   final WaterBasin basin;
   double _t = 0;
+  double? _target;
 
   static const double rise = 1.6;
   static const double stay = 7.5;
@@ -731,10 +732,12 @@ class WaterFace extends Component with HasGameReference<GolgeGame> {
   void update(double dt) {
     super.update(dt);
     _t += dt;
-    // Su inip kalkarken suya çekilmez: suyla birlikte iner, yeni vanayı
-    // gösterir; su durunca biraz daha bekler.
-    if (basin.moving && _t > rise && _t < rise + stay) {
-      _t = math.min(_t, rise + stay - 3);
+    // Vana açılınca (haznenin hedefi değişince) görevi biter: suya çekilir.
+    // Eskiden su inip kalkarken suyun üstünde bekliyordu; oyuncu onu
+    // kaybolmayan bir şey sanıyordu.
+    _target ??= basin.target;
+    if (basin.target != _target && _t < rise + stay) {
+      _t = math.max(_t, rise + stay);
     }
     if (_t > rise + stay + sink) removeFromParent();
   }

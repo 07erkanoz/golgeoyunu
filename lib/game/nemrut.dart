@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math' as math;
+import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:flame/components.dart';
@@ -11,6 +12,7 @@ import 'giant_puppet.dart';
 import 'golge_game.dart';
 import 'level.dart';
 import 'mechanics.dart';
+import 'myth_shapes.dart';
 import 'nemrut_sprites.dart';
 import 'palette.dart';
 import 'persist.dart';
@@ -118,9 +120,16 @@ class StarStone extends PositionComponent
 
   bool get correct => index < horoscope.length && sign == horoscope[index];
 
+  /// Taş tanrının omuzlarında durulan her yerden çevrilir (eskiden taşın
+  /// tam dibinde durmak gerekiyordu; nereden tutulacağı anlaşılmıyordu).
+  /// Aşağıdaki oturaktan çevrilmez.
   @override
   bool canUse(Vector2 p) =>
-      (p - position).x.abs() < 26 && (p - position).y.abs() < 44;
+      (p.x - position.x).abs() < 2.2 * kTile &&
+      (p.y - (position.y - Player.h / 2)).abs() < 20;
+
+  /// Oyuncu omuzlardayken taş belli olsun: ılık halka ve tutamak.
+  bool _near = false;
 
   @override
   void use() {
@@ -148,20 +157,76 @@ class StarStone extends PositionComponent
     }
   }
 
+  double _t = 0;
+
   @override
   void update(double dt) {
     super.update(dt);
+    _t += dt;
     _turn = math.max(0, _turn - dt * 3);
+    final p = game.player;
+    _near =
+        p != null &&
+        !p.isDead &&
+        (p.center.x - position.x).abs() < 4 * kTile &&
+        (p.center.y - position.y).abs() < 3 * kTile;
+    _show = math.max(0, _show - dt);
+    if (p != null && index == 0) _showRoute(p);
+  }
+
+  /// Taşlar gösterilirken hepsi nabız atar (kamera onlara bakarken).
+  double _show = 0;
+
+  /// Batı Terası'na ilk gelişte kamera omuzlardaki yıldız taşlarını gösterip
+  /// geri döner: nereye tırmanılacağı görünsün. Bir kez (tehlike varsa
+  /// sonraya kalır).
+  void _showRoute(Player p) {
+    final key = 'yildizYolu:${game.levelIndex}';
+    if (game.eventSeen(key) || !p.onGround) return;
+    final dx = position.x - p.center.x;
+    if (dx < 2 * kTile || dx > 9 * kTile) return;
+    if (p.center.y < position.y + 2 * kTile) return; // zaten yukarıda
+    final stones = game.world.children.whereType<StarStone>().toList();
+    if (stones.isEmpty) return;
+    var x = 0.0;
+    for (final s in stones) {
+      x += s.position.x;
+    }
+    x /= stones.length;
+    final at = Vector2(math.min(x, position.x + 6 * kTile), position.y - kTile);
+    if (!game.focus(at, hold: 2.4)) return;
+    game.markEvent(key);
+    for (final s in stones) {
+      s._show = 3.6;
+    }
   }
 
   @override
   void render(Canvas canvas) {
     final stone = Paint()..color = const Color(0xFF2A2430);
     canvas.drawRect(const Rect.fromLTWH(-12, -10, 24, 10), stone);
+    // Yaklaşınca taş çağırır: kenarında ılık, yavaş nabız atan bir halka.
+    if ((_near || _show > 0) && !correct) {
+      final pulse = 0.5 + 0.5 * math.sin(_t * 3);
+      canvas.drawCircle(
+        const Offset(0, -24),
+        17 + 2 * pulse,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.6
+          ..color = kWarmLight.withValues(alpha: 0.35 + 0.35 * pulse),
+      );
+    }
     canvas.save();
     canvas.translate(0, -24);
     canvas.rotate(_turn * math.pi);
     canvas.drawCircle(Offset.zero, 13, stone);
+    // Tutamaklar: çarkın kenarında iki çıkıntı, çevrilen bir taş olduğu
+    // görünsün.
+    final knob = Paint()..color = const Color(0xFF4A4256);
+    for (final a in [0.0, math.pi]) {
+      canvas.drawCircle(Offset(math.cos(a) * 14, math.sin(a) * 14), 3.2, knob);
+    }
     final ok = correct;
     final lit = Paint()
       ..color = ok ? const Color(0xFFFFE0A0) : const Color(0xFFC8C0D8);
@@ -182,196 +247,132 @@ class HoroscopeRelief extends PositionComponent
   @override
   void update(double dt) => _t += dt;
 
-  /// Kalınlığı incelen parça (bacak, kuyruk).
-  static Path _seg(Offset a, Offset b, double w0, double w1) {
-    final d = b - a;
-    final n = Offset(-d.dy, d.dx) / (d.distance == 0 ? 1 : d.distance);
-    return Path()
-      ..moveTo((a + n * w0 / 2).dx, (a + n * w0 / 2).dy)
-      ..lineTo((b + n * w1 / 2).dx, (b + n * w1 / 2).dy)
-      ..lineTo((b - n * w1 / 2).dx, (b - n * w1 / 2).dy)
-      ..lineTo((a - n * w0 / 2).dx, (a - n * w0 / 2).dy)
-      ..close()
-      ..addOval(Rect.fromCircle(center: a, radius: w0 / 2))
-      ..addOval(Rect.fromCircle(center: b, radius: w1 / 2));
-  }
+  /// Aslanın kabartmadaki yeri: ayakların ortası ve ölçeği (siluet
+  /// MythShapes.lion, boyu 100 birim).
+  static const Offset _lionAt = Offset(98, -9);
+  static const double _lionK = 0.86;
 
-  /// Kalçadan çıkıp S çizerek yukarı kalkan kuyruk: eğri boyunca incelen
-  /// kısa parçalar (ekler görünmez).
-  static Path _tail() {
-    Offset at(double u) {
-      const p0 = Offset(38, -54);
-      const p1 = Offset(14, -54);
-      const p2 = Offset(12, -82);
-      const p3 = Offset(24, -86);
-      final v = 1 - u;
-      return p0 * (v * v * v) +
-          p1 * (3 * v * v * u) +
-          p2 * (3 * v * u * u) +
-          p3 * (u * u * u);
-    }
+  /// Aslan: PhyloPic'teki kamu malı yürüyen aslan silueti (Margot Michaud);
+  /// sağa yürür, Antiochos'un Aslan Horoskobu'ndaki gibi (Nemrut, Batı
+  /// Terası). Kabartmanın yerel biriminde.
+  static final Path _lion = MythShapes.lion.transform(
+    Float64List.fromList([
+      _lionK, 0, 0, 0, //
+      0, _lionK, 0, 0, //
+      0, 0, 1, 0, //
+      _lionAt.dx, _lionAt.dy, 0, 1,
+    ]),
+  );
 
-    var out = Path();
-    const n = 16;
-    for (var i = 0; i < n; i++) {
-      final w0 = 4.2 - 2.0 * i / n;
-      final w1 = 4.2 - 2.0 * (i + 1) / n;
-      out = Path.combine(
-        PathOperation.union,
-        out,
-        _seg(at(i / n), at((i + 1) / n), w0, w1),
-      );
+  /// Gövdeye serpilmiş 19 yıldız: siluetin içinde, kenardan uzak noktalar
+  /// (kabartmadaki gibi gövde, yele ve bacaklarda).
+  static final List<Offset> _stars = () {
+    final b = _lion.getBounds();
+    bool deep(Offset p) => [
+      Offset.zero,
+      const Offset(4, 0),
+      const Offset(-4, 0),
+      const Offset(0, 4),
+      const Offset(0, -4),
+    ].every((d) => _lion.contains(p + d));
+    final out = <Offset>[];
+    // Seyrek, düzenli olmayan bir ızgara (her sırada yarım adım kayar).
+    for (var row = 0; row < 9; row++) {
+      for (var col = 0; col < 14; col++) {
+        final p = Offset(
+          b.left + (col + (row.isOdd ? 0.5 : 0) + 0.5) * b.width / 14,
+          b.top + (row + 0.5) * b.height / 9,
+        );
+        if (deep(p) && (col * 7 + row * 3) % 4 != 0) out.add(p);
+      }
     }
-    return out;
-  }
-
-  /// Aslan: sağa yürür; yeleli baş, kıvrılıp kalkan püsküllü kuyruk.
-  /// Antiochos'un Aslan Horoskobu'ndaki gibi (Nemrut, Batı Terası).
-  static final Path _lion = () {
-    final parts = <Path>[
-      // Gövde: kalça, sırt, göğüs, karın.
-      Path()
-        ..moveTo(38, -50)
-        ..cubicTo(36, -62, 46, -67, 60, -64)
-        ..cubicTo(82, -61, 104, -63, 122, -69)
-        ..cubicTo(132, -60, 134, -46, 128, -38)
-        ..cubicTo(110, -33, 72, -34, 52, -37)
-        ..cubicTo(42, -39, 38, -44, 38, -50)
-        ..close(),
-      // Arka bacaklar: but, diz, incik, pençe.
-      _seg(const Offset(50, -50), const Offset(42, -30), 15, 8),
-      _seg(const Offset(42, -30), const Offset(46, -10), 8, 6),
-      _seg(const Offset(62, -44), const Offset(60, -26), 11, 7),
-      _seg(const Offset(60, -26), const Offset(64, -10), 7, 6),
-      // Ön bacaklar.
-      _seg(const Offset(118, -44), const Offset(116, -10), 11, 7),
-      _seg(const Offset(128, -44), const Offset(132, -10), 10, 7),
-      // Kuyruk: kalçadan kıvrılıp yukarı kalkar (tek parça, incelen).
-      _tail(),
-      Path()..addOval(
-        Rect.fromCenter(center: const Offset(24, -87), width: 7, height: 9),
-      ),
-      // Baş ve burun.
-      Path()
-        ..addOval(Rect.fromCircle(center: const Offset(146, -66), radius: 10)),
-      Path()..addOval(
-        Rect.fromCenter(center: const Offset(157, -61), width: 13, height: 9),
-      ),
-      Path()
-        ..addOval(Rect.fromCircle(center: const Offset(141, -77), radius: 3)),
-    ];
-    // Pençeler.
-    for (final x in [47.0, 65.0, 117.0, 133.0]) {
-      parts.add(
-        Path()..addOval(
-          Rect.fromCenter(center: Offset(x + 2, -9), width: 10, height: 5),
-        ),
-      );
-    }
-    // Yele: başın ve boynun çevresinde dalgalı, sivri uçlu.
-    final mane = Path();
-    for (var i = 0; i <= 24; i++) {
-      final a = math.pi * 0.35 + i / 24 * math.pi * 1.45;
-      final r = i.isEven ? 21.0 : 15.5;
-      final pt = Offset(140 + math.cos(a) * r, -62 - math.sin(a) * r * 0.95);
-      i == 0 ? mane.moveTo(pt.dx, pt.dy) : mane.lineTo(pt.dx, pt.dy);
-    }
-    parts.add(mane..close());
-    var out = parts.first;
-    for (final p in parts.skip(1)) {
-      out = Path.combine(PathOperation.union, out, p);
-    }
-    return out;
+    // 19 tane: eşit aralıkla seçilir.
+    if (out.length <= 19) return out;
+    return [for (var k = 0; k < 19; k++) out[k * out.length ~/ 19]];
   }();
 
-  /// Aslanın üstündeki 19 yıldız (kabartmadaki gibi gövdeye ve yeleye
-  /// serpilmiş).
-  static const _stars = [
-    Offset(46, -54),
-    Offset(58, -58),
-    Offset(70, -52),
-    Offset(84, -56),
-    Offset(98, -50),
-    Offset(110, -58),
-    Offset(120, -50),
-    Offset(76, -42),
-    Offset(92, -40),
-    Offset(106, -42),
-    Offset(56, -44),
-    Offset(130, -66),
-    Offset(136, -78),
-    Offset(148, -80),
-    Offset(124, -60),
-    Offset(44, -24),
-    Offset(118, -24),
-    Offset(26, -72),
-    Offset(64, -24),
-  ];
+  /// Hilal: boynun altında, göğüste (siluetin içinde en sağdaki derin nokta
+  /// göğüs hizasında).
+  static final Offset _moon = () {
+    final b = _lion.getBounds();
+    final y = b.top + b.height * 0.55;
+    for (var x = b.right - 6; x > b.left; x -= 1) {
+      final p = Offset(x - 14, y);
+      if (_lion.contains(p) &&
+          _lion.contains(p + const Offset(8, 0)) &&
+          _lion.contains(p + const Offset(-8, 0))) {
+        return p;
+      }
+    }
+    return b.center;
+  }();
 
   @override
   void render(Canvas canvas) {
     const w = 6 * kTile;
     const h = 4 * kTile;
-    // Taş levha: ince bir çerçeve, içi oyulmuş.
+    // Kum taşı levha (Nemrut'un aslan başı çizimiyle aynı taş): kalın
+    // çerçeve, içi oyulmuş; aslan ondan kabarık ve açık.
     canvas.drawRect(
       const Rect.fromLTWH(0, -h, w, h),
-      Paint()..color = const Color(0xFF1C1822),
+      Paint()..color = const Color(0xFF6E5A46),
     );
     canvas.drawRect(
       const Rect.fromLTWH(5, -h + 5, w - 10, h - 10),
-      Paint()..color = const Color(0xFF29232F),
+      Paint()
+        ..shader = Gradient.linear(const Offset(0, -h), const Offset(0, 0), [
+          const Color(0xFF8C7458),
+          const Color(0xFF6A5642),
+        ]),
     );
     canvas.drawRect(
       const Rect.fromLTWH(5, -h + 5, w - 10, h - 10),
       Paint()
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 1
-        ..color = const Color(0xFF0E0B12),
+        ..strokeWidth = 1.2
+        ..color = const Color(0xFF3E3024),
     );
     // Kabartma: alt-sağa düşen gölge, gövde, üst-sola vuran ışık.
     canvas.save();
-    canvas.translate(2, 2);
-    canvas.drawPath(_lion, Paint()..color = const Color(0xFF110E15));
+    canvas.translate(2.4, 2.4);
+    canvas.drawPath(_lion, Paint()..color = const Color(0xFF3A2C20));
     canvas.restore();
     canvas.drawPath(
       _lion,
       Paint()
-        ..shader = Gradient.linear(const Offset(0, -90), const Offset(0, -8), [
-          const Color(0xFF5A5068),
-          const Color(0xFF3C3448),
+        ..shader = Gradient.linear(const Offset(0, -98), const Offset(0, -8), [
+          const Color(0xFFE2C79C),
+          const Color(0xFFAE906A),
         ]),
     );
     canvas.save();
     canvas.clipPath(_lion);
-    canvas.translate(1.2, 1.2);
+    canvas.translate(1.4, 1.4);
     canvas.drawPath(
       _lion,
       Paint()
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 2.4
-        ..color = const Color(0xFF8A80A0).withValues(alpha: 0.35),
+        ..strokeWidth = 2.6
+        ..color = const Color(0xFFFFF2D8).withValues(alpha: 0.45),
     );
     canvas.restore();
-    // Göz ve ağız çizgisi.
-    final line = Paint()
-      ..color = const Color(0xFF15111B)
-      ..strokeWidth = 1.1
-      ..strokeCap = StrokeCap.round;
-    canvas.drawCircle(const Offset(150, -68), 1.3, line);
-    canvas.drawLine(const Offset(156, -58), const Offset(162, -59), line);
-    // Hilal aslanın boynunda, yıldızlar gövdesinde, gezegenler sırtının
-    // üstünde (bulmacanın sırası).
     final glow = 0.55 + 0.25 * math.sin(_t * 1.3);
+    // Gezegenler sırtın üstünde, levhada: ılık parlar (bulmacanın sırası).
     final mark = Paint()
-      ..color = const Color(0xFFE8D8B0).withValues(alpha: glow);
-    _drawSign(canvas, Sign.moon, const Offset(134, -48), 8, mark);
+      ..color = const Color(0xFFFFEFC8).withValues(alpha: 0.6 + 0.3 * glow);
     for (var i = 1; i < horoscope.length; i++) {
-      _drawSign(canvas, horoscope[i], Offset(46.0 + i * 30, -100), 8, mark);
+      final at = Offset(46.0 + i * 30, -110);
+      glowDot(canvas, at, 12, kWarmLight, 0.25 * glow);
+      _drawSign(canvas, horoscope[i], at, 8, mark);
     }
-    final star = Paint()
-      ..color = const Color(0xFFE8D8B0).withValues(alpha: glow * 0.85);
+    // Hilal boynun altında, yıldızlar gövdede: taşa oyulmuş, koyu; hilal
+    // bulmacanın ilk işareti olduğu için hafifçe ışır.
+    final carved = Paint()..color = const Color(0xFF5A4030);
+    glowDot(canvas, _moon, 11, kWarmLight, 0.22 * glow);
+    _drawSign(canvas, Sign.moon, _moon, 7, carved);
     for (final p in _stars) {
-      _drawSign(canvas, Sign.star, p, 2.6, star);
+      if ((p - _moon).distance < 11) continue;
+      _drawSign(canvas, Sign.star, p, 2.4, carved);
     }
     // Kenar ve kar.
     canvas.drawRect(
@@ -1231,8 +1232,8 @@ void _drawBoulder(
 
 /// Temas sayısına göre devin çatlakları (yerel koordinatta, oranla).
 /// Devin alanındaki ateşböcekleri: alınan sürünün yerine birkaç saniye
-/// sonra yenisi çıkar; devden en uzak boş yerde (ateşböceği bitince oyuncu
-/// devden kaçıp yenisini toplar). Dev devrilince durur.
+/// sonra yenisi çıkar, oyuncunun bulunduğu yanda (devi geçmeden varılacak
+/// yerde); elinde hiç kalmadıysa beklemeden. Dev devrilince durur.
 class GiantFireflies extends Component with HasGameReference<GolgeGame> {
   GiantFireflies(this.giant);
 
@@ -1276,27 +1277,42 @@ class GiantFireflies extends Component with HasGameReference<GolgeGame> {
       return;
     }
     _cool -= dt;
+    final p = game.player;
+    final gx = giant.position.x + giant.size.x / 2;
+    // Oyuncunun tarafı: devin öbür yanındaki sürü ona yaramaz (yanına
+    // ancak devi geçerek varılır). Eskiden yeni sürü hep devden en uzak
+    // yere, çoğu kez öbür yana konuyordu; oyuncu ateşböceksiz kalıyordu.
+    final side = p == null ? 0 : (p.center.x < gx ? -1 : 1);
+    bool mine(Vector2 spot) =>
+        side == 0 || ((spot.x + kTile / 2 - gx).sign == side);
     var count = 0;
+    var near = 0;
     for (var i = 0; i < _spots.length; i++) {
       final s = _swarms[i];
       if (s != null && s.isMounted && s.strength >= 1) {
         count++;
+        if (mine(_spots[i])) near++;
         _emptyFor[i] = 0;
       } else {
         _emptyFor[i] = (_emptyFor[i] ?? 0) + dt;
       }
     }
-    if (count >= alive || _cool > 0 || _spots.isEmpty) return;
-    final p = game.player;
-    final gx = giant.position.x + giant.size.x / 2;
+    // Oyuncunun yanında en az bir sürü olsun; elinde hiç kalmadıysa beklemeden.
+    final starving = near == 0 && game.fireflies == 0;
+    if (_spots.isEmpty || (near > 0 && count >= alive)) return;
+    if (_cool > 0 && !starving) return;
     int? best;
-    var bestD = -1.0;
+    var bestD = double.infinity;
     for (var i = 0; i < _spots.length; i++) {
-      if ((_emptyFor[i] ?? 0) < regrow) continue;
+      final s = _swarms[i];
+      if (s != null && s.isMounted && s.strength >= 1) continue;
+      if (!starving && (_emptyFor[i] ?? 0) < regrow) continue;
+      if (!mine(_spots[i])) continue;
       final at = _spots[i] + Vector2(kTile / 2, kTile / 2);
-      if (p != null && (p.center - at).length < 3 * kTile) continue;
-      final d = (at.x - gx).abs();
-      if (d > bestD) {
+      final d = p == null ? 0.0 : (p.center - at).length;
+      // Oyuncunun dibinde belirmesin (toplaması bir adım sürsün).
+      if (d < 3 * kTile) continue;
+      if (d < bestD) {
         bestD = d;
         best = i;
       }

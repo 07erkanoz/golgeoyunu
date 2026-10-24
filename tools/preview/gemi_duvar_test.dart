@@ -48,11 +48,22 @@ void main() {
           .writeAsBytesSync(png!.buffer.asUint8List());
     }
 
+    final at = (Platform.environment['YER'] ?? '30,25').split(',').map(double.parse).toList();
     p.position.setFrom(
-      Level.standOn(Vector2(30 * kTile.toDouble(), 25 * kTile.toDouble()),
+      Level.standOn(Vector2(at[0] * kTile, at[1] * kTile),
           Player.w, Player.h),
     );
     run(4);
+    if (Platform.environment['ZIPLA'] != null) {
+      // Zıplarken saniyede 20 kare: duvar dünyayla birlikte mi kayıyor.
+      game.controls.keyboard.jump = true;
+      for (var i = 0; i < 16; i++) {
+        run(0.05);
+        if (i == 3) game.controls.keyboard.jump = false;
+        await shot();
+      }
+      return;
+    }
     await shot(); // 0: duruyor
     game.controls.keyboard.jump = true;
     run(0.1);

@@ -275,6 +275,9 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
           _light(canvas, g.glowCenter, g.glowRadius, 0.75);
         case GolgehaneSahne s when s.lit:
           _light(canvas, s.lampAt, 190, 0.9);
+        // Yüzen tahta karanlıkta da seçilsin: suyun parıltısı onu yalar.
+        case FloatPlank f:
+          _light(canvas, f.center.toOffset(), 58, 0.4);
         case GolgehaneKapi k:
           _light(canvas, k.glowCenter, 46, 0.45);
         case SunBeam b:

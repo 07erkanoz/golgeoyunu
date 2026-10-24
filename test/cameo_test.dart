@@ -46,15 +46,14 @@ void main() {
       expect(game.mythsSeen, contains('suIyesi'));
       final face = game.world.children.whereType<WaterFace>().single;
       expect(face.pointsAt?.fill, isFalse, reason: 'önce suyu boşaltan vana');
-      // Vana açılınca su çekilir; Su İyesi suyla iner, kuyunun dibindeki
-      // dolduran vanayı gösterir (boşaltılmış vanayı değil).
+      // Vana açılınca görevi biter: suya çekilip kaybolur (kullanıcı
+      // isteği; eskiden su inerken suyun üstünde bekliyordu).
       final drain = game.world.children.whereType<Valve>().firstWhere(
         (v) => !v.fill,
       );
       drain.use();
-      run(game, 6);
-      expect(face.isMounted, isTrue, reason: 'su inerken suya çekilmez');
-      expect(face.pointsAt?.fill, isTrue, reason: 'sonra dolduran vana');
+      run(game, 3);
+      expect(face.isMounted, isFalse, reason: 'vana açılınca kaybolur');
     },
   );
 

@@ -312,7 +312,10 @@ f.fill(59,10,61,10,'u')
 # 3) Gözcü'nün gölge köprüsü; ay ışığı aynayla gözüne çevrilir
 f.fill(62,10,70,12,'#'); f.put(63,9,'K'); f.put(64,9,'3'); f.put(66,9,'B')
 f.fill(71,10,84,10,'n')
-f.put(75,2,'j'); f.put(75,8,'m'); f.put(72,8,'#')     # kristal: sola kaçan ışığı tutar
+# Ayna köprüden önceki sağlam zeminin üstünde: gölge köprüsünde ancak
+# çömelip ışık saklanarak durulur, ayağa kalkıp aynayı çeviren köprüden
+# düşüyordu. Ayna çevrilince ay ışığı köprünün üstünden Gözcü'nün gözüne.
+f.put(70,2,'j'); f.put(70,8,'m'); f.put(67,8,'#')     # kristal: sola kaçan ışığı tutar
 f.fill(85,10,93,23,'#'); f.put(89,9,'g')
 # Asılı kristal: aynanın ışığı bu Gözcü'de durur; ileride, tüylerin
 # Gözcülerini kör etmesin.
@@ -567,6 +570,7 @@ d.fill(76,F-5,79,F-5,'#'); d.fill(75,F-5,75,F-1,'|')     # sol raf ve sarmaşık
 d.fill(100,F-5,103,F-5,'#'); d.fill(104,F-5,104,F-1,'|')  # sağ raf ve sarmaşık
 d.put(74,F-1,'5')
 d.put(78,F-6,'F'); d.put(101,F-6,'F'); d.put(112,F-1,'F')
+d.put(70,F-1,'F')       # sol yerde: devin bu yanında ikinci sürü yeri (raf dibindeyken de dolsun)
 d.put(82,F-1,'`')
 d.fill(125,2,125,F-7,'#'); d.fill(125,F-6,125,F-1,'H')
 # 4) Güneşin doğduğu yer: ayin, Kandilciler, ışık

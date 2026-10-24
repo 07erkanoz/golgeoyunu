@@ -569,20 +569,42 @@ class FloatPlank extends Deck {
 
   @override
   void render(Canvas canvas) {
-    final wood = Paint()..color = const Color(0xFF1C110B);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromLTWH(0, 0, size.x, 9),
-        const Radius.circular(2),
-      ),
-      wood,
+    // Karanlık suda seçilsin: açık kahve tahta, ışık alan üst kenar, iki
+    // kalas arası derz ve ip bağları; çevresinde suyun halkaları. (Eskiden
+    // neredeyse siyahtı, üstüne çıkılacağı anlaşılmıyordu.)
+    final w = size.x;
+    final ripple = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1
+      ..color = const Color(0xFFE8C08A)
+          .withValues(alpha: 0.25 + 0.1 * math.sin(_t * 2));
+    final spread = 4 + 3 * (0.5 + 0.5 * math.sin(_t * 1.3));
+    canvas.drawOval(Rect.fromLTRB(-spread, 6, w + spread, 13), ripple);
+    final body = RRect.fromRectAndRadius(
+      Rect.fromLTWH(0, 0, w, 9),
+      const Radius.circular(2),
     );
+    canvas.drawRRect(body, Paint()..color = const Color(0xFF7A4A28));
+    canvas.drawRect(
+      Rect.fromLTWH(0, 5, w, 4),
+      Paint()..color = const Color(0xFF4A2A16),
+    );
+    // Ortadaki derz ve ip bağları.
+    final dark = Paint()
+      ..color = const Color(0xFF2A160C)
+      ..strokeWidth = 1.2;
+    canvas.drawLine(Offset(w / 2, 1), Offset(w / 2, 8), dark);
+    for (final x in [w * 0.22, w * 0.78]) {
+      canvas.drawLine(Offset(x - 2, 0), Offset(x - 2, 9), dark);
+      canvas.drawLine(Offset(x + 1, 0), Offset(x + 1, 9), dark);
+    }
+    // Işık alan üst kenar.
     canvas.drawLine(
-      const Offset(2, 1),
-      Offset(size.x - 2, 1),
+      const Offset(1.5, 0.8),
+      Offset(w - 1.5, 0.8),
       Paint()
-        ..color = const Color(0xFFD08A5A).withValues(alpha: 0.3)
-        ..strokeWidth = 1,
+        ..color = const Color(0xFFE8B880).withValues(alpha: 0.9)
+        ..strokeWidth = 1.4,
     );
   }
 }
