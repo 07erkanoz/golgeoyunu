@@ -34,13 +34,17 @@ mixin Usable on PositionComponent {
 /// yalnızca karanlıkta katıdır: üstünden ancak çömelip kavanozun ışığını
 /// saklayarak geçilir.
 class PhasePlank extends Deck {
-  PhasePlank(Vector2 cell, int tiles, {required this.shade})
+  PhasePlank(Vector2 cell, int tiles, {required this.shade, this.cold = false})
     : super(
         position: Vector2(cell.x, cell.y),
         size: Vector2(tiles * kTile, 10),
       );
 
   final bool shade;
+
+  /// Kandilci yolu: yalnız Kandilcinin soğuk feneriyle belirir (Sâye'nin
+  /// sıcak ışığı göstermez). Kandilciler ışığı kendi yollarına saklamış.
+  final bool cold;
   bool _on = false;
   double _show = 0;
   double _t = math.Random().nextDouble() * 5;
@@ -53,7 +57,8 @@ class PhasePlank extends Deck {
     _t += dt;
     var lit = false;
     for (var x = 6.0; x < size.x; x += kTile) {
-      if (game.litAt(position + Vector2(x, 4))) {
+      final at = position + Vector2(x, 4);
+      if (cold ? game.coldLitAt(at) : game.litAt(at)) {
         lit = true;
         break;
       }
@@ -105,8 +110,11 @@ class PhasePlank extends Deck {
       }
     } else {
       // Işık tahtası: sönükken yalnızca noktalı bir iz, ışıkta parlar.
+      // Kandilci yolu aynı biçimde, soğuk camgöbeği.
+      if (cold) canvas.saveLayer(null, Paint()..colorFilter = _coldTint);
       if (_show < 0.98) {
-        final dot = Paint()..color = kWarmLight.withValues(alpha: 0.18);
+        final dot = Paint()
+          ..color = kWarmLight.withValues(alpha: cold ? 0.3 : 0.18);
         for (var x = 4.0; x < w; x += 8) {
           canvas.drawCircle(Offset(x, 4), 1.1, dot);
         }
@@ -121,7 +129,8 @@ class PhasePlank extends Deck {
         canvas.drawRRect(
           body.inflate(5),
           Paint()
-            ..color = const Color(0xFFFFD08A).withValues(alpha: 0.28 * _show)
+            ..color = const Color(0xFFFFD08A)
+                .withValues(alpha: (cold ? 0.5 : 0.28) * _show)
             ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6),
         );
         canvas.drawRRect(
@@ -160,8 +169,17 @@ class PhasePlank extends Deck {
           );
         }
       }
+      if (cold) canvas.restore();
     }
   }
+
+  /// Sıcak ışık renklerini fenerin soğuk camgöbeğine çevirir.
+  static const _coldTint = ColorFilter.matrix([
+    0.25, 0.1, 0.0, 0, 0, //
+    0.45, 0.45, 0.1, 0, 0, //
+    0.5, 0.4, 0.25, 0, 0, //
+    0, 0, 0, 1, 0,
+  ]);
 }
 
 // ============================================================ Çürük tahta

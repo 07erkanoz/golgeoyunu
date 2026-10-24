@@ -1551,7 +1551,10 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
 
   void _wallShadow(Canvas canvas) {
     final mood = _mood;
-    if (!jarStyle || !level.def.theme.indoor) return;
+    // Duvara düşen gölge kapalı mekânlarda; gönderilen gölge her yerde.
+    if (!jarStyle || (!level.def.theme.indoor && mood != _ShadowMood.sent)) {
+      return;
+    }
     // Saklanırken gölge yok; ama korku anında gölge kendi başına kalabilir.
     if ((hidden || crouching) && mood == _ShadowMood.follow) return;
     final flicker = 0.85 + 0.15 * math.sin(_anim * 11) * math.sin(_anim * 3.7);

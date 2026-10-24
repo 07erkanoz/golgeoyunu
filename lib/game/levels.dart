@@ -163,7 +163,11 @@ class LevelDef {
     this.legends = const [],
     this.gokboruRun = false,
     this.shadowStones = const [],
+    this.coldRuns = const [],
   });
+
+  /// Kandilci yolu (sütun, satır, uzunluk): soğuk ışık tahtaları.
+  final List<(int, int, int)> coldRuns;
 
   /// Gölge taşları (sütun, satır): üstünde ↑ ile gölge önden gönderilir.
   final List<(int, int)> shadowStones;
@@ -1196,6 +1200,8 @@ const levels = <LevelDef>[
       'The Gate of the Sun',
     ],
     map: kMapGokyolu,
+    // Kandilcilerin gök kampında boşluk: yol fenerle belirir.
+    coldRuns: [(312, 8, 8)],
   ),
   LevelDef(
     title: 'IV · KAF',
@@ -1900,6 +1906,8 @@ const levels = <LevelDef>[
       'Memory · "Why did the sun break, master?" "Someone wanted to hang it up for himself alone, Saye. Light agrees to be shared; it never agrees to be owned."',
     ],
     map: kMapKonya,
+    // Gölge ikinci kez: iki Kandilci ve semâzensiz bir koridor.
+    shadowStones: [(129, 27)],
   ),
   LevelDef(
     title: 'XV · ERLİK\'İN KATI',

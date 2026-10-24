@@ -272,7 +272,14 @@ s.fill(274,8,280,9,'#'); s.put(275,7,'K'); s.put(277,7,'B')
 s.fill(281,8,334,10,'#'); s.fill(283,11,332,11,'#')
 s.put(283,7,'p'); s.put(284,7,'8'); s.put(287,7,'F')
 s.put(292,7,'G'); s.fill(296,7,297,7,'~'); s.put(302,7,'I'); s.put(308,7,'G')
-s.fill(312,7,313,7,'~'); s.put(300,2,'N'); s.put(320,7,'G'); s.fill(316,7,317,7,'~')
+s.put(300,2,'N')
+# Kandilci yolu: kampın ortasında boşluk; üstündeki soğuk ışık tahtaları
+# (bölüm tanımında coldRuns) yalnız Kandilcinin feneriyle belirir. Ateşböceği
+# atılınca Kandilci kenarda ona dalar, feneri yolu gösterir. Sağanak:
+# kanat ıslanır, boşluk süzülerek aşılmaz.
+s.fill(312,8,319,11,'.'); s.put(304,7,'K'); s.put(305,7,'F')
+s.put(310,0,'<'); s.put(321,12,'>')
+s.fill(322,7,323,7,'~')                      # yolun ucu: dinlenme
 s.put(325,7,'B'); s.put(328,7,'K'); s.put(331,7,'E'); s.put(329,7,'B')
 W=336
 lvl3=s.rows()

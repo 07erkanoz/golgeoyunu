@@ -1001,6 +1001,14 @@ class GolgeGame extends FlameGame with KeyboardEvents {
           ShadowStone(Vector2(c * kTile.toDouble(), r * kTile.toDouble())),
         for (final (c, r, n) in level.glowRuns)
           PhasePlank(Vector2(c * kTile, r * kTile.toDouble()), n, shade: false),
+        // Kandilci yolu: yalnız Kandilcinin feneriyle belirir.
+        for (final (c, r, n) in level.def.coldRuns)
+          PhasePlank(
+            Vector2(c * kTile.toDouble(), r * kTile.toDouble()),
+            n,
+            shade: false,
+            cold: true,
+          ),
         // Gölge köprüsü ikişer karelik parçalardan: ışık yalnızca değdiği
         // parçayı siler (tek parça olunca ışığın bir ucu bütün köprüyü
         // siliyordu; iki gözcülü köprü hiç geçilemiyordu).
@@ -1181,6 +1189,24 @@ class GolgeGame extends FlameGame with KeyboardEvents {
   final _lights = <Component>[];
   int _lightsFrame = -1;
   int _frame = 0;
+
+  /// Kandilci yolu yalnız Kandilcinin feneriyle (halesi ve konisi) yanar.
+  bool coldLitAt(Vector2 at) {
+    for (final g in world.children.whereType<Guard>()) {
+      if (g.falling) continue;
+      final lantern = g.lanternWorld;
+      final d = at - lantern;
+      if (d.length2 < 70 * 70 && level.lineOfSight(lantern, at)) return true;
+      final ahead = d.x * g.facing;
+      if (ahead > 0 &&
+          ahead < g.coneRange &&
+          d.y.abs() < ahead * 0.5 + 34 &&
+          level.lineOfSight(lantern, at)) {
+        return true;
+      }
+    }
+    return false;
+  }
 
   bool litAt(Vector2 at) {
     bool reaches(Vector2 from, double radius) {
@@ -2056,6 +2082,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         Valve v when near(v, 4, 3) => 'valve',
         PerdeCord k when near(k, 4, 3) => 'cord',
         ShadowStone k when near(k, 4, 3) => 'shadowStone',
+        PhasePlank k when k.cold && near(k, 5, 4) => 'coldBridge',
         ArkScale s when near(s.lift.a, 6, 4) || near(s.lift.b, 6, 4) => 'scale',
         EyeStone e when near(e, 5, 3) => 'eyeStone',
         Mirror m when near(m, 5, 4) => 'mirror',
