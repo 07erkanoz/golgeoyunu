@@ -14,14 +14,16 @@ import 'package:golge/settings.dart';
 
 void main() {
   setUpAll(() async {
-    final bytes = File(
-      '/usr/share/fonts/noto/NotoSans-Regular.ttf',
-    ).readAsBytesSync();
+    final bytes = File('/usr/share/fonts/noto/NotoSans-Regular.ttf')
+        .readAsBytesSync();
     await (FontLoader(
       'Roboto',
     )..addFont(Future.value(ByteData.view(bytes.buffer)))).load();
   });
-  for (final (label, w, h) in [('masaustu', 1280, 720), ('telefon', 844, 390)]) {
+  for (final (label, w, h) in [
+    ('masaustu', 1280, 720),
+    ('telefon', 844, 390),
+  ]) {
     for (final scale in [1.0, 1.4]) {
       final name = 'seritler_${label}_${(scale * 100).round()}';
       testWithGame<GolgeGame>(name, GolgeGame.new, (game) async {
@@ -53,9 +55,8 @@ void main() {
         game.render(ui.Canvas(rec));
         final img = await rec.endRecording().toImage(w, h);
         final png = await img.toByteData(format: ui.ImageByteFormat.png);
-        File(
-          'build/preview/$name.png',
-        ).writeAsBytesSync(png!.buffer.asUint8List());
+        File('build/preview/$name.png')
+            .writeAsBytesSync(png!.buffer.asUint8List());
       });
     }
   }

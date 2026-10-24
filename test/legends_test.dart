@@ -339,6 +339,57 @@ void main() {
     );
   });
 
+  group('Perde bulmacası öğretir', () {
+    Future<(GiantPerde, Gate)> load(GolgeGame game) async {
+      final p = await place(game, 0, 112, 9);
+      p.hidden = false;
+      final perde = game.world.children.whereType<GiantPerde>().firstWhere(
+        (g) => g.puzzle,
+      );
+      final gate = game.world.children
+          .whereType<Gate>()
+          .where((g) => g.position.x > perde.position.x)
+          .reduce((a, b) => a.position.x < b.position.x ? a : b);
+      for (final g in game.world.children.whereType<Guard>().toList()) {
+        g.removeFromParent();
+      }
+      run(game, 0.2);
+      return (perde, gate);
+    }
+
+    testWithGame<GolgeGame>(
+      'doğru durak hesaplanır; takılınca yardım kademe kademe gelir',
+      GolgeGame.new,
+      (game) async {
+        final (perde, gate) = await load(game);
+        expect(perde.goodStop, 0, reason: 'iki koşul yalnız sol durakta');
+        final cord = game.world.children.whereType<PerdeCord>().first;
+        // Dört çekiş: ipucu simgesi uyanır.
+        for (var i = 0; i < 4; i++) {
+          cord.use();
+          run(game, 0.2);
+        }
+        expect(perde.help, 1);
+        expect(game.narration.hintReady.value, isTrue);
+        // Yedi çekiş: ayak izi ve çağıran ip.
+        for (var i = 0; i < 3; i++) {
+          cord.use();
+          run(game, 0.2);
+        }
+        expect(perde.help, 2);
+        expect(perde.stop == perde.goodStop, perde.beckon == false);
+        // Doğru durağa gelince ip susar.
+        while (perde.stop != perde.goodStop) {
+          cord.use();
+        }
+        run(game, 0.2);
+        expect(perde.beckon, isFalse);
+        // Kapıda iki göz: taşın gözü ışık taşa değince yanar.
+        expect(gate.emblemGlowStone, greaterThanOrEqualTo(0));
+      },
+    );
+  });
+
   group('Gemide terazi', () {
     Future<(ArkScale, Gate)> load(GolgeGame game, int col) async {
       await place(game, 5, col, 22);

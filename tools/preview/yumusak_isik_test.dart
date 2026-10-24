@@ -7,6 +7,7 @@ import 'dart:ui' as ui;
 
 import 'package:flame/components.dart';
 import 'package:flame_test/flame_test.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:golge/game/entities.dart';
 import 'package:golge/game/golge_game.dart';
 import 'package:golge/game/legends.dart';
@@ -14,7 +15,10 @@ import 'package:golge/game/level.dart';
 import 'package:golge/game/palette.dart';
 import 'package:golge/game/player.dart';
 
+import 'yazi_tipi.dart';
+
 void main() {
+  setUpAll(yaziTipiYukle);
   testWithGame<GolgeGame>('yumuşak ışık', GolgeGame.new, (game) async {
     Cartoon.on = true;
     Realism.on = true;
@@ -50,7 +54,13 @@ void main() {
     }
     await game.ready();
     final lever = game.world.children.whereType<Lever>().first;
-    place(Level.standOn(lever.position - Vector2(-kTile * 0.4, 20), Player.w, Player.h));
+    place(
+      Level.standOn(
+        lever.position - Vector2(-kTile * 0.4, 20),
+        Player.w,
+        Player.h,
+      ),
+    );
     run(1.5);
     // ignore: avoid_print
     print('kenar ${p.position} ${p.onGround}');
@@ -61,19 +71,22 @@ void main() {
     final r1 = ui.PictureRecorder();
     game.render(ui.Canvas(r1));
     final i1 = await r1.endRecording().toImage(870, 391);
-    File('build/preview/isik_1b.png').writeAsBytesSync((await i1.toByteData(format: ui.ImageByteFormat.png))!.buffer.asUint8List());
+    File('build/preview/isik_1b.png').writeAsBytesSync(
+      (await i1.toByteData(format: ui.ImageByteFormat.png))!.buffer
+          .asUint8List(),
+    );
     SoftEdge.force = null;
     SoftEdge.on = true;
     // 2: fenerci huzmesi.
     final g = guards.first;
     game.world.add(g);
     await game.ready();
-    place(
-      g.position + Vector2(-g.facing * 2 * kTile, g.size.y - Player.h - 2),
-    );
+    place(g.position + Vector2(-g.facing * 2 * kTile, g.size.y - Player.h - 2));
     run(1.5);
     // ignore: avoid_print
-    print('fenerci ${g.position} oyuncu ${p.position} ${p.onGround} yön ${g.facing}');
+    print(
+      'fenerci ${g.position} oyuncu ${p.position} ${p.onGround} yön ${g.facing}',
+    );
     await shot('2_fenerci');
     SoftEdge.force = false;
     SoftEdge.on = false;
@@ -81,7 +94,10 @@ void main() {
     final rec2 = ui.PictureRecorder();
     game.render(ui.Canvas(rec2));
     final im2 = await rec2.endRecording().toImage(870, 391);
-    File('build/preview/isik_2b.png').writeAsBytesSync((await im2.toByteData(format: ui.ImageByteFormat.png))!.buffer.asUint8List());
+    File('build/preview/isik_2b.png').writeAsBytesSync(
+      (await im2.toByteData(format: ui.ImageByteFormat.png))!.buffer
+          .asUint8List(),
+    );
     SoftEdge.force = null;
     // 3: Medusa gözü açıkken.
     final m = game.world.children.whereType<MedusaHead>().first;

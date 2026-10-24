@@ -13,47 +13,50 @@ import 'package:golge/game/voice.dart';
 
 void main() {
   for (final lang in Lang.values) {
-  test('harita ${lang.name}', () {
-    S.lang = lang;
-    final out = <Map<String, Object?>>[];
-    for (final i in levelOrder) {
-      final def = levels[i];
-      final lv = Level(def);
-      final trees = [for (final c in lv.checkpointCells) (c.x / kTile).round()];
-      final ws = def.whisperTexts;
-      final whispers = <Map<String, Object?>>[];
-      for (final (n, cell) in lv.triggers) {
-        if (n < 0 || n >= ws.length) continue;
-        final col = (cell.x / kTile).round();
-        final near = trees.isEmpty
-            ? null
-            : trees.map((t) => (t - col).abs()).reduce((a, b) => a < b ? a : b);
-        whispers.add({
-          'i': n,
-          'id': voiceId(ws[n]),
-          'col': col,
-          'agac': near,
-          'text': ws[n],
+    test('harita ${lang.name}', () {
+      S.lang = lang;
+      final out = <Map<String, Object?>>[];
+      for (final i in levelOrder) {
+        final def = levels[i];
+        final lv = Level(def);
+        final trees = [
+          for (final c in lv.checkpointCells) (c.x / kTile).round(),
+        ];
+        final ws = def.whisperTexts;
+        final whispers = <Map<String, Object?>>[];
+        for (final (n, cell) in lv.triggers) {
+          if (n < 0 || n >= ws.length) continue;
+          final col = (cell.x / kTile).round();
+          final near = trees.isEmpty
+              ? null
+              : trees
+                    .map((t) => (t - col).abs())
+                    .reduce((a, b) => a < b ? a : b);
+          whispers.add({
+            'i': n,
+            'id': voiceId(ws[n]),
+            'col': col,
+            'agac': near,
+            'text': ws[n],
+          });
+        }
+        whispers.sort((a, b) => (a['col'] as int).compareTo(b['col'] as int));
+        out.add({
+          'bolum': i,
+          'sira': levelOrder.indexOf(i),
+          'ad': def.titleText,
+          'genislik': lv.width,
+          'agaclar': trees,
+          'ozan': def.bardText,
+          'fisiltilar': whispers,
+          'hatiralar': [
+            for (final m in def.memoryTexts) {'id': voiceId(m), 'text': m},
+          ],
         });
       }
-      whispers.sort((a, b) => (a['col'] as int).compareTo(b['col'] as int));
-      out.add({
-        'bolum': i,
-        'sira': levelOrder.indexOf(i),
-        'ad': def.titleText,
-        'genislik': lv.width,
-        'agaclar': trees,
-        'ozan': def.bardText,
-        'fisiltilar': whispers,
-        'hatiralar': [
-          for (final m in def.memoryTexts) {'id': voiceId(m), 'text': m},
-        ],
-      });
-    }
-    Directory('build/ses').createSync(recursive: true);
-    File(
-      'build/ses/harita${lang == Lang.tr ? '' : '_${lang.name}'}.json',
-    ).writeAsStringSync(const JsonEncoder.withIndent(' ').convert(out));
-  });
+      Directory('build/ses').createSync(recursive: true);
+      File('build/ses/harita${lang == Lang.tr ? '' : '_${lang.name}'}.json')
+          .writeAsStringSync(const JsonEncoder.withIndent(' ').convert(out));
+    });
   }
 }

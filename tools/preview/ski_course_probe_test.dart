@@ -9,11 +9,14 @@ import 'package:golge/game/level.dart';
 import 'package:golge/game/player.dart';
 import 'package:golge/game/ski.dart';
 
+import 'yazi_tipi.dart';
+
 const _flips = bool.fromEnvironment('FLIPS');
 const _trace = int.fromEnvironment('TRACE');
 const _onlyD = int.fromEnvironment('D');
 
 void main() {
+  setUpAll(yaziTipiYukle);
   TestWidgetsFlutterBinding.ensureInitialized();
   const lvl = int.fromEnvironment('LVL', defaultValue: 9);
   testWithGame<GolgeGame>('pist', GolgeGame.new, (game) async {

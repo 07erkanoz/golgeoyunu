@@ -98,6 +98,16 @@ void main() {
       t += 1 / 60;
     }
     expect(bridge.active, isTrue, reason: 'fener yolu gösterir');
+    // Fener giderse yol hemen sönmez: kısa bir süre titreyerek uyarır.
+    {
+      final saved = g.facing;
+      g.facing = -g.facing;
+      for (var i = 0; i < 30; i++) {
+        bridge.update(1 / 60);
+      }
+      expect(bridge.active, isTrue, reason: 'yarım saniye sonra hâlâ yol var');
+      g.facing = saved;
+    }
     // Koşup karşıya geç.
     game.controls.keyboard.down = false;
     game.controls.keyboard.right = true;

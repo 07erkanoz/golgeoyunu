@@ -5,16 +5,32 @@ import 'dart:ui' as ui;
 
 import 'package:flame/components.dart';
 import 'package:flame_test/flame_test.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:golge/game/golge_game.dart';
 import 'package:golge/game/level.dart';
 import 'package:golge/game/levels.dart';
 import 'package:golge/game/player.dart';
 
+import 'yazi_tipi.dart';
+
 void main() {
+  setUpAll(yaziTipiYukle);
   for (final (name, li, c, r) in [
     ('kule', 1, 22, 8),
-    ('nemrut', levels.indexWhere((d) => d.map.length == 26 && d.title.contains('NEMRUT')), 300, 10),
-    ('otuken_dal', levels.indexWhere((d) => d.title.contains('ÖTÜKEN')), 633, 17),
+    (
+      'nemrut',
+      levels.indexWhere(
+        (d) => d.map.length == 26 && d.title.contains('NEMRUT'),
+      ),
+      300,
+      10,
+    ),
+    (
+      'otuken_dal',
+      levels.indexWhere((d) => d.title.contains('ÖTÜKEN')),
+      633,
+      17,
+    ),
   ]) {
     testWithGame<GolgeGame>('keşif $name', GolgeGame.new, (game) async {
       game.onGameResize(Vector2(870, 391));

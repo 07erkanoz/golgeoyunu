@@ -6,6 +6,7 @@ import 'dart:ui' as ui;
 
 import 'package:flame/components.dart';
 import 'package:flame_test/flame_test.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:golge/game/golge_game.dart';
 import 'package:golge/game/level.dart';
 import 'package:golge/game/palette.dart';
@@ -13,7 +14,10 @@ import 'package:golge/game/player.dart';
 import 'package:golge/game/puzzles.dart';
 import 'package:golge/game/entities.dart';
 
+import 'yazi_tipi.dart';
+
 void main() {
+  setUpAll(yaziTipiYukle);
   testWithGame<GolgeGame>('kuyu', GolgeGame.new, (game) async {
     Cartoon.on = true;
     Realism.on = true;
@@ -35,10 +39,7 @@ void main() {
       game.update(1 / 60);
     }
     final basin = game.world.children.whereType<WaterBasin>().first;
-    game.world.children
-        .whereType<Valve>()
-        .firstWhere((v) => !v.fill)
-        .use();
+    game.world.children.whereType<Valve>().firstWhere((v) => !v.fill).use();
     var n = 0;
     Future<void> shot() async {
       game.narration.resetScene();
@@ -46,9 +47,8 @@ void main() {
       game.render(ui.Canvas(rec));
       final img = await rec.endRecording().toImage(870, 391);
       final png = await img.toByteData(format: ui.ImageByteFormat.png);
-      File(
-        'build/preview/kuyu_${n++}.png',
-      ).writeAsBytesSync(png!.buffer.asUint8List());
+      File('build/preview/kuyu_${n++}.png')
+          .writeAsBytesSync(png!.buffer.asUint8List());
     }
 
     await shot();

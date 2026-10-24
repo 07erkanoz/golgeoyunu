@@ -15,13 +15,14 @@ import 'package:golge/ui/hint_button.dart';
 
 void main() {
   testWidgets('ipucu simgesi', (tester) async {
-    final bytes = File(
-      '/usr/share/fonts/noto/NotoSans-Regular.ttf',
-    ).readAsBytesSync();
+    final bytes = File('/usr/share/fonts/noto/NotoSans-Regular.ttf')
+        .readAsBytesSync();
     await (FontLoader(
       'Roboto',
     )..addFont(Future.value(ByteData.view(bytes.buffer)))).load();
-    final icons = File('/home/erkanoz/flutter/bin/cache/artifacts/material_fonts/MaterialIcons-Regular.otf').readAsBytesSync();
+    final icons = File(
+      '/home/erkanoz/flutter/bin/cache/artifacts/material_fonts/MaterialIcons-Regular.otf',
+    ).readAsBytesSync();
     await (FontLoader(
       'MaterialIcons',
     )..addFont(Future.value(ByteData.view(icons.buffer)))).load();
@@ -82,9 +83,8 @@ void main() {
             key.currentContext!.findRenderObject()! as RenderRepaintBoundary;
         final img = await b.toImage();
         final png = await img.toByteData(format: ui.ImageByteFormat.png);
-        File(
-          'build/preview/ipucu_${n++}.png',
-        ).writeAsBytesSync(png!.buffer.asUint8List());
+        File('build/preview/ipucu_${n++}.png')
+            .writeAsBytesSync(png!.buffer.asUint8List());
       });
     }
 

@@ -6,6 +6,7 @@ import 'dart:ui' as ui;
 
 import 'package:flame/components.dart';
 import 'package:flame_test/flame_test.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:golge/game/entities.dart';
 import 'package:golge/game/golge_game.dart';
 import 'package:golge/game/level.dart';
@@ -13,7 +14,10 @@ import 'package:golge/game/palette.dart';
 import 'package:golge/game/player.dart';
 import 'package:golge/game/puzzles.dart';
 
+import 'yazi_tipi.dart';
+
 void main() {
+  setUpAll(yaziTipiYukle);
   testWithGame<GolgeGame>('işaret', GolgeGame.new, (game) async {
     Cartoon.on = true;
     Realism.on = true;
@@ -45,7 +49,11 @@ void main() {
     final cord = game.world.children.whereType<PerdeCord>().first;
     // 1: ipe birkaç kare uzakta: ip parlıyor, işaret yok.
     p.position.setFrom(
-      Level.standOn(cord.position - Vector2(-3 * kTile, 20), Player.w, Player.h),
+      Level.standOn(
+        cord.position - Vector2(-3 * kTile, 20),
+        Player.w,
+        Player.h,
+      ),
     );
     run(1.2);
     await shot('1_uzak');

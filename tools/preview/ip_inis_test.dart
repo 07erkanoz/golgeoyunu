@@ -2,10 +2,13 @@
 // göre ilk basılan sütun (Ötüken parkurlarının tasarımı için).
 import 'package:flame/components.dart';
 import 'package:flame_test/flame_test.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:golge/game/golge_game.dart';
 import 'package:golge/game/level.dart';
 import 'package:golge/game/levels.dart';
 import 'package:golge/game/player.dart';
+
+import 'yazi_tipi.dart';
 
 List<String> _map(int rise) {
   const h = 34, f = 24, w = 60;
@@ -29,6 +32,7 @@ List<String> _map(int rise) {
 }
 
 void main() {
+  setUpAll(yaziTipiYukle);
   for (final rise in [0, 1, 2, 3]) {
     for (final eager in [true, false]) {
       for (final rel in [0.2, 0.4, 0.6, 0.8, 1.0]) {
@@ -85,7 +89,9 @@ void main() {
             if (p.isDead) break;
           }
           // ignore: avoid_print
-          print('INIS yükseklik=$rise ${eager ? 'ilk' : 'pompa'} açı=$rel iniş=${land?.toStringAsFixed(1) ?? 'yok'} (ipten ${land == null ? '-' : (land - 11.5).toStringAsFixed(1)})');
+          print(
+            'INIS yükseklik=$rise ${eager ? 'ilk' : 'pompa'} açı=$rel iniş=${land?.toStringAsFixed(1) ?? 'yok'} (ipten ${land == null ? '-' : (land - 11.5).toStringAsFixed(1)})',
+          );
           GolgeGame.debugLevels = null;
         });
       }

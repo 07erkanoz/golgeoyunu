@@ -5,7 +5,10 @@ import 'package:golge/game/golge_game.dart';
 import 'package:golge/game/level.dart';
 import 'package:golge/game/player.dart';
 
+import 'yazi_tipi.dart';
+
 void main() {
+  setUpAll(yaziTipiYukle);
   TestWidgetsFlutterBinding.ensureInitialized();
   testWithGame<GolgeGame>('uçurum', GolgeGame.new, (game) async {
     game.debugLoadLevel(9);

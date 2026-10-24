@@ -6,6 +6,7 @@ import 'dart:ui' as ui;
 
 import 'package:flame/components.dart';
 import 'package:flame_test/flame_test.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:golge/game/entities.dart';
 import 'package:golge/game/golge_game.dart';
 import 'package:golge/game/legends.dart';
@@ -13,7 +14,10 @@ import 'package:golge/game/level.dart';
 import 'package:golge/game/palette.dart';
 import 'package:golge/game/player.dart';
 
+import 'yazi_tipi.dart';
+
 void main() {
+  setUpAll(yaziTipiYukle);
   testWithGame<GolgeGame>('sal ve sütun', GolgeGame.new, (game) async {
     Cartoon.on = true;
     Realism.on = true;

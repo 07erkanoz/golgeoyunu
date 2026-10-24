@@ -9,7 +9,10 @@ import 'package:golge/game/golge_game.dart';
 import 'package:golge/game/level.dart';
 import 'package:golge/game/player.dart';
 
+import 'yazi_tipi.dart';
+
 void main() {
+  setUpAll(yaziTipiYukle);
   TestWidgetsFlutterBinding.ensureInitialized();
   const lvl = int.fromEnvironment('LVL', defaultValue: 9);
   testWithGame<GolgeGame>('insan', GolgeGame.new, (game) async {

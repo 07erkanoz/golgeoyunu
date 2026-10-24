@@ -16,6 +16,8 @@ import 'package:golge/game/levels.dart';
 import 'package:golge/game/nemrut.dart';
 import 'package:golge/game/winter.dart';
 
+import 'yazi_tipi.dart';
+
 const double _dt = 1 / 60;
 const double _limit = 90;
 
@@ -29,6 +31,7 @@ String _ad(Kestirme k) => switch (k) {
 };
 
 void main() {
+  setUpAll(yaziTipiYukle);
   final out = StringBuffer();
   tearDownAll(() {
     Directory('build/preview').createSync(recursive: true);

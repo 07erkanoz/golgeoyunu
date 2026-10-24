@@ -2527,6 +2527,17 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     }
     final focusAt = _focusAt;
     _focusZoom = 1;
+    if (focusAt != null && _focusT > _focusOut) {
+      // Odak sürerken tehlike doğarsa kamera hemen (yumuşakça) Sâye'ye döner:
+      // oyuncu kendini görmeden yakalanmasın.
+      final danger =
+          p.isDead ||
+          threat > 0.3 ||
+          world.children.whereType<Guard>().any(
+            (g) => g.state == GuardState.alert || g.state == GuardState.chase,
+          );
+      if (danger) _focusT = _focusOut;
+    }
     if (focusAt != null && _focusT > 0) {
       _focusT -= dt;
       // Git, bekle, dön: 0 → 1 → 0, yumuşak.

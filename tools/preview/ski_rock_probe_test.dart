@@ -6,7 +6,10 @@ import 'package:golge/game/level.dart';
 import 'package:golge/game/player.dart';
 import 'package:golge/game/ski.dart';
 
+import 'yazi_tipi.dart';
+
 void main() {
+  setUpAll(yaziTipiYukle);
   TestWidgetsFlutterBinding.ensureInitialized();
   const lvl = int.fromEnvironment('LVL', defaultValue: 18);
   testWithGame<GolgeGame>('kaya', GolgeGame.new, (game) async {

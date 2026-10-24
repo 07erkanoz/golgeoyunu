@@ -12,6 +12,8 @@ import 'package:golge/game/levels.dart';
 import 'package:golge/game/palette.dart';
 import 'package:golge/game/player.dart';
 
+import 'yazi_tipi.dart';
+
 List<String> _map({bool yada = false}) {
   const w = 64, h = 30;
   final g = List.generate(h, (_) => List.filled(w, '.'));
@@ -41,6 +43,7 @@ Future<void> _shot(GolgeGame game, String name) async {
 }
 
 void main() {
+  setUpAll(yaziTipiYukle);
   for (final (name, col, row, t, kind) in [
     ('yildiz_1_cark', 8.0, 21, 2.0, 0),
     ('yildiz_2_kazik', 26.0, 13, 5.0, 0),

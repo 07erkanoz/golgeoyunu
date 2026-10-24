@@ -5,12 +5,16 @@ import 'dart:ui' as ui;
 
 import 'package:flame/components.dart';
 import 'package:flame_test/flame_test.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:golge/game/golge_game.dart';
 import 'package:golge/game/level.dart';
 import 'package:golge/game/levels.dart';
 import 'package:golge/game/player.dart';
 
+import 'yazi_tipi.dart';
+
 void main() {
+  setUpAll(yaziTipiYukle);
   for (var li = 0; li < levels.length; li++) {
     for (final (c, r, kind) in levels[li].vistas) {
       testWithGame<GolgeGame>('manzara $kind', GolgeGame.new, (game) async {

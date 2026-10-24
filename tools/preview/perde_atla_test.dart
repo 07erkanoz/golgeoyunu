@@ -13,9 +13,8 @@ import 'package:golge/game/perde.dart';
 
 void main() {
   setUpAll(() async {
-    final bytes = File(
-      '/usr/share/fonts/noto/NotoSans-Regular.ttf',
-    ).readAsBytesSync();
+    final bytes = File('/usr/share/fonts/noto/NotoSans-Regular.ttf')
+        .readAsBytesSync();
     await (FontLoader(
       'Roboto',
     )..addFont(Future.value(ByteData.view(bytes.buffer)))).load();
@@ -38,8 +37,7 @@ void main() {
     game.render(ui.Canvas(rec));
     final img = await rec.endRecording().toImage(870, 391);
     final png = await img.toByteData(format: ui.ImageByteFormat.png);
-    File(
-      'build/preview/perde_atla.png',
-    ).writeAsBytesSync(png!.buffer.asUint8List());
+    File('build/preview/perde_atla.png')
+        .writeAsBytesSync(png!.buffer.asUint8List());
   });
 }

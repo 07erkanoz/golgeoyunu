@@ -5,12 +5,16 @@ import 'dart:ui' as ui;
 
 import 'package:flame/components.dart';
 import 'package:flame_test/flame_test.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:golge/game/golge_game.dart';
 import 'package:golge/game/level.dart';
 import 'package:golge/game/palette.dart';
 import 'package:golge/game/player.dart';
 
+import 'yazi_tipi.dart';
+
 void main() {
+  setUpAll(yaziTipiYukle);
   for (final col in [12, 44, 97]) {
     testWithGame<GolgeGame>('su $col', GolgeGame.new, (game) async {
       // 2000×900 telefon ekranı (yoğunluk ≈ 2.3).
@@ -42,7 +46,8 @@ void main() {
       game.render(ui.Canvas(rec));
       final img = await rec.endRecording().toImage(870, 391);
       final png = await img.toByteData(format: ui.ImageByteFormat.png);
-      File('build/preview/su_$col.png').writeAsBytesSync(png!.buffer.asUint8List());
+      File('build/preview/su_$col.png')
+          .writeAsBytesSync(png!.buffer.asUint8List());
     });
   }
 }

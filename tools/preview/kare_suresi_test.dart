@@ -4,12 +4,16 @@ import 'dart:ui' as ui;
 
 import 'package:flame/components.dart';
 import 'package:flame_test/flame_test.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:golge/game/golge_game.dart';
 import 'package:golge/game/level.dart';
 import 'package:golge/game/levels.dart';
 import 'package:golge/settings.dart';
 
+import 'yazi_tipi.dart';
+
 void main() {
+  setUpAll(yaziTipiYukle);
   for (var li = 0; li < levels.length; li++) {
     if (levels[li].skiSurface != null) continue;
     testWithGame<GolgeGame>('kare $li', GolgeGame.new, (game) async {

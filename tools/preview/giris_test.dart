@@ -6,9 +6,13 @@ import 'dart:ui' as ui;
 
 import 'package:flame/components.dart';
 import 'package:flame_test/flame_test.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:golge/game/golge_game.dart';
 
+import 'yazi_tipi.dart';
+
 void main() {
+  setUpAll(yaziTipiYukle);
   for (final (lv, times) in [
     (0, [0.35, 0.75, 1.15]),
     (3, [0.4, 1.4, 2.6]),
@@ -35,9 +39,8 @@ void main() {
         game.render(ui.Canvas(rec));
         final img = await rec.endRecording().toImage(1280, 720);
         final png = await img.toByteData(format: ui.ImageByteFormat.png);
-        File(
-          'build/preview/giris_${lv}_${n++}.png',
-        ).writeAsBytesSync(png!.buffer.asUint8List());
+        File('build/preview/giris_${lv}_${n++}.png')
+            .writeAsBytesSync(png!.buffer.asUint8List());
       }
     });
   }

@@ -11,6 +11,8 @@ import 'package:golge/game/golge_game.dart';
 import 'package:golge/game/level.dart';
 import 'package:golge/game/player.dart';
 
+import 'yazi_tipi.dart';
+
 Future<void> shot(GolgeGame game, String name) async {
   final rec = ui.PictureRecorder();
   game.render(ui.Canvas(rec));
@@ -26,6 +28,7 @@ void step(GolgeGame game, double seconds) {
 }
 
 void main() {
+  setUpAll(yaziTipiYukle);
   testWithGame<GolgeGame>('oyun içi önizlemeler', GolgeGame.new, (game) async {
     Directory('build/preview').createSync(recursive: true);
     game.onGameResize(Vector2(1280, 720));

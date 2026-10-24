@@ -5,11 +5,15 @@ import 'dart:ui' as ui;
 
 import 'package:flame/components.dart';
 import 'package:flame_test/flame_test.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:golge/game/golge_game.dart';
 import 'package:golge/game/levels.dart';
 import 'package:golge/game/palette.dart';
 
+import 'yazi_tipi.dart';
+
 void main() {
+  setUpAll(yaziTipiYukle);
   for (final li in [2, 3, 4, 5]) {
     testWithGame<GolgeGame>('ilk kare $li', GolgeGame.new, (game) async {
       Realism.on = true;
@@ -43,6 +47,7 @@ void main() {
         costs.add((name, s3.elapsedMicroseconds));
         r.endRecording().dispose();
       }
+
       timeIt('arkaplan', (c) => game.camera.backdrop.renderTree(c));
       for (final ch in game.world.children.toList()) {
         timeIt(ch.runtimeType.toString(), (c) => ch.renderTree(c));
@@ -52,7 +57,9 @@ void main() {
       }
       costs.sort((a, b) => b.$2.compareTo(a.$2));
       // ignore: avoid_print
-      print('PAHALI $li ${costs.take(6).map((e) => '${e.$1} ${(e.$2 / 1000).toStringAsFixed(1)}ms').join(', ')}');
+      print(
+        'PAHALI $li ${costs.take(6).map((e) => '${e.$1} ${(e.$2 / 1000).toStringAsFixed(1)}ms').join(', ')}',
+      );
       final frames = <String>[];
       for (var i = 0; i < 6; i++) {
         final s2 = Stopwatch()..start();
@@ -65,7 +72,9 @@ void main() {
         frames.add('$rec/${s2.elapsedMilliseconds}');
       }
       // ignore: avoid_print
-      print('İLK $li ${levels[li].title.padRight(20)} kurulum ${build}ms  kareler (kayıt/ızgara) ${frames.join(' ')}');
+      print(
+        'İLK $li ${levels[li].title.padRight(20)} kurulum ${build}ms  kareler (kayıt/ızgara) ${frames.join(' ')}',
+      );
     });
   }
 }

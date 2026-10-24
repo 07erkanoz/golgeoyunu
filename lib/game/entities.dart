@@ -160,7 +160,8 @@ class Guard extends PositionComponent
     _life += dt;
     _probe = approach(
       _probe,
-      state == GuardState.pause || state == GuardState.investigate && !distracted
+      state == GuardState.pause ||
+              state == GuardState.investigate && !distracted
           ? 1
           : 0,
       dt,
@@ -1694,6 +1695,10 @@ class Gate extends PositionComponent
   bool emblem = false;
   double emblemGlow = 0;
 
+  /// İkinci koşulun gözü (taştaki göz): iki koşullu bulmacada kapıda iki
+  /// göz levhası olur, her biri kendi koşulu tutunca yanar.
+  double emblemGlowStone = -1;
+
   bool get solid => _lift < _height * 0.75;
 
   @override
@@ -1995,14 +2000,27 @@ class Gate extends PositionComponent
       }
       canvas.drawRect(Rect.fromLTWH(2 + (y % 7), y + 3.6, 3, 4), rust);
     }
-    if (emblem) _eyePlate(canvas, Offset(8, _height * 0.42));
+    if (emblem) {
+      if (emblemGlowStone < 0) {
+        _eyePlate(canvas, Offset(8, _height * 0.42), emblemGlow);
+      } else {
+        // Üstte perdenin gözü, altta taşın gözü.
+        _eyePlate(canvas, Offset(8, _height * 0.32), emblemGlow);
+        _eyePlate(
+          canvas,
+          Offset(8, _height * 0.56),
+          emblemGlowStone,
+          stone: true,
+        );
+      }
+    }
     canvas.restore();
   }
 
   /// Kapının ortasındaki oyma göz: perdedeki gözün eşi. Bulmaca ilerledikçe
   /// kızarır, çözülünce yanar.
-  void _eyePlate(Canvas canvas, Offset c) {
-    final g = emblemGlow.clamp(0.0, 1.0);
+  void _eyePlate(Canvas canvas, Offset c, double glow, {bool stone = false}) {
+    final g = glow.clamp(0.0, 1.0);
     if (g > 0) {
       canvas.drawCircle(
         c,
@@ -2019,7 +2037,9 @@ class Gate extends PositionComponent
         Rect.fromCenter(center: c, width: 24, height: 17),
         const Radius.circular(4),
       ),
-      Paint()..color = const Color(0xFF2A1A12),
+      // Perdenin gözü bakır, taşın gözü taş levhada.
+      Paint()
+        ..color = stone ? const Color(0xFF3A3430) : const Color(0xFF2A1A12),
     );
     canvas.drawRRect(
       RRect.fromRectAndRadius(
@@ -2029,7 +2049,7 @@ class Gate extends PositionComponent
       Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1
-        ..color = const Color(0xFF8A5A30),
+        ..color = stone ? const Color(0xFF8A847C) : const Color(0xFF8A5A30),
     );
     final eye = Path()
       ..moveTo(c.dx - 9, c.dy)

@@ -62,7 +62,11 @@ void main() {
         game.update(1 / 60);
         if (p.isDead) {
           p.position.setFrom(
-            Level.standOn(Vector2(col * kTile, row * kTile), Player.w, Player.h),
+            Level.standOn(
+              Vector2(col * kTile, row * kTile),
+              Player.w,
+              Player.h,
+            ),
           );
         }
       }

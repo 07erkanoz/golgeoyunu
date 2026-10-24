@@ -58,9 +58,8 @@ void main() {
         add(Hints.poem(key), VoiceRole.ozan, 'siir:$key');
       }
       Directory('build/ses').createSync(recursive: true);
-      File('build/ses/satirlar_${lang.name}.json').writeAsStringSync(
-        const JsonEncoder.withIndent(' ').convert(out),
-      );
+      File('build/ses/satirlar_${lang.name}.json')
+          .writeAsStringSync(const JsonEncoder.withIndent(' ').convert(out));
     }
   });
 }

@@ -5,11 +5,15 @@ import 'dart:ui' as ui;
 
 import 'package:flame/components.dart';
 import 'package:flame_test/flame_test.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:golge/game/golge_game.dart';
 import 'package:golge/game/level.dart';
 import 'package:golge/game/player.dart';
 
+import 'yazi_tipi.dart';
+
 void main() {
+  setUpAll(yaziTipiYukle);
   const spec = String.fromEnvironment('SHOTS', defaultValue: '3:2:17');
   testWithGame<GolgeGame>('bölüm önizlemeleri', GolgeGame.new, (game) async {
     Directory('build/preview').createSync(recursive: true);

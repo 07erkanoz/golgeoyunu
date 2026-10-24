@@ -20,7 +20,9 @@ Future<void> _fonts() async {
   ]) {
     final file = File('/usr/share/fonts/noto/$f');
     if (file.existsSync()) {
-      loader.addFont(Future.value(ByteData.view(file.readAsBytesSync().buffer)));
+      loader.addFont(
+        Future.value(ByteData.view(file.readAsBytesSync().buffer)),
+      );
     }
   }
   await loader.load();
@@ -49,9 +51,8 @@ void main() {
               tester.binding.renderViews.first.debugLayer! as OffsetLayer;
           final img = await layer.toImage(Offset.zero & size);
           final png = await img.toByteData(format: ui.ImageByteFormat.png);
-          File(
-            'build/preview/ayarlar_${label}_$name.png',
-          ).writeAsBytesSync(png!.buffer.asUint8List());
+          File('build/preview/ayarlar_${label}_$name.png')
+              .writeAsBytesSync(png!.buffer.asUint8List());
         });
       }
 
@@ -60,12 +61,7 @@ void main() {
       }
       await tester.tap(find.text(S.of('settings')).first);
       await settle();
-      for (final tab in [
-        'tabSound',
-        'tabDisplay',
-        'tabGame',
-        'tabLicenses',
-      ]) {
+      for (final tab in ['tabSound', 'tabDisplay', 'tabGame', 'tabLicenses']) {
         await tester.tap(find.text(S.of(tab)).last);
         await settle();
         await shot(tab);

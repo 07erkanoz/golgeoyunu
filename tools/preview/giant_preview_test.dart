@@ -5,11 +5,14 @@ import 'dart:ui' as ui;
 
 import 'package:flame/components.dart';
 import 'package:flame_test/flame_test.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:golge/game/entities.dart';
 import 'package:golge/game/golge_game.dart';
 import 'package:golge/game/level.dart';
 import 'package:golge/game/nemrut.dart';
 import 'package:golge/game/player.dart';
+
+import 'yazi_tipi.dart';
 
 Future<void> shot(GolgeGame game, String name) async {
   final rec = ui.PictureRecorder();
@@ -21,6 +24,7 @@ Future<void> shot(GolgeGame game, String name) async {
 }
 
 void main() {
+  setUpAll(yaziTipiYukle);
   testWithGame<GolgeGame>('dev', GolgeGame.new, (game) async {
     game.onGameResize(Vector2(1280, 720));
     game.debugLoadLevel(7);

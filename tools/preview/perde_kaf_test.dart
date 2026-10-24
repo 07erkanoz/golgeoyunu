@@ -17,8 +17,14 @@ void main() {
       for (var i = 0; i < lines * 2; i++) {
         final p = 0.25 + i * 0.5;
         final rec = ui.PictureRecorder();
-        PerdePainter.paint(ui.Canvas(rec), const ui.Size(960, 540), scene,
-            p * 5, p, 1);
+        PerdePainter.paint(
+          ui.Canvas(rec),
+          const ui.Size(960, 540),
+          scene,
+          p * 5,
+          p,
+          1,
+        );
         final img = await rec.endRecording().toImage(960, 540);
         final png = await img.toByteData(format: ui.ImageByteFormat.png);
         File('build/preview/pk_${name}_${i.toString().padLeft(2, '0')}.png')

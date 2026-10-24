@@ -6,6 +6,7 @@ import 'dart:ui' as ui;
 
 import 'package:flame/components.dart';
 import 'package:flame_test/flame_test.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:golge/game/entities.dart';
 import 'package:golge/game/golge_game.dart';
 import 'package:golge/game/level.dart';
@@ -13,7 +14,10 @@ import 'package:golge/game/levels.dart';
 import 'package:golge/game/player.dart';
 import 'package:golge/game/shadow_decoy.dart';
 
+import 'yazi_tipi.dart';
+
 void main() {
+  setUpAll(yaziTipiYukle);
   testWithGame<GolgeGame>('gölge gönder', GolgeGame.new, (game) async {
     game.onGameResize(Vector2(870, 391));
     game.debugLoadLevel(levels.indexWhere((d) => d.shadowStones.isNotEmpty));
@@ -46,7 +50,8 @@ void main() {
     run(1.4);
     await shot();
     final g = game.world.children.whereType<Guard>().reduce(
-      (a, b) => (a.center.x - stone.position.x).abs() <
+      (a, b) =>
+          (a.center.x - stone.position.x).abs() <
               (b.center.x - stone.position.x).abs()
           ? a
           : b,

@@ -6,10 +6,14 @@ import 'dart:ui' as ui;
 
 import 'package:flame/components.dart';
 import 'package:flame_test/flame_test.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:golge/game/golge_game.dart';
 import 'package:golge/game/palette.dart';
 
+import 'yazi_tipi.dart';
+
 void main() {
+  setUpAll(yaziTipiYukle);
   for (final lv in [1, 12]) {
     testWithGame<GolgeGame>('okunurluk $lv', GolgeGame.new, (game) async {
       Cartoon.on = true;
@@ -31,7 +35,8 @@ void main() {
       game.render(ui.Canvas(rec));
       final img = await rec.endRecording().toImage(870, 391);
       final png = await img.toByteData(format: ui.ImageByteFormat.png);
-      File('build/preview/oku_$lv.png').writeAsBytesSync(png!.buffer.asUint8List());
+      File('build/preview/oku_$lv.png')
+          .writeAsBytesSync(png!.buffer.asUint8List());
     });
   }
 }

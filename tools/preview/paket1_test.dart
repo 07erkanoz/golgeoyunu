@@ -6,13 +6,17 @@ import 'dart:ui' as ui;
 
 import 'package:flame/components.dart';
 import 'package:flame_test/flame_test.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:golge/game/entities.dart';
 import 'package:golge/game/golge_game.dart';
 import 'package:golge/game/level.dart';
 import 'package:golge/game/palette.dart';
 import 'package:golge/game/player.dart';
 
+import 'yazi_tipi.dart';
+
 void main() {
+  setUpAll(yaziTipiYukle);
   testWithGame<GolgeGame>('paket 1', GolgeGame.new, (game) async {
     Cartoon.on = true;
     Realism.on = true;
@@ -45,7 +49,11 @@ void main() {
     }
 
     // 1-2: yüksekten iniş: toz ve ayak altı ışığı.
-    final land = Level.standOn(Vector2(40 * kTile, 13 * kTile), Player.w, Player.h);
+    final land = Level.standOn(
+      Vector2(40 * kTile, 13 * kTile),
+      Player.w,
+      Player.h,
+    );
     p.position.setFrom(land - Vector2(0, 5 * kTile));
     p.velocity.setZero();
     run(0.2);

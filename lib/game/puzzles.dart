@@ -11,6 +11,7 @@ import 'audio.dart';
 import 'creatures.dart';
 import 'entities.dart';
 import 'golge_game.dart';
+import 'hints.dart';
 import 'level.dart';
 import 'levels.dart';
 import 'mechanics.dart';
@@ -64,10 +65,12 @@ class PhasePlank extends Deck {
       }
     }
     final want = shade ? !lit : lit;
-    // Biraz gecikmeli: ışık kenarında titreyip durmasın.
+    // Biraz gecikmeli: ışık kenarında titreyip durmasın. Kandilci yolu
+    // sönmeden önce daha uzun bekler ve titrer: üstündeki kaçabilsin.
+    _fading = _on && !want;
     if (want != _on) {
       _hold += dt;
-      if (_hold > (want ? 0.08 : 0.2)) {
+      if (_hold > (want ? 0.08 : (cold ? 0.8 : 0.2))) {
         _on = want;
         _hold = 0;
       }
@@ -79,8 +82,18 @@ class PhasePlank extends Deck {
 
   double _hold = 0;
 
+  /// Yanıyor ama ışık gitti: sönmek üzere (Kandilci yolunda titrer).
+  bool _fading = false;
+
   @override
   void render(Canvas canvas) {
+    final shown = _show;
+    if (cold && _fading) _show *= 0.45 + 0.55 * (0.5 + 0.5 * math.sin(_t * 26));
+    _render(canvas);
+    _show = shown;
+  }
+
+  void _render(Canvas canvas) {
     final w = size.x;
     if (shade) {
       // Mürekkep gibi koyu tahta; ışıkta duman olup dağılır.
@@ -1126,6 +1139,7 @@ class GiantPerde extends PositionComponent
   /// Kandili bir durak sola çeker (en soldan sonra yeniden sağa döner).
   void pull() {
     stop = (stop + stops.length - 1) % stops.length;
+    _pulls++;
     GameAudio.instance.play('creak', volume: 0.6);
     GameAudio.instance.play('chain', volume: 0.25);
   }
@@ -1181,12 +1195,78 @@ class GiantPerde extends PositionComponent
     return best;
   }
 
+  // ------------------------------------------- öğretici geri bildirim
+  // Bulmaca iki koşul ister; oyuncu hangisinin tuttuğunu görsün: kapıda iki
+  // göz (üstte perdenin, altta taşın gözü), gölgenin başı perdedeki göze
+  // yaklaştıkça göz ısınır, perdenin kirişinde kandilin üç durağı. Takılan
+  // oyuncuya kademeli yardım: önce ipucu simgesi uyanır, sonra doğru durakta
+  // yerde silik ayak izi belirir, yanlış duraktaysa ip "çek beni" der.
+
+  /// İp kaç kez çekildi; bulmacanın önünde çözülmeden geçen süre.
+  int _pulls = 0;
+  double _stuckT = 0;
+
+  /// Yardım düzeyi: 0 yok, 1 ipucu simgesi, 2 ayak izi ve çağıran ip.
+  int help = 0;
+
+  /// İki koşulun birlikte sağlandığı durak (hesaplanır; yoksa null).
+  int? _goodStop;
+  bool _goodKnown = false;
+  double _stoneGlow = 0;
+  double _footT = 0;
+
+  int? get goodStop {
+    if (_goodKnown) return _goodStop;
+    _goodKnown = true;
+    final stones = game.world.children.whereType<EyeStone>().toList();
+    if (stones.isEmpty) return null;
+    final good = <int>[];
+    for (var i = 0; i < stops.length; i++) {
+      final jar = Vector2(standFor(i), position.y - Player.h * 0.55);
+      final ok = stones.any(
+        (e) =>
+            (e.position - jar).length < 200 * 0.7 * 0.9 &&
+            game.level.lineOfSight(jar, e.position),
+      );
+      if (ok) good.add(i);
+    }
+    _goodStop = good.length == 1 ? good.first : null;
+    return _goodStop;
+  }
+
+  /// Yanlış durakta takılan oyuncuya ip kendini çeker gibi gösterir.
+  bool get beckon =>
+      puzzle && !solved && help >= 2 && goodStop != null && stop != goodStop;
+
+  void _updateHelp(double dt, Player p) {
+    if (solved) return;
+    final near =
+        (p.center.x - (position.x + size.x / 2)).abs() <
+            size.x / 2 + 3 * kTile &&
+        (p.center.y - position.y).abs() < 4 * kTile;
+    if (near) _stuckT += dt;
+    if (help < 1 && (_stuckT > 40 || _pulls >= 4)) {
+      help = 1;
+      game.once(
+        'perdeHelp:${game.levelIndex}',
+        Hints.text('eyeStone'),
+        hint: true,
+      );
+    }
+    if (help < 2 && (_stuckT > 90 || _pulls >= 7)) help = 2;
+  }
+
   void _updatePuzzle(double dt, Player p, bool inFront) {
     final gate = _myGate ??= _targetGate;
+    final lit = game.world.children.whereType<EyeStone>().any((e) => e.lit);
+    _stoneGlow = approach(_stoneGlow, lit || solved ? 1 : 0, dt, 0.2);
     if (gate != null) {
       gate.emblem = true;
-      gate.emblemGlow = solved ? 1 : _markGlow * 0.7;
+      gate.emblemGlow = solved ? 1 : _markGlow;
+      gate.emblemGlowStone = solved ? 1 : _stoneGlow;
     }
+    _updateHelp(dt, p);
+    _footT += dt;
     _lampX = approach(_lampX, stops[stop], dt, 0.35);
     _turnT = math.max(0, _turnT - dt);
     final settled = (_lampX - stops[stop]).abs() < 0.01;
@@ -1198,7 +1278,13 @@ class GiantPerde extends PositionComponent
         !p.crouching &&
         (shadowX(s.$1) - (position.x + size.x * markAt)).abs() < 20;
     _shadowOnMark = on;
-    _markGlow = approach(_markGlow, on || solved ? 1 : 0, dt, 0.2);
+    // Sıcak–soğuk: gölgenin başı göze yaklaştıkça göz ısınır (değince tam).
+    var warm = 0.0;
+    if (s != null && inFront && settled && !p.crouching) {
+      final d = (shadowX(s.$1) - (position.x + size.x * markAt)).abs();
+      warm = (1 - d / 160).clamp(0.0, 1.0) * 0.5;
+    }
+    _markGlow = approach(_markGlow, on || solved ? 1 : warm, dt, 0.2);
     if (solved) return;
     // İlk kez göze değince gölge kendi başına döner (bulmacayı bozmaz).
     final key = 'perdeTurn:${game.levelIndex}';
@@ -1207,7 +1293,6 @@ class GiantPerde extends PositionComponent
       _turnT = 1.3;
       GameAudio.instance.play('breath', volume: 0.45);
     }
-    final lit = game.world.children.whereType<EyeStone>().any((e) => e.lit);
     _hold = on && lit ? _hold + dt : 0;
     if (_hold > 0.6) _solve();
   }
@@ -1240,6 +1325,55 @@ class GiantPerde extends PositionComponent
           g,
         )!.withValues(alpha: 0.85),
     );
+  }
+
+  /// Perdenin üst kirişinde kandilin üç durağı (şu anki yanar); takılan
+  /// oyuncuya doğru durakta yerde silik ayak izi.
+  void _drawStops(Canvas canvas, double w, double h) {
+    // Kiriş ve üç durak halkası: kandil hangisindeyse o yanar; ip çekilince
+    // sola kayar (en soldan sonra yeniden sağa).
+    final rail = Paint()
+      ..color = const Color(0xFF8A5A30)
+      ..strokeWidth = 2.2;
+    canvas.drawLine(Offset(w * 0.08, 8), Offset(w * 0.92, 8), rail);
+    for (var i = 0; i < stops.length; i++) {
+      final c = Offset(w * stops[i], 8);
+      final on = i == stop;
+      if (on) glowDot(canvas, c, 16, kWarmLight, 0.8);
+      final r = on ? 5.5 : 4.5;
+      canvas.drawCircle(
+        c,
+        r,
+        Paint()
+          ..color = on ? const Color(0xFFFFE6B0) : const Color(0xFF3A2414),
+      );
+      canvas.drawCircle(
+        c,
+        r,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.4
+          ..color = const Color(0xFFC08458),
+      );
+    }
+  }
+
+  /// Takılan oyuncuya: doğru durakta, durulacak yerde zeminde silik ayak
+  /// izi (perdenin yırtık kenarının dışında, zeminde; yerel: konum alt kenar).
+  void _drawFootprint(Canvas canvas) {
+    final good = goodStop;
+    if (help < 2 || solved || good == null || stop != good) return;
+    final x = standFor(good) - position.x;
+    final pulse = 0.55 + 0.45 * math.sin(_footT * 3);
+    glowDot(canvas, Offset(x, -4), 30, kWarmLight, 0.7 * pulse);
+    final foot = Paint()
+      ..color = const Color(0xFFFFEAC0).withValues(alpha: 0.9 * pulse);
+    for (final dx in [-6.0, 6.0]) {
+      canvas.drawOval(
+        Rect.fromCenter(center: Offset(x + dx, -2.5), width: 9, height: 4.5),
+        foot,
+      );
+    }
   }
 
   /// Gölge göze değiyor mu (testler ve ipucu için).
@@ -1405,7 +1539,10 @@ class GiantPerde extends PositionComponent
         canvas.restore();
       }
     }
-    if (puzzle) _drawMark(canvas, w);
+    if (puzzle) {
+      _drawMark(canvas, w);
+      _drawStops(canvas, w, h);
+    }
     canvas.restore();
 
     // Yırtıklardan sızan ışık ve üst kalas.
@@ -1434,6 +1571,7 @@ class GiantPerde extends PositionComponent
       );
     }
     canvas.restore();
+    if (puzzle) _drawFootprint(canvas);
   }
 }
 
@@ -1455,6 +1593,23 @@ class PerdeCord extends PositionComponent
   @override
   bool canUse(Vector2 p) =>
       (p - position).x.abs() < 30 && (p - position).y.abs() < 44;
+
+  GiantPerde? _perdeCache;
+
+  /// Bu ipin bağlı olduğu (en yakın) dev perde.
+  GiantPerde? get _perde {
+    if (_perdeCache != null && _perdeCache!.isMounted) return _perdeCache;
+    GiantPerde? best;
+    var bestD = double.infinity;
+    for (final g in game.world.children.whereType<GiantPerde>()) {
+      final d = (g.position - position).length;
+      if (d < bestD) {
+        bestD = d;
+        best = g;
+      }
+    }
+    return _perdeCache = best;
+  }
 
   @override
   void use() {
@@ -1497,7 +1652,9 @@ class PerdeCord extends PositionComponent
       ..color = kInk
       ..strokeWidth = 1.6;
     const top = Offset(0, -6 * kTile);
-    if (!_pulled) {
+    final perde = _perde;
+    final beckon = perde != null && perde.beckon;
+    if (!_pulled || beckon) {
       final pulse = 0.6 + 0.4 * math.sin(_t * 3);
       final c = end + const Offset(0, 5);
       canvas.drawCircle(
@@ -1532,7 +1689,9 @@ class PerdeCord extends PositionComponent
         ..lineTo(end.dx - 3.5, end.dy + 9)
         ..close(),
       Paint()
-        ..color = _pulled ? const Color(0xFF6A3A1E) : const Color(0xFFC0782E),
+        ..color = _pulled && !beckon
+            ? const Color(0xFF6A3A1E)
+            : const Color(0xFFC0782E),
     );
     canvas.drawCircle(end, 2.4, Paint()..color = kInk);
   }

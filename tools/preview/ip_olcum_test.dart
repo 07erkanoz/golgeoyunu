@@ -2,10 +2,13 @@
 // `flutter test tools/preview/ip_olcum_test.dart`
 import 'package:flame/components.dart';
 import 'package:flame_test/flame_test.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:golge/game/golge_game.dart';
 import 'package:golge/game/level.dart';
 import 'package:golge/game/levels.dart';
 import 'package:golge/game/player.dart';
+
+import 'yazi_tipi.dart';
 
 List<String> _map(int gap, int len, int n, {int drop = 0, int land = 3}) {
   const h = 30, f = 22;
@@ -37,6 +40,7 @@ List<String> _map(int gap, int len, int n, {int drop = 0, int land = 3}) {
 }
 
 void main() {
+  setUpAll(yaziTipiYukle);
   for (final gap in [5, 6, 7]) {
     for (final len in [6, 8]) {
       for (final rel in [0.4, 0.6, 0.8, 1.0]) {
