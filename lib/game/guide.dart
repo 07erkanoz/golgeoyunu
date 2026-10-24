@@ -5,6 +5,7 @@ import 'package:flame/components.dart';
 
 import 'audio.dart';
 import 'entities.dart';
+import 'ergenekon.dart';
 import 'golgehane.dart';
 import 'golge_game.dart';
 import 'hints.dart';
@@ -205,6 +206,13 @@ class Guide {
           consider(k, 'cord', k.position + Vector2(0, -kTile / 2));
         case FireflySwarm f when giant && game.fireflies == 0:
           consider(f, 'fireflyPickup', f.position.clone());
+        // Körükler sırayla basılır: yalnız sıradaki körük gösterilir (en
+        // yakın körük yanlış sıra olabilir).
+        case Bellows b:
+          final v = b.vein;
+          if (v != null && !v.lit && (b.order == 0 || b.order == v.next)) {
+            consider(b, 'bellows', b.position + Vector2(0, -kTile / 2));
+          }
         case Mirror m when !used.contains(_keyOf(m)):
           consider(m, 'mirror', m.position.clone());
         case Valve v when !used.contains(_keyOf(v)):
