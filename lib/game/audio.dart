@@ -431,6 +431,14 @@ class GameAudio {
   /// Anlatım konuşuyor ya da sırada satır var mı.
   bool get voiceBusy => _voice != null || _voiceBusy || _voiceQueue.isNotEmpty;
 
+  /// Çalan (ya da yüklenen) satırın yazısı.
+  String? _voiceText;
+
+  /// [text] şu an söyleniyor ya da sırada mı.
+  bool saying(String text) =>
+      ((_voice != null || _voiceBusy) && _voiceText == text) ||
+      _voiceQueue.any((e) => e.$1 == text);
+
   /// Bu satır şimdi seslendirilecek mi (anlatım açık, ses düzeyi sıfır
   /// değil, sesi var): öyleyse yazısı gösterilmez (altyazı açık değilse).
   bool speaks(String text) =>
@@ -483,6 +491,7 @@ class GameAudio {
   /// Anlatımı susturur (perde atlanınca, menüye dönülünce).
   void stopVoice({bool clearQueue = false, String reason = 'durduruldu'}) {
     if (clearQueue) _voiceQueue.clear();
+    _voiceText = null;
     _voiceGen++;
     _voiceEndsAt = 0;
     final h = _voice;
@@ -518,6 +527,7 @@ class GameAudio {
     _voiceQueue.removeWhere((e) => now - e.$2 > _voiceStaleMs);
     if (_voiceQueue.isEmpty) return;
     final (text, _, onStart) = _voiceQueue.removeAt(0);
+    _voiceText = text;
     if (!hasVoice(text)) {
       voiceStatus = '${voiceId(text)}: sesi yok (${_voiceFiles.length} dosya)';
       return;
@@ -540,6 +550,10 @@ class GameAudio {
         volume: Settings.voiceVolume.clamp(0.0, 1.0),
         paused: _paused,
       );
+      // Anlatım korunur: aynı anda çok ses çalınca (ormanda kuşlar, davul,
+      // adımlar) ses motoru en kısık sesleri susturur; anlatım onlardan
+      // biri olmasın.
+      _safe(() => _s.setProtectVoice(h, true), null);
       _voice = h;
       _voiceSrc = src;
       final length = _s.getLength(src).inMilliseconds / 1000;

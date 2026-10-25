@@ -1994,8 +1994,11 @@ class GolgeGame extends FlameGame with KeyboardEvents {
   /// Oyuncunun ağacın yanında kıpırdamadan durduğu süre.
   double _still = 0;
 
-  /// Rivayet anlatan ağaç (uzaklaşınca anlatım kısılır).
+  /// Rivayet anlatan ağaç (uzaklaşınca anlatım kısılır), rivayetin yazısı
+  /// ve başlayalı geçen süre.
   Vector2? _tellingTree;
+  String? _tellingText;
+  double _taleAge = 0;
 
   /// Bu bölümde ağaçlarda anlatılacak rivayetler: (fısıltı sırası, ağaç
   /// sütunu).
@@ -2114,10 +2117,21 @@ class GolgeGame extends FlameGame with KeyboardEvents {
   }
 
   void _updateTreeTales(Player p, double dt) {
+    // Ağacın rivayeti: uzaklaşınca yalnız o rivayet susar. Rivayet bitince
+    // (ya da yerine başka bir söz geçince) ağaç anlatmıyor sayılır; önceden
+    // ağaç "anlatıyor" diye kalıyordu, uzaklaşınca o an çalan başka sözü
+    // (ağacın yanındaki fısıltıyı) kesiyordu.
     final told = _tellingTree;
-    if (told != null && (told.x + kTile / 2 - p.center.x).abs() > 6 * kTile) {
-      GameAudio.instance.stopVoice(clearQueue: true);
-      _tellingTree = null;
+    if (told != null) {
+      _taleAge += dt;
+      final text = _tellingText;
+      final saying = text != null && GameAudio.instance.saying(text);
+      if (!saying && _taleAge > 8) {
+        _tellingTree = null;
+      } else if ((told.x + kTile / 2 - p.center.x).abs() > 6 * kTile) {
+        if (saying) GameAudio.instance.stopVoice(clearQueue: true);
+        _tellingTree = null;
+      }
     }
     Vector2? tree;
     for (final cell in level.checkpointCells) {
@@ -2145,6 +2159,8 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     _whispersShown.add('$levelIndex:tale:$i');
     narration.whisper(level.def.whisperTexts[i]);
     _tellingTree = tree;
+    _tellingText = level.def.whisperTexts[i];
+    _taleAge = 0;
     _still = 0.6;
   }
 
