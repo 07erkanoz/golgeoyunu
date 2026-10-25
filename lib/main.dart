@@ -249,7 +249,9 @@ class _GolgeAppState extends State<GolgeApp> with WindowListener {
                       // geçilir (dokunmatikte de; klavyede Esc).
                       ValueListenableBuilder<bool>(
                         valueListenable: _game.narration.perdeOn,
-                        builder: (context, on, _) => !on
+                        // Son perde (oyunun sonu) atlanmaz.
+                        builder: (context, on, _) =>
+                            !on || !_game.narration.skippable
                             ? const SizedBox.shrink()
                             : Positioned(
                                 right: 10,

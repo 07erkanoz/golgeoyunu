@@ -527,9 +527,12 @@ class GolgeGame extends FlameGame with KeyboardEvents {
   /// Uygulama arka plana alınırken: son kontrol noktası kaydedilir.
   Future<void> saveNow() => _saveProgress();
 
+  /// Oyun bitti (son perde): kayıt yazılmaz, menüde "Devam et" olmaz.
+  bool _ended = false;
+
   Future<void> _saveProgress() {
     final r = _respawn;
-    if (menuMode.value || r == null) return SaveGame.flush();
+    if (menuMode.value || r == null || _ended) return SaveGame.flush();
     return SaveGame.write(
       SaveData(
         level: levelIndex,
@@ -877,6 +880,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     // Yeni bir bölüme geçerken (ölüp yeniden doğmada değil) eski bölümün
     // bekleyen metinleri atılır.
     if (!respawn || index != levelIndex) {
+      _ended = false;
       narration.resetScene();
       // Önceki bölümün rivayet anlatan ağacı unutulur.
       _tellingTree = null;
@@ -1721,9 +1725,13 @@ class GolgeGame extends FlameGame with KeyboardEvents {
           return;
         }
         final ending = epilogueText;
-        // Oyun bitti: tiyatronun son perdesi bundan sonra açılır.
+        // Oyun bitti: tiyatronun son perdesi bundan sonra açılır. Kayıt
+        // silinir: menüde "Devam et" olmaz (bölümler listeden yeniden
+        // oynanabilir).
         Settings.finished = true;
         Settings.save();
+        _ended = true;
+        SaveGame.clear();
         narration.playCinematic(
           [
             ...ending.take(ending.length - 1),
@@ -1731,7 +1739,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
             ending.last,
           ],
           () {
-            // Perde kapanır: ana menüye dönülür, kayıt (son bölüm) korunur.
+            // Perde kapanır: ana menüye dönülür.
             _transitioning = false;
             _enterMenu();
           },

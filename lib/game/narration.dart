@@ -150,8 +150,9 @@ class Narration extends Component with HasGameReference<GolgeGame> {
   }) {
     _lines = lines;
     _out = null;
-    perdeOn.value = lines.isNotEmpty;
+    // Sahne önce: "Atla" düğmesi perdeOn değişince son perdeyi tanısın.
     _scene = lines.isEmpty ? null : scene;
+    perdeOn.value = lines.isNotEmpty;
     _sceneT = 0;
     GameAudio.instance.perde(_scene != null);
     _lineIndex = 0;
@@ -168,9 +169,12 @@ class Narration extends Component with HasGameReference<GolgeGame> {
     }
   }
 
+  /// Perde atlanabilir mi: son perde (oyunun sonu) atlanmaz.
+  bool get skippable => _scene != PerdeScene.epilogue;
+
   /// Sahnenin tamamını atlar (Esc).
   void skipAll() {
-    if (!inCinematic) return;
+    if (!inCinematic || !skippable) return;
     GameAudio.instance.stopVoice(clearQueue: true);
     _lineIndex = _lines.length - 1;
     _lineVoice = 0;
@@ -179,7 +183,7 @@ class Narration extends Component with HasGameReference<GolgeGame> {
 
   /// Satırı kapatmaya başla; zaten kapanıyorsa hemen sonrakine geç.
   void skip() {
-    if (!inCinematic) return;
+    if (!inCinematic || !skippable) return;
     // Satır geçilince sesi de susar.
     GameAudio.instance.stopVoice(clearQueue: true);
     _lineVoice = 0;
