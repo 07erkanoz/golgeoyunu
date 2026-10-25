@@ -2097,8 +2097,10 @@ class GolgeGame extends FlameGame with KeyboardEvents {
       return;
     }
     if (_idleFor < playIdle || _playWait > 0 || !calmMoment) return;
-    // Bir düzeneğin başında (görev satırı varken) düşünen oyuncu bölünmez.
-    if (narration.objective != null) return;
+    // Bir düzeneğin başında düşünen oyuncu bölünmez: yakında yapılacak bir
+    // adım varsa (yol gösteren gölgenin işi) gölge oyun oynamaz. Oyun
+    // yalnız düzeneksiz, sakin yerlerde.
+    if (narration.objective != null || guide.current != null) return;
     // Karagöz perdesi oynarken gölge oyunu araya girmez.
     if (world.children.whereType<KaragozSahne>().any((k) => k.playing)) {
       return;

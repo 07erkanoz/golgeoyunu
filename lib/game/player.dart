@@ -1432,7 +1432,12 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
 
   /// Gölgeyi [stand] noktasına (ayak) gönderir; gölge serbest değilse false.
   bool guideShadow(Vector2 stand) {
-    if (isDead || (_mood != _ShadowMood.follow && _mood != _ShadowMood.lag)) {
+    // Oynayan gölge oyunu bırakıp yol göstermeye gider (yol göstermek
+    // önce gelir).
+    if (isDead ||
+        (_mood != _ShadowMood.follow &&
+            _mood != _ShadowMood.lag &&
+            _mood != _ShadowMood.play)) {
       return false;
     }
     _mood = _ShadowMood.guide;

@@ -105,6 +105,32 @@ void main() {
   );
 
   testWithGame<GolgeGame>(
+    'gölge oyunu düzeneğin yanında başlamaz; oynayan gölge yol göstermeye '
+    'gider',
+    GolgeGame.new,
+    (game) async {
+      final p = await load(game, 0);
+      // Yerebatan'ın ilk kolunun yanında: sıradaki adım var, oyun yok.
+      final lever = game.world.children.whereType<Lever>().first;
+      p.position.setFrom(
+        Level.standOn(
+          lever.position - Vector2(2 * kTile.toDouble(), kTile.toDouble()),
+          Player.w,
+          Player.h,
+        ),
+      );
+      run(game, GolgeGame.playIdle + 3);
+      expect(game.guide.current, isNotNull);
+      expect(p.shadowPlaying, isFalse);
+      // Oynayan gölge yol gösterme çağrısında oyunu bırakır.
+      expect(p.shadowPlay(ShadowAnimal.rabbit), isTrue);
+      expect(p.guideShadow(lever.position.clone()), isTrue);
+      expect(p.shadowPlaying, isFalse);
+      expect(p.shadowGuiding, isTrue);
+    },
+  );
+
+  testWithGame<GolgeGame>(
     'Umay ağacında durunca kuşlar konar, kıpırdayınca uçar',
     GolgeGame.new,
     (game) async {
