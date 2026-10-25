@@ -382,6 +382,9 @@ class Guard extends PositionComponent
         game.closedGateAt(ahead)) {
       return false;
     }
+    // Şafakta güneşe adım atmaz (gölgede kalır).
+    final dawn = game.dawn;
+    if (dawn != null && dawn.sunlit(front)) return false;
     final below = level.cell(c, ((position.y + gh + 1) / kTile).floor());
     // Çürük tahtaya devriyede basmaz; bir şeyin peşine düşünce basar.
     final rotten = below == 'u' && !_calmPatrol;
@@ -498,6 +501,8 @@ class Guard extends PositionComponent
 
   bool _canSee(Player p) {
     if (p.isDead || p.hidden) return false;
+    // Şafakta güneşte duranı göremez: gözü kamaşır.
+    if (game.dawn?.sunlit(p.center.x) ?? false) return false;
     final eye = _lantern;
     final target = p.center;
     final dx = target.x - eye.x;

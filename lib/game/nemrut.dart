@@ -407,11 +407,14 @@ class LooseBoulder extends PositionComponent with HasGameReference<GolgeGame> {
     }
     if (_shake < 0) {
       final p = game.player;
+      // Sâye'nin hızına göre: koşarak gelenin hemen önüne düşer (eskiden
+      // ancak altına gelince sarsılıyordu, hep arkasına düşüyordu).
       final under =
           p != null &&
           !p.isDead &&
-          (p.center.x - position.x).abs() < 30 &&
-          p.center.y > position.y;
+          p.center.y > position.y &&
+          p.center.y - position.y < 10 * kTile &&
+          fallsAhead(p, position, 0.35);
       // Deprem yalnızca oyuncunun yakınındaki kayaları düşürür: yoksa
       // bölümün ilk depreminde haritanın bütün kayaları birden düşüyor,
       // oyuncu oraya vardığında tepede taş kalmıyordu.

@@ -2551,9 +2551,34 @@ class ScaleCrank extends PositionComponent
 // ================================================================= Dağ
 
 /// Saçaktan sarkan buz sarkıtı: altından geçilince titrer, sonra düşer.
+/// Düşen bir şey (buz sarkıtı, gevşek kaya) şimdi çatırdamaya başlarsa
+/// Sâye'nin önüne mi düşer: koşarak gelen Sâye'nin oraya varmasına,
+/// çatırdama ve düşüş süresinden biraz fazlası kalmışsa (önüne düşer, aynı
+/// hızla süren kırık parçalarına varır; duran ya da altında bekleyen
+/// vurulur). Yavaş yürüyende ya da tam altında durandaysa yakından.
+bool fallsAhead(Player p, Vector2 at, double shake) {
+  final dx = at.x - p.center.x;
+  if (dx.abs() < 12) return true;
+  final v = p.velocity.x;
+  if (v.abs() < 30 || dx.sign != v.sign) return false;
+  // Parmak ucunda (ya da iterek) yavaş gelen çatırtıyı yakından duyar:
+  // üstüne düşer (Aziz Hakob'un açmazı: koşan çanı çalar, sinsice yürüyeni
+  // sarkıt bulur).
+  if (v.abs() < Player.runSpeed * 0.6) return dx.abs() < 40;
+  final drop = math.max(0.0, p.position.y - at.y);
+  final fall = math.sqrt(2 * drop / Player.gravity);
+  return dx.abs() < v.abs() * (shake + fall + 0.12);
+}
+
 class FallingIcicle extends PositionComponent with HasGameReference<GolgeGame> {
   FallingIcicle(Vector2 cell)
     : super(position: Vector2(cell.x + kTile / 2, cell.y), priority: 21);
+
+  /// Düşmeden önce çatırdayıp titrediği süre.
+  static const double shakeTime = 0.3;
+
+  /// Testler için: düşüp kırıldı mı.
+  bool get debugFallen => _fallen;
 
   double _shake = -1;
   double _vy = 0;
@@ -2570,21 +2595,22 @@ class FallingIcicle extends PositionComponent with HasGameReference<GolgeGame> {
       return;
     }
     if (_shake < 0) {
-      // Yaklaşan ayak sesiyle çatırdar: altına varmadan düşmeye başlar.
-      final dx = position.x - (p?.center.x ?? 0);
-      final ahead = p == null ? 0.0 : dx * p.velocity.x.sign;
+      // Yaklaşan ayak sesiyle çatırdar. Sâye'nin hızına göre zamanlanır:
+      // koşarak gelenin hemen önüne düşer (eskiden 40 piksel kala
+      // çatırdıyordu; çatırdama ve düşüş sürerken koşan Sâye çoktan
+      // geçmiş oluyordu, buz hep arkasına düşüyordu).
       if (p != null &&
           !p.isDead &&
-          ((ahead > 0 && ahead < 40) || dx.abs() < 10) &&
           p.center.y > position.y &&
-          p.center.y - position.y < 9 * kTile) {
+          p.center.y - position.y < 9 * kTile &&
+          fallsAhead(p, position, shakeTime)) {
         _shake = 0;
         GameAudio.instance.play('creak', volume: 0.4);
       }
       return;
     }
     _shake += dt;
-    if (_shake < 0.3) return;
+    if (_shake < shakeTime) return;
     _vy = math.min(_vy + 1900 * dt, 900);
     position.y += _vy * dt;
     if (p != null &&

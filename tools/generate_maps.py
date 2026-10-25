@@ -581,7 +581,47 @@ d.put(150,F-7,'G'); d.fill(154,F-7,155,F-7,'~'); d.put(160,F-7,';'); d.put(161,F
 d.put(166,F-7,'G'); d.fill(170,F-7,171,F-7,'~'); d.put(176,F-7,'G'); d.put(172,F-15,'N')
 d.put(180,F-7,'6'); d.put(184,F-7,'M'); d.put(190,F-7,'K'); d.put(195,F-7,'B'); d.put(205,F-7,'E')
 d.put(188,F-7,'?')
-lvl8=d.rows()
+# Uzatma (2026-10-25): devin kapısından sonra iki yeni kesit araya girer
+# (devin alanı yerinde kalır; sonrası sağa kayar, GUNDOGUMU_INS).
+def statue(g,x):
+    g.put(x,F-10,'?'); g.fill(x,F-4,x+5,F-1,'#'); g.fill(x-1,F-2,x-1,F-1,'#')
+    g.fill(x+6,F-3,x+6,F-1,'#'); g.put(x+5,F-6,'#'); g.fill(x+1,F-8,x+4,F-8,'#')
+# G1) Şafağın Gölgeleri: güneş doğudan doğar, oturan tanrıların uzun
+# gölgeleri batıya düşer; Kandilciler yalnız gölgede yürür (levels.dart
+# dawn). Güneş yükseldikçe gölgeler kısalır: güneşte bekle, gölgeyi
+# Kandilci uzaktayken geç ya da tanrının omzundan aş.
+g1=G(66,H)
+g1.fill(0,F,65,H-1,'#')
+g1.put(1,F-1,'p'); g1.put(2,F-1,'K'); g1.put(4,F-1,'7'); g1.put(6,F-1,'F')
+for x in (12,32,52): statue(g1,x)
+for x in (10,30,50): g1.put(x,F-1,'G')    # tanrının dibinde: en kısa gölgede de
+g1.put(62,F-1,'B')
+# G2) Düşmüş Başlar: depremle sarsılan, yuvarlanmış dev başların üstünden;
+# yarıklarda çöken taşlar, kartal heykelinin kemerinden ip, kartalın
+# tepesinde kol.
+g2=G(72,H)
+def g2r(c0,c1,top=F): g2.fill(c0,top,c1,H-1,'#')
+g2r(0,7); g2.put(1,F-1,'p'); g2.put(2,F-1,'K'); g2.put(4,F-1,'8')
+g2.put(10,F,'O')                                   # 1. yarık, ortada çöken taş
+g2r(13,21,F-3); g2.fill(14,F-4,20,F-4,'#'); g2.put(17,F-5,';')   # düşmüş baş
+g2.fill(12,F-1,12,F-1,'#')                         # başa basamak
+g2r(22,33); g2.fill(23,F-8,30,F-7,'#')             # sarkan kaya
+for c in (24,27,30): g2.put(c,F-6,'%')
+g2.put(32,F-1,'F')
+g2.fill(35,F-11,41,F-10,'#'); g2.fill(38,F-9,38,F-1,'S')   # kartalın kemeri, ip
+g2r(44,71)
+g2.fill(46,F-2,47,F-1,'#'); g2.fill(48,F-4,50,F-1,'#')    # kartal heykelinin basamakları
+g2.fill(51,F-5,51,F-1,'#'); g2.fill(52,F-6,54,F-1,'#')
+g2.fill(55,F-4,56,F-1,'#'); g2.fill(57,F-2,57,F-1,'#')    # sağdan inen geri çıkabilsin
+g2.put(53,F-9,':'); g2.put(54,F-7,'L')
+g2.put(59,F-1,';'); g2.put(61,F-1,'I')
+g2.fill(66,2,66,F-7,'#'); g2.fill(66,F-6,66,F-1,'H')
+g2.put(68,F-1,'M')
+GUNDOGUMU_INS=[(126, g1.rows()), (126, g2.rows())]
+rows=d.rows()
+for at, ins in reversed(GUNDOGUMU_INS):
+    rows=[r[:at]+x+r[at:] for r,x in zip(rows,ins)]
+lvl8=rows
 
 # ------------------------------------------------------------ IX · KAR YOLU
 W,H=320,26

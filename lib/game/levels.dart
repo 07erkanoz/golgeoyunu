@@ -170,7 +170,12 @@ class LevelDef {
     this.finale,
     this.finaleLocks = const [],
     this.floodSpeed,
+    this.dawn,
   });
+
+  /// Şafak (sütun aralığı): oturan tanrıların gölgeleri güneş yükseldikçe
+  /// kısalır; Kandilciler güneşe çıkmaz, güneşteki Sâye'yi görmez.
+  final (int, int)? dawn;
 
   /// Kafesteki ışıklar (sütun, satır): Kandilcilerin topladığı ışıklar;
   /// açılınca kavanoza girer, en yakın kapıyı açar (Erlik'in kut kafesi).
@@ -1527,12 +1532,16 @@ const levels = <LevelDef>[
       'Tören Yolu',
       'Terasın Kapısı',
       'Doğu Terası',
+      'Şafağın Gölgeleri',
+      'Düşmüş Başlar',
       'Güneşin Doğduğu Yer',
     ],
     areasEn: [
       'The Processional Way',
       'The Terrace Gate',
       'The East Terrace',
+      'The Shadows of Dawn',
+      'The Fallen Heads',
       'Where the Sun Rises',
     ],
     whispers: [
@@ -1542,6 +1551,8 @@ const levels = <LevelDef>[
       'Kandilciler taşa can vermiş: Nemrud gibi göğe başkaldıran bir dev.',
       'Nemrud\'u bir sivrisinek yendi; başına yıllarca tokmak indi. Taş devi de üç küçük ışık yıkar: kulağına üç kez bırak.',
       'Işık orada, güneşin doğduğu yerde. Sâye, ona dokun.',
+      'Şafak. Tanrıların gölgeleri batıya uzanır; Kandilciler yalnız gölgede yürür, güneşe adım atmazlar. Güneş yükseldikçe gölge kısalır: sabret.',
+      'Deprem dev başları yuvarlamış. Kartalın tepesindeki kol son kapıyı açar.',
     ],
     whispersEn: [
       'The eastern terrace. Here the king had himself carved shaking hands with the gods.',
@@ -1550,17 +1561,22 @@ const levels = <LevelDef>[
       'The Lamplighters have breathed life into stone: a giant who rebels against the sky, like Nemrud.',
       'Nemrud was beaten by a gnat; for years a mallet struck his head. Three small lights will fell the stone giant too: leave one at his ear three times.',
       'The light is there, where the sun rises. Saye, touch it.',
+      'Dawn. The shadows of the gods stretch west; the Lamplighters walk only in shadow and never step into the sun. As the sun climbs the shadows shorten: be patient.',
+      'The earthquake has rolled the giant heads. The lever atop the eagle opens the last gate.',
     ],
     memories: [
       'Hatıra · Ustam el sıkışan iki tasviri hep yan yana koyardı. "Gölgeler de barışır," derdi.',
+      'Hatıra · Bir deprem gecesi ustam perdeye yıkık başları çıkardı. "Baş yere düşer, Sâye," dedi. "Bakış göğe kalır."',
       'Hatıra · Güneş doğarken perdeyi indirirdik. "Artık gölge oyunu yok," derdi. "Şimdi asıl oyun başlıyor."',
     ],
     memoriesEn: [
       'Memory · My master always set two figures shaking hands side by side. "Shadows make peace too," he said.',
+      'Memory · One night of earthquakes my master brought fallen heads onto the screen. "The head falls to the ground, Saye," he said. "The gaze stays with the sky."',
       'Memory · At sunrise we took down the screen. "No more shadow play," he said. "Now the real play begins."',
     ],
     map: kMapGunDogumu,
-    vistas: [(192, 13, 'sunrise')],
+    vistas: [(330, 13, 'sunrise')],
+    dawn: (126, 191),
   ),
   LevelDef(
     title: 'IX · KAR YOLU',

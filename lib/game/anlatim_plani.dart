@@ -102,6 +102,9 @@ const whisperPlan = <int, Map<int, (WhisperPlace, int?)>>{
     3: (WhisperPlace.tehlike, null),
     4: (WhisperPlace.yazi, null),
     5: (WhisperPlace.yazi, null),
+    // Uzatma (elle eklendi): yeni kesitlerin ağaçları.
+    6: (WhisperPlace.agac, 128),
+    7: (WhisperPlace.agac, 194),
   },
   8: {
     0: (WhisperPlace.agac, 52),

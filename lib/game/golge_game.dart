@@ -31,6 +31,7 @@ import 'shafts.dart';
 import 'ski_decor.dart';
 import 'ski_fx.dart';
 import 'ski_light.dart';
+import 'dawn.dart';
 import 'final.dart';
 import 'joy.dart';
 import 'levels.dart';
@@ -158,6 +159,9 @@ class GolgeGame extends FlameGame with KeyboardEvents {
   bool cinematic = true;
   bool _transitioning = false;
   bool _snapCamera = true;
+
+  /// Önizleme ve testler için: kamera bir sonraki karede oyuncuya oturur.
+  void debugSnapCamera() => _snapCamera = true;
   bool _prevJump = false;
   double _closeUp = 1;
 
@@ -527,6 +531,10 @@ class GolgeGame extends FlameGame with KeyboardEvents {
 
   /// Uygulama arka plana alınırken: son kontrol noktası kaydedilir.
   Future<void> saveNow() => _saveProgress();
+
+  /// Gün Doğumu'nun şafağı (yoksa null).
+  DawnShadows? get dawn => _dawn?.isMounted == true ? _dawn : null;
+  DawnShadows? _dawn;
 
   /// Oyun bitti (son perde): kayıt yazılmaz, menüde "Devam et" olmaz.
   bool _ended = false;
@@ -1033,6 +1041,8 @@ class GolgeGame extends FlameGame with KeyboardEvents {
             TasBekci(Vector2(c * kTile.toDouble(), r * kTile.toDouble()))
           else if (name == 'golgehane')
             ..._golgehane(c, r),
+        if (level.def.dawn case (final c0, final c1))
+          _dawn = DawnShadows(c0, c1),
         for (final (c, r) in level.def.cages)
           KutCage(Vector2(c * kTile.toDouble(), r * kTile.toDouble())),
         if (level.def.finale case (final c, final r))
@@ -2243,6 +2253,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
       if (_skiAirHint > 0.6) show('flip');
     }
     if (p.hasWings && !p.onGround && p.velocity.y > 60) show('glide');
+    if (dawn?.covers(p.center.x) ?? false) show('dawn');
     final pc = (p.center.x / kTile).floor();
     final pr = (p.center.y / kTile).floor();
     for (var c = pc - 3; c <= pc + 3; c++) {
