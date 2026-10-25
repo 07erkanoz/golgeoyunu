@@ -2465,6 +2465,9 @@ class GolgeGame extends FlameGame with KeyboardEvents {
   /// Kameranın suyu göstermek için indiği pay (yumuşatılmış).
   double _waterLook = 0;
 
+  /// Kameranın yukarı payı (bkz. _updateCamera): yukarıdaki fenerler için.
+  double _upLook = 0;
+
   /// Sâye'nin altında, ekranın genişliği içinde ve bir ekran boyu yakında
   /// suyun yüzeyi (yoksa null).
   double? _waterBelow(Player p, double halfH) {
@@ -2592,6 +2595,27 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     // Perdenin önünde suya bakılmaz; perde çerçevelenir.
     _waterLook = approach(_waterLook, wantDown * (1 - _perdeFrame), dt, 0.5);
     target.y += _waterLook;
+    // Yukarı pay: zeminin altı çoğu kez dolu kayadır; Sâye ekranın biraz
+    // altında durur, yukarısı daha çok görünür. Yukarıda bir Kandilci ya da
+    // Gözcü feneri varsa kadraja alınır (telefonda üstteki fenerler
+    // kesiliyordu). Sâye alt kenara 2,5 kareden çok yaklaşmaz.
+    var wantUp = water == null ? halfH * 0.16 : 0.0;
+    final topEdge = target.y - wantUp - halfH + 1.5 * kTile;
+    for (final c in world.children) {
+      final Vector2? lamp = switch (c) {
+        Guard g => g.lanternWorld,
+        Watcher w => w.lamp,
+        _ => null,
+      };
+      if (lamp == null) continue;
+      if ((lamp.x - target.x).abs() > halfW) continue;
+      if (lamp.y >= topEdge || lamp.y < p.center.y - 2 * halfH) continue;
+      wantUp = math.max(wantUp, wantUp + (topEdge - lamp.y));
+    }
+    final maxUp = target.y + halfH - 2.5 * kTile - p.center.y;
+    wantUp = wantUp.clamp(0.0, math.max(0.0, maxUp)) * (1 - _perdeFrame);
+    _upLook = _snapCamera ? wantUp : approach(_upLook, wantUp, dt, 0.6);
+    target.y -= _upLook;
     if (pr != null && _perdeFrame > 0) {
       final e = _perdeFrame * _perdeFrame * (3 - 2 * _perdeFrame);
       target.y += (pr.center.dy + 0.6 * kTile - target.y) * e;

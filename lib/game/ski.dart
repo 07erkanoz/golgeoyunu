@@ -619,8 +619,14 @@ class Avalanche extends PositionComponent with HasGameReference<GolgeGame> {
     if (p.isDead) return;
     _speed = math.min(440, _speed + dt * 14);
     position.x += _speed * dt;
-    // Çok geride kalmasın.
-    position.x = math.max(position.x, p.center.x - 760);
+    // Çok geride kalmasın: hep ekranda, sol kenardan içeri taşan bir kar
+    // dalgası olarak görünür (eskiden ekranın dışında kalıyordu; kovalandığı
+    // hissedilmiyordu). Sâye yavaşlarsa yetişir.
+    final view = game.camera.visibleWorldRect;
+    final edge = view.width > 0
+        ? view.left + view.width * 0.17
+        : p.center.x - 760;
+    position.x = math.max(position.x, math.min(edge, p.center.x - 170));
     position.y = (game.skiSurface?.at(position.x) ?? position.y);
     final gap = p.center.x - position.x;
     game.shake(((300 - gap) / 300).clamp(0.0, 1.0) * 6);

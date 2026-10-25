@@ -646,11 +646,19 @@ class Valve extends PositionComponent with HasGameReference<GolgeGame>, Usable {
     GameAudio.instance.play('gate', volume: 0.6);
     // Dolarken su bir an gurlar, sonra yükselir: tahtaya binmeye vakit kalır.
     b.setTarget(fill ? b.high : b.low, delay: fill ? 1.3 : 0.3);
-    // Kamera hazneye: suyun yükselişi ya da çekilişi görünsün.
-    game.focus(
-      Vector2(b.area.center.dx, (fill ? b.high : b.low) - kTile),
-      hold: fill ? 2.6 : 2.0,
-    );
+    // Kamera hazneye: suyun yükselişi ya da çekilişi görünsün. Oyuncu
+    // haznenin içindeyse (su onun çevresinde yükselecekse) kamera ondan
+    // ayrılmaz: yukarıya bakarken aşağıda boğuluyordu.
+    final p = game.player;
+    final inside =
+        p != null &&
+        b.area.inflate(kTile).contains(Offset(p.center.x, p.center.y));
+    if (!inside) {
+      game.focus(
+        Vector2(b.area.center.dx, (fill ? b.high : b.low) - kTile),
+        hold: fill ? 2.6 : 2.0,
+      );
+    }
   }
 
   @override
