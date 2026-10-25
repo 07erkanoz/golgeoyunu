@@ -5,7 +5,7 @@ import 'dart:ui' as ui;
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flame/game.dart';
-import 'package:flutter/foundation.dart' show ValueNotifier;
+import 'package:flutter/foundation.dart' show ValueNotifier, debugPrint;
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart' show KeyEventResult;
 
@@ -339,7 +339,30 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     if (const bool.fromEnvironment('DEV') && _startLevel >= 0) {
       debugLoadLevel(_startLevel);
     }
+    // Geliştirici ölçümü: bir bölümün perdesini oynatır, anlatım sesinin
+    // durumunu satır satır yazar (DEV ve START_PERDE).
+    if (const bool.fromEnvironment('DEV') && _startPerde >= 0) {
+      debugLoadLevel(_startPerde);
+      cinematic = true;
+      _perdeClock.start();
+      narration.playCinematic(
+        interludeText(_startPerde),
+        () {
+          cinematic = false;
+          debugPrint('perde ${_perdeClock.elapsedMilliseconds} ms: bitti');
+        },
+        instantBlack: true,
+        scene: interludeScene(_startPerde),
+      );
+    }
   }
+
+  static const _startPerde = int.fromEnvironment(
+    'START_PERDE',
+    defaultValue: -1,
+  );
+  final _perdeClock = Stopwatch();
+  String _perdeLog = '';
 
   /// Deneme yapısında F3: ölçüm göstergesi (kare sayısı, kare süresi,
   /// bellek, grafik modu). Yarım saniyede bir yenilenir.
@@ -1931,6 +1954,10 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     if (!dt.isFinite || dt < 0) dt = 0;
     frameMeter.countStep();
     if (perfShown) _updatePerf(dt);
+    if (_startPerde >= 0 && GameAudio.instance.voiceStatus != _perdeLog) {
+      _perdeLog = GameAudio.instance.voiceStatus;
+      debugPrint('perde ${_perdeClock.elapsedMilliseconds} ms: $_perdeLog');
+    }
     if (_autoWalk && !menuMode.value) {
       _autoT += dt;
       controls.keyboard
