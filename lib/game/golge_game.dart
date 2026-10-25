@@ -36,6 +36,7 @@ import 'final.dart';
 import 'gemi_ambar.dart';
 import 'joy.dart';
 import 'kaf_vadi.dart';
+import 'kus_yolu.dart';
 import 'levels.dart';
 import 'narration.dart';
 import 'perde.dart';
@@ -1050,6 +1051,9 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         for (final (c, r, n) in level.def.mirrorSteps) MirrorStep(c, r, n),
         for (final (c0, c1, r) in level.def.birdBridges)
           ...BirdBridge(c0, c1, r).birds(),
+        for (final cells in level.def.starStreams) StarStream(cells),
+        if (level.def.ulker case (final stars, final bridge))
+          UlkerCluster(stars, bridge),
         for (final (c, r) in level.def.leaks) LeakJet(c, r),
         for (final (c0, c1, r, ph) in level.def.barrels)
           RollingBarrel(c0, c1, r, phase: ph),
@@ -2264,6 +2268,17 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     }
     if (p.hasWings && !p.onGround && p.velocity.y > 60) show('glide');
     if (dawn?.covers(p.center.x) ?? false) show('dawn');
+    for (final st in world.children.whereType<StarStream>()) {
+      if ((st.points.first - p.center.toOffset()).distance < 6 * kTile) {
+        show('starStream');
+      }
+    }
+    for (final u in world.children.whereType<UlkerCluster>()) {
+      if (!u.complete &&
+          (u.stars.first - p.center.toOffset()).distance < 7 * kTile) {
+        show('ulker');
+      }
+    }
     for (final l in world.children.whereType<MirrorLake>()) {
       if (p.center.x > l.left - 3 * kTile && p.center.x < l.left + 4 * kTile) {
         show('mirrorLake');

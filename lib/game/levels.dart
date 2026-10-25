@@ -176,7 +176,15 @@ class LevelDef {
     this.birdBridges = const [],
     this.leaks = const [],
     this.barrels = const [],
+    this.starStreams = const [],
+    this.ulker,
   });
+
+  /// Kuş Yolu: ışık nehirleri (hücre noktaları; içine gireni taşır) ve
+  /// Ülker'in yedi yıldızı ile yanınca beliren köprü (ilk sütun, son
+  /// sütun, satır).
+  final List<List<(int, int)>> starStreams;
+  final (List<(int, int)>, (int, int, int))? ulker;
 
   /// Gemi: tabanında su fışkıran delikler (sütun, zemin satırı) ve
   /// yalpayla yuvarlanan fıçıların bölmeleri (ilk sütun, son sütun, zemin
@@ -1349,7 +1357,19 @@ const levels = <LevelDef>[
     ],
     map: kMapKaf,
     lake: (128, 183, 20),
-    mirrorSteps: [(130, 17, 2), (134, 16, 2), (138, 17, 2), (148, 16, 2), (152, 16, 2), (156, 17, 2), (160, 17, 2), (168, 16, 2), (172, 16, 2), (176, 17, 2), (180, 17, 2)],
+    mirrorSteps: [
+      (130, 17, 2),
+      (134, 16, 2),
+      (138, 17, 2),
+      (148, 16, 2),
+      (152, 16, 2),
+      (156, 17, 2),
+      (160, 17, 2),
+      (168, 16, 2),
+      (172, 16, 2),
+      (176, 17, 2),
+      (180, 17, 2),
+    ],
     birdBridges: [(273, 325, 16)],
   ),
   LevelDef(
@@ -2180,7 +2200,23 @@ const levels = <LevelDef>[
     placeEn: 'Ötüken · The layers of the sky',
     wings: true,
     cameos: [('kam', 12, 38), ('gokKat', 84, 30)],
-    skies: [(0, 0), (121, 1), (198, 2)],
+    skies: [(0, 0), (121, 1), (198, 2), (290, 1)],
+    starStreams: [
+      [(295, 23), (300, 20), (306, 16), (312, 13), (318, 11), (323, 11)],
+      [(362, 11), (367, 14), (373, 18), (379, 22), (384, 23)],
+    ],
+    ulker: (
+      [
+        (325, 10),
+        (326, 9),
+        (328, 9),
+        (329, 10),
+        (331, 9),
+        (332, 10),
+        (333, 11),
+      ],
+      (334, 355, 12),
+    ),
     wheels: [
       (131, 26, 4, 3, 9, 0),
       (147, 17, 3.5, 3, 9, 0),
@@ -2189,12 +2225,13 @@ const levels = <LevelDef>[
     ],
     karakci: [(174, 9, 5.2, -18)],
     yel: [(186, 2, 215, 16, 1), (221, 6, 243, 17, -1), (244, 4, 272, 22, -1)],
-    areas: ['Bulut Kapısı', 'Ay Katı', 'Yıldız Katı', 'Yel Katı'],
+    areas: ['Bulut Kapısı', 'Ay Katı', 'Yıldız Katı', 'Yel Katı', 'Kuş Yolu'],
     areasEn: [
       'The Cloud Gate',
       'The Moon Layer',
       'The Star Layer',
       'The Wind Layer',
+      'The Bird Road',
     ],
     whispers: [
       'Kam\'ın davulu seni göğe taşıdı. Göğün katları üst üste; her biri bir öncekinden aydınlık.',
@@ -2206,6 +2243,8 @@ const levels = <LevelDef>[
       'Yel Katı. Yel Ana burada soluk alır; kamlar ondan yol ister. Soluğu arkana al.',
       'Bu bir yada taşı. Kamlar onunla yağmuru, karı, rüzgârı çağırır. Taşa dokunan, Yel Ana\'ya yön söyler.',
       'Yelin ucunda göğün rengi değişiyor: yukarıda gün katı. Işık orada yakar.',
+      'Kuş Yolu. Kazaklar, Kırgızlar Samanyolu\'na böyle der: göçmen kuşlar yolunu onunla bulur. Işık nehrine gir; o seni taşır.',
+      'Ülker: yedi yıldız. Yedisine de dokun; aralarındaki çizgiler köprü olur.',
     ],
     whispersEn: [
       'The shaman\'s drum carried you into the sky. The layers of the sky lie one above another, each brighter than the last.',
@@ -2217,6 +2256,8 @@ const levels = <LevelDef>[
       'The Wind Layer. Here the Wind Mother breathes; shamans ask her for a road. Keep her breath at your back.',
       'This is a yada stone. With it shamans call rain, snow and wind. Whoever touches it tells the Wind Mother which way to blow.',
       'At the end of the wind the colour of the sky changes: above lies the sun layer. Its light burns.',
+      'The Bird Road. So the Kazakhs and Kyrgyz call the Milky Way: migrating birds find their way by it. Step into the river of light; it will carry you.',
+      'Ülker: seven stars. Touch all seven; the lines between them become a bridge.',
     ],
     memories: [
       'Hatıra · Ustam geceleri bana Demir Kazık\'ı gösterirdi. "Yolunu yitirirsen ona bak," derdi, "o hiç yerinden oynamaz."',

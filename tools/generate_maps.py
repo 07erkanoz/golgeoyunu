@@ -1571,7 +1571,17 @@ for c0,c1 in ((222,227),(230,234),(237,242)): isl1(c0,c1,16,1)
 isl1(244,248,16); g1.put(245,15,'K'); g1.put(246,15,'c'); g1.put(247,15,'8')
 isl1(270,280,20); g1.put(276,19,'M')
 isl1(282,303,24); g1.put(284,23,'K'); g1.put(286,23,'9'); g1.put(300,23,'E')
-lvl_gok=g1.rows()
+# Uzatma (2026-10-25): Kuş Yolu Katı araya girer (290. sütunda; çıkış
+# sağa kayar). Işık nehri ve Ülker'in yedi yıldızı levels.dart'ta
+# (starStreams, ulker).
+ky=G(100,G1H)
+ky.fill(0,24,5,25,'#'); ky.put(1,23,'p'); ky.put(2,23,'K'); ky.put(4,23,'(')
+ky.fill(34,12,42,13,'#')                      # Ülker'in bulutu
+ky.fill(67,12,71,13,'#'); ky.put(68,11,'K'); ky.put(69,11,')')
+ky.fill(95,24,99,25,'#')
+rows=g1.rows()
+rows=[r[:290]+x+r[290:] for r,x in zip(rows,ky.rows())]
+lvl_gok=rows
 
 # II: Gün Katı (eski 121-200) + Şimşek Katı (yeni) + Ülgen'in Kapısı ve
 # Tulpar (eski 201-331). Kara bulut basamakları ve yıldırımlar LevelDef'te

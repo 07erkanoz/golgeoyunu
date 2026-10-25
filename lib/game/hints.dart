@@ -168,6 +168,8 @@ class Hints {
     'mirrorLake': 'Yol havada görünmez · suya bak: basamaklar yansımada · rüzgâr esince bekle',
     'leak': 'Fışkıran su geri savurur · sandığın ardına sığın, deliğin üstüne it: {right}',
     'barrel': 'Gemi yalpalıyor, fıçılar yuvarlanır · yığının üstünde bekle, geçince koş ya da üstünden atla',
+    'starStream': 'Işık nehrine gir · seni taşır · ucunda savrulursun',
+    'ulker': 'Ülker\'in yedi yıldızına dokun · yedisi yanınca köprü belirir',
     'birdBridge': 'Kuşların sırtına bas · Gözcü\'nün feneri değen kuş ürker · ateşböceğiyle feneri oyala: {firefly}',
     'finale': '{up} Aynaları çevir · ay ışığı Kandilci Başı\'na düşsün · fenerin geçerken sütunun gölgesinde bekle',
     'horse': 'Çalkuyruk · yanına git, sırtına bin · atla çok yükseğe sıçrarsın',
@@ -264,6 +266,8 @@ class Hints {
     'mirrorLake': 'The road cannot be seen in the air · look at the water: the steps are in the reflection · wait when the wind blows',
     'leak': 'The spraying water throws you back · hide behind a crate and push it over the hole: {right}',
     'barrel': 'The ark is rolling; barrels roll loose · wait on top of a stack and run when one has passed, or jump over it',
+    'starStream': 'Step into the river of light · it carries you · at its end you are flung onward',
+    'ulker': 'Touch the seven stars of Ülker · when all seven shine, a bridge appears',
     'birdBridge': 'Step on the birds\' backs · a bird touched by the Watcher\'s lantern takes fright · distract the lantern with a firefly: {firefly}',
     'finale': '{up} Turn the mirrors · let the moonlight fall on the Chief Lamplighter · wait in a pillar\'s shadow as his lantern passes',
     'horse':

@@ -56,8 +56,23 @@ LOCK_ANY = {'kMapYesilKubbe'}
 # Kaf: aynalı gölün görünmeyen basamakları ve kuşlardan köprü (kuşlar
 # hareketli; denetimde uçuş satırında üç karede bir kuş sayılır).
 _KAF_STEPS = [(8,17),(12,16),(16,17),(26,16),(30,16),(34,17),(38,17),(46,16),(50,16),(54,17),(58,17)]
+def _stream(pts, step=3):
+    out = []
+    for (c0, r0), (c1, r1) in zip(pts, pts[1:]):
+        for c in range(c0, c1, step):
+            r = round(r0 + (r1 - r0) * (c - c0) / (c1 - c0)) + 1
+            out.append((c, r, 2))
+    return out
+
+
+# Göğün Katları, Kuş Yolu: ışık nehri taşır (denetimde nehrin boyunca
+# tahta sayılır); Ülker köprüsü yıldızlar yanınca (yıldızlar bulutun
+# üstünde, varılır).
 DECKS = {'kMapKaf': [(122 + c, r, 2) for c, r in _KAF_STEPS]
-         + [(c, 16, 2) for c in range(275, 324, 3)]}
+         + [(c, 16, 2) for c in range(275, 324, 3)],
+         'kMapGok': _stream([(295, 23), (300, 20), (306, 16), (312, 13), (318, 11), (323, 11)])
+         + _stream([(362, 11), (367, 14), (373, 18), (379, 22), (384, 23)])
+         + [(c, 12, 2) for c in range(334, 356, 2)]}
 
 # Göğün katları: `W` Tulpar'dır (kanat değil). Ona varılınca Tulpar'la uçulur;
 # uçuş benzetilmez: Tulpar'ın sağındaki hedefler varılmış sayılır (yaklaşık,
