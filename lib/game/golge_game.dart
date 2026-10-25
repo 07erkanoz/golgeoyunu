@@ -251,6 +251,11 @@ class GolgeGame extends FlameGame with KeyboardEvents {
   static const darkSwallow = 4.5;
 
   double _darkT = 0;
+
+  /// Karanlık Sâye'yi yuttu: yeniden doğarken kavanoz dolar. Yoksa
+  /// kontrol noktasındaki az ateşböceğiyle aynı karanlığa girilir, aynı
+  /// yerde yeniden yutulur (bitmeyen döngü).
+  bool _swallowed = false;
   bool _darkWarned = false;
 
   /// Kayak bölümünün yamacı (kayak bölümü değilse yok).
@@ -638,6 +643,8 @@ class GolgeGame extends FlameGame with KeyboardEvents {
       (z) => z.inflate(6 * kTile).contains(Offset(r.x, r.y)),
     );
     if (near) fireflies = math.max(fireflies, startFireflies);
+    if (_swallowed) fireflies = maxFireflies;
+    _swallowed = false;
     // Ötüken'in ışık alanlarının başında en az üç: ışık köprüsü kurulabilsin.
     final glade = level.def.glades.any(
       (z) => Rect.fromLTRB(
@@ -916,6 +923,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     if (!respawn || _respawn == null) {
       _respawn = Level.standOn(level.playerStart, Player.w, Player.h);
       _darkWarned = false;
+      _swallowed = false;
       _checkpointFireflies = fireflies;
     }
     if (respawn) _ensureFireflies();
@@ -2568,6 +2576,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
       }
     } else if (_darkT >= darkSwallow) {
       _darkT = 0;
+      _swallowed = true;
       p.die(cause: DeathCause.dark);
     }
   }
