@@ -46,3 +46,21 @@ harita denetimi, kural testi, önizleme.
 2. IV · Kaf (0,9 dk)
 3. VI · Nuh'un Gemisi, XVII · Göğün Katları, III · Gökyolu, II · Kule
 4. Kalanlar.
+
+## Yapılan (25 Ekim 2026)
+
+| Bölüm | Yeni kesitler | Genişlik | En kısa yol |
+|---|---|---|---|
+| VIII · Gün Doğumu | Şafağın Gölgeleri, Düşmüş Başlar | 212 → 350 | 0,8 → 1,3 dk |
+| IV · Kaf | Hayret Vadisi (aynalı göl), Otuz Kuş | 247 → 381 | 0,9 → 1,4 dk |
+| VI · Nuh'un Gemisi | Delikli Ambar, Yalpalayan Ambar | 300 → 424 | 1,1 → 1,6 dk |
+| XVII · Göğün Katları | Kuş Yolu Katı (ışık nehri, Ülker) | 304 → 404 | 1,1 → 1,5 dk |
+| III · Gökyolu | Lodos ile Poyraz, Uçurtmalar | 336 → 470 | 1,2 → 1,7 dk |
+| II · Kule | Kulenin Zindanı | 170 → 212 satır | 1,2 → 1,5 dk |
+| XX · Yeşil Kubbe | yeni final bölümü | 312 | 1,3 dk |
+
+En kısa yol yalnız koşup zıplamayı sayar; yeni kesitlerin çoğu düşünme ve
+bekleme ister (yansımayı okumak, fıçıyı beklemek, yıldızları bulmak), asıl
+oyun süresi bunun birkaç katıdır. Hedefe (10-15 dk) varmak için her bölüme
+bir-iki kesit daha gerekir; sıradakiler: Ağrı, Nemrut, Kar Yolu, Peri
+Bacaları, Derinkuyu, Erlik, Ergenekon, Ülgen'in Kapısı, Yerebatan.
