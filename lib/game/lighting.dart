@@ -12,6 +12,7 @@ import 'mechanics.dart';
 import 'nemrut.dart';
 import 'palette.dart';
 import 'puzzles.dart';
+import 'joy.dart';
 import 'umay.dart';
 import 'gokboru.dart';
 import 'golgehane.dart';
@@ -278,6 +279,14 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
         // Yüzen tahta karanlıkta da seçilsin: suyun parıltısı onu yalar.
         case FloatPlank f:
           _light(canvas, f.center.toOffset(), 58, 0.4);
+        case Bouncer z:
+          _light(canvas, z.glowCenter, 44, 0.4);
+        case KaragozSahne k:
+          _light(canvas, k.glowCenter, 120, 0.55);
+        case JoyLights j:
+          for (final at in j.points) {
+            _light(canvas, at.toOffset(), 26, 0.22);
+          }
         case GolgehaneKapi k:
           _light(canvas, k.glowCenter, 46, 0.45);
         case SunBeam b:

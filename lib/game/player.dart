@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'dart:ui';
 import 'dart:ui' as ui;
 
+import 'package:flutter/animation.dart' show Curves;
 import 'package:flame/components.dart';
 
 import 'entities.dart';
@@ -12,6 +13,7 @@ import 'golge_game.dart';
 import 'level.dart';
 import 'levels.dart';
 import 'mechanics.dart';
+import 'myth_shapes.dart';
 import 'palette.dart';
 import 'konya.dart';
 import 'legends.dart';
@@ -265,6 +267,17 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       return (position + Vector2(w / 2 + facing * 5, 17), radius);
     }
     return (position + Vector2(w / 2 + facing * 3, 6), radius * 0.6);
+  }
+
+  /// Zıpzıp fırlattı: [vy] hızıyla yukarı (zıplamayı bırakmak kesmez).
+  void bounce(double vy) {
+    if (state != PlayerState.normal) return;
+    velocity.y = -vy;
+    onGround = false;
+    _coyote = 0;
+    _jumpBuffer = 0;
+    _jumpCut = true;
+    _jarSwing.kick(3);
   }
 
   // ---------------------------------------------------------------- hareket
@@ -1590,6 +1603,216 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     }
   }
 
+  // ------------------------------------------------- gölge oyunları
+  // Sâye sakin bir yerde bir süre kıpırdamadan durunca gölgesinin canı
+  // sıkılır: kendi kendine bir hayvana dönüşür (tavşan zıplar, tilki koşup
+  // dönüp bakar, geyik otlar, kurt ulur, aslan kükrer, at şaha kalkar, kuş
+  // uçup döner), sonra yine Sâye olur. Sâye kıpırdarsa oyun hemen biter.
+
+  static const double _playIn = 0.6;
+  static const double _playAct = 4.8;
+  static const double _playOut = 0.6;
+
+  ShadowAnimal _playKind = ShadowAnimal.rabbit;
+  double _playHome = 0;
+  double _playLift = 0;
+  double _playTilt = 0;
+  double _playPulse = 1;
+  Path? _playPath;
+  bool _playCalled = false;
+
+  /// Gölge oyun oynuyor mu.
+  bool get shadowPlaying => _mood == _ShadowMood.play;
+
+  /// Gölgenin şu an dönüştüğü hayvan (testler için).
+  ShadowAnimal get playKind => _playKind;
+
+  /// Gölgeyi [kind] hayvanına dönüştürüp oynatır; gölge serbest değilse false.
+  bool shadowPlay(ShadowAnimal kind) {
+    if (isDead || skiing || _mood != _ShadowMood.follow) return false;
+    _mood = _ShadowMood.play;
+    _moodT = 0;
+    _playKind = kind;
+    _playHome = center.x - facing * 20;
+    _shadowX = _playHome;
+    _shadowY = position.y + h;
+    _shadowFacing = facing;
+    _shadowFade = 1;
+    _playLift = 0;
+    _playTilt = 0;
+    _playPulse = 1;
+    _playCalled = false;
+    return true;
+  }
+
+  /// Dönüşüm: 0 Sâye, 1 hayvan.
+  double get _playMorph {
+    final t = _moodT;
+    if (t < _playIn) return Curves.easeOutBack.transform(t / _playIn);
+    if (t < _playIn + _playAct) return 1;
+    return 1 - ((t - _playIn - _playAct) / _playOut).clamp(0.0, 1.0);
+  }
+
+  void _updatePlay(double dt) {
+    // Sâye kıpırdadı ya da tehlike: oyun biter, gölge yerine döner.
+    final moving = velocity.x.abs() > 20 || !onGround || crouching || hidden;
+    if ((moving || game.threat > 0.2) && _moodT < _playIn + _playAct) {
+      _moodT = _playIn + _playAct;
+    }
+    final a = _moodT - _playIn;
+    _playLift = 0;
+    _playTilt = 0;
+    _playPulse = 1;
+    if (a >= 0 && a < _playAct) {
+      final back = a > _playAct / 2;
+      var speed = 0.0;
+      switch (_playKind) {
+        case ShadowAnimal.rabbit:
+          // Zıp zıp: havadayken ilerler, inince bir an çömelir.
+          final c = a % 0.55;
+          if (c < 0.4) {
+            _playLift = math.sin(c / 0.4 * math.pi) * 18;
+            speed = 70;
+          } else {
+            _playPulse = 0.9;
+          }
+        case ShadowAnimal.fox:
+          // Koşar, durup omzunun üstünden bakar, geri koşar.
+          final stop = a > 1.3 && a < 2.4;
+          speed = stop ? 0 : 95;
+          if (!stop) _playLift = (math.sin(a * 18)).abs() * 3;
+          if (a > 1.6 && a < 2.1) _playTilt = -0.12;
+        case ShadowAnimal.deer:
+          // Ağır ağır yürür, başını eğip otlar, sıçrayarak döner.
+          if (a < 1.0) {
+            speed = 35;
+          } else if (a < 2.4) {
+            _playTilt = 0.22 * math.sin(((a - 1.0) / 1.4) * math.pi);
+          } else if (a < 3.2) {
+            speed = 110;
+            _playLift = math.sin((a - 2.4) / 0.8 * math.pi) * 26;
+            _playTilt = -0.15 * math.cos((a - 2.4) / 0.8 * math.pi);
+          } else {
+            speed = 40;
+          }
+        case ShadowAnimal.wolf:
+          // Yürür, durur, başını kaldırıp ulur (kurdun öbür duruşu).
+          if (a < 1.3 || a > 3.3) {
+            speed = 55;
+            _playLift = (math.sin(a * 12)).abs() * 2;
+          }
+        case ShadowAnimal.lion:
+          // Gururla yürür, durup kükrer (gövdesi kabarır).
+          if (a < 1.4 || a > 2.6) {
+            speed = 45;
+            _playLift = (math.sin(a * 9)).abs() * 2;
+          } else {
+            final k = math.sin(((a - 1.4) / 1.2) * math.pi);
+            _playPulse = 1 + 0.12 * k;
+            _playTilt = -0.1 * k;
+          }
+        case ShadowAnimal.horse:
+          // Dörtnala, dönüşte şaha kalkar.
+          if (a > 1.7 && a < 2.7) {
+            _playTilt = -0.45 * math.sin(((a - 1.7) / 1.0) * math.pi);
+          } else {
+            speed = 95;
+            _playLift = (math.sin(a * 11)).abs() * 7;
+            _playTilt = 0.05 * math.sin(a * 11);
+          }
+        case ShadowAnimal.bird:
+          // Havalanır, bir yay çizip yerine konar.
+          speed = 85;
+          _playLift = math.sin(a / _playAct * math.pi) * 95;
+      }
+      // Ses: hayvanın kendi sesi, tek ve kısık.
+      if (!_playCalled) {
+        final (sound, at) = switch (_playKind) {
+          ShadowAnimal.wolf => ('howl', 1.5),
+          ShadowAnimal.lion => ('growl', 1.5),
+          ShadowAnimal.bird => ('bird', 0.1),
+          ShadowAnimal.horse => ('drum', 1.8),
+          _ => ('', 99.0),
+        };
+        if (a > at) {
+          _playCalled = true;
+          GameAudio.instance.play(sound, volume: 0.22);
+        }
+      }
+      // Gidiş: önü kapalıysa döner. Dönüş: eve doğru.
+      final step = speed * dt;
+      if (!back) {
+        final f = _shadowFacing.toDouble();
+        final nx = _shadowX + f * (step + 10);
+        final wall =
+            level.cellAt(nx, _shadowY - 12) == '#' ||
+            level.cellAt(nx, _shadowY - 40) == '#';
+        final below = level.cellAt(nx, _shadowY + 4);
+        final floor =
+            _playKind == ShadowAnimal.bird ||
+            below == '#' ||
+            below == '=' ||
+            below == '-';
+        if (wall || !floor || (_shadowX - _playHome).abs() > 6 * kTile) {
+          _shadowFacing = -_shadowFacing;
+        } else {
+          _shadowX += f * step;
+        }
+      } else {
+        final dx = _playHome - _shadowX;
+        final left = _playAct - a;
+        // Vaktinde eve varsın: gerekirse hızlanır.
+        final v = math.max(speed, dx.abs() / math.max(0.3, left) * 1.1);
+        final st = v * dt;
+        if (dx.abs() > 1) _shadowFacing = dx > 0 ? 1 : -1;
+        _shadowX += dx.abs() < st ? dx : dx.sign * st;
+      }
+    } else if (a >= _playAct) {
+      // Yine Sâye: ev yerine akar.
+      final home = center.x - facing * 20;
+      _shadowX += (home - _shadowX) * math.min(1, dt * 10);
+      _shadowFacing = facing;
+      if (_moodT > _playIn + _playAct + _playOut) _mood = _ShadowMood.follow;
+    }
+    _playPath = switch (_playKind) {
+      ShadowAnimal.rabbit => MythShapes.rabbit,
+      ShadowAnimal.fox => MythShapes.fox,
+      ShadowAnimal.deer => MythShapes.deer,
+      ShadowAnimal.wolf =>
+        a > 1.5 && a < 3.2 ? MythShapes.wolfHowl : MythShapes.wolfWalk,
+      ShadowAnimal.lion => MythShapes.lion,
+      ShadowAnimal.horse => MythShapes.horse,
+      ShadowAnimal.bird =>
+        (_anim * 8).floor().isEven || _playLift > 70
+            ? MythShapes.birdGlide
+            : MythShapes.birdFlap,
+    };
+  }
+
+  /// Hayvanın duvardaki boyu (Sâye'nin boyuna göre).
+  double get _playHeight => switch (_playKind) {
+    ShadowAnimal.rabbit => 0.9,
+    ShadowAnimal.fox => 0.95,
+    ShadowAnimal.deer => 1.9,
+    ShadowAnimal.wolf => 1.3,
+    ShadowAnimal.lion => 1.35,
+    ShadowAnimal.horse => 1.75,
+    ShadowAnimal.bird => 1.1,
+  };
+
+  /// Oynayan hayvanı çizer (gölge katmanının içinde, [foot] ayak noktası).
+  void _drawPlayAnimal(Canvas canvas, Offset foot, double m) {
+    final path = _playPath;
+    if (path == null || m <= 0) return;
+    final s = h * 1.45 * _playHeight / 100 * m;
+    canvas.save();
+    canvas.translate(foot.dx, foot.dy - _playLift);
+    canvas.rotate(_playTilt * _shadowFacing);
+    canvas.scale(_shadowFacing * s * _playPulse, s * _playPulse);
+    canvas.drawPath(path, _fill);
+    canvas.restore();
+  }
+
   /// Korku anında gölgenin tepkisi: güçlü korkuda ayrılıp gider, hafifte
   /// geriden gelir.
   void shadowFright(double amount) {
@@ -1677,6 +1900,8 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
         _updateGuide(dt);
       case _ShadowMood.shy:
         _updateShy(dt);
+      case _ShadowMood.play:
+        _updatePlay(dt);
       case _ShadowMood.astray:
         // 0–0.6 sn donar; sonra ters yöne yürüyüp solar; 2.6'da durur,
         // 3.2'de döner ve bakar; 4.0'dan sonra hızla geri gelir.
@@ -1706,7 +1931,8 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     if (!jarStyle ||
         (!level.def.theme.indoor &&
             mood != _ShadowMood.sent &&
-            mood != _ShadowMood.guide)) {
+            mood != _ShadowMood.guide &&
+            mood != _ShadowMood.play)) {
       return;
     }
     // Saklanırken gölge yok; ama korku anında gölge kendi başına kalabilir.
@@ -1751,6 +1977,10 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
         dirFacing = _shadowFacing;
         walking = _guidePhase != 1;
         alpha *= 1.9;
+      case _ShadowMood.play:
+        foot = Offset(_shadowX - position.x, _shadowY - position.y);
+        dirFacing = _shadowFacing;
+        alpha *= 1.7;
     }
     // Gölgenin kendi duruşu: ayrıldığında yürür, Sâye dursa bile.
     final saved = (facing, velocity.x, _gait, onGround, state);
@@ -1779,7 +2009,8 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     final sent =
         mood == _ShadowMood.sent ||
         mood == _ShadowMood.shy ||
-        mood == _ShadowMood.guide;
+        mood == _ShadowMood.guide ||
+        mood == _ShadowMood.play;
     // Bulanıklık filtresi yok: her karede ara katmanı bulanıklaştırmak
     // telefonda (Skia) sürekli yüktü. Yumuşaklık ucuz yoldan: önce biraz
     // büyütülmüş, yarı saydam bir kopya (kenarda yarı gölge), üstüne asıl
@@ -1823,7 +2054,22 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       _fill.color = const Color(0xFF000000);
       _limb.color = _fill.color;
     }
-    figure(0);
+    if (mood == _ShadowMood.play) {
+      // Dönüşüm: Sâye'nin gölgesi ayaklarına doğru büzülür, yerinden hayvan
+      // büyür (ya da tersi).
+      final m = _playMorph;
+      if (m < 1) {
+        canvas.save();
+        canvas.translate(foot.dx, foot.dy);
+        canvas.scale(1 - 0.3 * m.clamp(0.0, 1.0), 1 - m.clamp(0.0, 1.0));
+        canvas.translate(-foot.dx, -foot.dy);
+        figure(0);
+        canvas.restore();
+      }
+      _drawPlayAnimal(canvas, foot, m);
+    } else {
+      figure(0);
+    }
     if (!sent && !plain) {
       canvas.drawRect(
         bounds,
@@ -1895,7 +2141,8 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
         _drawShadows(canvas);
       } else if (_mood == _ShadowMood.sent ||
           _mood == _ShadowMood.shy ||
-          _mood == _ShadowMood.guide) {
+          _mood == _ShadowMood.guide ||
+          _mood == _ShadowMood.play) {
         // Düşük grafikte süs gölgeleri yok; ama gönderilen gölge oynanışın
         // parçası (utangaç gölge de bir sır): bulanıklıksız düz siluet.
         _wallShadow(canvas, plain: true);
@@ -2732,4 +2979,7 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
   }
 }
 
-enum _ShadowMood { follow, lag, astray, sent, shy, guide }
+enum _ShadowMood { follow, lag, astray, sent, shy, guide, play }
+
+/// Gölgenin oyunda dönüştüğü hayvanlar.
+enum ShadowAnimal { rabbit, fox, deer, wolf, lion, horse, bird }

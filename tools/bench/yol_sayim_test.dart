@@ -2,7 +2,6 @@
 // `flutter test tools/bench/yol_sayim_test.dart`
 import 'package:flame/components.dart';
 import 'package:flame_test/flame_test.dart';
-import 'package:flutter_test/flutter_test.dart';
 import 'package:golge/game/entities.dart';
 import 'package:golge/game/golge_game.dart';
 import 'package:golge/game/levels.dart';

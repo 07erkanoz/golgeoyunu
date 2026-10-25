@@ -976,3 +976,116 @@ void paintCast(Canvas canvas, Size size, double time) {
     _person(canvas, Offset(x, y), rh * 0.62, 1, look, time: time);
   }
 }
+
+// ------------------------------------------------- Karagöz ile Hacivat
+
+const _karagozLook = _Look(
+  hat: _Hat.bork,
+  garb: _Garb.tunic,
+  beard: _Beard.short,
+  broad: 1.08,
+);
+const _hacivatLook = _Look(
+  hat: _Hat.sarik,
+  garb: _Garb.kaftan,
+  beard: _Beard.pointed,
+);
+
+/// Karagöz ile Hacivat'ın kısa güldürüsünün süresi (saniye).
+const double karagozLength = 8.5;
+
+/// Karagöz ile Hacivat'ın sözsüz güldürüsü (oyundaki küçük perdeler için):
+/// yandan girerler, Hacivat eğilip selam verir, elini kaldırıp söze başlar;
+/// Karagöz sözünü keser, kafa atar, Hacivat fırıl fırıl döner, Karagöz
+/// hoplayıp güler; sonunda ikisi birden [point] yönünü (1 sağ, -1 sol)
+/// gösterir. [ground] perdenin taban ortası, [h] tasvir boyu, [t] saniye.
+void paintKaragozHacivat(
+  Canvas c,
+  Offset ground,
+  double h,
+  double t, {
+  int point = 1,
+  double a = 1,
+}) {
+  double span(double from, double to) =>
+      ((t - from) / (to - from)).clamp(0.0, 1.0);
+  double ease(double k) => k * k * (3 - 2 * k);
+  // Hacivat.
+  var hx = -1.7 + 1.25 * ease(span(0, 1.0));
+  var hy = 0.0;
+  var hRot = 0.0;
+  var hArm = 0.0;
+  var hFlip = false;
+  // Karagöz.
+  var kx = 1.7 - 1.25 * ease(span(0.2, 1.2));
+  var ky = 0.0;
+  var kRot = 0.0;
+  var kArm = 0.0;
+  var kFlip = true;
+  if (t > 1.0 && t < 2.0) {
+    // Selam: Hacivat eğilir.
+    hRot = 0.38 * math.sin(math.pi * span(1.0, 2.0));
+    hArm = -0.8 * math.sin(math.pi * span(1.0, 2.0));
+  }
+  if (t > 1.6 && t < 2.2) kRot = -0.12 * math.sin(math.pi * span(1.6, 2.2));
+  if (t >= 2.0 && t < 3.4) {
+    // Hacivat söze başlar: el kalkar, sallanır.
+    hArm = -1.5 - 0.45 * math.sin(t * 9);
+    hy = -math.sin(t * 9).abs() * 1.5;
+  }
+  if (t >= 3.4 && t < 3.9) {
+    // Karagöz atılır, kafa atar.
+    final k = span(3.4, 3.9);
+    kx = 0.45 - 0.3 * ease(k);
+    kRot = -0.5 * math.sin(math.pi * k);
+    hArm = -1.5;
+  }
+  if (t >= 3.9 && t < 5.0) {
+    // Hacivat fırıl fırıl döner, savrulur.
+    final k = span(3.9, 5.0);
+    hFlip = (t * 9).floor().isOdd;
+    hx = -0.45 - 0.45 * math.sin(k * math.pi * 0.5);
+    hy = -math.sin(k * math.pi) * 18;
+    hRot = 0.3 * math.sin(t * 20);
+    kx = 0.15 + 0.25 * k;
+  }
+  if (t >= 5.0 && t < 5.9) {
+    // Karagöz hoplayarak güler.
+    kx = 0.4;
+    ky = -math.sin((t - 5.0) * 14).abs() * 6;
+    kArm = -2.4 + 0.3 * math.sin(t * 14);
+    hx = -0.9 + 0.45 * ease(span(5.2, 5.9));
+  }
+  if (t >= 5.9) {
+    // İkisi birden gösterir.
+    kx = 0.4;
+    hx = -0.45;
+    final k = ease(span(5.9, 6.4));
+    hArm = -1.75 * k;
+    kArm = -1.75 * k;
+    hFlip = point < 0;
+    kFlip = point < 0;
+    hy = -math.sin(t * 3).abs() * 1.2;
+    ky = -math.sin(t * 3 + 1).abs() * 1.2;
+  }
+  _person(
+    c,
+    ground + Offset(hx * h, hy),
+    h,
+    a,
+    _hacivatLook,
+    flip: hFlip,
+    arm: hArm,
+    rot: hRot,
+  );
+  _person(
+    c,
+    ground + Offset(kx * h, ky),
+    h * 0.94,
+    a,
+    _karagozLook,
+    flip: kFlip,
+    arm: kArm,
+    rot: kRot,
+  );
+}

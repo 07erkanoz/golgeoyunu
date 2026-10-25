@@ -1,16 +1,21 @@
-"""Aslan silueti (PhyloPic, Margot Michaud, CC0 1.0 kamu malı:
-https://www.phylopic.org/images/dd7c7bc6-2c6d-48e4-860b-02bf37886b5b) →
-MythShapes'in kodlamasına (0 moveTo, 1 lineTo, 2 cubicTo, 3 close; ayakların
-ortası (0, 0), boy 100 birim, baş sağa).
+"""PhyloPic'teki kamu malı (CC0) potrace siluetleri → MythShapes'in
+kodlamasına (0 moveTo, 1 lineTo, 2 cubicTo, 3 close; ayakların ortası (0, 0),
+boy 100 birim, baş sağa). Kullanılanlar:
+- lion: Margot Michaud, dd7c7bc6-2c6d-48e4-860b-02bf37886b5b
+- rabbit (aynalı): Ferran Sayol, ad7d2a9d-ef0d-46f2-895d-7c67bb8e6355
+- fox: Ferran Sayol, 9b3e3567-2238-40bf-ab5d-bcb6ce7b32d5
+- deer: Ferran Sayol, cc03f5c2-933f-4c40-9c64-7f8727556fdb
 
-    python3 -I tools/aslan_svg_to_dart.py <vector.svg>
+    python3 -I tools/aslan_svg_to_dart.py <vector.svg> [ad] [aynala]
 
-Çıktıyı lib/game/myth_shapes.dart'taki `lion` alanına yapıştırın.
+Çıktıyı lib/game/myth_shapes.dart'a yapıştırın.
 """
 import re
 import sys
 
 s = open(sys.argv[1]).read()
+NAME = sys.argv[2] if len(sys.argv) > 2 else 'lion'
+FLIP = len(sys.argv) > 3 and sys.argv[3] == 'aynala'
 tr = re.search(r'translate\(([-0-9.]+),([-0-9.]+)\)\s*scale\(([-0-9.]+),([-0-9.]+)\)', s)
 TX, TY, SX, SY = (float(v) for v in tr.groups())
 d = ' '.join(m for m in re.findall(r'<path d="([^"]*)"', s, re.S))
@@ -86,7 +91,8 @@ cx = (x0 + x1) / 2
 
 
 def f(p):
-    return [round((p[0] - cx) * k, 2), round((p[1] - y1) * k, 2)]
+    x = (p[0] - cx) * k
+    return [round(-x if FLIP else x, 2), round((p[1] - y1) * k, 2)]
 
 
 data = []
@@ -98,8 +104,8 @@ for sg in out:
         for p in sg[1]:
             data += f(p)
 w = (x1 - x0) * k
-print(f'  // lion: {sum(1 for s in out)} komut, {w:.1f}x100.0 birim')
-print('  static final Path lion = _decode(const <double>[')
+print(f'  // {NAME}: {sum(1 for s in out)} komut, {w:.1f}x100.0 birim')
+print(f'  static final Path {NAME} = _decode(const <double>[')
 line = '    '
 for v in data:
     t = (str(v) if isinstance(v, int) else (f'{v:g}' if v != int(v) else f'{int(v)}')) + ', '

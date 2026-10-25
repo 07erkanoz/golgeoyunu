@@ -1071,7 +1071,7 @@ const levels = <LevelDef>[
     ],
     // S2a · Unutulmuş Gölgehane: yolun sonundaki boşluğun dibinde taş gibi
     // boyanmış perde (sahanlığın sol üst hücresi); ardında ustanın odası.
-    surprises: [('golgehane', 45, 15)],
+    surprises: [('golgehane', 45, 15), ('karagoz', 44, 13)],
   ),
   LevelDef(
     title: 'II · KULE',

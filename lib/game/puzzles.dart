@@ -2097,6 +2097,47 @@ class AnimalCrate extends Crate {
   @override
   int get weight => kind == AnimalKind.elephant ? 3 : 2;
 
+  /// Son itilişten beri geçen süre (eşinin gölgesi bu sırada ısınır).
+  double sincePush = 99;
+
+  @override
+  double push(double dx, {int depth = 0}) {
+    final moved = super.push(dx, depth: depth);
+    if (moved != 0) {
+      sincePush = 0;
+      if (depth == 0) _showMate();
+    }
+    return moved;
+  }
+
+  @override
+  void update(double dt) {
+    super.update(dt);
+    sincePush += dt;
+  }
+
+  /// İlk itilişte kamera bu hayvanın eşinin gölgesini gösterir (ekranda
+  /// değilse): hangi heykelin nereye gideceği baştan belli olsun.
+  void _showMate() {
+    final key = 'esGoster:${game.levelIndex}:${kind.name}:${home.x.round()}';
+    if (game.eventSeen(key)) return;
+    Pedestal? mate;
+    var best = double.infinity;
+    for (final p in game.world.children.whereType<Pedestal>()) {
+      if (p.kind != kind || p.matched) continue;
+      final d = (p.position - position).length;
+      if (d < best) {
+        best = d;
+        mate = p;
+      }
+    }
+    if (mate == null) return;
+    game.markEvent(key);
+    final at = mate.position - Vector2(0, kTile * 1.6);
+    final view = game.camera.visibleWorldRect.deflate(kTile * 2);
+    if (!view.contains(Offset(at.x, at.y))) game.focus(at, hold: 1.4);
+  }
+
   @override
   void render(Canvas canvas) {
     const s = Crate.side;
@@ -2191,24 +2232,52 @@ class Pedestal extends PositionComponent
     return [this];
   }
 
+  /// Eşi yakında ya da itiliyor: gölge ısınır, kenarı ışır (0..1).
+  double _hot = 0;
+
+  /// Yanlış hayvan önüne gelince gölge "hayır" der gibi sallanır.
+  double _no = 0;
+  AnimalCrate? _wrong;
+
   @override
   void update(double dt) {
     super.update(dt);
     _t += dt;
+    _no = math.max(0, _no - dt);
     if (matched) {
       _glow = math.min(1, _glow + dt);
+      _hot = math.max(0, _hot - dt);
       return;
     }
+    var hot = 0.0;
+    AnimalCrate? wrong;
     for (final a in game.world.children.whereType<AnimalCrate>()) {
-      if (a.kind != kind) continue;
       final cx = a.position.x + Crate.side / 2;
       final feet = a.position.y + Crate.side;
-      if ((cx - position.x).abs() < 14 && (feet - position.y).abs() < 4) {
+      final dx = (cx - position.x).abs();
+      final level = (feet - position.y).abs() < 4;
+      if (a.kind != kind) {
+        if (dx < 16 && level) wrong = a;
+        continue;
+      }
+      if ((feet - position.y).abs() < 3 * kTile) {
+        final near = (1 - dx / (10 * kTile)).clamp(0.0, 1.0);
+        final pushed = a.sincePush < 1.5 ? 1.0 : 0.0;
+        hot = math.max(hot, math.max(near, pushed * 0.7 + near * 0.3));
+      }
+      if (dx < 14 && level) {
         matched = true;
         GameAudio.instance.play('memory', volume: 0.6);
         _openIfAllMatched();
       }
     }
+    // Yanlış hayvan geldi: bir kez sallanır.
+    if (wrong != null && wrong != _wrong) {
+      _no = 0.7;
+      GameAudio.instance.play('fizzle', volume: 0.4);
+    }
+    _wrong = wrong;
+    _hot = approach(_hot, hot, dt, 0.25);
   }
 
   /// Bu gölgeye en yakın kapı, o kapıya bağlı bütün gölgeler eşini bulunca
@@ -2240,10 +2309,48 @@ class Pedestal extends PositionComponent
 
   @override
   void render(Canvas canvas) {
+    // Gölgenin perdesi: duvarda fenerle aydınlanmış, ahşap çerçeveli bir
+    // pencere. Heykellerin kendi gölgelerinden ayrılsın, "burası bir
+    // sahne, oyuncusunu bekliyor" desin.
+    final art = ArkAnimal.of(arkKind(kind));
+    final b = art.silhouette.getBounds().shift(Offset(0, -kTile * 0.4));
+    final screen = RRect.fromRectAndRadius(
+      Rect.fromLTRB(b.left - 12, b.top - 12, b.right + 12, -2),
+      const Radius.circular(6),
+    );
+    final pulse = 0.5 + 0.5 * math.sin(_t * 4);
+    canvas.drawRRect(
+      screen,
+      Paint()
+        ..shader = Gradient.radial(screen.center, screen.width * 0.7, [
+          const Color(0xFFFFD9A0)
+              .withValues(alpha: 0.2 + 0.18 * _hot + 0.25 * _glow),
+          const Color(0xFFE0A15F).withValues(alpha: 0.05 + 0.08 * _hot),
+        ]),
+    );
+    canvas.drawRRect(
+      screen,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.5
+        ..color = const Color(0xFF3A2414),
+    );
+    canvas.drawRRect(
+      screen.deflate(2.5),
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 0.8
+        ..color = const Color(0xFFF0C080)
+            .withValues(alpha: 0.25 + 0.5 * _hot * pulse + 0.4 * _glow),
+    );
+    if (_no > 0) {
+      canvas.save();
+      canvas.translate(math.sin(_no * 40) * 4 * _no, 0);
+    }
     // Duvara düşen eş gölge; eşleşince ışıkla çevrelenir.
     final shade = Paint()
       ..color = const Color(0xFF0A0604)
-          .withValues(alpha: 0.55 + 0.1 * math.sin(_t));
+          .withValues(alpha: 0.8 + 0.08 * math.sin(_t));
     canvas.save();
     // Oyma hayvanla aynı yöne bakar: önüne gelince ikisi üst üste oturur.
     // Fener titredikçe gölge biraz büyüyüp küçülür, yana yatar.
@@ -2257,8 +2364,21 @@ class Pedestal extends PositionComponent
         0, 0, 0, 1,
       ]),
     );
-    drawAnimalShadow(canvas, arkKind(kind), shade.color, blur: 2.2);
+    // Eşi yaklaşınca gölgenin kenarı ılık ışır.
+    if (_hot > 0.02 && !matched) {
+      canvas.drawPath(
+        art.silhouette,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 3
+          ..color = kWarmLight.withValues(
+            alpha: 0.55 * _hot * (0.6 + 0.4 * pulse),
+          ),
+      );
+    }
+    drawAnimalShadow(canvas, arkKind(kind), shade.color, blur: 1.2);
     canvas.restore();
+    if (_no > 0) canvas.restore();
     if (_glow > 0) {
       glowDot(canvas, Offset(0, -kTile), 70, kWarmLight, 0.4 * _glow);
     }

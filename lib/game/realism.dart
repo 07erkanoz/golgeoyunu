@@ -10,6 +10,7 @@ import 'erlik.dart' show Kormos;
 import 'entities.dart';
 import 'fairy_chimney.dart';
 import 'golge_game.dart';
+import 'joy.dart';
 import 'level.dart';
 import 'levels.dart';
 import 'nemrut.dart' show StoneGiant;
@@ -1292,7 +1293,9 @@ class NearLayer extends Component with HasGameReference<GolgeGame> {
         if (c is Guard || c is Watcher || c is Wolf || c is Kormos)
           (c as PositionComponent).toRect()
         else if (c is StoneGiant)
-          c.toRect(),
+          c.toRect()
+        else if (c is KaragozSahne)
+          c.screenRect,
     ];
     // Yerebatan dışında yalnız tepeden sarkan, küçük şekiller: yerden
     // yükselen iri şekiller (kaya, kristal, fıçı, bulut...) oyunu örtüyordu.

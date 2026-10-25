@@ -31,6 +31,7 @@ import 'shafts.dart';
 import 'ski_decor.dart';
 import 'ski_fx.dart';
 import 'ski_light.dart';
+import 'joy.dart';
 import 'levels.dart';
 import 'narration.dart';
 import 'perde.dart';
@@ -1024,6 +1025,8 @@ class GolgeGame extends FlameGame with KeyboardEvents {
             TasBekci(Vector2(c * kTile.toDouble(), r * kTile.toDouble()))
           else if (name == 'golgehane')
             ..._golgehane(c, r),
+        ...joyPlaces(level),
+        for (final c in level.checkpointCells) UmayBirds(c),
         for (final (c, r, kind) in level.def.vistas)
           VistaPoint(
             Vector2((c + 0.5) * kTile, (r + 0.5) * kTile.toDouble()),
@@ -1903,6 +1906,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
       _updateBard(dt);
       _updateTreeTales(p, dt);
       _updateSurprises(p);
+      _updateShadowPlay(p, dt);
       guide.update(dt);
     } else {
       threat = math.max(0, threat - dt * 2);
@@ -2018,6 +2022,76 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         p.center.x > level.checkpointCells.first.x + 4 * kTile &&
         _clearAhead(p, 2 * kTile)) {
       if (p.shadowShy()) foundSecret('utangac');
+    }
+  }
+
+  // ------------------------------------------------- gölge oyunları (N1)
+
+  /// Sâye'nin kıpırdamadan durduğu süre ve gölgenin bir sonraki oyuna dek
+  /// beklemesi.
+  double _idleFor = 0;
+  double _playWait = 0;
+  int _playTurn = 0;
+
+  /// Gölgenin oynamaya başlaması için durma süresi; iki oyun arası.
+  static const double playIdle = 4.5;
+  static const double playGap = 40;
+
+  /// Bölüme göre gölgenin dönüştüğü hayvanlar (sırayla).
+  static List<ShadowAnimal> playAnimals(LevelTheme t) => switch (t) {
+    LevelTheme.cistern => const [ShadowAnimal.rabbit, ShadowAnimal.bird],
+    LevelTheme.cave => const [ShadowAnimal.fox, ShadowAnimal.rabbit],
+    LevelTheme.cliffs => const [ShadowAnimal.bird, ShadowAnimal.deer],
+    LevelTheme.sky ||
+    LevelTheme.kaf ||
+    LevelTheme.heavens => const [ShadowAnimal.bird, ShadowAnimal.horse],
+    LevelTheme.snow => const [ShadowAnimal.wolf, ShadowAnimal.fox],
+    LevelTheme.ark => const [
+      ShadowAnimal.horse,
+      ShadowAnimal.lion,
+      ShadowAnimal.deer,
+      ShadowAnimal.rabbit,
+    ],
+    LevelTheme.nemrut => const [ShadowAnimal.lion, ShadowAnimal.bird],
+    LevelTheme.peri => const [ShadowAnimal.horse, ShadowAnimal.bird],
+    LevelTheme.konya => const [ShadowAnimal.bird, ShadowAnimal.deer],
+    LevelTheme.underworld => const [ShadowAnimal.wolf, ShadowAnimal.fox],
+    LevelTheme.ergenekon => const [ShadowAnimal.wolf, ShadowAnimal.horse],
+    LevelTheme.forest => const [
+      ShadowAnimal.deer,
+      ShadowAnimal.fox,
+      ShadowAnimal.rabbit,
+    ],
+  };
+
+  /// Sâye sakin bir yerde durunca gölgesi kendi kendine bir hayvana dönüşüp
+  /// oynar; bölümde ilk görüşte sır sayacına eklenir.
+  void _updateShadowPlay(Player p, double dt) {
+    _playWait = math.max(0, _playWait - dt);
+    final still =
+        p.onGround &&
+        p.state == PlayerState.normal &&
+        p.velocity.x.abs() < 8 &&
+        !p.crouching &&
+        !p.hidden &&
+        !p.skiing &&
+        !onHorse &&
+        !p.isDead;
+    _idleFor = still ? _idleFor + dt : 0;
+    if (p.shadowPlaying) {
+      if (!secretSeen('golgeOyunu')) foundSecret('golgeOyunu');
+      return;
+    }
+    if (_idleFor < playIdle || _playWait > 0 || !calmMoment) return;
+    // Karagöz perdesi oynarken gölge oyunu araya girmez.
+    if (world.children.whereType<KaragozSahne>().any((k) => k.playing)) {
+      return;
+    }
+    final kinds = playAnimals(level.def.theme);
+    if (p.shadowPlay(kinds[_playTurn % kinds.length])) {
+      _playTurn++;
+      _playWait = playGap;
+      _idleFor = 0;
     }
   }
 
@@ -2139,6 +2213,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
           k.shade ? 'shadePlank' : 'lightPlank',
         Guard g when near(g, 9, 3) => 'guard',
         ShieldCrate s when near(s, 5, 3) => 'shield',
+        Bouncer b when near(b, 5, 3) => 'bouncer',
         MillStone m when near(m, 5, 3) => 'millstone',
         AnimalCrate a when near(a, 4, 3) => 'animal',
         Crate k when near(k, 3, 2) => 'crate',

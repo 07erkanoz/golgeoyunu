@@ -807,7 +807,8 @@ extension _EastBackdrops on Backdrop {
             0.94 +
             0.04 * math.sin(_t * 5.3 + gx) +
             0.02 * math.sin(_t * 13 + gx);
-        final alpha = (0.72 - off.abs() * 0.3) * flick;
+        // Soluk: bulmacanın çerçeveli hedef gölgeleriyle karışmasın.
+        final alpha = (0.34 - off.abs() * 0.14) * flick;
         canvas.save();
         canvas.translate(gx, bottom - 2);
         canvas.scale(scale * (1.15 + off.abs() * 0.25), scale * 1.15);
