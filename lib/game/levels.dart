@@ -178,7 +178,11 @@ class LevelDef {
     this.barrels = const [],
     this.starStreams = const [],
     this.ulker,
+    this.kites = const [],
   });
+
+  /// Gökyolu: rüzgârda salınan uçurtmalar (sütun, satır, evre).
+  final List<(int, int, double)> kites;
 
   /// Kuş Yolu: ışık nehirleri (hücre noktaları; içine gireni taşır) ve
   /// Ülker'in yedi yıldızı ile yanınca beliren köprü (ilk sütun, son
@@ -1219,6 +1223,16 @@ const levels = <LevelDef>[
     bard: 'Ozan der ki: Bulut yol olur, yiğit yolcu; kanatlı at yolu önden bilir.',
     bardEn: 'The bard says: the cloud becomes a road, the brave its traveller; the winged horse knows the way ahead.',
     cameos: [('tulpar', 140, 8)],
+    // Uzatma: lodos (arkadan), poyraz (önden) ve uçurtmalar.
+    yel: [(290, 0, 299, 12, 1), (300, 0, 314, 12, -1), (318, 0, 331, 12, 1)],
+    kites: [
+      (353, 9, 0),
+      (361, 8, 1.2),
+      (369, 10, 2.4),
+      (377, 8, 3.4),
+      (385, 9, 0.6),
+      (393, 8, 1.8),
+    ],
     subtitle: 'Kaf\'a giden yol buluttandır.',
     theme: LevelTheme.sky,
     wings: true,
@@ -1234,6 +1248,8 @@ const levels = <LevelDef>[
       'Gölgeden bir köprü: ışık değerse dağılır. Karanlığını kolla.',
       'Şimşek çakınca bir an her şey görünür: önündeki yol da.',
       'Kırık güneşin kapısı. Kandilciler onu kimseye açmaz.',
+      'Evliya Çelebi anlatır: Hezarfen lodosla uçtu. Arkadan esen lodos seni ileri taşır; önden esen poyrazda çömel, taşın ardına sığın.',
+      'Aşağıdaki damlarda çocuklar uçurtma uçuruyor. Uçurtmalar rüzgârda salınır; birinden ötekine atla.',
     ],
     whispersEn: [
       'A shard of the broken sun… Its warmth is familiar.',
@@ -1244,6 +1260,8 @@ const levels = <LevelDef>[
       'A bridge made of shadow: touch it with light and it scatters. Guard its darkness.',
       'When the lightning strikes, for a moment everything is seen: the road ahead too.',
       'The gate of the broken sun. The Lamplighters open it for no one.',
+      'Evliya Celebi tells that Hezarfen flew with the lodos. The lodos at your back carries you on; when the poyraz blows in your face, crouch behind a stone.',
+      'On the roofs below, children are flying kites. The kites sway in the wind; leap from one to the next.',
     ],
     memories: [
       'Hatıra · Perdenin köşesine bir hüdhüd işlemişti. "Yol gösterene borçlusun," derdi.',
@@ -1269,6 +1287,8 @@ const levels = <LevelDef>[
       'Balon Geçidi',
       'Gölgeden Köprü',
       'Fırtına Adaları',
+      'Lodos ile Poyraz',
+      'Uçurtmalar',
       'Güneşin Kapısı',
     ],
     areasEn: [
@@ -1281,11 +1301,13 @@ const levels = <LevelDef>[
       'The Balloon Pass',
       'The Bridge of Shadow',
       'The Storm Isles',
+      'Lodos and Poyraz',
+      'The Kites',
       'The Gate of the Sun',
     ],
     map: kMapGokyolu,
     // Kandilcilerin gök kampında boşluk: yol fenerle belirir.
-    coldRuns: [(312, 8, 8)],
+    coldRuns: [(446, 8, 8)],
   ),
   LevelDef(
     title: 'IV · KAF',

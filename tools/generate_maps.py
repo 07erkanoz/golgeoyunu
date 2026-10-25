@@ -293,7 +293,26 @@ s.put(310,0,'<'); s.put(321,12,'>')
 s.fill(322,7,323,7,'~')                      # yolun ucu: dinlenme
 s.put(325,7,'B'); s.put(328,7,'K'); s.put(331,7,'E'); s.put(329,7,'B')
 W=336
-lvl3=s.rows()
+# Uzatma (2026-10-25): iki kesit araya girer (273. sütunda, GOKYOLU_INS).
+# Y1) Lodos ile Poyraz: Evliya'ya göre Hezarfen lodosla uçtu. Arkadan esen
+# lodos süzülüşü uzatır, önden esen poyrazda çömel (levels.dart yel).
+y1=G(70,22)
+for c0,c1 in ((0,4),(13,17),(27,31),(43,47),(59,69)):
+    y1.fill(c0,8,c1,9,'#')
+y1.put(30,7,'#')                              # poyrazda ardına sığınılan taş
+y1.put(46,7,'#')
+y1.put(1,7,'p'); y1.put(2,7,'K'); y1.put(3,7,'9'); y1.put(15,7,'F')
+y1.put(62,7,'B')
+# Y2) Uçurtmalar: aşağıdaki damlardan yükselen çocuk uçurtmaları
+# (levels.dart kites); kuştan kuşa değil, uçurtmadan uçurtmaya.
+y2=G(64,22)
+y2.fill(0,8,4,9,'#'); y2.fill(58,8,63,9,'#')
+y2.put(1,7,'p'); y2.put(2,7,'K'); y2.put(3,7,'('); y2.put(60,7,'B')
+GOKYOLU_INS=[(273, y1.rows()), (273, y2.rows())]
+rows=s.rows()
+for at, ins in reversed(GOKYOLU_INS):
+    rows=[r[:at]+x+r[at:] for r,x in zip(rows,ins)]
+lvl3=rows
 
 # ------------------------------------------------------------ IV · KAF
 W,H=247,24

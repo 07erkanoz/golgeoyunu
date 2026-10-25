@@ -438,3 +438,94 @@ class BirdRing extends PositionComponent with HasGameReference<GolgeGame> {
     }
   }
 }
+
+// ================================================================ Uçurtmalar
+//
+// Gökyolu: aşağıdaki damlardan çocukların uçurtmaları yükselir. İpleri
+// rüzgârda salınan uçurtmalara basarak geniş boşluk geçilir.
+
+/// İpi aşağıya bağlı, rüzgârda salınan uçurtma: üstüne basılır.
+class KiteDeck extends Deck {
+  KiteDeck(int col, int row, {this.phase = 0})
+    : _anchor = Vector2((col + 0.5) * kTile, row * kTile.toDouble()),
+      super(position: Vector2.zero(), size: Vector2(34, 8));
+
+  final Vector2 _anchor;
+  final double phase;
+  double _t = 0;
+
+  /// Salınım: yatay ve dikey genlik (piksel), dönem (sn).
+  static const double swayX = 1.6 * kTile;
+  static const double swayY = 0.8 * kTile;
+  static const double period = 4.6;
+
+  @override
+  void step(double dt) {
+    _t += dt;
+    final a = (_t + phase) * 2 * math.pi / period;
+    moveTo(
+      Vector2(
+        _anchor.x + math.sin(a) * swayX - size.x / 2,
+        _anchor.y + math.cos(a * 2) * swayY * 0.5 - math.sin(a) * swayY * 0.5,
+      ),
+    );
+  }
+
+  @override
+  void render(Canvas canvas) {
+    final cx = size.x / 2;
+    // İp: aşağıya, ekranın dışındaki damlara.
+    canvas.drawLine(
+      Offset(cx, 14),
+      Offset(cx - 60 + math.sin(_t) * 10, 900),
+      Paint()
+        ..color = const Color(0xFFE8E0D0).withValues(alpha: 0.35)
+        ..strokeWidth = 1,
+    );
+    // Eşkenar dörtgen uçurtma: üst yüzü basılan yer.
+    final kite = Path()
+      ..moveTo(0, 2)
+      ..lineTo(cx, -6)
+      ..lineTo(size.x, 2)
+      ..lineTo(cx, 18)
+      ..close();
+    canvas.drawPath(kite, Paint()..color = const Color(0xFFB8402E));
+    canvas.drawPath(
+      Path()
+        ..moveTo(cx, -6)
+        ..lineTo(cx, 18)
+        ..moveTo(0, 2)
+        ..lineTo(size.x, 2),
+      Paint()
+        ..color = const Color(0xFF3A1A10)
+        ..strokeWidth = 1.2
+        ..style = PaintingStyle.stroke,
+    );
+    canvas.drawPath(
+      Path()
+        ..moveTo(cx, -6)
+        ..lineTo(size.x, 2)
+        ..lineTo(cx, 2)
+        ..close(),
+      Paint()..color = const Color(0xFFE8B850),
+    );
+    // Kuyruk: salınan kurdeleler.
+    final tail = Paint()
+      ..color = const Color(0xFFE8D8B0)
+      ..strokeWidth = 1.4
+      ..style = PaintingStyle.stroke;
+    final t = Path()..moveTo(cx, 18);
+    for (var i = 1; i <= 5; i++) {
+      t.lineTo(cx + math.sin(_t * 5 + i) * 5, 18 + i * 6);
+    }
+    canvas.drawPath(t, tail);
+    // Üst kenarda ışık: basılacak yer.
+    canvas.drawLine(
+      const Offset(4, 1.5),
+      Offset(size.x - 4, 1.5),
+      Paint()
+        ..color = const Color(0xFFFFF0D0).withValues(alpha: 0.6)
+        ..strokeWidth = 1.2,
+    );
+  }
+}

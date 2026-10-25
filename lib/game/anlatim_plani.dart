@@ -55,7 +55,10 @@ const whisperPlan = <int, Map<int, (WhisperPlace, int?)>>{
     4: (WhisperPlace.tehlike, null),
     5: (WhisperPlace.yazi, null),
     6: (WhisperPlace.yazi, null),
-    7: (WhisperPlace.agac, 275),
+    7: (WhisperPlace.agac, 410),
+    // Uzatma (elle eklendi): Lodos ile Poyraz, Uçurtmalar.
+    8: (WhisperPlace.agac, 275),
+    9: (WhisperPlace.agac, 345),
   },
   3: {
     0: (WhisperPlace.agac, 17),

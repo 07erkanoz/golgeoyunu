@@ -72,7 +72,9 @@ DECKS = {'kMapKaf': [(122 + c, r, 2) for c, r in _KAF_STEPS]
          + [(c, 16, 2) for c in range(275, 324, 3)],
          'kMapGok': _stream([(295, 23), (300, 20), (306, 16), (312, 13), (318, 11), (323, 11)])
          + _stream([(362, 11), (367, 14), (373, 18), (379, 22), (384, 23)])
-         + [(c, 12, 2) for c in range(334, 356, 2)]}
+         + [(c, 12, 2) for c in range(334, 356, 2)],
+         # Gökyolu: uçurtmalar (salınır; denetimde orta yerlerinde tahta).
+         'kMapGokyolu': [(c - 1, r, 2) for c, r in ((353, 9), (361, 8), (369, 10), (377, 8), (385, 9), (393, 8))]}
 
 # Göğün katları: `W` Tulpar'dır (kanat değil). Ona varılınca Tulpar'la uçulur;
 # uçuş benzetilmez: Tulpar'ın sağındaki hedefler varılmış sayılır (yaklaşık,

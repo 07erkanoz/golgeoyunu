@@ -1051,6 +1051,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         for (final (c, r, n) in level.def.mirrorSteps) MirrorStep(c, r, n),
         for (final (c0, c1, r) in level.def.birdBridges)
           ...BirdBridge(c0, c1, r).birds(),
+        for (final (c, r, ph) in level.def.kites) KiteDeck(c, r, phase: ph),
         for (final cells in level.def.starStreams) StarStream(cells),
         if (level.def.ulker case (final stars, final bridge))
           UlkerCluster(stars, bridge),
@@ -2316,6 +2317,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
           level.def.theme == LevelTheme.underworld ? 'kut' : 'lightCage',
         KandilciBasi k when near(k, 22, 6) && !k.solved => 'finale',
         BirdDeck b when near(b, 5, 4) => 'birdBridge',
+        KiteDeck k when near(k, 7, 5) => 'kite',
         LeakJet j when near(j, 6, 4) && !j.plugged => 'leak',
         RollingBarrel b when near(b, 7, 3) => 'barrel',
         Calkuyruk c when near(c, 5, 4) && !onHorse => 'horse',
