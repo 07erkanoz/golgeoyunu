@@ -1166,6 +1166,7 @@ const levels = <LevelDef>[
       'Galata\'nın altında mahzenler yanıyor. Alevin de bir nefesi var; dinle.',
       'Bir sandık bir alevi susturur. Hangisini susturacağını iyi seç.',
       'Kulenin çanı rüzgârda inler. Yanında yukarı basıp bir kez sen çal: Kandilciler sese gelir.',
+      'Kulenin dibi zindandır. Kanuni zamanında tersanede çalıştırılan esirler burada yatarmış. Karanlık ışığını yer; zindancının fenerinden uzak dur, zincire tutun.',
     ],
     whispersEn: [
       'The waters of the Horn remember everything, even those who fall.',
@@ -1176,8 +1177,10 @@ const levels = <LevelDef>[
       'Beneath Galata the cellars are burning. Fire breathes too; listen.',
       'One crate can silence one flame. Choose well which.',
       'The tower bell moans in the wind. Press up beside it and ring it once yourself: the Lamplighters come to its voice.',
+      'The foot of the tower is a dungeon. In Suleiman\'s time the captives who laboured in the shipyard slept here. The dark eats your light; keep away from the jailer\'s lantern and hold on to the chain.',
     ],
     memories: [
+      'Hatıra · Ustam zindandan kurtulan bir esirin gölgesini perdeye çıkarırdı. "Zincir kırılır, Sâye," derdi. "Gölge zaten hiç bağlanmamıştı."',
       'Hatıra · "Haliç bir aynadır," derdi ustam. "Şehir kendine orada bakar."',
       'Hatıra · Kulenin tepesini gösterip "Bir gün oradan bütün perdeyi göreceksin," demişti.',
       'Hatıra · Gözcülerin ışığı soğuktur; çünkü onlar ışığı sevmez, sayar.',
@@ -1185,6 +1188,7 @@ const levels = <LevelDef>[
       'Hatıra · Kuleden şehre bakarken sorardı: "Bunca ışığın gölgesi nereye düşer?"',
     ],
     memoriesEn: [
+      'Memory · My master used to bring the shadow of a captive who escaped the dungeon onto the screen. "Chains break, Saye," he said. "The shadow was never bound."',
       'Memory · "The Horn is a mirror," he said. "The city looks at itself there."',
       'Memory · He pointed at the top of the tower: "One day you will see the whole screen from there."',
       'Memory · The Watchers\' light is cold, for they do not love the light; they count it.',
@@ -1194,6 +1198,7 @@ const levels = <LevelDef>[
     place: 'Galata Kulesi · İstanbul, Temmuz 1660',
     placeEn: 'Galata Tower · Istanbul, July 1660',
     areas: [
+      'Kulenin Zindanı',
       'Yanan Mahzen',
       'Haliç Kıyısı',
       'Kargaların Yuvası',
@@ -1205,6 +1210,7 @@ const levels = <LevelDef>[
       'Külahın Tepesi',
     ],
     areasEn: [
+      'The Tower Dungeon',
       'The Burning Cellar',
       'The Golden Horn Shore',
       'The Crows\' Nest',

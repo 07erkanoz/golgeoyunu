@@ -218,7 +218,26 @@ for (bc0, bc1, br) in [(4, 6, 137), (23, 25, 158), (24, 26, 18)]:
     if all(k.g[br][c] == '.' for c in range(bc0, bc1 + 1)):
         k.fill(bc0, br, bc1, br, '=')
 H = k.H
-lvl2=k.rows()
+# Uzatma (2026-10-25): kulenin zindanı haritanın altına eklenir (eski
+# satırlar yerinde; başlangıç zindana iner). Kanuni döneminde kule,
+# Kasımpaşa tersanesinde çalıştırılan esirlerin zindanıydı.
+z=G(30,42)
+z.fill(0,0,1,41,'#'); z.fill(28,0,29,41,'#'); z.fill(0,40,29,41,'#')
+z.put(4,39,'P'); z.put(5,39,'p'); z.put(7,39,'9'); z.put(9,39,'F')
+z.put(2,14,'x'); z.put(27,39,'X')                 # karanlık: ışığı yer
+z.fill(11,37,15,37,'='); z.fill(17,34,22,34,'='); z.fill(23,31,26,31,'=')
+z.put(24,30,'K')
+z.fill(27,18,27,30,'|')                           # duvardaki zincir
+z.fill(19,17,26,17,'='); z.put(22,16,'G'); z.fill(20,16,20,16,'~')
+z.fill(12,15,16,15,'='); z.put(14,14,'F')
+z.put(9,13,'O'); z.put(6,11,'O')
+z.fill(2,9,5,9,'='); z.put(4,8,'M')
+z.fill(3,0,3,8,'|')                               # zindanın kapağına zincir
+rows=k.rows()
+rows[167]=rows[167][:4]+'.'+rows[167][5:]         # eski başlangıç
+for r in (168,169):
+    rows[r]=rows[r][:3]+'|'+rows[r][4:]           # zindanın kapağı
+lvl2=rows+z.rows()
 
 # ------------------------------------------------------------ III · GÖKYOLU
 W,H=150,22
