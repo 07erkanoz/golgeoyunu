@@ -343,4 +343,37 @@ void main() {
       expect(game.breath, greaterThanOrEqualTo(b), reason: 'ak nefes azalmaz');
     },
   );
+
+  testWithGame<GolgeGame>(
+    'Kişi\'nin taşına sudan çıkılır, öbür yandan yeniden dalınır',
+    GolgeGame.new,
+    (game) async {
+      final p = await load(game);
+      put(p, 341, kDenizSurface + 2.0);
+      run(game, 0.3);
+      expect(p.swimming, isTrue);
+      game.controls.keyboard.up = true;
+      run(game, 2);
+      game.controls.keyboard
+        ..up = false
+        ..right = true;
+      run(game, 0.8);
+      game.controls.keyboard.jump = true;
+      run(game, 0.05);
+      game.controls.keyboard.jump = false;
+      run(game, 1.2);
+      game.controls.keyboard.right = false;
+      run(game, 1.0);
+      expect(p.swimming, isFalse, reason: 'taşın üstünde');
+      expect(p.onGround, isTrue, reason: '${p.state} ${p.position / kTile}');
+      expect(p.center.x, greaterThan(344 * kTile));
+      // Öbür yana yürüyüp yeniden suya.
+      game.controls.keyboard.right = true;
+      run(game, 2);
+      game.controls.keyboard.right = false;
+      run(game, 0.5);
+      expect(p.swimming, isTrue);
+      expect(p.center.x, greaterThan(349 * kTile));
+    },
+  );
 }

@@ -156,6 +156,22 @@ def main():
         return best
 
     ok = True
+    # Suyu boydan boya kesen kayanın üstü su yüzünden en çok bir kare yüksek
+    # olmalı: yüzeyden kulaçla ancak o kadar çıkılır (Kişi'nin taşı yüksekti,
+    # geçilmiyordu).
+    for c in range(1, W - 1):
+        if not all(solid(c, r) for r in range(S, H)):
+            continue
+        if solid(c - 1, S) and solid(c + 1, S):
+            continue
+        top = S
+        while top > 0 and solid(c, top - 1):
+            top -= 1
+        if top == 0:
+            continue
+        if S - top > 1:
+            print(f'  YÜKSEK DUVAR sütun {c}: su yüzünden {S - top} kare (en çok 1)')
+            ok = False
     print(f'nefes yolu: {BREATH_TILES:.0f} kare · {len(members)} nefes kümesi, '
           f'{len(seen)} tanesine varılıyor')
     for name, ch in (('Umay', 'K'), ('hatıra', 'M'), ('ateşböceği', 'F'),

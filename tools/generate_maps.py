@@ -1960,8 +1960,10 @@ dz.put(254,DS+22,'p')
 # F · Kişi'nin Taşı: tavan açılır, dipten yüzeye bir taş.
 dcv(318,DS+22,329,DS+36)                 # koridorun ucundaki geniş su
 dcv(330,DS,359,dfloor(345)-1)
-dr(344,DS-4,348,DH-1)                    # Kişi'nin taşı
-dz.put(346,DS-5,'K'); dz.put(345,DS-5,'5'); dz.put(347,DS-5,'M')
+# Kişi'nin taşı: tepesi su yüzünün bir kare üstünde (yüzeyden kulaçla
+# çıkılır; daha yüksekte zıplama yetişmiyordu, taş da yolu kesiyor).
+dr(344,DS-1,348,DH-1)
+dz.put(346,DS-2,'K'); dz.put(345,DS-2,'5'); dz.put(347,DS-2,'M')
 dz.put(332,DS+8,'p')
 # G · Karanlık Dip.
 dr(360,0,DW-2,DS+3)
