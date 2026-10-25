@@ -224,7 +224,9 @@ H = k.H
 z=G(30,42)
 z.fill(0,0,1,41,'#'); z.fill(28,0,29,41,'#'); z.fill(0,40,29,41,'#')
 z.put(4,39,'P'); z.put(5,39,'p'); z.put(7,39,'9'); z.put(9,39,'F')
-z.put(2,14,'x'); z.put(27,39,'X')                 # karanlık: ışığı yer
+# Zindan loş ama karanlık bölge değil: oyunun ilk anı burada, ateşböcekleri
+# sönmesin (önceden bütün zindan ışığı yiyordu, başlangıçtaki iki
+# ateşböceği tırmanış bitmeden sönüyordu).
 z.fill(11,37,15,37,'='); z.fill(17,34,22,34,'='); z.fill(23,31,26,31,'=')
 z.put(24,30,'K')
 z.fill(27,18,27,30,'|')                           # duvardaki zincir
