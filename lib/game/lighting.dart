@@ -13,6 +13,7 @@ import 'nemrut.dart';
 import 'palette.dart';
 import 'puzzles.dart';
 import 'joy.dart';
+import 'kaf_vadi.dart';
 import 'umay.dart';
 import 'gokboru.dart';
 import 'golgehane.dart';
@@ -277,6 +278,11 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
         case GolgehaneSahne s when s.lit:
           _light(canvas, s.lampAt, 190, 0.9);
         // Yüzen tahta karanlıkta da seçilsin: suyun parıltısı onu yalar.
+        // Aynalı gölün yüzü ve basamakların yansıması karanlıkta da seçilsin.
+        case MirrorStep m when m.lake != null:
+          _light(canvas, m.reflectionCenter, 34, 0.35);
+        case BirdDeck b:
+          _light(canvas, b.center.toOffset(), 30, 0.25);
         case FloatPlank f:
           _light(canvas, f.center.toOffset(), 58, 0.4);
         case Bouncer z:

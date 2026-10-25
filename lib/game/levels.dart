@@ -171,7 +171,18 @@ class LevelDef {
     this.finaleLocks = const [],
     this.floodSpeed,
     this.dawn,
+    this.lake,
+    this.mirrorSteps = const [],
+    this.birdBridges = const [],
   });
+
+  /// Aynalı göl (ilk sütun, son sütun, yüzeyin satırı) ve yalnız yansımada
+  /// görünen basamaklar (sütun, satır, uzunluk): Kaf'ın Hayret Vadisi.
+  final (int, int, int)? lake;
+  final List<(int, int, int)> mirrorSteps;
+
+  /// Kuşlardan köprüler (ilk sütun, son sütun, uçuş satırı): Otuz Kuş.
+  final List<(int, int, int)> birdBridges;
 
   /// Şafak (sütun aralığı): oturan tanrıların gölgeleri güneş yükseldikçe
   /// kısalır; Kandilciler güneşe çıkmaz, güneşteki Sâye'yi görmez.
@@ -1277,7 +1288,9 @@ const levels = <LevelDef>[
       'Kandilcilerin Gök Karakolu',
       'Gölge Köprüsü',
       'Rüzgârın Sırtı',
+      'Hayret Vadisi',
       'Simurg\'un Tüyleri',
+      'Otuz Kuş',
       'Simurg\'un Ayna Salonu',
     ],
     areasEn: [
@@ -1285,7 +1298,9 @@ const levels = <LevelDef>[
       'The Lamplighters\' Sky Post',
       'The Shadow Bridge',
       'The Back of the Wind',
+      'The Valley of Bewilderment',
       'The Feathers of the Simurgh',
+      'Thirty Birds',
       'The Simurgh\'s Hall of Mirrors',
     ],
     whispers: [
@@ -1297,6 +1312,8 @@ const levels = <LevelDef>[
       'Simurg buraya üç tüy bırakmış. Üçünü bulmayan aynayı göremez.',
       'Gölgeden köprüyü iki göz bekler. Birinin baktığı yer, öbürünün kör noktası.',
       'Kayalar da nefes alır; inip kalkarlar. Onlarla birlikte yüksel.',
+      'Hayret Vadisi. Attâr der ki kuşlar yedi vadiden geçti; birinde şaşkınlıktan yolu göremediler. Burada yol havada görünmez, suda görünür. Aşağı bak.',
+      'Otuz kuş Hüdhüd\'ün peşinde uçar. Sırtlarına güven, Sâye; onlar da Simurg\'u arıyor.',
     ],
     whispersEn: [
       'This is Qaf. The birds flew a thousand years, and thirty arrived.',
@@ -1307,6 +1324,8 @@ const levels = <LevelDef>[
       'The Simurgh left three feathers here. Whoever does not find all three will never see the mirror.',
       'Two eyes guard the bridge of shadow. Where one looks, the other is blind.',
       'Rocks breathe too; they rise and fall. Rise with them.',
+      'The Valley of Bewilderment. Attar says the birds crossed seven valleys; in one, bewilderment hid the way. Here the road cannot be seen in the air, only in the water. Look down.',
+      'Thirty birds fly after the Hoopoe. Trust their backs, Saye; they too are seeking the Simurgh.',
     ],
     memories: [
       'Hatıra · "Simurg diye bir kuş yoktur," derdi ustam. "Otuz kuş vardır. Ama bunu ancak varan bilir."',
@@ -1321,6 +1340,9 @@ const levels = <LevelDef>[
       'Memory · One day he drew thirty birds on the screen. Then he joined them all into a single figure: "There. The Simurgh."',
     ],
     map: kMapKaf,
+    lake: (128, 183, 20),
+    mirrorSteps: [(130, 17, 2), (134, 16, 2), (138, 17, 2), (148, 16, 2), (152, 16, 2), (156, 17, 2), (160, 17, 2), (168, 16, 2), (172, 16, 2), (176, 17, 2), (180, 17, 2)],
+    birdBridges: [(273, 325, 16)],
   ),
   LevelDef(
     title: 'V · AĞRI',

@@ -51,6 +51,11 @@ FOREST = {'kMapOtuken'}
 CAGES = {'kMapYesilKubbe': [(92, 51), (132, 51), (182, 51)]}
 FINALE = {'kMapYesilKubbe': [(266, 9), (272, 7), (296, 9)]}
 LOCK_ANY = {'kMapYesilKubbe'}
+# Kaf: aynalı gölün görünmeyen basamakları ve kuşlardan köprü (kuşlar
+# hareketli; denetimde uçuş satırında üç karede bir kuş sayılır).
+_KAF_STEPS = [(8,17),(12,16),(16,17),(26,16),(30,16),(34,17),(38,17),(46,16),(50,16),(54,17),(58,17)]
+DECKS = {'kMapKaf': [(122 + c, r, 2) for c, r in _KAF_STEPS]
+         + [(c, 16, 2) for c in range(275, 324, 3)]}
 
 # Göğün katları: `W` Tulpar'dır (kanat değil). Ona varılınca Tulpar'la uçulur;
 # uçuş benzetilmez: Tulpar'ın sağındaki hedefler varılmış sayılır (yaklaşık,
@@ -542,6 +547,9 @@ def audit(idx):
     if wings is None:
         return None
     rows = load(name)
+    # Haritada görünmeyen basamaklar (levels.dart): denetimde tahta sayılır.
+    for (c, r, n) in DECKS.get(name, []):
+        rows[r] = rows[r][:c] + '=' * n + rows[r][c + n:]
     if name in VEINS:
         rows = [r.replace('d', 'H') for r in rows]
     start = cells(rows, 'P')[0]

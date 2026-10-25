@@ -451,6 +451,9 @@ class Watcher extends PositionComponent with HasGameReference<GolgeGame> {
     }
   }
 
+  /// Nokta fenerin ışığında mı (kör değilken): Kaf'ın kuşları ürker.
+  bool lights(Vector2 target) => dazzled <= 0 && _inBeam(target);
+
   bool _inBeam(Vector2 target) {
     final d = target - lamp;
     final dist = d.length;

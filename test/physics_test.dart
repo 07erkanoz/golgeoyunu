@@ -1082,19 +1082,19 @@ void main() {
       GolgeGame.new,
       (game) async {
         expect(levels[3].title, 'IV · KAF');
-        var p = await place(game, 3, 215, 12);
+        var p = await place(game, 3, 349, 12);
         for (final g in game.world.children.whereType<Guard>().toList()) {
           g.removeFromParent();
         }
         run(game, 0.3);
         press(game);
         p.position.setFrom(
-          Level.standOn(Vector2(224 * kTile, 12 * kTile), Player.w, Player.h),
+          Level.standOn(Vector2(358 * kTile, 12 * kTile), Player.w, Player.h),
         );
         run(game, 0.3);
         press(game);
         p.position.setFrom(
-          Level.standOn(Vector2(224 * kTile, 17 * kTile), Player.w, Player.h),
+          Level.standOn(Vector2(358 * kTile, 17 * kTile), Player.w, Player.h),
         );
         run(game, 0.4);
         press(game);
@@ -1104,7 +1104,7 @@ void main() {
         // Sandığı çukura it.
         p = game.player!;
         p.position.setFrom(
-          Level.standOn(Vector2(225.6 * kTile, 17 * kTile), Player.w, Player.h),
+          Level.standOn(Vector2(359.6 * kTile, 17 * kTile), Player.w, Player.h),
         );
         keys(game).right = true;
         run(game, 1.5);
@@ -1414,11 +1414,11 @@ void main() {
       'gölge köprüsü: çömelerek geçilir, tüy alınır, gözcünün altından çıkılır',
       GolgeGame.new,
       (game) async {
-        final p = await place(game, 3, 136, 17);
+        final p = await place(game, 3, 206, 17);
         final feather = game.world.children.whereType<SimurgFeather>().reduce(
           (a, b) =>
-              (a.position.x - 148.5 * kTile).abs() <
-                  (b.position.x - 148.5 * kTile).abs()
+              (a.position.x - 218.5 * kTile).abs() <
+                  (b.position.x - 218.5 * kTile).abs()
               ? a
               : b,
         );
@@ -1427,7 +1427,7 @@ void main() {
           ..right = true;
         for (
           var i = 0;
-          i < _hz * 30 && !p.isDead && p.position.x < 163 * kTile;
+          i < _hz * 30 && !p.isDead && p.position.x < 233 * kTile;
           i++
         ) {
           game.update(_dt);
@@ -1437,7 +1437,7 @@ void main() {
           ..right = false;
         expect(p.isDead, isFalse, reason: '${p.deathCause}');
         expect(feather.taken, isTrue, reason: 'köprüdeki tüy alınamadı');
-        expect(p.position.x, greaterThan(163 * kTile));
+        expect(p.position.x, greaterThan(233 * kTile));
         expect(p.position.y + Player.h, closeTo(18 * kTile, 2));
       },
     );
@@ -1446,12 +1446,12 @@ void main() {
       'üç tüy toplanınca sunak tüy kapısını açar',
       GolgeGame.new,
       (game) async {
-        final p = await place(game, 3, 186, 17);
+        final p = await place(game, 3, 256, 17);
         final feathers = game.world.children
             .whereType<SimurgFeather>()
             .toList();
         expect(feathers.length, 3);
-        final gate = nearest<Gate>(game, 194 * kTile);
+        final gate = nearest<Gate>(game, 264 * kTile);
         // Tüyleri tek tek al (sınavlar ayrı testlerde); sonra sunağa dön.
         final safe = p.position.clone();
         for (final f in feathers) {
@@ -1471,13 +1471,13 @@ void main() {
       'kayan kayalarla yüksek buluta çıkılır',
       GolgeGame.new,
       (game) async {
-        final p = await place(game, 3, 164, 17);
+        final p = await place(game, 3, 234, 17);
         final rocks =
             game.world.children
                 .whereType<MovingRock>()
                 .where(
                   (r) =>
-                      r.position.x > 160 * kTile && r.position.x < 180 * kTile,
+                      r.position.x > 230 * kTile && r.position.x < 250 * kTile,
                 )
                 .toList()
               ..sort((a, b) => a.position.x.compareTo(b.position.x));
@@ -1507,7 +1507,7 @@ void main() {
           hopTo(r.position.x + 12, () => r.position.y);
           expect(p.isDead, isFalse);
         }
-        hopTo(176.3 * kTile, () => 7 * kTile.toDouble());
+        hopTo(246.3 * kTile, () => 7 * kTile.toDouble());
         run(game, 0.5);
         expect(p.isDead, isFalse);
         expect(p.position.y + Player.h, lessThanOrEqualTo(7 * kTile + 2));

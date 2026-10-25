@@ -34,6 +34,7 @@ import 'ski_light.dart';
 import 'dawn.dart';
 import 'final.dart';
 import 'joy.dart';
+import 'kaf_vadi.dart';
 import 'levels.dart';
 import 'narration.dart';
 import 'perde.dart';
@@ -1043,6 +1044,11 @@ class GolgeGame extends FlameGame with KeyboardEvents {
             ..._golgehane(c, r),
         if (level.def.dawn case (final c0, final c1))
           _dawn = DawnShadows(c0, c1),
+        if (level.def.lake case (final c0, final c1, final r))
+          MirrorLake(c0, c1, r),
+        for (final (c, r, n) in level.def.mirrorSteps) MirrorStep(c, r, n),
+        for (final (c0, c1, r) in level.def.birdBridges)
+          ...BirdBridge(c0, c1, r).birds(),
         for (final (c, r) in level.def.cages)
           KutCage(Vector2(c * kTile.toDouble(), r * kTile.toDouble())),
         if (level.def.finale case (final c, final r))
@@ -2254,6 +2260,11 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     }
     if (p.hasWings && !p.onGround && p.velocity.y > 60) show('glide');
     if (dawn?.covers(p.center.x) ?? false) show('dawn');
+    for (final l in world.children.whereType<MirrorLake>()) {
+      if (p.center.x > l.left - 3 * kTile && p.center.x < l.left + 4 * kTile) {
+        show('mirrorLake');
+      }
+    }
     final pc = (p.center.x / kTile).floor();
     final pr = (p.center.y / kTile).floor();
     for (var c = pc - 3; c <= pc + 3; c++) {
@@ -2285,6 +2296,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         KutCage k when near(k, 3, 3) && !k.freed =>
           level.def.theme == LevelTheme.underworld ? 'kut' : 'lightCage',
         KandilciBasi k when near(k, 22, 6) && !k.solved => 'finale',
+        BirdDeck b when near(b, 5, 4) => 'birdBridge',
         Calkuyruk c when near(c, 5, 4) && !onHorse => 'horse',
         IronVein v when near(v, 6, 4) && !v.lit => 'forge',
         IronVein v when v.fuelNeeded > 0 && !v.fueled && near(v, 10, 4) =>

@@ -65,7 +65,10 @@ const whisperPlan = <int, Map<int, (WhisperPlace, int?)>>{
     4: (WhisperPlace.yazi, null),
     5: (WhisperPlace.yazi, null),
     6: (WhisperPlace.yazi, null),
-    7: (WhisperPlace.agac, 123),
+    7: (WhisperPlace.agac, 193),
+    // Uzatma (elle eklendi): Hayret Vadisi ve Otuz Kuş'un ağaçları.
+    8: (WhisperPlace.agac, 125),
+    9: (WhisperPlace.agac, 269),
   },
   4: {
     0: (WhisperPlace.agac, 32),

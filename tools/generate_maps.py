@@ -356,7 +356,28 @@ f.fill(161+HO,3,161+HO,11,'#'); f.fill(161+HO,12,161+HO,17,'H')
 f.put(165+HO,17,'B'); f.put(167+HO,17,'E')
 for c,r in [(8,16),(32,8),(66,8),(98,7),(126+HO,16)]:
     f.put(c,r,'p')
-lvl4=f.rows()
+# Uzatma (2026-10-25): Attâr'ın vadilerinden iki kesit araya girer
+# (öncekiler yerinde, sonrası sağa kayar; KAF_INS).
+# K1) Hayret Vadisi · Aynalı Göl: görünmeyen basamaklar yalnız yansımada
+# (levels.dart lake, mirrorSteps); iki taş ada.
+k1=G(70,24)
+k1.fill(0,18,5,23,'#'); k1.fill(6,20,61,23,'w')
+k1.fill(20,17,22,23,'#'); k1.fill(41,17,43,23,'#')
+k1.fill(62,18,69,23,'#')
+k1.put(1,17,'p'); k1.put(3,17,'K'); k1.put(4,17,'9'); k1.put(21,16,'F')
+k1.put(65,17,'B')
+# K2) Otuz Kuş · Kuşlardan Köprü: uçurumun üstünden sürü uçar
+# (levels.dart birdBridges).
+k2=G(64,24)
+k2.fill(0,18,5,23,'#'); k2.fill(58,18,63,23,'#')
+k2.put(1,17,'p'); k2.put(2,17,'K'); k2.put(4,17,'('); k2.put(60,17,'B')
+k2.put(3,17,'F')                                   # ateşböceği: Gözcü'yü oyala
+k2.fill(29,9,32,9,'#'); k2.put(30,8,'g')           # uçurumun ortasında asılı kaya, Gözcü
+KAF_INS=[(122, k1.rows()), (197, k2.rows())]
+rows=f.rows()
+for at, ins in sorted(KAF_INS, reverse=True):
+    rows=[r[:at]+x+r[at:] for r,x in zip(rows,ins)]
+lvl4=rows
 
 # ------------------------------------------------------------ V · AĞRI
 W,H=314,26

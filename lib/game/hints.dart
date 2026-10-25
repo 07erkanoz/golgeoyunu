@@ -165,6 +165,8 @@ class Hints {
     'kut': '{up} Kafesi aç · kut kavanoza girer, kapı açılır · kavanoz parladıkça Körmösler uzaktan görür',
     'lightCage': '{up} Kafesi aç · ışık kavanozuna girer, bir kapı açılır',
     'dawn': 'Güneşte dur · Kandilciler gölgeden çıkmaz, güneşte seni görmez · güneş yükseldikçe gölge kısalır',
+    'mirrorLake': 'Yol havada görünmez · suya bak: basamaklar yansımada · rüzgâr esince bekle',
+    'birdBridge': 'Kuşların sırtına bas · Gözcü\'nün feneri değen kuş ürker · ateşböceğiyle feneri oyala: {firefly}',
     'finale': '{up} Aynaları çevir · ay ışığı Kandilci Başı\'na düşsün · fenerin geçerken sütunun gölgesinde bekle',
     'horse': 'Çalkuyruk · yanına git, sırtına bin · atla çok yükseğe sıçrarsın',
     'gokboruTrail':
@@ -257,6 +259,8 @@ class Hints {
     'kut': '{up} Open the cage · the kut enters your jar and a gate opens · the brighter the jar, the farther the Körmös see',
     'lightCage': '{up} Open the cage · the light enters your jar and a gate opens',
     'dawn': 'Stay in the sun · Lamplighters never leave the shadow and cannot see you in sunlight · the shadows shorten as the sun climbs',
+    'mirrorLake': 'The road cannot be seen in the air · look at the water: the steps are in the reflection · wait when the wind blows',
+    'birdBridge': 'Step on the birds\' backs · a bird touched by the Watcher\'s lantern takes fright · distract the lantern with a firefly: {firefly}',
     'finale': '{up} Turn the mirrors · let the moonlight fall on the Chief Lamplighter · wait in a pillar\'s shadow as his lantern passes',
     'horse':
         'Çalkuyruk · go to him and climb on · on horseback you leap far higher',
