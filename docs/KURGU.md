@@ -18,9 +18,11 @@ Palandöken'e, Kapadokya'ya ve Konya'ya.
 - **Yaz sonu:** Kule ve Gökyolu, ardından Kaf.
 - **Sonbahar:** Ağrı, Nuh'un Gemisi, Nemrut. Dağlarda ilk kar.
 - **Kış:** Palandöken'de kar ve tipi, ardından Kapadokya.
-- **17 Aralık 1660, Konya:** Mevlânâ'nın vefatının (17 Aralık 1273) 387. yılı.
-  Bugünkü büyük ve resmî törenler 20. yüzyılda başladı; 1660'ta dergâhın
-  semâhanesinde, dervişlerin kendi aralarında anıldığı sade bir gecedir.
+- **Şubat 1661, Konya:** Şeb-i Arûs. Mevlânâ 5 Cemâziyelâhir 672'de (17 Aralık
+  1273, Jülyen) öldü; 1660'larda anma hicrî tarihte yapılırdı: 5 Cemâziyelâhir
+  1071, yaklaşık 5 Şubat 1661. Bugünkü 17 Aralık törenleri 20. yüzyılda başladı;
+  1661'de dergâhın semâhanesinde, dervişlerin kendi aralarında anıldığı sade
+  bir gecedir (bkz. docs/EFSANE_DOGRULAMA.md).
 - Perde rüya gibidir: Nemrut'un taş tanrıları (MÖ 1. yüzyıl) ve Nuh'un Gemisi
   1660'ta birer kalıntı olarak görülür, perde onları bir an canlandırır.
 

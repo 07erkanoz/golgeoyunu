@@ -145,8 +145,8 @@ class MythCard {
       nameEn: 'Hezarfen Ahmed Çelebi',
       whoTr: 'Galata Kulesi\'nden kanatlarla uçtuğu anlatılan "bin fen bilen" bilgin.',
       whoEn: 'The scholar "of a thousand sciences" said to have flown with wings from the Galata Tower.',
-      storyTr: 'Evliya Çelebi\'nin Seyahatname\'sine göre IV. Murad döneminde Hezarfen, kartal kanadına benzeyen kanatlarla Galata Kulesi\'nden atlayıp Boğaz\'ın üstünden süzülerek Üsküdar\'da Doğancılar\'a indi. Padişah ona bir kese altın verdi, sonra "korkulacak adam" diyerek Cezayir\'e sürdü. Anlatının tek kaynağı Evliya Çelebi\'dir.',
-      storyEn: 'According to Evliya Çelebi\'s Book of Travels, in the reign of Murad IV Hezarfen leapt from the Galata Tower with wings like an eagle\'s and glided over the Bosphorus to land at Doğancılar in Üsküdar. The sultan gave him a purse of gold, then, calling him "a man to be feared", exiled him to Algiers. Evliya Çelebi is the only source for the story.',
+      storyTr: 'Evliya Çelebi\'nin Seyahatname\'sine göre IV. Murad döneminde Hezarfen, kartal kanadına benzeyen kanatlarla Galata Kulesi\'nden atlayıp Boğaz\'ın üstünden süzülerek Üsküdar\'da Doğancılar\'a indi. Padişah ona bir kese altın verdi, sonra "korkulacak adam" diyerek Cezayir\'e sürdü. Anlatının tek kaynağı Evliya Çelebi\'dir; başka bir çağdaş kaynakta geçmediği için tarihçiler olayı Evliya\'nın rivayeti sayar.',
+      storyEn: 'According to Evliya Çelebi\'s Book of Travels, in the reign of Murad IV Hezarfen leapt from the Galata Tower with wings like an eagle\'s and glided over the Bosphorus to land at Doğancılar in Üsküdar. The sultan gave him a purse of gold, then, calling him "a man to be feared", exiled him to Algiers. Evliya Çelebi is the only source for the story; since no other contemporary source mentions it, historians treat it as his account rather than established fact.',
       sourceTr: 'Evliya Çelebi, Seyahatname',
       sourceEn: 'Evliya Çelebi, Book of Travels',
     ),
@@ -289,15 +289,15 @@ class MythCard {
       storyTr:
           'Oğuz Kağan Destanı\'nda bir sabah Oğuz\'un çadırına gökten bir '
           'ışık düşer; ışığın içinden gök tüylü, gök yeleli bir erkek kurt '
-          'çıkar ve ordunun önünde yürüyerek yol gösterir. Ergenekon '
-          'anlatısında da dağlarla çevrili vadiden çıkış yolunu bir kurt '
+          'çıkar ve ordunun önünde yürüyerek yol gösterir. Sonraki Ergenekon '
+          'anlatılarında da dağlarla çevrili vadiden çıkış yolunu bir kurt '
           'gösterir.',
       storyEn:
           'In the Oghuz Khagan epic a light falls into Oghuz\'s tent one '
           'morning; out of it steps a male wolf with sky-coloured fur and '
-          'mane, who walks before the army and shows it the way. In the '
-          'Ergenekon legend, too, a wolf shows the people the way out of the '
-          'valley walled in by mountains.',
+          'mane, who walks before the army and shows it the way. In later '
+          'tellings of the Ergenekon legend, too, a wolf shows the people the '
+          'way out of the valley walled in by mountains.',
       sourceTr: 'Oğuz Kağan Destanı; Ergenekon Destanı',
       sourceEn: 'Oghuz Khagan epic; Ergenekon legend',
     ),
@@ -327,18 +327,18 @@ class MythCard {
       id: 'albasti',
       nameTr: 'Albastı (Al Karısı)',
       nameEn: 'Albastı (Al Karısı)',
-      whoTr: 'Halk inancında kızıl bir kötü ruh; demirden korktuğuna inanılır.',
-      whoEn: 'A red evil spirit of folk belief, said to fear iron.',
+      whoTr: 'Halk inancında al gömlekli bir kötü ruh; demirden korktuğuna inanılır.',
+      whoEn: 'An evil spirit of folk belief in a red shirt, said to fear iron.',
       storyTr:
-          'Anadolu\'dan Orta Asya\'ya yaygın halk inancında Albastı, kızıl '
-          'saçlı, insanın gücünü ve ışığını çalan karanlık bir varlıktır. '
-          'Ondan korunmak için yanında demir taşınır, kapıya nal çakılır: '
-          'demirden korktuğuna inanılır.',
+          'Anadolu\'dan Orta Asya\'ya yaygın halk inancında Albastı, çoğu '
+          'zaman al gömlekli bir cadı kılığında düşünülen, insanın gücünü '
+          'çalan karanlık bir varlıktır. Ondan korunmak için yanda demir bir '
+          'şey bulundurulur: demirden korktuğuna inanılır.',
       storyEn:
-          'In folk belief from Anatolia to Central Asia, Albastı is a '
-          'red-haired dark being that steals a person\'s strength and light. '
-          'People carry iron or nail a horseshoe to the door to keep her '
-          'away: she is said to fear iron.',
+          'In folk belief from Anatolia to Central Asia, Albastı is a dark '
+          'being, often imagined as a hag in a red shirt, who steals a '
+          'person\'s strength. People keep something of iron close by to '
+          'keep her away: she is said to fear iron.',
       sourceTr: 'Türk halk inançları',
       sourceEn: 'Turkic folk belief',
     ),
@@ -479,20 +479,22 @@ class MythCard {
       id: 'asena',
       nameTr: 'Asena',
       nameEn: 'Asena',
-      whoTr: 'Göktürk türeyiş efsanesinde çocuğu kurtarıp büyüten dişi kurt.',
-      whoEn: 'In the Göktürk origin legend, the she-wolf who saved and raised a child.',
+      whoTr: 'Göktürk türeyiş efsanesinde çocuğu kurtarıp büyüten dişi kurt; bugün Asena diye anılır.',
+      whoEn: 'In the Göktürk origin legend, the she-wolf who saved and raised a child; today she is called Asena.',
       storyTr:
           'Çin kaynaklarına geçen Göktürk efsanesine göre boyu yok edilince '
           'geriye kalan tek çocuğu bir dişi kurt kurtarır ve besler. Kurt '
           'onunla dağların arasındaki bir mağaraya sığınır; mağaranın içinde '
           'çevresi dağlarla kuşatılmış bir ova vardır. Göktürk hanedanı '
-          'Aşina adını bu soydan alır.',
+          'Aşina adını bu soydan alır. Kaynaklarda kurdun adı geçmez; Asena '
+          'adı hanedanın adından türetilmiştir.',
       storyEn:
           'According to the Göktürk legend preserved in Chinese sources, when '
           'the tribe was destroyed a she-wolf saved and fed the only child '
           'left. She took refuge with him in a cave among the mountains; '
           'inside the cave lay a plain encircled by mountains. The Göktürk '
-          'ruling house, Ashina, took its name from this line.',
+          'ruling house, Ashina, took its name from this line. The sources '
+          'never name the wolf; the name Asena comes from the dynasty\'s.',
       sourceTr: 'Göktürk türeyiş efsanesi (Çin kaynakları, Zhoushu)',
       sourceEn: 'Göktürk origin legend (Chinese sources, Zhoushu)',
     ),
