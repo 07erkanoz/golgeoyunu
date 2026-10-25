@@ -2,8 +2,10 @@ package com.erkanoz.golge
 
 import android.graphics.Rect
 import android.os.Build
+import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
+import android.view.WindowManager
 import io.flutter.embedding.android.FlutterActivity
 
 class MainActivity : FlutterActivity() {
@@ -13,6 +15,13 @@ class MainActivity : FlutterActivity() {
     private val exclusion = View.OnLayoutChangeListener { v, _, _, _, _, _, _, _, _ ->
         applyExclusion(v)
         noFocusHighlight(v)
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        // Oyun açıkken ekran kararmaz, kilit ekranı gelmez: perde (anlatım)
+        // dokunmadan izlenir, telefon onu boşta sanıp kilitliyordu.
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     }
 
     override fun onPostResume() {

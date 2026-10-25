@@ -878,6 +878,9 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     // bekleyen metinleri atılır.
     if (!respawn || index != levelIndex) {
       narration.resetScene();
+      // Önceki bölümün rivayet anlatan ağacı unutulur.
+      _tellingTree = null;
+      _tellingText = null;
       // Başka bölüme geçerken önceki bölümün bulmaca durumu atılır.
       _puzzle = null;
       _fails.clear();
