@@ -150,15 +150,14 @@ class Hints {
         'Gün katının ışığı yakar · Hüma\'nın gölgesinde, onunla birlikte yürü',
     'tulpar': 'Tulpar · sırtına bin · havada zıplayınca kanat çırpar: {jump}',
     'forge': 'Ocak sönmüş · yanına ateşböceği sal, yeniden yansın: {firefly}',
-    'bellows': '{up} Körüğe bas · üstündeki çentik sayısı sırasıyla · sıra bozulur ya da geç kalırsan ateş söner',
-    'bellowsBeat': '{up} Körüğü çekiç örse indiği anda bas · basılan körük dolana dek öbürüne koş',
+    'bellows': '{up} Oklu körüğe bas · çentik sayısı sırası · yanlış körük ateşi söndürür',
+    'bellowsBeat': '{up} Oklu körüğe, çekiç örse inince bas · altı vuruş · sonra öbür körük yanar',
     'fuel': 'Ocak boş · kömür sandıklarını ocağın önündeki çukura it · birini basamak için sakla',
     'goalFuel':
         'Kömür sandıklarını ocağın önündeki ışıklı çukura it ({n}/{need})',
     'goalLight': 'Ocağın ağzına bir ateşböceği at: {firefly}',
-    'goalBeat':
-        'Körüğün üstündeki halka kapanıp parlayınca bas: {up} · ısı %{heat}',
-    'goalOrder': 'Körüklere üstlerindeki çentik sayısı sırasıyla bas: {up} · sıradaki {next}',
+    'goalBeat': 'Oklu körüğe, halkası kapanınca bas: {up} · vuruş {n}/{need}',
+    'goalOrder': 'Oklu körüğe bas: {up} · sıradaki {next}',
     'goalForge': 'Ocak',
     'nevruz': '{up} Demire üç kez vur',
     'molten': 'Akan demir yakar · soğuyup kararınca üstünden geç',
@@ -241,14 +240,13 @@ class Hints {
     'scorch': 'The light of the sun layer burns · walk in the Huma\'s shadow, along with it',
     'tulpar': 'Tulpar · climb on his back · jump in the air to beat his wings: {jump}',
     'forge': 'The forge is cold · release a firefly beside it to light it again: {firefly}',
-    'bellows': '{up} Pump the bellows · in the order of the notches on each · break the order or wait too long and the fire dies',
-    'bellowsBeat': '{up} Pump a bellows just as the hammer hits the anvil · run to another while it refills',
+    'bellows': '{up} Pump the bellows with the arrow · in notch order · the wrong one puts the fire out',
+    'bellowsBeat': '{up} Pump the bellows with the arrow as the hammer strikes · six beats · then another lights up',
     'fuel': 'The forge is empty · push the charcoal crates into the pit before it · keep one as a step',
     'goalFuel': 'Push the charcoal crates into the glowing pit before the forge ({n}/{need})',
     'goalLight': 'Throw a firefly into the forge mouth: {firefly}',
-    'goalBeat': 'Pump the bellows when the ring above it closes and flashes: {up} · heat {heat}%',
-    'goalOrder':
-        'Pump the bellows in the order of their notches: {up} · next {next}',
+    'goalBeat': 'Pump the bellows with the arrow when its ring closes: {up} · beat {n}/{need}',
+    'goalOrder': 'Pump the bellows with the arrow: {up} · next {next}',
     'goalForge': 'Forge',
     'nevruz': '{up} Strike the iron three times',
     'molten': 'Flowing iron burns · cross only when it cools and darkens',
@@ -335,7 +333,7 @@ class Hints {
     'kormos': 'Körmös yalnız açık ışığı görür; ışığı kaybedince son gördüğü yere süzülür.',
     'wolf': 'Kurt atılmadan önce çömelip hazırlanır; atıldıktan sonra yön değiştiremez.',
     'lamp': 'Büyük fenerin huzmesi damları sırayla tarar; gölgede kalan yer güvenlidir.',
-    'bellowsBeat': 'Körük ancak çekiç örse indiği anda ocağı ısıtır; erken ya da geç basmak ısıyı düşürür.',
+    'bellowsBeat': 'Körük ancak çekiç örse indiği anda ocağı ısıtır; altı denk vuruşta demir erir.',
   };
 
   static const _relationEn = {
@@ -355,7 +353,7 @@ class Hints {
     'kormos': 'A Körmös sees only open light; when it loses the light it drifts to where it last saw it.',
     'wolf': 'A wolf crouches before it lunges; once it lunges, it cannot turn.',
     'lamp': 'The great lamp\'s beam sweeps the roofs in turn; whatever lies in shadow is safe.',
-    'bellowsBeat': 'A bellows heats the forge only when pumped as the hammer strikes; too early or too late, the heat drops.',
+    'bellowsBeat': 'A bellows heats the forge only when pumped as the hammer strikes; six true beats melt the iron.',
   };
 
   static const _solutionTr = {
@@ -375,7 +373,7 @@ class Hints {
     'kormos': 'Kavanozunu ört ve hemen yer değiştir: Körmös eski yerinde ararken karanlıktan geç. Ateşböceği salarsan onu uzağa çeker.',
     'wolf': 'Kurt çömelince yana ya da yukarı çekil. İnce buzun kenarında beklersen atılışı onu buza düşürür. Ateşböceği kurdu bir süre korkutur.',
     'lamp': 'Revakın ya da bacanın gölgesinde dur. Huzme üstünden geçip uzaklaşınca bir sonraki gölgeye koş; huzmede bir an bile kalma.',
-    'bellowsBeat': 'Örsü dinle: çekiç inerken körüğün hazır ışığı yanar, o anda bas. Körük dolarken öbürüne koş, sıradaki vuruşu bekle.',
+    'bellowsBeat': 'Örsü dinle: üstünde ok olan körüğün halkası daralır, çekiç inince kapanıp parlar; o anda bas. Her denk vuruştan sonra ok öbür körüğe geçer; oraya koş, sıradaki vuruşu bekle. Altı vuruş yeter.',
   };
 
   static const _solutionEn = {
@@ -395,7 +393,7 @@ class Hints {
     'kormos': 'Cover your jar and move at once: while the Körmös searches the old spot, pass through the dark. A firefly draws it away.',
     'wolf': 'When the wolf crouches, step aside or climb. Wait at the edge of thin ice and its lunge will drop it in. A firefly scares the wolf for a while.',
     'lamp': 'Stand in the shadow of a porch or chimney. When the beam has passed over and away, run to the next shadow; never stay in the beam even for a moment.',
-    'bellowsBeat': 'Listen to the anvil: as the hammer falls the bellows\' ready light glows; pump then. While it refills, run to the other and wait for the next strike.',
+    'bellowsBeat': 'Listen to the anvil: the ring over the bellows with the arrow narrows and flashes as the hammer falls; pump then. After each true beat the arrow moves to another bellows; run there and wait for the next strike. Six beats are enough.',
   };
 
   /// Hikâyeye karışan şiirsel bilmeceler (alttaki fısıltıyla anlatılır).

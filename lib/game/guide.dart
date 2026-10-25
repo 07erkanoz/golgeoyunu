@@ -210,7 +210,11 @@ class Guide {
         // yakın körük yanlış sıra olabilir).
         case Bellows b:
           final v = b.vein;
-          if (v != null && !v.lit && (b.order == 0 || b.order == v.next)) {
+          if (v != null &&
+              v.lit &&
+              !v.opening &&
+              b.order > 0 &&
+              (v.rhythm ? identical(b, v.activeBellows) : b.order == v.next)) {
             consider(b, 'bellows', b.position + Vector2(0, -kTile / 2));
           }
         case Mirror m when !used.contains(_keyOf(m)):

@@ -53,9 +53,26 @@ class IronVein extends Gate {
   /// Bu damara bağlı körük sayısı (kurulurken verilir).
   int bellowsCount = 1;
 
-  /// Ritimli damar: körükler Demirci'nin örs vuruşuna denk basılır; sıra
-  /// yoktur. Isı her denk basışta artar, yavaşça söner.
+  /// Ritimli damar: sıradaki (ışıklı) körük Demirci'nin örs vuruşuna denk
+  /// basılır; her denk basış bir vuruş sayılır, sonra öbür körük yanar.
+  /// [beatsNeeded] vuruşta ocak kızar. Yanlış an ya da yanlış körük vuruş
+  /// düşürmez, yalnız sayılmaz (telefonda ne kaç kez basılacağı ne sıradaki
+  /// körük belliydi; ısı kendiliğinden de sönüyordu).
   bool rhythm = false;
+
+  /// Ritimde gereken denk vuruş sayısı.
+  static const int beatsNeeded = 6;
+
+  /// Ritimde şimdiye dek denk vuruş.
+  int beats = 0;
+
+  /// Ritimli damarın körükleri (soldan sağa); sıradaki yanar.
+  List<Bellows> rhythmPumps = const [];
+  int _turn = 0;
+
+  /// Ritimde şimdi basılacak körük.
+  Bellows? get activeBellows =>
+      rhythmPumps.isEmpty ? null : rhythmPumps[_turn % rhythmPumps.length];
 
   /// Ocağın önündeki çukura itilmesi gereken kömür sandığı sayısı (odun
   /// ve kömür yığılmadan ocak yanmaz).
@@ -64,13 +81,8 @@ class IronVein extends Gate {
   /// Damarın örsü (ritimli damarda).
   Anvil? anvil;
 
-  /// Ritimde: denk basışta ısı artışı, yanlışta düşüş, saniyede sönme.
-  static const double beatGain = 0.14;
-  static const double offBeatLoss = 0.06;
-  static const double decay = 0.03;
-
-  /// Doğru basışlar arasında en çok bu kadar beklenebilir.
-  static const double window = 8;
+  /// Sıralı damarda doğru basışlar arasında en çok bu kadar beklenebilir.
+  static const double window = 15;
 
   /// Çukurdaki kömür sandığı sayısı.
   int get fuel {
@@ -108,6 +120,7 @@ class IronVein extends Gate {
       opening = true;
       lit = true;
       heat = 1;
+      beats = beatsNeeded;
       melt = 1;
     }
     return [this];
@@ -161,19 +174,22 @@ class IronVein extends Gate {
       return;
     }
     if (rhythm) {
+      if (!identical(b, activeBellows)) return;
       final a = anvil;
       if (a != null && a.onBeat) {
-        heat = math.min(1, heat + beatGain);
+        beats++;
+        heat = math.min(1, beats / beatsNeeded);
+        _turn++;
         _flash = 1;
         GameAudio.instance.play('fire', volume: 0.6);
-        if (heat >= 1) {
+        GameAudio.instance.play('bell', volume: 0.25 + 0.05 * beats);
+        if (beats >= beatsNeeded) {
           opening = true;
           GameAudio.instance.play('grind', volume: 0.7);
           GameAudio.instance.play('gate', volume: 0.6);
         }
       } else {
-        heat = math.max(0, heat - offBeatLoss);
-        GameAudio.instance.play('fizzle', volume: 0.6);
+        GameAudio.instance.play('fizzle', volume: 0.5);
       }
       return;
     }
@@ -234,10 +250,7 @@ class IronVein extends Gate {
       }
       return;
     }
-    if (rhythm) {
-      heat = math.max(0, heat - decay * dt);
-      return;
-    }
+    if (rhythm) return;
     if (next > 1) {
       _since += dt;
       if (_since > window) _cool();
@@ -414,7 +427,7 @@ class Anvil extends PositionComponent with HasGameReference<GolgeGame> {
   static const double beat = 1 / 0.9;
 
   /// Vuruşun iki yanındaki denk sayılan pay (saniye).
-  static const double grace = 0.3;
+  static const double grace = 0.36;
 
   /// Usta iri çizilir (Sâye'nin üç katı): çekicin inişi uzaktan görülsün.
   static const double drawScale = 0.9;
@@ -706,7 +719,7 @@ class Bellows extends PositionComponent
   double _t = math.Random().nextDouble() * 4;
 
   /// Ritimli damarda basılan körük boşalır, dolması bu kadar sürer.
-  static const double refill = 1.3;
+  static const double refill = 0.8;
   double _empty = 0;
 
   /// Körük dolu mu (ritimde basılabilir).
@@ -720,9 +733,26 @@ class Bellows extends PositionComponent
       (p.x - position.x).abs() < 26 &&
       (p.y - position.y).abs() < 44;
 
+  /// Ritimde sırası bu körükte mi (ışıklı körük).
+  bool get isTurn {
+    final v = vein;
+    return v != null && v.rhythm && identical(v.activeBellows, this);
+  }
+
+  /// Sıralı damarda sıradaki körük mü.
+  bool get isNext {
+    final v = vein;
+    return v != null && !v.rhythm && v.lit && !v.opening && order == v.next;
+  }
+
   @override
   void use() {
     final v = vein;
+    if (v != null && v.rhythm && v.lit && !isTurn) {
+      // Sırası başka körükte: bu körük sönük.
+      GameAudio.instance.play('creak', volume: 0.3, minGapMs: 200);
+      return;
+    }
     if (v != null && v.rhythm && !ready) {
       // Boş körük: hava yok.
       GameAudio.instance.play('creak', volume: 0.3, minGapMs: 200);
@@ -786,76 +816,106 @@ class Bellows extends PositionComponent
     );
     final v = vein;
     if (v != null && v.rhythm) {
-      // Ritimli ocakta sıra yok: çentik yerine dolu olduğunu gösteren
-      // bir ışık; örsün vuruşuyla atar, boşken söner.
-      if (order > 0 && v.lit && !v.opening) {
-        // Ocağın ısısı: körüğün üstünde kor bir çubuk (ocak uzakta
-        // kaldığında da ilerleme görülsün).
-        const barW = 26.0;
-        canvas.drawRRect(
-          RRect.fromRectAndRadius(
-            Rect.fromLTWH(-barW / 2, top - 20, barW, 4),
-            const Radius.circular(2),
-          ),
-          Paint()..color = const Color(0x66140A06),
-        );
-        canvas.drawRRect(
-          RRect.fromRectAndRadius(
-            Rect.fromLTWH(-barW / 2, top - 20, barW * v.heat, 4),
-            const Radius.circular(2),
-          ),
-          Paint()..color = const Color(0xFFFF9A40),
-        );
-      }
-      final anvil = v.anvil;
-      if (order > 0 && ready && v.lit && !v.opening && anvil != null) {
-        // Vuruşa doğru daralan halka: kapanıp parladığı an basma anı.
-        final ph = anvil.phase;
-        final r = 6 + 26 * (1 - ph);
-        final on = anvil.onBeat;
-        canvas.drawCircle(
-          Offset(0, top - 9),
-          on ? 9 : r,
-          Paint()
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = on ? 3.5 : 2
-            ..color = (on ? const Color(0xFFFFE6A8) : const Color(0xFFFFB050))
-                .withValues(alpha: on ? 1 : 0.35 + 0.5 * ph),
-        );
-      }
-      if (order > 0 && ready && v.lit && !v.opening) {
-        final beat = (v.anvil?.onBeat ?? false) ? 1.0 : 0.35;
-        canvas.drawCircle(
-          Offset(0, top - 9),
-          3.2,
-          Paint()
-            ..color = const Color(0xFFFFD890)
-                .withValues(alpha: 0.4 + 0.6 * beat),
-        );
-        canvas.drawCircle(
-          Offset(0, top - 9),
-          9,
-          Paint()
-            ..color = const Color(0xFFFFB050).withValues(alpha: 0.25 * beat)
-            ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
-        );
+      // Ritimli ocakta yalnız sıradaki körük yanar: üstünde aşağı bakan
+      // ok, vuruşa doğru daralan halka ve kaç vuruş kaldığını gösteren
+      // korlar. Öbür körükler sönük.
+      if (order > 0 && v.lit && !v.opening && isTurn) {
+        _turnMarks(canvas, v, top);
       }
       canvas.restore();
       return;
     }
-    // Çentikler: sırası (ışıklı oyuk).
+    // Çentikler: sırası (ışıklı oyuk); iri, uzaktan sayılır. Sıradaki
+    // körüğün çentikleri parlar, üstünde aşağı bakan bir ok atar.
     final hot = vein?.lit ?? false;
+    final next = isNext;
     final notch = Paint()
-      ..color = (hot ? const Color(0xFFFFD890) : const Color(0xFF8A7A68))
-          .withValues(alpha: hot ? 0.75 + 0.25 * math.sin(_t * 2) : 0.5);
+      ..color =
+          (next
+                  ? const Color(0xFFFFE6A8)
+                  : hot
+                  ? const Color(0xFFB89868)
+                  : const Color(0xFF8A7A68))
+              .withValues(alpha: next ? 0.8 + 0.2 * math.sin(_t * 5) : 0.6);
     for (var i = 0; i < order; i++) {
       canvas.drawCircle(
-        Offset((i - (order - 1) / 2) * 5.0, top - 9),
-        1.6,
+        Offset((i - (order - 1) / 2) * 8.0, top - 10),
+        2.8,
         notch,
       );
     }
+    if (next) _arrow(canvas, top - 20);
     canvas.restore();
+  }
+
+  /// Aşağı bakan, inip kalkan ılık ok: "buna bas".
+  void _arrow(Canvas canvas, double y) {
+    final bob = 3 * math.sin(_t * 4);
+    final p = Paint()
+      ..color = const Color(0xFFFFD890)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.6
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+    final tip = Offset(0, y + bob);
+    canvas.drawPath(
+      Path()
+        ..moveTo(tip.dx - 6, tip.dy - 6)
+        ..lineTo(tip.dx, tip.dy)
+        ..lineTo(tip.dx + 6, tip.dy - 6)
+        ..moveTo(tip.dx, tip.dy)
+        ..lineTo(tip.dx, tip.dy - 13),
+      p,
+    );
+  }
+
+  /// Ritimde sıradaki körüğün işaretleri: kaç vuruş kaldığını gösteren
+  /// korlar, vuruşa doğru daralan halka, ok.
+  void _turnMarks(Canvas canvas, IronVein v, double top) {
+    const need = IronVein.beatsNeeded;
+    for (var i = 0; i < need; i++) {
+      final lit = i < v.beats;
+      final at = Offset((i - (need - 1) / 2) * 7.0, top - 40);
+      canvas.drawCircle(
+        at,
+        lit ? 3 : 2.4,
+        Paint()
+          ..color = lit
+              ? const Color(0xFFFF9A40)
+              : const Color(0xFF140A06).withValues(alpha: 0.7),
+      );
+      canvas.drawCircle(
+        at,
+        3,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 0.8
+          ..color = const Color(0xFFFFC27A).withValues(alpha: 0.6),
+      );
+    }
+    _arrow(canvas, top - 26);
+    final anvil = v.anvil;
+    if (anvil == null) return;
+    final on = anvil.onBeat;
+    if (ready) {
+      // Vuruşa doğru daralan halka: kapanıp parladığı an basma anı.
+      final ph = anvil.phase;
+      final r = 6 + 26 * (1 - ph);
+      canvas.drawCircle(
+        Offset(0, top - 9),
+        on ? 9 : r,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = on ? 3.5 : 2
+          ..color = (on ? const Color(0xFFFFE6A8) : const Color(0xFFFFB050))
+              .withValues(alpha: on ? 1 : 0.35 + 0.5 * ph),
+      );
+    }
+    canvas.drawCircle(
+      Offset(0, top - 9),
+      on ? 5 : 3.2,
+      Paint()..color = const Color(0xFFFFD890).withValues(alpha: on ? 1 : 0.45),
+    );
   }
 }
 

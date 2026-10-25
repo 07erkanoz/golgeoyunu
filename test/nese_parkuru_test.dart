@@ -94,7 +94,7 @@ void main() {
           Player.h,
         ),
       );
-      run(game, 6);
+      run(game, GolgeGame.playIdle + 1.5);
       expect(p.shadowPlaying, isTrue);
       expect(game.secretSeen('golgeOyunu'), isTrue);
       game.controls.keyboard.right = true;

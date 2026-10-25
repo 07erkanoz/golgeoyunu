@@ -1539,6 +1539,10 @@ class GolgeGame extends FlameGame with KeyboardEvents {
       final v = sorted[i];
       v.rhythm = rhythm;
       v.fuelNeeded = fuel;
+      v.rhythmPumps = rhythm
+          ? ([...?pumps[v]]
+              ..sort((a, b) => a.position.x.compareTo(b.position.x)))
+          : const [];
       if (rhythm) {
         // Örs körüklerin yanında: çekiç ekranda görünsün, vuruşu duyulsun
         // (ocağın dibindeyken körüklerden yirmi kare uzakta kalıyordu).
@@ -1578,7 +1582,8 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         Hints.text('goalLight'),
         if (v.rhythm)
           Hints.text('goalBeat')
-              .replaceAll('{heat}', '${(v.heat * 100).round()}')
+              .replaceAll('{n}', '${v.beats}')
+              .replaceAll('{need}', '${IronVein.beatsNeeded}')
         else
           Hints.text('goalOrder').replaceAll('{next}', '${v.next}'),
       ];
@@ -2041,8 +2046,10 @@ class GolgeGame extends FlameGame with KeyboardEvents {
   int _playTurn = 0;
 
   /// Gölgenin oynamaya başlaması için durma süresi; iki oyun arası.
-  static const double playIdle = 4.5;
-  static const double playGap = 40;
+  /// Uzun: düşünürken ya da beklerken gölge araya girip oyunun keyfini
+  /// kaçırmasın (4,5 sn'de bir dönüşmesi telefonda çok erkendi).
+  static const double playIdle = 15;
+  static const double playGap = 120;
 
   /// Bölüme göre gölgenin dönüştüğü hayvanlar (sırayla).
   static List<ShadowAnimal> playAnimals(LevelTheme t) => switch (t) {
@@ -2090,6 +2097,8 @@ class GolgeGame extends FlameGame with KeyboardEvents {
       return;
     }
     if (_idleFor < playIdle || _playWait > 0 || !calmMoment) return;
+    // Bir düzeneğin başında (görev satırı varken) düşünen oyuncu bölünmez.
+    if (narration.objective != null) return;
     // Karagöz perdesi oynarken gölge oyunu araya girmez.
     if (world.children.whereType<KaragozSahne>().any((k) => k.playing)) {
       return;

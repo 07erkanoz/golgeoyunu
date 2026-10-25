@@ -19,7 +19,7 @@ Durum: ✅ yapıldı · ⏳ sırada
 
 ## N1 · Gölge oyunları ✅
 
-Sâye sakin bir yerde 4,5 saniye durunca gölgesi kendi kendine bir hayvana
+Sâye sakin bir yerde 15 saniye durunca (bir düzeneğin başında değilse; iki oyun arası en az iki dakika) gölgesi kendi kendine bir hayvana
 dönüşür, oynar, sonra yine Sâye olur (kıpırdarsa hemen döner). Bölüme göre:
 sarnıçta tavşan ve kuş, mağarada tilki, karda uluyan kurt, Nemrut'ta kükreyen
 aslan, gemide at, aslan, geyik, tavşan; Kapadokya'da şaha kalkan at; ormanda

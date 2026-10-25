@@ -75,19 +75,17 @@ void main() {
         if (wasOn && !on) {
           // Vuruştan çıkıldı: yarım vuruş sonra (ortada) bas.
           run(game, Anvil.beat / 2 - Anvil.grace);
-          for (final b in bellows) {
-            if (b.ready) {
-              b.use();
-              offPumps++;
-              break;
-            }
+          final b = v.activeBellows!;
+          if (b.ready) {
+            b.use();
+            offPumps++;
           }
         }
         wasOn = anvil.onBeat;
       }
       expect(offPumps, greaterThan(5));
       expect(v.opening, isFalse);
-      expect(v.heat, lessThan(0.2));
+      expect(v.beats, 0);
       // Vuruşa denk basan: her vuruşta dolu bir körüğe.
       wasOn = anvil.onBeat;
       for (var i = 0; i < 60 * 30 && !v.opening; i++) {
@@ -95,12 +93,8 @@ void main() {
         final on = anvil.onBeat;
         if (on && !wasOn) {
           run(game, Anvil.grace * 0.8);
-          for (final b in bellows) {
-            if (b.ready) {
-              b.use();
-              break;
-            }
-          }
+          final b = v.activeBellows!;
+          if (b.ready) b.use();
         }
         wasOn = anvil.onBeat;
       }
