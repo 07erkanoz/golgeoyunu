@@ -25,7 +25,9 @@ void main() {
 
   test('Ötüken Derinkuyu ile Erlik arasına girer; kayıtlar kaymaz', () {
     expect(levelOrder.indexOf(17), levelOrder.indexOf(12) + 1);
-    expect(levelOrder.indexOf(14), levelOrder.indexOf(17) + 1);
+    // Ötüken ile Erlik arasında Ak Ana'nın Denizi (8. sürüm).
+    expect(levelOrder.indexOf(20), levelOrder.indexOf(17) + 1);
+    expect(levelOrder.indexOf(14), levelOrder.indexOf(20) + 1);
     // 4. sürümde Erlik'e (yer 13) varmış kayıt yine Erlik'te kalır.
     expect(levelOrder[migrateOrderPosition(13, 4)], 14);
     expect(levelOrder[migrateOrderPosition(12, 4)], 12);
@@ -38,5 +40,13 @@ void main() {
     // 5. sürümde Konya'ya (yer 17) varmış kayıt yine Konya'da kalır.
     expect(levelOrder[migrateOrderPosition(17, 5)], 13);
     expect(levelOrder[migrateOrderPosition(16, 5)], 16);
+  });
+
+  test('Ak Ana\'nın Denizi Ötüken ile Erlik arasına girer; kayıtlar kaymaz', () {
+    // 7. sürümde Erlik'e (yer 14) varmış kayıt yine Erlik'te kalır; Ötüken'de
+    // kalan Ötüken'de.
+    expect(levelOrder[migrateOrderPosition(14, 7)], 14);
+    expect(levelOrder[migrateOrderPosition(13, 7)], 17);
+    expect(levelOrder[migrateOrderPosition(19, 7)], 19);
   });
 }

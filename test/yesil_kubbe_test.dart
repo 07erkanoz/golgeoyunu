@@ -1,4 +1,4 @@
-// XX · Yeşil Kubbe (final): avlunun ay kilidi, kafesteki ışıklar, Kandilci
+// XXI · Yeşil Kubbe (final): avlunun ay kilidi, kafesteki ışıklar, Kandilci
 // Başı'nın üç aynası ve çıkış.
 import 'package:flame/components.dart';
 import 'package:flame_test/flame_test.dart';
@@ -27,7 +27,7 @@ Future<void> load(GolgeGame game) async {
 
 void main() {
   test('final Şeb-i Arûs\'tan sonra, oyunun son bölümü', () {
-    expect(levels[19].title, 'XX · YEŞİL KUBBE');
+    expect(levels[19].title, 'XXI · YEŞİL KUBBE');
     expect(nextLevel(13), 19);
     expect(levelOrder.last, 19);
     expect(nextLevel(19), isNull);

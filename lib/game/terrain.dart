@@ -1593,6 +1593,7 @@ Color _surfaceTint(LevelTheme t) => switch (t) {
   LevelTheme.ergenekon => const Color(0xFF8AA070),
   LevelTheme.heavens => const Color(0xFFE8E0F0),
   LevelTheme.forest => const Color(0xFFA8D27A),
+  LevelTheme.sea => const Color(0xFF8FD6CC),
 };
 
 /// Üst yüzün ışığı ve ince taş dokusu.
@@ -1794,6 +1795,7 @@ void _cartoonColumn(
   LevelTheme.heavens => (const Color(0xFF131828), const Color(0xFF2A3450)),
   LevelTheme.cistern => (Cartoon.stone, Cartoon.seam),
   LevelTheme.forest => (const Color(0xFF16200F), const Color(0xFF2C3E1E)),
+  LevelTheme.sea => (const Color(0xFF0A1C20), const Color(0xFF1A3C40)),
 };
 
 /// Doku denemesi (kayak bölümleri hariç): karonun gövdesi bölümün malzemesiyle (yüzeyden derine
@@ -1923,7 +1925,10 @@ void _themedBody(
           canvas.drawLine(Offset(sx, sy), Offset(sx + 4, sy + 5), line);
         }
       }
-    case LevelTheme.kaf || LevelTheme.underworld || LevelTheme.ergenekon:
+    case LevelTheme.kaf ||
+        LevelTheme.underworld ||
+        LevelTheme.ergenekon ||
+        LevelTheme.sea:
       // Maden damarları: kıvrımlı ince çizgi, Kaf'ta zümrüt, Erlik'te mor,
       // Ergenekon'da kızgın demir.
       final glow = switch (theme) {

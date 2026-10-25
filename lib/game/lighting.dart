@@ -5,6 +5,7 @@ import 'dart:ui' as ui;
 import 'package:flame/components.dart';
 
 import 'creatures.dart';
+import 'deniz.dart';
 import 'entities.dart';
 import 'konya.dart';
 import 'legends.dart';
@@ -60,6 +61,8 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
     LevelTheme.heavens => 0.12,
     // Ötüken Ormanı: oyunun aydınlık, yeşil yeri.
     LevelTheme.forest => 0.16,
+    // Deniz: yüzeye yakın aydınlık; derinin karanlığını su kendi çizer.
+    LevelTheme.sea => 0.22,
   };
 
   final _cut = Paint()..blendMode = BlendMode.dstOut;
@@ -193,6 +196,8 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
 
     for (final c in game.world.children) {
       switch (c) {
+        case SeaLight s:
+          _light(canvas, s.glowCenter, s.glowRadius, s.glowStrength);
         case Guard g when _view.overlaps(g.drawnArea):
           final lantern = g.lanternWorld;
           _light(canvas, lantern.toOffset(), 90, 0.9);

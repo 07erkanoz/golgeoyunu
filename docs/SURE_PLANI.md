@@ -58,6 +58,7 @@ harita denetimi, kural testi, önizleme.
 | III · Gökyolu | Lodos ile Poyraz, Uçurtmalar | 336 → 470 | 1,2 → 1,7 dk |
 | II · Kule | Kulenin Zindanı | 170 → 212 satır | 1,2 → 1,5 dk |
 | XX · Yeşil Kubbe | yeni final bölümü | 312 | 1,3 dk |
+| XV · Ak Ana'nın Denizi | yeni su altı bölümü (Ötüken ile Erlik arası) | 420×78 | yüzüş (denetim: tools/audit_deniz.py) |
 
 En kısa yol yalnız koşup zıplamayı sayar; yeni kesitlerin çoğu düşünme ve
 bekleme ister (yansımayı okumak, fıçıyı beklemek, yıldızları bulmak), asıl

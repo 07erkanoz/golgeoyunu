@@ -56,9 +56,13 @@ enum PerdeScene {
   /// kuşları, peşteki Karabasan, yapraktan süzülen ışık.
   otuken,
 
-  /// Erlik'in katı: ilk su, sudan yükselen Ak Ana, çamurdan kalkan dünya,
-  /// yerin altına sürülen Erlik.
+  /// Ak Ana'nın Denizi: ilk su, sudan yükselen Ak Ana, çamurdan kalkan
+  /// dünya, yerin altına sürülen Erlik.
   akAna,
+
+  /// Erlik'in katı: Ak Ana sahnesinin devamı (Kişi'nin sürülüşünden
+  /// başlar): Erlik, akan ışıklar, Er Töştük, Körmösler.
+  erlik,
 
   /// Ergenekon: dağlarla çevrili vadi, demirci ve yetmiş körük, eriyen dağ,
   /// yolu gösteren kurt, örste dövülen kızgın demir.
@@ -90,12 +94,13 @@ PerdeScene? interludeScene(int level) => switch (level) {
   11 => PerdeScene.fairies,
   12 => PerdeScene.underground,
   13 => PerdeScene.sema,
-  14 => PerdeScene.akAna,
+  14 => PerdeScene.erlik,
   15 => PerdeScene.ergenekon,
   16 => PerdeScene.gok,
   17 => PerdeScene.otuken,
   18 => PerdeScene.gok,
   19 => PerdeScene.sema,
+  20 => PerdeScene.akAna,
   _ => null,
 };
 
@@ -400,6 +405,8 @@ class PerdePainter {
           _otukenScene(canvas, time, progress);
         case PerdeScene.akAna:
           _akAnaScene(canvas, time, progress);
+        case PerdeScene.erlik:
+          _akAnaScene(canvas, time, progress + 3);
         case PerdeScene.ergenekon:
           _ergenekonScene(canvas, time, progress);
         case PerdeScene.gok:

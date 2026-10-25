@@ -53,6 +53,12 @@ class Kormos extends PositionComponent with HasGameReference<GolgeGame> {
   double _search = 0;
   static const double searchTime = 2.6;
 
+  /// Ak Ana yükselince dağılır: yerin dibine çekilip kaybolur.
+  double _scatter = -1;
+  void scatter() {
+    if (_scatter < 0) _scatter = 0;
+  }
+
   /// Son görülen ışığı arıyor mu.
   bool get searching => _search > 0 && lastLight != null;
 
@@ -88,6 +94,13 @@ class Kormos extends PositionComponent with HasGameReference<GolgeGame> {
     super.update(dt);
     dt = math.min(dt, 1 / 30);
     _t += dt;
+    if (_scatter >= 0) {
+      _scatter += dt;
+      position.y += 140 * dt;
+      position.x += math.sin(_t * 9) * 30 * dt;
+      if (_scatter > 1.6) removeFromParent();
+      return;
+    }
     final p = game.player;
     Vector2? target;
     var speed = drift;

@@ -61,6 +61,8 @@ List<Component> joyPlaces(Level lv) {
   if (!joyEnabled) return const [];
   final def = lv.def;
   if (def.skiMarks != null) return const [];
+  // Suyun altında zıpzıp ve perde yok.
+  if (def.seaSurface != null) return const [];
   final spots = findJoySpots(lv);
   final look = bouncerLookFor(def.theme);
   final stage = findKaragozSpot(lv, spots);

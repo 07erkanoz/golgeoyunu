@@ -55,6 +55,8 @@ DepthKind? depthKind(Level lv) => switch (lv.def.theme) {
   LevelTheme.heavens => DepthKind.heavens,
   // Orman: tepeden sarkan kökler ve sarmaşıklar (Kule'nin yakın katmanı).
   LevelTheme.forest => DepthKind.forest,
+  // Deniz: yakın katman yok; yosunlar ve sürüler derinliği verir.
+  LevelTheme.sea => null,
 };
 
 /// Bu bölümde ışık ve derinlik denemesi çizilsin mi.

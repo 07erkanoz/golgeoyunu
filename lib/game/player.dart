@@ -123,6 +123,40 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
   /// Kavanozun dünyadaki son çizildiği yer (ışık oradan çıkar).
   Vector2? _jarWorld;
 
+  // ------------------------------------------------------------ yüzüş
+  // Ak Ana'nın Denizi: suyun altında serbest, ataletli yüzüş. Parmağın
+  // (okların) yönüne hızlanır, bırakınca süzülür; atılış bir kurbağalama
+  // kulacıdır: kollar çekilir, bacaklar toplanıp itilir, itiş bacakların
+  // açıldığı anda gelir (anında fırlama yok).
+
+  /// Suyun altında mı (bölüm bunu açar).
+  bool swimming = false;
+
+  /// Onu taşıyan (su kaplumbağası): taşınırken kendi yüzmez.
+  Object? carrier;
+
+  static const double swimAccel = 430;
+  static const double swimMax = 105;
+
+  /// Bir kulacın toplam itişi (px/sn) ve süresi.
+  static const double strokePush = 210;
+  static const double strokeTime = 0.9;
+
+  /// Kulacın evresi (0-1; 1: kulaç yok, süzülüş).
+  double _stroke = 1;
+  Offset _strokeDir = const Offset(1, 0);
+
+  /// Çırpışın evresi ve gövdenin açısı (çizim): 0 dik, π/2 yatay.
+  double _kick = 0;
+  double _swimPitch = 0.2;
+
+  /// Yüzüşün çizimdeki ağırlığı (0: suda dikey durup çırpınma, 1: süzülüş).
+  double _swimGlide = 0;
+
+  /// Ağızdan ve ayaklardan çıkan kabarcıklar (dünya konumu, yaş).
+  final _bubbles = <(Vector2, double, double)>[];
+  double _breathT = 0;
+
   /// Arkadan gelen bir ses: baş bir süre geriye döner (yalnızca çizim).
   double _lookBackT = 0;
   bool get lookingBack => _lookBackT > 0;
@@ -208,6 +242,8 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     }
 
     switch (state) {
+      case PlayerState.normal when swimming:
+        _updateSwim(dt, dir, up, down, jumpPressed);
       case PlayerState.normal when game.skiSurface != null:
         _updateSki(dt, dir, jump, jumpPressed);
       case PlayerState.normal:
@@ -236,7 +272,7 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     if (lurePressed && state != PlayerState.climbUp) {
       game.releaseFirefly(light.$1, facing);
     }
-    if (!isDead && game.skiSurface == null) _checkHazards();
+    if (!isDead && game.skiSurface == null && !swimming) _checkHazards();
     inShadow = level.rectHits(
       position.x + 2,
       position.y + 6,
@@ -251,10 +287,12 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       );
     }
     hidden =
-        inShadow &&
-        state == PlayerState.normal &&
-        onGround &&
-        (crouching || sneaking || velocity.x.abs() < 20);
+        (inShadow &&
+            state == PlayerState.normal &&
+            onGround &&
+            (crouching || sneaking || velocity.x.abs() < 20)) ||
+        // Suyun altında yosun ve mürekkep saklar.
+        (swimming && game.seaCover(center));
   }
 
   /// Oyuncunun taşıdığı ışık: konumu ve yarıçapı (aydınlatma katmanı için).
@@ -481,6 +519,187 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     for (final c in game.world.children) {
       if (c is Crate) yield c;
       if (c is Gate && c.solid) yield c;
+    }
+  }
+
+  void _updateSwim(double dt, int dir, bool up, bool down, bool stroke) {
+    var ix = dir.toDouble();
+    var iy = ((down ? 1 : 0) - (up ? 1 : 0)).toDouble();
+    final len = math.sqrt(ix * ix + iy * iy);
+    if (len > 0) {
+      ix /= len;
+      iy /= len;
+      if (ix != 0) facing = ix.sign.toInt();
+    }
+    // Su yüzünde: başı dışarıda süzülür (nefes alır); yukarı basmak onu
+    // sudan çıkarmaz, kulaç burada sudan çıkış hamlesidir. Aşağı basan
+    // yeniden dalar.
+    final line = level.surfaceAbove(center.x, center.y);
+    final float = line == null ? 0.0 : line + 5 + math.sin(_anim * 2.4) * 1.2;
+    final atSurface =
+        line != null &&
+        iy <= 0 &&
+        carrier == null &&
+        center.y < float + 10 &&
+        velocity.y < 30;
+    velocity.x += ix * swimAccel * dt;
+    velocity.y += (atSurface ? 0 : iy) * swimAccel * dt;
+    if (atSurface) {
+      {
+        velocity.y +=
+            ((float - center.y) * 6 - velocity.y) * math.min(1, dt * 8);
+        if (stroke) {
+          velocity.y = -560;
+          _stroke = 1;
+          stroke = false;
+          GameAudio.instance.play('splash', volume: 0.4, minGapMs: 300);
+        }
+      }
+    }
+    // Kulaç: bir öncekinin bacakları açılmadan yenisi başlamaz.
+    if (stroke && _stroke > 0.7) {
+      _stroke = 0;
+      final sp = velocity.length;
+      _strokeDir = len > 0
+          ? Offset(ix, iy)
+          : (sp > 20
+                ? Offset(velocity.x / sp, velocity.y / sp)
+                : Offset(facing.toDouble(), 0));
+      if (_strokeDir.dx.abs() > 0.2) facing = _strokeDir.dx.sign.toInt();
+    }
+    if (_stroke < 1) {
+      final before = _stroke;
+      _stroke = math.min(1, _stroke + dt / strokeTime);
+      // İtiş: kolların çekişinde az, bacakların açılışında çok.
+      double push(double t) =>
+          0.2 * _ramp(t, 0.02, 0.36) + 0.8 * _ramp(t, 0.38, 0.62);
+      final dv = (push(_stroke) - push(before)) * strokePush;
+      velocity.x += _strokeDir.dx * dv;
+      velocity.y += _strokeDir.dy * dv;
+    }
+    // Su direnci: kulaçtan sonra süzülüş uzun sürer, yavaşça söner.
+    final drag = len > 0 ? 2.2 : 1.1;
+    final k = math.exp(-drag * dt);
+    velocity.scale(k);
+    // Kendi itişiyle en çok bu hıza varır; dışarıdan gelen (sokma,
+    // akıntı, kabarcık) itişleri yalnız su direnci söndürür.
+    final sp = velocity.length;
+    final cap = _stroke < 1 ? swimMax + strokePush * 0.8 : swimMax;
+    if (len > 0 && sp > cap) {
+      velocity.scale(1 - (1 - cap / sp) * math.min(1, dt * 6));
+    }
+    // Su hafifçe yukarı iter.
+    if (len == 0) velocity.y -= 12 * dt;
+    if (carrier == null) {
+      _moveX(velocity.x * dt, 0);
+      _moveY(velocity.y * dt, allowOneWay: false);
+    }
+    onGround = false;
+    // Çizim: hızlandıkça gövde gidiş yönüne yatar; dururken dikleşir.
+    final v = velocity.length;
+    _kick += dt * (2.2 + v / 35);
+    _swimGlide = approach(
+      _swimGlide,
+      ((v - 18) / 55).clamp(0.0, 1.0),
+      dt,
+      0.25,
+    );
+    final lx = velocity.x * facing;
+    final target = v < 8 ? 0.2 : math.atan2(velocity.y, lx.abs()) + math.pi / 2;
+    final aim = 0.2 + (target - 0.2) * _swimGlide;
+    _swimPitch += (aim - _swimPitch) * (1 - math.exp(-dt * 5));
+    _updateBubbles(dt);
+  }
+
+  static double _ramp(double t, double a, double b) {
+    final x = ((t - a) / (b - a)).clamp(0.0, 1.0);
+    return x * x * (3 - 2 * x);
+  }
+
+  /// Yüzerken: ağızdan ara ara nefes kabarcıkları, kulaçta ayaklardan iz.
+  void _updateBubbles(double dt) {
+    _breathT -= dt;
+    final up = Offset(math.sin(_swimPitch) * facing, -math.cos(_swimPitch));
+    final mouth = center + Vector2(up.dx, up.dy) * 11;
+    if (_breathT <= 0) {
+      _breathT = 1.6 + math.sin(_anim * 7) * 0.5;
+      for (var i = 0; i < 3; i++) {
+        _bubbles.add((
+          mouth + Vector2(i * 1.2, -i * 2.5),
+          -i * 0.12,
+          1 + i * 0.3,
+        ));
+      }
+    }
+    if (_stroke > 0.5 && _stroke < 0.75) {
+      final feet = center - Vector2(up.dx, up.dy) * 14;
+      if ((_anim * 30).floor() % 2 == 0) {
+        _bubbles.add((feet + Vector2(math.sin(_anim * 40) * 3, 0), 0, 0.6));
+      }
+    }
+    for (var i = _bubbles.length - 1; i >= 0; i--) {
+      final (pos, age, size) = _bubbles[i];
+      final a = age + dt;
+      if (a > 2.4) {
+        _bubbles.removeAt(i);
+        continue;
+      }
+      if (a > 0) {
+        pos.y -= (26 + size * 14) * dt;
+        pos.x += math.sin(a * 5 + size * 3) * 6 * dt;
+      }
+      _bubbles[i] = (pos, a, size);
+    }
+  }
+
+  /// Nefes: Sâye'nin çevresinde ince bir halka (dolu ve hiç azalmamışsa
+  /// görünmez); azaldıkça kısalır, sona doğru kızarır ve atar.
+  double _breathShown = 0;
+
+  void _drawBreath(Canvas canvas) {
+    final b = game.breath;
+    final want = b < 0.98 || game.drowning > 0 ? 1.0 : 0.0;
+    _breathShown += (want - _breathShown) * 0.08;
+    if (_breathShown < 0.02) return;
+    final c = Offset(w / 2, h / 2);
+    final low = (1 - b / 0.3).clamp(0.0, 1.0);
+    final pulse = low > 0 ? 0.5 + 0.5 * math.sin(_anim * 9) : 1.0;
+    final r = 25.0 + low * pulse * 1.5;
+    final base = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.2
+      ..color = const Color(0xFF0A1A1C).withValues(alpha: 0.35 * _breathShown);
+    canvas.drawCircle(c, r, base);
+    final col = game.akNefes
+        ? const Color(0xFFFFFFFF)
+        : Color.lerp(const Color(0xFFCFF4EC), const Color(0xFFFF9A7A), low)!;
+    canvas.drawArc(
+      Rect.fromCircle(center: c, radius: r),
+      -math.pi / 2,
+      2 * math.pi * b.clamp(0.0, 1.0),
+      false,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round
+        ..strokeWidth = 2.2
+        ..color = col.withValues(alpha: 0.8 * _breathShown),
+    );
+  }
+
+  void _drawBubbles(Canvas canvas) {
+    final ring = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.7;
+    final shine = Paint();
+    for (final (pos, age, size) in _bubbles) {
+      if (age < 0) continue;
+      final fade = (1 - age / 2.4).clamp(0.0, 1.0);
+      final r = 0.9 + size * 1.1 + age * 0.25;
+      final c = Offset(pos.x - position.x, pos.y - position.y);
+      ring.color = const Color(0xFFDDF2F2).withValues(alpha: 0.55 * fade);
+      canvas.drawCircle(c, r, ring);
+      shine.color = const Color(0xFFFFFFFF).withValues(alpha: 0.5 * fade);
+      canvas.drawCircle(c.translate(-r * 0.35, -r * 0.35), r * 0.28, shine);
     }
   }
 
@@ -2112,6 +2331,10 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       crouching = was;
       return;
     }
+    if (swimming) {
+      _drawBubbles(canvas);
+      _drawBreath(canvas);
+    }
     // Ayak altında ılık ışık: koyu sahnede durduğu yer seçilir.
     if (onGround && !isDead && entranceAlpha > 0.5) {
       drawFootGlow(canvas, const Offset(w / 2, h), 1);
@@ -2141,7 +2364,7 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       canvas.translate(-w / 2, -h);
       drawSpray(canvas, Offset(w / 2 - 12, h), onGround ? _skiSpeed : 0, _anim);
     }
-    if (!ski && !isDead && !riding) {
+    if (!ski && !isDead && !riding && !swimming) {
       if (!Settings.lowGraphics) {
         _drawShadows(canvas);
       } else if (_mood == _ShadowMood.sent ||
@@ -2352,6 +2575,14 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       canvas.rotate(-_swingBody.value * facing);
       canvas.translate(-pivot.dx, -pivot.dy);
     }
+    final swim = swimming && !isDead;
+    if (swim) {
+      // Suyun altında gövde gidiş yönüne yatar: baş önde, ayaklar geride.
+      const pivot = Offset(cx, 20);
+      canvas.translate(pivot.dx, pivot.dy);
+      canvas.rotate(_swimPitch);
+      canvas.translate(-pivot.dx, -pivot.dy);
+    }
     if (isDead && !_fell) {
       canvas.translate(cx, _artH);
       canvas.rotate(math.min(_stateTime * 5, 1) * math.pi / 2);
@@ -2503,6 +2734,61 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
         foot1 = Offset(cx + 2, _artH);
         foot2 = Offset(cx - 2, _artH);
         arm2 = -0.3;
+      case PlayerState.normal when swim:
+        // Poz dik gövdeye göre kurulur (gövde sonra döner): yukarısı ileri,
+        // aşağısı geri, +x karın yanı. Kavanoz taşıyan biri yan kulaç atar:
+        // süzülürken alttaki kol ileri uzanır, üstteki kol uyluğa dayanır,
+        // ayaklar hafifçe çırpar. Kulaçta kollar göğüste buluşur, bacaklar
+        // makas gibi açılır; sonra bacaklar birden kapanır (itiş), alttaki
+        // kol yeniden uzanır, üstteki geriye iter. Dururken suda dik durur,
+        // bacaklar yavaşça çevrilir, kollar yanlarda kürek çeker.
+        final g = _swimGlide;
+        final k = _kick;
+        final st = _stroke;
+        hipY = 27;
+        lean = 0;
+        final open = st < 1 ? _ramp(st, 0.02, 0.36) : 0.0;
+        final snap = st < 1 ? _ramp(st, 0.38, 0.6) : 1.0;
+        final scissor = open * (1 - snap);
+        final tread1 = Offset(
+          cx + 2.5 + math.cos(k) * 2.2,
+          _artH - 2.5 + math.sin(k) * 1.4,
+        );
+        final tread2 = Offset(
+          cx - 2 - math.cos(k) * 2.2,
+          _artH - 2.5 - math.sin(k) * 1.4,
+        );
+        final flutter = math.sin(k * 1.7) * 2.6 * (st < 1 ? 0 : 1);
+        final glide1 = blendPose(
+          Offset(cx + 1.6 + flutter, hipY + 14.2),
+          Offset(cx + 7, hipY + 8),
+          scissor,
+        );
+        final glide2 = blendPose(
+          Offset(cx - 0.8 - flutter, hipY + 14.4),
+          Offset(cx - 6, hipY + 11.5),
+          scissor,
+        );
+        foot1 = blendPose(tread1, glide1, g);
+        foot2 = blendPose(tread2, glide2, g);
+        final sh = Offset(cx, hipY - 10);
+        final scull = math.sin(k * 1.3) * 1.6;
+        final chest1 = sh + Offset(4.5, 3);
+        final chest2 = sh + Offset(3, 2.5);
+        // Alttaki (öndeki) kol ileri ve aşağı uzanır: iri başın önünde
+        // kalmasın, çenenin altından dışarı çıksın.
+        final reach = sh + Offset(9.6, -3.4);
+        final onThigh = Offset(cx + 2.6, hipY + 4.5);
+        final lower = blendPose(blendPose(reach, chest1, open), reach, snap);
+        final upper = blendPose(
+          blendPose(onThigh, chest2, open),
+          onThigh,
+          snap,
+        );
+        frontHand = blendPose(sh + Offset(6.5 + scull, 3.5), lower, g);
+        backHand = blendPose(sh + Offset(-5.5 - scull, 4), upper, g);
+        arm2 = 0;
+        jarAtHip = true;
       case PlayerState.normal when skiing:
         // Kayak duruşu: dizler kırık, gövde öne eğik, ayaklar tahtada.
         hipY = 30;
@@ -2620,7 +2906,12 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
         _jarSwing.value +
         math.sin(cycle * 2) * 0.06 * amount * (1 - _air) +
         math.sin(_anim * 1.7) * 0.03;
-    final jar = jarAtHip
+    final jar = swim
+        ? hip.translate(
+            7.5 + math.sin(_anim * 1.5) * 0.8,
+            2 + _swimGlide * 2 + math.cos(_anim * 1.3) * 0.6,
+          )
+        : jarAtHip
         ? hip.translate(5, -1)
         : (shielded
               ? jarHand.translate(-1.5, 1.5)
@@ -2667,6 +2958,25 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       canvas.drawLine(hip, knee, _limb..strokeJoin = StrokeJoin.round);
       _limb.strokeWidth = 3.6;
       canvas.drawLine(knee, foot, _limb);
+      if (swim) {
+        // Yüzerken ayak ucu gergin: pabuç baldırın doğrultusunda uzanır.
+        final d = foot - knee;
+        canvas.save();
+        canvas.translate(foot.dx, foot.dy);
+        canvas.rotate(math.atan2(d.dy, d.dx));
+        canvas.drawOval(
+          Rect.fromCenter(
+            center: Offset(toon ? 2.6 : 1.8, toon ? 0.8 : 0.5),
+            width: toon ? 8.4 : 6.2,
+            height: toon ? 4 : 2.8,
+          ),
+          _fill,
+        );
+        canvas.restore();
+        _limb.color = ink;
+        _fill.color = ink;
+        return;
+      }
       // Küçük bot (denemede iri, karikatür pabuç).
       canvas.drawOval(
         Rect.fromCenter(
@@ -2736,6 +3046,14 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       canvas.scale(-1, 1);
       canvas.translate(-head.dx, 0);
     }
+    // Yüzerken baş gidiş yönüne bakar (boyun geriye kıvrılır).
+    if (swim) {
+      final neckPivot = Offset(head.dx - 1, headY + 6);
+      canvas.save();
+      canvas.translate(neckPivot.dx, neckPivot.dy);
+      canvas.rotate(-0.55 * _swimGlide);
+      canvas.translate(-neckPivot.dx, -neckPivot.dy);
+    }
     // Denemede baş ve saç boyundan büyütülür (karikatür oranı).
     final bigHead = toon;
     if (bigHead) {
@@ -2777,6 +3095,19 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
         math.sin(_anim * 5 + i * 1.4) * (0.06 + wind * 0.55) -
         float * (1.4 + i * 0.5);
     Offset h(double x, double y) => head + Offset(x, y);
+    // Suyun içinde saç süzülür: dururken yukarı kabarır, yüzerken ardında
+    // akar.
+    Offset tip(int i, double x, double y) {
+      if (!swim) return h(x, y);
+      final wv = math.sin(_anim * 2.6 + i * 1.3);
+      const up = [Offset(-8, -10), Offset(-10.5, -6), Offset(-9.5, -1.5)];
+      const trail = [Offset(-7.5, 3.5), Offset(-9.5, 7), Offset(-6.5, 9.5)];
+      final o =
+          Offset.lerp(up[i], trail[i], _swimGlide)! +
+          Offset(wv * 0.9, wv * 0.7 * (1 - _swimGlide));
+      return h(o.dx, o.dy);
+    }
+
     final hair = Path()
       ..moveTo(h(5.8, -1.5).dx, h(5.8, -1.5).dy)
       ..quadraticBezierTo(
@@ -2791,16 +3122,23 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
         h(-4, -7.4).dx,
         h(-4, -7.4).dy,
       )
-      ..lineTo(h(-9.5 - b, -7 + sw(0)).dx, h(-9.5 - b, -7 + sw(0)).dy)
+      ..lineTo(tip(0, -9.5 - b, -7 + sw(0)).dx, tip(0, -9.5 - b, -7 + sw(0)).dy)
       ..lineTo(h(-6.4, -4.6).dx, h(-6.4, -4.6).dy)
-      ..lineTo(h(-10.5 - b, -3 + sw(1)).dx, h(-10.5 - b, -3 + sw(1)).dy)
+      ..lineTo(
+        tip(1, -10.5 - b, -3 + sw(1)).dx,
+        tip(1, -10.5 - b, -3 + sw(1)).dy,
+      )
       ..lineTo(h(-6.8, -0.8).dx, h(-6.8, -0.8).dy)
-      ..lineTo(h(-9 - b * 0.8, 2 + sw(2)).dx, h(-9 - b * 0.8, 2 + sw(2)).dy)
+      ..lineTo(
+        tip(2, -9 - b * 0.8, 2 + sw(2)).dx,
+        tip(2, -9 - b * 0.8, 2 + sw(2)).dy,
+      )
       ..lineTo(h(-5.2, 3).dx, h(-5.2, 3).dy)
       ..lineTo(h(-2, -1).dx, h(-2, -1).dy)
       ..close();
     canvas.drawPath(hair, _fill);
     if (bigHead) canvas.restore();
+    if (swim) canvas.restore();
 
     if (looking) canvas.restore();
 
@@ -2821,9 +3159,13 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       for (var i = 0; i <= n; i++) {
         final k = i / n;
         // Dururken aşağı sarkar, koşarken ve havada yatayda savrulur.
-        final sweep = (0.25 + wind * 0.75).clamp(0.0, 1.0);
-        final wave =
-            math.sin(_anim * (7 + tail * 2) - k * 5 + tail) * k * (0.6 + wind);
+        // Suyun içinde ardında yavaşça dalgalanır.
+        final sweep = swim ? 0.05 : (0.25 + wind * 0.75).clamp(0.0, 1.0);
+        final wave = swim
+            ? math.sin(_anim * (2.4 + tail) - k * 4 + tail) * k * 1.6
+            : math.sin(_anim * (7 + tail * 2) - k * 5 + tail) *
+                  k *
+                  (0.6 + wind);
         final x =
             neck.dx -
             1 -
@@ -2846,7 +3188,16 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       canvas.restore();
       return;
     }
-    if (!jarAtHip && !shielded) {
+    if (swim) {
+      // Kavanoz kuşağa bağlı: ipinin ucunda suda süzülür.
+      canvas.drawLine(
+        hip.translate(2.5, -1),
+        jar.translate(0, -5.4),
+        Paint()
+          ..color = kInk
+          ..strokeWidth = 0.9,
+      );
+    } else if (!jarAtHip && !shielded) {
       canvas.drawLine(
         jarHand,
         jar.translate(0, -5.4),
@@ -2857,10 +3208,10 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     }
 
     if (toon) {
-      // İri kavanoz: uzaktan da okunur.
+      // İri kavanoz: uzaktan da okunur (yüzerken kolları örtmesin).
       canvas.save();
       canvas.translate(jar.dx, jar.dy);
-      canvas.scale(1.35);
+      canvas.scale(swim ? 1.0 : 1.35);
       canvas.translate(-jar.dx, -jar.dy);
       _drawJar(canvas, jar, lightAmount);
       canvas.restore();

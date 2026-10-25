@@ -633,6 +633,9 @@ void _heroOverlay(Canvas canvas, PerdeScene scene, double time, double u) {
   }
 
   switch (scene) {
+    // Erlik perdesi Ak Ana sahnesinin devamıdır: kahramanları da öyle.
+    case PerdeScene.erlik:
+      _heroOverlay(canvas, PerdeScene.akAna, time, u + 3);
     case PerdeScene.galata:
       // Hezarfen: kanatlarıyla kulede; sonra Boğaz'ın üstünden süzülür.
       stage(1, (a) {

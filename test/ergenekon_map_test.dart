@@ -41,7 +41,7 @@ void main() {
     'kömür yığılmadan ocak yanmaz; iki sandık çukura girince yanar',
     GolgeGame.new,
     (game) async {
-      expect(levels[level].title, 'XVI · ERGENEKON');
+      expect(levels[level].title, 'XVII · ERGENEKON');
       await place(game, level, 84, 34);
       final v = firstVein(game);
       expect(v.rhythm, isTrue);

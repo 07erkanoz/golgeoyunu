@@ -21,6 +21,7 @@ import 'guide.dart';
 import 'surprises.dart';
 import 'vistas.dart';
 import 'creatures.dart';
+import 'deniz.dart';
 import 'frame_pacer.dart';
 import 'mechanics.dart';
 import 'entities.dart';
@@ -947,9 +948,13 @@ class GolgeGame extends FlameGame with KeyboardEvents {
       _respawn = Level.standOn(level.playerStart, Player.w, Player.h);
       _darkWarned = false;
       _swallowed = false;
+      akNefes = false;
       _checkpointFireflies = fireflies;
     }
     if (respawn) _ensureFireflies();
+    breath = 1;
+    drowning = 0;
+    _wasSwimming = false;
 
     world.addAll(
       restorePuzzle([
@@ -1018,7 +1023,8 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         for (final c in level.batCells)
           if (level.def.theme.snowy)
             Wolf(c)
-          else if (level.def.theme == LevelTheme.underworld)
+          else if (level.def.theme == LevelTheme.underworld ||
+              level.def.theme == LevelTheme.sea)
             Kormos(c)
           else
             BatRoost(c),
@@ -1084,6 +1090,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
           ...BirdBridge(c0, c1, r).birds(),
         for (final (c, r, ph) in level.def.kites) KiteDeck(c, r, phase: ph),
         for (final cells in level.def.starStreams) StarStream(cells),
+        ..._seaParts(),
         if (level.def.ulker case (final stars, final bridge))
           UlkerCluster(stars, bridge),
         for (final (c, r) in level.def.leaks) LeakJet(c, r),
@@ -1096,7 +1103,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         for (final (c, r) in level.def.finaleLocks)
           FinaleLock(Vector2(c * kTile.toDouble(), r * kTile.toDouble())),
         ...joyPlaces(level),
-        if (joyEnabled)
+        if (joyEnabled && level.def.seaSurface == null)
           for (final c in level.checkpointCells) UmayBirds(c),
         for (final (c, r, kind) in level.def.vistas)
           VistaPoint(
@@ -2155,6 +2162,8 @@ class GolgeGame extends FlameGame with KeyboardEvents {
       ShadowAnimal.fox,
       ShadowAnimal.rabbit,
     ],
+    // Suyun altında duvar yok, gölge oynamaz (hava ceplerinde kuş).
+    LevelTheme.sea => const [ShadowAnimal.bird],
   };
 
   /// Sâye sakin bir yerde durunca gölgesi kendi kendine bir hayvana dönüşüp
@@ -2347,7 +2356,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         Lever l when near(l, 4, 4) => 'lever',
         UmayTree u when near(u, 3, 3) => 'umay',
         PawTrail t when near(t, 4, 3) => 'gokboruTrail',
-        Kormos k when near(k, 7, 5) => 'kormos',
+        Kormos k when near(k, 7, 5) => p.swimming ? 'kormosSea' : 'kormos',
         KutCage k when near(k, 3, 3) && !k.freed =>
           level.def.theme == LevelTheme.underworld ? 'kut' : 'lightCage',
         KandilciBasi k when near(k, 22, 6) && !k.solved => 'finale',
@@ -2525,6 +2534,128 @@ class GolgeGame extends FlameGame with KeyboardEvents {
 
     _updateDarkZone(p, dt);
     _updateStorm(dt);
+    _updateSea(p, dt);
+  }
+
+  // ------------------------------------------------------------ deniz
+  // Ak Ana'nın Denizi: suyun altında Sâye yüzer, nefesi azalır; hava
+  // ceplerinde, yüzeyde ve kabarcık sütunlarında dolar. Bitince bir an
+  // bulanır, sonra bayılır (son Umay köküne döner).
+
+  /// Nefes (1 dolu, 0 bitti).
+  double breath = 1;
+
+  /// Nefes bittikten sonra geçen süre.
+  double drowning = 0;
+
+  /// Ak Ana'nın verdiği nefes: bölümün sonuna dek azalmaz.
+  bool akNefes = false;
+
+  /// Dolu nefesin suyun altında yettiği süre ve bitince bayılmadan önceki
+  /// pay (sn).
+  static const double breathTime = 25;
+  static const double drownTime = 3;
+
+  bool _wasSwimming = false;
+
+  void breathe(double amount) => breath = (breath + amount).clamp(0.0, 1.0);
+
+  /// Bir düzeneğin ilk karşılaşma ipucu.
+  void hint(String key) => _queueHint(key);
+
+  /// Suyun altında saklayan: öndeki yosun ya da mürekkep.
+  bool seaCover(Vector2 at) {
+    for (final c in world.children) {
+      if (c is InkCloud && c.covers(at)) return true;
+      if (c is Kelp &&
+          c.front &&
+          (at.x - c.position.x).abs() < 15 &&
+          at.y < c.position.y &&
+          at.y > c.position.y - c.tall * 0.9) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /// Yakında saklayan bir yosun var mı (ipucu için).
+  bool seaCoverNear(Vector2 at, double r) => world.children.any(
+    (c) => c is Kelp && c.front && (c.position - at).length < r + c.tall / 2,
+  );
+
+  List<Component> _seaParts() {
+    final top = level.seaTop;
+    if (top == null) return const [];
+    final d = level.def;
+    return [
+      SeaWater(top),
+      SeaTint(top),
+      SeaShafts(top),
+      SeaMotes(),
+      for (final (c0, c1) in d.kelpBeds) ...kelpBed(level, c0, c1, seed: c0),
+      for (final (c, r, n) in d.fishSchools)
+        FishSchool(
+          Vector2((c + 0.5) * kTile, (r + 0.5) * kTile),
+          count: n,
+          seed: c,
+        ),
+      for (final (c, r, t) in d.jellies) StingingJelly(c, r, t),
+      for (final (c, r, w) in d.anglers) AnglerHunter(c, r, w),
+      for (final (c, r) in d.octopi) Octopus(c, r),
+      for (final cells in d.currents) SeaCurrent(cells),
+      for (final (c, r) in d.bubbleVents) BubbleVent(c, r),
+      if (d.turtle.length > 1) SeaTurtle(d.turtle),
+      for (final (c0, c1) in d.boats) LanternBoat(c0, c1, top),
+      if (d.akAna case (final c, final r)) AkAnaSea(c, r),
+    ];
+  }
+
+  void _updateSea(Player p, double dt) {
+    if (level.seaTop == null) return;
+    if (p.isDead) {
+      p.swimming = false;
+      _wasSwimming = false;
+      return;
+    }
+    final now = level.inWater(p.center.x, p.center.y);
+    p.swimming = now;
+    if (_wasSwimming && !now && p.velocity.y < -10) {
+      // Sudan çıkarken bir hamlede yukarı: cebin kıyısına tutunabilsin.
+      p.velocity.y = math.min(p.velocity.y, -470);
+      GameAudio.instance.play('splash', volume: 0.3, minGapMs: 400);
+    } else if (!_wasSwimming && now) {
+      p.velocity.y *= 0.35;
+      GameAudio.instance.play('splash', volume: 0.45, minGapMs: 400);
+      _queueHint('swim');
+    }
+    _wasSwimming = now;
+    final head = level.inWater(p.center.x, p.center.y - 9);
+    if (head && !akNefes && p.carrier == null) {
+      breathe(-dt / breathTime);
+    } else if (!head) {
+      breathe(dt * 1.4);
+    }
+    if (breath < 0.6) _queueHint('breath');
+    if (breath < 0.3 && head) {
+      GameAudio.instance.play('heartbeat', volume: 0.5, minGapMs: 1100);
+    }
+    if (breath <= 0 && head) {
+      drowning += dt;
+      threat = math.max(threat, 0.5 + 0.5 * drowning / drownTime);
+      if (drowning > drownTime) {
+        drowning = 0;
+        p.die(cause: DeathCause.water);
+      }
+    } else {
+      drowning = math.max(0, drowning - dt * 2);
+    }
+    for (final a in level.airRects) {
+      if (a.inflate(5 * kTile).contains(p.center.toOffset())) {
+        _queueHint('airPocket');
+        break;
+      }
+    }
+    if (p.swimming && seaCoverNear(p.center, 3 * kTile)) _queueHint('kelpHide');
   }
 
   /// Şimşek: ekranı bir anlığına beyaza boğar, her şey görünür.
@@ -2783,7 +2914,12 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     final y = p.center.y;
     if (_snapCamera || _camFloor.isNaN) _camFloor = y;
     final band = halfH * 0.32;
-    if (p.onGround || p.isDead) {
+    if (p.swimming) {
+      // Suyun altında Sâye ortada kalır; gidilen yön (aşağısı da) önden
+      // görünür.
+      final ahead = p.velocity.y.clamp(-200.0, 200.0) * 0.6;
+      _camFloor = approach(_camFloor, y + ahead + 20, dt, 0.35);
+    } else if (p.onGround || p.isDead) {
       _camFloor = approach(_camFloor, y, dt, 0.18);
     } else if (y < _camFloor - band) {
       _camFloor = y + band;
@@ -2808,7 +2944,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     // altında durur, yukarısı daha çok görünür. Yukarıda bir Kandilci ya da
     // Gözcü feneri varsa kadraja alınır (telefonda üstteki fenerler
     // kesiliyordu). Sâye alt kenara 2,5 kareden çok yaklaşmaz.
-    var wantUp = water == null ? halfH * 0.16 : 0.0;
+    var wantUp = water == null && !p.swimming ? halfH * 0.16 : 0.0;
     final topEdge = target.y - wantUp - halfH + 1.5 * kTile;
     for (final c in world.children) {
       final Vector2? lamp = switch (c) {

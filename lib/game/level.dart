@@ -477,6 +477,50 @@ class Level {
   bool inDarkZone(Vector2 p) =>
       darkZones.any((z) => z.contains(Offset(p.x, p.y)));
 
+  /// Ak Ana'nın Denizi: suyun yüzeyi (dünya y; denizsiz bölümde null).
+  double? get seaTop =>
+      def.seaSurface == null ? null : def.seaSurface! * kTile.toDouble();
+
+  /// Hava cepleri (dünya dikdörtgenleri).
+  late final List<Rect> airRects = [
+    for (final (c0, r0, c1, r1) in def.airPockets)
+      Rect.fromLTRB(
+        c0 * kTile.toDouble(),
+        r0 * kTile.toDouble(),
+        (c1 + 1) * kTile.toDouble(),
+        (r1 + 1) * kTile.toDouble(),
+      ),
+  ];
+
+  /// Noktanın hemen üstündeki su yüzü (en çok [reach] yukarıda; üstü
+  /// havaysa, kaya değilse): açık denizin ya da bir hava cebinin dibi.
+  double? surfaceAbove(double x, double y, {double reach = 1.2 * kTile}) {
+    final top = seaTop;
+    if (top == null) return null;
+    double? best;
+    void consider(double line) {
+      if (y < line || y - line > reach) return;
+      if (solid((x / kTile).floor(), ((line - 4) / kTile).floor())) return;
+      if (best == null || line > best!) best = line;
+    }
+
+    consider(top);
+    for (final a in airRects) {
+      if (x >= a.left && x <= a.right) consider(a.bottom);
+    }
+    return best;
+  }
+
+  /// Nokta suyun içinde mi (yüzeyin altında ve hava cebinde değil).
+  bool inWater(double x, double y) {
+    final top = seaTop;
+    if (top == null || y < top) return false;
+    for (final a in airRects) {
+      if (a.contains(Offset(x, y))) return false;
+    }
+    return true;
+  }
+
   /// Bölümde ne kadar ilerlendiği: yatay bölümlerde x, dikey (tırmanma)
   /// bölümlerinde yükseklik.
   bool get vertical => height > width;

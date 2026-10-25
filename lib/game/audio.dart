@@ -99,6 +99,7 @@ class GameAudio {
     'amb_konya.ogg',
     'amb_cave.ogg',
     'amb_forest.ogg',
+    'amb_sea.ogg',
     'karabasan.ogg',
     'heartbeat.ogg',
     'murmur.ogg',
@@ -249,6 +250,7 @@ class GameAudio {
       LevelTheme.snow || LevelTheme.nemrut => 'amb_snow',
       LevelTheme.konya => 'amb_konya',
       LevelTheme.forest => 'amb_forest',
+      LevelTheme.sea => 'amb_sea',
     };
     _updateBed();
   }

@@ -1883,7 +1883,121 @@ yk.put(307,F-43,'E')
 yb(311,0,311,H-1)
 lvl_yesil=yk.rows()
 
-MAPS = [('kMapYerebatan', lvl1), ('kMapKule', lvl2), ('kMapGokyolu', lvl3), ('kMapKaf', lvl4), ('kMapAgri', lvl5), ('kMapGemi', lvl6), ('kMapNemrut', lvl7), ('kMapGunDogumu', lvl8), ('kMapKarYolu', lvl9), ('kMapPalandoken', lvl10), ('kMapCig', lvl11), ('kMapPeri', lvl12), ('kMapDerinkuyu', lvl13), ('kMapKonya', lvl14), ('kMapErlik', lvl_erlik), ('kMapErgenekon', lvl_ergenekon), ('kMapGok', lvl_gok), ('kMapOtuken', lvl_otuken), ('kMapGok2', lvl_gok2), ('kMapYesilKubbe', lvl_yesil)]
+# ------------------------------------------------------------ XV · AK ANA'NIN DENİZİ
+# Altay yaratılış anlatısındaki ilk su (docs/AK_ANA_DENIZI_PLANI.md). Sâye
+# Hayat Ağacı'nın köklerinden kıyıya iner, suya dalar: sığlık (Kandilci
+# sandalları), yosun ormanı (fenerbalığı, ahtapot), denizanası mağaraları,
+# akıntı koridorları (kol, kapı, kaplumbağa), Kişi'nin taşı (açık su), karanlık
+# dip (Körmösler, kabarcıklar), dipteki yarık: Ak Ana yükselir.
+import math as _m
+DS=6; DW,DH=420,78
+dz=G(DW,DH)
+def dr(c0,r0,c1,r1): dz.fill(c0,r0,c1,r1,'#')
+def dcv(c0,r0,c1,r1): dz.fill(c0,r0,c1,r1,'.')
+def dfloor(c):
+    if c<90: return 21+round(1.5*_m.sin(c/6.0)+0.8*_m.sin(c/2.7))
+    if c<172: return 34+round(1.8*_m.sin(c/7.0)+0.7*_m.sin(c/3.1))
+    if c<330: return DH-1
+    if c<360: return 40+round(2*_m.sin(c/5.0))
+    return 72+round(1.2*_m.sin(c/4.0))
+for c in range(DW):
+    dr(c,dfloor(c),c,DH-1)
+dr(0,0,0,DH-1); dr(DW-1,0,DW-1,DH-1)
+D_AIR=[]
+def dpocket(c0,c1,top,bottom,ledge=(1,4),k=True,lever=False):
+    """Kayaya oyulmuş hava cebi: altı suya açık, bir yanında kıyı."""
+    dcv(c0,top,c1,bottom)
+    l0,l1 = (c1-ledge[1]+1, c1) if ledge[0]>0 else (c0, c0+ledge[1]-1)
+    dr(l0,bottom,l1,bottom)
+    if k: dz.put(l1 if ledge[0]>0 else l0, bottom-1, 'K')
+    if lever: dz.put(l0+1 if ledge[0]>0 else l1-1, bottom-1, 'L')
+    D_AIR.append((c0,top,c1,bottom))
+# A · Köklerin Ucu: kıyı.
+dr(1,DS-1,13,DH-1)
+dz.put(4,DS-2,'P'); dz.put(9,DS-2,'K'); dz.put(7,DS-2,'B')
+dz.put(12,DS-2,'p')
+dz.put(17,DS+2,'1')
+dz.put(11,DS-2,'M')
+# B · Sığlık: açık su, Kandilci sandalları yüzeyde.
+dz.put(36,dfloor(36)-1,'F'); dz.put(66,dfloor(66)-1,'F')
+dz.put(52,DS+9,'M')
+# C · Yosun Ormanı: kayalık tavanın altı.
+dr(88,0,171,DS+3)
+dr(110,DS+4,112,DS+8); dr(141,DS+4,144,DS+9); dr(158,DS+4,159,DS+6)
+dz.put(91,DS+6,'p')
+dpocket(96,104,DS-1,DS+3)
+dpocket(132,139,DS,DS+3)
+dpocket(164,171,DS,DS+3,ledge=(-1,4))
+dz.put(124,DS+12,'3')
+dz.put(121,dfloor(121)-1,'F'); dz.put(150,dfloor(150)-1,'F')
+dz.put(147,DS+14,'M')
+# D · Denizanası Mağaraları: kayaya oyulmuş dolambaçlı tüneller.
+dr(172,0,251,DH-1)
+dcv(170,DS+8,186,DS+12)                  # giriş tüneli
+dcv(184,DS+8,188,DS+30)                  # birinci baca (denizanaları)
+dcv(184,DS+26,214,DS+30)                 # dip tüneli
+dcv(198,DS+18,202,DS+25)                 # cebe çıkan baca
+dpocket(195,205,DS+13,DS+17)
+dcv(212,DS+10,216,DS+30)                 # ikinci baca
+dcv(212,DS+10,236,DS+14)                 # üst tünel
+dcv(220,DS+14,240,DS+36)                 # mağara
+dcv(238,DS+20,251,DS+24)                 # çıkış tüneli
+dpocket(242,250,DS+15,DS+19)
+dz.put(174,DS+10,'p')
+dz.put(230,DS+33,'F')
+# E · Akıntı Koridorları.
+dr(252,0,329,DH-1)
+dcv(252,DS+20,300,DS+24)                 # üst koridor (akıntı sola)
+for a in (262,272,290):                  # akıntının dışında soluklanma oyukları
+    dcv(a,DS+17,a+3,DS+19)
+dpocket(274,282,DS+12,DS+16,lever=True)   # kollu cep
+dcv(278,DS+17,281,DS+19)
+dcv(296,DS+24,300,DS+32)                 # aşağı inen baca
+dcv(286,DS+32,329,DS+36)                 # alt koridor
+for r in range(DS+32,DS+37): dz.put(304,r,'H')   # kapı (kol açar)
+dpocket(309,316,DS+28,DS+31)               # kaplumbağanın başında soluklanma
+dz.put(254,DS+22,'p')
+# F · Kişi'nin Taşı: tavan açılır, dipten yüzeye bir taş.
+dcv(318,DS+22,329,DS+36)                 # koridorun ucundaki geniş su
+dcv(330,DS,359,dfloor(345)-1)
+dr(344,DS-4,348,DH-1)                    # Kişi'nin taşı
+dz.put(346,DS-5,'K'); dz.put(345,DS-5,'5'); dz.put(347,DS-5,'M')
+dz.put(332,DS+8,'p')
+# G · Karanlık Dip.
+dr(360,0,DW-2,DS+3)
+dpocket(361,368,DS,DS+3,ledge=(-1,3))
+dz.put(366,DS+8,'p')
+dr(383,DS+34,389,DS+35)                  # yarı derinlikte kaya: kaynağı nefes verir
+for c,r in ((385,60),(400,50),(404,64)): dz.put(c,r,'b')
+dz.put(371,dfloor(371)-1,'F'); dz.put(390,dfloor(390)-1,'F')
+dz.put(380,DS+40,'7')                    # Körmösler (tehlike)
+dz.put(404,DH-8,'8')                     # Ak Ana (yazı)
+# H · Dipteki yarık: Ak Ana.
+dcv(402,dfloor(404),407,DH-2)
+dz.put(404,DH-2,'E')
+lvl_deniz=dz.rows()
+
+def _floor_at(c):
+    # Suyun dibi: yüzeyin altında ilk sudan sonraki ilk kaya.
+    seen=False
+    for r in range(DS,DH):
+        if dz.g[r][c]!='#': seen=True
+        elif seen: return r
+    return DH-1
+D_KELP=[(18,50),(56,86),(106,128),(146,162),(378,392)]
+D_FISH=[(40,DS+8,28),(70,DS+5,18),(150,DS+12,24),(350,DS+10,20)]
+D_JELLY=[(186,DS+14,3),(186,DS+23,3),(214,DS+15,3),(214,DS+23,3),
+         (225,DS+20,4),(232,DS+28,4),(237,DS+18,3),
+         (370,DS+22,5),(382,DS+36,5),(397,DS+26,5),(406,DS+46,4)]
+D_ANGLER=[(126,DS+18,7),(378,DS+44,6),(396,DS+58,5)]
+D_OCTO=[(118,_floor_at(118)-1),(229,DS+36-0),(366,_floor_at(366)-1)]
+D_CURRENTS=[[(299,DS+22),(256,DS+22)]]
+D_VENTS=[(115,_floor_at(115)-1),(152,_floor_at(152)-1),(186,DS+30),(230,DS+36),(263,DS+24),(386,DS+33),(373,_floor_at(373)-1),(393,_floor_at(393)-1)]
+D_TURTLE=[(308,DS+34),(328,DS+34),(336,DS+30),(340,DS+22),(338,DS+14)]
+D_BOATS=[(20,52),(54,86)]
+D_AKANA=(404,DH-4)
+
+MAPS = [('kMapYerebatan', lvl1), ('kMapKule', lvl2), ('kMapGokyolu', lvl3), ('kMapKaf', lvl4), ('kMapAgri', lvl5), ('kMapGemi', lvl6), ('kMapNemrut', lvl7), ('kMapGunDogumu', lvl8), ('kMapKarYolu', lvl9), ('kMapPalandoken', lvl10), ('kMapCig', lvl11), ('kMapPeri', lvl12), ('kMapDerinkuyu', lvl13), ('kMapKonya', lvl14), ('kMapErlik', lvl_erlik), ('kMapErgenekon', lvl_ergenekon), ('kMapGok', lvl_gok), ('kMapOtuken', lvl_otuken), ('kMapGok2', lvl_gok2), ('kMapYesilKubbe', lvl_yesil), ('kMapDeniz', lvl_deniz)]
 
 out = ['// Bu dosya tools/generate_maps.py ile üretilir; elle düzenleme.',
        '// Gösterim: lib/game/level.dart başındaki açıklamaya bakın.', '']
@@ -1913,5 +2027,24 @@ for name, ys in SURFACES:
 out.append('/// Palandöken Manyetik Tepe sütun aralıkları (ilk, son).')
 out.append('const kSkiPalandokenMagnet = <(int, int)>[' + ', '.join(f'({a}, {b})' for a,b in PAL_MAGNET) + '];')
 out.append('')
+
+def _cells(xs): return ', '.join(f'({a}, {b})' for a,b in xs)
+out.append('// Ak Ana\'nın Denizi: suyun içindekiler (tools/generate_maps.py).')
+out.append('const kDenizSurface = %d;' % DS)
+out.append('const kDenizAir = <(int, int, int, int)>[' + ', '.join(f'({a}, {b}, {c}, {d})' for a,b,c,d in D_AIR) + '];')
+out.append('const kDenizKelp = <(int, int)>[' + _cells(D_KELP) + '];')
+out.append('const kDenizFish = <(int, int, int)>[' + ', '.join(f'({a}, {b}, {c})' for a,b,c in D_FISH) + '];')
+out.append('const kDenizJellies = <(int, int, int)>[' + ', '.join(f'({a}, {b}, {c})' for a,b,c in D_JELLY) + '];')
+out.append('const kDenizAnglers = <(int, int, int)>[' + ', '.join(f'({a}, {b}, {c})' for a,b,c in D_ANGLER) + '];')
+out.append('const kDenizOctopi = <(int, int)>[' + _cells(D_OCTO) + '];')
+out.append('const kDenizCurrents = <List<(int, int)>>[' + ', '.join('[' + _cells(p) + ']' for p in D_CURRENTS) + '];')
+out.append('const kDenizVents = <(int, int)>[' + _cells(D_VENTS) + '];')
+out.append('const kDenizTurtle = <(int, int)>[' + _cells(D_TURTLE) + '];')
+out.append('const kDenizBoats = <(int, int)>[' + _cells(D_BOATS) + '];')
+out.append('const kDenizAkAna = (%d, %d);' % D_AKANA)
+out.append('')
+import json, os
+os.makedirs('build', exist_ok=True)
+json.dump({'surface':DS,'air':D_AIR,'vents':D_VENTS,'turtle':D_TURTLE,'currents':D_CURRENTS,'akAna':D_AKANA,'jellies':D_JELLY,'anglers':D_ANGLER}, open('build/deniz.json','w'))
 open('lib/game/maps.dart', 'w').write('\n'.join(out))
 print('magnet', sk.magnets, 'palandöken', len(pal_surface), 'çığ', len(cig_surface))

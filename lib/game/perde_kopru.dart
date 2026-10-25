@@ -106,6 +106,8 @@ void _bridgeStage(Canvas c, int level, double time, double u, int n) {
       _bOtuken(c, time, u, nn);
     case 18:
       _bSky(c, time, u, nn);
+    case 20:
+      _bSea(c, time, u, nn);
   }
 }
 
@@ -1720,4 +1722,121 @@ void _bOtuken(Canvas c, double time, double u, double n) {
     }
   }
   _sayeAt(c, Offset(x, _gb + 12), time);
+}
+
+// ------------------------------------------------------------- Ak Ana'nın Denizi
+
+void _bSea(Canvas c, double time, double u, double n) {
+  // İlk su: perdenin üst kenarı yüzey; altı mürekkebe doğru koyulaşır.
+  const top = 70.0;
+  c.drawRect(const Rect.fromLTWH(0, top, 780, 330), _ink(0.35));
+  c.drawRect(const Rect.fromLTWH(0, 230, 780, 170), _ink(0.25));
+  final wave = Path()..moveTo(0, top);
+  for (var x = 0.0; x <= 780; x += 12) {
+    wave.lineTo(x, top + math.sin(time * 1.3 + x / 40) * 3);
+  }
+  c.drawPath(wave, _stroke(_ink(0.9), 3));
+  // Sâye soldan sağa yüzer: gövdesi yatık, hafif dalgalanarak.
+  final x = _walkX(u, n, 60, 640);
+  var y = 200 + math.sin(time * 1.6) * 8;
+  var rot = math.pi / 2 - 0.15;
+  // 0: Kandilci sandalları yüzeyde; fenerlerin ışığı suya iner, yosunlar.
+  final a0 = _heroA(u, 0);
+  if (a0 > 0) {
+    for (var i = 0; i < 2; i++) {
+      final bx = 220 + i * 300.0 + math.sin(time * 0.4 + i) * 30;
+      c.drawPath(
+        Path()
+          ..moveTo(bx - 50, top - 12)
+          ..lineTo(bx + 50, top - 12)
+          ..quadraticBezierTo(bx + 40, top + 8, bx, top + 8)
+          ..quadraticBezierTo(bx - 40, top + 8, bx - 50, top - 12)
+          ..close(),
+        _ink(a0),
+      );
+      c.drawCircle(Offset(bx - 10, top - 40), 9, _ink(a0));
+      c.drawRect(Rect.fromLTWH(bx - 18, top - 32, 16, 22), _ink(a0));
+      final cone = Path()
+        ..moveTo(bx + 34, top - 8)
+        ..lineTo(bx - 10, 260)
+        ..lineTo(bx + 90, 260)
+        ..close();
+      c.drawPath(cone, _hole(0.18 * a0));
+    }
+    for (var k = 0; k < 9; k++) {
+      final kx = 40.0 + k * 85;
+      final sway = math.sin(time * 0.9 + k) * 12;
+      c.drawPath(
+        Path()
+          ..moveTo(kx, _gb + 50)
+          ..quadraticBezierTo(kx + sway, _gb - 60, kx + sway * 1.6, _gb - 140),
+        _stroke(_ink(a0), 5),
+      );
+    }
+    y = 300 + math.sin(time * 1.6) * 6;
+  }
+  // 1: denizanalarının ışığı; kaplumbağa Sâye'yi sırtında taşır.
+  final a1 = _heroA(u, 1);
+  if (a1 > 0) {
+    for (var i = 0; i < 4; i++) {
+      final jx = 140 + i * 160.0;
+      final jy = 150 + math.sin(time * 1.4 + i * 1.7) * 30;
+      c.drawCircle(Offset(jx, jy), 26, _hole(0.25 * a1));
+      c.drawPath(
+        Path()
+          ..moveTo(jx - 18, jy + 4)
+          ..quadraticBezierTo(jx, jy - 26, jx + 18, jy + 4)
+          ..close(),
+        _hole(0.6 * a1),
+      );
+      for (var t = 0; t < 4; t++) {
+        c.drawLine(
+          Offset(jx - 12 + t * 8.0, jy + 4),
+          Offset(jx - 12 + t * 8.0 + math.sin(time * 2 + t) * 4, jy + 34),
+          _stroke(_hole(0.4 * a1), 1.5),
+        );
+      }
+    }
+    final ride = _span(u, 1.3, 1.9);
+    if (ride > 0) {
+      final tx = x + 10;
+      final ty = 250.0;
+      c.drawOval(Rect.fromCenter(center: Offset(tx, ty), width: 120, height: 50), _ink(a1));
+      c.drawOval(Rect.fromCenter(center: Offset(tx + 70, ty + 4), width: 34, height: 22), _ink(a1));
+      for (final s in const [-1.0, 1.0]) {
+        c.save();
+        c.translate(tx + 30 * s, ty + 18);
+        c.rotate(0.7 * math.sin(time * 6) * s + 0.4);
+        c.drawOval(const Rect.fromLTWH(-8, 0, 16, 40), _ink(a1));
+        c.restore();
+      }
+      y = ty - 30;
+      rot = math.pi / 2;
+    }
+  }
+  // 2: dipte yarık; Körmösler dağılır, Ak Ana ışıkla yükselir.
+  final a2 = _heroA(u, 2);
+  if (a2 > 0) {
+    c.drawRect(Rect.fromLTWH(0, _gb - 10, 780, 70), _ink(a2));
+    c.drawRect(Rect.fromLTWH(520, _gb - 10, 50, 70), _hole(0.5 * a2));
+    final rise = _span(u, 2.25, 2.8);
+    for (var i = 0; i < 3; i++) {
+      final kx = 300 + i * 90.0 - rise * (60 + i * 30);
+      _person(
+        c,
+        Offset(kx, _gb - 10 + rise * 120),
+        150,
+        a2 * (1 - rise),
+        _kormos,
+        flip: i.isOdd,
+        time: time + i,
+      );
+    }
+    if (rise > 0) {
+      c.drawCircle(Offset(545, _gb - 150 * rise), 60 * rise, _hole(0.45 * a2));
+      _person(c, Offset(545, _gb + 60 - 170 * rise), 210, a2 * rise, _akAna);
+    }
+    y = 220 + _span(u, 2.6, 2.95) * 160;
+  }
+  _sayeAt(c, Offset(x, y), time, s: 1.3, rot: rot);
 }

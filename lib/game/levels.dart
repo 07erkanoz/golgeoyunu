@@ -94,7 +94,11 @@ enum LevelTheme {
 
   /// Ötüken Ormanı: kutlu ormanlı dağ; ak kayınlar, yaprak arasından süzülen
   /// ışık, yosun. Oyunun tek yeşil yeri.
-  forest;
+  forest,
+
+  /// Ak Ana'nın Denizi: Altay anlatısındaki ilk su; serin, derinleştikçe
+  /// kararan su, yosun ormanları, siluet kayalar.
+  sea;
 
   /// Kapalı mekân: tavanın üstü kaya, uzaktan zincir sesleri.
   bool get indoor =>
@@ -179,7 +183,61 @@ class LevelDef {
     this.starStreams = const [],
     this.ulker,
     this.kites = const [],
+    this.seaSurface,
+    this.airPockets = const [],
+    this.kelpBeds = const [],
+    this.fishSchools = const [],
+    this.jellies = const [],
+    this.anglers = const [],
+    this.octopi = const [],
+    this.currents = const [],
+    this.bubbleVents = const [],
+    this.turtle = const [],
+    this.boats = const [],
+    this.akAna,
   });
+
+  /// Ak Ana'nın Denizi: suyun yüzeyinin satırı (bu satırdan aşağısı su;
+  /// yoksa bölümde deniz yok). Sâye suda yüzer, nefesi azalır.
+  final int? seaSurface;
+
+  /// Suyun içinde hava cepleri (ilk sütun, ilk satır, son sütun, son
+  /// satır): nefes burada dolar.
+  final List<(int, int, int, int)> airPockets;
+
+  /// Yosun ormanları (ilk sütun, son sütun): dibe dikilir; öndeki yosunlar
+  /// Sâye'yi saklar.
+  final List<(int, int)> kelpBeds;
+
+  /// Balık sürüleri (sütun, satır, sayı).
+  final List<(int, int, int)> fishSchools;
+
+  /// Denizanaları (sütun, satır, inip çıktığı yol karesi).
+  final List<(int, int, int)> jellies;
+
+  /// Fenerbalıkları (sütun, satır, gezindiği yarı genişlik karesi).
+  final List<(int, int, int)> anglers;
+
+  /// Ahtapotlar (sütun, satır): dokununca mürekkep bırakır.
+  final List<(int, int)> octopi;
+
+  /// Akıntılar (hücre noktaları; içindekini akış yönünde iter).
+  final List<List<(int, int)>> currents;
+
+  /// Dipteki kaynaklar (sütun, satır): kabarcık sütunu nefes verir, yukarı
+  /// taşır.
+  final List<(int, int)> bubbleVents;
+
+  /// Su kaplumbağasının yolu (hücre noktaları): başına dokunan sırtında
+  /// taşınır.
+  final List<(int, int)> turtle;
+
+  /// Yüzeydeki Kandilci sandalları (ilk sütun, son sütun): fenerin ışığı
+  /// suya iner.
+  final List<(int, int)> boats;
+
+  /// Ak Ana'nın belirdiği yer (sütun, satır): dipteki yarığın ağzı.
+  final (int, int)? akAna;
 
   /// Gökyolu: rüzgârda salınan uçurtmalar (sütun, satır, evre).
   final List<(int, int, double)> kites;
@@ -590,10 +648,7 @@ const interludes = <List<String>>[
     'SON PERDE · DÜĞÜN',
   ],
   [
-    'Hayat Ağacı\'nın kökleri yerin en dibine iner. Sâye köklerin arasından aşağı süzüldü; en dipte bir ses vardı: su sesi.',
-    'Ozan der ki: Başlangıçta yalnız su vardı. Kayra Han suyun üstünde yalnızdı; ne yaratacağını bilmiyordu.',
-    'Sudan ak bir ana yükseldi: Ak Ana. "Yarat," dedi, ve yeniden suya döndü.',
-    'Kayra Han yarattı. Ama yarattıklarından biri, Erlik, kendini ondan büyük sandı; yerin altına sürüldü.',
+    'Ağzında toprak saklayan Kişi ışıktan kovuldu. Yerin altına sürüldü ve oranın efendisi oldu: Erlik.',
     'Kandilcilerin çaldığı ışıklar yerin altına, Erlik\'in katına akıyordu. Usta da o yoldan geçirilmişti.',
     'Ozan der ki: Bir zaman Er Töştük adında bir yiğit de yerin altına düşmüştü. Konuşan atı Çalkuyruk ona yol gösterdi.',
     'Yerin altında Erlik\'in gölgeleri dolaşır: Körmösler. Işığa gelirler; çalınan canları, kutları kafeslerde tutarlar.',
@@ -636,6 +691,13 @@ const interludes = <List<String>>[
     'Kandilciler ustayı kubbenin tepesine, alemin dibine çıkarmıştı. Başlarında en yaşlıları vardı: Kandilci Başı.',
     'Derler ki Kandilci Başı bir zamanlar bir hayalîydi. Işığı kimseyle bölüşmemek için kandilini kapadı; o gün gölgesini kaybetti.',
     'Ustanın kandili titriyordu. Gece yarısına az kalmıştı.',
+  ],
+  [
+    'Hayat Ağacı\'nın kökleri yerin en dibine iner. Sâye köklerin arasından aşağı süzüldü; en dipte bir ses vardı: su sesi.',
+    'Ozan der ki: Başlangıçta yalnız su vardı. Kayra Han ile ilk yarattığı Kişi, suyun üstünde iki kara kaz gibi uçardı.',
+    'Sudan ak bir ana yükseldi: Ak Ana. "Yarat," dedi, ve yeniden suya döndü.',
+    'Kişi yükseğe çıkmak istedi, suya düştü. Kayra Han ona dibe dalıp toprak getirmesini buyurdu; Kişi bir parçasını ağzında sakladı.',
+    'Kandilcilerin çaldığı ışıklar o suyun dibine akıyordu. Sâye derin bir nefes aldı ve kendini ilk suya bıraktı.',
   ],
 ];
 
@@ -744,10 +806,7 @@ const interludesEn = <List<String>>[
     'THE LAST VEIL · THE WEDDING',
   ],
   [
-    'The roots of the Tree of Life reach to the very bottom of the earth. Saye slipped down between them; at the very bottom there was a sound: running water.',
-    'The bard says: in the beginning there was only water. Kayra Khan was alone above it; he did not know what to create.',
-    'A white mother rose from the water: Ak Ana. "Create," she said, and went back into the water.',
-    'Kayra Khan created. But one of his creatures, Erlik, thought himself greater; he was cast beneath the earth.',
+    'Kişi, who had hidden earth in his mouth, was driven out of the light. He was cast beneath the earth and became its lord: Erlik.',
     'The light the Lamplighters stole was flowing beneath the earth, to Erlik\'s realm. The master had been taken that way too.',
     'The bard says: once a hero named Er Töştük had fallen beneath the earth too. His talking horse Çalkuyruk showed him the way.',
     'Erlik\'s shades roam beneath the earth: the Körmös. They come to the light, and keep stolen lives, the kuts, in cages.',
@@ -791,18 +850,25 @@ const interludesEn = <List<String>>[
     'They say the Chief Lamplighter was once a shadow master himself. To share the light with no one, he closed his lamp; that day he lost his shadow.',
     'The master\'s lamp was flickering. It was nearly midnight.',
   ],
+  [
+    'The roots of the Tree of Life reach to the very bottom of the earth. Saye slipped down between them; at the very bottom there was a sound: running water.',
+    'The bard says: in the beginning there was only water. Kayra Khan and Kişi, the first he made, flew over it like two black geese.',
+    'A white mother rose from the water: Ak Ana. "Create," she said, and went back into the water.',
+    'Kişi wanted to rise higher, and fell into the water. Kayra Khan bade him dive to the bottom and bring up earth; Kişi hid a piece of it in his mouth.',
+    'The light the Lamplighters stole was flowing to the bottom of that water. Saye took a deep breath and let herself into the first water.',
+  ],
 ];
 
 /// Oynanış sırası. Bölümün kimliği `levels` listesindeki yeridir ve hiç
 /// değişmez (kayıt, hatıralar, görülen olaylar bu kimlikle tutulur); yeni
 /// bölümler listenin sonuna eklenir, oynanıştaki yerlerine bu sırada girer.
 const levelOrder = <int>[
-  0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 17, 14, 15, 16, 18, 13, 19, //
+  0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 17, 20, 14, 15, 16, 18, 13, 19, //
 ];
 
 /// Sıra değişince artar: kayıttaki "açılan en ileri bölüm" (sıradaki yer)
 /// eski sıradan yenisine çevrilir.
-const levelOrderVersion = 7;
+const levelOrderVersion = 8;
 
 /// Eski sıra sürümlerinde her yerdeki bölüm kimliği (1. sürüm: kimlik =
 /// yer).
@@ -814,6 +880,7 @@ const _levelOrderHistory = <int, List<int>>{
   5: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 17, 14, 15, 16, 13],
   6: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 17, 14, 15, 16, 18, 13],
   7: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 17, 14, 15, 16, 18, 13, 19],
+  8: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 17, 20, 14, 15, 16, 18, 13, 19],
 };
 
 /// Bölümün oynanış sırasındaki yeri (yoksa -1).
@@ -936,6 +1003,10 @@ const bridges = <List<String>>[
     'Kandiller koridorunda kafesleri açtı; çalınan ışıklar sahiplerini hatırlayıp kavanozuna girdi.',
     'Kubbenin yeşil kaburgalarına tırmandı; aşağıda biriken ışık taşıyordu.',
     'Tepede üç aynayı çevirdi. Kandilci Başı yüzyıllar sonra ilk kez kendi gölgesini gördü.',
+  ],  [
+    'Kandilci sandallarının fenerleri altından, yosunların arasından yüzdü; fenerbalığının yeminden uzak durdu.',
+    'Denizanalarının ışığıyla karanlık mağaraları geçti. Akıntıya karşı kulaç attı; bir su kaplumbağası onu Kişi\'nin taşına taşıdı.',
+    'Dipte Körmösler yaklaşırken su kıpırdadı: Ak Ana yükseldi, Sâye\'ye ak bir nefes verdi. Sâye yarıktan aşağı, Erlik\'in katına indi.',
   ],
 ];
 
@@ -1033,6 +1104,10 @@ const bridgesEn = <List<String>>[
     'In the corridor of lamps she opened the cages; the stolen lights remembered their owners and entered her jar.',
     'She climbed the green ribs of the dome; the light gathered below was overflowing.',
     'At the top she turned three mirrors. For the first time in centuries, the Chief Lamplighter saw his own shadow.',
+  ],  [
+    'She swam beneath the lanterns of the Lamplighters\' boats, between the kelp; she kept away from the anglerfish\'s lure.',
+    'By the light of the jellyfish she crossed the dark caves. She stroked against the current; a sea turtle carried her to Kişi\'s stone.',
+    'In the deep, as the Körmös closed in, the water stirred: Ak Ana rose and gave Saye a white breath. Saye went down through the rift, to Erlik\'s realm.',
   ],
 ];
 
@@ -1986,7 +2061,7 @@ const levels = <LevelDef>[
     shadowStones: [(206, 23)],
   ),
   LevelDef(
-    title: 'XIX · ŞEB-İ ARÛS',
+    title: 'XX · ŞEB-İ ARÛS',
     legends: ['sebiArus'],
     bard: 'Ozan der ki: Dönen döner, gölge düşer; kim dönerse yolunu bulur.',
     bardEn: 'The bard says: the whirling turn, the shadows fall; whoever turns finds the way.',
@@ -1994,7 +2069,7 @@ const levels = <LevelDef>[
     subtitle: 'Bu gece ölüm bir düğündür.',
     theme: LevelTheme.konya,
     wings: true,
-    titleEn: 'XIX · SHEB-I ARUS',
+    titleEn: 'XX · SHEB-I ARUS',
     subtitleEn: 'Tonight, death is a wedding.',
     place: 'Konya · Şubat 1661, Şeb-i Arûs gecesi',
     placeEn: 'Konya · February 1661, the night of Sheb-i Arus',
@@ -2073,9 +2148,9 @@ const levels = <LevelDef>[
     shadowStones: [(129, 27)],
   ),
   LevelDef(
-    title: 'XV · ERLİK\'İN KATI',
+    title: 'XVI · ERLİK\'İN KATI',
     subtitle: 'Yerin altında ışık tehlikeli, karanlık güvenlidir.',
-    titleEn: 'XV · ERLIK\'S REALM',
+    titleEn: 'XVI · ERLIK\'S REALM',
     subtitleEn: 'Beneath the earth, light is danger and darkness is safety.',
     theme: LevelTheme.underworld,
     bard: 'Ozan der ki: Yerin altında ışık düşmandır; karanlık, sırtını dayayacağın duvardır.',
@@ -2133,9 +2208,9 @@ const levels = <LevelDef>[
     map: kMapErlik,
   ),
   LevelDef(
-    title: 'XVI · ERGENEKON',
+    title: 'XVII · ERGENEKON',
     subtitle: 'Dört yanı dağ; çıkış demirin içinden.',
-    titleEn: 'XVI · ERGENEKON',
+    titleEn: 'XVII · ERGENEKON',
     subtitleEn: 'Mountains on every side; the way out runs through iron.',
     theme: LevelTheme.ergenekon,
     bard: 'Ozan der ki: Dağ demirse demir erir; sabreden boyun önü açılır.',
@@ -2217,9 +2292,9 @@ const levels = <LevelDef>[
     map: kMapErgenekon,
   ),
   LevelDef(
-    title: 'XVII · GÖĞÜN KATLARI',
+    title: 'XVIII · GÖĞÜN KATLARI',
     subtitle: 'Her kat bir öncekinden aydınlık.',
-    titleEn: 'XVII · THE LAYERS OF THE SKY',
+    titleEn: 'XVIII · THE LAYERS OF THE SKY',
     subtitleEn: 'Each layer brighter than the last.',
     theme: LevelTheme.heavens,
     bard: 'Ozan der ki: Gök kat kattır; davul vurdukça basamak olur, yıldız döndükçe merdiven.',
@@ -2394,9 +2469,9 @@ const levels = <LevelDef>[
     vistas: [(234, 32, 'valley')],
   ),
   LevelDef(
-    title: 'XVIII · ÜLGEN\'İN KAPISI',
+    title: 'XIX · ÜLGEN\'İN KAPISI',
     subtitle: 'Işığın kaynağına, fırtınanın içinden.',
-    titleEn: 'XVIII · ÜLGEN\'S GATE',
+    titleEn: 'XIX · ÜLGEN\'S GATE',
     subtitleEn: 'To the source of light, through the storm.',
     theme: LevelTheme.heavens,
     bard: 'Ozan der ki: Gün katında gölge bir sığınaktır; şimşek bir fener.',
@@ -2453,7 +2528,7 @@ const levels = <LevelDef>[
   ),
   // XX · Yeşil Kubbe: oyunun finali (docs/YESIL_KUBBE_PLANI.md).
   LevelDef(
-    title: 'XX · YEŞİL KUBBE',
+    title: 'XXI · YEŞİL KUBBE',
     legends: ['sebiArus'],
     bard: 'Ozan der ki: Işık bölünmeye razıdır; sahiplenilmeye razı olmaz.',
     bardEn: 'The bard says: light consents to be shared; it never consents to be owned.',
@@ -2461,7 +2536,7 @@ const levels = <LevelDef>[
     subtitleEn: 'As the lamp goes out, the shadow joins the light.',
     theme: LevelTheme.konya,
     wings: true,
-    titleEn: 'XX · THE GREEN DOME',
+    titleEn: 'XXI · THE GREEN DOME',
     place: 'Konya · Yeşil Kubbe, Şeb-i Arûs gecesi',
     placeEn: 'Konya · The Green Dome, the night of Sheb-i Arus',
     areas: [
@@ -2514,5 +2589,81 @@ const levels = <LevelDef>[
     finaleLocks: [(281, 9), (290, 7), (287, 9)],
     floodSpeed: 16,
     map: kMapYesilKubbe,
+  ),
+  LevelDef(
+    title: 'XV · AK ANA\'NIN DENİZİ',
+    subtitle: 'İlk su: ne dibi görünür ne ucu.',
+    titleEn: 'XV · THE SEA OF AK ANA',
+    subtitleEn: 'The first water: neither its floor nor its end can be seen.',
+    theme: LevelTheme.sea,
+    noWings: true,
+    legends: ['akAna'],
+    bard:
+        'Ozan der ki: Su her şeyden önce vardı; her şeyden sonra da olacak.',
+    bardEn:
+        'The bard says: water was there before everything; it will be there after everything too.',
+    place: 'İlk Su · Ak Ana\'nın denizi',
+    placeEn: 'The First Water · The sea of Ak Ana',
+    areas: [
+      'Köklerin Ucu',
+      'Yosun Ormanı',
+      'Denizanası Mağaraları',
+      'Akıntı Koridorları',
+      'Kişi\'nin Taşı',
+      'Karanlık Dip',
+    ],
+    areasEn: [
+      "The Roots' End",
+      'The Kelp Forest',
+      'The Jellyfish Caves',
+      'The Current Corridors',
+      "Kişi's Stone",
+      'The Dark Deep',
+    ],
+    whispers: [
+      'İlk su. Ne dibi görünür ne ucu. Kökler Sâye\'yi kıyısına bırakmıştı.',
+      'Ozan der ki: Kişi, Kayra Han\'dan yükseğe çıkmak istedi; kanatları tutmadı, suya düştü. Boğulurken yardım diledi.',
+      'Işığa yaklaşma. Derinde ışık, yem demektir.',
+      'Kayra Han sudan bir taş yükseltti; Kişi ona tutundu. O taş hâlâ ilk suyun ortasında durur derler.',
+      'Kişi\'nin taşı. Su da burada nefes alır.',
+      'Kişi dibe daldı, toprak getirdi; bir parçasını ağzında sakladı. Toprak ağzında şişti; "Tükür," denince tükürdü. Bataklıklar ondan kaldı.',
+      'Körmösler! Işığa geliyorlar. Yosuna saklan.',
+      'Su kıpırdadı. Ak Ana yükseldi; Sâye\'nin göğsüne ak bir nefes doldu.',
+    ],
+    whispersEn: [
+      'The first water. Neither its floor nor its end can be seen. The roots had left Saye on its shore.',
+      'The bard says: Kişi wanted to rise higher than Kayra Khan; his wings failed him and he fell into the water. Drowning, he begged for help.',
+      'Keep away from the light. In the deep, light means bait.',
+      'Kayra Khan raised a stone from the water, and Kişi held on to it. They say that stone still stands in the middle of the first water.',
+      "Kişi's stone. Here, the water breathes too.",
+      'Kişi dived to the bottom and brought up earth; a piece of it he hid in his mouth. The earth swelled in his mouth; told to spit, he spat. The marshes were left from that.',
+      'The Körmös! They are coming to the light. Hide in the kelp.',
+      'The water stirred. Ak Ana rose; a white breath filled Saye\'s chest.',
+    ],
+    memories: [
+      'Hatıra · Ustam suya bir kandil bırakıp ardından bakardı. "Su ışığı saklamaz," derdi, "derine götürür."',
+      'Hatıra · Bana yüzmeyi Haliç\'in sığında öğretti. "Nefesini say," dedi, "korkunu sayma."',
+      'Hatıra · Perdede balıkları hep sürüyle oynatırdı. "Tek balık kaybolur," derdi, "sürü yolu bilir."',
+      'Hatıra · "Taşa tutunan boğulmaz, Sâye," demişti. "Ama taş da bir gün bırakmanı ister."',
+    ],
+    memoriesEn: [
+      'Memory · My master would set a lamp on the water and watch it drift away. "Water does not hide light," he said, "it carries it deep."',
+      'Memory · He taught me to swim in the shallows of the Golden Horn. "Count your breaths," he said, "not your fears."',
+      'Memory · On the screen he always played the fish in a shoal. "One fish gets lost," he said, "a shoal knows the way."',
+      'Memory · "Whoever holds on to a stone does not drown, Saye," he had said. "But one day the stone asks you to let go."',
+    ],
+    map: kMapDeniz,
+    seaSurface: kDenizSurface,
+    airPockets: kDenizAir,
+    kelpBeds: kDenizKelp,
+    fishSchools: kDenizFish,
+    jellies: kDenizJellies,
+    anglers: kDenizAnglers,
+    octopi: kDenizOctopi,
+    currents: kDenizCurrents,
+    bubbleVents: kDenizVents,
+    turtle: kDenizTurtle,
+    boats: kDenizBoats,
+    akAna: kDenizAkAna,
   ),
 ];

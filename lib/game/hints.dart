@@ -28,6 +28,7 @@ class Hints {
               'move': '← →',
               'left': '←',
               'right': '→',
+              'swim': 'the arrow keys',
             }
           : const {
               'down': '↓',
@@ -39,6 +40,7 @@ class Hints {
               'move': '← →',
               'left': '←',
               'right': '→',
+              'swim': 'oklarla',
             };
     }
     if (Settings.touchGestures) {
@@ -53,6 +55,7 @@ class Hints {
               'move': 'drag left or right',
               'left': 'drag left',
               'right': 'drag right',
+              'swim': 'drag toward where you want to go',
             }
           : const {
               'down': 'aşağı sürükle',
@@ -64,6 +67,7 @@ class Hints {
               'move': 'sola ya da sağa sürükle',
               'left': 'sola sürükle',
               'right': 'sağa sürükle',
+              'swim': 'parmağını gideceğin yöne sürükle',
             };
     }
     return S.en
@@ -77,6 +81,7 @@ class Hints {
             'move': '◀ ▶',
             'left': '◀',
             'right': '▶',
+            'swim': '◀ ▶ and the climb and crouch buttons',
           }
         : const {
             'down': 'çömel düğmesi',
@@ -88,6 +93,7 @@ class Hints {
             'move': '◀ ▶',
             'left': '◀',
             'right': '▶',
+            'swim': '◀ ▶, tırman ve çömel düğmeleriyle',
           };
   }
 
@@ -169,6 +175,18 @@ class Hints {
     'leak': 'Fışkıran su geri savurur · sandığın ardına sığın, deliğin üstüne it: {right}',
     'barrel': 'Gemi yalpalıyor, fıçılar yuvarlanır · yığının üstünde bekle, geçince koş ya da üstünden atla',
     'starStream': 'Işık nehrine gir · seni taşır · ucunda savrulursun',
+    'swim': 'Yüz: {swim} · kulaç at: {jump}',
+    'breath': 'Nefesin azalıyor · çevrendeki halka · hava cebine, yüzeye ya da kabarcıklara çık',
+    'airPocket': 'Hava cebi · yüzeye çık, nefesin dolar · kıyıya çıkmak için: {jump}',
+    'kelpHide': 'Öndeki yosunlar seni saklar · fenerbalığı yosunda görmez',
+    'angler': 'Fenerbalığı · yeminin ışığına girme · yosunda saklan ya da ateşböceği sal: {firefly}',
+    'jellyfish': 'Denizanaları sokar, nefesinden alır · kasılıp yükselir, gevşeyip iner · aralarından geç',
+    'octopus': 'Ahtapota dokun · mürekkebi seni saklar',
+    'current': 'Akıntı seni taşır · çıkmak için yana kulaç at: {jump}',
+    'bubbles': 'Kabarcık sütunu · içinde nefes alırsın, seni yukarı taşır',
+    'turtle': 'Su kaplumbağası · seni sırtında akıntının sonuna taşır',
+    'boat': 'Kandilci sandalı · fenerinin ışığı suya iner · derinden geç',
+    'kormosSea': 'Körmösler ışığa gelir · yosunda saklan · ya da ateşböceği sal: {firefly}',
     'kite': 'Uçurtmalara bas · rüzgârda salınırlar, yaklaşınca atla · kanatla süzül: {jump}',
     'ulker': 'Ülker\'in yedi yıldızına dokun · yedisi yanınca köprü belirir',
     'birdBridge': 'Kuşların sırtına bas · Gözcü\'nün feneri değen kuş ürker · ateşböceğiyle feneri oyala: {firefly}',
@@ -268,6 +286,18 @@ class Hints {
     'leak': 'The spraying water throws you back · hide behind a crate and push it over the hole: {right}',
     'barrel': 'The ark is rolling; barrels roll loose · wait on top of a stack and run when one has passed, or jump over it',
     'starStream': 'Step into the river of light · it carries you · at its end you are flung onward',
+    'swim': 'Swim: {swim} · take a stroke: {jump}',
+    'breath': 'Your breath is running out · the ring around you · reach an air pocket, the surface or the bubbles',
+    'airPocket': 'An air pocket · reach the surface and your breath fills · to climb out: {jump}',
+    'kelpHide': 'The kelp in front hides you · the anglerfish cannot see into it',
+    'angler': 'Anglerfish · keep out of its lure\'s light · hide in the kelp or release a firefly: {firefly}',
+    'jellyfish': 'Jellyfish sting and take your breath · they pulse up and drift down · pass between them',
+    'octopus': 'Touch the octopus · its ink hides you',
+    'current': 'The current carries you · to get out, stroke sideways: {jump}',
+    'bubbles': 'A column of bubbles · you breathe inside it, and it carries you up',
+    'turtle': 'A sea turtle · it carries you on its back to the end of the current',
+    'boat': 'A Lamplighter\'s boat · its lantern shines down into the water · pass deep below',
+    'kormosSea': 'Körmös drift toward light · hide in the kelp · or release a firefly: {firefly}',
     'kite': 'Step on the kites · they sway in the wind; leap when one swings near · glide with your wings: {jump}',
     'ulker': 'Touch the seven stars of Ülker · when all seven shine, a bridge appears',
     'birdBridge': 'Step on the birds\' backs · a bird touched by the Watcher\'s lantern takes fright · distract the lantern with a firefly: {firefly}',

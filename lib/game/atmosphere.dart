@@ -172,6 +172,14 @@ class Backdrop extends Component with HasGameReference<GolgeGame> {
         );
       case LevelTheme.forest:
         _forest(canvas, w, h, cam);
+      case LevelTheme.sea:
+        // Ak Ana'nın Denizi: suyun kendisi dünyada çizilir (SeaWater,
+        // derinliğe göre); arkada yalnız serin bir derinlik.
+        _gradient(canvas, rect, const [
+          Color(0xFF235A63),
+          Color(0xFF103540),
+          Color(0xFF07161D),
+        ]);
       case LevelTheme.ergenekon:
         _ergenekon(canvas, w, h, cam);
       case LevelTheme.heavens:
@@ -1090,6 +1098,7 @@ class ScreenEffects extends Component with HasGameReference<GolgeGame> {
       LevelTheme.ergenekon => (const Color(0xFFDCE8DC), 0.1),
       LevelTheme.heavens => (const Color(0xFFF0F0FF), 0.08),
       LevelTheme.forest => (const Color(0xFFE6F0C0), 0.09),
+      LevelTheme.sea => (const Color(0xFFBFE6E0), 0.04),
     };
     if (!Settings.lowGraphics) {
       for (var i = 0; i < 5; i++) {
