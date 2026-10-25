@@ -16,7 +16,7 @@ part of 'perde.dart';
 //     perdesine dönüşür.
 
 /// Girişin başında karanlıkta hayalînin adı (saniye): kibrit ondan sonra.
-const introCredit = 1.8;
+const introCredit = 2.8;
 
 /// Girişin süresi (saniye): bundan sonra menü kalır.
 const introLength = introCredit + 12.2;
@@ -348,67 +348,51 @@ void _paintIntro(
     );
     canvas.restore();
   }
-  // Hayalînin adı: perdenin önünde, karanlıkta.
+  // Hayalînin adı: perdeye konan göstermelik.
   if (creditName != null && t < introCredit) {
-    _paintCredit(canvas, size, t, creditLabel ?? '', creditName);
+    _paintCredit(canvas, r, t, creditLabel ?? '', creditName);
   }
 }
 
-/// Hayalînin adı: karanlıkta, perdenin çerçevesine vuran kor ışığı renginde,
-/// küçük ve soluk; belirir, durur, söner.
-void _paintCredit(
-  Canvas canvas,
-  Size size,
-  double t,
-  String label,
-  String name,
-) {
-  final a = math.min(
-    PerdePainter._span(t, 0.2, 0.7),
-    1 - PerdePainter._span(t, introCredit - 0.55, introCredit - 0.1),
+/// Hayalînin adı: Karagöz'de oyundan önce perdeye konan göstermelik gibi.
+/// Karanlıkta perdenin ardında küçük bir mum yanar; adı oyulmuş deri levha
+/// uzaktan (iri, bulanık) gelip perdeye dayanır, harflerinden mumun ışığı
+/// geçer; sonra levha çekilir, mum söner, kibrit çakılır.
+void _paintCredit(Canvas canvas, Rect r, double t, String label, String name) {
+  final span = PerdePainter._span;
+  final candle = math.min(
+    span(t, 0.0, 0.5),
+    1 - span(t, introCredit - 0.5, introCredit - 0.05),
   );
-  if (a <= 0) return;
-  final k = (size.height / 400).clamp(0.7, 1.6);
-  const ember = Color(0xFFE0A15F);
-  final top = TextPainter(
-    text: TextSpan(
-      text: label.toUpperCase(),
-      style: TextStyle(
-        fontFamily: 'Roboto',
-        fontSize: 11 * k,
-        letterSpacing: 5 * k,
-        color: ember.withValues(alpha: 0.6 * a),
-      ),
-    ),
-    textDirection: TextDirection.ltr,
-  )..layout();
-  // Ad, oyunun adıyla aynı yazı biçiminde (kalın, aralıklı büyük harfler);
-  // karanlıkta harflerin oyuklarından kandil ışığı sızıyormuş gibi.
-  final big = TextPainter(
-    text: TextSpan(
-      text: name.toUpperCase(),
-      style: TextStyle(
-        fontFamily: 'Roboto',
-        fontSize: 34 * k,
-        fontWeight: FontWeight.w900,
-        letterSpacing: 7 * k,
-        color: const Color(0xFFFFE6B8).withValues(alpha: 0.85 * a),
-        shadows: [
-          Shadow(
-            color: const Color(0xFFFFB46A).withValues(alpha: 0.6 * a),
-            blurRadius: 14 * k,
-          ),
-        ],
-      ),
-    ),
-    textDirection: TextDirection.ltr,
-  )..layout();
-  final c = size.center(Offset.zero);
-  final gap = 8 * k;
-  final h = top.height + gap + big.height;
-  top.paint(canvas, Offset(c.dx - top.width / 2, c.dy - h / 2));
-  big.paint(
+  if (candle <= 0) return;
+  final flick = 0.9 + 0.06 * math.sin(t * 9.1) + 0.04 * math.sin(t * 15.3);
+  // Mumun ışığı perdenin bezine vurur (kandilden çok daha küçük).
+  canvas.save();
+  canvas.clipRect(r);
+  final at = r.center.translate(0, r.height * 0.08);
+  canvas.drawCircle(
+    at,
+    r.width * 0.42,
+    Paint()
+      ..shader = ui.Gradient.radial(at, r.width * 0.42, [
+        const Color(0xFFE8A85E).withValues(alpha: 0.42 * candle * flick),
+        const Color(0xFF8A4A20).withValues(alpha: 0.18 * candle * flick),
+        const Color(0x00000000),
+      ], const [0, 0.45, 1]),
+  );
+  canvas.restore();
+  // Levha: uzaktan gelir (0,25-1,0 sn), durur, geri çekilir.
+  final k = math.min(
+    Curves.easeOut.transform(span(t, 0.25, 1.0)),
+    1 - Curves.easeIn.transform(span(t, introCredit - 0.85, introCredit - 0.2)),
+  );
+  PerdePainter.gostermelik(
     canvas,
-    Offset(c.dx - big.width / 2, c.dy - h / 2 + top.height + gap),
+    r,
+    '${label.toUpperCase()} · ${name.toUpperCase()}',
+    t,
+    k,
+    centerY: r.center.dy - r.height * 0.02,
+    scale: 1.35,
   );
 }

@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
+import 'package:flutter/animation.dart' show Curves;
 import 'package:flutter/painting.dart';
 
 import 'deer_rig.dart';
@@ -131,18 +132,22 @@ class PerdePainter {
     Rect screen,
     String title,
     double time,
-    double k,
-  ) {
+    double k, {
+    double? centerY,
+    double scale = 1,
+  }) {
     if (k <= 0.01) return;
     // Kandil biraz kısılır: sahne geride kalır, levha öne çıkar.
-    canvas.drawRect(
-      screen,
-      Paint()..color = const Color(0xFF1A0B05).withValues(alpha: 0.42 * k),
-    );
+    if (centerY == null) {
+      canvas.drawRect(
+        screen,
+        Paint()..color = const Color(0xFF1A0B05).withValues(alpha: 0.42 * k),
+      );
+    }
     final parts = title.split(' · ');
     final top = parts.length > 1 ? parts.first : '';
     final main = parts.length > 1 ? parts.sublist(1).join(' · ') : parts.first;
-    final h = screen.height;
+    final h = screen.height * scale;
     TextPainter cut(String t, double size, double spacing) => TextPainter(
       text: TextSpan(
         text: t,
@@ -178,9 +183,7 @@ class PerdePainter {
     // Perdenin üst kısmında: sahne altta görünür kalır.
     final c = Offset(
       aside ? screen.left + screen.width * 0.8 : screen.center.dx,
-      screen.top +
-          h * (aside ? 0.12 : 0.025) +
-          ph / 2 +
+      (centerY ?? screen.top + h * (aside ? 0.12 : 0.025) + ph / 2) +
           math.sin(time * 1.7) * 1.5,
     );
     canvas.save();

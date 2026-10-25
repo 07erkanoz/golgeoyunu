@@ -12,6 +12,7 @@ import 'yazi_tipi.dart';
 void main() {
   setUpAll(yaziTipiYukle);
   test('giriş anları', () async {
+    PerdePainter.debugFontFamily = 'Roboto';
     const size = Size(870, 391);
     // Menüde perdenin yeri (bu ekran boyunda, main_menu.dart düzeninden).
     const menu = Rect.fromLTWH(54.8, 61, 408, 253);
