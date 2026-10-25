@@ -49,7 +49,9 @@ FOREST = {'kMapOtuken'}
 # finalin üç aynasına varılınca Kandilci Başı çıkış kapısını açar; avlunun
 # ay kilidi havadadır (aynalara varmak yeter).
 CAGES = {'kMapYesilKubbe': [(92, 51), (132, 51), (182, 51)]}
-FINALE = {'kMapYesilKubbe': [(266, 9), (272, 7), (296, 9)]}
+FINALE = {'kMapYesilKubbe': [(266, 9), (272, 7), (296, 9)],
+          # Gemi'nin Delikli Ambarı: üç deliğe (sandıkla) varılınca kapı açılır.
+          'kMapGemi': [(191, 25), (209, 25), (225, 25)]}
 LOCK_ANY = {'kMapYesilKubbe'}
 # Kaf: aynalı gölün görünmeyen basamakları ve kuşlardan köprü (kuşlar
 # hareketli; denetimde uçuş satırında üç karede bir kuş sayılır).

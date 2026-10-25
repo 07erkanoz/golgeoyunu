@@ -85,8 +85,11 @@ const whisperPlan = <int, Map<int, (WhisperPlace, int?)>>{
     2: (WhisperPlace.yazi, null),
     3: (WhisperPlace.yazi, null),
     4: (WhisperPlace.tehlike, null),
-    5: (WhisperPlace.agac, 232),
+    5: (WhisperPlace.agac, 356),
     6: (WhisperPlace.yazi, null),
+    // Uzatma (elle eklendi): Delikli ve Yalpalayan Ambar'ın ağaçları.
+    7: (WhisperPlace.agac, 178),
+    8: (WhisperPlace.agac, 255),
   },
   6: {
     0: (WhisperPlace.yazi, null),

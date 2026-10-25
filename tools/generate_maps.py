@@ -501,7 +501,27 @@ n.put(248,7,'G'); n.fill(244,7,245,7,'~'); n.put(258,7,'I'); n.put(262,7,'G')
 n.fill(266,6,268,7,'#'); n.put(267,5,'M')    # sönmüş ışığın kaidesi
 n.put(270,7,'7'); n.put(276,7,'K'); n.put(284,7,'B'); n.put(290,7,'E')
 n.fill(252,7,256,7,'-')
-lvl6=n.rows()
+# Uzatma (2026-10-25): iki ambar araya girer (GEMI_INS; sonrası sağa kayar).
+# G1) Delikli Ambar: tabandaki deliklerden su fışkırır (levels.dart leaks);
+# sandık deliğin üstüne sürülünce tıkanır; üçü tıkanınca kapı açılır.
+a1=G(60,30)
+a1.fill(0,0,59,18,'#'); a1.fill(0,26,59,29,'#')
+a1.put(1,25,'p'); a1.put(2,25,'K'); a1.put(4,25,'8')
+for c in (12,30,46): a1.put(c,25,'C')
+a1.put(22,25,'F')
+a1.fill(56,19,56,25,'H')
+# G2) Yalpalayan Ambar: bölmelerde fıçılar yuvarlanır (levels.dart
+# barrels); aralarda sandık yığınları (fıçı tırmanamaz, üstünde beklenir).
+a2=G(64,30)
+a2.fill(0,0,63,18,'#'); a2.fill(0,26,63,29,'#')
+a2.put(1,25,'p'); a2.put(2,25,'K'); a2.put(4,25,'9')
+for c in (7,22,37,52): a2.fill(c,23,c+2,25,'#')     # yığınlar (üstü 23)
+a2.put(30,25,'F'); a2.put(60,25,'B')
+GEMI_INS=[(176, a1.rows()), (193, a2.rows())]
+rows=n.rows()
+for at, ins in sorted(GEMI_INS, reverse=True):
+    rows=[r[:at]+x+r[at:] for r,x in zip(rows,ins)]
+lvl6=rows
 
 # ------------------------------------------------------------ VII · NEMRUT
 W,H=330,26

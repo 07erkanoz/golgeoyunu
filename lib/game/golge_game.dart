@@ -33,6 +33,7 @@ import 'ski_fx.dart';
 import 'ski_light.dart';
 import 'dawn.dart';
 import 'final.dart';
+import 'gemi_ambar.dart';
 import 'joy.dart';
 import 'kaf_vadi.dart';
 import 'levels.dart';
@@ -1049,6 +1050,9 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         for (final (c, r, n) in level.def.mirrorSteps) MirrorStep(c, r, n),
         for (final (c0, c1, r) in level.def.birdBridges)
           ...BirdBridge(c0, c1, r).birds(),
+        for (final (c, r) in level.def.leaks) LeakJet(c, r),
+        for (final (c0, c1, r, ph) in level.def.barrels)
+          RollingBarrel(c0, c1, r, phase: ph),
         for (final (c, r) in level.def.cages)
           KutCage(Vector2(c * kTile.toDouble(), r * kTile.toDouble())),
         if (level.def.finale case (final c, final r))
@@ -2297,6 +2301,8 @@ class GolgeGame extends FlameGame with KeyboardEvents {
           level.def.theme == LevelTheme.underworld ? 'kut' : 'lightCage',
         KandilciBasi k when near(k, 22, 6) && !k.solved => 'finale',
         BirdDeck b when near(b, 5, 4) => 'birdBridge',
+        LeakJet j when near(j, 6, 4) && !j.plugged => 'leak',
+        RollingBarrel b when near(b, 7, 3) => 'barrel',
         Calkuyruk c when near(c, 5, 4) && !onHorse => 'horse',
         IronVein v when near(v, 6, 4) && !v.lit => 'forge',
         IronVein v when v.fuelNeeded > 0 && !v.fueled && near(v, 10, 4) =>

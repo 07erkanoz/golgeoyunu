@@ -1670,7 +1670,7 @@ void main() {
       'ambar kuyusunda tufandan önce tepeye çık',
       GolgeGame.new,
       (game) async {
-        final p = await place(game, 5, 193, 25);
+        final p = await place(game, 5, 317, 25);
         keys(game).right = true;
         run(game, 0.6);
         final basin = game.world.children.whereType<WaterBasin>().first;
@@ -1679,7 +1679,7 @@ void main() {
         // her satıra tahtanın ucundan koşarak sıçranır.
         for (final r in [24, 22, 20, 18, 16, 14, 12, 10]) {
           final left = ((24 - r) ~/ 2).isEven;
-          final x = left ? 201.5 : 210.5;
+          final x = left ? 325.5 : 334.5;
           final cx = p.center.x / kTile;
           final first = r == 24;
           for (var i = 0; i < _hz * 3; i++) {
@@ -1688,7 +1688,7 @@ void main() {
             // Sıçrama yeri: ilk satırda tahtanın altından, sonra tahta ucu.
             final edge = first
                 ? dx.abs() < 2 * kTile
-                : (cx < 206 ? at >= 205.5 : at <= 207.5);
+                : (cx < 330 ? at >= 329.5 : at <= 331.5);
             keys(game)
               ..right = dx > 6
               ..left = dx < -6

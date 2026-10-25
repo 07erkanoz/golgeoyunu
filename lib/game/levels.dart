@@ -174,7 +174,15 @@ class LevelDef {
     this.lake,
     this.mirrorSteps = const [],
     this.birdBridges = const [],
+    this.leaks = const [],
+    this.barrels = const [],
   });
+
+  /// Gemi: tabanında su fışkıran delikler (sütun, zemin satırı) ve
+  /// yalpayla yuvarlanan fıçıların bölmeleri (ilk sütun, son sütun, zemin
+  /// satırı, evre).
+  final List<(int, int)> leaks;
+  final List<(int, int, int, double)> barrels;
 
   /// Aynalı göl (ilk sütun, son sütun, yüzeyin satırı) ve yalnız yansımada
   /// görünen basamaklar (sütun, satır, uzunluk): Kaf'ın Hayret Vadisi.
@@ -1417,7 +1425,7 @@ const levels = <LevelDef>[
     bard:
         'Ozan der ki: Su yükselir, gemi kalkar; ilk suyun anası da bunu bilir.',
     bardEn: 'The bard says: the water rises, the ark lifts; the mother of the first water knows this too.',
-    cameos: [('akAna', 200, 25)],
+    cameos: [('akAna', 324, 25)],
     subtitle: 'Kırk gün kırk gece. Sonra bir dal, bir güvercin.',
     theme: LevelTheme.ark,
     wings: true,
@@ -1429,6 +1437,8 @@ const levels = <LevelDef>[
       'Aslanların Ambarı',
       'Eşini Bekleyenler',
       'Kandillerin Ambarı',
+      'Delikli Ambar',
+      'Yalpalayan Ambar',
       'Ambar Kuyusu',
       'Güverte',
     ],
@@ -1436,6 +1446,8 @@ const levels = <LevelDef>[
       'The Lions\' Hold',
       'Those Who Wait for Their Mates',
       'The Hold of Lamps',
+      'The Leaking Hold',
+      'The Rolling Hold',
       'The Hold Shaft',
       'The Deck',
     ],
@@ -1447,6 +1459,8 @@ const levels = <LevelDef>[
       'Su hatırlar. Bir kere yükseldi; bir daha yükselir.',
       'Güvercin buradan uçtu, ağzında bir zeytin dalıyla döndü. Hüdhüd onu tanıdı.',
       'Işık burada değil. Kandilciler onu güneşin doğduğu dağa, Nemrut\'a taşımış.',
+      'Anadolu\'da anlatılır: tufanda gemiyi bir fare deldi, su doldu; yılan deliği kuyruğuyla tıkadı. Sen de bir sandıkla tıka; ardına sığın, suya doğru it.',
+      'Gemi dalgada yalpalar; bağı kopmuş fıçılar ambarda bir o yana bir bu yana yuvarlanır. Yığınların üstünde bekle, fıçı geçince koş.',
     ],
     whispersEn: [
       'This ark drifted for months on dark waters. Inside it was a light that never went out.',
@@ -1456,6 +1470,8 @@ const levels = <LevelDef>[
       'Water remembers. It rose once; it will rise again.',
       'The dove flew from here and came back with an olive branch in its beak. The Hoopoe knew it.',
       'The light is not here. The Lamplighters have carried it to the mountain where the sun rises: Nemrut.',
+      'They tell it in Anatolia: in the Flood a mouse gnawed a hole in the ark and the water poured in; the snake plugged the hole with its tail. Plug it with a crate: hide behind it and push it toward the water.',
+      'The ark rolls on the waves; barrels torn loose roll from side to side in the hold. Wait on top of the stacks, and run when a barrel has passed.',
     ],
     memories: [
       'Hatıra · Tufan sahnesinde ustam perdeyi yavaşça sallardı. "Su da bir gölgedir," derdi, "en büyüğü."',
@@ -1471,6 +1487,13 @@ const levels = <LevelDef>[
     // Aslan, fil, zürafa eşlerinin gölgelerine; terazide iki geyik (fil tuzak).
     animalKinds: [0, 1, 2, 3, 1, 3],
     shadowKinds: [0, 1, 2, 3, 3],
+    leaks: [(191, 26), (209, 26), (225, 26)],
+    barrels: [
+      (263, 274, 26, 0),
+      (278, 289, 26, 1.6),
+      (293, 304, 26, 3.2),
+      (308, 314, 26, 0.8),
+    ],
   ),
   LevelDef(
     title: 'VII · NEMRUT',

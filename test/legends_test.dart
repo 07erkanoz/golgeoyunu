@@ -427,19 +427,19 @@ void main() {
       'iki geyik iki kefeye: terazi hizalanır, kapı açılır',
       GolgeGame.new,
       (game) async {
-        final (scale, gate) = await load(game, 185);
+        final (scale, gate) = await load(game, 245);
         expect(scale.kindA, AnimalKind.deer);
         expect(scale.kindB, AnimalKind.deer);
         // Soldaki geyiği sola, sol kefeye.
         push(game, right: false);
-        expect(crateAt(game, 184).riding, scale.lift.a);
+        expect(crateAt(game, 244).riding, scale.lift.a);
         // Sağdaki geyiğe git (filin üstünden atla), sağa, sağ kefeye.
-        game.player!.position.x = 187 * kTile + 8;
+        game.player!.position.x = 247 * kTile + 8;
         run(game, 0.3);
         push(game, right: true, seconds: 1.0);
-        expect(crateAt(game, 188).riding, scale.lift.b);
+        expect(crateAt(game, 248).riding, scale.lift.b);
         // Sâye kefede durursa ağırlığı dengeyi bozar: rafa geri çekilir.
-        game.player!.position.x = 186 * kTile + 20;
+        game.player!.position.x = 246 * kTile + 20;
         game.player!.position.y = 22 * kTile + kTile - 28;
         run(game, 4);
         expect(scale.lift.level, isTrue);
@@ -453,11 +453,11 @@ void main() {
       'fil ağırdır: geyikle dengelenmez; kol teraziyi boşaltır',
       GolgeGame.new,
       (game) async {
-        final (scale, gate) = await load(game, 187);
+        final (scale, gate) = await load(game, 247);
         // Fili sola iter: önündeki geyiği de iter, ikisi de sol kefeye
         // düşer ya da fil düşer; terazi dengelenmez.
         push(game, right: false, seconds: 2.5);
-        game.player!.position.x = 189 * kTile - 20;
+        game.player!.position.x = 249 * kTile - 20;
         run(game, 0.5);
         run(game, 4);
         expect(scale.solved, isFalse);
@@ -466,8 +466,8 @@ void main() {
         final crank = game.world.children.whereType<ScaleCrank>().first;
         crank.use();
         run(game, 1);
-        expect(crateAt(game, 184).position, crateAt(game, 184).home);
-        expect(crateAt(game, 186).position, crateAt(game, 186).home);
+        expect(crateAt(game, 244).position, crateAt(game, 244).home);
+        expect(crateAt(game, 246).position, crateAt(game, 246).home);
         expect(scale.lift.level, isTrue);
       },
     );
