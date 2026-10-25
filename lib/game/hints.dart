@@ -163,6 +163,8 @@ class Hints {
     'molten': 'Akan demir yakar · soğuyup kararınca üstünden geç',
     'kormos': 'Körmösler ışığa gelir · {down} kavanozunu ört · ya da ateşböceği sal: {firefly}',
     'kut': '{up} Kafesi aç · kut kavanoza girer, kapı açılır · kavanoz parladıkça Körmösler uzaktan görür',
+    'lightCage': '{up} Kafesi aç · ışık kavanozuna girer, bir kapı açılır',
+    'finale': '{up} Aynaları çevir · ay ışığı Kandilci Başı\'na düşsün · fenerin geçerken sütunun gölgesinde bekle',
     'horse': 'Çalkuyruk · yanına git, sırtına bin · atla çok yükseğe sıçrarsın',
     'gokboruTrail':
         '{down} Kavanozunu ört · Gökbörü\'nün izleri karanlıkta parlar',
@@ -252,6 +254,8 @@ class Hints {
     'molten': 'Flowing iron burns · cross only when it cools and darkens',
     'kormos': 'Körmös drift toward light · {down} cover your jar · or release a firefly: {firefly}',
     'kut': '{up} Open the cage · the kut enters your jar and a gate opens · the brighter the jar, the farther the Körmös see',
+    'lightCage': '{up} Open the cage · the light enters your jar and a gate opens',
+    'finale': '{up} Turn the mirrors · let the moonlight fall on the Chief Lamplighter · wait in a pillar\'s shadow as his lantern passes',
     'horse':
         'Çalkuyruk · go to him and climb on · on horseback you leap far higher',
     'gokboruTrail':

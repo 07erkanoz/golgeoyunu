@@ -881,13 +881,16 @@ class Mirror extends PositionComponent
 /// kapı açılır.
 class SunLock extends PositionComponent
     with HasGameReference<GolgeGame>, Persistent {
-  SunLock(Vector2 cell)
+  SunLock(Vector2 cell, {this.opensGate = true})
     : col = (cell.x / kTile).round(),
       row = (cell.y / kTile).round(),
       super(position: cell + Vector2.all(kTile / 2), priority: 18);
 
   final int col;
   final int row;
+
+  /// Açılınca en yakın kapıyı açar (finalin kilitleri açmaz).
+  final bool opensGate;
   double charge = 0;
   bool open = false;
   bool lit = false;
@@ -917,6 +920,7 @@ class SunLock extends PositionComponent
     if (charge >= 1) {
       open = true;
       GameAudio.instance.play('memory', volume: 0.6);
+      if (!opensGate) return;
       GameAudio.instance.play('gate', volume: 0.7);
       Gate? best;
       var bestD = double.infinity;

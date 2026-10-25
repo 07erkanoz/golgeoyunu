@@ -15,7 +15,7 @@ void main() {
     for (var i = 0; i < levels.length; i++)
       if (levels[i].shadowStones.isNotEmpty) i,
   ];
-  test('gölge taşı olan bölümler', () => expect(withStones, hasLength(2)));
+  test('gölge taşı olan bölümler', () => expect(withStones, hasLength(3)));
   for (final li in withStones) {
     testWithGame<GolgeGame>('gölge Kandilciyi oyalar ($li)', GolgeGame.new, (
       game,

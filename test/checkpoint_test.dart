@@ -181,7 +181,8 @@ void main() {
         for (final m in game.world.children.whereType<Mirror>()) {
           m.use();
         }
-        run(game, 0.5);
+        // Işık kilitleri dolup otursun (Yeşil Kubbe'de Kandilci Başı da).
+        run(game, 1.5);
         game.debugCheckpoint();
         Map<String, Object?> settled() => {
           for (final e in capturePuzzle(game.world.children).entries)

@@ -38,13 +38,19 @@ LEVELS = [
     ('kMapPalandoken', None, 0), ('kMapCig', None, 0), ('kMapPeri', True, 0),
     ('kMapDerinkuyu', True, 0), ('kMapKonya', True, 0),
     ('kMapErlik', False, 0), ('kMapErgenekon', False, 0), ('kMapGok', True, 0),
-    ('kMapOtuken', False, 0), ('kMapGok2', True, 0),
+    ('kMapOtuken', False, 0), ('kMapGok2', True, 0), ('kMapYesilKubbe', True, 0),
 ]
 
 # Ötüken Ormanı: `a` Ak Geyik, `d` geyik kökü (üstüne basılmaz). Geyik
 # ateşböceğiyle köke götürülür: köke varılınca en yakın kapı açılır
 # (geyiğin yürüyüşü benzetilmez, oyun içi sınamayla doğrulanır).
 FOREST = {'kMapOtuken'}
+# Yeşil Kubbe: kafesler (levels.dart cages) kol gibi en yakın kapıyı açar;
+# finalin üç aynasına varılınca Kandilci Başı çıkış kapısını açar; avlunun
+# ay kilidi havadadır (aynalara varmak yeter).
+CAGES = {'kMapYesilKubbe': [(92, 51), (132, 51), (182, 51)]}
+FINALE = {'kMapYesilKubbe': [(266, 9), (272, 7), (296, 9)]}
+LOCK_ANY = {'kMapYesilKubbe'}
 
 # Göğün katları: `W` Tulpar'dır (kanat değil). Ona varılınca Tulpar'la uçulur;
 # uçuş benzetilmez: Tulpar'ın sağındaki hedefler varılmış sayılır (yaklaşık,
@@ -572,9 +578,18 @@ def audit(idx):
             for c in cells(rows, 's'):
                 if c in reach and ('s', c) not in used:
                     new.append((('s', c), nearest_gate(gs, opened_gates, c)))
+        for c in CAGES.get(name, []):
+            if c in reach and ('L', c) not in used:
+                new.append((('L', c), nearest_gate(gs, opened_gates, c)))
+        fin = FINALE.get(name)
+        if fin and all(x in reach for x in fin) and ('fin', fin[0]) not in used:
+            new.append((('fin', fin[0]), nearest_gate(gs, opened_gates, fin[-1], right_only=True)))
         for c in cells(rows, 't'):
             mirrors = cells(rows, 'm') + cells(rows, 'h')
-            if c in reach and all(x in reach for x in mirrors) and ('t', c) not in used:
+            if name in LOCK_ANY:
+                # Yalnız bu kilidin aynaları (yakındakiler) sayılır.
+                mirrors = [x for x in mirrors if abs(x[0] - c[0]) < 40]
+            if (c in reach or name in LOCK_ANY) and all(x in reach for x in mirrors) and ('t', c) not in used:
                 new.append((('t', c), nearest_gate(gs, opened_gates, c)))
         if all_reached('*'):
             for c in cells(rows, '*')[:1]:
@@ -607,6 +622,8 @@ def audit(idx):
         if new:
             stage_goals = {k[1] for k, _ in new}
             stage_goals |= set(cells(rows, 'E'))
+            if name in LOCK_ANY:
+                stage_goals |= set(cells(rows, 'm') + cells(rows, 'h'))
             stage_traps |= _stuck(seen, edges, escapes, stage_goals)
         if name in VEINS:
             veins = [g for g in gs if g not in opened_gates]
@@ -658,6 +675,7 @@ def audit(idx):
     airborne = set('MT123456789()[]{}B')
     missing = [(ch, c, r) for r, row in enumerate(rows) for c, ch in enumerate(row)
                if ch in TARGETS and (c, r) not in reach
+               and not (ch == 't' and name in LOCK_ANY)
                and not (ch in airborne and (c, r) in AIR)]
     if name in FLYING:
         ws = cells(rows, 'W')

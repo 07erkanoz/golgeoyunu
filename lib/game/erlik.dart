@@ -7,6 +7,7 @@ import 'audio.dart';
 import 'entities.dart';
 import 'golge_game.dart';
 import 'level.dart';
+import 'levels.dart';
 import 'myth_figures.dart';
 import 'palette.dart';
 import 'persist.dart';
@@ -210,7 +211,9 @@ class KutCage extends PositionComponent
       }
     }
     best?.opening = true;
-    game.meetMyth('kut');
+    // Yeşil Kubbe'de kafesteki ışıklar Kandilcilerin topladıklarıdır, kut
+    // değil.
+    if (game.level.def.theme == LevelTheme.underworld) game.meetMyth('kut');
   }
 
   @override

@@ -1662,7 +1662,97 @@ for at, ins in sorted(OTUKEN_INS, reverse=True):
     rows = [r[:at] + x + r[at:] for r, x in zip(rows, ins)]
 lvl_otuken=rows
 
-MAPS = [('kMapYerebatan', lvl1), ('kMapKule', lvl2), ('kMapGokyolu', lvl3), ('kMapKaf', lvl4), ('kMapAgri', lvl5), ('kMapGemi', lvl6), ('kMapNemrut', lvl7), ('kMapGunDogumu', lvl8), ('kMapKarYolu', lvl9), ('kMapPalandoken', lvl10), ('kMapCig', lvl11), ('kMapPeri', lvl12), ('kMapDerinkuyu', lvl13), ('kMapKonya', lvl14), ('kMapErlik', lvl_erlik), ('kMapErgenekon', lvl_ergenekon), ('kMapGok', lvl_gok), ('kMapOtuken', lvl_otuken), ('kMapGok2', lvl_gok2)]
+# ------------------------------------------------------------ XX · YEŞİL KUBBE (final)
+# Dört alan: türbe avlusu (şadırvanın ayı, iki ayna), kandiller koridoru
+# (kafesteki ışıklar, iki Kandilci, gölge taşı), kubbenin kaburgaları
+# (fenerlerin taradığı tırmanış, çöken çiniler, ipler, ışık seli) ve
+# ustanın kandili (Kandilci Başı; üç ayna, levels.dart'ta finale).
+W,H=312,60
+F=52
+yk=G(W,H)
+def yc(c0,r0,c1,r1): yk.fill(c0,r0,c1,r1,'.')
+def yb(c0,r0,c1,r1): yk.fill(c0,r0,c1,r1,'#')
+yb(0,F,99,H-1)
+yb(0,0,0,H-1)
+# 1) Türbe avlusu: karlı avlu, gül bahçesi; gökten havuza inen ay.
+yk.put(2,F-1,'P'); yk.put(3,F-1,'p'); yk.put(5,F-1,'1'); yk.put(9,F-1,'B')
+yk.put(14,F-1,'K'); yk.put(18,F-1,'M')
+yb(26,F-8,27,F-4)                       # sol duvar: yanlış yöne giden ışık kesilir
+yb(31,F-4,37,F-1)                       # şadırvanın taşı (aynanın sahanlığı)
+yb(29,F-2,30,F-1)                       # basamak
+yk.put(34,F-20,'j')                     # ay: kubbenin penceresinden
+yk.put(34,F-5,'m')                      # ayna: başta sola (yanlış)
+yk.put(40,F-1,'2')
+yk.put(48,F-1,'G')                      # avluyu dolaşan Kandilci
+yb(55,F-2,56,F-1); yb(58,F-4,59,F-1)    # basamaklar
+yb(60,F-4,66,F-1)                       # ikinci aynanın sahanlığı
+yb(67,F-2,68,F-1)                       # sağdan inen geri çıkabilsin
+yk.put(64,F-5,'h')                      # ayna: başta aşağı (yanlış)
+yk.put(64,F-12,'t')                     # türbenin gümüş kapısının kilidi
+yb(63,F-14,65,F-13)                     # kilidin taşı
+yk.put(70,F-1,'F')
+yb(74,F-14,75,F-7); yk.fill(74,F-6,74,F-1,'H')   # türbenin kapısı
+yb(74,0,75,F-15)
+yk.put(72,F-1,'3')
+# 2) Kandiller koridoru: türbenin içi; kafeslerde Kandilcilerin topladığı
+# ışıklar (levels.dart'ta cages). Her kafes bir kapı açar.
+yb(75,0,200,F-13)                       # tavan
+yb(100,F,200,H-1)
+yk.put(78,F-1,'K'); yk.put(79,F-1,'p'); yk.put(81,F-1,'4')
+yk.put(86,F-1,'I')
+yb(96,F-12,97,F-7); yk.fill(96,F-6,96,F-1,'H')   # ilk kafesin kapısı
+yk.put(99,F-1,'I'); yk.put(104,F-1,'G'); yk.put(112,F-1,'I')
+yk.put(119,F-1,'5'); yk.put(124,F-1,'G'); yk.put(131,F-1,'I')
+yb(136,F-12,137,F-7); yk.fill(136,F-6,136,F-1,'H')   # ikinci kafesin kapısı
+yk.put(139,F-1,'K'); yk.put(141,F-1,'F'); yk.put(143,F-1,'M')
+yk.put(147,F-1,'I'); yk.put(152,F-1,'G'); yk.put(160,F-1,'I')
+yb(156,F-3,157,F-1)                     # sanduka: üstüne çıkılır
+yk.put(166,F-1,'6'); yk.put(170,F-1,'I'); yk.put(176,F-1,'G')
+yb(186,F-12,187,F-7); yk.fill(186,F-6,186,F-1,'H')   # üçüncü kafesin kapısı
+yk.put(190,F-1,'B')
+# Koridorun sonu: türbenin arka kapısından kubbenin dibine.
+yc(188,F-12,200,F-1)
+# 3) Kubbenin kaburgaları: dışarıda, fenerlerin taradığı tırmanış.
+yb(200,F,311,H-1)
+yb(201,F-1,205,F-1)                     # kasnağın dibi
+yk.put(195,F-1,'K'); yk.put(196,F-1,'p')
+yk.put(202,F-2,'z')                     # ışık seli buradan sonra yükselir
+# Kaburgalar: sağa sola dizilen basamaklar (her biri iki-üç kare yukarı).
+steps=[(206,F-2,4),(211,F-4,3),(206,F-6,3),(211,F-8,3),(216,F-10,4),
+       (221,F-12,3),(216,F-14,3),(211,F-16,3),(206,F-18,4)]
+for c,r,n in steps: yk.fill(c,r,c+n-1,r,'=')
+yk.put(222,F-13,'I'); yk.put(212,F-17,'I')
+yk.put(207,F-19,'K'); yk.put(209,F-19,'7')
+# Çöken çiniler, ip, yeniden kaburgalar.
+for c,r in ((212,F-19),(215,F-20),(218,F-21)): yk.put(c,r,'O')
+yb(219,F-31,225,F-31)                   # ipin bağlandığı kemer
+yk.fill(222,F-30,222,F-22,'S')          # ip
+yk.fill(228,F-22,231,F-22,'=')
+yk.put(229,F-23,'I')
+yk.fill(233,F-24,235,F-24,'='); yk.fill(237,F-26,239,F-26,'=')
+yk.put(238,F-27,'8')
+yk.fill(233,F-28,235,F-28,'='); yk.fill(237,F-30,240,F-30,'=')
+yk.put(239,F-31,'K'); yk.put(240,F-31,'M')
+for c,r in ((243,F-32),(246,F-33),(249,F-34)): yk.put(c,r,'O')
+yk.fill(251,F-36,253,F-36,'='); yk.fill(255,F-38,257,F-38,'=')
+yk.fill(252,F-40,254,F-40,'=')
+yk.put(256,F-39,'Z')                    # sel burada durur
+# Kasnağı dolaşan büyük fenerler.
+yk.put(203,F-28,'0'); yk.put(232,F-38,'0')
+# 4) Ustanın kandili: kubbenin alemi, Kandilci Başı.
+yb(258,F-42,311,F-40)
+yk.put(259,F-43,'p'); yk.put(260,F-43,'9')
+yk.put(263,F-43,'I'); yk.put(276,F-43,'I'); yk.put(294,F-43,'I')
+yk.put(266,F-50,'j'); yk.put(266,F-43,'m')        # birinci ayna
+yb(270,F-44,274,F-44)                              # ikinci aynanın sahanlığı
+yk.put(272,F-51,'j'); yk.put(272,F-45,'m')         # ikinci ayna (yukarıda)
+yk.put(296,F-50,'j'); yk.put(296,F-43,'h')         # üçüncü ayna
+yb(303,F-50,304,F-47); yk.fill(303,F-46,303,F-43,'H')   # çıkış kapısı
+yk.put(307,F-43,'E')
+yb(311,0,311,H-1)
+lvl_yesil=yk.rows()
+
+MAPS = [('kMapYerebatan', lvl1), ('kMapKule', lvl2), ('kMapGokyolu', lvl3), ('kMapKaf', lvl4), ('kMapAgri', lvl5), ('kMapGemi', lvl6), ('kMapNemrut', lvl7), ('kMapGunDogumu', lvl8), ('kMapKarYolu', lvl9), ('kMapPalandoken', lvl10), ('kMapCig', lvl11), ('kMapPeri', lvl12), ('kMapDerinkuyu', lvl13), ('kMapKonya', lvl14), ('kMapErlik', lvl_erlik), ('kMapErgenekon', lvl_ergenekon), ('kMapGok', lvl_gok), ('kMapOtuken', lvl_otuken), ('kMapGok2', lvl_gok2), ('kMapYesilKubbe', lvl_yesil)]
 
 out = ['// Bu dosya tools/generate_maps.py ile üretilir; elle düzenleme.',
        '// Gösterim: lib/game/level.dart başındaki açıklamaya bakın.', '']

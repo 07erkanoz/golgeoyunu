@@ -31,6 +31,7 @@ import 'shafts.dart';
 import 'ski_decor.dart';
 import 'ski_fx.dart';
 import 'ski_light.dart';
+import 'final.dart';
 import 'joy.dart';
 import 'levels.dart';
 import 'narration.dart';
@@ -1032,6 +1033,12 @@ class GolgeGame extends FlameGame with KeyboardEvents {
             TasBekci(Vector2(c * kTile.toDouble(), r * kTile.toDouble()))
           else if (name == 'golgehane')
             ..._golgehane(c, r),
+        for (final (c, r) in level.def.cages)
+          KutCage(Vector2(c * kTile.toDouble(), r * kTile.toDouble())),
+        if (level.def.finale case (final c, final r))
+          KandilciBasi(Vector2((c + 0.5) * kTile, (r + 1) * kTile.toDouble())),
+        for (final (c, r) in level.def.finaleLocks)
+          FinaleLock(Vector2(c * kTile.toDouble(), r * kTile.toDouble())),
         ...joyPlaces(level),
         if (joyEnabled)
           for (final c in level.checkpointCells) UmayBirds(c),
@@ -1121,7 +1128,11 @@ class GolgeGame extends FlameGame with KeyboardEvents {
           if (skiSurface != null)
             Avalanche(level.chaseStart!, level.chaseEnd!)
           else if (level.def.theme == LevelTheme.konya)
-            LightFlood(level.chaseStart!, level.chaseTop!)
+            LightFlood(
+              level.chaseStart!,
+              level.chaseTop!,
+              maxSpeed: level.def.floodSpeed ?? 72,
+            )
           else if (level.def.theme == LevelTheme.heavens)
             // Erlik'in fırtınası: Sâye Tulpar'a binince soldan gelir.
             StormWall(level.chaseStart!, level.chaseEnd!)
@@ -2260,7 +2271,9 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         UmayTree u when near(u, 3, 3) => 'umay',
         PawTrail t when near(t, 4, 3) => 'gokboruTrail',
         Kormos k when near(k, 7, 5) => 'kormos',
-        KutCage k when near(k, 3, 3) && !k.freed => 'kut',
+        KutCage k when near(k, 3, 3) && !k.freed =>
+          level.def.theme == LevelTheme.underworld ? 'kut' : 'lightCage',
+        KandilciBasi k when near(k, 22, 6) && !k.solved => 'finale',
         Calkuyruk c when near(c, 5, 4) && !onHorse => 'horse',
         IronVein v when near(v, 6, 4) && !v.lit => 'forge',
         IronVein v when v.fuelNeeded > 0 && !v.fueled && near(v, 10, 4) =>

@@ -226,6 +226,18 @@ const whisperPlan = <int, Map<int, (WhisperPlace, int?)>>{
     5: (WhisperPlace.tehlike, null),
     6: (WhisperPlace.yazi, null),
   },
+  // Yeşil Kubbe (final; elle eklendi).
+  19: {
+    0: (WhisperPlace.yazi, null),
+    1: (WhisperPlace.yazi, null),
+    2: (WhisperPlace.agac, 78),
+    3: (WhisperPlace.yazi, null),
+    4: (WhisperPlace.agac, 139),
+    5: (WhisperPlace.agac, 139),
+    6: (WhisperPlace.agac, 207),
+    7: (WhisperPlace.tehlike, null),
+    8: (WhisperPlace.yazi, null),
+  },
 };
 
 /// Fısıltının yeri (planda yoksa oynanış sırasında yazı).

@@ -166,7 +166,22 @@ class LevelDef {
     this.coldRuns = const [],
     this.vistas = const [],
     this.surprises = const [],
+    this.cages = const [],
+    this.finale,
+    this.finaleLocks = const [],
+    this.floodSpeed,
   });
+
+  /// Kafesteki ışıklar (sütun, satır): Kandilcilerin topladığı ışıklar;
+  /// açılınca kavanoza girer, en yakın kapıyı açar (Erlik'in kut kafesi).
+  final List<(int, int)> cages;
+
+  /// Final: Kandilci Başı'nın durduğu hücre ve çevresindeki ay kilitleri.
+  final (int, int)? finale;
+  final List<(int, int)> finaleLocks;
+
+  /// Işık selinin en yüksek hızı (piksel/sn; verilmezse 72).
+  final double? floodSpeed;
 
   /// Küçük sürprizler (ad, sütun, satır): bkz. surprises.dart.
   final List<(String, int, int)> surprises;
@@ -580,6 +595,12 @@ const interludes = <List<String>>[
     'Derler ki Hüma\'nın gölgesi kimin başına düşerse ona kut getirir. Tulpar ise yiğidi göğün katları arasında taşır.',
     'Yakutlar gök gürültüsünü Süge Toyon\'un sesi bilir; yıldırımı kötü ruhlara indirir. O gece gök gürlüyordu.',
   ],
+  [
+    'Sâye semâhanenin damından Yeşil Kubbe\'ye baktı. Kubbenin içinden yüzyılların ışığı taşıyordu.',
+    'Kandilciler ustayı kubbenin tepesine, alemin dibine çıkarmıştı. Başlarında en yaşlıları vardı: Kandilci Başı.',
+    'Derler ki Kandilci Başı bir zamanlar bir hayalîydi. Işığı kimseyle bölüşmemek için kandilini kapadı; o gün gölgesini kaybetti.',
+    'Ustanın kandili titriyordu. Gece yarısına az kalmıştı.',
+  ],
 ];
 
 const interludesEn = <List<String>>[
@@ -728,18 +749,24 @@ const interludesEn = <List<String>>[
     'They say the shadow of the Huma brings kut to whomever it falls on. And Tulpar carries the hero between the layers of the sky.',
     'The Yakuts know thunder as the voice of Süge Toyon, who hurls lightning at evil spirits. That night the sky was thundering.',
   ],
+  [
+    'From the roof of the semahane Saye looked at the Green Dome. The light of centuries was overflowing from within.',
+    'The Lamplighters had carried the master to the top of the dome, to the foot of the finial. At their head was the eldest of them: the Chief Lamplighter.',
+    'They say the Chief Lamplighter was once a shadow master himself. To share the light with no one, he closed his lamp; that day he lost his shadow.',
+    'The master\'s lamp was flickering. It was nearly midnight.',
+  ],
 ];
 
 /// Oynanış sırası. Bölümün kimliği `levels` listesindeki yeridir ve hiç
 /// değişmez (kayıt, hatıralar, görülen olaylar bu kimlikle tutulur); yeni
 /// bölümler listenin sonuna eklenir, oynanıştaki yerlerine bu sırada girer.
 const levelOrder = <int>[
-  0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 17, 14, 15, 16, 18, 13, //
+  0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 17, 14, 15, 16, 18, 13, 19, //
 ];
 
 /// Sıra değişince artar: kayıttaki "açılan en ileri bölüm" (sıradaki yer)
 /// eski sıradan yenisine çevrilir.
-const levelOrderVersion = 6;
+const levelOrderVersion = 7;
 
 /// Eski sıra sürümlerinde her yerdeki bölüm kimliği (1. sürüm: kimlik =
 /// yer).
@@ -750,6 +777,7 @@ const _levelOrderHistory = <int, List<int>>{
   4: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 16, 13],
   5: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 17, 14, 15, 16, 13],
   6: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 17, 14, 15, 16, 18, 13],
+  7: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 17, 14, 15, 16, 18, 13, 19],
 };
 
 /// Bölümün oynanış sırasındaki yeri (yoksa -1).
@@ -867,6 +895,12 @@ const bridges = <List<String>>[
     'Hüma\'nın gölgesi başına düştü. Süge Toyon\'un yıldırımlarının ışığında kara bulutlara bastı.',
     'Ülgen\'in kapısında Tulpar onu bekliyordu.',
   ],
+  [
+    'Şadırvanın havuzuna düşen ayı aynalarla türbenin gümüş kapısına taşıdı.',
+    'Kandiller koridorunda kafesleri açtı; çalınan ışıklar sahiplerini hatırlayıp kavanozuna girdi.',
+    'Kubbenin yeşil kaburgalarına tırmandı; aşağıda biriken ışık taşıyordu.',
+    'Tepede üç aynayı çevirdi. Kandilci Başı yüzyıllar sonra ilk kez kendi gölgesini gördü.',
+  ],
 ];
 
 const bridgesEn = <List<String>>[
@@ -957,6 +991,12 @@ const bridgesEn = <List<String>>[
   [
     'The Huma\'s shadow fell upon her. By the light of Süge Toyon\'s lightning she stepped on the black clouds.',
     'At Ülgen\'s gate, Tulpar was waiting for her.',
+  ],
+  [
+    'With mirrors she carried the moon fallen into the fountain\'s pool to the tomb\'s silver door.',
+    'In the corridor of lamps she opened the cages; the stolen lights remembered their owners and entered her jar.',
+    'She climbed the green ribs of the dome; the light gathered below was overflowing.',
+    'At the top she turned three mirrors. For the first time in centuries, the Chief Lamplighter saw his own shadow.',
   ],
 ];
 
@@ -2280,5 +2320,69 @@ const levels = <LevelDef>[
       'Memory · "Master, who broke the sun?" "Someone who wanted it all to himself, Saye."',
     ],
     map: kMapGok2,
+  ),
+  // XX · Yeşil Kubbe: oyunun finali (docs/YESIL_KUBBE_PLANI.md).
+  LevelDef(
+    title: 'XX · YEŞİL KUBBE',
+    legends: ['sebiArus'],
+    bard: 'Ozan der ki: Işık bölünmeye razıdır; sahiplenilmeye razı olmaz.',
+    bardEn: 'The bard says: light consents to be shared; it never consents to be owned.',
+    subtitle: 'Kandil sönerken gölge ışığa karışır.',
+    subtitleEn: 'As the lamp goes out, the shadow joins the light.',
+    theme: LevelTheme.konya,
+    wings: true,
+    titleEn: 'XX · THE GREEN DOME',
+    place: 'Konya · Yeşil Kubbe, 17 Aralık 1660 gecesi',
+    placeEn: 'Konya · The Green Dome, the night of 17 December 1660',
+    areas: [
+      'Türbe Avlusu',
+      'Kandiller Koridoru',
+      'Kubbenin Kaburgaları',
+      'Ustanın Kandili',
+    ],
+    areasEn: [
+      'The Tomb Courtyard',
+      'The Corridor of Lamps',
+      'The Ribs of the Dome',
+      'The Master\'s Lamp',
+    ],
+    whispers: [
+      'Yeşil Kubbe. Kandilciler ustayı en tepeye çıkardı; yüzyıllardır topladıkları bütün ışık orada. Bu gece düğün gecesi.',
+      'Şadırvanın havuzuna ay düşer. Aynaları çevir: ay ışığı türbenin gümüş kapısını açar.',
+      'Kapının üstünde Mesnevî\'nin ilk beyti: "Dinle, bu ney nasıl şikâyet ediyor; ayrılıkları anlatıyor."',
+      'Kandiller koridoru. Kandilciler topladıkları ışıkları gümüş kafeslere asmış: her biri bir evin, bir çocuğun ışığı. Kafesi aç; ışık sahibini hatırlar.',
+      'Işığı saklayan gölgesini kaybeder. Kandilciler yüzyıllardır gölgesiz dolaşıyor; o yüzden fenerleri hiç sönmez.',
+      'Sandukaların başında sikkeler: dervişin keçe külahı, nefsin mezar taşı. Burada ölüm bir düğündür.',
+      'Kubbenin yeşil kaburgaları. Kandilciler kasnağı dolaşıyor, fenerleri kaburgaları tarıyor. Gölgede bekle; ışık geçince tırman.',
+      'Aşağıda biriken ışık taşıyor. Sel yükseliyor, Sâye: tırman!',
+      'Ustanın kandili. Kandilci Başı onu bırakmıyor. Bir zamanlar o da bir hayalîydi; gölgesini kaybedeli çok oldu. Ona kendi gölgesini göster.',
+    ],
+    whispersEn: [
+      'The Green Dome. The Lamplighters carried the master to the very top; all the light they have gathered for centuries is there. Tonight is the wedding night.',
+      'The moon falls into the fountain\'s pool. Turn the mirrors: moonlight opens the tomb\'s silver door.',
+      'Above the door, the first couplet of the Masnavi: "Listen to the reed, how it complains; it tells of separations."',
+      'The corridor of lamps. The Lamplighters hung the light they gathered in silver cages: each the light of a home, of a child. Open a cage; the light remembers its owner.',
+      'Whoever hides the light loses his shadow. The Lamplighters have wandered shadowless for centuries; that is why their lanterns never go out.',
+      'Felt caps on the cenotaphs: the dervish\'s sikke, the tombstone of the ego. Here, death is a wedding.',
+      'The green ribs of the dome. Lamplighters circle the drum; their lanterns sweep the ribs. Wait in the shadow; climb when the light has passed.',
+      'The light gathered below is overflowing. The flood is rising, Saye: climb!',
+      'The master\'s lamp. The Chief Lamplighter will not let it go. He too was once a shadow master; it has been long since he lost his shadow. Show him his own shadow.',
+    ],
+    memories: [
+      'Hatıra · Ustam her oyunun sonunda kandili üflemeden önce perdeye eğilir, gölgelere teşekkür ederdi.',
+      'Hatıra · "Perde biter, Sâye," derdi. "Gölge bitmez. Bir başka kandilde yeniden doğar."',
+      'Hatıra · Bir gece sordum: "Usta, gölgenin de gölgesi olur mu?" Güldü: "Dua eden gölgenin olur."',
+    ],
+    memoriesEn: [
+      'Memory · At the end of every play, before blowing out the lamp, my master bowed to the screen and thanked the shadows.',
+      'Memory · "The screen comes to an end, Saye," he said. "The shadow does not. It is born again by another lamp."',
+      'Memory · One night I asked: "Master, does a shadow have a shadow too?" He laughed: "A praying shadow does."',
+    ],
+    shadowStones: [(101, 51), (145, 51)],
+    cages: [(92, 51), (132, 51), (182, 51)],
+    finale: (284, 9),
+    finaleLocks: [(281, 9), (290, 7), (287, 9)],
+    floodSpeed: 16,
+    map: kMapYesilKubbe,
   ),
 ];
