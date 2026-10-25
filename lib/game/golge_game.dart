@@ -1026,7 +1026,8 @@ class GolgeGame extends FlameGame with KeyboardEvents {
           else if (name == 'golgehane')
             ..._golgehane(c, r),
         ...joyPlaces(level),
-        for (final c in level.checkpointCells) UmayBirds(c),
+        if (joyEnabled)
+          for (final c in level.checkpointCells) UmayBirds(c),
         for (final (c, r, kind) in level.def.vistas)
           VistaPoint(
             Vector2((c + 0.5) * kTile, (r + 0.5) * kTile.toDouble()),

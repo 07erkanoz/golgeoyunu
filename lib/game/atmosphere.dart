@@ -968,6 +968,10 @@ class ScreenEffects extends Component with HasGameReference<GolgeGame> {
         ? math.sin(beat / 0.12 * math.pi)
         : (beat < 0.3 ? 0.6 * math.sin((beat - 0.15) / 0.15 * math.pi) : 0.0);
     final r = math.max(w, h) * (0.6 - 0.24 * s - 0.06 * pulse);
+    // Kenarlardan içeri sızan karanlık ve kalp atışıyla vuran kızıl nabız
+    // tek geçişte: ekranı kaplayan her ek katman telefonda (yüksek
+    // çözünürlük, 120 Hz) kare hızını düşürüyordu.
+    final red = s * (0.06 + 0.12 * pulse);
     canvas.drawRect(
       Rect.fromLTWH(0, 0, w, h),
       Paint()
@@ -975,31 +979,21 @@ class ScreenEffects extends Component with HasGameReference<GolgeGame> {
           Offset(w / 2, h / 2),
           r,
           [
-            const Color(0x00200303),
-            const Color(0xFF200303).withValues(alpha: 0.75 * s),
+            const Color(0xFF8A0E0E).withValues(alpha: red),
+            Color.lerp(
+              const Color(0xFF200303),
+              const Color(0xFF8A0E0E),
+              red,
+            )!.withValues(alpha: math.min(1, 0.75 * s + red)),
             const Color(0xFF0A0101).withValues(alpha: s),
           ],
           const [0.25, 0.62, 0.95],
         ),
     );
-    // Kalp atışıyla bütün ekrana vuran kızıl nabız.
-    canvas.drawRect(
-      Rect.fromLTWH(0, 0, w, h),
-      Paint()
-        ..color = const Color(0xFF8A0E0E)
-            .withValues(alpha: s * (0.06 + 0.12 * pulse)),
-    );
     // Kenarlardan uzanan titrek kara çizgiler (mürekkep damarları); altında
-    // kızıl bir hare, karanlıkta seçilsinler.
-    final glow = Paint()
-      ..color = const Color(0xFFB01818).withValues(alpha: 0.35 * s)
-      ..strokeWidth = 7
-      ..strokeCap = StrokeCap.round
-      ..style = PaintingStyle.stroke;
-    final ink = Paint()
-      ..color = const Color(0xFF050202).withValues(alpha: 0.9 * s)
-      ..strokeWidth = 3.2
-      ..strokeCap = StrokeCap.round;
+    // kızıl bir hare, karanlıkta seçilsinler. Bütün damarlar tek yolda: iki
+    // çizim (her damar ayrı ayrı 52 çizimdi).
+    final veins = Path();
     for (var i = 0; i < 26; i++) {
       final ang = i / 26 * 2 * math.pi + math.sin(_t * 0.7 + i) * 0.05;
       final edge = Offset(
@@ -1007,19 +1001,34 @@ class ScreenEffects extends Component with HasGameReference<GolgeGame> {
         h / 2 + math.sin(ang) * h * 0.56,
       );
       final len = (0.25 + 0.2 * ((i * 37) % 5) / 5) * s * (1 + 0.3 * pulse);
-      var p = edge;
-      final path = Path()..moveTo(p.dx, p.dy);
+      veins.moveTo(edge.dx, edge.dy);
       for (var k = 1; k <= 5; k++) {
         final t = k / 5 * len;
         final jitter = math.sin(_t * 9 + i * 3 + k) * 6;
-        p =
+        final p =
             Offset.lerp(edge, Offset(w / 2, h / 2), t)! +
             Offset(-math.sin(ang) * jitter, math.cos(ang) * jitter);
-        path.lineTo(p.dx, p.dy);
+        veins.lineTo(p.dx, p.dy);
       }
-      canvas.drawPath(path, glow);
-      canvas.drawPath(path, ink..style = PaintingStyle.stroke);
     }
+    canvas.drawPath(
+      veins,
+      Paint()
+        ..color = const Color(0xFFB01818).withValues(alpha: 0.35 * s)
+        ..strokeWidth = 7
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round
+        ..style = PaintingStyle.stroke,
+    );
+    canvas.drawPath(
+      veins,
+      Paint()
+        ..color = const Color(0xFF050202).withValues(alpha: 0.9 * s)
+        ..strokeWidth = 3.2
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round
+        ..style = PaintingStyle.stroke,
+    );
   }
 
   /// Kar: yakındakiler büyük ve hızlı, uzaktakiler küçük; rüzgârla savrulur.

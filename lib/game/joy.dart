@@ -53,8 +53,12 @@ double bouncePower(int air, {bool second = false}) {
 int hopTiles(double v) =>
     (Player.runSpeed * 2 * v / Player.gravity / kTile).round();
 
+/// Ölçüm için: neşe paketini kapatır (parkur, perde, kuşlar).
+bool joyEnabled = true;
+
 /// Bölümdeki neşe parkurları (yer bulunamazsa boş).
 List<Component> joyPlaces(Level lv) {
+  if (!joyEnabled) return const [];
   final def = lv.def;
   if (def.skiMarks != null) return const [];
   final spots = findJoySpots(lv);

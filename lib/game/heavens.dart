@@ -174,16 +174,18 @@ class DrumCloud extends Deck {
     canvas.save();
     canvas.translate(shake, sink);
     final a = 0.35 + 0.65 * _show;
+    // Işık huzmelerinin önünde de seçilsin: koyu kalın kontur, açık
+    // kabuk ve üstte açık yeşil bir yosun çizgisi (basılacak yer).
     final bark = Paint()
       ..color = Color.lerp(
         const Color(0xFF1A120A),
-        const Color(0xFF3A2A18),
+        const Color(0xFF5A4028),
         _show,
       )!.withValues(alpha: a);
     final dark = Paint()
       ..color = const Color(0xFF0C0805).withValues(alpha: a)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.4;
+      ..strokeWidth = 2.4;
     // Kalın, kıvrık gövde: üstü düzce (basılır), altı yumru yumru.
     final top = Path()..moveTo(-4, 6);
     for (var x = 0.0; x <= w + 4; x += 8) {
@@ -210,6 +212,19 @@ class DrumCloud extends Deck {
         hair,
       );
     }
+    // Basılacak üst yüz: açık yosun çizgisi.
+    final rim = Path()..moveTo(-2, 2);
+    for (var x = 0.0; x <= w + 2; x += 8) {
+      rim.lineTo(x, 1.5 + math.sin(x * 0.37) * 1.2);
+    }
+    canvas.drawPath(
+      rim,
+      Paint()
+        ..color = const Color(0xFFC8E08A).withValues(alpha: 0.9 * _show)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.2
+        ..strokeCap = StrokeCap.round,
+    );
     // Yosun: kalkık kökün üstü yeşerir.
     if (_show > 0.4) {
       final moss = Paint()
