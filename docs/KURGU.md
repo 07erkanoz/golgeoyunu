@@ -4,7 +4,16 @@ Oyun bir **hayal perdesi**dir: âlem bir perde, biz gölgeleriz, ardında bir ka
 yanar. Kahraman **Sâye**, Hayali Usta'nın perdesinden düşmüş bir gölgedir ama
 bunu bilmez. Rehberi **Hüdhüd**'dür (Attar'ın Mantıku't-Tayr'ındaki kuş).
 
-Ton: mistik, az sözlü, beyit gibi. Gerilim var, dehşet yok: tehdit sezilir,
+Ton: mistik, az sözlü, beyit gibi. Perdeler tek bir hikâye gibi birbirine
+bağlanır; her perde bir merakla kapanır. Perde metninin tek kaynağı
+tools/perde_metni/metin.json (koda tools/perde_metni/uygula.py işler, okunur
+hâli docs/PERDE_METNI.md).
+
+Gizem iplikleri: kırık güneş ve Kandilciler (Gökyolu'nda Hüdhüd anlatır, Kar
+Yolu'nda ustanın kandilinden ışık çektikleri görülür, Yeşil Kubbe'de Kandilci
+Başı'nın sırrı); Sâye kim (Kaf'ın aynası, perinin bakışı, Karabasan'ın
+sahipsiz gölgeleri, son perde); usta (Kar Yolu'nda zincirli, Erlik'in katında
+izi, Yeşil Kubbe'de kavuşma). Gerilim var, dehşet yok: tehdit sezilir,
 ölüm ışığın sönmesidir. Perde sahneleri bölümleri birbirine bağlar.
 
 Coğrafya bir rüya coğrafyasıdır. Perde, gerçekte uzak olan yerleri tek bir
@@ -112,7 +121,7 @@ olarak gördüğü için vefat gecesi (17 Aralık 1273) bu adla anılır.
 | Kubbe-i Hadrâ | Düğün gecesi | **Işık seli**: biriktirilen ışık taşar, tepeye tırmanış |
 
 **Cevaplar (son perde):**
-- **Sâye kimdir?** Ustanın gölgesi değil, duası: hem eşi, hem yolu, hem hemzatı.
+- **Sâye kimdir?** Ustanın gölgesi değil, duası: bunca yolu yürüyüp ustasına gelen dua.
 - **Kandilciler neden ışığı topladı?** Işığı saklayan gölgesini kaybeder.
   Ustanın kandili gölgelere can veren tek ışıktır; onu istediler.
 - **Güneş neden kırıldı?** Onu yalnız kendileri için asmak istediler. Işık
