@@ -101,11 +101,13 @@ void _bridgeStage(Canvas c, int level, double time, double u, int n) {
     case 15:
       _bErgenekon(c, time, u, nn);
     case 16:
-      _bSky(c, time, u, nn);
+      _bSkyLayers(c, time, u, nn);
     case 17:
       _bOtuken(c, time, u, nn);
     case 18:
-      _bSky(c, time, u, nn);
+      _bUlgen(c, time, u, nn);
+    case 19:
+      _bKubbe(c, time, u, nn);
     case 20:
       _bSea(c, time, u, nn);
   }
@@ -2307,7 +2309,8 @@ void _bKonya(Canvas c, double time, double u, double n) {
   final pan = -_span(u, 0.08, n - 0.4) * 900;
   c.save();
   c.translate(pan, 0);
-  final ink = _ink(0.9);
+  // Yapılar soluk: önlerinden geçen Sâye seçik kalsın.
+  final ink = _ink(0.55);
   // Höyük, İkonion kapısı, Alâeddin tepesi.
   c.drawOval(const Rect.fromLTWH(60, 280, 260, 140), _far(1.6));
   c.drawRect(const Rect.fromLTWH(380, 220, 40, 130), ink);
@@ -2360,18 +2363,36 @@ void _bKonya(Canvas c, double time, double u, double n) {
       _semazenPuppet(c, Offset(1190 + i * 60.0, _gb + 12), time * 3 + i, a1);
     }
   }
-  _greenDome(c, 1560, 1, scale: 1.4);
+  _greenDome(c, 1560, 0.95, scale: 1.15);
   c.restore();
   _floor(c, 0.9);
+  // Kar: iri taneler, yoğun.
+  _snowfall(c, time, 1.9, wind: 20);
+  _snowfall(c, time * 0.7 + 3, 1.2, wind: 35);
   var x = 160 + _span(u, 0.08, n - 0.4) * 140;
   var y = _gb + 12;
-  final climb = _span(u, 2.55, 2.95);
+  var rot = 0.0;
+  // Kubbeye yürür, duvarına, sonra yeşil kaburgalarına tutunup tırmanır.
+  final walk = _span(u, 2.5, 2.68);
+  if (walk > 0) x += walk * 305;
+  final climb = _span(u, 2.68, 2.97);
   if (climb > 0) {
-    x += climb * 300;
-    y -= _span(u, 2.78, 2.98) * 110;
+    // Kubbe ekranda 1560-900 = 660'ta; duvar dibi, duvar başı, külah.
+    const path = [Offset(605, _gb + 12), Offset(610, 216), Offset(636, 148)];
+    final f = climb * 2;
+    final i = math.min(f.floor(), 1);
+    final p = Offset.lerp(path[i], path[i + 1], f - i)!;
+    x = p.dx;
+    y = p.dy;
+    rot = 0.28 * _span(u, 2.8, 2.9);
   }
-  _snowfall(c, time, 1, wind: 20);
-  _sayeAt(c, Offset(x, y), time);
+  _sayeAt(
+    c,
+    Offset(x, y),
+    time,
+    rot: rot,
+    s: walk > 0 ? 1.5 - 0.5 * walk : 1.5,
+  );
 }
 
 // ------------------------------------------------------------- Erlik
@@ -2743,72 +2764,6 @@ void _bErgenekon(Canvas c, double time, double u, double n) {
   _sayeJ(c, Offset(x, y), 1.5, time, 1, jar: 1 - hammer);
 }
 
-// ------------------------------------------------------------- Göğün katları
-
-void _bSky(Canvas c, double time, double u, double n) {
-  final rise = _span(u, 0.55, 1.3);
-  // Katlar: bulut, ay, gün; yükseldikçe aşağı kayar.
-  c.save();
-  c.translate(0, rise * 300);
-  for (var i = 0; i < 6; i++) {
-    _P._cloud(c, 60 + i * 130.0, 330, 1.1, 0.8);
-  }
-  c.drawCircle(const Offset(600, 40), 30, _hole(0.7));
-  c.drawCircle(const Offset(612, 34), 26, _cloth(1));
-  c.drawCircle(const Offset(240, -220), 60, _hole(0.8));
-  c.restore();
-  final x = _walkX(u, n, 300, 560);
-  final y = 330 - rise * 120 + math.sin(time * 1.2) * 6;
-  // 0: kamın davulu.
-  final a0 = _heroA(u, 0);
-  if (a0 > 0) {
-    _cut(
-      c,
-      MythShapes.kam,
-      Offset(110, _gb + 12 + rise * 300),
-      190,
-      a0,
-      deco: false,
-    );
-    final beat = math.pow(math.max(0, math.sin(time * 5)), 8).toDouble();
-    for (var i = 0; i < 3; i++) {
-      c.drawCircle(
-        Offset(150, _gb - 110 + rise * 300),
-        30 + i * 18 + beat * 10,
-        _stroke(_hole(0.3 * a0 * (1 - i / 3)), 2),
-      );
-    }
-  }
-  // 1: Hüma'nın gölgesi, Ülgen'in kapısı, Tulpar bekler.
-  final a1 = _heroA(u, 1);
-  if (a1 > 0) {
-    final hx = 100 + _span(u, 1.05, 1.8) * 600;
-    _cut(c, MythShapes.birdGlide, Offset(hx, 110), 120, a1, deco: false);
-    c.drawOval(
-      Rect.fromCenter(center: Offset(hx, y - 140), width: 120, height: 14),
-      _ink(0.3 * a1),
-    );
-    c.drawCircle(const Offset(690, 150), 120, _hole(0.3 * a1));
-    final gate = Path()
-      ..moveTo(640, 360)
-      ..lineTo(640, 150)
-      ..quadraticBezierTo(690, 90, 740, 150)
-      ..lineTo(740, 360);
-    c.drawPath(gate, _stroke(_ink(a1), 10));
-    _cut(
-      c,
-      MythShapes.horse,
-      Offset(600, 330),
-      120,
-      a1,
-      flip: true,
-      deco: false,
-    );
-    _wings(c, const Offset(596, 240), 70, 0.3 + math.sin(time * 2) * 0.1, a1);
-  }
-  _sayeAt(c, Offset(x, y), time);
-}
-
 // ---------------------------------------------------------------- Ötüken
 
 void _bOtuken(Canvas c, double time, double u, double n) {
@@ -2906,7 +2861,7 @@ void _bOtuken(Canvas c, double time, double u, double n) {
   if (a1 > 0) {
     // Kam davulunu çalar; her vuruşta kökler yerden kalkar, basamak olur.
     final beat = math.pow((time * 1.6) % 1, 3).toDouble();
-    _kamFig(c, const Offset(70, _gb + 10), 210, a1, time, beat: beat);
+    _kamOrman(c, const Offset(70, _gb + 10), 210, a1, time, beat: beat);
     for (var i = 0; i < 3; i++) {
       final up = _span(u, 1.04 + i * 0.07, 1.14 + i * 0.07);
       final rx = 170 + i * 52.0;

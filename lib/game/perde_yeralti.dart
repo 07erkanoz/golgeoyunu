@@ -141,7 +141,7 @@ void _seated(
 /// Kam: tüylü başlık, cübbe; bir elinde çerçeve davul, ötekinde tokmak.
 /// [beat] 0-1 tokmağın davula inişi (1'de vurur); [seated] bağdaş kurar.
 /// Boyu (ayakta) [h] piksel.
-void _kamFig(
+void _kamOrman(
   Canvas c,
   Offset feet,
   double h,
@@ -881,7 +881,7 @@ void _otukenScene(Canvas canvas, double time, double u) {
       _line(u, 2),
       math.max(_span(u, 4.55, 4.75) * (1 - _span(u, 4.85, 5.0)), _line(u, 6)),
     );
-    _kamFig(
+    _kamOrman(
       c,
       const Offset(196, g + 8),
       250,
