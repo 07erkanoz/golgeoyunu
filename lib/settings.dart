@@ -239,7 +239,17 @@ class Settings {
     if ((version ?? 0) < _version) await save();
   }
 
+  /// Geliştirici ölçüm çalıştırmaları (belli bölümle açılış, perde, kendi
+  /// kendine yürüme) oyuncunun ayarına ve kaydına yazmaz: aynı bilgisayarda
+  /// oynanan oyunun kaydını ve "giriş izlendi" bilgisini bozuyordu.
+  static const bool readOnly =
+      bool.fromEnvironment('DEV') &&
+      (int.fromEnvironment('START_LEVEL', defaultValue: -1) >= 0 ||
+          int.fromEnvironment('START_PERDE', defaultValue: -1) >= 0 ||
+          bool.fromEnvironment('AUTOWALK'));
+
   static Future<void> save() async {
+    if (readOnly) return;
     final p = await _open();
     if (p == null) return;
     try {
@@ -383,6 +393,7 @@ class SaveGame {
   static Future<void> flush() => _queue;
 
   static Future<void> write(SaveData data) {
+    if (Settings.readOnly) return _queue;
     // Sayı olmayan bir konum kaydın tamamını düşürmesin.
     if (!data.x.isFinite || !data.y.isFinite) return _queue;
     current = data;
@@ -409,6 +420,7 @@ class SaveGame {
   }
 
   static Future<void> clear() {
+    if (Settings.readOnly) return _queue;
     current = null;
     return _enqueue(_clear);
   }
