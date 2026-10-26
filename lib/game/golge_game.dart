@@ -1823,9 +1823,13 @@ class GolgeGame extends FlameGame with KeyboardEvents {
           } else {
             effects.setFade(1, kInk);
             // Ekran kapalıyken yeni bölümün araziyi ve yakın katmanı önceden
-            // hazırlanır: perdeden oyuna geçiş takılmasın.
-            _prewarm(next);
-            _playPerde('$next', interlude, interludeScene(next), enter);
+            // hazırlanır: perdeden oyuna geçiş takılmasın. Önce karanlık bir
+            // kare çizilir: hazırlık uzun sürerse (bir katmanın ilk kullanımı,
+            // ör. Kaf'tan Ağrı'ya) ekran bölüm sonunun beyazında donmasın.
+            effects.after(0.06, () {
+              _prewarm(next);
+              _playPerde('$next', interlude, interludeScene(next), enter);
+            });
           }
           return;
         }
