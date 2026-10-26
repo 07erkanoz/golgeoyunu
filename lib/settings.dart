@@ -43,9 +43,10 @@ class Settings {
   /// olan satırlar). Kapalıyken yalnız yazı.
   static bool voice = true;
 
-  /// Altyazı: seslendirilen satırın yazısı da görünür (varsayılan kapalı:
+  /// Altyazı: seslendirilen satırın yazısı da görünür (varsayılan açık:
+  /// sesi kısık izleyen, İngilizce oynayan perdeyi kaçırmasın; kapatılınca
   /// ses varken yazı gösterilmez; sesi olmayan satırlar hep yazıdır).
-  static bool subtitles = false;
+  static bool subtitles = true;
 
   /// Anlatım sesinin düzeyi (0 – 1).
   static double voiceVolume = 0.9;
@@ -96,7 +97,7 @@ class Settings {
 
   /// Kayıtlı ayarların sürümü: varsayılanlar değişince eski kayıttaki
   /// görüntü ayarları bir kez yeni varsayılana çekilir.
-  static const _version = 2;
+  static const _version = 3;
 
   /// Dokunmatik düğmelerin görünürlüğü (0.1 – 1).
   static double touchOpacity = 0.7;
@@ -212,13 +213,15 @@ class Settings {
     // Eski kayıt: görüntü ayarları yeni varsayılanlara (renk tonu 35,
     // parlaklık 85, ışık ve derinlik açık, grafik yüksek) bir kez çekilir.
     final version = p == null ? null : _read(() => p.getInt('settings_v'));
-    if ((version ?? 0) < _version) {
+    if ((version ?? 0) < 2) {
       tone = defaultTone;
       brightness = defaultBrightness;
       lowGraphics = false;
       texture = Cartoon.trialBuild;
       realism = Cartoon.trialBuild;
     }
+    // 3. sürüm: altyazı açık başlar (eski kayıtta kapalıysa bir kez açılır).
+    if ((version ?? 0) < 3) subtitles = true;
     // "unlocked": oynanış sırasındaki en ileri yer. Sıra değiştiyse (yeni
     // bölümler araya girdiyse) eski yer yeni sıraya çevrilir.
     final u = p == null ? null : _read(() => p.getInt('unlocked'));
