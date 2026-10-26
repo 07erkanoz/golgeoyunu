@@ -1,0 +1,154 @@
+{
+ "_aciklama": "Tırnak içindeki sözleri kim söyler (kadro.json'daki adlar). Sahne -> satır sırası (başlık kartları dahil) -> konuşan. Bir satırda birden çok konuşan varsa dile göre sıralı liste. Tırnak dışı her şey anlatıcının; burada olmayan tırnaklar da anlatıcıda kalır.",
+ "prologue": {
+  "7": "suiyesi",
+  "8": "suiyesi",
+  "9": "suiyesi"
+ },
+ "kopru:0": {
+  "0": "suiyesi",
+  "1": "suiyesi"
+ },
+ "perde:1": {
+  "1": "hezarfen",
+  "2": "hezarfen",
+  "3": "hezarfen",
+  "4": "hezarfen",
+  "5": "hezarfen"
+ },
+ "kopru:1": {
+  "2": "saye"
+ },
+ "perde:2": {
+  "1": "lagari",
+  "2": "lagari",
+  "4": "hudhud",
+  "5": "hudhud"
+ },
+ "kopru:2": {
+  "2": "hudhud"
+ },
+ "perde:3": {
+  "1": "hudhud",
+  "2": "hudhud",
+  "3": "hudhud",
+  "4": "hudhud"
+ },
+ "perde:4": {
+  "0": "hudhud",
+  "2": "hudhud",
+  "3": [
+   "coban1",
+   "coban2",
+   "coban2"
+  ],
+  "4": "coban2",
+  "5": "ayazata"
+ },
+ "kopru:4": {
+  "1": [
+   "ayazata",
+   "saye"
+  ]
+ },
+ "perde:5": {
+  "1": "guvercin",
+  "2": "guvercin",
+  "3": "guvercin",
+  "5": "akana"
+ },
+ "kopru:5": {
+  "2": "saye"
+ },
+ "perde:6": {
+  "1": "antiochos",
+  "2": "antiochos",
+  "3": "antiochos",
+  "4": "antiochos"
+ },
+ "perde:7": {
+  "0": "antiochos",
+  "1": "antiochos",
+  "2": "antiochos",
+  "3": "antiochos",
+  "5": "saye"
+ },
+ "perde:8": {
+  "0": "saye"
+ },
+ "perde:9": {
+  "0": "kervanci",
+  "1": "kervanci",
+  "2": "kervanci",
+  "3": "kervanci"
+ },
+ "kopru:9": {
+  "0": "kervanci"
+ },
+ "perde:10": {
+  "4": "gokboru"
+ },
+ "perde:11": {
+  "2": "peri",
+  "3": "peri",
+  "4": "peri"
+ },
+ "perde:12": {
+  "0": "peri",
+  "1": "peri",
+  "2": "peri",
+  "3": "peri"
+ },
+ "perde:17": {
+  "2": "kam",
+  "4": "kam",
+  "6": "kam"
+ },
+ "perde:20": {
+  "0": "akana",
+  "1": "akana",
+  "2": "akana",
+  "3": "akana",
+  "4": "akana"
+ },
+ "perde:14": {
+  "2": "calkuyruk",
+  "3": "calkuyruk"
+ },
+ "kopru:14": {
+  "2": "calkuyruk"
+ },
+ "perde:15": {
+  "0": "demirci",
+  "1": "demirci",
+  "2": "demirci",
+  "3": "demirci",
+  "4": "demirci",
+  "5": "demirci",
+  "6": [
+   "demirci",
+   "saye"
+  ]
+ },
+ "perde:16": {
+  "0": "kam",
+  "1": "kam",
+  "3": "kam",
+  "4": "kam"
+ },
+ "perde:13": {
+  "1": "tulpar",
+  "5": "gokboru"
+ },
+ "perde:19": {
+  "2": "kandilcibasi"
+ },
+ "epilogue": {
+  "2": "usta",
+  "4": "usta",
+  "5": "usta",
+  "7": "usta",
+  "12": "hudhud",
+  "14": "usta"
+ }
+}

@@ -19,7 +19,9 @@
   "yorgun": "[weary, gentle]",
   "inanc": "[tender, quiet conviction]",
   "yalin": "[quiet, plain]",
-  "agir": "[low, slow]"
+  "agir": "[low, slow]",
+  "sevinc": "[joyful, excited]",
+  "neseli": "[cheerful, playful]"
  },
  "sahne": {
   "prologue": [
@@ -29,7 +31,7 @@
    "huzun",
    "umut",
    "hayret",
-   "masal",
+   "yakin",
    "huzun",
    "yakin",
    "umut"
@@ -37,11 +39,11 @@
   "kopru:0": [
    "hayret",
    "gergin",
-   "umut"
+   "gergin"
   ],
   "perde:1": [
-   "huzun",
-   "masal",
+   "gergin",
+   "hayret",
    "masal",
    "hayret",
    "huzun",
@@ -53,12 +55,12 @@
    "karar"
   ],
   "perde:2": [
-   "ferah",
-   "masal",
-   "gulumse",
+   "sevinc",
+   "neseli",
+   "neseli",
    "hayret",
-   "yakin",
-   "umut"
+   "gergin",
+   "hayret"
   ],
   "kopru:2": [
    "acele",
@@ -80,34 +82,34 @@
   "perde:4": [
    "yakin",
    "sefkat",
-   "huzun",
+   "acele",
    "masal",
-   "huzun",
+   "masal",
    "tekin"
   ],
   "kopru:4": [
    "gergin",
-   "masal",
+   "karar",
    "hayret"
   ],
   "perde:5": [
    "hayret",
    "masal",
    "umut",
-   "gergin",
+   "huzun",
    "sefkat",
    "hayret"
   ],
   "kopru:5": [
+   "sevinc",
    "umut",
-   "hayret",
-   "huzun"
+   "karar"
   ],
   "perde:6": [
-   "karar",
+   "hayret",
    "masal",
-   "yakin",
-   "tekin",
+   "huzun",
+   "huzun",
    "gergin"
   ],
   "kopru:6": [
@@ -115,7 +117,7 @@
    "karar"
   ],
   "perde:7": [
-   "hayret",
+   "yakin",
    "masal",
    "tekin",
    "gulumse",
@@ -139,14 +141,14 @@
    "yakin"
   ],
   "perde:9": [
-   "hayret",
-   "tekin",
+   "yakin",
+   "masal",
    "masal",
    "tekin",
    "karar"
   ],
   "kopru:9": [
-   "acele",
+   "umut",
    "acele"
   ],
   "perde:10": [
@@ -163,9 +165,9 @@
   "perde:11": [
    "ferah",
    "hayret",
-   "masal",
+   "hayret",
    "yakin",
-   "tekin"
+   "gergin"
   ],
   "kopru:11": [
    "hayret",
@@ -187,10 +189,10 @@
   "perde:13": [
    "yakin",
    "umut",
-   "yakin",
+   "hayret",
    "dingin",
    "gergin",
-   "yakin"
+   "acele"
   ],
   "kopru:13": [
    "karar",
@@ -209,13 +211,13 @@
    "umut"
   ],
   "perde:15": [
-   "huzun",
+   "yakin",
    "masal",
    "gergin",
-   "karar",
-   "umut",
    "masal",
-   "gergin"
+   "umut",
+   "gulumse",
+   "karar"
   ],
   "kopru:15": [
    "karar",
@@ -223,11 +225,11 @@
    "karar"
   ],
   "perde:16": [
-   "masal",
-   "yakin",
    "hayret",
    "masal",
-   "umut"
+   "hayret",
+   "masal",
+   "karar"
   ],
   "kopru:16": [
    "hayret",
@@ -237,7 +239,7 @@
    "hayret",
    "ferah",
    "masal",
-   "dingin",
+   "sefkat",
    "gergin",
    "tekin",
    "umut"
@@ -251,17 +253,17 @@
    "yakin",
    "umut",
    "gergin",
-   "masal",
+   "hayret",
    "gergin"
   ],
   "kopru:18": [
    "karar",
-   "ferah"
+   "sefkat"
   ],
   "perde:19": [
    "hayret",
    "gergin",
-   "huzun",
+   "tekin",
    "gergin"
   ],
   "kopru:19": [

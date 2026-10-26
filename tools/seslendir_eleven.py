@@ -32,7 +32,11 @@ import urllib.request
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
 import seslendir as s  # noqa: E402  (sayılar, yazıya döküm, kalıntı silme)
 
-VOICE = {"tr": "mF7tIc9VLrznhGooGjaT", "en": "WdZjiN0nNcik2LBjOHiv"}
+# Kahramanların sesleri ve kimin konuştuğu: tırnak dışı anlatıcının (Seyfullah /
+# David), tırnak içi konuşanın kendi sesiyle okunur, parçalar birleşir.
+CAST = json.loads(pathlib.Path("tools/perde_metni/kadro.json").read_text())["ses"]
+SPEAKERS = json.loads(pathlib.Path("tools/perde_metni/konusanlar.json").read_text())
+METIN = json.loads(pathlib.Path("tools/perde_metni/metin.json").read_text())
 MODEL = "eleven_v4"
 SETTINGS = {"stability": 0.4, "similarity_boost": 0.8, "style": 0.5, "use_speaker_boost": True}
 REJI = pathlib.Path("tools/perde_metni/reji.json")
@@ -86,6 +90,45 @@ def scripted(lang: str, sc: dict[str, list[dict]]) -> dict[str, list[str]]:
     return out
 
 
+def full_index(lang: str, w: str, i: int) -> int:
+    """Başlık kartları sayılmayan satır sırasından metin.json'daki sıraya."""
+    lines = METIN[lang][w] if w in ("prologue", "epilogue") else METIN[lang][w.split(":")[0]][w.split(":")[1]]
+    k = -1
+    for j, line in enumerate(lines):
+        if not s.is_title(line):
+            k += 1
+            if k == i:
+                return j
+    return i
+
+
+def segments(lang: str, w: str, i: int, text: str) -> list[tuple[str, str]]:
+    """Satırı (konuşan, seslendirme metni) parçalarına böler; her parça
+    satırın duygu etiketini taşır."""
+    m = re.match(r"(\[[^\]]*\])\s*(.*)", text, re.S)
+    tag, body = (m.group(1), m.group(2)) if m else ("", text)
+    spec = SPEAKERS.get(w, {}).get(str(full_index(lang, w, i)))
+    if not spec:
+        return [("anlatici", text)]
+    out: list[tuple[str, str]] = []
+    n = 0
+    for part in re.split(r"(“[^”]*”)", body):
+        if part.startswith("“"):
+            who = spec if isinstance(spec, str) else spec[min(n, len(spec) - 1)]
+            n += 1
+            piece = part.strip("“”").strip()
+        else:
+            who = "anlatici"
+            piece = part.strip().lstrip(",;").strip()
+        if not re.search(r"\w", piece):
+            continue
+        if out and out[-1][0] == who:
+            out[-1] = (who, out[-1][1] + " " + piece)
+        else:
+            out.append((who, piece))
+    return [(who, f"{tag} {piece}".strip()) for who, piece in out]
+
+
 def plain(t: str) -> str:
     return re.sub(r"\[[^\]]*\]\s*", "", t)
 
@@ -104,13 +147,15 @@ def check(heard: str, text: str) -> tuple[bool, float]:
     return ratio >= 0.88 and abs(len(h) - len(p)) <= max(2, len(p) // 12), ratio
 
 
-def tts(lang: str, text: str, prev: str | None, nxt: str | None) -> bytes:
+def tts(lang: str, text: str, prev: str | None, nxt: str | None, who: str = "anlatici") -> bytes:
     body = {"text": text, "model_id": MODEL, "voice_settings": SETTINGS}
+    if lang == "tr":
+        body["language_code"] = "tr"
     if prev:
         body["previous_text"] = plain(prev)
     if nxt:
         body["next_text"] = plain(nxt)
-    url = f"https://api.elevenlabs.io/v1/text-to-speech/{VOICE[lang]}?output_format=mp3_44100_128"
+    url = f"https://api.elevenlabs.io/v1/text-to-speech/{CAST[who][lang]}?output_format=mp3_44100_128"
     for attempt in range(5):
         req = urllib.request.Request(url, data=json.dumps(body).encode(),
                                      headers={"xi-api-key": KEY, "Content-Type": "application/json"})
@@ -131,6 +176,27 @@ def wav16(mp3: bytes) -> bytes:
     return subprocess.run(["ffmpeg", "-loglevel", "error", "-i", "pipe:0", "-ac", "1",
                            "-ar", "16000", "-f", "wav", "-"], input=mp3,
                           capture_output=True, check=True).stdout
+
+
+def join(pieces: list[bytes]) -> bytes:
+    """Parçaları kırpıp her birinin ses yüksekliğini eşitler, aralarına kısa
+    bir durak koyarak birleştirir (MP3)."""
+    if len(pieces) == 1:
+        return pieces[0]
+    with tempfile.TemporaryDirectory() as d:
+        ins, flt = [], []
+        for j, mp3 in enumerate(pieces):
+            f = pathlib.Path(d) / f"{j}.mp3"
+            f.write_bytes(mp3)
+            ins += ["-i", str(f)]
+            flt.append(f"[{j}:a]aresample=32000,silenceremove=start_periods=1:start_threshold=-48dB,"
+                       "areverse,silenceremove=start_periods=1:start_threshold=-48dB,areverse,"
+                       f"loudnorm=I=-18:TP=-2:LRA=7,aresample=32000,apad=pad_dur=0.3[a{j}]")
+        flt.append("".join(f"[a{j}]" for j in range(len(pieces))) + f"concat=n={len(pieces)}:v=0:a=1[o]")
+        out = pathlib.Path(d) / "o.mp3"
+        subprocess.run(["ffmpeg", "-y", "-loglevel", "error", *ins, "-filter_complex", ";".join(flt),
+                        "-map", "[o]", "-ac", "1", "-b:a", "128k", str(out)], check=True)
+        return out.read_bytes()
 
 
 def save(mp3: bytes, out: pathlib.Path) -> None:
@@ -172,17 +238,24 @@ def main() -> None:
         for i, e in enumerate(items):
             if a.kimlik and e["id"] not in a.kimlik:
                 continue
+            segs = segments(a.dil, w, i, tx[i])
+            sig = tx[i] + "|" + ",".join(who for who, _ in segs)
             if a.kuru:
-                print(f"{w} {e['id']} {tx[i]}")
+                print(f"{w} {e['id']} " + " ‖ ".join(f"{who}: {p}" for who, p in segs))
                 continue
-            # Daha önce bu masalcı sesiyle üretildiyse geç (eski Gemini sesi değil).
-            if not a.yeniden and done.get(e["id"]) == tx[i] and (out_dir / f"{e['id']}.mp3").exists():
+            # Daha önce bu kadroyla üretildiyse geç.
+            if not a.yeniden and done.get(e["id"]) == sig and (out_dir / f"{e['id']}.mp3").exists():
                 continue
             prev = tx[i - 1] if i > 0 else None
             nxt = tx[i + 1] if i + 1 < len(tx) else None
             best = None
             for attempt in range(4):
-                mp3 = tts(a.dil, tx[i], prev, nxt)
+                pieces = []
+                for k, (who, piece) in enumerate(segs):
+                    p_prev = segs[k - 1][1] if k > 0 else prev
+                    p_next = segs[k + 1][1] if k + 1 < len(segs) else nxt
+                    pieces.append(tts(a.dil, piece, p_prev, p_next, who))
+                mp3 = join(pieces)
                 heard = s.transcribe(wav16(mp3))
                 ok, score = check(heard, tx[i])
                 if best is None or score > best[0]:
@@ -191,7 +264,7 @@ def main() -> None:
                     break
                 print(f"    {e['id']} yeniden ({score:.2f}): {heard[:90]}", flush=True)
             save(best[1], out_dir / f"{e['id']}.mp3")
-            done[e["id"]] = tx[i]
+            done[e["id"]] = sig
             done_file.write_text(json.dumps(done, ensure_ascii=False, indent=1))
             mark = "" if best[0] >= 0.88 else "  <<< DENETLE"
             if mark:
