@@ -14,8 +14,8 @@ perde başlığıdır, seslendirilmez.
    *At last they came to Master Hayalî's door. First they took the lamp that lit his shadow screen. Then they dragged the master into the dark.*
 4. Perde karardı. Ama kandilin son ışığında, küçük bir gölge perdeden ayrılıp yere düştü. Ustanın karanlığa sürüklenirken son gördüğü şey oydu.
    *The screen went black. But in the lamp's last light, a small shadow slipped from the screen and fell to the ground. It was the last thing the master saw as they dragged him into the dark.*
-5. Düştüğü yerde küller yarıldı, bir kayın fidanı filizlendi. Dalında tek bir ak çaput sallanıyordu. Derler ki Umay, düşen her çocuğun başında bekler.
-   *Where it fell, the ashes parted and a birch sapling grew. A single white cloth fluttered from its branch. They say Umay keeps watch beside every fallen child.*
+5. Düştüğü yerde küller yarıldı, bir kayın fidanı filizlendi. Dalında tek bir ak çaput sallanıyordu. Umay'ın işaretiydi bu; düşen her çocuğun başında bekleyen Umay'ın.
+   *Where it fell, the ashes parted and a birch sapling grew. A single white cloth fluttered from its branch. It was the sign of Umay, who keeps watch beside every fallen child.*
 6. GÖLGE OYUNU
    *SHADOW PLAY*
 7. Küçük gölge gözlerini suyun altında açtı. Yerin derininde, unutulmuş bir saraydaydı: Yerebatan Sarnıcı'nda.
@@ -50,8 +50,8 @@ perde başlığıdır, seslendirilmez.
    *Then, one morning on a southerly wind, he stepped from the top of the tower. He crossed the Bosphorus and came to rest in Üsküdar. That day, Istanbul watched a man become a bird.*
 5. Sultan ona bir kese altın vermiş. Ardından, “Bu adamdan korkulur,” demiş. Hezarfen'i uzak diyarlara sürmüşler. İstanbul'un üstünde kanat açan adam, gurbette ölmüş.
    *The sultan gave him a purse of gold. Then he said, “This is a man to be feared.” They sent Hezarfen into exile. The man who had flown above Istanbul died far from home.*
-6. Derler ki gitmeden önce kanatlarını kulenin en üst katına saklamış; bir gün düşmekten korkmayan biri bulsun diye. Uçanlar sürgün edilir, Sâye. Yine de uç.
-   *They say he hid his wings at the top of the tower before he left, for someone who would not be afraid to fall. Those who fly are sent into exile, Saye. Fly anyway.*
+6. Gitmeden önce kanatlarını kulenin en üst katına saklamış; bir gün düşmekten korkmayan biri bulsun diye. Uçanlar sürgün edilir, Sâye. Yine de uç.
+   *Before he left, he hid his wings at the top of the tower, for someone who would not be afraid to fall. Those who fly are sent into exile, Saye. Fly anyway.*
 
 ## II · KULE · Hikâye köprüsü
 
@@ -90,8 +90,8 @@ perde başlığıdır, seslendirilmez.
 
 1. Bulutlar çekildi. Önlerinde zümrüt kayalardan bir dağ yükseldi. Dünya orada bitiyordu. Dağın adı Kaf'tı.
    *The clouds drew back. A mountain of emerald stone rose before them. Here the world came to an end. The mountain was called Qaf.*
-2. Derler ki Kaf, dünyayı bir yüzük gibi sarar. Ardında ne gece vardır ne gündüz. En yüksek tepesinde kuşların padişahı Simurg yaşar.
-   *They say Qaf circles the world like a ring. Beyond it there is neither night nor day. On its highest summit lives the Simurgh, sovereign of the birds.*
+2. Kaf, dünyayı bir yüzük gibi sararmış. Ardında ne gece varmış ne gündüz. En yüksek tepesinde kuşların padişahı Simurg yaşarmış.
+   *Qaf circled the world like a ring. Beyond it there was neither night nor day. On its highest summit lived the Simurgh, sovereign of the birds.*
 3. Vaktiyle bütün kuşlar, Simurg'u bulmak için yola düşmüş. Önlerine Süleyman Peygamber'in habercisi Hüdhüd geçmiş. Şimdi Sâye'ye yol gösteren de aynı kuştu.
    *Long ago, all the birds set out to find the Simurgh. The Hoopoe, messenger of the Prophet Solomon, led the way. The very same bird now flew before Saye.*
 4. Yedi vadi aşmışlar: talep, aşk, marifet, istiğna, tevhid, hayret ve yokluk. Kimi korkusuna yenilmiş, kimi yorgun düşmüş. Kimi de bir dala konmuş, bir daha kalkamamış. Dağa varan yalnız otuz kuş olmuş.
@@ -116,8 +116,8 @@ perde başlığıdır, seslendirilmez.
    *Saye looked too. No child stood before her; only a shadow. She raised her hand, and the shadow raised its own. Her name meant shadow in the old tongue. Her master had known that when he named her.*
 3. Ama ustasının kandili Kaf'ta değildi. Kandilciler onu doğuya götürmüştü. Tufandan beri sönmeyen bir ışığın saklandığı dağa: Ağrı'ya.
    *But her master's lamp was not on Qaf. The Lamplighters had taken it east, to a mountain where a light had burned since the Flood: Mount Ağrı.*
-4. Eteklerinde yaşayanlar ona Masis der, Çiyayê Agirî der; ateşli dağ diye seslenir. Anlatılır ki tufan çekilince büyük gemi gelip onun omzuna oturmuş.
-   *Those who live at its foot call it Masis, or Çiyayê Agirî, the mountain of fire. They tell of a great ship that came to rest upon its shoulder when the Flood withdrew.*
+4. Eteklerinde yaşayanlar ona Masis der, Çiyayê Agirî der; ateşli dağ diye seslenir. Tufan çekilince büyük gemi gelip onun omzuna oturmuş.
+   *Those who live at its foot call it Masis, or Çiyayê Agirî, the mountain of fire. When the Flood withdrew, the great ship came to rest upon its shoulder.*
 5. Zirvesine kimse varamazmış. Aziz Hakob, gemiyi görmek için yıllarca tırmanmış. Her sabah gözlerini yine dağın eteğinde açmış. Sonunda bir melek, ona gemiden bir tahta parçası getirmiş.
    *No one could reach the summit. Saint Hakob climbed for years in search of the ship. Each morning, he awoke at the mountain's foot once more. At last, an angel brought him a piece of its timber.*
 6. Tipinin içinde ak sakallı bir ihtiyar göründü. Ayaz Ata'ydı bu; kış onunla gelirdi. Sâye'nin kavanozundaki ışık titredi.
@@ -138,16 +138,16 @@ perde başlığıdır, seslendirilmez.
 
 1. Ağrı'nın buzulları altında, taşa dönmüş büyük bir gemi yatıyordu. Nuh'un Gemisi'ydi bu.
    *Beneath the glaciers of Ağrı lay a great ship turned to stone. It was Noah's Ark.*
-2. Derler ki yağmur kırk gün kırk gece dinmemiş. Gemi aylarca karanlık sularda sürüklenmiş. Sular çekildiğinde gelip bu dağın omzuna oturmuş.
-   *They say the rain fell for forty days and forty nights. For months, the ship drifted over dark waters. When the Flood withdrew, it settled on the mountain's shoulder.*
+2. Yağmur kırk gün kırk gece dinmemiş. Gemi aylarca karanlık sularda sürüklenmiş. Sular çekildiğinde gelip bu dağın omzuna oturmuş.
+   *The rain fell for forty days and forty nights. For months, the ship drifted over dark waters. When the Flood withdrew, it settled on the mountain's shoulder.*
 3. Nuh Peygamber önce bir kuzgun salmış. Kuzgun geri dönmemiş. Sonra bir güvercin göndermiş; o, gagasında bir zeytin dalıyla gelmiş. Dünya yeniden yeşeriyormuş.
    *The Prophet Noah first sent out a raven. It did not return. Then he sent a dove, and the dove came back with an olive branch in its beak. The world was growing green again.*
 4. Gemide her canlıdan bir çift varmış. Bir de hiç sönmeyen bir ışık. Kandilciler o ışığın peşinden gemiye girmiş; hayvanların gölgelerini eşlerinden koparıp ambarlara kapatmıştı.
    *A pair of every creature had sailed aboard the Ark. And with them, a light that never went out. The Lamplighters had entered the ship in search of it. They had torn the animals' shadows from their mates and shut them in the holds.*
 5. Ayrı düşen gölgeler karanlıkta birbirini arıyordu. Sâye onları gördü. Her biri bir başkasını arıyordu; tıpkı kendisi gibi.
    *The parted shadows searched for one another in the dark. Saye watched them. Each was looking for someone, just as she was.*
-6. Tufandan kalan su kıpırdadı. İçinden ak bir ışık yükseldi: Ak Ana. Derler ki dünyanın ilk suyu da bir zaman böyle kıpırdamış.
-   *The water left by the Flood began to stir. A white light rose from it: Ak Ana, the White Mother. They say the world's first water stirred just so.*
+6. Tufandan kalan su kıpırdadı. İçinden ak bir ışık yükseldi: Ak Ana. Dünyanın ilk suyu da bir zaman böyle kıpırdamıştı.
+   *The water left by the Flood began to stir. A white light rose from it: Ak Ana, the White Mother. Long ago, the world's first water had stirred just so.*
 
 ## VI · NUH'UN GEMİSİ · Hikâye köprüsü
 
@@ -180,8 +180,8 @@ perde başlığıdır, seslendirilmez.
 
 ## VIII · GÜN DOĞUMU · perde
 
-1. Derler ki Nemrut'ta güneş iki kez doğar. Önce gökte, sonra taş tanrıların yüzünde. Halk bu dağa bir başka kralın adını da verir: Nemrud.
-   *They say the sun rises twice on Nemrut. Once in the sky, and once upon the faces of the stone gods. The people also give this mountain another king's name: Nimrod.*
+1. Nemrut'ta güneş iki kez doğar: önce gökte, sonra taş tanrıların yüzünde. Halk bu dağa bir başka kralın adını da verir: Nemrud.
+   *On Nemrut the sun rises twice: once in the sky, and once upon the faces of the stone gods. The people also give this mountain another king's name: Nimrod.*
 2. Nemrud, göğe hükmetmek istermiş. Dört kartalı bir sandığa bağlamış, önlerine et asmış. Kartallar ete uzandıkça sandık yükselmiş.
    *Nimrod wished to rule the heavens. He bound four eagles to a chest and hung meat before them. As they reached for it, the chest rose into the sky.*
 3. Göğe bir ok atmış. Ok kanlı dönünce, “Tanrı'yı vurdum,” demiş. İbrahim Peygamber'i ateşe attırmış; ama o ateş bir gül bahçesine dönmüş.
@@ -212,8 +212,8 @@ perde başlığıdır, seslendirilmez.
    *The caravan was heading north, into the snows of Erzurum. Winter came so fiercely to this fortress of the east that travellers called it the gate of winter.*
 5. Şehrin güneyinde Palandöken yükseliyordu. Kervancılar, o dik yokuşlarda hayvanların palanlarının kaydığını, yüklerin uçuruma döküldüğünü anlatırdı.
    *South of the city stood Palandöken. Caravan drivers told of its steep paths, where packsaddles slipped from the animals' backs and loads tumbled into the abyss.*
-6. Kervanın önünde gök yeleli bir kurt yürüyordu: Gökbörü. Derler ki çok eski zamanlarda Oğuz'un ordusuna da o yol göstermiş.
-   *A wolf with a sky-blue mane walked before the caravan: Gökbörü. They say he had once led the army of Oghuz, long ages before.*
+6. Kervanın önünde gök yeleli bir kurt yürüyordu: Gökbörü. Çok eski zamanlarda Oğuz'un ordusuna da o yol göstermişti.
+   *A wolf with a sky-blue mane walked before the caravan: Gökbörü. Long ages before, he had led the army of Oghuz.*
 7. ÜÇÜNCÜ PERDE · KAR
    *ACT THREE · THE SNOW*
 
@@ -228,8 +228,8 @@ perde başlığıdır, seslendirilmez.
 
 1. Sâye başını kaldırdı. Önünde iki beyaz doruk vardı: Büyük Ejder ile Küçük Ejder.
    *Saye looked up. Two white summits stood before her: the Great Dragon and the Little Dragon.*
-2. Ozanlar anlatır: Dünya daha gençken bu doruklarda iki ejder kardeş yaşarmış. Kış geldi mi ovaya iner, sürüleri de kervanları da yutarlarmış.
-   *The bards tell this tale: when the world was young, two dragon brothers lived on these peaks. Each winter, they descended to the plain and swallowed flocks and caravans alike.*
+2. Dünya daha gençken bu doruklarda iki ejder kardeş yaşarmış. Kış geldi mi ovaya iner, sürüleri de kervanları da yutarlarmış.
+   *When the world was young, two dragon brothers lived on these peaks. Each winter, they descended to the plain and swallowed flocks and caravans alike.*
 3. Bir kış gecesi bir derviş zirveye çıkmış, dua etmiş. Ardından kar başlamış. Yedi gün yedi gece dinmemiş.
    *One winter night, a dervish climbed to the summit and prayed. Then the snow began. It fell for seven days and seven nights.*
 4. Ejderler o karın altında uykuya dalmış, sonunda iki doruğa dönüşmüşler. O günden beri fırtına onların nefesi, sis onların uykusudur. Uykularını bozanı kar yutar.
@@ -292,14 +292,14 @@ perde başlığıdır, seslendirilmez.
 
 1. Uçhisar'dan ovaya baktığında bir kuyu ağzı gördü. Kandilcilerin fenerleri birer birer orada kayboluyordu. Yol, Derinkuyu'ya iniyordu.
    *From Uçhisar, she saw the mouth of a well in the plain below. One by one, the Lamplighters' lanterns disappeared into it. The way led down to Derinkuyu.*
-2. Toprağın altında bir şehir vardı. Ahırları, mutfakları, kuyuları; dışarıdan nefes taşıyan bacaları vardı. Derler ki binlerce insan, düşman geçip gidene dek oraya sığınırmış.
-   *A city lay beneath the earth. It had stables, kitchens, wells, and shafts that brought it breath from the world above. They say thousands once sheltered there until their enemies had passed.*
+2. Toprağın altında bir şehir vardı. Ahırları, mutfakları, kuyuları; dışarıdan nefes taşıyan bacaları vardı. Düşman geçip gidene dek binlerce insan oraya sığınırmış.
+   *A city lay beneath the earth. It had stables, kitchens, wells, and shafts that brought it breath from the world above. Thousands once sheltered there until their enemies had passed.*
 3. Masallar daha da eskisini söyler. Peri Padişahı, ateşli devleri yerin altına sürmüş. Sonra insanlar gelmiş, uyuyan devlerin üstüne bir şehir kazmış.
    *The tales reach further back. The Fairy King had driven the fiery giants underground. Then people came and carved a city above their sleeping bodies.*
 4. Yuvarlak taş kapılar yalnız içeriden açılırdı. İçeride kalan, hayatta kalırdı. Aşağı in, Sâye. Ama uyuyanı uyandırma.
    *The round stone doors opened only from within. Those inside could live. Go down, Saye. But do not wake what sleeps below.*
-5. En derinden boğuk bir ses yükseliyordu. Derler ki Erlik'in katı, o derinliğin bile altındadır.
-   *A muffled sound rose from the deepest earth. They say Erlik's realm lies deeper still.*
+5. En derinden boğuk bir ses yükseliyordu. Erlik'in katı, o derinliğin de altındaydı.
+   *A muffled sound rose from the deepest earth. Erlik's realm lay deeper still.*
 
 ## XIII · DERİNKUYU · Hikâye köprüsü
 
@@ -318,8 +318,8 @@ perde başlığıdır, seslendirilmez.
    *Dawn was breaking when she emerged. Before her stretched a forest without end. Birch and pine, the scent of moss. Birdsong came from every side.*
 3. Atalar bu ormanın adını taşlara yazmıştı: Ötüken. Bir yurdu tutmak için ondan iyi yer olmadığını söylemişlerdi.
    *The ancestors had carved this forest's name in stone: Ötüken. There was no better place, they said, to make a homeland endure.*
-4. Ormanın ortasında Hayat Ağacı göğe yükseliyordu. Derler ki Umay onun dallarında oturur; doğacak çocukların canları kuş olup yanına konar.
-   *At its heart, the Tree of Life rose into the sky. They say Umay sits among its branches, where the souls of children yet unborn gather as birds.*
+4. Ormanın ortasında Hayat Ağacı göğe yükseliyordu. Dallarında Umay otururdu; doğacak çocukların canları kuş olup yanına konardı.
+   *At its heart, the Tree of Life rose into the sky. Umay sat among its branches, where the souls of children yet unborn gathered as birds.*
 5. Ama Sâye'yle birlikte başka bir şey de yukarı çıkmıştı. Onu sarnıçta gören, Derinkuyu'nun karanlığında ardından sürünen şey: Karabasan.
    *But something else had risen with Saye. The thing that had seen her in the cistern and crept behind her through Derinkuyu: the Karabasan.*
 6. Karabasan, sahipsiz gölgeyi sezerdi. Uyuyanın göğsüne çöker gibi üstüne çökerdi. Ustasını yitirmiş bir gölge, onun için en tatlı lokmaydı.
@@ -342,8 +342,8 @@ perde başlığıdır, seslendirilmez.
 
 1. Hayat Ağacı'nın kökleri yerin en dibine uzanırdı. Sâye onların arasından aşağı süzüldü. Derinlerden su sesi geliyordu.
    *The roots of the Tree of Life reached to the bottom of the earth. Saye slipped down between them. From the depths came the sound of water.*
-2. Ozan der ki başlangıçta yalnız su vardı. Kayra Han ile ilk yarattığı Kişi, o uçsuz bucaksız suyun üstünde iki kara kaz gibi uçardı.
-   *The bard says that in the beginning, there was only water. Above that boundless water flew Kayra Han and Kişi, the first being he had made, like two black geese.*
+2. Başlangıçta yalnız su vardı. Kayra Han ile ilk yarattığı Kişi, o uçsuz bucaksız suyun üstünde iki kara kaz gibi uçardı.
+   *In the beginning, there was only water. Above that boundless water flew Kayra Han and Kişi, the first being he had made, like two black geese.*
 3. Bir gün sudan ak bir ana yükselmiş. Ak Ana, “Yarat,” demiş. Sonra yeniden suya dönmüş.
    *One day, a white mother rose from the water. “Create,” said Ak Ana. Then she sank beneath the surface once more.*
 4. Kişi, Kayra Han'dan daha yükseğe çıkmak istemiş. Ama suya düşmüş. Ondan dibe dalıp toprak getirmesi istenmiş. Kişi o toprağın bir avucunu ağzında saklamış.
@@ -382,8 +382,8 @@ perde başlığıdır, seslendirilmez.
 
 ## XVII · ERGENEKON · perde
 
-1. Ozan der ki bir zamanlar bir boy, büyük bir savaşta yenilmiş. Yalnız iki yiğit, Kıyan ile Nüküz, eşleriyle birlikte kurtulmuş.
-   *The bard says a people once fell in a great war. Only two warriors, Kıyan and Nüküz, escaped with their wives.*
+1. Bir zamanlar bir boy, büyük bir savaşta yenilmiş. Yalnız iki yiğit, Kıyan ile Nüküz, eşleriyle birlikte kurtulmuş.
+   *Once, a people fell in a great war. Only two warriors, Kıyan and Nüküz, escaped with their wives.*
 2. Dağlar arasında gizli bir vadiye sığınmışlar: Ergenekon'a. Oraya varan yol, keçi yolundan bile darmış. İçerideyse çayırlar, ırmaklar, meyve ağaçları ve bol av varmış.
    *They took refuge in a hidden valley among the mountains: Ergenekon. The way in was narrower than a goat track. Within lay meadows, rivers, fruit trees and plentiful game.*
 3. Dört yüz yıl geçmiş. Boy çoğalmış, vadi onlara dar gelmiş. Çıkıp gitmek istemişler; ama dört yanlarında aşılmaz dağlar varmış.
@@ -408,8 +408,8 @@ perde başlığıdır, seslendirilmez.
 
 ## XVIII · GÖĞÜN KATLARI · perde
 
-1. Ozanlar anlatır: Altay'da kamlar davullarını çalınca canları göğe yükselirmiş. Göğün kat kat olduğunu onlar görmüş, onlar söylemiş.
-   *The bards tell of shamans in the Altai whose souls rose into the heavens when they beat their drums. They saw the many layers of the sky and returned to tell of them.*
+1. Altay'da kamlar davullarını çaldıkça canları göğe yükselirmiş. Göğün kat kat olduğunu onlar görmüş, onlar söylemiş.
+   *In the Altai, when the shamans beat their drums, their souls rose into the heavens. They saw the many layers of the sky and returned to tell of them.*
 2. En yüksek katta aydınlığın kaynağı Ülgen otururmuş. Yerin dibinde Erlik'in hükmü geçer; göğün tepesinde Ülgen'in.
    *On the highest sat Ülgen, the source of light. As Erlik ruled the depths of the earth, so Ülgen ruled the heights of heaven.*
 3. Bir katta ay, soğuk ve yumuşak bir ışıkla yanarmış. Bir başkasında yıldızlar, Demir Kazık'ın çevresinde dönermiş.
