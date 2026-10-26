@@ -14,6 +14,7 @@ part 'perde_giris.dart';
 part 'perde_tasvir.dart';
 part 'perde_kisi.dart';
 part 'perde_kopru.dart';
+part 'perde_yeralti.dart';
 
 /// Perde sahneleri: prologda, bölüm aralarında ve finalde oynanan gölge oyunu.
 enum PerdeScene {
@@ -408,7 +409,7 @@ class PerdePainter {
         case PerdeScene.akAna:
           _akAnaScene(canvas, time, progress);
         case PerdeScene.erlik:
-          _akAnaScene(canvas, time, progress + 3);
+          _erlikScene(canvas, time, progress);
         case PerdeScene.ergenekon:
           _ergenekonScene(canvas, time, progress);
         case PerdeScene.gok:

@@ -633,9 +633,10 @@ void _heroOverlay(Canvas canvas, PerdeScene scene, double time, double u) {
   }
 
   switch (scene) {
-    // Erlik perdesi Ak Ana sahnesinin devamıdır: kahramanları da öyle.
-    case PerdeScene.erlik:
-      _heroOverlay(canvas, PerdeScene.akAna, time, u + 3);
+    // Erlik'in katı ve Ak Ana'nın Denizi kahramanlarını kendi sahnelerinde
+    // çizer (perde_yeralti.dart).
+    case PerdeScene.erlik || PerdeScene.akAna:
+      break;
     case PerdeScene.galata || PerdeScene.skyroad || PerdeScene.kaf:
       // Satır tasvirleri sahnenin kendisinde (PerdePainter._galata, _kaf).
       break;
@@ -793,71 +794,6 @@ void _heroOverlay(Canvas canvas, PerdeScene scene, double time, double u) {
       _chaseBeat(canvas, time, u, 4);
       stage(5, (a) {
         _cut(c, MythShapes.wolfHowl, const Offset(430, g + 10), 220, a);
-      });
-    case PerdeScene.akAna:
-      // Kayra Han suyun üstünde yalnız.
-      stage(1, (a) {
-        final p = _hole(0.4 * a);
-        for (var i = 0; i < 12; i++) {
-          final ang = i / 12 * math.pi * 2 + time * 0.2;
-          c.drawLine(
-            const Offset(390, 120) + Offset(math.cos(ang), math.sin(ang)) * 70,
-            const Offset(390, 120) + Offset(math.cos(ang), math.sin(ang)) * 110,
-            p..strokeWidth = 3,
-          );
-        }
-        _person(c, const Offset(390, g - 20), 230, a, _kayra);
-      });
-      // Ak Ana sudan yükselir: "Yarat."
-      stage(2, (a) {
-        final rise = _span(u, 2.05, 2.6);
-        c.save();
-        c.clipRect(const Rect.fromLTWH(0, 0, 780, g + 12));
-        _person(c, Offset(390, g + 170 - 170 * rise), 290, a, _akAna);
-        c.restore();
-      });
-      // Erlik yerin altına sürülür.
-      stage(3, (a) {
-        final fall = _span(u, 3.2, 3.9);
-        c.save();
-        c.clipRect(const Rect.fromLTWH(0, 0, 780, g + 12));
-        _person(
-          c,
-          Offset(470, g + 12 + fall * 260),
-          220,
-          a,
-          _erlik,
-          flip: true,
-        );
-        c.restore();
-        _person(c, const Offset(250, g + 12), 250, a, _kayra);
-      });
-      _chaseBeat(canvas, time, u, 4);
-      // Er Töştük, konuşan atı Çalkuyruk'la.
-      stage(5, (a) {
-        final x = 260 + 220 * _span(u, 5.0, 6.0);
-        _cut(
-          c,
-          MythShapes.horse,
-          Offset(x, g + 10),
-          200,
-          a,
-          eye: const Offset(48, -82),
-        );
-        _person(c, Offset(x - 8, g - 120), 130, a, _erTostuk);
-      });
-      // Körmösler: Erlik'in gölgeleri, ışık delikli gözler.
-      stage(6, (a) {
-        for (var i = 0; i < 3; i++) {
-          _person(
-            c,
-            Offset(220 + i * 170.0, g + 12 + math.sin(time * 2 + i) * 4),
-            200 + i * 20.0,
-            a,
-            _kormos,
-            flip: i.isOdd,
-          );
-        }
       });
     case PerdeScene.gok:
       // Kam davulunu çalar.
@@ -1405,47 +1341,6 @@ void _heroExtra(Canvas canvas, PerdeScene scene, double time, double u) {
         c.translate(-390, -(g + 12));
         _semazenPuppet(c, const Offset(390, g + 12), time * 3, a);
         c.restore();
-      });
-    case PerdeScene.akAna:
-      // Taşın altında su sesi: Sâye kulağını taşa dayar.
-      stage(0, (a) {
-        c.drawRect(const Rect.fromLTWH(420, 0, 360, 400), _ink(a));
-        _tasvirSaye(canvas, const Offset(370, g + 12), 2.4, time, a);
-        final p = _hole(0.7 * a);
-        for (var i = 0; i < 6; i++) {
-          final y = 40 + ((time * 0.7 + i / 6) % 1) * 300;
-          c.drawCircle(Offset(470 + (i % 3) * 60.0, y), 3, p);
-        }
-      });
-    case PerdeScene.ergenekon:
-      // Kıyan ile Nüküz, eşleriyle vadiye sığınır.
-      stage(0, (a) {
-        final k = _span(u, 0.05, 0.95);
-        for (var i = 0; i < 4; i++) {
-          final x = 140 + k * 200 + i * 80.0;
-          _person(
-            c,
-            Offset(x, g + 12),
-            i.isEven ? 210 : 190,
-            a,
-            (i % 4 == 0
-                ? _kiyan
-                : i % 4 == 1
-                ? _woman
-                : i % 4 == 2
-                ? _nukuz
-                : _woman2),
-          );
-        }
-      });
-      // Nevruz: her yıl o gün demir ateşte kızdırılır, örste dövülür.
-      stage(5, (a) {
-        c.drawCircle(
-          Offset(620, 120 - 30 * _span(u, 5.0, 6.0)),
-          46,
-          _hole(0.6 * a),
-        );
-        _tasvirDemirci(canvas, const Offset(260, g + 12), 1.0, time, a);
       });
     case PerdeScene.gok:
       // Bir katında ay soğuk, bir katında güneş yakar.
