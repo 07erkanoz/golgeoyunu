@@ -12,8 +12,8 @@ perde başlığıdır, seslendirilmez.
    *As the flames died down, the Lamplighters came into the streets. They went from house to house among the ashes. They left no lamp, no candle. They took even the light from people's eyes.*
 3. Sonunda Hayalî Usta'nın kapısına dayandılar. Önce perdeyi aydınlatan kandili aldılar. Ardından ustayı karanlığa sürüklediler.
    *At last they came to Master Hayalî's door. First they took the lamp that lit his shadow screen. Then they dragged the master into the dark.*
-4. Perde karardı. Ama kandilin son ışığında, küçük bir gölge perdeden ayrılıp yere düştü.
-   *The screen went black. But in the lamp's last light, a small shadow slipped from the screen and fell to the ground.*
+4. Perde karardı. Ama kandilin son ışığında, küçük bir gölge perdeden ayrılıp yere düştü. Ustanın karanlığa sürüklenirken son gördüğü şey oydu.
+   *The screen went black. But in the lamp's last light, a small shadow slipped from the screen and fell to the ground. It was the last thing the master saw as they dragged him into the dark.*
 5. Düştüğü yerde küller yarıldı, bir kayın fidanı filizlendi. Dalında tek bir ak çaput sallanıyordu. Derler ki Umay, düşen her çocuğun başında bekler.
    *Where it fell, the ashes parted and a birch sapling grew. A single white cloth fluttered from its branch. They say Umay keeps watch beside every fallen child.*
 6. GÖLGE OYUNU
@@ -112,8 +112,8 @@ perde başlığıdır, seslendirilmez.
 
 1. Otuz kuş, aynada Simurg'u aramış. Baktıklarında karşılarında kendilerini görmüşler. Meğer Simurg, eski dilde “otuz kuş” demekmiş.
    *The thirty birds had looked into the mirror for the Simurgh. They saw themselves. In the old tongue, the tale says, Simurgh meant “thirty birds.”*
-2. Sâye de aynaya baktı. Karşısında bir çocuk yoktu. Bir gölge duruyordu. Kendi adı da eski dilde gölge demekti. Ustası ona Sâye derken bunu biliyordu.
-   *Saye looked too. No child stood before her. Only a shadow. Her own name meant shadow in the old tongue. Her master had known that when he named her.*
+2. Sâye de aynaya baktı. Karşısında bir çocuk yoktu; bir gölge duruyordu. Elini kaldırdı, gölge de kaldırdı. Adı eski dilde gölge demekti. Ustası ona Sâye derken bunu biliyordu.
+   *Saye looked too. No child stood before her; only a shadow. She raised her hand, and the shadow raised its own. Her name meant shadow in the old tongue. Her master had known that when he named her.*
 3. Ama ustasının kandili Kaf'ta değildi. Kandilciler onu doğuya götürmüştü. Tufandan beri sönmeyen bir ışığın saklandığı dağa: Ağrı'ya.
    *But her master's lamp was not on Qaf. The Lamplighters had taken it east, to a mountain where a light had burned since the Flood: Mount Ağrı.*
 4. Eteklerinde yaşayanlar ona Masis der, Çiyayê Agirî der; ateşli dağ diye seslenir. Anlatılır ki tufan çekilince büyük gemi gelip onun omzuna oturmuş.
@@ -202,12 +202,12 @@ perde başlığıdır, seslendirilmez.
 
 ## IX · KAR YOLU · perde
 
-1. Sâye ışığa dokundu. Ustası bir an gözlerinin önünde belirdi.
-   *Saye touched the light. For a heartbeat, she saw her master.*
+1. Sâye ışığa dokundu. Ustası bir an gözlerinin önünde belirdi. Ona seslendi; ama ustası duymadı.
+   *Saye touched the light. For a heartbeat, her master stood before her eyes. She called out to him; but he could not hear her.*
 2. Karda yürüyordu. Bir kervanın ortasında, zincirler içindeydi. Kandilini göğsünde taşıyordu; içinde bir mum alevi kadar ışık kalmıştı.
    *He was walking through snow, in chains, at the heart of a caravan. He held his lamp against his breast. Barely a candle's flame remained inside.*
-3. Kandilciler, kırık güneşin her parçasını ustanın kandilinden aldıkları ışıkla yakıyordu. Her yeni alevde usta biraz daha sönüyordu.
-   *The Lamplighters were kindling each fragment of the broken sun with light drawn from his lamp. With every new flame, the master faded a little more.*
+3. Kandilciler, kırık güneşin her parçasını ustanın kandilinden aldıkları ışıkla yakıyordu. Her yeni alevde usta biraz daha sönüyordu. Görüntü dağıldığında Sâye'nin elleri titriyordu.
+   *The Lamplighters were kindling each fragment of the broken sun with light drawn from his lamp. With every new flame, the master faded a little more. When the vision broke, Saye's hands were shaking.*
 4. Kervan kuzeye, Erzurum'un karlarına gidiyordu. Doğunun bu kalesine kış öyle sert gelirdi ki yolcular ona “kışın kapısı” derdi.
    *The caravan was heading north, into the snows of Erzurum. Winter came so fiercely to this fortress of the east that travellers called it the gate of winter.*
 5. Şehrin güneyinde Palandöken yükseliyordu. Kervancılar, o dik yokuşlarda hayvanların palanlarının kaydığını, yüklerin uçuruma döküldüğünü anlatırdı.
@@ -364,8 +364,8 @@ perde başlığıdır, seslendirilmez.
 
 1. Ağzında toprak saklayan Kişi, ışıktan kovulmuş. Yerin altına sürülmüş. Zamanla oranın efendisi olmuş; adına Erlik demişler.
    *For hiding earth in his mouth, Kişi was driven from the light. He was cast beneath the earth. In time, he became its lord, and they called him Erlik.*
-2. Çalınan ışıklar onun katına akıyordu. Ustayı da buradan geçirmişlerdi. Sâye, taşlarda ondan kalan bir iz sezdi.
-   *The stolen lights were flowing into his realm. The master had been brought this way as well. Saye could sense a trace of him in the stones.*
+2. Çalınan ışıklar onun katına akıyordu. Ustayı da buradan geçirmişlerdi. Sâye bir taşa dokundu; ustasının sıcaklığı hâlâ oradaydı.
+   *The stolen lights were flowing into his realm. The master had been brought this way too. Saye touched a stone; her master's warmth still lingered there.*
 3. Ozanlar, bir zaman Er Töştük adında bir yiğidin de yerin altına düştüğünü anlatır. Konuşan atı Çalkuyruk, ona yukarıya dönen yolu göstermiş.
    *The bards tell of a hero named Er Töştük who once fell beneath the earth. His speaking horse, Çalkuyruk, showed him the road back to the world above.*
 4. Burada Erlik'in gölgeleri dolaşırdı: Körmösler. Işığa üşüşür, çaldıkları canları kafeslere kapatırlardı.
@@ -450,8 +450,8 @@ perde başlığıdır, seslendirilmez.
 
 1. Tulpar bulutların arasından indi. Gökte ay, aşağıda uçsuz bucaksız bir kar ovası vardı.
    *Tulpar descended through the clouds. Above was the moon; below, an endless plain of snow.*
-2. Batıda bir şehrin kubbeleri parlıyordu. Konya'ydı bu; bir zamanlar Selçukluların başkenti. Kandilciler ustayı oraya götürmüştü.
-   *To the west, the domes of a city shone. Konya, once the Seljuk capital. The Lamplighters had taken her master there.*
+2. Batıda bir şehrin kubbeleri parlıyordu. Konya'ydı bu; bir zamanlar Selçukluların başkenti. Kandilciler ustayı oraya götürmüştü. Sâye ona hiç bu kadar yaklaşmamıştı.
+   *To the west, the domes of a city shone. Konya, once the Seljuk capital. The Lamplighters had taken her master there. Saye had never been so close to him.*
 3. O gece Şeb-i Arûs'tu. Düğün gecesi.
    *It was Şeb-i Arûs. The wedding night.*
 4. Yüzyıllar önce bu şehirde Mevlânâ adında bir şair ölmüştü. Giderken, “Ağlamayın,” demişti. “Bu benim düğün gecemdir.”
@@ -480,8 +480,8 @@ perde başlığıdır, seslendirilmez.
    *The Lamplighters had brought the master to its highest point, beneath the finial. Beside him stood the oldest of them: the Chief Lamplighter.*
 3. Derler ki Kandilci Başı da bir zamanlar hayalîymiş. Işığını kimseyle bölüşmemek için kandilini kapatmış. Gölgesini o gün yitirmiş.
    *They say the Chief Lamplighter had once been a shadow player too. He closed his lamp rather than share its light. That was the day he lost his shadow.*
-4. Ustanın kandili titriyordu. Gece yarısına az kalmıştı.
-   *The master's lamp was flickering. Midnight was near.*
+4. Ustanın kandili titriyordu. Gece yarısına az kalmıştı. Sâye'nin kavanozundaki ateşböcekleri de titredi; sanki onlar da biliyordu.
+   *The master's lamp was flickering. Midnight was near. The fireflies in Saye's jar flickered too, as if they also knew.*
 
 ## XXI · YEŞİL KUBBE · Hikâye köprüsü
 
@@ -496,35 +496,35 @@ perde başlığıdır, seslendirilmez.
 
 ## Son perde
 
-1. Yeşil Kubbe'nin tepesinde, yağan karın altında bir kandil titriyordu.
-   *At the top of the Green Dome, beneath the falling snow, a lamp trembled.*
-2. Ustası oradaydı. Yaşlanmış, küçülmüştü. Kandilciler çevresinde bir halka kurmuş, fenerlerini onun kandiline tutuyordu.
-   *Her master was there. He had grown old, and small. The Lamplighters stood in a ring around him, their lanterns held toward his lamp.*
-3. “Geldin,” dedi usta. “Geleceğini biliyordum. Dua karşılıksız kalmaz.”
-   *“You came,” said the master. “I knew you would. No prayer goes unanswered.”*
-4. Kandilciler bütün ışığı toplamış, kendi gölgelerini yitirmişti. Gölgelere can verebilen tek ışık, ustanın kandilinde kalmıştı. Bir zaman güneşi yalnız kendileri için istemiş, onu kırmışlardı. Şimdi bu kandille yeniden yakacaklardı.
-   *The Lamplighters had gathered all the light and lost their own shadows. Only the master's lamp could still give shadows life. Once, they had wanted the sun for themselves and broken it. Now they meant to kindle it again with this lamp.*
-5. “Kandilim sönmesin diye getirdiler beni,” dedi usta. “Mevlânâ'nın düğün gecesine yetiştirdiler. Sanıyorlar ki bu gece ışık ölmez.”
-   *“They brought me here to keep my lamp from going out,” said the master. “In time for Mevlânâ's wedding night. They believe that tonight, light cannot die.”*
-6. “Haklılar, Sâye. Bu gece ışık ölmez. Yalnızca kavuşur.”
-   *“And they are right, Saye. Tonight, light does not die. It only returns to what it loves.”*
-7. Semâhaneden bir ney sesi yükseldi. Usta, kandili Sâye'nin avuçlarına bıraktı.
-   *The sound of a ney rose from the semahane. The master placed the lamp in Saye's hands.*
-8. “Sen benim gölgem değildin, Sâye. Duamdın. Bunca yolu yürüyüp bana gelen duam. Şimdi ışığı tutma sırası sende.”
-   *“You were never my shadow, Saye. You were my prayer. The prayer that walked all this way to find me. Now it is your turn to hold the light.”*
+1. Yeşil Kubbe'nin tepesinde, yağan karın altında küçük bir kandil titriyordu. Sâye son basamağı da çıktı ve olduğu yerde kaldı.
+   *At the top of the Green Dome, beneath the falling snow, a small lamp trembled. Saye climbed the last step and stood still.*
+2. Ustası oradaydı. Yaşlanmış, küçülmüştü; omuzlarına kar birikmişti. Kandilciler çevresinde bir halka kurmuş, fenerlerini onun kandiline tutuyordu.
+   *Her master was there. He had grown old, and small; snow had gathered on his shoulders. The Lamplighters stood in a ring around him, their lanterns held toward his lamp.*
+3. Usta başını kaldırdı. Sâye'yi görünce yüzündeki bütün yorgunluk silindi. “Geldin,” dedi. Sesi titriyordu. “Geleceğini biliyordum. Dua karşılıksız kalmaz.”
+   *The master raised his head. When he saw Saye, all the weariness left his face. “You came,” he said. His voice was shaking. “I knew you would. No prayer goes unanswered.”*
+4. Sâye halkayı yarıp ustasına koştu, dizlerinin dibine çöktü. Kandilciler kıpırdamadı. Hiçbirinin karda gölgesi yoktu; ışığı kendine saklayanın gölgesi kalmazdı.
+   *Saye broke through the ring and ran to him, and sank down at his knees. The Lamplighters did not move. None of them cast a shadow on the snow; those who keep the light for themselves are left with no shadow.*
+5. “Güneşi yalnız kendilerine istediler; güneş kırıldı,” dedi usta. “Şimdi onu benim kandilimle yakacaklar. Mevlânâ'nın düğün gecesinde ışığın ölmeyeceğine inanıyorlar.”
+   *“They wanted the sun for themselves alone, and the sun broke,” said the master. “Now they mean to light it with my lamp. They believe that on Mevlana's wedding night, light cannot die.”*
+6. Sonra gülümsedi. “Haklılar, Sâye. Bu gece ışık ölmez. Yalnızca kavuşur.”
+   *Then he smiled. “They are right, Saye. Tonight light does not die. It only comes home.”*
+7. Semâhaneden bir ney sesi yükseldi. Usta, titreyen elleriyle kandili Sâye'nin avuçlarına bıraktı. Kandil ılıktı; tıpkı ustasının elleri gibi.
+   *The sound of a reed flute rose from the hall of the whirling dancers. With trembling hands, the master placed the lamp in Saye's palms. The lamp was warm; as warm as his hands.*
+8. Usta alnını Sâye'nin alnına dayadı. “Sen benim gölgem değildin, Sâye. Duamdın. Bunca yolu yürüyüp bana gelen duam. Şimdi ışığı tutma sırası sende.”
+   *The master rested his forehead against hers. “You were never my shadow, Saye. You were my prayer. The prayer that walked all this way to find me. Now it is your turn to hold the light.”*
 9. Kandil söndü.
    *The lamp went out.*
 10. Perde karardı. Bir an ne usta kaldı ne gölge.
    *The screen went dark. For a moment, there was neither master nor shadow.*
-11. Sonra Sâye'nin içinden bir ışık doğdu. Gölge kaybolmamıştı. Işığa karışmıştı.
-   *Then a light was born within Saye. The shadow had not vanished. She had become part of the light.*
-12. Kandilcilerin yüzyıllardır sakladığı bütün ışık, Sâye'de doğan ışığa yöneldi. Birlikte göğe yükseldiler. Kandilciler karın üstüne baktı. Gölgeleri geri gelmişti. Ağladılar.
-   *All the light the Lamplighters had hoarded for centuries turned toward the light within her. Together, they rose into the sky. The Lamplighters looked down at the snow. Their shadows had returned. And they wept.*
-13. Hüdhüd, Sâye'nin omzuna kondu. “Kırık güneşin yalnız bir parçası buradaydı,” dedi. “Ötekiler hâlâ dünyanın dört bir yanında.”
-   *The Hoopoe settled on Saye's shoulder. “Only one fragment of the broken sun was here,” he said. “The others are still scattered across the world.”*
-14. Sâye perdenin ardına baktı. Önünde, yeni yağmış karların üstünde bir yol uzanıyordu.
-   *Saye looked beyond the screen. Ahead, a road stretched over the newly fallen snow.*
-15. Rüzgârın içinden ustasının sesi geldi: “Yürü, Sâye. Yol bitmez; yürüyen değişir.”
-   *Her master's voice came on the wind. “Walk on, Saye. The road does not end. The one who walks it changes.”*
+11. Sonra Sâye'nin avuçlarında, kendi içinden bir ışık doğdu. Gölge kaybolmamıştı. Ustasının ışığını taşıyordu artık.
+   *Then, in Saye's palms, a light was born from within her. The shadow had not vanished. She was carrying her master's light now.*
+12. Kandilcilerin yüzyıllardır sakladığı bütün ışık o ışığa döndü ve göğe yükseldi. Kandilciler karın üstüne baktı. Gölgeleri geri gelmişti. Hıçkıra hıçkıra ağladılar.
+   *All the light the Lamplighters had hoarded for centuries turned toward that light and rose into the sky. The Lamplighters looked down at the snow. Their shadows had returned. They wept and wept.*
+13. Hüdhüd Sâye'nin omzuna kondu. Bir süre hiçbir şey söylemedi. Sonra, “Kırık güneşin yalnız bir parçası buradaydı,” dedi. “Ötekiler hâlâ dünyanın dört bir yanında.”
+   *The Hoopoe settled on Saye's shoulder. For a while it said nothing. Then: “Only one piece of the broken sun was here. The others are still scattered across the world.”*
+14. Ustasının oturduğu yeri kar çoktan örtmüştü. Sâye perdenin ardına baktı. Önünde, yeni yağmış karın üstünde bir yol uzanıyordu.
+   *The snow had already covered the place where her master had sat. Saye looked beyond the screen. Ahead, a road stretched over the newly fallen snow.*
+15. Rüzgârın içinden ustasının sesi geldi: “Yürü, Sâye. Yol bitmez; yürüyen değişir.” Sâye kandili göğsüne bastırdı ve yürüdü.
+   *Her master's voice came on the wind: “Walk on, Saye. The road does not end; the one who walks it changes.” Saye held the lamp to her heart, and walked.*
 16. SÂYE'NİN YOLCULUĞU SÜRECEK
    *SAYE'S JOURNEY WILL CONTINUE*
