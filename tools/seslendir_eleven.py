@@ -41,7 +41,7 @@ MODEL = "eleven_v4"
 SETTINGS = {"stability": 0.4, "similarity_boost": 0.8, "style": 0.5, "use_speaker_boost": True}
 REJI = pathlib.Path("tools/perde_metni/reji.json")
 # İngiliz ses Türkçe adları yazıldığı gibi okusun diye (yalnız seslendirmede).
-EN_SAY = {"Hayalî": "Hayali", "Mevlânâ": "Mevlana", "Ülgen": "Ulgen"}
+EN_SAY = {"Hayalî": "Hayali", "Mevlânâ": "Mevlana", "Ülgen": "Ulgen", "Yel Ana": "Yell Ana"}
 KEY = (pathlib.Path.home() / ".config/golge-oyunu/elevenlabs.key").read_text().strip()
 
 NUMS = set(
@@ -127,6 +127,56 @@ def segments(lang: str, w: str, i: int, text: str) -> list[tuple[str, str]]:
         else:
             out.append((who, piece))
     return [(who, f"{tag} {piece}".strip()) for who, piece in out]
+
+
+OYUN_TAG = {"saye": "[soft, nostalgic, gentle]", "usta": "[old, warm, gentle]", "hudhud": "[warm, wise, confidential]",
+            "anlatici": "[warm storyteller]", "akana": "[calm, luminous]", "demirci": "[hearty, encouraging]",
+            "calkuyruk": "[brave, urgent]", "tulpar": "[noble, proud]"}
+# Oyun içinde kadrodaki bir kahramanın konuştuğu sözler: tırnak dışı anlatıcı.
+OYUN_SOZ = {"soz:cameo_akAna": "akana", "soz:cameo_demirci": "demirci",
+            "soz:calkuyrukMount": "calkuyruk", "soz:tulparMount": "tulpar"}
+ASKED = re.compile(r"^\W*(dedim|sordum|diye sordum|I asked|I said)\b", re.I)
+
+
+def game_segments(lang: str, e: dict) -> list[tuple[str, str]] | None:
+    """Oyun içi satırlar: hatıralarda anlatım Sâye'nin, tırnak içi ustanın
+    (Sâye'nin kendi soruları Sâye'nin); Gökyolu ve Kaf fısıltıları Hüdhüd'ün."""
+    w, text = e["where"], e["text"]
+    if w in ("fisilti:2", "fisilti:3"):
+        t = s.words_for_numbers(text, lang)
+        return [("hudhud", f"{OYUN_TAG['hudhud']} {t}")]
+    if w in OYUN_SOZ:
+        out = []
+        for part in re.split(r"([\"“][^\"“”]*[\"”])", s.words_for_numbers(text, lang)):
+            who = OYUN_SOZ[w] if part[:1] in ('"', "“") else "anlatici"
+            piece = part.strip('"“” ').rstrip(":").strip()
+            # Yalnız konuşanın adı ("Demirci:") okunmaz; ses zaten onun.
+            if re.search(r"\w", piece) and (who != "anlatici" or len(piece.split()) > 1):
+                out.append((who, f"{OYUN_TAG[who]} {piece}"))
+        return out
+    if e["role"] != "hatira":
+        return None
+    t = s.words_for_numbers(s.PREFIX.sub("", text), lang)
+    if lang == "en":
+        for a, b in EN_SAY.items():
+            t = t.replace(a, b)
+    parts = re.split(r"([\"“][^\"“”]*[\"”])", t)
+    out: list[tuple[str, str]] = []
+    for k, part in enumerate(parts):
+        if part[:1] in ('"', "“"):
+            q = part.strip('"“” ')
+            after = parts[k + 1] if k + 1 < len(parts) else ""
+            mine = ASKED.match(after) or re.match(r"^(Usta|Master)\b", q) or re.search(r"(usta|master)\?$", q, re.I)
+            who, piece = ("saye" if mine else "usta"), q
+        else:
+            who, piece = "saye", part.strip().lstrip(",;").strip()
+        if not re.search(r"\w", piece):
+            continue
+        if out and out[-1][0] == who:
+            out[-1] = (who, out[-1][1] + " " + piece)
+        else:
+            out.append((who, piece))
+    return [(who, f"{OYUN_TAG[who]} {p}") for who, p in out]
 
 
 def plain(t: str) -> str:
@@ -222,7 +272,10 @@ def main() -> None:
     ap.add_argument("--kimlik", nargs="*", help="yalnız bu satırlar")
     ap.add_argument("--yeniden", action="store_true", help="var olanı da yeniden üret")
     ap.add_argument("--kuru", action="store_true", help="üretmeden seslendirme kopyasını yaz")
+    ap.add_argument("--oyunici", action="store_true", help="hatıralar (Sâye ve usta) ve Gökyolu/Kaf fısıltıları (Hüdhüd)")
     a = ap.parse_args()
+    if a.oyunici:
+        return game_lines(a)
 
     sc = scenes(a.dil)
     texts = scripted(a.dil, sc)
@@ -270,6 +323,49 @@ def main() -> None:
             if mark:
                 bad.append((w, e["id"], best[2]))
             print(f"  {w} {e['id']} {best[0]:.2f}  {plain(tx[i])[:60]}{mark}", flush=True)
+    for w, i, h in bad:
+        print(f"DENETLE {w} {i}: {h}")
+
+
+def game_lines(a) -> None:
+    lines = json.loads(pathlib.Path(f"build/ses/satirlar_{a.dil}.json").read_text())
+    out_dir = pathlib.Path(f"assets/voice/{a.dil}")
+    done_file = pathlib.Path(f"build/ses/eleven_oyun_{a.dil}.json")
+    done = json.loads(done_file.read_text()) if done_file.exists() else {}
+    bad = []
+    for e in lines:
+        segs = game_segments(a.dil, e)
+        if not segs or (a.kimlik and e["id"] not in a.kimlik):
+            continue
+        sig = " ‖ ".join(f"{who}: {p}" for who, p in segs)
+        if a.kuru:
+            print(f"{e['where']} {e['id']} {sig}")
+            continue
+        if not a.yeniden and done.get(e["id"]) == sig and (out_dir / f"{e['id']}.mp3").exists():
+            continue
+        whole = " ".join(plain(p) for _, p in segs)
+        best = None
+        for attempt in range(4):
+            pieces = []
+            for k, (who, piece) in enumerate(segs):
+                p_prev = segs[k - 1][1] if k > 0 else None
+                p_next = segs[k + 1][1] if k + 1 < len(segs) else None
+                pieces.append(tts(a.dil, piece, p_prev, p_next, who))
+            mp3 = join(pieces)
+            heard = s.transcribe(wav16(mp3))
+            ok, score = check(heard, whole)
+            if best is None or score > best[0]:
+                best = (score, mp3, heard)
+            if ok:
+                break
+            print(f"    {e['id']} yeniden ({score:.2f}): {heard[:90]}", flush=True)
+        save(best[1], out_dir / f"{e['id']}.mp3")
+        done[e["id"]] = sig
+        done_file.write_text(json.dumps(done, ensure_ascii=False, indent=1))
+        mark = "" if best[0] >= 0.88 else "  <<< DENETLE"
+        if mark:
+            bad.append((e["where"], e["id"], best[2]))
+        print(f"  {e['where']} {e['id']} {best[0]:.2f}  {whole[:60]}{mark}", flush=True)
     for w, i, h in bad:
         print(f"DENETLE {w} {i}: {h}")
 

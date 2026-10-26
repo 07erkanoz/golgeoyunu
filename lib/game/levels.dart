@@ -1433,8 +1433,8 @@ const levels = <LevelDef>[
       'Simurg buraya üç tüy bırakmış. Üçünü bulmayan aynayı göremez.',
       'Gölgeden köprüyü iki göz bekler. Birinin baktığı yer, öbürünün kör noktası.',
       'Kayalar da nefes alır; inip kalkarlar. Onlarla birlikte yüksel.',
-      'Hayret Vadisi. Attâr der ki kuşlar yedi vadiden geçti; birinde şaşkınlıktan yolu göremediler. Burada yol havada görünmez, suda görünür. Aşağı bak.',
-      'Otuz kuş Hüdhüd\'ün peşinde uçar. Sırtlarına güven, Sâye; onlar da Simurg\'u arıyor.',
+      'Hayret Vadisi. Biz kuşlar burada şaşkınlıktan yolu göremedik. Yol havada görünmez, suda görünür. Aşağı bak, Sâye.',
+      'Otuz kuş benim peşimde uçar. Sırtlarına güven, Sâye; onlar da Simurg\'u arıyor.',
     ],
     whispersEn: [
       'This is Qaf. The birds flew a thousand years, and thirty arrived.',
@@ -1445,8 +1445,8 @@ const levels = <LevelDef>[
       'The Simurgh left three feathers here. Whoever does not find all three will never see the mirror.',
       'Two eyes guard the bridge of shadow. Where one looks, the other is blind.',
       'Rocks breathe too; they rise and fall. Rise with them.',
-      'The Valley of Bewilderment. Attar says the birds crossed seven valleys; in one, bewilderment hid the way. Here the road cannot be seen in the air, only in the water. Look down.',
-      'Thirty birds fly after the Hoopoe. Trust their backs, Saye; they too are seeking the Simurgh.',
+      'The Valley of Bewilderment. Here we birds were so bewildered we could not see the way. The road cannot be seen in the air, only in the water. Look down, Saye.',
+      'Thirty birds fly after me. Trust their backs, Saye; they too are seeking the Simurgh.',
     ],
     memories: [
       'Hatıra · "Simurg diye bir kuş yoktur," derdi ustam. "Otuz kuş vardır. Ama bunu ancak varan bilir."',
