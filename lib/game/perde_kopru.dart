@@ -534,334 +534,680 @@ void _bQaf(Canvas c, double time, double u, double n) {
 // ------------------------------------------------------------- Ağrı
 
 void _bAgri(Canvas c, double time, double u, double n) {
-  _peaks(c, [(0, 300), (250, 60), (420, 230), (560, 150), (780, 290)], _far(1));
+  final a0 = _agWin(u, 0, 1, n);
+  if (a0 > 0) _bAgriRopes(c, time, u, a0);
+  final a1 = _agWin(u, 1, 2, n);
+  if (a1 > 0) _bAgriGate(c, time, u, a1);
+  final a2 = _agWin(u, 2, 3, n);
+  if (a2 > 0) _bAgriIceCave(c, time, u, a2);
+}
+
+/// 0: tipide iplere tutunup yamacı tırmanır; terk edilmiş ağıla sığınır.
+void _bAgriRopes(Canvas c, double time, double u, double a) {
+  double slope(double x) => x < 560 ? 382 - x * 182 / 560 : 200;
+  _peaks(c, [(0, 200), (220, 40), (420, 180)], _far(0.7 * a));
   c.drawPath(
     Path()
-      ..moveTo(212, 100)
-      ..lineTo(250, 60)
-      ..lineTo(290, 104)
-      ..lineTo(268, 96)
-      ..lineTo(250, 110)
-      ..lineTo(232, 94)
+      ..moveTo(0, 400)
+      ..lineTo(0, slope(0))
+      ..lineTo(560, 200)
+      ..lineTo(780, 200)
+      ..lineTo(780, 400)
       ..close(),
-    _hole(0.35),
+    _ink(a),
   );
-  _floor(c, 0.9);
-  final x = _walkX(u, n, 80, 640);
-  // 0: iplere tutunarak; terk edilmiş ağıl.
-  final a0 = _heroA(u, 0);
-  if (a0 > 0) {
-    for (var i = 0; i < 6; i++) {
-      c.drawLine(
-        Offset(60 + i * 64.0, _gb),
-        Offset(60 + i * 64.0, _gb - 70),
-        _stroke(_ink(a0), 3),
-      );
+  // Kazıklar ve ip: yamaç boyunca.
+  final rope = Path();
+  for (var i = 0; i <= 7; i++) {
+    final x = 30 + i * 76.0;
+    final y = slope(x);
+    c.drawLine(Offset(x, y), Offset(x - 3, y - 46), _stroke(_ink(a), 4));
+    if (i == 0) {
+      rope.moveTo(x - 3, y - 44);
+    } else {
+      final px = x - 76;
+      rope.quadraticBezierTo(px + 36, (slope(px) + y) / 2 - 26, x - 3, y - 44);
     }
-    final rope = Path()..moveTo(60, _gb - 64);
-    for (var i = 0; i < 5; i++) {
-      rope.quadraticBezierTo(92 + i * 64.0, _gb - 50, 124 + i * 64.0, _gb - 64);
-    }
-    c.drawPath(rope, _stroke(_ink(a0), 2));
-    c.drawRect(Rect.fromLTWH(470, _gb - 50, 110, 50), _ink(a0));
-    c.drawPath(
-      Path()
-        ..moveTo(460, _gb - 48)
-        ..lineTo(525, _gb - 84)
-        ..lineTo(590, _gb - 48)
-        ..close(),
-      _ink(a0),
-    );
-    c.drawRect(Rect.fromLTWH(512, _gb - 30, 22, 30), _hole(0.4 * a0));
   }
-  // 1: Akori'nin bağı, manastır, Ayaz Ata'nın ak gölgesi.
-  final a1 = _heroA(u, 1);
-  if (a1 > 0) {
-    for (var i = 0; i < 4; i++) {
-      final vx = 70 + i * 44.0;
-      c.drawPath(
-        Path()
-          ..moveTo(vx, _gb)
-          ..quadraticBezierTo(vx - 8, _gb - 24, vx + 4, _gb - 44)
-          ..quadraticBezierTo(vx + 14, _gb - 52, vx + 6, _gb - 60),
-        _stroke(_ink(a1), 3),
-      );
-      c.drawCircle(Offset(vx + 10, _gb - 50), 5, _ink(a1));
-    }
-    c.drawRect(Rect.fromLTWH(430, _gb - 90, 90, 90), _ink(a1));
-    c.drawRect(Rect.fromLTWH(458, _gb - 130, 34, 40), _ink(a1));
-    c.drawPath(
-      Path()
-        ..moveTo(452, _gb - 128)
-        ..lineTo(475, _gb - 170)
-        ..lineTo(498, _gb - 128)
-        ..close(),
-      _ink(a1),
-    );
-    c.drawLine(
-      Offset(475, _gb - 170),
-      Offset(475, _gb - 186),
-      _stroke(_ink(a1), 2),
-    );
-    c.drawLine(
-      Offset(468, _gb - 180),
-      Offset(482, _gb - 180),
-      _stroke(_ink(a1), 2),
-    );
-    c.drawArc(
-      Rect.fromLTWH(462, _gb - 50, 26, 40),
-      math.pi,
-      math.pi,
-      true,
-      _hole(0.5 * a1),
-    );
-    final ax = 680 - _span(u, 1.05, 1.9) * 60;
-    c.save();
-    c.translate(ax, _gb + 12);
-    c.scale(-2.2, 2.2);
-    c.drawPath(MythFigures.ayazAtaSilhouette, _hole(0.5 * a1));
-    c.restore();
+  c.drawPath(rope, _stroke(_ink(a), 2.4));
+  // Ağıl: taş duvar ve sundurma.
+  c.drawRect(const Rect.fromLTWH(600, 166, 170, 34), _ink(a));
+  for (var i = 0; i < 9; i++) {
+    c.drawCircle(Offset(612 + i * 19.0, 176 + (i % 2) * 10), 2, _hole(0.5 * a));
   }
-  // 2: buz mağarası; tufanın eşiği.
-  final a2 = _heroA(u, 2);
-  if (a2 > 0) {
+  c.drawPath(
+    Path()
+      ..moveTo(650, 166)
+      ..lineTo(650, 120)
+      ..lineTo(700, 100)
+      ..lineTo(760, 120)
+      ..lineTo(760, 166)
+      ..close(),
+    _ink(a),
+  );
+  final inside = _span(u, 0.72, 0.85);
+  c.drawRect(
+    const Rect.fromLTWH(676, 128, 34, 38),
+    _hole((0.15 + 0.55 * inside) * a),
+  );
+  // Sâye: ipe tutunarak tırmanır, ağılın kapısında ateşböceklerini
+  // göğsüne bastırır.
+  final x = _agLerp(40, 620, _span(u, 0.04, 0.72));
+  final hug = _span(u, 0.74, 0.85);
+  _agSaye(
+    c,
+    Offset(x, slope(x) + 4),
+    1.25,
+    time,
+    a,
+    rot: x < 560 ? -0.12 : 0,
+    jar: 1 - hug,
+    seed: 1,
+  );
+  if (hug > 0) {
+    final chest = Offset(x + 6, slope(x) + 4 - 44 * 1.25);
+    c.drawCircle(
+      chest,
+      26,
+      Paint()
+        ..shader = ui.Gradient.radial(chest, 26, [
+          const Color(0xFFFFF0C0).withValues(alpha: 0.75 * a * hug),
+          const Color(0x00FFF0C0),
+        ]),
+    );
+    c.drawCircle(chest, 5, _hole(a * hug));
+  }
+  // Tipi.
+  final wind = Paint()
+    ..strokeWidth = 1.5
+    ..strokeCap = StrokeCap.round
+    ..color = const Color(0xFFFFF8EC).withValues(alpha: 0.65 * a);
+  for (var i = 0; i < 60; i++) {
+    final wx = (i * 71.0 + time * 360) % 860 - 40;
+    final wy = (i * 37.0 + time * 50) % 380;
+    c.drawLine(Offset(wx, wy), Offset(wx - 20, wy - 4), wind);
+  }
+}
+
+/// 1: Akori'nin asmaları; manastırın kapısında Ayaz Ata sorar, sonra kenara
+/// çekilir.
+void _bAgriGate(Canvas c, double time, double u, double a) {
+  _peaks(c, [(0, 260), (180, 90), (380, 250)], _far(0.6 * a));
+  _floor(c, a);
+  // Asmalar: çardak ve salkımlar.
+  final vine = _stroke(_ink(a), 3);
+  c.drawLine(const Offset(30, _gb - 92), const Offset(250, _gb - 92), vine);
+  for (var i = 0; i < 4; i++) {
+    final vx = 40 + i * 64.0;
     c.drawPath(
       Path()
-        ..moveTo(520, _gb)
-        ..lineTo(560, 160)
-        ..lineTo(700, 130)
-        ..lineTo(780, 180)
-        ..lineTo(780, _gb)
-        ..close(),
-      _ink(a2),
+        ..moveTo(vx, _gb)
+        ..quadraticBezierTo(vx - 10, _gb - 40, vx + 6, _gb - 92),
+      vine,
     );
-    final mouth = Path()
-      ..moveTo(600, _gb)
-      ..quadraticBezierTo(650, 190, 720, _gb)
-      ..close();
-    c.drawPath(mouth, _hole(0.5 * a2 * _span(u, 2.2, 2.7)));
-    for (var i = 0; i < 6; i++) {
-      c.drawPath(
-        Path()
-          ..moveTo(600 + i * 20.0, 228 + (i % 2) * 8)
-          ..lineTo(606 + i * 20.0, 252 + (i % 3) * 8)
-          ..lineTo(612 + i * 20.0, 228 + (i % 2) * 8)
-          ..close(),
-        _ink(a2),
+    for (var j = 0; j < 6; j++) {
+      c.drawCircle(
+        Offset(
+          vx + 22 + (j % 3) * 5.0 - (j ~/ 3) * 2,
+          _gb - 80 + (j ~/ 3) * 7.0 + (j % 3) * 2,
+        ),
+        3.6,
+        _ink(a),
       );
     }
   }
-  _snowfall(c, time, 1, wind: 120);
-  _sayeAt(c, Offset(x, _gb + 12), time);
+  // Yapraklar çardak boyunca.
+  for (var i = 0; i < 12; i++) {
+    c.drawOval(
+      Rect.fromCenter(
+        center: Offset(36 + i * 19.0, _gb - 96 - (i % 2) * 6),
+        width: 22,
+        height: 11,
+      ),
+      _ink(a),
+    );
+  }
+  // Manastır: taş gövde, kubbe kasnağı, sivri külah, haç; kemerli kapı.
+  // Uzakta (soluk): kapıdaki Ayaz Ata önünde seçik kalır.
+  final ink = _ink(0.55 * a);
+  c.drawRect(const Rect.fromLTWH(440, _gb - 130, 200, 130), ink);
+  c.drawRect(const Rect.fromLTWH(505, _gb - 180, 70, 50), ink);
+  c.drawPath(
+    Path()
+      ..moveTo(498, _gb - 180)
+      ..lineTo(540, _gb - 232)
+      ..lineTo(582, _gb - 180)
+      ..close(),
+    ink,
+  );
+  c.drawLine(
+    const Offset(540, _gb - 232),
+    const Offset(540, _gb - 256),
+    _stroke(_ink(0.55 * a), 3),
+  );
+  c.drawLine(
+    const Offset(530, _gb - 247),
+    const Offset(550, _gb - 247),
+    _stroke(_ink(0.55 * a), 3),
+  );
+  for (var i = 0; i < 3; i++) {
+    c.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(516 + i * 18.0, _gb - 172, 8, 22),
+        const Radius.circular(4),
+      ),
+      _hole(0.6 * a),
+    );
+  }
+  final open = _span(u, 1.72, 1.95);
+  final door = Path()
+    ..moveTo(515, _gb)
+    ..lineTo(515, _gb - 62)
+    ..quadraticBezierTo(540, _gb - 96, 565, _gb - 62)
+    ..lineTo(565, _gb)
+    ..close();
+  c.drawPath(door, _hole((0.55 + 0.4 * open) * a));
+  _snowfall(c, time, a, wind: 30);
+  // Ayaz Ata kapıda; konuşup kenara çekilir.
+  final ax = _agLerp(540, 690, _span(u, 1.72, 1.95));
+  _agAyazAta(
+    c,
+    Offset(ax, _gb + 6),
+    190,
+    time,
+    a,
+    flip: true,
+    hand: _shown(u, 1.25, 1.55, 0.06),
+  );
+  // Sâye cevap verir, sonra kapıya yürür.
+  final sx = _agLerp(300, 420, _span(u, 1.85, 1.98));
+  _agSaye(
+    c,
+    Offset(sx, _gb + 6),
+    1.6,
+    time,
+    a,
+    raise: 0.4 * _shown(u, 1.55, 1.72, 0.05),
+    seed: 2,
+  );
+}
+
+/// 2: buz mağarasının dibinde, buzun ardında kapkara, kocaman bir gemi.
+void _bAgriIceCave(Canvas c, double time, double u, double a) {
+  final ice = Path()
+    ..moveTo(300, _gb)
+    ..lineTo(290, 150)
+    ..quadraticBezierTo(320, 70, 470, 66)
+    ..quadraticBezierTo(700, 70, 740, 160)
+    ..lineTo(750, _gb)
+    ..close();
+  c.drawPath(
+    ice,
+    Paint()..color = const Color(0xFFFFF4E0).withValues(alpha: 0.55 * a),
+  );
+  // Buzun ardında gemi.
+  final reveal = _span(u, 2.15, 2.6);
+  c.save();
+  c.clipPath(ice);
+  c.translate(520, 250);
+  c.scale(1.65);
+  _arkShape(_ink(0.85 * a * (0.45 + 0.55 * reveal)), _hole(0), 0);
+  c.restore();
+  // Buzun çatlakları.
+  final crack = _stroke(_hole(0.7 * a), 1.4);
+  c.drawLine(const Offset(330, 120), const Offset(380, 200), crack);
+  c.drawLine(const Offset(380, 200), const Offset(360, 260), crack);
+  c.drawLine(const Offset(690, 110), const Offset(650, 190), crack);
+  // Mağaranın kayası: çerçeve ve sarkıtlar.
+  c.drawPath(
+    Path()
+      ..fillType = PathFillType.evenOdd
+      ..addRect(const Rect.fromLTWH(-10, -10, 800, 420))
+      ..moveTo(40, _gb)
+      ..lineTo(60, 120)
+      ..quadraticBezierTo(140, 30, 400, 34)
+      ..quadraticBezierTo(700, 30, 760, 110)
+      ..lineTo(770, _gb)
+      ..close(),
+    _ink(a),
+  );
+  for (var i = 0; i < 14; i++) {
+    final x = 90 + i * 48.0;
+    final l = 26 + (i * 37 % 5) * 9.0;
+    final top = 40 + ((x - 400).abs() / 400) * 40;
+    c.drawPath(
+      Path()
+        ..moveTo(x - 9, top - 4)
+        ..lineTo(x, top + l)
+        ..lineTo(x + 9, top - 4)
+        ..close(),
+      _ink(a),
+    );
+  }
+  _floor(c, a);
+  _agSaye(c, const Offset(180, _gb + 6), 1.7, time, a, seed: 3);
 }
 
 // ------------------------------------------------------------- Gemi
 
 void _bArk(Canvas c, double time, double u, double n) {
-  // Ambarın kaburgaları.
-  for (var i = 0; i < 7; i++) {
-    c.drawArc(
-      Rect.fromLTWH(-40 + i * 130.0, -80, 160, 520),
-      math.pi * 0.5,
-      math.pi,
-      false,
-      _stroke(_far(1), 9),
+  final a0 = _agWin(u, 0, 1, n);
+  if (a0 > 0) _bArkLocks(c, time, u, a0);
+  final a1 = _agWin(u, 1, 2, n);
+  if (a1 > 0) _bArkWell(c, time, u, a1);
+  final a2 = _agWin(u, 2, 3, n);
+  if (a2 > 0) _bArkDeck(c, time, u, a2);
+}
+
+/// Sevinç: kavuşan eşlerin çevresinde ışık kıvılcımları.
+void _bJoy(Canvas c, Offset at, double time, double a) {
+  if (a <= 0.01) return;
+  final p = _hole(0.9 * a);
+  for (var i = 0; i < 9; i++) {
+    final k = (time * 0.8 + i / 9) % 1;
+    final ang = i * 0.7;
+    c.drawCircle(
+      at + Offset(math.cos(ang) * (20 + k * 50), -k * 70 + math.sin(ang) * 10),
+      2.4 * (1 - k) + 0.6,
+      p,
     );
   }
-  c.drawRect(const Rect.fromLTWH(0, 30, 780, 10), _far(1));
-  _floor(c, 0.9);
-  final x = _walkX(u, n, 80, 640);
-  // 0: eşlerinden ayrılmış gölgeler, kilitler açılır.
-  final a0 = _heroA(u, 0);
-  if (a0 > 0) {
-    final pairs = [
-      (MythShapes.horse, 90.0),
-      (MythShapes.wolfStand, 70.0),
-      (MythShapes.birdGlide, 46.0),
-    ];
-    for (var i = 0; i < 3; i++) {
-      final cx = 180 + i * 210.0;
-      final open = _span(u, 0.3 + i * 0.18, 0.55 + i * 0.18);
-      final (shape, h) = pairs[i];
-      final y = i == 2 ? _gb - 90 : _gb + 6;
-      _cut(c, shape, Offset(cx - 66 + 34 * open, y), h, a0, deco: false);
-      _cut(
-        c,
-        shape,
-        Offset(cx + 66 - 34 * open, y),
-        h,
-        a0,
-        flip: true,
-        deco: false,
-      );
-      for (var b = 0; b < 3; b++) {
-        c.drawLine(
-          Offset(cx - 8 + b * 8.0, _gb - 140 - open * 150),
-          Offset(cx - 8 + b * 8.0, _gb - open * 150),
-          _stroke(_ink(a0), 3),
-        );
-      }
-    }
+}
+
+/// 0: Sâye ambar kilitlerini açar; aslanın gölgesi aslanına, kuşun gölgesi
+/// kuşuna koşar.
+void _bArkLocks(Canvas c, double time, double u, double a) {
+  _agHold(c, a);
+  // Sol ambar: aslanın gölgesi; sağ ambar: kuşun gölgesi.
+  const left = Rect.fromLTWH(30, 150, 180, 200);
+  const right = Rect.fromLTWH(600, 150, 170, 200);
+  final open1 = _span(u, 0.18, 0.3);
+  final open2 = _span(u, 0.62, 0.72);
+  for (final r in [left, right]) {
+    c.drawRect(r, _ink(0.22 * a));
   }
-  // 1: kuyunun dibinde Ak Ana.
-  final a1 = _heroA(u, 1);
-  if (a1 > 0) {
-    final water = _gb - 20 - 40 * _span(u, 1.4, 1.9);
-    c.save();
-    c.clipRect(Rect.fromLTWH(0, 0, 780, water));
-    _person(
+  // Aslan bekler; gölgesi koşup ona kavuşur.
+  const lion = Offset(410, _gb);
+  _agBeast(c, MythShapes.lion, lion, 90, a, flip: true);
+  final run1 = _span(u, 0.3, 0.5);
+  if (run1 < 1) {
+    _agBeast(
       c,
-      Offset(460, water + 70 - 60 * _span(u, 1.05, 1.5)),
-      210,
-      a1,
-      _akAna,
-      time: time,
+      MythShapes.lion,
+      Offset(_agLerp(120, lion.dx, run1), _gb),
+      90,
+      a * (1 - _span(u, 0.45, 0.52)),
+      flip: true,
+      shadow: true,
+    );
+  }
+  _bJoy(c, lion.translate(-20, -70), time, a * _shown(u, 0.48, 0.95, 0.08));
+  // Kuş tünekte bekler; gölgesi uçup ona kavuşur.
+  c.drawLine(
+    const Offset(470, _gb),
+    const Offset(470, 250),
+    _stroke(_ink(a), 5),
+  );
+  c.drawLine(
+    const Offset(440, 250),
+    const Offset(500, 250),
+    _stroke(_ink(a), 5),
+  );
+  const bird = Offset(470, 250);
+  _cut(c, MythShapes.birdFlap, bird, 46, a, deco: false);
+  final run2 = _span(u, 0.72, 0.9);
+  if (run2 < 1) {
+    final bp = Offset.lerp(
+      const Offset(690, 300),
+      bird,
+      run2,
+    )!.translate(0, -math.sin(run2 * math.pi) * 60);
+    c.save();
+    c.translate(bp.dx, bp.dy);
+    c.scale(0.46);
+    c.drawPath(
+      MythShapes.birdFlap,
+      _ink(0.38 * a * (1 - _span(u, 0.86, 0.92))),
     );
     c.restore();
+  }
+  _bJoy(c, bird.translate(0, -30), time, a * _span(u, 0.88, 0.95));
+  // Ambar kapıları: parmaklıklar kalkar; asma kilit düşer.
+  for (final (r, open) in [(left, open1), (right, open2)]) {
+    for (var b = 0; b < 7; b++) {
+      c.drawRect(
+        Rect.fromLTWH(
+          r.left + 6 + b * r.width / 7,
+          r.top - open * 120,
+          6,
+          r.height,
+        ),
+        _ink(a),
+      );
+    }
     c.drawRect(
-      Rect.fromLTWH(300, water, 320, _gb - water + 10),
-      _hole(0.4 * a1),
+      Rect.fromLTWH(r.left - 6, r.top - 12, r.width + 12, 12),
+      _ink(a),
     );
-    for (var i = 0; i < 5; i++) {
-      final wx = 310 + (i * 63 + time * 20) % 300;
+    final lockAt = Offset(r.center.dx, r.center.dy + open * 140);
+    if (open < 1) {
+      c.drawRect(
+        Rect.fromCenter(center: lockAt, width: 22, height: 18),
+        _ink(a),
+      );
+      c.drawArc(
+        Rect.fromCenter(
+          center: lockAt.translate(0, -12 - open * 6),
+          width: 14,
+          height: 14,
+        ),
+        math.pi,
+        math.pi,
+        false,
+        _stroke(_ink(a), 3),
+      );
+      c.drawCircle(lockAt, 2.4, _hole(a));
+    }
+  }
+  // Sâye: önce sol kapıyı, sonra sağ kapıyı açar.
+  final walk = _span(u, 0.5, 0.62);
+  final sx = _agLerp(232, 562, walk);
+  _agSaye(
+    c,
+    Offset(sx, _gb + 6),
+    1.5,
+    time,
+    a,
+    flip: walk < 0.02,
+    raise:
+        0.4 * math.max(_shown(u, 0.1, 0.3, 0.05), _shown(u, 0.6, 0.74, 0.05)),
+    seed: 6,
+  );
+}
+
+/// 1: kuyunun dibinde Ak Ana gülümser; su yükselir, Sâye'yi güverteye taşır.
+void _bArkWell(Canvas c, double time, double u, double a) {
+  _agHold(c, a);
+  final level = _agLerp(330, 150, _span(u, 1.2, 1.85));
+  // Ak Ana suyun içinde, ışıktan: başı ve omuzları suyun üstünde.
+  c.save();
+  c.clipRect(const Rect.fromLTWH(300, 0, 180, _gb));
+  _agAkAna(c, Offset(445, level + 150), 190, time, a);
+  c.restore();
+  // Kuyunun suyu (yarı saydam).
+  final wpath = Path()..moveTo(300, _gb);
+  for (var x = 300.0; x <= 480; x += 10) {
+    wpath.lineTo(x, level + math.sin(x / 18 + time * 2.4) * 3);
+  }
+  wpath
+    ..lineTo(480, _gb)
+    ..close();
+  c.drawPath(wpath, _ink(0.18 * a));
+  c.drawPath(wpath, _stroke(_hole(0.8 * a), 2));
+  // Taş kuyu duvarları.
+  for (final x in [250.0, 480.0]) {
+    c.drawRect(Rect.fromLTWH(x, 120, 50, _gb - 120), _ink(a));
+    for (var i = 0; i < 9; i++) {
       c.drawLine(
-        Offset(wx, water + 6),
-        Offset(wx + 20, water + 6),
-        _stroke(_ink(0.5 * a1), 1.4),
+        Offset(x, 140 + i * 24.0),
+        Offset(x + 50, 140 + i * 24.0),
+        _stroke(_hole(0.35 * a), 1.2),
+      );
+      c.drawLine(
+        Offset(x + (i.isEven ? 20 : 34), 140 + i * 24.0),
+        Offset(x + (i.isEven ? 20 : 34), 164 + i * 24.0),
+        _stroke(_hole(0.35 * a), 1.2),
       );
     }
   }
-  // 2: güverte: ışığın yeri boş.
-  final a2 = _heroA(u, 2);
-  if (a2 > 0) {
-    c.drawRect(const Rect.fromLTWH(0, 0, 780, 210), _cloth(a2));
-    c.drawRect(Rect.fromLTWH(0, 210, 780, 12), _ink(a2));
-    final niche = Path()
-      ..moveTo(560, _gb)
-      ..lineTo(560, 260)
-      ..quadraticBezierTo(600, 210, 640, 260)
-      ..lineTo(640, _gb)
-      ..close();
-    c.drawPath(niche, _ink(a2));
-    c.drawCircle(const Offset(600, 300), 14, _stroke(_hole(0.5 * a2), 1.5));
+  // Güverte ağzı.
+  c.drawRect(const Rect.fromLTWH(0, 108, 300, 14), _ink(a));
+  c.drawRect(const Rect.fromLTWH(480, 108, 300, 14), _ink(a));
+  // Sâye suyun üstünde yükselir.
+  _agSaye(c, Offset(372, level + 2), 1.25, time, a, seed: 7);
+}
+
+/// 2: güverte boş; sönmeyen ışığın yeri boş. Sâye yumruklarını sıkar.
+void _bArkDeck(Canvas c, double time, double u, double a) {
+  // Mağaranın loşluğu, uzakta giden fenerler.
+  c.drawRect(const Rect.fromLTWH(0, 0, 780, 400), _ink(0.2 * a));
+  final away = _span(u, 2.0, 2.9);
+  for (var i = 0; i < 3; i++) {
+    final p = Offset(640 + away * 110 + i * 22, 150 + i * 6.0);
+    c.drawCircle(p, 3, _hole(a * (1 - away)));
   }
-  _sayeAt(c, Offset(x, _gb + 12), time);
+  // Güverte tahtaları.
+  c.drawRect(Rect.fromLTWH(0, _gb, 780, 60), _ink(a));
+  for (var i = 0; i < 14; i++) {
+    c.drawLine(
+      Offset(i * 60.0, _gb + 4),
+      Offset(i * 60.0, _gb + 50),
+      _stroke(_hole(0.25 * a), 1.2),
+    );
+  }
+  c.drawLine(
+    const Offset(0, _gb),
+    const Offset(780, _gb),
+    _stroke(_hole(0.4 * a), 1.4),
+  );
+  // Işığın kaidesi: ayaklı, boş kandillik; kopuk zinciri sallanır.
+  c.drawRect(const Rect.fromLTWH(562, 196, 12, _gb - 196), _ink(a));
+  c.drawPath(
+    Path()
+      ..moveTo(540, _gb)
+      ..lineTo(568, _gb - 30)
+      ..lineTo(596, _gb)
+      ..close(),
+    _ink(a),
+  );
+  c.drawPath(
+    Path()
+      ..moveTo(530, 180)
+      ..quadraticBezierTo(568, 220, 606, 180)
+      ..lineTo(596, 176)
+      ..quadraticBezierTo(568, 204, 540, 176)
+      ..close(),
+    _ink(a),
+  );
+  final sw = math.sin(time * 1.8) * 0.25;
+  c.save();
+  c.translate(600, 182);
+  c.rotate(sw);
+  for (var i = 0; i < 4; i++) {
+    c.drawOval(
+      Rect.fromCenter(
+        center: Offset(0, 8 + i * 10.0),
+        width: i.isEven ? 7 : 11,
+        height: i.isEven ? 11 : 7,
+      ),
+      _stroke(_ink(a), 2.4),
+    );
+  }
+  c.drawArc(
+    Rect.fromCenter(center: const Offset(3, 50), width: 12, height: 12),
+    -0.3,
+    3.6,
+    false,
+    _stroke(_ink(a), 2.4),
+  );
+  c.restore();
+  // Işığın bıraktığı soluk iz.
+  c.drawCircle(const Offset(568, 160), 22, _stroke(_hole(0.35 * a), 1.4));
+  final fist = _span(u, 2.5, 2.65);
+  _agSaye(
+    c,
+    const Offset(330, _gb + 6),
+    2.1,
+    time,
+    a,
+    fist: fist,
+    jar: 0.8,
+    seed: 8,
+  );
 }
 
 // ------------------------------------------------------------- Nemrut
 
 void _bNemrut(Canvas c, double time, double u, double n) {
   _peaks(c, [(420, 330), (600, 120), (780, 330)], _far(1));
-  _floor(c, 0.9);
-  for (var i = 0; i < 3; i++) {
-    c.save();
-    c.translate(0, 0);
-    _seatedGod(c, 120 + i * 120.0, i, 1, 0.5);
-    c.restore();
-  }
-  final x = _walkX(u, n, 60, 660);
-  // 0: deprem yarıkları açılıp kapanır.
-  final a0 = _heroA(u, 0);
-  var lift = 0.0;
-  if (a0 > 0) {
-    final w = 6 + 10 * math.max(0, math.sin(time * 2.6));
-    for (final rx in [300.0, 470.0]) {
-      final crack = Path()..moveTo(rx - w, _gb);
-      for (var i = 1; i < 5; i++) {
-        crack.lineTo(rx + (i.isEven ? -w : w) * 0.6, _gb + i * 12.0);
-      }
-      crack
-        ..lineTo(rx + w, _gb)
-        ..close();
-      c.drawPath(crack, _hole(0.7 * a0));
-      if ((x - rx).abs() < 40) {
-        lift = math.sin((x - rx + 40) / 80 * math.pi) * 40;
-      }
-    }
-  }
-  // 1: kartal heykeli, tümülüsten doğuya geçit.
-  final a1 = _heroA(u, 1);
-  if (a1 > 0) {
-    c.drawRect(Rect.fromLTWH(380, _gb - 40, 60, 40), _ink(a1));
-    _cut(c, MythShapes.birdGlide, Offset(410, _gb - 40), 110, a1, deco: false);
-    c.drawArc(
-      Rect.fromLTWH(620, _gb - 70, 70, 140),
-      math.pi,
-      math.pi,
-      true,
-      _hole(0.6 * a1),
+  // Başsız beş tanrı (perdedeki gibi beş): terasta, uzakta; başları
+  // dibinde karda.
+  for (var i = 0; i < 5; i++) {
+    final x = 90 + i * 150.0;
+    _agStatue(c, x, 120, 1, headless: true, alpha: 0.5, y: _gb - 4);
+    _agStoneHead(
+      c,
+      Offset(x + 52, _gb - 2),
+      50,
+      1,
+      rot: -0.5 + i * 0.25,
+      flip: i.isOdd,
+      kind: i % 3,
+      alpha: 0.5,
     );
   }
-  _sayeAt(c, Offset(x, _gb + 12 - lift), time);
+  _floor(c, 0.9);
+  final a0 = _agWin(u, 0, 1, n);
+  if (a0 > 0) _bNemrutCracks(c, time, u, a0);
+  final a1 = _agWin(u, 1, 2, n);
+  if (a1 > 0) _bNemrutEagle(c, time, u, a1);
+}
+
+/// 0: başsız tanrıların arasından geçer; ayağının altında yer yarılır,
+/// sonra kapanır (Sâye yarıkların üstünden sıçrar).
+void _bNemrutCracks(Canvas c, double time, double u, double a) {
+  final x = _agLerp(50, 730, _span(u, 0.04, 0.95));
+  var lift = 0.0;
+  for (final (rx, ph) in [(250.0, 0.0), (480.0, 1.9)]) {
+    final w = 4 + 12 * math.max(0, math.sin(time * 2.6 + ph));
+    final crack = Path()..moveTo(rx - w, _gb);
+    for (var i = 1; i < 5; i++) {
+      crack.lineTo(rx + (i.isEven ? -w : w) * 0.6, _gb + i * 12.0);
+    }
+    crack
+      ..lineTo(rx + w, _gb)
+      ..close();
+    c.drawPath(crack, _hole(0.8 * a));
+    final d = x - rx;
+    if (d.abs() < 50) {
+      lift = math.max(lift, math.cos(d / 50 * math.pi / 2) * 46);
+    }
+  }
+  _agSaye(
+    c,
+    Offset(x, _gb + 6 - lift),
+    1.5,
+    time,
+    a,
+    rot: lift > 4 ? 0.15 : 0,
+    seed: 10,
+  );
+}
+
+/// 1: taş kartalın gözünden süzülür; taşların arasındaki gizli yoldan doğu
+/// terasına çıkar.
+void _bNemrutEagle(Canvas c, double time, double u, double a) {
+  final ink = _ink(a);
+  // Kaide ve kartalın gövdesi (kanatları kapalı).
+  c.drawRect(const Rect.fromLTWH(330, _gb - 60, 150, 60), ink);
+  _punchRow(
+    c,
+    const Offset(340, _gb - 30),
+    const Offset(470, _gb - 30),
+    8,
+    2,
+    a,
+  );
+  c.drawPath(
+    Path()
+      ..moveTo(300, _gb - 60)
+      ..quadraticBezierTo(320, _gb - 190, 420, _gb - 200)
+      ..quadraticBezierTo(470, _gb - 196, 476, _gb - 150)
+      ..lineTo(470, _gb - 60)
+      ..close(),
+    ink,
+  );
+  for (var i = 0; i < 4; i++) {
+    c.drawArc(
+      Rect.fromLTWH(330 + i * 26.0, _gb - 170 + i * 20.0, 70, 50),
+      0.4,
+      2.0,
+      false,
+      _stroke(_hole(0.35 * a), 1.5),
+    );
+  }
+  // Baş: kıvrık gaga, iri göz (içinden geçilecek delik).
+  const head = Offset(470, _gb - 230);
+  c.drawCircle(head, 46, ink);
+  c.drawPath(
+    Path()
+      ..moveTo(500, _gb - 256)
+      ..quadraticBezierTo(552, _gb - 252, 548, _gb - 208)
+      ..quadraticBezierTo(536, _gb - 222, 506, _gb - 214)
+      ..close(),
+    ink,
+  );
+  const eye = Offset(478, _gb - 240);
+  c.drawCircle(eye, 16, _hole(0.95 * a));
+  // Gizli yol: taşların arasında basamaklar, doğu terasına.
+  for (var i = 0; i < 6; i++) {
+    c.drawRect(
+      Rect.fromLTWH(520 + i * 42.0, _gb - 20 - i * 24.0, 46, 20 + i * 24.0),
+      _ink(0.85 * a),
+    );
+  }
+  final top = const Offset(760, 200);
+  c.drawCircle(
+    top,
+    60,
+    Paint()
+      ..shader = ui.Gradient.radial(top, 60, [
+        const Color(0xFFFFF0C8).withValues(alpha: 0.7 * a),
+        const Color(0x00FFF0C8),
+      ]),
+  );
+  // Sâye: kartala tırmanır, küçülüp gözünden geçer, ardında basamaklara
+  // iner ve terasa çıkar.
+  final toEye = _span(u, 1.05, 1.4);
+  final through = _span(u, 1.4, 1.55);
+  final climb = _span(u, 1.6, 1.95);
+  Offset p;
+  double s;
+  double sa = a;
+  if (through <= 0) {
+    p = Offset.lerp(
+      const Offset(230, _gb + 6),
+      eye + const Offset(-6, 12),
+      toEye,
+    )!;
+    s = _agLerp(1.5, 0.28, toEye);
+  } else if (climb <= 0) {
+    p = Offset.lerp(
+      eye + const Offset(-6, 12),
+      eye + const Offset(64, -26),
+      through,
+    )!;
+    s = 0.28 + 0.4 * through;
+    sa = a * (through < 0.3 ? 0.4 : 1);
+  } else {
+    final i = climb * 5;
+    final step = i.floor().clamp(0, 5);
+    p = Offset(
+      _agLerp(560, 740, climb),
+      _gb - 20 - step * 24.0 - math.sin((i - step) * math.pi) * 6 + 6,
+    );
+    s = _agLerp(0.68, 1.0, climb);
+  }
+  _agSaye(c, p, s, time, sa, seed: 14);
 }
 
 // ------------------------------------------------------------- Gün doğumu
 
-const _stoneGiant = _Look(
-  hat: _Hat.none,
-  garb: _Garb.tunic,
-  broad: 1.7,
-  belt: false,
-);
-
 void _bSunrise(Canvas c, double time, double u, double n) {
-  final sun = _span(u, 0.2, 1.6);
-  c.drawCircle(Offset(700, _gb + 30 - 90 * sun), 80, _hole(0.25 + 0.4 * sun));
-  _floor(c, 0.9);
-  final x = _walkX(u, n, 140, 560);
-  // 0: taştan dev uyanır ve peşine düşer.
-  final a0 = _heroA(u, 0);
-  var shake = 0.0;
-  if (a0 > 0) {
-    final step = (time * 1.2) % 1;
-    shake = math.pow(1 - step, 6) * 4;
-    final gx = 40 + _span(u, 0.2, 0.95) * 150;
-    _person(
-      c,
-      Offset(gx, _gb + 12 - math.sin(step * math.pi) * 8),
-      230,
-      a0,
-      _stoneGiant,
-      arm: -1.2,
-      time: 0,
-    );
-    final seam = _stroke(_hole(0.35 * a0), 1.4);
-    for (var i = 0; i < 5; i++) {
-      c.drawLine(
-        Offset(gx - 30 + i * 12.0, _gb - 260 + i * 40),
-        Offset(gx - 10 + i * 12.0, _gb - 240 + i * 40),
-        seam,
-      );
-    }
-    for (var i = 0; i < 8; i++) {
-      c.drawCircle(
-        Offset(gx + 30 + i * 9.0, _gb - 4 - shake * i % 7),
-        2,
-        _ink(0.6 * a0),
-      );
-    }
-  }
-  // 1: güneş taş yüzlere vurur; Kandilcilerin ışığı.
-  final a1 = _heroA(u, 1);
-  if (a1 > 0) {
-    _tasvirKandilci(c, Offset(640, _gb + 12), 0.8, time, a1);
-    c.drawRect(Rect.fromLTWH(560, _gb - 70, 40, 70), _ink(a1));
-    final reach = _span(u, 1.4, 1.8);
-    c.drawCircle(
-      Offset(580, _gb - 92),
-      16 + 10 * reach,
-      _hole((0.6 + 0.4 * reach) * a1),
-    );
-    c.drawPath(
-      Path()
-        ..moveTo(700, 200)
-        ..lineTo(560, _gb - 100)
-        ..lineTo(600, _gb - 84)
-        ..close(),
-      _hole(0.25 * a1),
-    );
-  }
-  _sayeAt(c, Offset(x, _gb + 12 + shake), time);
+  final a0 = _agWin(u, 0, 1, n);
+  if (a0 > 0) _agGiantWalk(c, time, u, a0);
+  final a1 = _agWin(u, 1, 2, n);
+  if (a1 > 0) _agFirstLight(c, time, u, a1);
 }
 
 // ------------------------------------------------------------- Kar Yolu
