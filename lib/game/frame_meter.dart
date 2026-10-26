@@ -35,6 +35,9 @@ class FrameMeter {
   int _logFrames = 0;
   final _logClock = Stopwatch()..start();
   int _steps = 0;
+  double _maxBuild = 0;
+  double _maxRaster = 0;
+  int _slow = 0;
 
   /// Oyun adımı sayacı (ölçüm için).
   void countStep() {
@@ -50,14 +53,26 @@ class FrameMeter {
         print(
           '[kare] çizilen ${(_logFrames / s).toStringAsFixed(1)}/sn, '
           'oyun adımı ${(_steps / s).toStringAsFixed(1)}/sn, çizici '
-          '${ui.ImageFilter.isShaderFilterSupported ? 'Impeller' : 'Skia'}',
+          '${ui.ImageFilter.isShaderFilterSupported ? 'Impeller' : 'Skia'}, '
+          'en uzun kurma ${_maxBuild.toStringAsFixed(1)} ms, çizim '
+          '${_maxRaster.toStringAsFixed(1)} ms, 20 ms\'yi aşan $_slow kare',
         );
         _logFrames = 0;
         _steps = 0;
+        _maxBuild = 0;
+        _maxRaster = 0;
+        _slow = 0;
         _logClock.reset();
       }
     }
     for (final t in timings) {
+      if (_fpsLog) {
+        final b = t.buildDuration.inMicroseconds / 1000;
+        final r = t.rasterDuration.inMicroseconds / 1000;
+        if (b > _maxBuild) _maxBuild = b;
+        if (r > _maxRaster) _maxRaster = r;
+        if (b > 20 || r > 20) _slow++;
+      }
       final w = t.buildDuration > t.rasterDuration
           ? t.buildDuration
           : t.rasterDuration;

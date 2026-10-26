@@ -66,6 +66,16 @@ static void my_application_activate(GApplication* application) {
   g_autoptr(FlDartProject) project = fl_dart_project_new();
   fl_dart_project_set_dart_entrypoint_arguments(
       project, self->dart_entrypoint_arguments);
+  // Skia çizicisi (Windows'taki gibi): Impeller masaüstünde her karede bütün
+  // sahneyi yeniden çiziyor, güçlü ekran kartında da kare kaçırıp
+  // takılıyordu (Yeşil Kubbe'de çizim 20-50 ms). "--impeller" ile açılırsa
+  // karşılaştırma için Impeller seçilir.
+  gboolean impeller = FALSE;
+  for (gchar** arg = self->dart_entrypoint_arguments;
+       arg != nullptr && *arg != nullptr; arg++) {
+    if (g_strcmp0(*arg, "--impeller") == 0) impeller = TRUE;
+  }
+  fl_dart_project_set_enable_impeller(project, impeller);
 
   FlView* view = fl_view_new(project);
   GdkRGBA background_color;

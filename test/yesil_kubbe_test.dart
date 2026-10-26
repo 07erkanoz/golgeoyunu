@@ -7,6 +7,7 @@ import 'package:golge/game/entities.dart';
 import 'package:golge/game/erlik.dart';
 import 'package:golge/game/final.dart';
 import 'package:golge/game/golge_game.dart';
+import 'package:golge/game/konya.dart';
 import 'package:golge/game/level.dart';
 import 'package:golge/game/levels.dart';
 import 'package:golge/game/player.dart';
@@ -33,36 +34,42 @@ void main() {
     expect(nextLevel(19), isNull);
   });
 
-  testWithGame<GolgeGame>('avlu: iki ayna çevrilince türbenin kapısı açılır',
-      GolgeGame.new, (game) async {
-    await load(game);
-    final gate = game.world.children
-        .whereType<Gate>()
-        .firstWhere((g) => (g.position.x / kTile).round() == 74);
-    run(game, 1);
-    expect(gate.opening, isFalse);
-    for (final m in game.world.children.whereType<Mirror>()) {
-      if (m.col < 70) m.use();
-    }
-    run(game, 1.5);
-    expect(gate.opening, isTrue);
-  });
-
-  testWithGame<GolgeGame>('koridor: her kafes kendi kapısını açar',
-      GolgeGame.new, (game) async {
-    await load(game);
-    final cages = game.world.children.whereType<KutCage>().toList()
-      ..sort((a, b) => a.position.x.compareTo(b.position.x));
-    expect(cages.length, 3);
-    for (final (i, col) in [96, 136, 186].indexed) {
-      final gate = game.world.children
-          .whereType<Gate>()
-          .firstWhere((g) => (g.position.x / kTile).round() == col);
+  testWithGame<GolgeGame>(
+    'avlu: iki ayna çevrilince türbenin kapısı açılır',
+    GolgeGame.new,
+    (game) async {
+      await load(game);
+      final gate = game.world.children.whereType<Gate>().firstWhere(
+        (g) => (g.position.x / kTile).round() == 74,
+      );
+      run(game, 1);
       expect(gate.opening, isFalse);
-      cages[i].use();
-      expect(gate.opening, isTrue, reason: 'kafes $i → kapı $col');
-    }
-  });
+      for (final m in game.world.children.whereType<Mirror>()) {
+        if (m.col < 70) m.use();
+      }
+      run(game, 1.5);
+      expect(gate.opening, isTrue);
+    },
+  );
+
+  testWithGame<GolgeGame>(
+    'koridor: her kafes kendi kapısını açar',
+    GolgeGame.new,
+    (game) async {
+      await load(game);
+      final cages = game.world.children.whereType<KutCage>().toList()
+        ..sort((a, b) => a.position.x.compareTo(b.position.x));
+      expect(cages.length, 3);
+      for (final (i, col) in [96, 136, 186].indexed) {
+        final gate = game.world.children.whereType<Gate>().firstWhere(
+          (g) => (g.position.x / kTile).round() == col,
+        );
+        expect(gate.opening, isFalse);
+        cages[i].use();
+        expect(gate.opening, isTrue, reason: 'kafes $i → kapı $col');
+      }
+    },
+  );
 
   testWithGame<GolgeGame>(
     'Kandilci Başı: üç ayna ay ışığını kilitlere düşürür; gölgesini görür, '
@@ -71,9 +78,9 @@ void main() {
     (game) async {
       await load(game);
       final k = game.world.children.whereType<KandilciBasi>().single;
-      final exit = game.world.children
-          .whereType<Gate>()
-          .firstWhere((g) => (g.position.x / kTile).round() == 303);
+      final exit = game.world.children.whereType<Gate>().firstWhere(
+        (g) => (g.position.x / kTile).round() == 303,
+      );
       final ms = game.world.children
           .whereType<Mirror>()
           .where((m) => m.col > 250)
@@ -112,6 +119,46 @@ void main() {
       }
       expect(died, isTrue);
       expect(k.solved, isFalse);
+    },
+  );
+
+  testWithGame<GolgeGame>(
+    'kasnağın feneri hızla geçerken silmez; ucunda bekleyeni siler',
+    GolgeGame.new,
+    (game) async {
+      game.onGameResize(Vector2(1280, 720));
+      game.debugLoadLevel(19);
+      await game.ready();
+      game.cinematic = false;
+      // Yalnız fenerler: yükselen ışık seli ve Kandilciler karışmasın.
+      for (final c in game.world.children.toList()) {
+        if (c is LightFlood || c is Guard || c is KandilciBasi) {
+          c.removeFromParent();
+        }
+      }
+      await game.ready();
+      final p = game.player!;
+      p.position.setFrom(
+        Level.standOn(Vector2(207 * kTile, 33 * kTile), Player.w, Player.h),
+      );
+      final lamp = game.world.children.whereType<GreatLamp>().firstWhere(
+        (g) => (g.position.x / kTile).floor() == 203,
+      );
+      var touched = false;
+      for (var i = 0; i < 60 * 20 && !p.isDead; i++) {
+        game.update(1 / 60);
+        if (lamp.exposure > 0) touched = true;
+      }
+      expect(touched, isTrue, reason: 'huzme üstünden geçti');
+      expect(p.isDead, isFalse, reason: 'hızla geçen huzme silmez');
+      // İkinci fenerin döndüğü uçta (huzme orada oyalanır) bekleyen silinir.
+      p.position.setFrom(
+        Level.standOn(Vector2(221 * kTile, 20 * kTile), Player.w, Player.h),
+      );
+      for (var i = 0; i < 60 * 20 && !p.isDead; i++) {
+        game.update(1 / 60);
+      }
+      expect(p.isDead, isTrue);
     },
   );
 }

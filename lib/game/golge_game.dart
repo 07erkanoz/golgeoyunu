@@ -339,6 +339,27 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     // Geliştirici ölçümü: doğrudan bir bölümle açılır (DEV ve START_LEVEL).
     if (const bool.fromEnvironment('DEV') && _startLevel >= 0) {
       debugLoadLevel(_startLevel);
+      // Geliştirici ölçümü: belli bir hücrede başla (START_COL, START_ROW).
+      const col = int.fromEnvironment('START_COL', defaultValue: -1);
+      const row = int.fromEnvironment('START_ROW', defaultValue: -1);
+      if (col >= 0 && row >= 0) {
+        player?.position.setFrom(
+          Level.standOn(
+            Vector2(col * kTile.toDouble(), row * kTile.toDouble()),
+            Player.w,
+            Player.h,
+          ),
+        );
+        debugSnapCamera();
+      }
+      if (const bool.fromEnvironment('LOWGFX')) Settings.lowGraphics = true;
+      if (const bool.fromEnvironment('NOREAL')) Realism.on = false;
+      if (const bool.fromEnvironment('NOFAR')) Realism.debugNoFar = true;
+      if (const bool.fromEnvironment('NORIM')) Realism.debugNoLight = true;
+      if (const bool.fromEnvironment('NONEAR')) Realism.debugNoNear = true;
+      if (const bool.fromEnvironment('NOREFLECT')) {
+        Realism.debugNoReflect = true;
+      }
     }
     // Geliştirici ölçümü: bir bölümün perdesini oynatır, anlatım sesinin
     // durumunu satır satır yazar (DEV ve START_PERDE).
@@ -357,6 +378,11 @@ class GolgeGame extends FlameGame with KeyboardEvents {
       );
     }
   }
+
+  /// Geliştirici ölçümü: iki saniyede bir Sâye'nin yeri ve durumu.
+  static const _gameLog =
+      bool.fromEnvironment('DEV') && bool.fromEnvironment('GAMELOG');
+  double _gameLogT = 0;
 
   static const _startPerde = int.fromEnvironment(
     'START_PERDE',
@@ -1223,7 +1249,12 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         for (var i = 0; i < level.chandelierCells.length; i++)
           ..._chandelier(level.chandelierCells[i], i),
         for (var i = 0; i < level.lampCells.length; i++)
-          GreatLamp(level.lampCells[i], index: i),
+          GreatLamp(
+            level.lampCells[i],
+            index: i,
+            // Yeşil Kubbe (final): uzak ve uzun fenerler, seyrek saklanma.
+            gentle: level.def.finale != null,
+          ),
         // İki fener aynı şerefedeyse aralarında bir minare yükselir.
         if (level.lampCells.length >= 2)
           MinaretCap(
@@ -1961,6 +1992,18 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     if (!dt.isFinite || dt < 0) dt = 0;
     frameMeter.countStep();
     if (perfShown) _updatePerf(dt);
+    if (_gameLog && player != null) {
+      _gameLogT += dt;
+      if (_gameLogT > 2) {
+        _gameLogT = 0;
+        final p = player!;
+        debugPrint(
+          '[oyun] bölüm $levelIndex, Sâye ${(p.center / kTile).toString()}, '
+          '${p.state}${p.isDead ? ' (ölü)' : ''}, perde ${narration.inCinematic}, '
+          'nesne ${world.children.length}',
+        );
+      }
+    }
     if (_startPerde >= 0 && GameAudio.instance.voiceStatus != _perdeLog) {
       _perdeLog = GameAudio.instance.voiceStatus;
       debugPrint('perde ${_perdeClock.elapsedMilliseconds} ms: $_perdeLog');

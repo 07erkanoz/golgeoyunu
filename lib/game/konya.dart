@@ -455,7 +455,7 @@ class CandleTray extends Deck {
 /// tarar. Huzmesi duvarda, kubbede, bacada kesilir; arkasına saklanılır.
 /// Huzmede kalan gölge birkaç an içinde silinir.
 class GreatLamp extends PositionComponent with HasGameReference<GolgeGame> {
-  GreatLamp(Vector2 cell, {required int index})
+  GreatLamp(Vector2 cell, {required int index, this.gentle = false})
     : _phase = index * 1.7,
       super(position: cell + Vector2(kTile / 2, kTile / 2), priority: 22);
 
@@ -464,7 +464,18 @@ class GreatLamp extends PositionComponent with HasGameReference<GolgeGame> {
   static const double halfWidth = 0.1;
   static const double mid = math.pi / 2;
   static const double sweep = 1.15;
+  /// Konya'nın damları: saklanma yerleri (revaklar) yakın; huzme her
+  /// geçişte siler, oyuncu ışığı uzaktayken revaktan revaka koşar.
   static const double period = 7.0;
+
+  /// Yeşil Kubbe'nin kasnağı: fener daha uzak ve uzun (26 kare), saklanma
+  /// yerleri seyrek. Huzmenin ucu koşudan kat kat hızlı geçer; her geçişte
+  /// silince kaçmak imkânsızdı (ışığın değdiği her durak siliniyordu).
+  /// Burada tarama daha ağır, hızla geçen huzme silmez; üstünde oyalanan,
+  /// döndüğü uçta bekleyen silinir.
+  final bool gentle;
+  double get _period => gentle ? 9.5 : period;
+  double get _limit => gentle ? 0.5 : exposureLimit;
 
   /// Huzmede bu kadar kalan gölge silinir.
   static const double exposureLimit = 0.2;
@@ -474,7 +485,7 @@ class GreatLamp extends PositionComponent with HasGameReference<GolgeGame> {
   double exposure = 0;
 
   double get beamAngle =>
-      mid + sweep * math.sin(_t * 2 * math.pi / period + _phase);
+      mid + sweep * math.sin(_t * 2 * math.pi / _period + _phase);
 
   /// Huzmenin kenarlarını oluşturan ışınların ucu (duvarda kesilir).
   final rays = <Offset>[];
@@ -495,15 +506,13 @@ class GreatLamp extends PositionComponent with HasGameReference<GolgeGame> {
       }
       exposure += dt;
       game.threat = math.max(game.threat, 0.9);
-      // Huzmenin kenarına bir an değen kaçabilir (eskiden 0,1 sn idi, tepkiye
-      // vakit kalmıyordu). Açıkta durana huzmenin tam geçişi ~0,3 sn sürer:
-      // eşik bundan kısa kalmalı, yoksa gölgeye saklanmak gereksizleşir.
-      if (exposure > exposureLimit) {
+      // Huzmenin kenarına bir an değen kaçabilir (bkz. exposureLimit).
+      if (exposure > _limit) {
         exposure = 0;
         p.die(cause: DeathCause.light);
       }
     } else {
-      exposure = math.max(0, exposure - dt * 2);
+      exposure = math.max(0, exposure - dt * (gentle ? 4 : 2));
     }
   }
 
