@@ -174,7 +174,11 @@ def doubled(heard: str, text: str) -> str:
     hl, pl = len("".join(h)), len("".join(p))
     if hl > pl * 1.12 + 3:
         return f"{hl - pl} fazla harf"
+    pairs = set(zip(p, p[1:]))
     for a, b in zip(h, h[1:]):
+        # Metnin kendi ikilemeleri ("ev ev", "birer birer") hata değil.
+        if (a, b) in pairs:
+            continue
         if a == b or (len(a) >= 2 and b.startswith(a) and a not in p):
             return f"ikileme: {a} {b}"
     if difflib.SequenceMatcher(None, "".join(h), "".join(p)).ratio() < 0.8:
@@ -463,7 +467,8 @@ def main() -> None:
                     pieces.append(tts(a.dil, piece, p_prev, p_next, who))
                 mp3 = join(pieces)
                 heard = s.transcribe(wav16(mp3))
-                ok, score = check(heard, tx[i])
+                # Beklenen: seslendirilen parçalar (okunmayan "dedi" ekleri hariç).
+                ok, score = check(heard, " ".join(plain(p) for _, p in segs))
                 if best is None or score > best[0]:
                     best = (score, mp3, heard)
                 if ok:
