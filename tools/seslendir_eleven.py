@@ -90,6 +90,125 @@ def scripted(lang: str, sc: dict[str, list[dict]]) -> dict[str, list[str]]:
     return out
 
 
+# Etiket yalnız ardındaki cümleye işliyor; satırın her cümlesine masalcı
+# tarifi konur (--cumle). Kısa etiket yerine önsözde işe yarayan türden tarif.
+RICH = {
+    "[slowly, like an old storyteller beginning a tale]": "[slowly, like an old storyteller beginning a tale]",
+    "[warm storyteller]": "[warmly, as a storyteller]",
+    "[low, tense]": "[low, tense, as a storyteller]",
+    "[low, ominous]": "[darkly, as a storyteller]",
+    "[sad, restrained]": "[sadly, holding back tears]",
+    "[quiet wonder]": "[softly, full of wonder]",
+    "[gentle, hopeful]": "[gently, with hope]",
+    "[quiet resolve]": "[quietly, with courage]",
+    "[urgent, controlled]": "[urgently, excited]",
+    "[tender, moved]": "[tenderly, deeply moved]",
+    "[relieved, softer]": "[with relief, softly]",
+    "[faint smile]": "[smiling, playful]",
+    "[hushed, intimate]": "[hushed, like a secret]",
+    "[gentle, peaceful]": "[peacefully, gently]",
+    "[tender, voice trembling]": "[tenderly, voice trembling]",
+    "[weary, gentle]": "[wearily, gently]",
+    "[tender, quiet conviction]": "[tenderly, with conviction]",
+    "[quiet, plain]": "[quietly, plainly]",
+    "[low, slow]": "[slowly, deep and low]",
+    "[joyful, excited]": "[joyfully, excited]",
+    "[cheerful, playful]": "[cheerfully, playfully]",
+}
+CUMLE = False
+# A yolu (--ayri): anlatıcının her cümlesi ayrı ve bağlamsız istek; her biri
+# "ilk cümle" gibi başlar, ses satırın sonuna dek düzleşmez.
+AYRI = False
+STORY = {
+    "[slowly, like an old storyteller beginning a tale]": "[slowly, like an old storyteller beginning a tale]",
+    "[warm storyteller]": "[warmly, like an old storyteller]",
+    "[low, tense]": "[tense, low, like an old storyteller]",
+    "[low, ominous]": "[darkly, like an old storyteller]",
+    "[sad, restrained]": "[sadly, like an old storyteller]",
+    "[quiet wonder]": "[in wonder, like an old storyteller]",
+    "[gentle, hopeful]": "[hopefully, like an old storyteller]",
+    "[quiet resolve]": "[bravely, like an old storyteller]",
+    "[urgent, controlled]": "[urgently, like an old storyteller]",
+    "[tender, moved]": "[tenderly, like an old storyteller]",
+    "[relieved, softer]": "[relieved, like an old storyteller]",
+    "[faint smile]": "[smiling, like an old storyteller]",
+    "[hushed, intimate]": "[hushed, like an old storyteller]",
+    "[gentle, peaceful]": "[peacefully, like an old storyteller]",
+    "[tender, voice trembling]": "[trembling, like an old storyteller]",
+    "[weary, gentle]": "[wearily, like an old storyteller]",
+    "[tender, quiet conviction]": "[tenderly, like an old storyteller]",
+    "[quiet, plain]": "[quietly, like an old storyteller]",
+    "[low, slow]": "[slowly, like an old storyteller]",
+    "[joyful, excited]": "[joyfully, like an old storyteller]",
+    "[cheerful, playful]": "[playfully, like an old storyteller]",
+}
+
+
+def narrator_pieces(lang: str, seg: str) -> list[bytes]:
+    """A yolu: parçanın cümleleri tek tek, bağlamsız, masalcı tarifiyle."""
+    m = re.match(r"(\[[^\]]*\])\s*(.*)", seg, re.S)
+    tag, body = (m.group(1), m.group(2)) if m else ("[warm storyteller]", seg)
+    rich = STORY.get(tag, tag)
+    out = []
+    for snt in sentences(body):
+        best = None
+        for attempt in range(4):
+            mp3 = tts(lang, f"{rich} {snt}", None, None, "anlatici")
+            heard = s.transcribe(wav16(mp3))
+            bad = doubled(heard, snt)
+            if not bad:
+                best = mp3
+                break
+            print(f"      cümle yeniden ({bad}): {heard[:70]}", flush=True)
+            best = best or mp3
+        out.append(best)
+    return out
+
+
+def doubled(heard: str, text: str) -> str:
+    """İkileme ya da fazladan söz: duyulan, metinden uzun ya da yan yana
+    yinelenen söz/hece varsa nedenini döndürür."""
+    h, p = words(heard), words(text)
+    # Bitişik/ayrık yazım farkı ("ateşböcekleri" / "ateş böcekleri") fazla söz
+    # sayılmasın: uzunluk harf üzerinden ölçülür.
+    hl, pl = len("".join(h)), len("".join(p))
+    if hl > pl * 1.12 + 3:
+        return f"{hl - pl} fazla harf"
+    for a, b in zip(h, h[1:]):
+        if a == b or (len(a) >= 2 and b.startswith(a) and a not in p):
+            return f"ikileme: {a} {b}"
+    if difflib.SequenceMatcher(None, "".join(h), "".join(p)).ratio() < 0.8:
+        return "eşleşmedi"
+    return ""
+
+
+def sentences(body: str) -> list[str]:
+    """Yalnız gerçek cümle sonlarında (. ! ?) böler; üç nokta, iki nokta ve
+    noktalı virgül cümlenin içinde kalır (tek kelimelik parça ikileniyordu).
+    Kısa parçalar komşusuna eklenir."""
+    raw = [s for s in re.split(r"(?<=[.!?])\s+", body.strip()) if re.search(r"\w", s)]
+    out: list[str] = []
+    for s in raw:
+        if out and (len(s) < 25 or len(out[-1]) < 25):
+            out[-1] = out[-1] + " " + s
+        else:
+            out.append(s)
+    return out
+
+
+def per_sentence(tag: str, text: str) -> str:
+    """Anlatıcı parçasında her cümlenin başına tarif."""
+    rich = RICH.get(tag, tag)
+    parts = re.split(r"(?<=[.!?…])\s+", text.strip())
+    return " ".join(f"{rich} {p}" for p in parts if p)
+
+
+SPEECH_TAG = re.compile(
+    r"^(dedi|derdi|demişti|diye|sordu|fısıldadı|bağırdı|seslendi|said|asked|whispered|cried|he said|she said|it said)\b",
+    re.I,
+)
+
+
 def full_index(lang: str, w: str, i: int) -> int:
     """Başlık kartları sayılmayan satır sırasından metin.json'daki sıraya."""
     lines = METIN[lang][w] if w in ("prologue", "epilogue") else METIN[lang][w.split(":")[0]][w.split(":")[1]]
@@ -109,7 +228,7 @@ def segments(lang: str, w: str, i: int, text: str) -> list[tuple[str, str]]:
     tag, body = (m.group(1), m.group(2)) if m else ("", text)
     spec = SPEAKERS.get(w, {}).get(str(full_index(lang, w, i)))
     if not spec:
-        return [("anlatici", text)]
+        return [("anlatici", per_sentence(tag, body) if CUMLE else text)]
     out: list[tuple[str, str]] = []
     n = 0
     for part in re.split(r"(“[^”]*”)", body):
@@ -120,12 +239,24 @@ def segments(lang: str, w: str, i: int, text: str) -> list[tuple[str, str]]:
         else:
             who = "anlatici"
             piece = part.strip().lstrip(",;").strip()
+            # Kahraman kendi sesiyle konuşurken "dedi", "diye fısıldadı
+            # Hüdhüd", "said the Hoopoe" gibi kısa ekler okunmaz (altyazıda
+            # kalır): tek başına üretilen kırıntı ses ikileniyordu.
+            if SPEECH_TAG.match(piece) and len(piece.split()) <= 4:
+                continue
         if not re.search(r"\w", piece):
             continue
         if out and out[-1][0] == who:
-            out[-1] = (who, out[-1][1] + " " + piece)
+            prev = out[-1][1]
+            # Arada okunmayan "dedi" kalktıysa: "istemiş, Her gece" → "istemiş. Her gece"
+            if prev.endswith(",") and piece[:1].isupper():
+                prev = prev[:-1] + "."
+            out[-1] = (who, prev + " " + piece)
         else:
             out.append((who, piece))
+    out = [(who, p[:-1] + "." if p.endswith(",") else p) for who, p in out]
+    if CUMLE:
+        return [(who, per_sentence(tag, piece) if who == "anlatici" else f"{tag} {piece}".strip()) for who, piece in out]
     return [(who, f"{tag} {piece}".strip()) for who, piece in out]
 
 
@@ -170,12 +301,15 @@ def game_segments(lang: str, e: dict) -> list[tuple[str, str]] | None:
             who, piece = ("saye" if mine else "usta"), q
         else:
             who, piece = "saye", part.strip().lstrip(",;").strip()
+            if SPEECH_TAG.match(piece) and len(piece.split()) <= 3:
+                continue
         if not re.search(r"\w", piece):
             continue
         if out and out[-1][0] == who:
             out[-1] = (who, out[-1][1] + " " + piece)
         else:
             out.append((who, piece))
+    out = [(who, p[:-1] + "." if p.endswith(",") else p) for who, p in out]
     return [(who, f"{OYUN_TAG[who]} {p}") for who, p in out]
 
 
@@ -272,15 +406,22 @@ def main() -> None:
     ap.add_argument("--kimlik", nargs="*", help="yalnız bu satırlar")
     ap.add_argument("--yeniden", action="store_true", help="var olanı da yeniden üret")
     ap.add_argument("--kuru", action="store_true", help="üretmeden seslendirme kopyasını yaz")
+    ap.add_argument("--cumle", action="store_true", help="anlatıcının her cümlesine masalcı tarifi")
+    ap.add_argument("--ayri", action="store_true", help="A yolu: anlatıcının her cümlesi ayrı, bağlamsız")
+    ap.add_argument("--deneme", help="oyuna yazmadan bu klasöre üret (karşılaştırma)")
     ap.add_argument("--oyunici", action="store_true", help="hatıralar (Sâye ve usta) ve Gökyolu/Kaf fısıltıları (Hüdhüd)")
     a = ap.parse_args()
     if a.oyunici:
         return game_lines(a)
+    global CUMLE, AYRI
+    CUMLE = a.cumle
+    AYRI = a.ayri
 
     sc = scenes(a.dil)
     texts = scripted(a.dil, sc)
-    out_dir = pathlib.Path(f"assets/voice/{a.dil}")
-    done_file = pathlib.Path(f"build/ses/eleven_{a.dil}.json")
+    out_dir = pathlib.Path(a.deneme or f"assets/voice/{a.dil}")
+    out_dir.mkdir(parents=True, exist_ok=True)
+    done_file = pathlib.Path(f"build/ses/eleven_{a.dil}.json" if not a.deneme else f"{a.deneme}/done.json")
     done = json.loads(done_file.read_text()) if done_file.exists() else {}
     order = ["prologue"] + [f"{k}:{i}" for i in range(len(sc)) for k in ("perde", "kopru")] + ["epilogue"]
     bad = []
@@ -293,18 +434,30 @@ def main() -> None:
                 continue
             segs = segments(a.dil, w, i, tx[i])
             sig = tx[i] + "|" + ",".join(who for who, _ in segs)
+            if AYRI and any(who == "anlatici" for who, _ in segs):
+                sig += "|ayri"
             if a.kuru:
                 print(f"{w} {e['id']} " + " ‖ ".join(f"{who}: {p}" for who, p in segs))
                 continue
             # Daha önce bu kadroyla üretildiyse geç.
-            if not a.yeniden and done.get(e["id"]) == sig and (out_dir / f"{e['id']}.mp3").exists():
-                continue
+            if not a.yeniden and (out_dir / f"{e['id']}.mp3").exists():
+                old = done.get(e["id"], "")
+                # Aynı metin A yoluyla zaten üretildiyse ("dedi" ekleri sonradan
+                # çıkarılsa da) yeniden üretilmez.
+                if old == sig or (AYRI and old.startswith(tx[i] + "|") and old.endswith("|ayri")):
+                    continue
+                # A yolu yalnız anlatıcıyı yeniler; anlatıcısız satırlar kalır.
+                if AYRI and not any(who == "anlatici" for who, _ in segs):
+                    continue
             prev = tx[i - 1] if i > 0 else None
             nxt = tx[i + 1] if i + 1 < len(tx) else None
             best = None
-            for attempt in range(4):
+            for attempt in range(3 if AYRI else 4):
                 pieces = []
                 for k, (who, piece) in enumerate(segs):
+                    if AYRI and who == "anlatici":
+                        pieces += narrator_pieces(a.dil, piece)
+                        continue
                     p_prev = segs[k - 1][1] if k > 0 else prev
                     p_next = segs[k + 1][1] if k + 1 < len(segs) else nxt
                     pieces.append(tts(a.dil, piece, p_prev, p_next, who))
