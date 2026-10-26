@@ -1,0 +1,89 @@
+{
+ "_aciklama": "Kahramanların sesleri (ElevenLabs voice_id). anlatici: Seyfullah / David; saye: Miranda (iki dilde); usta: tasarlanan Usta (Hayalî) / Peter. Öbürleri tarifle tasarlandı.",
+ "ses": {
+  "anlatici": {
+   "tr": "mF7tIc9VLrznhGooGjaT",
+   "en": "WdZjiN0nNcik2LBjOHiv"
+  },
+  "saye": {
+   "tr": "SpujdQyiKXTCe05mAnq6",
+   "en": "SpujdQyiKXTCe05mAnq6"
+  },
+  "usta": {
+   "tr": "M6xnW5LCMpKB6Wx5p7Dw",
+   "en": "Ix8C14HEHgIQkJswik2o"
+  },
+  "hudhud": {
+   "tr": "Wis2DUPRJ8q6DD4RY60A",
+   "en": "aRrWfngKlHfKlruWVgj7"
+  },
+  "antiochos": {
+   "tr": "fi2aCE1oxfdAi7IEMx0P",
+   "en": "6WDBrkcQzdly1UnHzjvr"
+  },
+  "akana": {
+   "tr": "6KfEeX5OdLcZ5f7CcjM0",
+   "en": "HUAGZitEXFlVUbFEVaKs"
+  },
+  "kam": {
+   "tr": "wNiEgHIgdkE4IZKbwu4I",
+   "en": "XJGgrwn6wr07eF827qPd"
+  },
+  "hezarfen": {
+   "tr": "dLAxUPEUCZ9cz4KHisnL",
+   "en": "L1aJrPa7pLJEyYlh3Ilq"
+  },
+  "lagari": {
+   "tr": "gsJ9nrlXYbPztJxC4fwc",
+   "en": "fnYMz3F5gMEDGMWcH1ex"
+  },
+  "demirci": {
+   "tr": "QAABwpMjK3YR9pYW5FDO",
+   "en": "slqy4DcONcsk0O1jNin8"
+  },
+  "kervanci": {
+   "tr": "0DihkedLJYKoWg7H1u4d",
+   "en": "0lp4RIz96WD1RUtvEu3Q"
+  },
+  "coban1": {
+   "tr": "tOqnHSMt5y3uRBgH7e8J",
+   "en": "WcBjenfRbq6mp5hToyo4"
+  },
+  "coban2": {
+   "tr": "cnssGWqE7kJax1MvsjA8",
+   "en": "UzI1NsMEV3ni5JRkRSls"
+  },
+  "kandilcibasi": {
+   "tr": "Rn6ATQ4HFbyhBC6mze4Z",
+   "en": "CMnmjgHVfO80YDEjKZ2S"
+  },
+  "suiyesi": {
+   "tr": "kYquas5ozJujvQ7WhFl4",
+   "en": "mgVqp9c1CpXOf5jJ6O2v"
+  },
+  "guvercin": {
+   "tr": "8BxDhxAb7r2PwoDDIl1G",
+   "en": "8dMxL4V5r9ggxyOKlhe6"
+  },
+  "peri": {
+   "tr": "RnEpz5gU7IzgiWq3ch5E",
+   "en": "l1FRWe7cMIA71OOLnGnM"
+  },
+  "calkuyruk": {
+   "tr": "26a19WkZ2eVdHpbUrx0S",
+   "en": "QPXYJADQAQPiRFBpmous"
+  },
+  "ayazata": {
+   "tr": "4KacbPm1BWzYKAFZ1RWQ",
+   "en": "fF90WdomTtJnxIi9zaDk"
+  },
+  "tulpar": {
+   "tr": "gWsIcwXLMxocwYF4sxRI",
+   "en": "2cyzQfifriRA6AYJcTWM"
+  },
+  "gokboru": {
+   "tr": "ywd78jXrrzn0QChStNbN",
+   "en": "BnAbyLhmXsLnQqrrQgJe"
+  }
+ }
+}
