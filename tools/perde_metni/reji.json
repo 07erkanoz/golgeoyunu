@@ -1,0 +1,372 @@
+{
+ "_aciklama": "Masalcı rejisi: her sahnede satır sırasıyla birer etiket kodu (başlık kartları sayılmaz). İngilizce aynı sıradaki etiketi alır. Etiketler yalnız seslendirmeye gider, altyazıya girmez. 'durak': seslendirme kopyasında yapılan yer değiştirmeler (üç nokta = masalcı durağı). 'etiket_en': İngilizcede farklı okunan etiketler (uzun açılış etiketi İngiliz seste ilk cümleyi iki kez okuttu).",
+ "etiket": {
+  "acilis": "[slowly, like an old storyteller beginning a tale]",
+  "masal": "[warm storyteller]",
+  "gergin": "[low, tense]",
+  "tekin": "[low, ominous]",
+  "huzun": "[sad, restrained]",
+  "hayret": "[quiet wonder]",
+  "umut": "[gentle, hopeful]",
+  "karar": "[quiet resolve]",
+  "acele": "[urgent, controlled]",
+  "sefkat": "[tender, moved]",
+  "ferah": "[relieved, softer]",
+  "gulumse": "[faint smile]",
+  "yakin": "[hushed, intimate]",
+  "dingin": "[gentle, peaceful]",
+  "titrek": "[tender, voice trembling]",
+  "yorgun": "[weary, gentle]",
+  "inanc": "[tender, quiet conviction]",
+  "yalin": "[quiet, plain]",
+  "agir": "[low, slow]"
+ },
+ "sahne": {
+  "prologue": [
+   "acilis",
+   "tekin",
+   "gergin",
+   "huzun",
+   "umut",
+   "hayret",
+   "masal",
+   "huzun",
+   "yakin",
+   "umut"
+  ],
+  "kopru:0": [
+   "hayret",
+   "gergin",
+   "umut"
+  ],
+  "perde:1": [
+   "huzun",
+   "masal",
+   "masal",
+   "hayret",
+   "huzun",
+   "karar"
+  ],
+  "kopru:1": [
+   "gergin",
+   "hayret",
+   "karar"
+  ],
+  "perde:2": [
+   "ferah",
+   "masal",
+   "gulumse",
+   "hayret",
+   "yakin",
+   "umut"
+  ],
+  "kopru:2": [
+   "acele",
+   "gergin",
+   "hayret"
+  ],
+  "perde:3": [
+   "hayret",
+   "masal",
+   "masal",
+   "huzun",
+   "yakin"
+  ],
+  "kopru:3": [
+   "gergin",
+   "hayret",
+   "yakin"
+  ],
+  "perde:4": [
+   "yakin",
+   "sefkat",
+   "huzun",
+   "masal",
+   "huzun",
+   "tekin"
+  ],
+  "kopru:4": [
+   "gergin",
+   "masal",
+   "hayret"
+  ],
+  "perde:5": [
+   "hayret",
+   "masal",
+   "umut",
+   "gergin",
+   "sefkat",
+   "hayret"
+  ],
+  "kopru:5": [
+   "umut",
+   "hayret",
+   "huzun"
+  ],
+  "perde:6": [
+   "karar",
+   "masal",
+   "yakin",
+   "tekin",
+   "gergin"
+  ],
+  "kopru:6": [
+   "gergin",
+   "karar"
+  ],
+  "perde:7": [
+   "hayret",
+   "masal",
+   "tekin",
+   "gulumse",
+   "acele",
+   "karar"
+  ],
+  "kopru:7": [
+   "acele",
+   "gergin"
+  ],
+  "perde:8": [
+   "sefkat",
+   "huzun",
+   "huzun",
+   "karar",
+   "masal",
+   "umut"
+  ],
+  "kopru:8": [
+   "umut",
+   "yakin"
+  ],
+  "perde:9": [
+   "hayret",
+   "tekin",
+   "masal",
+   "tekin",
+   "karar"
+  ],
+  "kopru:9": [
+   "acele",
+   "acele"
+  ],
+  "perde:10": [
+   "gergin",
+   "tekin",
+   "agir",
+   "agir",
+   "acele"
+  ],
+  "kopru:10": [
+   "acele",
+   "ferah"
+  ],
+  "perde:11": [
+   "ferah",
+   "hayret",
+   "masal",
+   "yakin",
+   "tekin"
+  ],
+  "kopru:11": [
+   "hayret",
+   "gergin",
+   "yakin"
+  ],
+  "perde:12": [
+   "gergin",
+   "masal",
+   "tekin",
+   "gergin",
+   "tekin"
+  ],
+  "kopru:12": [
+   "gergin",
+   "acele",
+   "umut"
+  ],
+  "perde:13": [
+   "yakin",
+   "umut",
+   "yakin",
+   "dingin",
+   "gergin",
+   "yakin"
+  ],
+  "kopru:13": [
+   "karar",
+   "yakin",
+   "gergin"
+  ],
+  "perde:14": [
+   "tekin",
+   "sefkat",
+   "umut",
+   "gergin"
+  ],
+  "kopru:14": [
+   "gergin",
+   "umut",
+   "umut"
+  ],
+  "perde:15": [
+   "huzun",
+   "masal",
+   "gergin",
+   "karar",
+   "umut",
+   "masal",
+   "gergin"
+  ],
+  "kopru:15": [
+   "karar",
+   "acele",
+   "karar"
+  ],
+  "perde:16": [
+   "masal",
+   "yakin",
+   "hayret",
+   "masal",
+   "umut"
+  ],
+  "kopru:16": [
+   "hayret",
+   "acele"
+  ],
+  "perde:17": [
+   "hayret",
+   "ferah",
+   "masal",
+   "dingin",
+   "gergin",
+   "tekin",
+   "umut"
+  ],
+  "kopru:17": [
+   "gergin",
+   "acele",
+   "karar"
+  ],
+  "perde:18": [
+   "yakin",
+   "umut",
+   "gergin",
+   "masal",
+   "gergin"
+  ],
+  "kopru:18": [
+   "karar",
+   "ferah"
+  ],
+  "perde:19": [
+   "hayret",
+   "gergin",
+   "huzun",
+   "gergin"
+  ],
+  "kopru:19": [
+   "karar",
+   "umut",
+   "gergin",
+   "yakin"
+  ],
+  "perde:20": [
+   "yakin",
+   "masal",
+   "dingin",
+   "tekin",
+   "karar"
+  ],
+  "kopru:20": [
+   "gergin",
+   "hayret",
+   "gergin"
+  ],
+  "epilogue": [
+   "sefkat",
+   "huzun",
+   "titrek",
+   "sefkat",
+   "yorgun",
+   "dingin",
+   "sefkat",
+   "inanc",
+   "yalin",
+   "yalin",
+   "umut",
+   "sefkat",
+   "yakin",
+   "huzun",
+   "dingin"
+  ]
+ },
+ "durak": {
+  "tr": [
+   [
+    "prologue",
+    0,
+    "altmış yazıydı.",
+    "altmış yazıydı…"
+   ],
+   [
+    "prologue",
+    1,
+    "bıraktılar ne bir mum;",
+    "bıraktılar… ne bir mum;"
+   ],
+   [
+    "prologue",
+    2,
+    "Ardından ustayı",
+    "Ardından… ustayı"
+   ],
+   [
+    "prologue",
+    3,
+    "son gördüğü şey oydu",
+    "son gördüğü şey… oydu"
+   ],
+   [
+    "prologue",
+    4,
+    "işaretiydi bu;",
+    "işaretiydi bu…"
+   ],
+   [
+    "perde:1",
+    5,
+    "Sâye. Yine de uç.",
+    "Sâye… Yine de uç."
+   ],
+   [
+    "epilogue",
+    7,
+    "Duamdın.",
+    "Duamdın…"
+   ],
+   [
+    "perde:10",
+    3,
+    "Ve kar aktı.",
+    "Ve kar… aktı."
+   ]
+  ],
+  "en": [
+   [
+    "prologue",
+    2,
+    "Then they dragged",
+    "Then… they dragged"
+   ],
+   [
+    "prologue",
+    3,
+    "the master saw as",
+    "the master saw… as"
+   ]
+  ]
+ },
+ "etiket_en": {
+  "acilis": "[slow, warm storyteller]"
+ }
+}
