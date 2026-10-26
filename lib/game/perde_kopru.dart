@@ -1327,41 +1327,50 @@ void _bKonya(Canvas c, double time, double u, double n) {
 // ------------------------------------------------------------- Erlik
 
 void _bErlik(Canvas c, double time, double u, double n) {
-  c.drawRect(const Rect.fromLTWH(0, 0, 780, 400), _ink(0.5));
+  _coldCloth(c, 1);
+  c.drawRect(const Rect.fromLTWH(0, 0, 780, 400), _ink(0.2));
   _floor(c, 1);
-  var x = _walkX(u, n, 70, 600);
+  final walk0 = _span(u, 0.05, 0.4);
+  final hide = _span(u, 0.5, 0.65);
+  var x = u < 1
+      ? 110 + 120 * walk0 - 60 * hide
+      : 170 + 160 * _span(u, 1.05, 1.9);
   var y = _gb + 12;
-  var hide = 1.0;
-  // 0: kara kapı, mürekkep köprüler, Körmösler ışığı koklar.
+  var jar = 1 - hide * (1 - _span(u, 0.98, 1.2));
+  var drawSaye = true;
+  // 0: kara kapı, mürekkep köprüler; Körmösler ışığın kokusunu alır, Sâye
+  // kavanozunu örtüp kapının gölgesine saklanır.
   final a0 = _heroA(u, 0);
   if (a0 > 0) {
-    c.drawRect(Rect.fromLTWH(40, 120, 30, _gb - 120), _ink(a0));
-    c.drawRect(Rect.fromLTWH(140, 120, 30, _gb - 120), _ink(a0));
-    c.drawRect(Rect.fromLTWH(30, 100, 150, 24), _ink(a0));
     for (var i = 0; i < 2; i++) {
       c.drawArc(
-        Rect.fromLTWH(220 + i * 200.0, _gb - 60, 200, 120),
+        Rect.fromLTWH(250 + i * 220.0, _gb - 70, 220, 140),
         math.pi,
         math.pi,
         false,
-        _stroke(_ink(a0), 8),
+        _stroke(_ink(a0), 9),
       );
     }
+    final sniff = _span(u, 0.35, 0.6);
     for (var i = 0; i < 2; i++) {
-      final kx = 380 + i * 170.0 + math.sin(time * 0.8 + i) * 20;
+      final kx = 370 + i * 220.0 - 30 * sniff + math.sin(time * 0.8 + i) * 6;
       _person(
         c,
-        Offset(kx, _gb + 12),
-        170,
+        Offset(kx, _gb - 66),
+        150,
         a0,
         _kormos,
-        flip: i.isEven,
+        flip: true,
         time: time + i,
+        arm: -1.2 * sniff,
       );
-      if ((x - kx).abs() < 120) {
-        hide = math.min(hide, 0.35 + (x - kx).abs() / 200);
-      }
     }
+    // Kapı: Sâye'nin önünde kalan iki kara direk.
+    c.drawRect(Rect.fromLTWH(30, 100, 150, 24), _ink(a0));
+    c.drawRect(Rect.fromLTWH(40, 120, 30, _gb - 120), _ink(a0));
+    _sayeJ(c, Offset(x, y), 1.5, time, 1, jar: jar);
+    c.drawRect(Rect.fromLTWH(140, 120, 34, _gb - 120), _ink(a0));
+    drawSaye = false;
   }
   // 1: kut zindanı: kafesler açılır, canlar kuş olup uçar.
   final a1 = _heroA(u, 1);
@@ -1377,6 +1386,7 @@ void _bErlik(Canvas c, double time, double u, double n) {
           _stroke(_ink(a1), 2.5),
         );
       }
+      c.drawLine(Offset(cx, 0), Offset(cx, 140), _stroke(_ink(a1), 1.6));
       _P._bird(
         c,
         Offset(cx + 30 * open * math.sin(time + i), 200 - open * 160),
@@ -1387,28 +1397,63 @@ void _bErlik(Canvas c, double time, double u, double n) {
       c.drawCircle(Offset(cx, 200 - open * 160), 9, _hole(0.4 * a1));
     }
   }
-  // 2: Çalkuyruk'un kuyusu: atın başı, yukarı yol.
+  // 2: kuyunun dibinde Çalkuyruk bekler; "Bin sırtıma." Sâye biner, at
+  // yukarı çıkan yoldan onu taşır.
   final a2 = _heroA(u, 2);
   if (a2 > 0) {
-    c.drawRect(Rect.fromLTWH(560, 0, 140, _gb), _cloth(0.6 * a2));
-    _cut(
-      c,
-      MythShapes.horse,
-      Offset(650, _gb + 40),
-      170,
-      a2,
-      flip: true,
-      eye: const Offset(48, -82),
-      deco: false,
+    // Kuyu: yukarı kıvrılan aydınlık yol.
+    final road = Path()
+      ..moveTo(420, _gb)
+      ..lineTo(500, _gb)
+      ..lineTo(760, 150)
+      ..lineTo(760, 90)
+      ..close();
+    c.drawPath(road, _cloth(0.55 * a2));
+    c.drawLine(
+      const Offset(500, _gb),
+      const Offset(760, 150),
+      _stroke(_ink(a2), 4),
     );
-    c.drawLine(const Offset(600, 0), Offset(600, _gb), _stroke(_ink(a2), 2));
-    final up = _span(u, 2.3, 2.9);
-    if (up > 0) {
-      x = 600;
-      y = _gb + 12 - up * 260;
+    final mount = _span(u, 2.3, 2.45);
+    final ride = _span(u, 2.45, 2.92);
+    const slope = -0.6;
+    final hx = 520 + 190 * ride;
+    final hy = _gb + 10 - 178 * ride;
+    c.save();
+    c.translate(hx, hy);
+    c.rotate(slope * _span(u, 2.45, 2.55));
+    final speak = _span(u, 2.15, 2.22) * (1 - _span(u, 2.32, 2.4));
+    _horseLift(
+      c,
+      Offset.zero,
+      150,
+      a2,
+      0.6 + 0.4 * _span(u, 2.1, 2.3),
+      time,
+      speak: speak,
+    );
+    if (mount > 0) {
+      _sayeJ(c, const Offset(-6, -50), 1.2, time, a2 * mount);
+    }
+    c.restore();
+    if (u < 2.45) {
+      x = 330 + 30 * _span(u, 2.05, 2.25);
+      y = _gb + 12;
+      if (mount > 0) {
+        x += (hx - 6 - x) * mount;
+        y += (hy - 50 - y) * mount;
+      }
+      jar = 1;
+      drawSaye = mount < 1;
+      if (mount > 0) {
+        _sayeJ(c, Offset(x, y), 1.5 - 0.3 * mount, time, a2 * (1 - mount));
+        drawSaye = false;
+      }
+    } else {
+      drawSaye = false;
     }
   }
-  _sayeAt(c, Offset(x, y), time, a: hide);
+  if (drawSaye) _sayeJ(c, Offset(x, y), 1.5, time, 1, jar: jar);
 }
 
 // ------------------------------------------------------------- Ergenekon
@@ -1469,42 +1514,116 @@ void _bErgenekon(Canvas c, double time, double u, double n) {
     }
     if (u < 0.5) x = crate - 50;
   }
-  // 1: akan demir, sisli çayırın adacıkları, Asena'nın mağarası.
+  // 1: erimiş demir dalga dalga akar (akkor ışık); sisli çayırın
+  // adacıkları akıntının üstünde tümsek; Sâye birinden ötekine atlar;
+  // Asena'nın mağarasında boz kurdun gözleri parlar.
   final a1 = _heroA(u, 1);
   if (a1 > 0) {
     final wave = Path()..moveTo(0, _gb + 2);
     for (var i = 0; i <= 26; i++) {
       final wx = i * 30.0;
-      wave.lineTo(wx, _gb - 8 - 8 * math.sin(time * 3 + i * 0.7));
+      wave.lineTo(wx, _gb - 10 - 6 * math.sin(time * 3 - i * 0.7));
     }
     wave
       ..lineTo(780, 400)
       ..lineTo(0, 400)
       ..close();
-    c.drawPath(wave, _hole(0.6 * a1));
-    for (var i = 0; i < 4; i++) {
-      c.drawOval(
-        Rect.fromCenter(
-          center: Offset(150 + i * 130.0, _gb - 6),
-          width: 70,
-          height: 22,
+    c.drawPath(
+      wave,
+      Paint()
+        ..shader = ui.Gradient.linear(
+          const Offset(0, _gb - 20),
+          const Offset(0, 400),
+          [
+            const Color(0xFFFFE8A0).withValues(alpha: 0.95 * a1),
+            const Color(0xFFFF9A40).withValues(alpha: 0.9 * a1),
+            const Color(0xFFB84A18).withValues(alpha: 0.85 * a1),
+          ],
+          const [0, 0.35, 1],
         ),
-        _ink(a1),
+    );
+    c.drawRect(
+      const Rect.fromLTWH(0, _gb - 60, 780, 50),
+      Paint()
+        ..shader = ui.Gradient.linear(
+          const Offset(0, _gb - 60),
+          const Offset(0, _gb - 10),
+          [
+            const Color(0x00FFB050),
+            const Color(0xFFFFB050).withValues(alpha: 0.35 * a1),
+          ],
+        ),
+    );
+    // Akan demirin kabuğu: akıntıyla kayan kara pullar.
+    for (var i = 0; i < 12; i++) {
+      final fx = (i * 71.0 + time * 40) % 820 - 20;
+      c.drawLine(
+        Offset(fx, _gb + 8 + (i % 3) * 12),
+        Offset(fx + 18, _gb + 8 + (i % 3) * 12),
+        _stroke(_ink(0.5 * a1), 2.5),
       );
     }
+    // Adacıklar: akıntının üstünde çimenli tümsekler.
+    for (var i = 0; i < 4; i++) {
+      final ix = 150 + i * 130.0;
+      c.drawPath(
+        Path()
+          ..moveTo(ix - 40, _gb + 6)
+          ..quadraticBezierTo(ix - 34, _gb - 30, ix, _gb - 32)
+          ..quadraticBezierTo(ix + 34, _gb - 30, ix + 40, _gb + 6)
+          ..close(),
+        _ink(a1),
+      );
+      for (var t = 0; t < 4; t++) {
+        final gx = ix - 18 + t * 12.0;
+        c.drawLine(
+          Offset(gx, _gb - 30),
+          Offset(gx + math.sin(time * 2 + t) * 3, _gb - 42),
+          _stroke(_ink(a1), 1.6),
+        );
+      }
+    }
+    // Sis: adacıkların üstünde ince ışık şeritleri.
+    for (var i = 0; i < 6; i++) {
+      final mx = (i * 140.0 + time * 12) % 900 - 60;
+      c.drawLine(
+        Offset(mx, _gb - 50 - (i % 2) * 14),
+        Offset(mx + 90, _gb - 50 - (i % 2) * 14),
+        _stroke(_hole(0.3 * a1), 5),
+      );
+    }
+    // Asena'nın mağarası.
     c.drawArc(
-      Rect.fromLTWH(600, _gb - 110, 150, 220),
+      Rect.fromLTWH(610, _gb - 120, 150, 240),
       math.pi,
       math.pi,
       true,
       _ink(a1),
     );
-    c.drawCircle(Offset(668, _gb - 50), 3, _hole(a1));
-    c.drawCircle(Offset(682, _gb - 50), 3, _hole(a1));
-    y -= math.max(0, math.sin((x - 150) / 130 * math.pi)) * 30;
+    final blink = (time % 3) < 0.12 ? 0.2 : 1.0;
+    for (final ex in [672.0, 688.0]) {
+      c.drawOval(
+        Rect.fromCenter(
+          center: Offset(ex, _gb - 56),
+          width: 7,
+          height: 5 * blink,
+        ),
+        _hole(a1),
+      );
+      c.drawCircle(Offset(ex, _gb - 56), 9, _hole(0.2 * a1));
+    }
+    // Sâye adacıktan adacığa sekerek geçer.
+    final hop = _span(u, 1.05, 1.85);
+    final k = hop * 3;
+    final seg = k.floor().clamp(0, 2);
+    final t = k - seg;
+    x = 150 + (seg + t) * 130.0;
+    y = _gb - 30 + 12 - math.sin(t * math.pi) * 60;
   }
-  // 2: demir dağın içi: Nevruz örsü, kapı açılır.
+  // 2: demir dağın içi: Sâye örse üç kez vurur (tak, tak, tak); kapı
+  // açılır, Sâye ışığa yürür.
   final a2 = _heroA(u, 2);
+  var hammer = 0.0;
   if (a2 > 0) {
     c.drawRect(const Rect.fromLTWH(0, 0, 780, 400), _ink(0.6 * a2));
     for (var i = 0; i < 5; i++) {
@@ -1526,8 +1645,13 @@ void _bErgenekon(Canvas c, double time, double u, double n) {
       ..close();
     c.drawPath(anvil, _ink(a2));
     c.drawRect(Rect.fromLTWH(380, _gb - 48, 40, 8), _hole(0.9 * a2));
+    var strike = 0.0;
     for (var s = 0; s < 3; s++) {
-      final hit = _shown(u, 2.2 + s * 0.15, 2.3 + s * 0.15, 0.04);
+      final t0 = 2.2 + s * 0.13;
+      final hit = _shown(u, t0, t0 + 0.06, 0.02);
+      final lift =
+          _span(u, t0 - 0.08, t0 - 0.03) * (1 - _span(u, t0 - 0.03, t0));
+      strike = math.max(strike, lift);
       for (var i = 0; i < 6; i++) {
         final ang = -math.pi / 2 + (i - 2.5) * 0.4;
         c.drawLine(
@@ -1537,13 +1661,36 @@ void _bErgenekon(Canvas c, double time, double u, double n) {
         );
       }
     }
-    final open = _span(u, 2.65, 2.9);
+    final open = _span(u, 2.56, 2.7);
     c.drawRect(Rect.fromLTWH(640, 150, 100, _gb - 150), _hole(0.9 * a2 * open));
     c.drawRect(Rect.fromLTWH(640 - 50 * open, 150, 50, _gb - 150), _ink(a2));
     c.drawRect(Rect.fromLTWH(690 + 50 * open, 150, 50, _gb - 150), _ink(a2));
-    if (u > 2 && u < 2.6) x = math.min(x, 340);
+    final go = _span(u, 2.7, 2.85);
+    final approach = _span(u, 2.02, 2.15);
+    if (u < 2.7) {
+      x = 300 + 30 * approach;
+      hammer = a2 * (1 - _span(u, 2.6, 2.7));
+    } else {
+      x = 330 + 360 * go;
+    }
+    y = _gb + 12;
+    if (hammer > 0) {
+      // Çekiç: Sâye'nin elinde; her vuruşta kalkar, örse iner.
+      final hand = Offset(x + 30, y - 46);
+      final ang = -0.15 - 1.9 * strike;
+      final head = hand + Offset(math.cos(ang), math.sin(ang)) * 52;
+      c.drawLine(hand, head, _stroke(_ink(hammer), 4));
+      c.save();
+      c.translate(head.dx, head.dy);
+      c.rotate(ang);
+      c.drawRect(
+        Rect.fromCenter(center: Offset.zero, width: 10, height: 22),
+        _ink(hammer),
+      );
+      c.restore();
+    }
   }
-  _sayeAt(c, Offset(x, y), time);
+  _sayeJ(c, Offset(x, y), 1.5, time, 1, jar: 1 - hammer);
 }
 
 // ------------------------------------------------------------- Göğün katları
@@ -1615,15 +1762,17 @@ void _bSky(Canvas c, double time, double u, double n) {
 // ---------------------------------------------------------------- Ötüken
 
 void _bOtuken(Canvas c, double time, double u, double n) {
-  // Orman: arkada kayınlar ve çamlar, önde yosunlu zemin.
+  // Orman: arkada kayınlar ve çamlar (son satırda Kara Bataklık'a döner).
+  final swamp = _span(u, 1.85, 2.15);
   for (var i = 0; i < 11; i++) {
     final x = 30.0 + i * 74;
     final h = 170.0 + (i * 41 % 70);
+    final p = _far(1 - 0.5 * swamp);
     if (i.isEven) {
-      c.drawRect(Rect.fromLTWH(x - 4, _gb - h, 8, h), _far(1));
+      c.drawRect(Rect.fromLTWH(x - 4, _gb - h, 8, h), p);
       c.drawOval(
         Rect.fromCenter(center: Offset(x, _gb - h), width: 80, height: 64),
-        _far(1),
+        p,
       );
     } else {
       for (var k = 0; k < 4; k++) {
@@ -1634,14 +1783,15 @@ void _bOtuken(Canvas c, double time, double u, double n) {
             ..lineTo(x - 18 - k * 7, y + h / 4)
             ..lineTo(x + 18 + k * 7, y + h / 4)
             ..close(),
-          _far(1),
+          p,
         );
       }
     }
   }
-  _floor(c, 1);
-  final x = _walkX(u, n, 90, 560);
-  // 0: yapraklardan ışık; gölgede gözler.
+  var x = 100 + 200 * _span(u, 0.1, 0.9);
+  var y = _gb + 12;
+  var rot = 0.0;
+  // 0: yapraklardan ışık; gölgede Karabasan'ın gözleri açılıp kapanır.
   final a0 = _heroA(u, 0);
   if (a0 > 0) {
     for (var i = 0; i < 4; i++) {
@@ -1668,60 +1818,266 @@ void _bOtuken(Canvas c, double time, double u, double n) {
       }
     }
   }
-  // 1: davul kökleri ve sarmaşık; ışığa yürüyen Ak Geyik.
+  // Zemin; 1'de ortasında dikenli bir yar açılır.
   final a1 = _heroA(u, 1);
+  const r0 = 330.0, r1 = 480.0;
   if (a1 > 0) {
-    final beat = ((time * 0.7).floor()) % 2;
-    for (var i = 0; i < 4; i++) {
-      final up = (i % 2) == beat;
-      c.drawRRect(
-        RRect.fromRectAndRadius(
-          Rect.fromLTWH(200 + i * 70.0, _gb - (up ? 14 : 0), 54, 12),
-          const Radius.circular(6),
-        ),
-        _ink(a1 * (up ? 1 : 0.4)),
+    c.drawRect(const Rect.fromLTWH(0, _gb, r0, 60), _ink(1));
+    c.drawRect(const Rect.fromLTWH(r1, _gb, 780 - r1, 60), _ink(1));
+    c.drawRect(const Rect.fromLTWH(r0, _gb, r1 - r0, 60), _ink(1 - a1));
+    // Yarın duvarları ve dibi: dikenler.
+    for (final (wx, dir) in [(r0, 1.0), (r1, -1.0)]) {
+      for (var k = 0; k < 4; k++) {
+        final ty = _gb + 4 + k * 12.0;
+        c.drawPath(
+          Path()
+            ..moveTo(wx, ty)
+            ..lineTo(wx + dir * 16, ty + 4)
+            ..lineTo(wx, ty + 8)
+            ..close(),
+          _ink(a1),
+        );
+      }
+    }
+    for (var k = 0; k < 9; k++) {
+      final tx = r0 + 10 + k * 16.0;
+      c.drawPath(
+        Path()
+          ..moveTo(tx - 6, 400)
+          ..lineTo(tx, 372 - (k % 2) * 8)
+          ..lineTo(tx + 6, 400)
+          ..close(),
+        _ink(a1),
       );
     }
+  } else {
+    _floor(c, 1);
+  }
+  if (a1 > 0) {
+    // Kam davulunu çalar; her vuruşta kökler yerden kalkar, basamak olur.
+    final beat = math.pow((time * 1.6) % 1, 3).toDouble();
+    _kamFig(c, const Offset(70, _gb + 10), 210, a1, time, beat: beat);
+    for (var i = 0; i < 3; i++) {
+      final up = _span(u, 1.04 + i * 0.07, 1.14 + i * 0.07);
+      final rx = 170 + i * 52.0;
+      final top = _gb - up * (20 + i * 18);
+      c.drawPath(
+        Path()
+          ..moveTo(rx - 22, _gb + 4)
+          ..quadraticBezierTo(rx - 18, top, rx, top - 4)
+          ..quadraticBezierTo(rx + 18, top, rx + 22, _gb + 4)
+          ..close(),
+        _ink(a1),
+      );
+      c.drawCircle(Offset(rx, top + 8), 2, _hole(0.5 * a1 * up));
+    }
+    // Yarın üstünde dal ve sarmaşık.
+    const pivot = Offset(405, 40);
     c.drawPath(
       Path()
-        ..moveTo(470, 30)
-        ..quadraticBezierTo(470 + math.sin(time) * 30, 150, 480, 240),
-      _stroke(_ink(a1), 3),
+        ..moveTo(290, 30)
+        ..quadraticBezierTo(400, 60, 530, 36),
+      _stroke(_ink(a1), 9),
     );
-    final dk = _span(u, 1.1, 1.9);
+    final swing = _span(u, 1.3, 1.65);
+    final ang = u < 1.3
+        ? 0.75 + math.sin(time * 1.5) * 0.04
+        : (u < 1.65 ? 0.75 - swing * 1.5 : -0.75);
+    const len = 175.0;
+    final end = pivot + Offset(-math.sin(ang), math.cos(ang)) * len;
+    c.drawLine(pivot, end, _stroke(_ink(a1), 3.5));
+    for (var k = 1; k < 6; k++) {
+      final p = Offset.lerp(pivot, end, k / 6)!;
+      c.drawOval(
+        Rect.fromCenter(center: p + const Offset(5, 0), width: 10, height: 5),
+        _ink(a1),
+      );
+    }
+    // Ak geyik ateşböceklerinin ışığını izler, kök kapısını açar.
+    final dk = _span(u, 1.1, 1.7);
+    final gate = _span(u, 1.6, 1.85);
+    c.drawRect(Rect.fromLTWH(690, 190, 44, _gb - 190), _hole(0.55 * a1 * gate));
+    for (final side in [-1.0, 1.0]) {
+      c.save();
+      c.translate(712 + side * (22 + 24 * gate), _gb);
+      c.scale(side, 1);
+      c.drawPath(
+        Path()
+          ..moveTo(-10, 0)
+          ..quadraticBezierTo(-8, -110, -30 * gate - 2, -170)
+          ..lineTo(-30 * gate + 8, -164)
+          ..quadraticBezierTo(4, -100, 8, 0)
+          ..close(),
+        _ink(a1),
+      );
+      c.restore();
+    }
+    final deer = DeerRig.frame(
+      gate > 0.9 ? 0 : time * 0.8,
+      alert: 0.5,
+      still: gate > 0.9,
+    ).shape;
     c.save();
-    c.translate(560 + dk * 120, _gb);
-    c.scale(0.9);
-    c.drawPath(DeerRig.frame(time * 0.8, alert: 0.5).shape, _ink(a1));
+    c.translate(520 + dk * 110, _gb);
+    c.scale(0.95);
+    c.drawPath(deer, _hole(0.9 * a1));
+    c.drawPath(deer, _stroke(_ink(a1), 2.4));
     c.restore();
-    c.drawCircle(Offset(640 + dk * 120, _gb - 90), 10, _hole(0.8 * a1));
+    for (var i = 0; i < 6; i++) {
+      final fx = 600 + dk * 110 + math.sin(time * 2 + i * 1.3) * 26 + i * 6;
+      final fy = _gb - 150 + math.cos(time * 1.7 + i) * 22 - i * 4;
+      c.drawCircle(Offset(fx, fy), 2.4, _hole(0.9 * a1));
+      c.drawCircle(Offset(fx, fy), 7, _hole(0.18 * a1));
+    }
+    // Sâye: kök basamaklarından çıkar, sarmaşıkla yarın üstünden sallanır,
+    // karşıya iner.
+    final climb = _span(u, 1.12, 1.26);
+    final grab = _span(u, 1.24, 1.3);
+    final land = _span(u, 1.65, 1.8);
+    final hang = end + Offset(-math.sin(ang), math.cos(ang)) * 69;
+    if (u < 1.3) {
+      x = 140 + 150 * climb;
+      var bump = 0.0;
+      for (var i = 0; i < 3; i++) {
+        final up = _span(u, 1.04 + i * 0.07, 1.14 + i * 0.07);
+        final d = (x - (170 + i * 52.0)) / 24;
+        bump = math.max(bump, up * (24 + i * 18) * (1 - d * d));
+      }
+      y = _gb + 12 - bump;
+      x = x + (hang.dx - x) * grab;
+      y = y + (hang.dy - y) * grab;
+      rot = ang * grab;
+    } else if (u < 1.65) {
+      x = hang.dx;
+      y = hang.dy;
+      rot = ang;
+    } else {
+      x = hang.dx + 60 * land;
+      y = hang.dy + (_gb + 12 - hang.dy) * land;
+      rot = ang * (1 - land);
+    }
   }
-  // 2: Kara Bataklık ve Hayat Ağacı; ışık köklere akar, Karabasan dağılır.
+  // 2: Kara Bataklık: Karabasan bütün gücüyle çöker; Sâye Hayat Ağacı'na
+  // tırmanır, dallardaki aynalarla gün ışığını köklere çevirir; ışık
+  // köklere akınca Karabasan dağılır.
   final a2 = _heroA(u, 2);
   if (a2 > 0) {
+    // Bataklık sazları ve suyun parıltısı.
+    for (var i = 0; i < 14; i++) {
+      final rx = 20.0 + i * 56;
+      c.drawLine(
+        Offset(rx, _gb + 2),
+        Offset(rx + math.sin(time + i) * 4, _gb - 30 - (i % 3) * 12),
+        _stroke(_ink(a2), 2.5),
+      );
+    }
+    for (var i = 0; i < 5; i++) {
+      c.drawLine(
+        Offset(40 + i * 150.0, _gb + 14),
+        Offset(110 + i * 150.0, _gb + 14),
+        _stroke(_hole(0.25 * a2), 2),
+      );
+    }
+    // Gün: sol üstte.
+    const sun = Offset(90, 58);
+    c.drawCircle(sun, 34, _hole(0.6 * a2));
+    c.drawCircle(sun, 52, _hole(0.15 * a2));
+    // Hayat Ağacı: perdenin içinde; gövde, dallar, tepe.
+    const tx = 610.0;
     c.drawPath(
       Path()
-        ..moveTo(600, _gb)
-        ..quadraticBezierTo(610, 160, 620, 0)
-        ..lineTo(680, 0)
-        ..quadraticBezierTo(690, 160, 700, _gb)
+        ..moveTo(tx - 40, _gb + 4)
+        ..quadraticBezierTo(tx - 16, _gb - 150, tx - 12, 80)
+        ..lineTo(tx + 12, 80)
+        ..quadraticBezierTo(tx + 16, _gb - 150, tx + 40, _gb + 4)
         ..close(),
       _ink(a2),
     );
-    final flow = _span(u, 2.3, 2.9);
-    c.drawRect(Rect.fromLTWH(632, 0, 36, _gb * flow), _hole(0.75 * a2));
-    final scatter = _span(u, 2.5, 2.95);
-    for (var i = 0; i < 14; i++) {
-      final ang = i / 14 * math.pi * 2;
-      final d = 30 + scatter * 160;
-      c.drawCircle(
-        Offset(560 + math.cos(ang) * d, _gb - 60 + math.sin(ang) * d * 0.6),
-        16 * (1 - scatter * 0.8),
-        _ink(a2 * (1 - scatter)),
+    final mirrors = <Offset>[];
+    for (var i = 0; i < 4; i++) {
+      final side = i.isEven ? -1.0 : 1.0;
+      final by = _gb - 110 - i * 42.0;
+      final end = Offset(tx + side * (110 - i * 14), by - 34);
+      c.drawPath(
+        Path()
+          ..moveTo(tx, by)
+          ..quadraticBezierTo(tx + side * 50, by - 4, end.dx, end.dy),
+        _stroke(_ink(a2), 8.0 - i),
+      );
+      if (side < 0) mirrors.add(end);
+    }
+    c.drawOval(
+      Rect.fromCenter(center: const Offset(tx, 78), width: 270, height: 80),
+      _ink(a2),
+    );
+    for (final dx in [-70.0, -30.0, 30.0, 70.0]) {
+      c.drawPath(
+        Path()
+          ..moveTo(tx, _gb)
+          ..quadraticBezierTo(tx + dx, _gb + 10, tx + dx * 1.5, _gb + 40),
+        _stroke(_ink(a2), 6),
       );
     }
+    // Aynalar: Sâye çevirince ışığı köklere yollar.
+    final turn = _span(u, 2.5, 2.62);
+    final flow = _span(u, 2.58, 2.78);
+    for (final m in mirrors) {
+      c.drawOval(Rect.fromCenter(center: m, width: 22, height: 28), _ink(a2));
+      c.drawOval(
+        Rect.fromCenter(center: m, width: 14, height: 20),
+        _hole((0.35 + 0.65 * turn) * a2),
+      );
+    }
+    if (turn > 0) {
+      final m = mirrors.first;
+      c.drawPath(
+        Path()
+          ..moveTo(sun.dx + 20, sun.dy - 22)
+          ..lineTo(sun.dx + 20, sun.dy + 22)
+          ..lineTo(m.dx, m.dy + 10)
+          ..lineTo(m.dx, m.dy - 10)
+          ..close(),
+        _hole(0.35 * a2 * turn),
+      );
+    }
+    if (flow > 0) {
+      final m = mirrors.first;
+      c.drawPath(
+        Path()
+          ..moveTo(m.dx - 8, m.dy)
+          ..lineTo(m.dx + 8, m.dy)
+          ..lineTo(tx + 70, m.dy + (_gb - m.dy) * flow)
+          ..lineTo(tx - 110, m.dy + (_gb - m.dy) * flow)
+          ..close(),
+        _hole(0.45 * a2),
+      );
+      for (var i = 0; i < 6; i++) {
+        c.drawCircle(
+          Offset(tx - 80 + i * 32.0, _gb + 6),
+          4,
+          _hole(a2 * flow * (0.5 + 0.4 * math.sin(time * 4 + i))),
+        );
+      }
+    }
+    // Karabasan: Sâye'nin üstüne çöker; ışıkta parçalanıp dağılır.
+    final press = _span(u, 2.05, 2.3);
+    final follow = _span(u, 2.3, 2.6);
+    _karabasan(
+      c,
+      Offset(330 + 120 * follow, _gb - 60 - 30 * press),
+      66 + 16 * press,
+      a2,
+      time,
+      dir: 1,
+      scatter: _span(u, 2.68, 2.95),
+    );
+    // Sâye: kaçar, ağaca tırmanır, aynanın yanında durur.
+    final run = _span(u, 2.05, 2.3);
+    final up = _span(u, 2.3, 2.52);
+    x = 440 + 108 * run;
+    y = _gb + 12 - up * 130;
   }
-  _sayeAt(c, Offset(x, _gb + 12), time);
+  _sayeAt(c, Offset(x, y), time, rot: rot);
 }
 
 // ------------------------------------------------------------- Ak Ana'nın Denizi
@@ -1774,6 +2130,46 @@ void _bSea(Canvas c, double time, double u, double n) {
       );
     }
     y = 300 + math.sin(time * 1.6) * 6;
+    // Fenerbalığı: sağdaki karanlıktan parlak yemini sallar; Sâye
+    // kanmaz, altından geçip gider.
+    final fish = _span(u, 0.35, 0.6);
+    if (fish > 0) {
+      final fx = 700 - 90 * fish + math.sin(time * 0.8) * 8;
+      const fy = 250.0;
+      final body = Path()
+        ..moveTo(fx - 60, fy)
+        ..quadraticBezierTo(fx - 50, fy - 40, fx + 10, fy - 36)
+        ..quadraticBezierTo(fx + 50, fy - 30, fx + 64, fy - 6)
+        ..lineTo(fx + 84, fy - 22)
+        ..lineTo(fx + 80, fy + 18)
+        ..lineTo(fx + 62, fy + 6)
+        ..quadraticBezierTo(fx + 40, fy + 34, fx - 10, fy + 30)
+        ..quadraticBezierTo(fx - 50, fy + 26, fx - 60, fy)
+        ..close();
+      c.drawPath(body, _ink(a0 * fish));
+      // Ağız: dişli yarık.
+      for (var t = 0; t < 5; t++) {
+        c.drawPath(
+          Path()
+            ..moveTo(fx - 58 + t * 7, fy + 2)
+            ..lineTo(fx - 54 + t * 7, fy + 9)
+            ..lineTo(fx - 50 + t * 7, fy + 2)
+            ..close(),
+          _hole(0.6 * a0 * fish),
+        );
+      }
+      c.drawCircle(Offset(fx - 30, fy - 14), 3, _hole(a0 * fish));
+      // Olta ve parlak yem.
+      final lure = Offset(fx - 96, fy - 70 + math.sin(time * 2.4) * 6);
+      c.drawPath(
+        Path()
+          ..moveTo(fx - 20, fy - 34)
+          ..quadraticBezierTo(fx - 40, fy - 100, lure.dx, lure.dy),
+        _stroke(_ink(a0 * fish), 2),
+      );
+      c.drawCircle(lure, 18, _hole(0.25 * a0 * fish));
+      c.drawCircle(lure, 6, _hole(a0 * fish));
+    }
   }
   // 1: denizanalarının ışığı; kaplumbağa Sâye'yi sırtında taşır.
   final a1 = _heroA(u, 1);
@@ -1801,8 +2197,14 @@ void _bSea(Canvas c, double time, double u, double n) {
     if (ride > 0) {
       final tx = x + 10;
       final ty = 250.0;
-      c.drawOval(Rect.fromCenter(center: Offset(tx, ty), width: 120, height: 50), _ink(a1));
-      c.drawOval(Rect.fromCenter(center: Offset(tx + 70, ty + 4), width: 34, height: 22), _ink(a1));
+      c.drawOval(
+        Rect.fromCenter(center: Offset(tx, ty), width: 120, height: 50),
+        _ink(a1),
+      );
+      c.drawOval(
+        Rect.fromCenter(center: Offset(tx + 70, ty + 4), width: 34, height: 22),
+        _ink(a1),
+      );
       for (final s in const [-1.0, 1.0]) {
         c.save();
         c.translate(tx + 30 * s, ty + 18);
@@ -1814,29 +2216,62 @@ void _bSea(Canvas c, double time, double u, double n) {
       rot = math.pi / 2;
     }
   }
-  // 2: dipte yarık; Körmösler dağılır, Ak Ana ışıkla yükselir.
+  // 2: dipte yarık; Körmösler yaklaşır, Ak Ana ışıkla yükselince geri
+  // çekilip karanlığa karışır; Ak Ana Sâye'ye ak bir nefes verir, Sâye
+  // yarıktan aşağı süzülür.
   final a2 = _heroA(u, 2);
+  var sx = x;
   if (a2 > 0) {
     c.drawRect(Rect.fromLTWH(0, _gb - 10, 780, 70), _ink(a2));
-    c.drawRect(Rect.fromLTWH(520, _gb - 10, 50, 70), _hole(0.5 * a2));
-    final rise = _span(u, 2.25, 2.8);
+    c.drawRect(Rect.fromLTWH(440, _gb - 10, 70, 70), _hole(0.55 * a2));
+    final come = _span(u, 2.05, 2.3);
+    final rise = _span(u, 2.25, 2.6);
+    final flee = _span(u, 2.3, 2.75);
     for (var i = 0; i < 3; i++) {
-      final kx = 300 + i * 90.0 - rise * (60 + i * 30);
+      final kx = 60 + i * 80.0 + come * 80 - flee * (140 + i * 40);
       _person(
         c,
-        Offset(kx, _gb - 10 + rise * 120),
+        Offset(kx, _gb - 8),
         150,
-        a2 * (1 - rise),
+        a2 * (1 - flee),
         _kormos,
-        flip: i.isOdd,
         time: time + i,
+        arm: -1.4 * come * (1 - flee),
       );
     }
-    if (rise > 0) {
-      c.drawCircle(Offset(545, _gb - 150 * rise), 60 * rise, _hole(0.45 * a2));
-      _person(c, Offset(545, _gb + 60 - 170 * rise), 210, a2 * rise, _akAna);
+    final ana = a2 * rise;
+    if (ana > 0) {
+      c.drawCircle(Offset(640, _gb - 150 * rise), 60 * rise, _hole(0.4 * ana));
+      _person(
+        c,
+        Offset(640, _gb + 60 - 170 * rise),
+        210,
+        ana,
+        _akAna,
+        flip: true,
+      );
     }
-    y = 220 + _span(u, 2.6, 2.95) * 160;
+    // Ak nefes: Ak Ana'nın ağzından Sâye'ye ışıktan bir şerit.
+    final breath = _span(u, 2.45, 2.6) * (1 - _span(u, 2.75, 2.85));
+    sx = 400 + 75 * _span(u, 2.0, 2.4);
+    if (breath > 0) {
+      final from = Offset(632, _gb + 60 - 170 - 196);
+      final to = Offset(sx + 20, 200.0);
+      final p = Path()..moveTo(from.dx, from.dy);
+      for (var i = 1; i <= 12; i++) {
+        final t = i / 12;
+        final q = Offset.lerp(from, to, t * breath)!;
+        p.lineTo(q.dx, q.dy + math.sin(time * 6 + t * 8) * 6 * t);
+      }
+      c.drawPath(p, _stroke(_hole(0.85 * breath), 5));
+    }
+    final sink = _span(u, 2.62, 2.95);
+    y = 200 + sink * 190;
+    rot = math.pi / 2 - 0.15 + sink * (math.pi / 2 + 0.15);
   }
-  _sayeAt(c, Offset(x, y), time, s: 1.3, rot: rot);
+  // Yarığa inerken perdenin dibinden taşmasın.
+  c.save();
+  if (a2 > 0) c.clipRect(const Rect.fromLTWH(0, 0, 780, _gb + 50));
+  _sayeAt(c, Offset(a2 > 0 ? sx : x, y), time, s: 1.3, rot: rot);
+  c.restore();
 }
