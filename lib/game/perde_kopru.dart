@@ -1935,372 +1935,857 @@ void _pine(Canvas c, double x, double h, Paint p) {
 }
 
 void _bSnowRoad(Canvas c, double time, double u, double n) {
-  for (var i = 0; i < 9; i++) {
-    _pine(c, 30 + i * 92.0, 150 + (i % 3) * 30, _far(1));
-  }
-  _floor(c, 0.9);
-  final x = _walkX(u, n, 60, 560);
-  final wx = x + 150;
-  // 0: Gökbörü önde; ayak izleri.
-  final a0 = _heroA(u, 0);
-  for (var i = 0; i < 14; i++) {
-    final px = wx - 30 - i * 26.0;
-    if (px < 0) break;
-    c.drawOval(
-      Rect.fromCenter(
-        center: Offset(px, _gb + 3 + (i % 2) * 4),
-        width: 7,
-        height: 4,
-      ),
-      _ink(0.5),
-    );
-  }
+  final x = _walkX(u, n, 80, 535);
+  final a0 = _krL(u, 0), a1 = _krL(u, 1, 2);
+  // 0: kurtların ormanı; Sâye Gökbörü'nün izlerine basa basa yürür.
   if (a0 > 0) {
-    for (var i = 0; i < 4; i++) {
-      _pine(c, 90 + i * 210.0, 230, _ink(a0));
+    for (var i = 0; i < 9; i++) {
+      _pine(c, 30 + i * 92.0, 150 + (i % 3) * 30, _far(a0));
     }
+    // Ormanın kurtları: ağaçların arasından bakar, yaklaşınca geri çekilir.
+    for (final (wx, flip) in [(250.0, true), (470.0, false), (660.0, true)]) {
+      final back = _span(x, wx - 150, wx - 40) * 26 * (flip ? 1 : -1);
+      _krWolf(
+        c,
+        Offset(wx + back, _gb + 2),
+        62,
+        time,
+        a0 * 0.8,
+        flip: flip,
+        shape: MythShapes.wolfStand,
+      );
+    }
+    for (final px in [120.0, 360.0, 580.0, 735.0]) {
+      _pine(c, px, 230, _ink(0.62 * a0));
+    }
+    _krGround(c, a0);
   }
-  // 1: donmuş göl, sönmüş han, ejderin eteği.
-  final a1 = _heroA(u, 1);
+  // 1: donmuş göl; ocağı sönmeye yüz tutmuş han; karşıda iki ak dağ.
   if (a1 > 0) {
-    _ejder(c, const Offset(600, 120), 0.8, time, 0.5 * a1, dir: -1);
+    _krTwinPeaks(c, a1);
+    _krGround(c, a1);
+    // Buz: düz, parlak; çatlaklar.
     c.drawOval(
-      Rect.fromCenter(center: Offset(260, _gb + 4), width: 300, height: 16),
-      _hole(0.4 * a1),
+      const Rect.fromLTRB(40, _gb - 6, 440, _gb + 10),
+      _krLight(0.55 * a1),
     );
-    c.drawRect(Rect.fromLTWH(470, _gb - 80, 120, 80), _ink(a1));
+    final crack = _krLine(_ink(0.5 * a1), 1);
+    for (final (x0, x1) in [(90.0, 150.0), (210.0, 250.0), (330.0, 400.0)]) {
+      c.drawLine(Offset(x0, _gb + 1), Offset(x1, _gb + 4), crack);
+    }
+    // Han: taş duvar, düz dam, kemerli kapı; içeride sönük ocak.
+    final ink = _ink(a1);
+    c.drawRect(const Rect.fromLTWH(560, _gb - 92, 190, 94), ink);
+    c.drawRect(const Rect.fromLTWH(552, _gb - 102, 206, 12), ink);
+    c.drawRect(const Rect.fromLTWH(700, _gb - 140, 20, 40), ink);
+    for (var i = 0; i < 4; i++) {
+      final k = (time * 0.15 + i / 4) % 1;
+      c.drawCircle(
+        Offset(712 + k * 24 + math.sin(time + i) * 4, _gb - 148 - k * 70),
+        5 + k * 10,
+        _ink(0.25 * a1 * (1 - k)),
+      );
+    }
+    final ember = 0.45 + 0.15 * math.sin(time * 5) + 0.1 * math.sin(time * 13);
+    const door = Offset(612, _gb - 26);
+    _krGlow(c, door, 46, a1 * ember, core: 0.6);
     c.drawPath(
       Path()
-        ..moveTo(460, _gb - 78)
-        ..lineTo(530, _gb - 120)
-        ..lineTo(600, _gb - 78)
+        ..moveTo(594, _gb + 2)
+        ..lineTo(594, _gb - 40)
+        ..quadraticBezierTo(612, _gb - 62, 630, _gb - 40)
+        ..lineTo(630, _gb + 2)
         ..close(),
-      _ink(a1),
+      _hole(0.75 * a1 * ember),
     );
-    c.drawArc(
-      Rect.fromLTWH(512, _gb - 46, 36, 70),
-      math.pi,
-      math.pi,
-      true,
-      _ink(a1),
+    c.drawRRect(
+      RRect.fromRectAndRadius(
+        const Rect.fromLTWH(668, _gb - 64, 18, 24),
+        const Radius.circular(9),
+      ),
+      _hole(0.6 * a1 * ember),
     );
-    c.drawRect(Rect.fromLTWH(560, _gb - 140, 12, 30), _ink(a1));
+    _punchRow(
+      c,
+      const Offset(566, _gb - 96),
+      const Offset(744, _gb - 96),
+      12,
+      1.4,
+      a1,
+    );
   }
-  _tasvirBozkurt(c, Offset(wx, _gb + 8), 80, time, 1);
-  _snowfall(c, time, 1);
+  // Gökbörü'nün izleri: Sâye'nin önünde.
+  final pr = _hole(0.55 * a0);
+  for (var i = 0; i < 22; i++) {
+    final px = 40 + i * 34.0;
+    c.drawOval(
+      Rect.fromCenter(
+        center: Offset(px, _gb + 5 + (i % 2) * 5),
+        width: 9,
+        height: 5,
+      ),
+      pr,
+    );
+  }
+  _krSnow(c, time, 1, wind: 26, n: 60);
   _sayeAt(c, Offset(x, _gb + 12), time);
 }
 
 // ------------------------------------------------------------- Palandöken
 
-void _bSki(Canvas c, double time, double u, double n) {
-  double slope(double x) => 150 + x * 0.25 + 18 * math.sin(x / 90);
-  _peaks(
-    c,
-    [(0, 140), (160, 60), (300, 120), (420, 40), (600, 150), (780, 130)],
-    _far(1),
-    base: 360,
+/// Tahta kızak: kıvrık burunlu kızaklar, üstte tahtalar.
+void _krSled(Canvas c, Offset at, double rot, double s, double a) {
+  if (a <= 0) return;
+  c.save();
+  c.translate(at.dx, at.dy);
+  c.rotate(rot);
+  c.scale(s);
+  c.drawPath(
+    Path()
+      ..moveTo(-30, 0)
+      ..lineTo(26, 0)
+      ..quadraticBezierTo(38, 0, 38, -10)
+      ..quadraticBezierTo(36, -3, 26, -3)
+      ..lineTo(-30, -3)
+      ..close(),
+    _ink(a),
   );
-  final hill = Path()..moveTo(0, slope(0));
-  for (var x = 0.0; x <= 780; x += 20) {
-    hill.lineTo(x, slope(x));
+  c.drawRect(const Rect.fromLTWH(-28, -11, 50, 5), _ink(a));
+  for (final x in [-20.0, 0.0, 16.0]) {
+    c.drawLine(Offset(x, -6), Offset(x, -2), _krLine(_ink(a), 2));
   }
-  hill
-    ..lineTo(780, 400)
-    ..lineTo(0, 400)
-    ..close();
-  c.drawPath(hill, _ink(0.9));
-  final p = _span(u, 0.08, n - 0.1);
-  var x = 60 + p * 640;
-  var y = slope(x);
-  // 0: çoban kulübesi, kandil balonları.
-  final a0 = _heroA(u, 0);
+  c.restore();
+}
+
+/// Fenerli balon: kâğıt fener, içinde ışık.
+void _krSkyLantern(Canvas c, Offset at, double a) {
+  if (a <= 0) return;
+  _krGlow(c, at, 26, a, core: 0.7);
+  c.drawPath(
+    Path()
+      ..moveTo(at.dx - 9, at.dy - 12)
+      ..lineTo(at.dx + 9, at.dy - 12)
+      ..lineTo(at.dx + 6, at.dy + 10)
+      ..lineTo(at.dx - 6, at.dy + 10)
+      ..close(),
+    _krLine(_ink(a), 2),
+  );
+  c.drawCircle(at + const Offset(0, 6), 2.4, _krLight(a));
+}
+
+void _bSki(Canvas c, double time, double u, double n) {
+  final a0 = _krL(u, 0), a1 = _krL(u, 1, 2);
+  // 0: kervancının kulübesi; ihtiyar kızağı verir, Sâye ejderin sırtından
+  // aşağı bırakır kendini.
   if (a0 > 0) {
-    c.drawRect(Rect.fromLTWH(30, slope(50) - 40, 50, 42), _ink(a0));
+    _krTwinPeaks(c, 0.6 * a0);
+    double sy(double x) => x < 250 ? 186 : 186 + (x - 250) * 0.32;
+    final hill = Path()
+      ..moveTo(0, 400)
+      ..lineTo(0, 186)
+      ..lineTo(250, 186);
+    for (var x = 270.0; x <= 780; x += 20) {
+      hill.lineTo(x, sy(x));
+    }
+    hill
+      ..lineTo(780, 400)
+      ..close();
+    c.drawPath(hill, _ink(a0));
+    // Ejder sırtı: pul kesikleri.
+    for (var x = 300.0; x < 760; x += 44) {
+      c.drawArc(
+        Rect.fromCenter(center: Offset(x, sy(x) + 22), width: 24, height: 14),
+        math.pi,
+        math.pi,
+        false,
+        _krLine(_hole(0.3 * a0), 1.2),
+      );
+    }
+    // Kulübe.
+    final ink = _ink(a0);
+    c.drawRect(const Rect.fromLTWH(26, 126, 92, 62), ink);
     c.drawPath(
       Path()
-        ..moveTo(24, slope(50) - 38)
-        ..lineTo(55, slope(50) - 66)
-        ..lineTo(86, slope(50) - 38)
+        ..moveTo(16, 130)
+        ..lineTo(72, 92)
+        ..lineTo(128, 130)
         ..close(),
-      _ink(a0),
+      ink,
     );
-    for (var i = 0; i < 4; i++) {
-      final b = Offset(
-        240 + i * 120.0,
-        60 + (i % 2) * 30 + math.sin(time + i) * 8,
-      );
-      c.drawCircle(b, 16, _ink(a0));
-      c.drawCircle(b, 8, _hole(0.7 * a0));
-      c.drawLine(
-        b + const Offset(-8, 14),
-        b + const Offset(-5, 32),
-        _stroke(_ink(a0), 1),
-      );
-      c.drawLine(
-        b + const Offset(8, 14),
-        b + const Offset(5, 32),
-        _stroke(_ink(a0), 1),
-      );
-      c.drawRect(
-        Rect.fromCenter(center: b + const Offset(0, 36), width: 12, height: 8),
-        _ink(a0),
-      );
-    }
+    c.drawRect(const Rect.fromLTWH(46, 150, 18, 38), _hole(0.55 * a0));
+    _krGlow(c, const Offset(55, 170), 28, 0.6 * a0);
+    // İhtiyar kızağı uzatır.
+    final give = _span(u, 0.18, 0.36);
+    const mf = Offset(158, 198);
+    _person(c, mf, 118, a0, _krKervanciEl, arm: -1.25 + 0.6 * give, time: time);
+    final hand = _krHand(mf, 118, -1.25 + 0.6 * give + 0.15, bent: 0.3);
+    final take = _span(u, 0.36, 0.48);
+    final ride = _span(u, 0.5, 0.95);
+    final sx = ride > 0 ? 272 + ride * ride * 400 : 272.0;
+    final sAng = ride > 0.02 ? math.atan(0.32) : 0.0;
+    final rideA = a0 * (1 - _span(u, 0.86, 0.97));
+    final sledAt = take < 1
+        ? Offset.lerp(hand + const Offset(14, 4), Offset(272, sy(272)), take)!
+        : Offset(sx, sy(sx));
+    _krSled(c, sledAt, take < 1 ? 0 : sAng, 1.1, take < 1 ? a0 : rideA);
+    final hop = _span(u, 0.42, 0.52);
+    final sayeX = 250 + hop * 22;
+    final onSled = ride > 0 || hop > 0;
+    _krSaye(
+      c,
+      onSled
+          ? Offset(
+              ride > 0 ? sx : sayeX,
+              (ride > 0 ? sy(sx) : sy(sayeX)) -
+                  11 -
+                  math.sin(hop * math.pi) * 22,
+            )
+          : const Offset(250, 198),
+      1.3,
+      time,
+      ride > 0 ? rideA : a0,
+      flip: !onSled,
+      rot: ride > 0 ? sAng : 0,
+    );
+    _krSnow(c, time, a0, n: 50);
   }
-  // 1: ejderin sıçrayışı, uzakta Erzurum.
-  final a1 = _heroA(u, 1);
+  // 1: fenerli balonların altından, mıknatıslı tepenin üstünden; tümsekte
+  // havalanır, Erzurum'a doğru süzülür.
   if (a1 > 0) {
-    for (var i = 0; i < 6; i++) {
-      final bx = 620 + i * 26.0;
-      c.drawRect(Rect.fromLTWH(bx, 330 - (i % 3) * 8, 20, 40), _far(a1 * 2));
-      c.drawCircle(Offset(bx + 10, 330 - (i % 3) * 8), 10, _far(a1 * 2));
+    double sy(double x) =>
+        150 +
+        x * 0.27 -
+        42 * math.exp(-math.pow((x - 300) / 55, 2)) -
+        40 * math.exp(-math.pow((x - 452) / 22, 2)) +
+        46 * _span(x, 470, 560);
+    // Uzakta Erzurum.
+    c.save();
+    c.translate(225, 106);
+    c.scale(0.7);
+    _krErzurum(c, a1);
+    c.restore();
+    final hill = Path()..moveTo(0, 400);
+    for (var x = 0.0; x <= 780; x += 10) {
+      hill.lineTo(x, sy(x));
     }
-    c.drawRect(const Rect.fromLTWH(700, 270, 6, 60), _far(a1 * 2));
-    final air = _span(u, 1.35, 1.75) * (1 - _span(u, 1.75, 1.85));
-    y -= math.sin(air * math.pi) * 70;
+    hill
+      ..lineTo(780, 400)
+      ..close();
+    c.drawPath(hill, _ink(a1));
+    // Mıknatıslı tepe: üstünde çekim yayları.
+    for (var i = 0; i < 3; i++) {
+      final r = 30.0 + i * 16 + (time * 10) % 16;
+      c.drawArc(
+        Rect.fromCenter(
+          center: Offset(300, sy(300)),
+          width: r * 2.2,
+          height: r * 1.6,
+        ),
+        math.pi * 1.15,
+        math.pi * 0.7,
+        false,
+        _krLine(_hole(0.5 * a1 * (1 - (r - 30) / 64)), 1.5),
+      );
+    }
+    // Fenerli balonlar.
+    for (var i = 0; i < 6; i++) {
+      final bx = 70 + i * 70.0 + math.sin(time * 0.6 + i) * 8;
+      final by = 60 + (i % 3) * 22 - ((time * 4 + i * 9) % 30);
+      _krSkyLantern(c, Offset(bx, by), a1);
+    }
+    // Sâye'nin yolu: tümsekte havalanır, süzülüp konar.
+    final p = _span(u, 1.0, 1.9);
+    final x = 40 + p * 520;
+    var y = sy(x);
+    var ang = math.atan((sy(x + 4) - sy(x - 4)) / 8);
+    if (x > 462 && x < 560) {
+      final t = (x - 462) / 98;
+      y = sy(462) + (sy(560) - sy(462)) * t - math.sin(t * math.pi) * 80;
+      ang = -0.25 + t * 0.6;
+    }
+    final fa = a1 * _span(u, 0.92, 1.05);
+    _krSled(c, Offset(x, y), ang, 1.1, fa);
+    _krSaye(c, Offset(x, y - 11), 1.3, time, fa, rot: ang);
+    _krSnow(c, time, a1, n: 40);
   }
-  final ang = math.atan(0.25 + 0.2 * math.cos(x / 90));
-  c.save();
-  c.translate(x, y);
-  c.rotate(ang);
-  c.drawRect(const Rect.fromLTWH(-34, -4, 68, 6), _ink(1));
-  c.restore();
-  x += 0;
-  _sayeAt(c, Offset(x, y - 2), time, s: 1.3, rot: ang);
 }
 
 // ------------------------------------------------------------- Çığ
 
 void _bAvalanche(Canvas c, double time, double u, double n) {
-  _peaks(c, [(0, 120), (200, 40), (380, 140), (560, 70), (780, 160)], _far(1));
-  final a0 = _heroA(u, 0) + _heroA(u, 1);
-  _ejder(
-    c,
-    const Offset(170, 120),
-    0.9,
-    time,
-    a0.clamp(0, 1) * 0.8,
-    awake: true,
-  );
-  _floor(c, 0.9);
-  final x = _walkX(u, n, 160, 600);
-  final front = x - 140 + math.sin(time * 3) * 8;
-  final shelter = _span(u, 1.5, 1.8);
-  // 1: kırık sırt ve sığınak.
-  final a1 = _heroA(u, 1);
+  final a0 = _krL(u, 0), a1 = _krL(u, 1, 2);
+  // 0: ejder uyanmış; ak nefesi yamacı yutarak Sâye'nin ardından gelir.
+  if (a0 > 0) {
+    _peaks(c, [
+      (0, 150),
+      (200, 60),
+      (380, 150),
+      (560, 80),
+      (780, 170),
+    ], _far(a0));
+    _krDragon(c, const Offset(222, 112), 0.6, 0.2, time, a0, awake: true);
+    _krGround(c, a0);
+    final run = _span(u, 0.04, 1.0);
+    final sx = 330 + 260 * run;
+    _krAvalancheMass(
+      c,
+      const [Offset(252, 124), Offset(300, 352), Offset(900, 352)],
+      120 + 330 * run,
+      time,
+      a0,
+      maxR: 70,
+    );
+    _krWolf(c, Offset(sx + 110, _gb + 10), 95, time, a0, run: 1);
+    _krSayeRun(c, Offset(sx, _gb + 12), 1.35, time, a0);
+  }
+  // 1: Gökbörü önden, Sâye ardından; kırık sırttan atlar, kayanın dibine
+  // sığınır; çığ başının üstünden geçer. Sâye güler.
   if (a1 > 0) {
+    _peaks(c, [
+      (0, 120),
+      (220, 50),
+      (420, 140),
+      (600, 60),
+      (780, 150),
+    ], _far(a1));
+    final ink = _ink(a1);
+    // Kırık sırt (solda yüksek) ve aşağıdaki düzlük.
     c.drawPath(
       Path()
-        ..moveTo(560, _gb)
-        ..lineTo(560, 250)
-        ..quadraticBezierTo(650, 190, 740, 250)
-        ..lineTo(740, _gb)
+        ..moveTo(0, 400)
+        ..lineTo(0, 250)
+        ..lineTo(318, 250)
+        ..lineTo(332, 262)
+        ..lineTo(322, 280)
+        ..lineTo(338, 300)
+        ..lineTo(330, 330)
+        ..lineTo(346, 352)
+        ..lineTo(346, 400)
         ..close(),
-      _ink(a1),
+      ink,
     );
-    c.drawArc(
-      Rect.fromLTWH(600, _gb - 70, 80, 140),
-      math.pi,
-      math.pi,
-      true,
-      _hole(0.35 * a1),
+    c.drawRect(const Rect.fromLTWH(340, _gb, 440, 50), ink);
+    // Sarkan kaya: altı oyuk, içi sığınak.
+    c.drawPath(
+      Path()
+        ..moveTo(478, 238)
+        ..quadraticBezierTo(470, 206, 520, 186)
+        ..quadraticBezierTo(600, 158, 690, 170)
+        ..quadraticBezierTo(740, 186, 748, 240)
+        ..lineTo(748, 352)
+        ..lineTo(706, 352)
+        ..quadraticBezierTo(690, 262, 600, 256)
+        ..quadraticBezierTo(520, 252, 494, 234)
+        ..close(),
+      ink,
+    );
+    _punchRow(c, const Offset(560, 190), const Offset(690, 196), 8, 1.5, a1);
+    // Kaya çatlakları.
+    final crack = _krLine(_hole(0.4 * a1), 1.4);
+    for (final (x0, y0, x1, y1) in [
+      (540.0, 214.0, 566.0, 236.0),
+      (620.0, 204.0, 610.0, 232.0),
+      (700.0, 214.0, 726.0, 262.0),
+      (726.0, 290.0, 716.0, 330.0),
+    ]) {
+      c.drawLine(Offset(x0, y0), Offset(x1, y1), crack);
+    }
+    // Kurt: sırttan atlar, sığınağa koşar, Sâye'yi bekler.
+    final w1 = _span(u, 1.0, 1.2);
+    final wj = _span(u, 1.2, 1.32);
+    final w2 = _span(u, 1.32, 1.45);
+    Offset wolf;
+    if (wj <= 0) {
+      wolf = Offset(150 + w1 * 175, 252);
+    } else if (w2 <= 0) {
+      wolf = Offset(
+        325 + wj * 125,
+        252 + wj * 100 - math.sin(wj * math.pi) * 40,
+      );
+    } else {
+      wolf = Offset(450 + w2 * 200, 352);
+    }
+    final waiting = _span(u, 1.43, 1.5);
+    _krWolf(c, wolf, 90, time, a1 * (1 - waiting), run: 1);
+    _krWolf(
+      c,
+      wolf,
+      90,
+      time,
+      a1 * waiting,
+      flip: true,
+      shape: MythShapes.wolfStand,
+    );
+    // Sâye: sırtta koşar, son kez atlar, kayanın dibine sığınır.
+    final s1 = _span(u, 1.0, 1.3);
+    final sj = _span(u, 1.3, 1.45);
+    final laugh = _span(u, 1.82, 1.9);
+    final sp = sj <= 0
+        ? Offset(60 + s1 * 262, 262)
+        : Offset(322 + sj * 240, 262 + sj * 100 - math.sin(sj * math.pi) * 70);
+    if (sj > 0 && sj < 1) {
+      _krSaye(c, sp, 1.3, time, a1, rot: 0.3 * math.sin(sj * math.pi));
+    } else if (sj <= 0) {
+      _krSayeRun(c, sp, 1.3, time, a1);
+    } else {
+      final hop = laugh * math.sin(time * 12).abs() * 6;
+      _krSaye(c, sp + Offset(0, -hop), 1.3, time, a1);
+      if (laugh > 0) {
+        for (var i = 0; i < 5; i++) {
+          final ang = -math.pi / 2 + (i - 2) * 0.5;
+          c.drawCircle(
+            sp +
+                const Offset(4, -110) +
+                Offset(math.cos(ang), math.sin(ang)) *
+                    (14 + 6 * math.sin(time * 6 + i)),
+            2,
+            _krLight(a1 * laugh),
+          );
+        }
+      }
+    }
+    // Çığ: sırtın üstünden, kayanın tepesinden gürleyerek geçer.
+    _krAvalancheMass(
+      c,
+      const [
+        Offset(-80, 252),
+        Offset(330, 252),
+        Offset(470, 206),
+        Offset(600, 160),
+        Offset(880, 168),
+      ],
+      _span(u, 1.22, 1.78) * 1000,
+      time,
+      a1 * (1 - _span(u, 1.72, 1.86)),
+      maxR: 52,
     );
   }
-  // Çığın beyaz nefesi: Sâye'nin ardından akar; sığınağın üstünden geçer.
-  final wave = Path()..moveTo(-20, 400);
-  final reach = shelter > 0 ? front + shelter * 400 : front;
-  for (var i = 0; i <= 12; i++) {
-    final t = i / 12;
-    final wy = _gb + 20 - 260 * t;
-    wave.lineTo(reach - t * 120 + math.sin(time * 4 + i) * 14, wy);
-  }
-  wave
-    ..lineTo(-20, 60)
-    ..close();
-  c.save();
-  if (shelter > 0) {
-    c.clipRect(
-      Rect.fromLTWH(0, 0, 780, 250 - 40 * shelter + 140 * (1 - shelter)),
-    );
-  }
-  c.drawPath(wave, _hole(0.55));
-  c.restore();
-  final wx = x + 120;
-  if (shelter < 1) {
-    _tasvirBozkurt(c, Offset(wx, _gb + 8), 80, time, 1 - shelter);
-  }
-  _sayeAt(c, Offset(x, _gb + 12), time, a: 1 - 0.5 * shelter);
+  _krSnow(c, time, 1, wind: 40, n: 40);
 }
 
 // ------------------------------------------------------------- Peri bacaları
 
-void _chimney(
-  Canvas c,
-  double x,
-  double h,
-  double w,
-  Paint p, {
-  double hole = 0,
-}) {
+/// Kayaya oyulmuş kilise: kemerli kapı, pencereler, sütunlar.
+void _krRockChurch(Canvas c, double a) {
+  if (a <= 0) return;
   c.drawPath(
     Path()
-      ..moveTo(x - w, _gb)
-      ..quadraticBezierTo(x - w * 0.4, _gb - h * 0.6, x - w * 0.3, _gb - h)
-      ..lineTo(x + w * 0.3, _gb - h)
-      ..quadraticBezierTo(x + w * 0.4, _gb - h * 0.6, x + w, _gb)
+      ..moveTo(600, 400)
+      ..lineTo(600, 150)
+      ..quadraticBezierTo(640, 110, 700, 104)
+      ..quadraticBezierTo(760, 100, 780, 120)
+      ..lineTo(780, 400)
       ..close(),
-    p,
+    _ink(a),
   );
-  c.drawOval(
-    Rect.fromCenter(center: Offset(x, _gb - h - 6), width: w * 1.1, height: 20),
-    p,
-  );
-  if (hole > 0) {
-    for (var i = 0; i < 3; i++) {
-      c.drawRect(
-        Rect.fromLTWH(x - 5 + (i - 1) * 12.0, _gb - h * 0.5 + i * 14, 7, 10),
-        _hole(hole),
-      );
-    }
+  Path arch(double x, double y, double w, double h) => Path()
+    ..moveTo(x - w / 2, y)
+    ..lineTo(x - w / 2, y - h + w / 2)
+    ..arcToPoint(
+      Offset(x + w / 2, y - h + w / 2),
+      radius: Radius.circular(w / 2),
+    )
+    ..lineTo(x + w / 2, y)
+    ..close();
+  c.drawPath(arch(690, 300, 40, 70), _hole(0.55 * a));
+  for (final x in [640.0, 740.0]) {
+    c.drawPath(arch(x, 230, 18, 34), _hole(0.5 * a));
   }
+  for (final x in [660.0, 720.0]) {
+    c.drawRect(Rect.fromLTWH(x - 3, 240, 6, 60), _hole(0.3 * a));
+  }
+  _punchRow(c, const Offset(626, 172), const Offset(760, 172), 9, 1.6, a);
 }
 
 void _bFairy(Canvas c, double time, double u, double n) {
-  for (var i = 0; i < 7; i++) {
-    _chimney(c, 40 + i * 120.0, 160 + (i % 3) * 40, 40, _far(1));
-  }
-  _floor(c, 0.9);
-  var x = _walkX(u, n, 60, 600);
-  var y = _gb + 12;
-  // 0: güvercinlikler, kaya kiliseleri, perilerin dansı.
-  final a0 = _heroA(u, 0);
+  final a0 = _krL(u, 0), a1 = _krL(u, 1), a2 = _krL(u, 2, 2);
+  // 0: Muşkara'dan peri bacalarına tırmanır; güvercinlikler, kaya
+  // kiliseleri; periler dans eder.
   if (a0 > 0) {
-    for (var i = 0; i < 3; i++) {
-      final cx = 200 + i * 200.0;
-      _chimney(c, cx, 200 + i * 20.0, 50, _ink(a0), hole: 0.5 * a0);
-      final top = Offset(cx, _gb - 230 - i * 20.0);
-      for (var f = 0; f < 2; f++) {
-        _fairy(
+    _krMoon(c, const Offset(560, 220), 20, a0);
+    for (final (x, h) in [(130.0, 210.0), (300.0, 250.0), (470.0, 230.0)]) {
+      _krChimney(c, x, h, 38, _ink(0.5 * a0), holes: 1);
+    }
+    _krRockChurch(c, a0);
+    double gy(double x) => 352 - math.max(0, x - 60) * 0.2;
+    final hill = Path()
+      ..moveTo(0, 400)
+      ..lineTo(0, 352);
+    for (var x = 60.0; x <= 620; x += 20) {
+      hill.lineTo(x, gy(x) + ((x ~/ 20).isEven ? 0 : 3));
+    }
+    hill
+      ..lineTo(620, 400)
+      ..close();
+    c.drawPath(hill, _ink(a0));
+    for (final (x, h) in [(130.0, 210.0), (300.0, 250.0), (470.0, 230.0)]) {
+      for (var i = 0; i < 2; i++) {
+        final ang = time * 1.5 + i * math.pi + x * 0.01;
+        _krFairy(
           c,
-          top +
-              Offset(
-                math.cos(time * 1.6 + f * math.pi) * 34,
-                -16 + math.sin(time * 1.6 + f * math.pi) * 8,
-              ),
-          time,
+          Offset(x + math.cos(ang) * 34, 352 - h - 24 + math.sin(ang) * 10),
+          24,
+          time + i,
           a0,
-          i * 2.0 + f,
+          flip: math.sin(ang) > 0,
         );
       }
     }
+    final x = 80 + 470 * _span(u, 0.04, 0.98);
+    final step = math.sin(time * 6).abs() * 4;
+    _krSaye(c, Offset(x, gy(x) + 10 - step), 1.35, time, a0, rot: 0.1);
   }
-  // 1: Albastı; Sâye demirin ardında.
-  final a1 = _heroA(u, 1);
+  // 1: Albastı kızıl gölgesini uzatır; Sâye demir kapının ardında.
   if (a1 > 0) {
-    final back = _span(u, 1.45, 1.8);
-    c.save();
-    c.translate(560 + back * 120, _gb + 12);
-    c.scale(-2.3, 2.3);
-    c.drawPath(MythFigures.albastiSilhouette, _ink(a1));
-    c.restore();
-    for (var i = 0; i < 5; i++) {
-      c.drawLine(
-        Offset(430 + i * 14.0, _gb),
-        Offset(430 + i * 14.0, _gb - 120),
-        _stroke(_ink(a1), 4),
-      );
-    }
-    c.drawLine(
-      Offset(424, _gb - 116),
-      Offset(492, _gb - 116),
-      _stroke(_ink(a1), 5),
-    );
-    c.drawLine(
-      Offset(424, _gb - 60),
-      Offset(492, _gb - 60),
-      _stroke(_ink(a1), 5),
-    );
-    if (u > 1 && u < 2) x = math.min(x, 400);
-  }
-  // 2: Uçhisar'ın tepesi; ay doğar.
-  final a2 = _heroA(u, 2);
-  if (a2 > 0) {
-    c.drawCircle(
-      Offset(640, 140 - 40 * _span(u, 2.05, 2.8)),
-      26,
-      _hole(0.8 * a2),
-    );
-    c.drawPath(
-      Path()
-        ..moveTo(360, _gb)
-        ..lineTo(400, 230)
-        ..lineTo(450, 200)
-        ..lineTo(520, 214)
-        ..lineTo(560, _gb)
-        ..close(),
-      _ink(a2),
-    );
     for (var i = 0; i < 6; i++) {
-      c.drawRect(
-        Rect.fromLTWH(410 + (i % 3) * 36.0, 250 + (i ~/ 3) * 40.0, 10, 14),
-        _hole(0.4 * a2),
-      );
+      _krChimney(c, 40 + i * 140.0, 150 + (i % 3) * 40, 34, _ink(0.35 * a1));
     }
-    final climb = _span(u, 2.1, 2.7);
-    if (climb > 0) {
-      x = 420 + climb * 50;
-      y = _gb + 12 - climb * 150;
+    c.drawRect(const Rect.fromLTWH(0, 350, 780, 50), _ink(a1));
+    final come = _span(u, 1.0, 1.25);
+    final back = _span(u, 1.62, 1.92);
+    final ax = 720 - come * 120 + back * 60;
+    final reach = _span(u, 1.15, 1.45) * (1 - _span(u, 1.5, 1.66));
+    final cower = _span(u, 1.2, 1.35);
+    _krSaye(
+      c,
+      Offset(410, 362),
+      1.35,
+      time,
+      a1,
+      flip: true,
+      shake: cower * (1 - back),
+    );
+    _krIronGate(c, 380, 450, 210, a1);
+    _krAlbasti(c, Offset(ax, 362), 175, time, a1);
+    if (reach > 0) {
+      // Uzayan kızıl gölge: parmaklı bir el, demire değince geri çekilir.
+      final from = Offset(ax - 20, 262);
+      final to = Offset.lerp(from, const Offset(458, 280), reach)!;
+      final arm = Path()..moveTo(from.dx, from.dy - 8);
+      for (var i = 1; i <= 10; i++) {
+        final t = i / 10;
+        final p = Offset.lerp(from, to, t)!;
+        arm.lineTo(p.dx, p.dy - 8 + math.sin(t * 8 + time * 5) * 5);
+      }
+      for (var i = 10; i >= 0; i--) {
+        final t = i / 10;
+        final p = Offset.lerp(from, to, t)!;
+        arm.lineTo(
+          p.dx,
+          p.dy + 8 * (1 - 0.6 * t) + math.sin(t * 8 + time * 5) * 5,
+        );
+      }
+      arm.close();
+      c.drawPath(arm, _ink(0.6 * a1));
+      for (var i = 0; i < 4; i++) {
+        final ang = math.pi + (i - 1.5) * 0.35;
+        c.drawLine(
+          to,
+          to + Offset(math.cos(ang), math.sin(ang)) * 18,
+          _krLine(_ink(0.6 * a1), 3),
+        );
+      }
+    }
+    // Tıslar.
+    final hiss = _span(u, 1.5, 1.6) * (1 - _span(u, 1.85, 1.95));
+    if (hiss > 0) {
+      for (var i = 0; i < 3; i++) {
+        final y = 362 - 160 + i * 7.0;
+        final x0 = ax - 26;
+        final w = Path()..moveTo(x0, y);
+        for (var k = 1; k <= 6; k++) {
+          w.lineTo(x0 - k * 5, y + (k.isEven ? -3 : 3));
+        }
+        c.drawPath(w, _krLine(_ink(hiss * a1), 1.5));
+      }
     }
   }
-  _sayeAt(c, Offset(x, y), time);
+  // 2: ay tepeye vardığında Sâye de Uçhisar'ın doruğuna varır.
+  if (a2 > 0) {
+    final rise = _span(u, 2.0, 2.9);
+    _krMoon(c, Offset(712, 290 - rise * 230), 24, a2);
+    for (final (x, h) in [
+      (70.0, 150.0),
+      (170.0, 190.0),
+      (260.0, 130.0),
+      (610.0, 120.0),
+    ]) {
+      _krChimney(c, x, h, 32, _ink(0.45 * a2));
+    }
+    // Uçhisar: hepsinden yüksek, delik deşik kale kaya.
+    final rock = Path()
+      ..moveTo(330, 352)
+      ..quadraticBezierTo(360, 230, 400, 192)
+      ..quadraticBezierTo(420, 144, 470, 133)
+      ..quadraticBezierTo(530, 131, 545, 168)
+      ..quadraticBezierTo(580, 232, 640, 352)
+      ..close();
+    c.drawPath(rock, _ink(0.55 * a2));
+    for (var i = 0; i < 14; i++) {
+      c.drawRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromLTWH(
+            400 + (i % 5) * 26.0 + (i ~/ 5) * 6,
+            170 + (i ~/ 5) * 50.0 + (i % 2) * 8,
+            7,
+            11,
+          ),
+          const Radius.circular(3.5),
+        ),
+        _hole(0.6 * a2),
+      );
+    }
+    c.drawRect(const Rect.fromLTWH(0, 350, 780, 50), _ink(a2));
+    // Kayaya oyulmuş yol: zikzak.
+    const path = [
+      Offset(300, 362),
+      Offset(380, 336),
+      Offset(470, 304),
+      Offset(410, 262),
+      Offset(500, 222),
+      Offset(440, 182),
+      Offset(478, 136),
+    ];
+    final line = Path()..moveTo(path.first.dx, path.first.dy - 2);
+    for (final p in path.skip(1)) {
+      line.lineTo(p.dx, p.dy - 2);
+    }
+    c.drawPath(line, _krLine(_hole(0.45 * a2), 2.5));
+    final climb = _span(u, 2.02, 2.88);
+    var total = 0.0;
+    for (var i = 0; i < path.length - 1; i++) {
+      total += (path[i + 1] - path[i]).distance;
+    }
+    var d = climb * total;
+    var at = path.last;
+    for (var i = 0; i < path.length - 1; i++) {
+      final seg = (path[i + 1] - path[i]).distance;
+      if (d <= seg) {
+        at = Offset.lerp(path[i], path[i + 1], d / seg)!;
+        break;
+      }
+      d -= seg;
+    }
+    final step = climb < 1 ? math.sin(time * 6).abs() * 3 : 0.0;
+    _krSaye(c, at + Offset(0, -step), 1.15, time, a2);
+  }
 }
 
 // ------------------------------------------------------------- Derinkuyu
 
 void _bDerinkuyu(Canvas c, double time, double u, double n) {
-  c.drawRect(const Rect.fromLTWH(0, 0, 780, 400), _ink(0.82));
-  final carve = _cloth(0.75);
-  // Kat kat odalar, dikey baca, alt dehliz.
-  c.drawRect(const Rect.fromLTWH(60, 30, 300, 70), carve);
-  c.drawRect(const Rect.fromLTWH(330, 30, 50, 200), carve);
-  c.drawRect(const Rect.fromLTWH(380, 115, 300, 60), carve);
-  c.drawRect(const Rect.fromLTWH(60, 200, 680, 150), carve);
-  for (final (dx, dy) in [(300.0, 68.0), (450.0, 146.0)]) {
-    final roll = _span(u, 0.2, 0.6) * 40;
-    c.drawCircle(Offset(dx + roll, dy), 28, _ink(1));
-    c.drawCircle(Offset(dx + roll, dy), 7, _cloth(0.75));
-  }
-  // Sâye: önce yukarı odadan bacaya, sonra alt dehlize.
-  final d = _span(u, 0.08, 0.95);
-  var p = Offset(120 + d * 230, 108);
-  if (d >= 1) p = Offset(355, 108 + _span(u, 0.95, 1.1) * 254);
-  if (u > 1.1) p = Offset(355 + _span(u, 1.1, 2.6) * 300, 362);
-  // 1: dev uyanır ve peşine düşer; karanlıkta kurt gözleri.
-  final a1 = _heroA(u, 1);
-  if (a1 > 0) {
-    c.save();
-    c.clipRect(const Rect.fromLTWH(60, 200, 680, 150));
-    _person(c, Offset(p.dx - 170, 362), 100, a1, _giant, arm: -1.3, time: time);
-    c.restore();
-    c.drawCircle(Offset(p.dx + 140, 300), 3, _hole(a1));
-    c.drawCircle(Offset(p.dx + 150, 300), 3, _hole(a1));
-  }
-  // 2: en dipten uğultu.
-  final a2 = _heroA(u, 2);
-  if (a2 > 0) {
+  final a0 = _krL(u, 0), a1 = _krL(u, 1), a2 = _krL(u, 2, 2);
+  // 0: mahzenler, şapel, hava bacaları; yuvarlak kapı içeriden yuvarlanıp
+  // yol verir.
+  if (a0 > 0) {
+    _krEarth(c, const Rect.fromLTWH(0, 0, 780, 400), const [
+      Rect.fromLTWH(50, 40, 260, 90), // mahzen
+      Rect.fromLTWH(296, 100, 50, 30),
+      Rect.fromLTWH(330, 30, 240, 120), // şapel
+      Rect.fromLTWH(560, 110, 76, 40),
+      Rect.fromLTWH(594, 110, 40, 236), // baca
+      Rect.fromLTWH(250, 260, 470, 86), // dehliz
+      Rect.fromLTWH(720, 30, 26, 240), // hava bacası
+    ], a0);
+    // Mahzende küpler; şapelde kemerler ve sütunlar.
     for (var i = 0; i < 4; i++) {
-      final r = 30 + ((time * 30 + i * 30) % 120);
+      c.drawOval(Rect.fromLTWH(170 + i * 30.0, 108, 20, 24), _ink(0.45 * a0));
+    }
+    for (final x in [400.0, 500.0]) {
+      c.drawRect(Rect.fromLTWH(x - 6, 70, 12, 80), _ink(a0));
       c.drawArc(
-        Rect.fromCenter(center: Offset(p.dx, 420), width: r * 3, height: r),
+        Rect.fromLTWH(x - 50, 36, 100, 70),
         math.pi,
         math.pi,
         false,
-        _stroke(_hole(0.4 * a2 * (1 - r / 150)), 2),
+        _krLine(_ink(a0), 6),
       );
     }
+    c.drawRect(const Rect.fromLTWH(560, 48, 4, 40), _ink(a0));
+    c.drawRect(const Rect.fromLTWH(552, 58, 20, 4), _ink(a0));
+    // Kapı: Sâye varmadan yuvasına yuvarlanır.
+    final roll = _span(u, 0.62, 0.8);
+    _krMillDoor(c, Offset(400 - roll * 92, 303), 42, -roll * 2.2, a0);
+    const pts = [
+      Offset(80, 132),
+      Offset(300, 132),
+      Offset(330, 152),
+      Offset(612, 152),
+      Offset(612, 346),
+      Offset(440, 346),
+    ];
+    var total = 0.0;
+    for (var i = 0; i < pts.length - 1; i++) {
+      total += (pts[i + 1] - pts[i]).distance;
+    }
+    var d = _span(u, 0.04, 0.96) * total;
+    var at = pts.last;
+    var flip = false;
+    for (var i = 0; i < pts.length - 1; i++) {
+      final seg = (pts[i + 1] - pts[i]).distance;
+      if (d <= seg) {
+        at = Offset.lerp(pts[i], pts[i + 1], d / seg)!;
+        flip = pts[i + 1].dx < pts[i].dx;
+        break;
+      }
+      d -= seg;
+      flip = true;
+    }
+    _krSaye(c, at, 0.95, time, a0, flip: flip);
   }
-  _sayeAt(c, p, time, s: 0.95);
+  // 1: devlerin kapısında uyuyan dev bir gözünü açar; Sâye kaçar;
+  // karanlıkta iki göz: Gökbörü.
+  if (a1 > 0) {
+    _krEarth(c, const Rect.fromLTWH(0, 0, 780, 400), const [
+      Rect.fromLTWH(30, 50, 720, 302),
+    ], a1);
+    // Devlerin kapısı: koca kemer.
+    c.drawPath(
+      Path()
+        ..moveTo(60, 352)
+        ..lineTo(60, 140)
+        ..quadraticBezierTo(170, 40, 280, 140)
+        ..lineTo(280, 352)
+        ..lineTo(250, 352)
+        ..lineTo(250, 150)
+        ..quadraticBezierTo(170, 74, 90, 150)
+        ..lineTo(90, 352)
+        ..close(),
+      _ink(a1),
+    );
+    _punchRow(c, const Offset(100, 116), const Offset(240, 116), 8, 1.8, a1);
+    // Sağ yan karanlık.
+    c.drawRect(
+      const Rect.fromLTWH(560, 50, 190, 302),
+      Paint()
+        ..shader = ui.Gradient.linear(
+          const Offset(560, 0),
+          const Offset(700, 0),
+          [
+            const Color(0x001A0B05),
+            const Color(0xFF1A0B05).withValues(alpha: 0.5 * a1),
+          ],
+        ),
+    );
+    c.drawRect(const Rect.fromLTWH(0, 350, 780, 50), _ink(a1));
+    // Uyuyan dev: kapının önünde boylu boyunca yatar.
+    const gf = Offset(520, 316);
+    _person(c, gf, 170, a1, _giant, rot: -math.pi / 2, time: time * 0.2);
+    final eye = _span(u, 1.2, 1.3);
+    final head = gf + const Offset(-213, -9);
+    c.drawOval(
+      Rect.fromCenter(center: head, width: 10, height: 1.5 + 7 * eye),
+      _krLight(a1 * (0.5 + 0.5 * eye)),
+    );
+    if (eye > 0) c.drawCircle(head, 2 * eye, _ink(a1));
+    // Sâye kaçar.
+    final flee = _span(u, 1.3, 1.55);
+    final sx = 548 + flee * 52;
+    if (flee > 0 && flee < 1) {
+      _krSayeRun(c, Offset(sx, 362), 1.0, time, a1);
+    } else {
+      _krSaye(
+        c,
+        Offset(sx, 362),
+        1.0,
+        time,
+        a1,
+        flip: flee <= 0,
+        shake: flee >= 1 ? 0.3 : 0,
+      );
+    }
+    // Karanlıkta iki göz; sonra kurt.
+    final eyes = _span(u, 1.55, 1.65);
+    final wolf = _span(u, 1.72, 1.9);
+    if (eyes > 0) {
+      for (final dx in [0.0, 12.0]) {
+        c.drawCircle(
+          Offset(655 + dx, 268),
+          3,
+          _krLight(a1 * eyes * (1 - wolf)),
+        );
+      }
+    }
+    _krWolf(
+      c,
+      const Offset(700, 360),
+      110,
+      time,
+      a1 * wolf,
+      flip: true,
+      shape: MythShapes.wolfStand,
+    );
+  }
+  // 2: en dipte kökler sarkar; yukarıdan yaprak kokusu; Sâye köklere uzanır.
+  if (a2 > 0) {
+    _krEarth(c, const Rect.fromLTWH(0, 0, 780, 400), const [
+      Rect.fromLTWH(60, 70, 660, 282),
+    ], a2);
+    // Yukarıdaki yarıktan ışık.
+    c.drawPath(
+      Path()
+        ..moveTo(360, 0)
+        ..lineTo(420, 0)
+        ..lineTo(404, 74)
+        ..lineTo(378, 74)
+        ..close(),
+      _krLight(0.7 * a2),
+    );
+    _krGlow(c, const Offset(390, 80), 110, 0.6 * a2, core: 0.6);
+    // Kökler.
+    for (var i = 0; i < 9; i++) {
+      final x0 = 120 + i * 62.0;
+      final len = 110.0 + (i * 53) % 90;
+      final sw = math.sin(time * 0.8 + i) * 6;
+      final p = Path()..moveTo(x0, 66);
+      p.cubicTo(
+        x0 + 14,
+        66 + len * 0.3,
+        x0 - 14 + sw,
+        66 + len * 0.7,
+        x0 + sw,
+        66 + len,
+      );
+      c.drawPath(p, _krLine(_ink(a2), 4.0 - (i % 3)));
+      final b = Path()..moveTo(x0 + 4, 66 + len * 0.4);
+      b.quadraticBezierTo(
+        x0 + 20,
+        66 + len * 0.55,
+        x0 + 18 + sw,
+        66 + len * 0.75,
+      );
+      c.drawPath(b, _krLine(_ink(a2), 1.5));
+    }
+    // Süzülen yapraklar.
+    for (var i = 0; i < 6; i++) {
+      final k = (time * 0.12 + i / 6) % 1;
+      final at = Offset(380 + math.sin(k * 7 + i) * 60, 70 + k * 260);
+      c.save();
+      c.translate(at.dx, at.dy);
+      c.rotate(k * 6 + i);
+      c.drawOval(
+        const Rect.fromLTWH(-5, -2.5, 10, 5),
+        _krLight(0.8 * a2 * (1 - k)),
+      );
+      c.restore();
+    }
+    c.drawRect(const Rect.fromLTWH(0, 350, 780, 50), _ink(a2));
+    _krWolf(
+      c,
+      const Offset(250, 360),
+      90,
+      time,
+      a2,
+      shape: MythShapes.wolfStand,
+    );
+    final reach = _span(u, 2.2, 2.6);
+    const sp = Offset(420, 362);
+    _krSaye(c, sp, 1.5, time, a2, rot: -0.05 * reach);
+    // Yukarı uzanan kol.
+    final hand = sp + Offset(0 + 26 * reach, -69 - 46 * reach);
+    c.drawLine(sp + const Offset(-4, -69), hand, _krLine(_ink(a2), 5));
+    c.drawCircle(hand, 3.5, _ink(a2));
+  }
 }
 
 // ------------------------------------------------------------- Konya
