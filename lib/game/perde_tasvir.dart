@@ -1037,15 +1037,11 @@ void _heroOverlay(Canvas canvas, PerdeScene scene, double time, double u) {
         c.restore();
       });
     case PerdeScene.sema:
-      // Mevlânâ: "Bu benim düğünümdür."
-      stage(3, (a) {
-        _dervish(c, const Offset(390, g + 12), 260, a);
-        c.drawCircle(const Offset(390, 70), 40, _hole(0.3 * a));
-      });
-      _chaseBeat(canvas, time, u, 4);
-      stage(5, (a) {
-        _cut(c, MythShapes.wolfHowl, const Offset(430, g + 10), 220, a);
-      });
+      _semaLines(canvas, time, u);
+    case PerdeScene.ulgen:
+      _ulgenLines(canvas, time, u);
+    case PerdeScene.yesilKubbe:
+      _kubbeLines(canvas, time, u);
     case PerdeScene.akAna:
       // Kayra Han suyun üstünde yalnız.
       stage(1, (a) {
@@ -1112,28 +1108,7 @@ void _heroOverlay(Canvas canvas, PerdeScene scene, double time, double u) {
         }
       });
     case PerdeScene.gok:
-      // Kam davulunu çalar.
-      stage(0, (a) {
-        _cut(c, MythFigures.kamSilhouette, const Offset(390, g + 12), 270, a);
-      });
-      // Ülgen'in ışığı en yüksek katta.
-      stage(1, (a) {
-        c.save();
-        c.translate(390, 300);
-        c.scale(2.2);
-        MythFigures.ulgenLight(c, time);
-        c.restore();
-      });
-      // Hüma'nın gölgesi kimin başına düşerse.
-      stage(3, (a) {
-        c.save();
-        c.translate(390, 150 + math.sin(time * 1.4) * 8);
-        c.scale(4.2);
-        c.drawPath(MythShapes.birdGlide, _ink(a));
-        c.restore();
-        _tasvirSaye(canvas, const Offset(390, g + 12), 2.0, time, a);
-      });
-      _chaseBeat(canvas, time, u, 4);
+      _gokLines(canvas, time, u);
     case PerdeScene.prologue ||
         PerdeScene.ergenekon ||
         PerdeScene.otuken ||
@@ -1929,40 +1904,6 @@ void _heroExtra(Canvas canvas, PerdeScene scene, double time, double u) {
         c.restore();
         _tasvirSaye(canvas, const Offset(470, g + 12), 1.6, time, a * roll);
       }, veil: 0.3);
-    case PerdeScene.sema:
-      // Tulpar Sâye'yi karlı ovaya indirir; gökte ay.
-      stage(0, (a) {
-        c.drawCircle(const Offset(640, 70), 28, _hole(0.8 * a));
-        final k = _span(u, 0.05, 0.9);
-        final at = Offset(180 + k * 280, 150 + k * 190);
-        _cut(
-          c,
-          MythShapes.horse,
-          at,
-          170,
-          a,
-          eye: const Offset(48, -82),
-          deco: false,
-        );
-        _wings(
-          c,
-          at + const Offset(6, -128),
-          100,
-          0.4 + math.sin(time * 3) * 0.25,
-          a,
-        );
-        _tasvirSaye(canvas, at + const Offset(-6, -98), 1.0, time, a);
-      });
-      // Şeb-i Arûs: düğün gecesi; semâzen döner.
-      stage(2, (a) {
-        _semazenPuppet(c, const Offset(390, g + 12), time * 3, a);
-        c.save();
-        c.translate(390, g + 12);
-        c.scale(2.3);
-        c.translate(-390, -(g + 12));
-        _semazenPuppet(c, const Offset(390, g + 12), time * 3, a);
-        c.restore();
-      });
     case PerdeScene.akAna:
       // Taşın altında su sesi: Sâye kulağını taşa dayar.
       stage(0, (a) {
@@ -2004,37 +1945,6 @@ void _heroExtra(Canvas canvas, PerdeScene scene, double time, double u) {
         );
         _tasvirDemirci(canvas, const Offset(260, g + 12), 1.0, time, a);
       });
-    case PerdeScene.gok:
-      // Bir katında ay soğuk, bir katında güneş yakar.
-      stage(2, (a) {
-        c.drawPath(
-          Path.combine(
-            PathOperation.difference,
-            Path()..addOval(
-              Rect.fromCircle(center: const Offset(230, 170), radius: 80),
-            ),
-            Path()..addOval(
-              Rect.fromCircle(center: const Offset(262, 150), radius: 70),
-            ),
-          ),
-          _hole(0.8 * a),
-        );
-        c.drawCircle(const Offset(560, 170), 70, _hole(0.9 * a));
-        final ray = _hole(0.6 * a)..strokeWidth = 4;
-        for (var i = 0; i < 16; i++) {
-          final ang = i / 16 * math.pi * 2 + time * 0.3;
-          c.drawLine(
-            const Offset(560, 170) + Offset(math.cos(ang), math.sin(ang)) * 84,
-            const Offset(560, 170) + Offset(math.cos(ang), math.sin(ang)) * 120,
-            ray,
-          );
-        }
-        c.drawLine(
-          const Offset(390, 20),
-          const Offset(390, 330),
-          _ink(a)..strokeWidth = 4,
-        );
-      });
     case PerdeScene.epilogue:
       _epilogueStage(canvas, time, u);
     default:
@@ -2042,112 +1952,246 @@ void _heroExtra(Canvas canvas, PerdeScene scene, double time, double u) {
   }
 }
 
-/// Son perde: her satır kendi sahnesiyle.
+/// Son perde: her satır kendi sahnesiyle. Yakın tasvirler (1-7, 10, 12, 14)
+/// kubbenin tepesinde geçer; ardındaki geniş manzara örtülür.
 void _epilogueStage(Canvas c, double time, double u) {
   const g = PerdePainter._ground;
-  void stage(double k, void Function(double a) draw, {double veil = 0.8}) {
+  void stage(
+    double k,
+    void Function(double a) draw, {
+    double veil = 0.8,
+    int cover = 1,
+  }) {
     final a = _heroA(u, k);
     if (a <= 0) return;
-    _veil(c, a * veil);
+    for (var i = 0; i < cover; i++) {
+      _veil(c, a * veil);
+    }
+    _P._c = c;
     draw(a);
   }
 
-  void master(Offset feet, double s, double a) => _P._puppet(
-    c,
-    feet,
-    time,
-    0.9,
-    a,
-    (ink, hole) => _P._master(ink, hole),
-    scale: s,
-    rod: false,
-  );
-  void lamp(Offset at, double r, double a) {
-    c.drawCircle(
-      at,
-      r * 2.4,
-      Paint()
-        ..shader = ui.Gradient.radial(at, r * 2.4, [
-          const Color(0xFFFFE0A0).withValues(alpha: 0.7 * a),
-          const Color(0x00FFE0A0),
-        ]),
+  // Kandilcilerin halkası: fenerlerini ustanın kandiline tutarlar.
+  void ring(double a) {
+    _kandilciFig(c, const Offset(122, g + 12), 0.95, time, a, lift: -14);
+    _kandilciFig(
+      c,
+      const Offset(232, g + 12),
+      1.0,
+      time,
+      a,
+      lift: -24,
+      seed: 0.5,
     );
-    c.drawCircle(at, r, _hole(a));
+    _kandilciFig(
+      c,
+      const Offset(548, g + 12),
+      1.0,
+      time,
+      a,
+      flip: true,
+      lift: -24,
+      seed: 1,
+    );
+    _kandilciFig(
+      c,
+      const Offset(658, g + 12),
+      0.95,
+      time,
+      a,
+      flip: true,
+      lift: -14,
+      seed: 1.5,
+    );
   }
 
-  // 0: Yeşil Kubbe'nin tepesinde, karın altında bir kandil.
+  double flick() => 0.12 * math.sin(time * 9) * math.sin(time * 5.3);
+  const mFeet = Offset(390, g + 12);
+  const ms = 0.72;
+
+  // 0: Yeşil Kubbe'nin tepesinde, karın altında küçük bir kandil; Sâye son
+  // basamağı çıkar.
   stage(0, (a) {
-    _greenDome(c, 390, a, scale: 2.2);
-    lamp(const Offset(390, 70), 7, a);
-  });
-  // 1: Usta ve çevresinde halka olmuş Kandilciler.
-  stage(1, (a) {
-    master(const Offset(390, g + 12), 1.9, a);
-    lamp(const Offset(430, g - 150), 6, a);
-    for (var i = 0; i < 4; i++) {
-      final x = i < 2 ? 120 + i * 90.0 : 570 + (i - 2) * 90.0;
-      _tasvirKandilci(c, Offset(x, g + 12), 1.05, time, a);
-    }
-  });
-  // 2: "Geldin," dedi usta.
-  stage(2, (a) {
-    master(const Offset(470, g + 12), 1.9, a);
-    _tasvirSaye(c, const Offset(270, g + 12), 2.2, time, a);
-  });
-  // 3: Kandilciler gölgesiz; kırık güneş.
-  stage(3, (a) {
-    for (var i = 0; i < 5; i++) {
-      final ang = i / 5 * math.pi * 2;
-      c.drawPath(
-        Path()
-          ..moveTo(390, 120)
-          ..lineTo(390 + math.cos(ang) * 70, 120 + math.sin(ang) * 70)
-          ..lineTo(
-            390 + math.cos(ang + 1.1) * 70,
-            120 + math.sin(ang + 1.1) * 70,
-          )
-          ..close(),
-        _hole(0.8 * a),
+    _snowfall(c, time, a);
+    _greenDome(c, 390, a, scale: 1.05);
+    _lampGlow(c, const Offset(380, 66), 3.5, a, flick: 2 * flick());
+    final t = _span(u, 0.08, 0.75);
+    final p = Offset.lerp(const Offset(436, 178), const Offset(404, 96), t)!;
+    c.save();
+    c.translate(p.dx, p.dy);
+    c.rotate(-0.32 * (1 - _span(u, 0.7, 0.8)));
+    c.scale(-1, 1);
+    _tasvirSaye(c, Offset.zero, 0.42, time, a);
+    c.restore();
+  }, veil: 1);
+  // 1: Usta yaşlanmış, küçülmüş, omzunda kar; Kandilciler halka olmuş.
+  stage(
+    1,
+    (a) {
+      _endTop(c, time, a);
+      ring(a);
+      _masterFig(c, mFeet, ms, time, a, lamp: true, snow: 0.85);
+      _lampGlow(c, _masterHand(mFeet, ms), 4.5, a, flick: flick());
+    },
+    veil: 1,
+    cover: 3,
+  );
+  // 2: Usta başını kaldırır: "Geldin."
+  stage(
+    2,
+    (a) {
+      _endTop(c, time, a);
+      ring(a);
+      _masterFig(c, mFeet, ms, time, a, flip: true, lamp: true, snow: 0.85);
+      _lampGlow(c, _masterHand(mFeet, ms, flip: true), 4.5, a, flick: flick());
+      _tasvirSaye(c, const Offset(62, g + 12), 1.25, time, a);
+    },
+    veil: 1,
+    cover: 3,
+  );
+  // 3: Sâye halkayı yarar, ustasının dizlerinin dibine çöker; Kandilcilerin
+  // karda gölgesi yok.
+  stage(
+    3,
+    (a) {
+      _endTop(c, time, a);
+      ring(a);
+      _masterFig(c, mFeet, ms, time, a, flip: true, lamp: true, snow: 0.85);
+      _lampGlow(c, _masterHand(mFeet, ms, flip: true), 4.5, a, flick: flick());
+      final run = _span(u, 3.05, 3.55);
+      final x = 62 + run * (338 - 62);
+      _sayeKneel(c, Offset(x, g + 12), 1.2, time, a, kneel: _span(u, 3.5, 3.7));
+    },
+    veil: 1,
+    cover: 3,
+  );
+  // Usta ile Sâye yakından (4-7): halka geride soluk.
+  const near = Offset(460, g + 12);
+  const ns = 0.85;
+  const sFeet = Offset(350, g + 12);
+  const ss = 1.5;
+  void closeSet(double a) {
+    _snowfall(c, time, a);
+    // Alem ustanın ardında kalır (aralarında direk durmasın).
+    _domeTip(c, const Offset(460, g + 12), a, w: 300, finial: 232);
+    _kandilciFig(c, const Offset(100, g + 12), 0.9, time, 0.4 * a);
+    _kandilciFig(c, const Offset(700, g + 12), 0.9, time, 0.4 * a, flip: true);
+  }
+
+  // 4: "Güneşi yalnız kendilerine istediler; güneş kırıldı."
+  stage(
+    4,
+    (a) {
+      closeSet(a);
+      c.drawCircle(const Offset(640, 72), 28, _hole(0.6 * a));
+      for (final (p, q) in [
+        (const Offset(624, 46), const Offset(644, 74)),
+        (const Offset(644, 74), const Offset(632, 100)),
+        (const Offset(644, 74), const Offset(670, 82)),
+      ]) {
+        c.drawLine(p, q, _stroke(_ink(0.8 * a), 2.5));
+      }
+      _masterFig(c, near, ns, time, a, flip: true, lamp: true, snow: 0.85);
+      _lampGlow(c, _masterHand(near, ns, flip: true), 5, a, flick: flick());
+      _sayeKneel(c, sFeet, ss, time, a);
+    },
+    veil: 1,
+    cover: 3,
+  );
+  // 5: "Bu gece ışık ölmez. Yalnızca kavuşur." Sâye doğrulur.
+  stage(
+    5,
+    (a) {
+      closeSet(a);
+      _masterFig(c, near, ns, time, a, flip: true, lamp: true, snow: 0.85);
+      _lampGlow(
+        c,
+        _masterHand(near, ns, flip: true),
+        5 + 2 * _span(u, 5.1, 5.6),
+        a,
+        flick: flick(),
       );
-    }
-    for (var i = 0; i < 3; i++) {
-      _tasvirKandilci(c, Offset(220 + i * 170.0, g + 12), 1.15, time, a);
-    }
-  });
-  // 4: Mevlânâ'nın düğün gecesi.
-  stage(4, (a) {
-    master(const Offset(260, g + 12), 1.8, a);
-    _semazenPuppet(c, const Offset(520, g + 12), time * 3, a);
-  });
-  // 5: "Bu gece ışık ölmez. Yalnızca kavuşur."
-  stage(5, (a) {
-    master(const Offset(450, g + 12), 1.9, a);
-    _tasvirSaye(c, const Offset(300, g + 12), 2.1, time, a);
-    lamp(const Offset(490, g - 150), 7, a);
-  });
-  // 6: Ney sesi; usta kandili Sâye'nin avuçlarına bırakır.
-  stage(6, (a) {
-    master(const Offset(460, g + 12), 1.9, a);
-    _tasvirSaye(c, const Offset(300, g + 12), 2.1, time, a);
-    final k = _span(u, 6.2, 6.8);
-    lamp(
-      Offset.lerp(const Offset(500, g - 150), const Offset(356, g - 60), k)!,
-      7,
-      a,
-    );
-  });
-  // 7: "Sen benim gölgem değildin. Duamdın."
-  stage(7, (a) {
-    master(const Offset(460, g + 12), 1.9, a);
-    _tasvirSaye(c, const Offset(300, g + 12), 2.1, time, a);
-    lamp(const Offset(356, g - 60), 8, a);
-  });
-  // 10: Sâye'nin içinden bir ışık doğar.
-  stage(10, (a) {
-    _tasvirSaye(c, const Offset(390, g + 12), 2.4, time, a);
-    final r = 40 + 80 * _span(u, 10.1, 10.9);
-    c.drawCircle(const Offset(390, g - 100), r, _hole(0.55 * a));
-  }, veil: 0.5);
+      _sayeKneel(c, sFeet, ss, time, a, kneel: 1 - _span(u, 5.25, 5.7));
+    },
+    veil: 1,
+    cover: 3,
+  );
+  // 6: Ney sesi; usta eğilir, kandili Sâye'nin avuçlarına bırakır.
+  stage(
+    6,
+    (a) {
+      closeSet(a);
+      for (var i = 0; i < 3; i++) {
+        final k = (time * 0.3 + i / 3) % 1;
+        final y = 380 - k * 220;
+        c.drawPath(
+          Path()
+            ..moveTo(30 + i * 30.0, y)
+            ..quadraticBezierTo(60 + i * 30.0, y - 20, 50 + i * 30.0, y - 44),
+          _stroke(_hole(0.45 * a * (1 - k)), 2),
+        );
+      }
+      final bend = 0.22 * _span(u, 6.05, 6.45);
+      _masterFig(
+        c,
+        near,
+        ns,
+        time,
+        a,
+        flip: true,
+        bend: bend,
+        lamp: true,
+        snow: 0.85,
+      );
+      final from = _masterHand(near, ns, flip: true, bend: bend);
+      final to = _sayeHand(sFeet, ss);
+      final k = _span(u, 6.35, 6.8);
+      _tasvirSaye(c, sFeet, ss, time, a);
+      _lampGlow(c, Offset.lerp(from, to, k)!, 6, a, flick: flick());
+    },
+    veil: 1,
+    cover: 3,
+  );
+  // 7: Usta alnını Sâye'nin alnına dayar: "Sen benim duamdın."
+  stage(
+    7,
+    (a) {
+      closeSet(a);
+      final k = _span(u, 7.05, 7.45);
+      final feet = Offset.lerp(near, const Offset(443, g + 28), k)!;
+      final bend = 0.22 + 0.23 * k;
+      c.save();
+      c.clipRect(const Rect.fromLTWH(0, 0, 780, g + 14));
+      _masterFig(c, feet, ns, time, a, flip: true, bend: bend, snow: 0.85);
+      c.restore();
+      _tasvirSaye(c, sFeet, ss, time, a);
+      _lampGlow(c, _sayeHand(sFeet, ss), 6, a, flick: flick());
+    },
+    veil: 1,
+    cover: 3,
+  );
+  // 10: Sâye'nin avuçlarında, kendi içinden bir ışık doğar.
+  stage(
+    10,
+    (a) {
+      _endTop(c, time, a);
+      const feet = Offset(300, g + 12);
+      _tasvirSaye(c, feet, 2.2, time, a);
+      final grow = _span(u, 10.1, 10.9);
+      final at = _sayeHand(feet, 2.2);
+      _lampGlow(c, at, 5 + 18 * grow, a);
+      for (var i = 0; i < 12; i++) {
+        final ang = i / 12 * math.pi * 2 + time * 0.3;
+        c.drawLine(
+          at + Offset(math.cos(ang), math.sin(ang)) * (30 + 40 * grow),
+          at + Offset(math.cos(ang), math.sin(ang)) * (44 + 70 * grow),
+          _stroke(_hole(0.5 * a * grow), 2),
+        );
+      }
+    },
+    veil: 1,
+    cover: 3,
+  );
   // 11: Işık göğe yükselir; Kandilciler gölgelerine bakıp ağlar.
   stage(11, (a) {
     final rise = _span(u, 11.05, 11.9);
@@ -2157,40 +2201,36 @@ void _epilogueStage(Canvas c, double time, double u) {
       c.drawRect(Rect.fromLTWH(150 + i * 160.0, g + 10, 80, 6), _ink(a * 0.5));
     }
   });
-  // 12: Hüdhüd: "Kırık güneşin yalnızca bir parçası buradaydı."
-  stage(12, (a) {
-    _tasvirHudhud(c, const Offset(420, 170), 3.4, time, a);
-    _tasvirSaye(c, const Offset(240, g + 12), 2.0, time, a);
-  });
+  // 12: Hüdhüd sözünü tutar, Sâye'nin omzuna konar.
+  stage(
+    12,
+    (a) {
+      _endTop(c, time, a);
+      const feet = Offset(330, g + 12);
+      _tasvirSaye(c, feet, 2.0, time, a);
+      final k = _span(u, 12.05, 12.45);
+      // Omzuna konar: başının ardında, atkısının üstünde.
+      final perch = feet + const Offset(-30, -112);
+      final p =
+          Offset.lerp(const Offset(730, 70), perch, k)! -
+          Offset(0, math.sin(k * math.pi) * 40);
+      _tasvirHudhud(c, p, 0.6, time, a);
+    },
+    veil: 1,
+    cover: 3,
+  );
   // 13: Önünde bir yol uzanır.
   stage(13, (a) {
-    c.drawPath(
-      Path()
-        ..moveTo(330, g + 12)
-        ..quadraticBezierTo(560, g - 40, 760, g - 120)
-        ..lineTo(760, g - 110)
-        ..quadraticBezierTo(560, g - 20, 450, g + 12)
-        ..close(),
-      _hole(0.6 * a),
-    );
+    _endRoad(c, a);
     _tasvirSaye(c, const Offset(300, g + 12), 2.2, time, a);
   }, veil: 0.5);
-  // 14: "Yürü, Sâye."
+  // 14: "Yürü, Sâye." Omzunda Hüdhüd, yolu yürür.
   stage(14, (a) {
-    final k = _span(u, 14.05, 14.95);
-    _tasvirSaye(
-      c,
-      Offset(300 + k * 380, g + 12 - k * 80),
-      2.2 - k * 1.2,
-      time,
-      a,
-    );
-    _tasvirHudhud(
-      c,
-      Offset(360 + k * 380, g - 190 - k * 60),
-      1.6 - k * 0.8,
-      time,
-      a,
-    );
+    _endRoad(c, a);
+    final t = 0.25 + 0.6 * _span(u, 14.05, 14.95);
+    final p = _endRoadAt(t);
+    final s = 2.2 * (1 - 0.62 * t);
+    _tasvirSaye(c, p, s, time, a);
+    _tasvirHudhud(c, p + Offset(-15 * s, -56 * s), 0.3 * s, time, a);
   }, veil: 0.4);
 }

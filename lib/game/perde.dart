@@ -14,6 +14,7 @@ part 'perde_giris.dart';
 part 'perde_tasvir.dart';
 part 'perde_kisi.dart';
 part 'perde_kopru.dart';
+part 'perde_son.dart';
 
 /// Perde sahneleri: prologda, bölüm aralarında ve finalde oynanan gölge oyunu.
 enum PerdeScene {
@@ -72,8 +73,14 @@ enum PerdeScene {
   /// Tulpar, kırık güneşin parçası.
   gok,
 
+  /// Ülgen'in kapısı: göğün en üst katı, kara bulutlar, Hüma, Süge Toyon.
+  ulgen,
+
   /// Konya: düğün gecesi, semâzenler, neyzen.
   sema,
+
+  /// Yeşil Kubbe: ışık kubbeden taşar; tepede usta ve Kandilci Başı.
+  yesilKubbe,
 
   /// Son: Yeşil Kubbe'de kandil söner, gölge ışığa karışır.
   epilogue,
@@ -98,8 +105,8 @@ PerdeScene? interludeScene(int level) => switch (level) {
   15 => PerdeScene.ergenekon,
   16 => PerdeScene.gok,
   17 => PerdeScene.otuken,
-  18 => PerdeScene.gok,
-  19 => PerdeScene.sema,
+  18 => PerdeScene.ulgen,
+  19 => PerdeScene.yesilKubbe,
   20 => PerdeScene.akAna,
   _ => null,
 };
@@ -411,8 +418,12 @@ class PerdePainter {
           _ergenekonScene(canvas, time, progress);
         case PerdeScene.gok:
           _gokScene(canvas, time, progress);
+        case PerdeScene.ulgen:
+          _ulgenScene(canvas, time, progress);
         case PerdeScene.sema:
           _semaScene(canvas, time, progress);
+        case PerdeScene.yesilKubbe:
+          _kubbeScene(canvas, time, progress);
         case PerdeScene.epilogue:
           _endingScene(canvas, time, progress);
       }

@@ -784,10 +784,15 @@ void _greenDome(Canvas canvas, double x, double a, {double scale = 1}) {
 void _semaScene(Canvas canvas, double time, double u) {
   _P._c = canvas;
   _fallLines(canvas, time, 0.6, snow: true, count: 40);
-  _P._city(canvas, 1);
-  _greenDome(canvas, 600, 1, scale: 0.9);
+  // Önce ve sonra kar ovası (uzakta şehir); ortada Konya'nın içi.
+  final city = _shown(u, 2.0, 3.97, 0.3);
+  _snowPlain(canvas, time, 1 - city);
+  _farCity(canvas, 690, 296, 0.55, 1 - city, glow: 0.5);
+  if (city <= 0) return;
+  _P._city(canvas, city);
+  _greenDome(canvas, 540, city, scale: 0.9);
   // Semâzenler, düğün gecesi döner.
-  final sa = _span(u, 1.6, 2.3);
+  final sa = _span(u, 1.6, 2.3) * city;
   for (var i = 0; i < 5; i++) {
     final orbit = time * 0.35 + i * 2 * math.pi / 5;
     final x = 300 + math.cos(orbit) * 150;
@@ -800,7 +805,7 @@ void _semaScene(Canvas canvas, double time, double u) {
     );
   }
   // Neyzen: başı eğik, neyi yana tutar.
-  final na = _span(u, 2.2, 2.8);
+  final na = _span(u, 2.2, 2.8) * city;
   if (na > 0) {
     final ink = _ink(na);
     canvas.drawPath(
@@ -818,33 +823,6 @@ void _semaScene(Canvas canvas, double time, double u) {
       const Offset(104, 282),
       const Offset(150, 316),
       ink..strokeWidth = 3,
-    );
-  }
-  // Kandilciler ustayı kubbenin tepesine çıkarır.
-  final ka = _span(u, 3.8, 4.4);
-  if (ka > 0) {
-    for (var i = 0; i < 2; i++) {
-      _P._puppet(
-        canvas,
-        Offset(560 + i * 80.0, 350 - 262 * 0.9 + 10),
-        time,
-        i * 2.1,
-        ka,
-        (ink, hole) => _P._lamplighter(ink, hole),
-        scale: 0.3,
-        flip: i == 1,
-        rod: false,
-      );
-    }
-    _P._puppet(
-      canvas,
-      Offset(600, 350 - 262 * 0.9 + 8),
-      time,
-      1.3,
-      ka,
-      _P._master,
-      scale: 0.32,
-      rod: false,
     );
   }
 }
@@ -888,12 +866,19 @@ void _endingScene(Canvas canvas, double time, double u) {
   // Şehir, kubbe ve kar.
   _fallLines(canvas, time, 0.5, snow: true, count: 40);
   _P._city(canvas, 1);
-  _greenDome(canvas, 390, 1, scale: 1.05);
+  // Yakın tasvirlerde (1-7, 10, 12) kubbe ardında hayalet gibi kalmasın.
+  final close = math.max(
+    _shown(u, 0.9, 7.95, 0.3),
+    math.max(_shown(u, 10.0, 11.0), _shown(u, 12.0, 13.0)),
+  );
+  _greenDome(canvas, 390, 1 - close, scale: 1.05);
   const top = Offset(390, 350 - 262 * 1.05);
 
   // Kandilciler halka olmuş; fenerlerinin ışığı sonunda göğe uçar.
   final freed = _span(u, 10.8, 11.8);
-  final ring = _shown(u, 0.8, 12.8);
+  // Halka, usta ve Sâye geniş manzarada kandilin sönüşünden az önce
+  // görünür; öncesini yakın tasvirler anlatır.
+  final ring = _shown(u, 7.85, 12.8);
   for (var i = 0; i < 4; i++) {
     final x = 120.0 + i * 180 + (i > 1 ? 40 : 0);
     _P._puppet(
@@ -934,7 +919,7 @@ void _endingScene(Canvas canvas, double time, double u) {
   }
 
   // Usta kubbenin tepesinde, kandili elinde. Kandil Sâye'ye geçer, söner.
-  final ma = _shown(u, 0.8, 8.9, 0.4);
+  final ma = _shown(u, 7.85, 8.9, 0.4);
   _P._puppet(
     canvas,
     top.translate(-26, 0),
@@ -958,12 +943,12 @@ void _endingScene(Canvas canvas, double time, double u) {
     canvas.drawCircle(
       lampAt,
       5 + flame * 2,
-      _hole(0.95 * (1 - _span(u, 7.9, 8.2))),
+      _hole(0.95 * _span(u, 7.8, 8.0) * (1 - _span(u, 7.9, 8.2))),
     );
   }
 
   // Sâye: önce gölge, sonra ışık.
-  final sa = _span(u, 1.8, 2.3);
+  final sa = _span(u, 7.85, 8.1);
   final glow = _span(u, 9.9, 10.8);
   canvas.save();
   canvas.translate(top.dx + 26, top.dy);
@@ -990,14 +975,15 @@ void _endingScene(Canvas canvas, double time, double u) {
   }
 
   // Hüdhüd omzuna konar.
-  final land = _span(u, 11.8, 12.6);
+  // (Konuşu 12. satırın yakın tasvirinde; burada omzunda oturur.)
+  final land = _span(u, 12.8, 13.0);
   if (land > 0) {
     canvas.save();
-    final p = Offset.lerp(const Offset(800, 60), top.translate(36, -40), land)!;
+    final p = top.translate(36, -40);
     canvas.translate(p.dx, p.dy);
     canvas.scale(0.7);
     _P._c = canvas;
-    _P._hoopoe(_ink(1), time, flying: land < 1);
+    _P._hoopoe(_ink(land), time);
     canvas.restore();
   }
 
@@ -1343,112 +1329,8 @@ void _gokScene(Canvas canvas, double time, double u) {
     canvas.drawPath(band, _ink(0.25 + k * 0.08));
   }
   canvas.drawRect(Rect.fromLTWH(0, g, 780, 50), _ink(1));
-  // Kam davulunu çalar; canlar göğe yükselir.
-  final kam = _span(u, 0.05, 0.4) * (1 - _span(u, 4.6, 5.0));
-  if (kam > 0) {
-    _shape(canvas, MythFigures.kamSilhouette, Offset(120, g), 110, _ink(kam));
-    final beat = (time * 1.4) % 1;
-    canvas.drawOval(
-      Rect.fromCenter(center: const Offset(84, g - 58), width: 26, height: 36),
-      _ink(kam),
-    );
-    canvas.drawOval(
-      Rect.fromCenter(center: const Offset(84, g - 58), width: 14, height: 22),
-      _hole(kam * (0.3 + 0.6 * (1 - beat))),
-    );
-    for (var i = 0; i < 5; i++) {
-      final k = ((time * 0.25 + i / 5) % 1);
-      canvas.drawCircle(
-        Offset(120 + math.sin(i * 2.1 + time) * 20, g - 120 - k * 200),
-        3,
-        _hole(kam * (1 - k)),
-      );
-    }
-  }
-  // Ülgen'in ışığı en yüksek katta.
-  final ulgen = _span(u, 1.05, 1.5);
-  if (ulgen > 0) {
-    const at = Offset(390, 40);
-    canvas.drawCircle(at, 26 + 3 * math.sin(time * 2), _hole(0.9 * ulgen));
-    final ray = _hole(0.5 * ulgen)
-      ..strokeWidth = 3
-      ..strokeCap = StrokeCap.round;
-    for (var i = 0; i < 12; i++) {
-      final a = i / 12 * math.pi * 2 + time * 0.1;
-      canvas.drawLine(
-        at + Offset(math.cos(a), math.sin(a)) * 32,
-        at + Offset(math.cos(a), math.sin(a)) * (52 + 8 * math.sin(time + i)),
-        ray,
-      );
-    }
-  }
-  // Ay ve güneş: bir katta soğuk, bir katta yakıcı.
-  final sky = _span(u, 2.05, 2.5);
-  if (sky > 0) {
-    canvas.drawCircle(const Offset(180, 120), 24, _hole(0.6 * sky));
-    canvas.drawCircle(const Offset(192, 114), 22, _ink(sky));
-    canvas.drawCircle(const Offset(600, 110), 30, _hole(0.85 * sky));
-  }
-  // Hüma geçer; Tulpar uçar.
-  final fly = _line(u, 3);
-  if (fly > 0) {
-    final k = _span(u, 3, 4);
-    _shape(
-      canvas,
-      MythShapes.birdGlide,
-      Offset(100 + k * 600, 170),
-      34,
-      _ink(fly),
-    );
-    final tx = 700 - k * 560;
-    _shape(
-      canvas,
-      MythShapes.horse,
-      Offset(tx, 240),
-      60,
-      _ink(fly),
-      flip: true,
-    );
-    canvas.save();
-    canvas.translate(tx - 4, 240 - 42);
-    canvas.rotate(math.sin(time * 3) * 0.3);
-    canvas.scale(-0.6, 0.6);
-    canvas.drawPath(MythFigures.wingSilhouette, _ink(fly));
-    canvas.restore();
-  }
-  // Kırık güneşin parçası en yüksek katta; Sâye davul vuruşlarıyla yükselir.
-  final rise = _span(u, 4.0, 4.9);
-  if (rise > 0) {
-    canvas.drawPath(
-      Path()
-        ..moveTo(560, 50)
-        ..lineTo(600, 40)
-        ..lineTo(590, 80)
-        ..close(),
-      _hole(rise),
-    );
-    for (var i = 0; i < 4; i++) {
-      final on = ((time * 1.4).floor() + i) % 2 == 0;
-      canvas.drawRRect(
-        RRect.fromRectAndRadius(
-          Rect.fromLTWH(330 + i * 40.0, g - 40 - i * 50, 44, 8),
-          const Radius.circular(4),
-        ),
-        _hole(rise * (on ? 0.8 : 0.2)),
-      );
-    }
-    _P._puppet(
-      canvas,
-      Offset(350 + rise * 120, g - 40 - rise * 150),
-      time,
-      2,
-      rise,
-      (ink, hole) {
-        _P._saye(ink, hole, time);
-      },
-      scale: 0.45,
-    );
-  }
+  // Kam, katlar, Hüma ve Sâye'nin yükselişi satır satır tasvirde
+  // (perde_son.dart).
 }
 
 /// Ötüken: Sâye köklerden yukarı tırmanır, orman açılır; Kül Tigin'in taşı,
