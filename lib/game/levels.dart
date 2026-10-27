@@ -167,6 +167,7 @@ class LevelDef {
     this.legends = const [],
     this.gokboruRun = false,
     this.shadowStones = const [],
+    this.rollingDoors = const [],
     this.coldRuns = const [],
     this.vistas = const [],
     this.surprises = const [],
@@ -288,6 +289,10 @@ class LevelDef {
 
   /// Gölge taşları (sütun, satır): üstünde ↑ ile gölge önden gönderilir.
   final List<(int, int)> shadowStones;
+
+  /// Derinkuyu: yuvarlak taş kapılar (sütun, geçidin alt satırı, içerinin
+  /// yönü: 1 sağ, -1 sol); yalnız içeriden yuvarlanır.
+  final List<(int, int, int)> rollingDoors;
 
   /// Kayak bölümünde çığ uyanınca Gökbörü önde koşup güvenli hattı gösterir.
   final bool gokboruRun;
@@ -2016,6 +2021,7 @@ const levels = <LevelDef>[
     placeEn: 'Derinkuyu · Cappadocia, December 1660',
     areas: [
       'Mahzen',
+      'Ahırlar',
       'Şapel',
       'Havalandırma Bacası',
       'Derin Kuyu',
@@ -2024,6 +2030,7 @@ const levels = <LevelDef>[
     ],
     areasEn: [
       'The Cellar',
+      'The Stables',
       'The Chapel',
       'The Air Shaft',
       'The Deep Well',
@@ -2065,6 +2072,10 @@ const levels = <LevelDef>[
     map: kMapDerinkuyu,
     // İki Kandilcinin koridoru: gölge önden gider, onlar ona bakarken geçilir.
     shadowStones: [(206, 23)],
+    // Yuvarlak taş kapı: içerisi sağda. Dışarıdan gelen alttaki ahırlardan
+    // dolaşıp içeri girer; içerideki Kandilci'yi ateşböceğiyle dışarı çekip
+    // kapıyı ardından kapatabilir.
+    rollingDoors: [(62, 15, 1)],
   ),
   LevelDef(
     title: 'XX · ŞEB-İ ARÛS',

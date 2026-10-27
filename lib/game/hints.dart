@@ -236,6 +236,9 @@ class Hints {
     'ski': '{right} hızlan · {left} yavaşla · {jump} sıçra',
     'ring': 'Peri halkasına bas · göğe fırla',
     'millstone': 'Sürgü taşını it · basamak yap',
+    'rollingDoor': '{up} Yuvarlak taşı yuvasına yuvarla · yine {up} ile kapanır · kapalıyken Kandilci de geçemez',
+    'rollingDoorOutside':
+        'Yuvarlak taş yalnız içeriden yuvarlanır · içeriye başka bir yol bul',
     'semazen': '{sneak} Önden geçen semâzenin eteğinde yürü',
     'chandelier': 'Mum tablasına zıpla · avize seni taşır',
     'lamp': 'Gölgede bekle · huzme geçince koş',
@@ -359,6 +362,9 @@ class Hints {
     'ski': '{right} speed up · {left} slow down · {jump} leap',
     'ring': 'Step on the fairy ring · fly up',
     'millstone': 'Push the rolling stone · make a step',
+    'rollingDoor': '{up} Roll the stone into its niche · {up} again to close · shut, it stops the Lamplighters too',
+    'rollingDoorOutside':
+        'The round stone rolls only from inside · find another way in',
     'semazen': '{sneak} Walk in the skirt of the dervish passing in front',
     'chandelier': 'Jump onto a candle tray · the chandelier carries you',
     'lamp': 'Wait in shadow · run when the beam has passed',

@@ -23,6 +23,7 @@ import 'vistas.dart';
 import 'creatures.dart';
 import 'deniz.dart';
 import 'deniz_koy.dart';
+import 'derinkuyu.dart';
 import 'maps.dart';
 import 'frame_pacer.dart';
 import 'mechanics.dart';
@@ -1146,6 +1147,8 @@ class GolgeGame extends FlameGame with KeyboardEvents {
           ),
         for (final (c, r) in level.def.shadowStones)
           ShadowStone(Vector2(c * kTile.toDouble(), r * kTile.toDouble())),
+        for (final (c, r, side) in level.def.rollingDoors)
+          RollingDoor(c, r, inside: side),
         for (final (c, r, n) in level.glowRuns)
           PhasePlank(Vector2(c * kTile, r * kTile.toDouble()), n, shade: false),
         // Kandilci yolu: yalnız Kandilcinin feneriyle belirir.
@@ -2417,6 +2420,8 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         ShieldCrate s when near(s, 5, 3) => 'shield',
         Bouncer b when near(b, 5, 3) => 'bouncer',
         MillStone m when near(m, 5, 3) => 'millstone',
+        RollingDoor d when near(d, 4, 3) =>
+          d.isInside(p.center) ? 'rollingDoor' : 'rollingDoorOutside',
         AnimalCrate a when near(a, 4, 3) => 'animal',
         Crate k when near(k, 3, 2) => 'crate',
         Lever l when near(l, 4, 4) => 'lever',
