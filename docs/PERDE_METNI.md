@@ -24,8 +24,8 @@ perde başlığıdır, seslendirilmez.
    *A voice whispered in the dark: “Do not be afraid, little shadow. This is the palace of water. Long ago an emperor had thousands of workers dig me out, so the city would never go thirsty.”*
 9. “Şu sütunu görüyor musun? Hiç kurumaz. Beni kazarken ölenler için ağlar. Ona Ağlayan Sütun derler.”
    *“Do you see that column? It never dries. It weeps for those who died digging me. They call it the Weeping Column.”*
-10. “Sonra şehir beni unuttu,” dedi ses. “İnsanlar evlerinin döşemesinden kova sarkıtıp balık tuttu; ayaklarının altında bir sarayın uyuduğunu bilmeden.”
-   *“Then the city forgot me,” said the voice. “People lowered buckets through their floors and caught fish, never knowing a palace slept beneath their feet.”*
+10. “Sonra şehir beni unuttu. İnsanlar evlerinin döşemesinden kova sarkıtıp balık tuttu; ayaklarının altında bir sarayın uyuduğunu bilmeden.”
+   *“Then the city forgot me. People lowered buckets through their floors and caught fish, never knowing a palace slept beneath their feet.”*
 11. Ses sustu. Küçük gölge yapayalnızdı. Ustası ona Sâye derdi. Sâye korkuyordu; ama biliyordu: ustası karanlıkta bir yerde onu bekliyordu. Kalktı ve yürüdü.
    *The voice fell silent. The little shadow was all alone. Her master called her Saye. Saye was afraid; but she knew that somewhere in the dark, her master was waiting for her. She got up and walked.*
 
@@ -33,8 +33,8 @@ perde başlığıdır, seslendirilmez.
 
 1. Derken su kıpırdadı ve o sesin sahibi sudan yükseldi: saçları yosun gibi dalgalanan, sudan yapılmış bir kız, bir su iyesi. İnce parmağıyla paslı bir vanayı gösterdi: “Önce suyu aç.”
    *Then the water stirred, and the owner of that voice rose from it: a girl made of water, her hair swaying like weeds, a water spirit. She pointed one thin finger at a rusted valve: “First, open the water.”*
-2. Sütunların dibinde taştan iki kadın başı yatıyordu; saçları yılandı. “Medusa,” diye fısıldadı su iyesi. “Gözüne bakanı taşa çevirir. Gölgen bile değmesin.” Sâye gözlerini yumup aralarından geçti.
-   *At the foot of the columns lay two stone heads of a woman with snakes for hair. “Medusa,” whispered the water spirit. “Whoever meets her eyes turns to stone. Do not let even your shadow touch her.” Saye shut her eyes and slipped between them.*
+2. Sütunların dibinde taştan iki kadın başı yatıyordu; saçları yılandı. “Medusa. Gözüne bakanı taşa çevirir. Gölgen bile değmesin.” Sâye gözlerini yumup aralarından geçti.
+   *At the foot of the columns lay two stone heads of a woman with snakes for hair. “Medusa. Whoever meets her eyes turns to stone. Do not let even your shadow touch her.” Saye shut her eyes and slipped between them.*
 3. Arkasında bir şey nefes aldı. Sâye döndü; kimse yoktu. Bir sala atlayıp karanlık kanallardan kaçtı. Suyun bittiği yerde bir merdiven onu yukarıya, yanan şehre çağırıyordu.
    *Behind her, something breathed. Saye turned; no one was there. She leapt onto a raft and fled through the dark channels. Where the water ended, a stairway called her up toward the burning city.*
 
@@ -42,8 +42,8 @@ perde başlığıdır, seslendirilmez.
 
 1. Sâye merdivenden çıktığında İstanbul hâlâ tütüyordu. Dumanların içinden upuzun bir kule yükseliyordu: Galata. Kandilcilerin fenerleri kulenin pencerelerinde dolaşıyordu.
    *When Saye climbed out, Istanbul was still smoking. Through the smoke rose a tall tower: Galata. The Lamplighters' lanterns moved past its windows.*
-2. Sâye kuleye sızdı. Derken duvarda bir gölge kıpırdadı: sırtında kartal kanatları olan bir adamın gölgesi. “Hoş geldin, kardeş gölge,” dedi. “Ben Hezarfen'im. Bin şey bilirim; ama en çok uçmayı sevdim.”
-   *Saye crept into the tower. Then a shadow stirred on the wall: the shadow of a man with eagle wings on his back. “Welcome, sister shadow,” he said. “I am Hezarfen. I know a thousand things; but flying is what I loved most.”*
+2. Sâye kuleye sızdı. Derken duvarda bir gölge kıpırdadı: sırtında kartal kanatları olan bir adamın gölgesi. “Hoş geldin, kardeş gölge. Ben Hezarfen'im. Bin şey bilirim; ama en çok uçmayı sevdim.”
+   *Saye crept into the tower. Then a shadow stirred on the wall: the shadow of a man with eagle wings on his back. “Welcome, sister shadow. I am Hezarfen. I know a thousand things; but flying is what I loved most.”*
 3. “Kanatlarımı önce bir bayırda denedim. Düştüm, kalktım; yine düştüm, yine kalktım. Dokuzuncu kez rüzgâr beni tuttu.”
    *“I first tried my wings on a hillside. I fell and got up; I fell again and got up again. On the ninth try, the wind held me.”*
 4. “Sonra bir sabah bu kulenin tepesinden kendimi boşluğa bıraktım. Boğaz'ın üstünden süzülüp ta karşı kıyıya, Üsküdar'a kondum. O gün bütün İstanbul bir insanın kuş oluşunu seyretti.”
@@ -72,10 +72,10 @@ perde başlığıdır, seslendirilmez.
    *When the fire ran out, the man fell into the sea, splashed his way to the palace and bowed to the sultan with a great laugh: “The Prophet Jesus sends you his greetings!” Saye laughed so hard she nearly forgot her wings.*
 4. Fişeğin dumanı dağılınca bulutların arasında ince bir yol parladı. Yalnız kuşların görebildiği bir köprüydü bu; Sâye de görüyordu, çünkü artık kanatları vardı. Köprü dünyanın kıyısına, Kaf Dağı'na gidiyordu.
    *When the rocket's smoke cleared, a thin path glimmered among the clouds. It was a bridge that only birds can see; Saye could see it too, for now she had wings. The bridge led to the edge of the world, to Mount Qaf.*
-5. Derken yanına başında taç gibi tepesi olan, alaca kanatlı bir kuş kondu. “Ben Hüdhüd'üm,” dedi. “Bir zamanlar gökte koca bir güneş vardı. Kandilciler onu yalnız kendilerine istedi; güneş kırıldı. Şimdi ustanın ışığıyla yenisini yakmak istiyorlar!”
-   *Then a bird with a crest like a crown and speckled wings landed beside her. “I am the Hoopoe,” it said. “Once a great sun burned in the sky. The Lamplighters wanted it for themselves alone, and the sun broke. Now they want to light a new one with your master's light!”*
-6. O sırada bulutların ardından kanatlı, bembeyaz bir at dörtnala geçti. “Tulpar!” dedi Hüdhüd. “Yiğitlerin atı. Binicisini kendi seçer.” At bir an durup Sâye'ye baktı. Sonra kayboldu.
-   *Just then a winged horse, white as snow, galloped past behind the clouds. “Tulpar!” said the Hoopoe. “The horse of heroes. He chooses his own rider.” The horse stopped for a moment and looked at Saye. Then he was gone.*
+5. Derken yanına başında taç gibi tepesi olan, alaca kanatlı bir kuş kondu. “Ben Hüdhüd'üm. Bir zamanlar gökte koca bir güneş vardı. Kandilciler onu yalnız kendilerine istedi; güneş kırıldı. Şimdi ustanın ışığıyla yenisini yakmak istiyorlar!”
+   *Then a bird with a crest like a crown and speckled wings landed beside her. “I am the Hoopoe. Once a great sun burned in the sky. The Lamplighters wanted it for themselves alone, and the sun broke. Now they want to light a new one with your master's light!”*
+6. O sırada bulutların ardından kanatlı, bembeyaz bir at dörtnala geçti. “Tulpar! Yiğitlerin atı. Binicisini kendi seçer.” At bir an durup Sâye'ye baktı. Sonra kayboldu.
+   *Just then a winged horse, white as snow, galloped past behind the clouds. “Tulpar! The horse of heroes. He chooses his own rider.” The horse stopped for a moment and looked at Saye. Then he was gone.*
 
 ## III · GÖKYOLU · Hikâye köprüsü
 
@@ -83,15 +83,15 @@ perde başlığıdır, seslendirilmez.
    *Saye followed the Hoopoe along the wind road. They flew over the islands of crows; the crows cawed after them, “Caw! Caw!” Then they saw the Lamplighters' camp in the clouds.*
 2. Fırtına adalarında bir şimşek çaktı; her yer bir an ışığa boğuldu. Saklanacak gölge kalmamıştı! Sâye gölgeden örülmüş bir köprünün üstünden uçup kaçtı.
    *Lightning struck over the storm islands, and everything was flooded with light. There was no shadow left to hide in! Saye fled over a bridge woven from shadow.*
-3. Bulutların arasında Tulpar'ın yelesi bir an parladı, sonra kayboldu. İleride zümrüt yeşili bir dağ yükseliyordu. “Kaf,” dedi Hüdhüd. “Dünyanın kıyısı.”
-   *Among the clouds, Tulpar's mane flashed once and vanished. Ahead rose a mountain green as emerald. “Qaf,” said the Hoopoe. “The edge of the world.”*
+3. Bulutların arasında Tulpar'ın yelesi bir an parladı, sonra kayboldu. İleride zümrüt yeşili bir dağ yükseliyordu. “Kaf. Dünyanın kıyısı.”
+   *Among the clouds, Tulpar's mane flashed once and vanished. Ahead rose a mountain green as emerald. “Qaf. The edge of the world.”*
 
 ## IV · KAF · perde
 
 1. Bulutlar çekildi. Önlerinde zümrüt kayalardan bir dağ yükseldi. Dünya orada bitiyordu. Sâye hiç bu kadar uzağa gelmemişti; kanatları titriyordu.
    *The clouds drew back. A mountain of emerald stone rose before them. Here the world came to an end. Saye had never been so far from home; her wings were trembling.*
-2. “Kaf, dünyayı bir yüzük gibi sarar,” dedi Hüdhüd. “Ardında ne gece vardır ne gündüz. Tepesinde kuşların padişahı yaşar: dev kanatlı Simurg.”
-   *“Qaf circles the world like a ring,” said the Hoopoe. “Beyond it there is neither night nor day. On its summit lives the king of the birds: the giant-winged Simurgh.”*
+2. “Kaf, dünyayı bir yüzük gibi sarar. Ardında ne gece vardır ne gündüz. Tepesinde kuşların padişahı yaşar: dev kanatlı Simurg.”
+   *“Qaf circles the world like a ring. Beyond it there is neither night nor day. On its summit lives the king of the birds: the giant-winged Simurgh.”*
 3. “Bir zamanlar bütün kuşlar Simurg'u bulmak için yola düştü. Yolu onlara ben gösterdim.” Hüdhüd tepesini gururla kabarttı; o, Süleyman Peygamber'in habercisiydi.
    *“Once, all the birds set out to find the Simurgh. I showed them the way.” The Hoopoe puffed out its crest with pride; it had been the messenger of the Prophet Solomon.*
 4. “Yedi vadi aştık. Kimimiz korkuya yenildi, kimimiz yoruldu, kimimiz bir dala konup bir daha kalkmadı. Dağa yalnız otuz kuş varabildi.” Hüdhüd bir an sustu; gözleri dolmuştu.
@@ -110,18 +110,18 @@ perde başlığıdır, seslendirilmez.
 
 ## V · AĞRI · perde
 
-1. Sâye aynaya yaklaştı. “Otuz kuş da buraya bakmıştı,” diye fısıldadı Hüdhüd. “Simurg'u aradılar; karşılarında kendilerini buldular. Meğer Simurg, otuz kuş demekmiş.”
-   *Saye stepped up to the mirror. “The thirty birds looked into it too,” whispered the Hoopoe. “They searched for the Simurgh, and found themselves. For Simurgh means thirty birds.”*
+1. Sâye aynaya yaklaştı. “Otuz kuş da buraya bakmıştı. Simurg'u aradılar; karşılarında kendilerini buldular. Meğer Simurg, otuz kuş demekmiş.”
+   *Saye stepped up to the mirror. “The thirty birds looked into it too. They searched for the Simurgh, and found themselves. For Simurgh means thirty birds.”*
 2. Sâye de baktı. Karşısında bir çocuk yoktu, bir gölge vardı. Elini kaldırdı; gölge de kaldırdı. Ustası ona bu adı boşuna vermemişti: Sâye, gölge demekti.
    *Saye looked too. No child stood before her; only a shadow. She raised her hand, and the shadow raised its own. Her master had not given her that name for nothing: Saye means shadow.*
-3. Aynanın derininde bir şey kıpırdadı: zincirli bir el, titreyen bir kandil. “Ustanı doğuya, Ağrı Dağı'na götürüyorlar!” dedi Hüdhüd. “Ben kırık güneşin parçalarını arayacağım. Sen ışığın peşinden git, Sâye. Seni bulurum.”
-   *Deep in the mirror, something moved: a chained hand, a trembling lamp. “They are taking your master east, to Mount Ağrı!” said the Hoopoe. “I will search for the pieces of the broken sun. You follow the light, Saye. I will find you.”*
-4. Az gitti, uz gitti; Sâye karlı bir dağın eteğine vardı. İki çoban ateş başında konuşuyordu. “Biz bu dağa Masis deriz,” dedi biri. “Biz Agirî,” dedi öteki. “Ama ikimiz de biliriz: Nuh'un gemisi onun omzunda uyur.”
-   *On and on she went, until she reached the foot of a snowy mountain. Two shepherds were talking by a fire. “We call this mountain Masis,” said one. “We call it Agirî,” said the other. “But we both know: Noah's Ark sleeps on its shoulder.”*
-5. “Vaktiyle Hakob adında bir keşiş gemiyi görmek istemiş,” dedi yaşlı çoban. “Her gece tırmanmış, her sabah kendini yine eteklerde bulmuş. Sonunda bir melek ona gemiden bir tahta getirmiş. Yukarısı insana kapalıdır, evlat.”
-   *“Long ago a monk named Hakob wanted to see the Ark,” said the old shepherd. “Every night he climbed, and every morning he woke at the mountain's foot again. At last an angel brought him a plank from the Ark. The heights are closed to us, child.”*
-6. Ama Sâye yine de tırmandı. İlk adımda tipi başladı. Tipinin içinden ak sakallı, buz gözlü bir ihtiyar çıktı: Ayaz Ata, kışın sahibi. “Bu dağa ışıkla çıkılmaz,” dedi. Sâye'nin kavanozundaki ateşböcekleri titredi.
-   *But Saye climbed anyway. At her first step, a blizzard began. Out of it came an old man with a white beard and eyes of ice: Ayaz Ata, the lord of winter. “No one climbs this mountain with a light,” he said. The fireflies in Saye's jar trembled.*
+3. Aynanın derininde bir şey kıpırdadı: zincirli bir el, titreyen bir kandil. “Ustanı doğuya, Ağrı Dağı'na götürüyorlar! Ben kırık güneşin parçalarını arayacağım. Sen ışığın peşinden git, Sâye. Seni bulurum.”
+   *Deep in the mirror, something moved: a chained hand, a trembling lamp. “They are taking your master east, to Mount Ağrı! I will search for the pieces of the broken sun. You follow the light, Saye. I will find you.”*
+4. Az gitti, uz gitti; Sâye karlı bir dağın eteğine vardı. İki çoban ateş başında konuşuyordu. “Biz bu dağa Masis deriz.” “Biz Agirî. Ama ikimiz de biliriz: Nuh'un gemisi onun omzunda uyur.”
+   *On and on she went, until she reached the foot of a snowy mountain. Two shepherds were talking by a fire. “We call this mountain Masis.” “We call it Agirî. But we both know: Noah's Ark sleeps on its shoulder.”*
+5. “Vaktiyle Hakob adında bir keşiş gemiyi görmek istemiş. Her gece tırmanmış, her sabah kendini yine eteklerde bulmuş. Sonunda bir melek ona gemiden bir tahta getirmiş. Yukarısı insana kapalıdır, evlat.”
+   *“Long ago a monk named Hakob wanted to see the Ark. Every night he climbed, and every morning he woke at the mountain's foot again. At last an angel brought him a plank from the Ark. The heights are closed to us, child.”*
+6. Ama Sâye yine de tırmandı. İlk adımda tipi başladı. Tipinin içinden ak sakallı, buz gözlü bir ihtiyar çıktı: Ayaz Ata, kışın sahibi. “Bu dağa ışıkla çıkılmaz.” Sâye'nin kavanozundaki ateşböcekleri titredi.
+   *But Saye climbed anyway. At her first step, a blizzard began. Out of it came an old man with a white beard and eyes of ice: Ayaz Ata, the lord of winter. “No one climbs this mountain with a light.” The fireflies in Saye's jar trembled.*
 7. İKİNCİ PERDE · DAĞ
    *ACT TWO · THE MOUNTAIN*
 
@@ -129,8 +129,8 @@ perde başlığıdır, seslendirilmez.
 
 1. Sâye iplere tutunup tırmandı. Tipi yüzünü kamçılıyor, parmakları donuyordu. Terk edilmiş bir ağıla sığındı; ateşböceklerini göğsüne bastırıp ısıttı.
    *Saye climbed, clinging to ropes. The blizzard lashed her face and froze her fingers. She sheltered in an abandoned sheepfold and warmed her fireflies against her chest.*
-2. Akori köyünde, Nuh'un diktiği anlatılan asmaların yanından geçti. Manastırın kapısında Ayaz Ata bekliyordu. “Işığını neden koruyorsun?” diye sordu. “Ustam için,” dedi Sâye. İhtiyar ona uzun uzun baktı, sonra kenara çekildi.
-   *In the village of Akori she passed the vines that Noah himself is said to have planted. At the monastery gate, Ayaz Ata was waiting. “Why do you guard your light?” he asked. “For my master,” said Saye. The old man looked at her for a long time, then stepped aside.*
+2. Akori köyünde, Nuh'un diktiği anlatılan asmaların yanından geçti. Manastırın kapısında Ayaz Ata bekliyordu. “Işığını neden koruyorsun?” “Ustam için.” İhtiyar ona uzun uzun baktı, sonra kenara çekildi.
+   *In the village of Akori she passed the vines that Noah himself is said to have planted. At the monastery gate, Ayaz Ata was waiting. “Why do you guard your light?” “For my master.” The old man looked at her for a long time, then stepped aside.*
 3. Buz mağarasının en dibinde durdu. Buzun ardında kapkara, kocaman bir gemi yatıyordu.
    *Deep in the ice cave she stopped. Beyond the ice lay a huge ship, black as night.*
 
@@ -138,16 +138,16 @@ perde başlığıdır, seslendirilmez.
 
 1. İşte oradaydı: Nuh'un Gemisi! Binlerce yıldır buzun altında uyuyordu. Sâye tahtasına dokundu; hâlâ deniz kokuyordu. Derken bir kanat hışırdadı. Gagasında kurumuş bir zeytin dalı olan bir güvercin direğe kondu.
    *There it was: Noah's Ark! It had slept beneath the ice for thousands of years. Saye touched its timbers; they still smelled of the sea. Then wings rustled. A dove with a dry olive branch in its beak landed on the mast.*
-2. “Ben o güvercinim,” dedi kuş. “Kırk gün kırk gece yağmur yağdı. Bütün dünya su oldu. Bu gemi aylarca karanlık sularda tek başına sürüklendi.”
-   *“I am that dove,” said the bird. “It rained for forty days and forty nights. The whole world became water. This ship drifted alone on the dark sea for months.”*
+2. “Ben o güvercinim. Kırk gün kırk gece yağmur yağdı. Bütün dünya su oldu. Bu gemi aylarca karanlık sularda tek başına sürüklendi.”
+   *“I am that dove. It rained for forty days and forty nights. The whole world became water. This ship drifted alone on the dark sea for months.”*
 3. “Nuh Peygamber önce bir kuzgun saldı; kuzgun dönmedi. Sonra beni saldı. Gagamda bir zeytin dalıyla döndüğümde, dünyanın yeniden yeşerdiğini anladık.”
    *“The Prophet Noah first sent out a raven; it did not return. Then he sent me. When I came back with an olive branch in my beak, we knew the world was green again.”*
 4. Güvercinin sesi titredi. “Gemide her canlıdan bir çift vardı, bir de hiç sönmeyen bir ışık. Kandilciler o ışık için geldi. Hayvanların gölgelerini eşlerinden kopardılar, ambarlara kilitlediler.”
    *The dove's voice trembled. “A pair of every creature sailed on this ship, and a light that never went out. The Lamplighters came for that light. They tore the animals' shadows from their mates and locked them in the holds.”*
 5. Ambarların karanlığında ayrı düşen gölgeler birbirini arıyordu. Sâye'nin boğazı düğümlendi. O da birini arıyordu.
    *In the darkness of the holds, the parted shadows searched for one another. Saye felt a lump in her throat. She, too, was searching for someone.*
-6. Derken dipteki su kıpırdadı. İçinden ak saçlı, ak giysili bir kadın yükseldi; her yanından ışık süzülüyordu. “Ben Ak Ana'yım, suların anası,” dedi. “Tufanın suyu da benimdi. Korkma, kızım.”
-   *Then the water at the bottom stirred. A woman rose from it, white-haired and dressed in white, light streaming from her. “I am Ak Ana, the mother of the waters,” she said. “The waters of the Flood were mine too. Do not be afraid, my child.”*
+6. Derken dipteki su kıpırdadı. İçinden ak saçlı, ak giysili bir kadın yükseldi; her yanından ışık süzülüyordu. “Ben Ak Ana'yım, suların anası. Tufanın suyu da benimdi. Korkma, kızım.”
+   *Then the water at the bottom stirred. A woman rose from it, white-haired and dressed in white, light streaming from her. “I am Ak Ana, the mother of the waters. The waters of the Flood were mine too. Do not be afraid, my child.”*
 
 ## VI · NUH'UN GEMİSİ · Hikâye köprüsü
 
@@ -162,12 +162,12 @@ perde başlığıdır, seslendirilmez.
 
 1. Az gitti, uz gitti; Sâye ışığın izinde Fırat'ı aştı, Nemrut Dağı'nın tepesine kondu. Karların içinde kocaman taş başlar yatıyordu. Derken içlerinden biri gözlerini açtı.
    *On and on she went; following the light, Saye crossed the Euphrates and landed on the summit of Mount Nemrut. Huge stone heads lay in the snow. Then one of them opened its eyes.*
-2. “Korkma, küçük gölge,” dedi taş baş. “Ben Antiochos'um, bu dağın kralı. Bir zamanlar tanrılarla el sıkışır, kendimi onlardan sayardım.”
-   *“Do not be afraid, little shadow,” said the stone head. “I am Antiochus, king of this mountain. Once I shook hands with the gods and counted myself among them.”*
+2. “Korkma, küçük gölge. Ben Antiochos'um, bu dağın kralı. Bir zamanlar tanrılarla el sıkışır, kendimi onlardan sayardım.”
+   *“Do not be afraid, little shadow. I am Antiochus, king of this mountain. Once I shook hands with the gods and counted myself among them.”*
 3. “Ölünce de aralarında oturayım diye tepeye taş üstüne taş yığdırdım, altına yattım. Ama dağ kibri sevmez. Bir gece yer sarsıldı; başım omzumdan yuvarlandı.”
    *“I wished to sit among them even in death, so I had stone piled upon stone on the summit and lay down beneath it. But the mountain has no love for pride. One night the earth shook, and my head rolled from my shoulders.”*
-4. Taş başın gözünden bir damla süzüldü. “Kandilciler de benim gibi,” dedi. “Göğü kendilerine istiyorlar. Gemiden çaldıkları ışığı doğu terasında, gün doğarken yakacaklar.”
-   *A drop slid from the stone head's eye. “The Lamplighters are like me,” it said. “They want the sky for themselves. At sunrise, on the eastern terrace, they will kindle the light they stole from the Ark.”*
+4. Taş başın gözünden bir damla süzüldü. “Kandilciler de benim gibi. Göğü kendilerine istiyorlar. Gemiden çaldıkları ışığı doğu terasında, gün doğarken yakacaklar.”
+   *A drop slid from the stone head's eye. “The Lamplighters are like me. They want the sky for themselves. At sunrise, on the eastern terrace, they will kindle the light they stole from the Ark.”*
 5. “Hem de ustanın kandilinden çaldıkları alevle.” Sâye'nin yüreği sıkıştı. Başların arasında fenerler kıpırdadı. Kandilciler buradaydı!
    *“And with the flame they stole from your master's lamp.” Saye's heart tightened. Among the heads, lanterns moved. The Lamplighters were here!*
 
@@ -180,8 +180,8 @@ perde başlığıdır, seslendirilmez.
 
 ## VIII · GÜN DOĞUMU · perde
 
-1. Sâye taşların ardına sindi. “Bu dağın bir adı daha var,” diye fısıldadı Antiochos. “Nemrud. Benden de kibirli bir kralın adı. Dinle, küçük gölge; işine yarayacak.”
-   *Saye crouched behind the stones. “This mountain has another name,” whispered Antiochus. “Nimrod. The name of a king even prouder than I. Listen, little shadow; it will help you.”*
+1. Sâye taşların ardına sindi. “Bu dağın bir adı daha var. Nemrud. Benden de kibirli bir kralın adı. Dinle, küçük gölge; işine yarayacak.”
+   *Saye crouched behind the stones. “This mountain has another name. Nimrod. The name of a king even prouder than I. Listen, little shadow; it will help you.”*
 2. “Nemrud göğe hükmetmek istedi. Dört kartalı bir sandığa bağladı, önlerine et astı; kartallar uzandıkça sandık yükseldi. Bulutların üstünde göğe bir ok attı.”
    *“Nimrod wished to rule the heavens. He tied four eagles to a chest and hung meat before them; as the eagles reached for it, the chest rose. Above the clouds, he shot an arrow into the sky.”*
 3. “Ok kanlı düşünce, 'Tanrı'yı vurdum!' diye böbürlendi. Ona boyun eğmeyen İbrahim Peygamber'i ateşe attırdı. Ama ateş bir gül bahçesine döndü.”
@@ -190,8 +190,8 @@ perde başlığıdır, seslendirilmez.
    *“And do you know who beat him in the end? A tiny gnat. It flew into his nose and settled in his head. The great king was beaten by a gnat.” A smile spread across Saye's face.*
 5. Tam o anda dağ sarsıldı. Doğu terasında taştan bir dev doğruluyordu; kocaman, kibirli, Nemrud'un kendisi gibi. Güneş doğmak üzereydi.
    *At that very moment, the mountain shook. On the eastern terrace a giant of stone was rising; huge and proud, like Nimrod himself. The sun was about to rise.*
-6. Sâye'nin dizleri titredi. Ama sivrisineği düşündü. Tek gözlü dev Tepegöz'ü yenen de aslanlar arasında büyümüş küçük Basat değil miydi? “Ben de küçüğüm,” dedi Sâye. Ve deve doğru koştu.
-   *Saye's knees trembled. But she thought of the gnat. And who had beaten the one-eyed giant Tepegöz? Little Basat, who grew up among lions. “I'm small too,” said Saye. And she ran toward the giant.*
+6. Sâye'nin dizleri titredi. Ama sivrisineği düşündü. Tek gözlü dev Tepegöz'ü yenen de aslanlar arasında büyümüş küçük Basat değil miydi? “Ben de küçüğüm.” Ve deve doğru koştu.
+   *Saye's knees trembled. But she thought of the gnat. And who had beaten the one-eyed giant Tepegöz? Little Basat, who grew up among lions. “I'm small too.” And she ran toward the giant.*
 
 ## VIII · GÜN DOĞUMU · Hikâye köprüsü
 
@@ -239,8 +239,8 @@ perde başlığıdır, seslendirilmez.
 
 ## X · PALANDÖKEN · Hikâye köprüsü
 
-1. Kervancının kulübesinde tahta bir kızak buldu. “Al,” dedi ihtiyar, “yolun açık olsun.” Sâye kızağa atladı ve kendini ejderin sırtından aşağı bıraktı.
-   *In the caravan driver's hut she found a wooden sled. “Take it,” said the old man, “and may your road be open.” Saye jumped on and let herself go down the dragon's back.*
+1. Kervancının kulübesinde tahta bir kızak buldu. “Al, yolun açık olsun.” Sâye kızağa atladı ve kendini ejderin sırtından aşağı bıraktı.
+   *In the caravan driver's hut she found a wooden sled. “Take it, and may your road be open.” Saye jumped on and let herself go down the dragon's back.*
 2. Fenerli balonların altından, mıknatıslı tepenin üstünden kaydı. Ejderin sırtındaki tümsekte havalandı; bir an uçtu, sonra Erzurum'a doğru süzüldü.
    *She slid beneath the lantern balloons and over the magnet hill. At the bump on the dragon's back she flew into the air for a moment, then glided down toward Erzurum.*
 
@@ -270,12 +270,12 @@ perde başlığıdır, seslendirilmez.
    *When the avalanche settled, the caravan had turned west. Saye left the snows behind and came down into a milder land. The moon was rising over the little village of Muşkara.*
 2. Önünde tuhaf bir ülke uzanıyordu: güzel atlar ülkesi Kapadokya. Yağmurla rüzgâr eski yanardağların külünü oya oya taştan bacalar yapmıştı; her biri başlıklı bir dev gibiydi.
    *Before her stretched a strange country: Cappadocia, the land of beautiful horses. Rain and wind had carved the ash of ancient volcanoes into stone chimneys, each like a giant in a pointed hood.*
-3. Derken bir bacanın tepesinde minicik bir ışık yandı. Işık kanatlandı, Sâye'nin önüne süzüldü: ışıktan yapılmış, kanatlı bir peri! “Ne zamandır gölge görmemiştim,” dedi.
-   *Then a tiny light flickered on top of a chimney. The light grew wings and floated down before Saye: a winged fairy made of light! “I haven't seen a shadow in so long,” it said.*
-4. “Biz periler gölge bırakmayız,” dedi peri. “Bir zamanlar devlerle savaştık, onları yerin altına sürdük. Ama gölgeleri severiz.” Sonra Sâye'ye uzun uzun baktı; sanki onu çok eskiden tanıyordu.
-   *“We fairies cast no shadows,” said the fairy. “Long ago we fought the giants and drove them under the earth. But we love shadows.” Then it looked at Saye for a long time, as if it had known her long ago.*
-5. Birden perinin ışığı titredi. “Albastı geliyor!” diye fısıldadı. Bacaların dibinde kızıl saçlı, ışığa aç bir gölge dolaşıyordu. “Demirin ardına saklan. O yalnız demirden korkar.”
-   *Suddenly the fairy's light flickered. “Albastı is coming!” it whispered. A red-haired shadow, hungry for light, was prowling at the foot of the chimneys. “Hide behind the iron. Iron is the only thing she fears.”*
+3. Derken bir bacanın tepesinde minicik bir ışık yandı. Işık kanatlandı, Sâye'nin önüne süzüldü: ışıktan yapılmış, kanatlı bir peri! “Ne zamandır gölge görmemiştim.”
+   *Then a tiny light flickered on top of a chimney. The light grew wings and floated down before Saye: a winged fairy made of light! “I haven't seen a shadow in so long.”*
+4. “Biz periler gölge bırakmayız. Bir zamanlar devlerle savaştık, onları yerin altına sürdük. Ama gölgeleri severiz.” Sonra Sâye'ye uzun uzun baktı; sanki onu çok eskiden tanıyordu.
+   *“We fairies cast no shadows. Long ago we fought the giants and drove them under the earth. But we love shadows.” Then it looked at Saye for a long time, as if it had known her long ago.*
+5. Birden perinin ışığı titredi. “Albastı geliyor!” Bacaların dibinde kızıl saçlı, ışığa aç bir gölge dolaşıyordu. “Demirin ardına saklan. O yalnız demirden korkar.”
+   *Suddenly the fairy's light flickered. “Albastı is coming!” A red-haired shadow, hungry for light, was prowling at the foot of the chimneys. “Hide behind the iron. Iron is the only thing she fears.”*
 6. DÖRDÜNCÜ PERDE · PERİLER
    *ACT FOUR · THE FAIRIES*
 
@@ -292,8 +292,8 @@ perde başlığıdır, seslendirilmez.
 
 1. Uçhisar'dan ovaya baktı. Kandilcilerin fenerleri birer birer bir kuyunun ağzında kayboluyordu. Peri yanına süzüldü: “Derinkuyu'ya iniyorlar.”
    *From Uçhisar she looked down at the plain. One by one, the Lamplighters' lanterns were vanishing into the mouth of a well. The fairy floated to her side: “They are going down to Derinkuyu.”*
-2. “Yerin altında koca bir şehir var,” dedi peri. “Ahırları, mutfakları, nefes alan bacaları... Düşman geldiğinde insanlar oraya iner, düşman gidene dek saklanırdı.”
-   *“There is a whole city under the earth,” said the fairy. “Stables, kitchens, shafts that let it breathe... When enemies came, people went down there and hid until the enemies were gone.”*
+2. “Yerin altında koca bir şehir var. Ahırları, mutfakları, nefes alan bacaları... Düşman geldiğinde insanlar oraya iner, düşman gidene dek saklanırdı.”
+   *“There is a whole city under the earth. Stables, kitchens, shafts that let it breathe... When enemies came, people went down there and hid until the enemies were gone.”*
 3. “Ama o şehrin altında daha eski bir şey uyur. Bizim padişahımız ateşli devleri yerin altına sürdü. İnsanlar şehirlerini, bilmeden, uyuyan devlerin üstüne kazdı.”
    *“But something older sleeps beneath that city. Our king drove the fiery giants under the earth. Without knowing it, people dug their city right above the sleeping giants.”*
 4. “Taş kapılar değirmen taşı gibi yuvarlaktır, yalnız içeriden açılır. Aşağı in, Sâye. Ama sessiz ol. Uyuyanı uyandırma.”
@@ -320,12 +320,12 @@ perde başlığıdır, seslendirilmez.
    *On a stone she saw old carved letters. At its foot sat an old kam, a wise one who speaks with spirits. “The ancestors wrote here,” he said: “Stay in Ötüken, and your homeland will live forever.”*
 4. Ormanın ortasında göğe kadar uzanan bir ağaç vardı: Hayat Ağacı. Dalında ak kanatlı bir ana oturuyordu: çocukları koruyan Umay. Sâye onu tanıdı. Düştüğü gece başında bekleyen oydu.
    *In the middle of the forest stood a tree that reached the sky: the Tree of Life. On its branch sat a white-winged mother: Umay, who protects children. Saye knew her. She was the one who had watched over her the night she fell.*
-5. Ama Sâye yalnız çıkmamıştı. Sarnıçta ensesinde duyduğu, Derinkuyu'da ardından sürünen o nefes de onunla gelmişti. “Karabasan,” diye fısıldadı kam. “Kaç, kızım!”
-   *But Saye had not come up alone. The breath she had felt on her neck in the cistern, the thing that crept after her through Derinkuyu, had come too. “Karabasan,” whispered the kam. “Run, child!”*
+5. Ama Sâye yalnız çıkmamıştı. Sarnıçta ensesinde duyduğu, Derinkuyu'da ardından sürünen o nefes de onunla gelmişti. “Karabasan. Kaç, kızım!”
+   *But Saye had not come up alone. The breath she had felt on her neck in the cistern, the thing that crept after her through Derinkuyu, had come too. “Karabasan. Run, child!”*
 6. Karabasan, uyuyanın göğsüne çöken kara bir ağırlıktı. Ustası olmayan gölgeleri sezer, üstlerine çökerdi. Ustasını yitirmiş bir gölge, onun için en tatlı lokmaydı.
    *The Karabasan was a black weight that sits on a sleeper's chest. It could sense shadows without a master and fall upon them. A shadow who had lost her master was its sweetest morsel.*
-7. “Ama ışığa basamaz,” dedi kam. “Yaprakların arasından süzülen her gün ışığı sana sığınaktır. Işıkta yürü.”
-   *“But it cannot step into the light,” said the kam. “Every ray of sunlight falling through the leaves is a shelter for you. Walk in the light.”*
+7. “Ama ışığa basamaz. Yaprakların arasından süzülen her gün ışığı sana sığınaktır. Işıkta yürü.”
+   *“But it cannot step into the light. Every ray of sunlight falling through the leaves is a shelter for you. Walk in the light.”*
 8. BEŞİNCİ PERDE · ÖTÜKEN
    *ACT FIVE · ÖTÜKEN*
 
@@ -342,8 +342,8 @@ perde başlığıdır, seslendirilmez.
 
 1. Hayat Ağacı'nın kökleri yerin en dibine iniyordu. Sâye köklerin arasından aşağı süzüldü, kulağını bir taşa dayadı. Taşın ardından su sesi geliyordu. Derken su bir ses oldu: “Hoş geldin, kızım.”
    *The roots of the Tree of Life reached the bottom of the earth. Saye slid down between them and pressed her ear to a stone. From behind it came the sound of water. Then the water became a voice: “Welcome, my child.”*
-2. Ak Ana'ydı bu. “Burası dünyanın ilk suyu,” dedi. “Başlangıçta yalnız su vardı. Her şeyi yaratan Kayra Han, bu suyun üstünde kara bir kaz gibi uçardı. Yanında ilk yarattığı Kişi.”
-   *It was Ak Ana. “This is the world's first water,” she said. “In the beginning there was only water. Kayra Han, who made all things, flew above it like a black goose. Beside him flew Kişi, the first being he had made.”*
+2. Ak Ana'ydı bu. “Burası dünyanın ilk suyu. Başlangıçta yalnız su vardı. Her şeyi yaratan Kayra Han, bu suyun üstünde kara bir kaz gibi uçardı. Yanında ilk yarattığı Kişi.”
+   *It was Ak Ana. “This is the world's first water. In the beginning there was only water. Kayra Han, who made all things, flew above it like a black goose. Beside him flew Kişi, the first being he had made.”*
 3. “Bir gün ben sudan yükseldim ve Kayra Han'a 'Yarat,' dedim. Sonra yeniden suya döndüm. Dünya o sözle başladı.”
    *“One day I rose from the water and said to Kayra Han, 'Create.' Then I sank back into the water. With that word, the world began.”*
 4. “Kişi, Kayra Han'dan yükseğe çıkmak istedi ama suya düştü. Dibe dalıp toprak getirmesi istendi. O toprağın bir avucunu ağzında sakladı; kendine bir dünya yapmak için.”
@@ -366,10 +366,10 @@ perde başlığıdır, seslendirilmez.
    *Kişi, who had hidden earth in his mouth, was driven from the light and cast beneath the earth. There he became the lord of darkness, and his name became Erlik. Now Saye was in his realm.*
 2. Çalınan ışıklar buraya akıyordu. Ustayı da buradan geçirmişlerdi. Sâye bir taşa dokundu; ustasının sıcaklığı hâlâ oradaydı. Gözleri doldu.
    *The stolen lights were flowing here. The master had been brought this way too. Saye touched a stone; her master's warmth still lingered there. Her eyes filled with tears.*
-3. Karanlıkta bir kişneme duyuldu. Uzun yeleli bir at başını kaldırdı. “Ben Çalkuyruk'um, Er Töştük'ün atı,” dedi. “Bir zamanlar efendimi bu karanlıktan ben çıkardım. Seni de çıkarırım.”
-   *A neigh rang out in the dark. A long-maned horse raised its head. “I am Çalkuyruk, Er Töştük's horse,” he said. “Once I carried my master out of this darkness. I will carry you out too.”*
-4. “Ama dikkat et,” dedi at. “Burada Körmösler dolaşır. Işığa üşüşür, yakaladıkları canları kafeslere kapatırlar.”
-   *“But be careful,” said the horse. “The Körmös roam here. They swarm to every light and lock the souls they catch in cages.”*
+3. Karanlıkta bir kişneme duyuldu. Uzun yeleli bir at başını kaldırdı. “Ben Çalkuyruk'um, Er Töştük'ün atı. Bir zamanlar efendimi bu karanlıktan ben çıkardım. Seni de çıkarırım.”
+   *A neigh rang out in the dark. A long-maned horse raised its head. “I am Çalkuyruk, Er Töştük's horse. Once I carried my master out of this darkness. I will carry you out too.”*
+4. “Ama dikkat et. Burada Körmösler dolaşır. Işığa üşüşür, yakaladıkları canları kafeslere kapatırlar.”
+   *“But be careful. The Körmös roam here. They swarm to every light and lock the souls they catch in cages.”*
 
 ## XVI · ERLİK'İN KATI · Hikâye köprüsü
 
@@ -377,19 +377,19 @@ perde başlığıdır, seslendirilmez.
    *Saye passed through the black gate. On the bridges of ink, the Körmös caught the scent of her light. Saye held her breath and hid in the dark.*
 2. Canların hapsedildiği zindanda kafesleri açtı. Çalınan canlar birer kuşa dönüştü, kanat çırpıp yukarıya uçtu.
    *In the prison of souls she opened the cages. The stolen souls turned into birds and flew upward, beating their wings.*
-3. Kuyunun dibinde Çalkuyruk onu bekliyordu. “Bin sırtıma,” dedi. Ve Sâye'yi yukarıya çıkan yola taşıdı.
-   *At the bottom of the well, Çalkuyruk was waiting. “Climb on my back,” he said. And he carried Saye to the road that led up.*
+3. Kuyunun dibinde Çalkuyruk onu bekliyordu. “Bin sırtıma.” Ve Sâye'yi yukarıya çıkan yola taşıdı.
+   *At the bottom of the well, Çalkuyruk was waiting. “Climb on my back.” And he carried Saye to the road that led up.*
 
 ## XVII · ERGENEKON · perde
 
-1. Çalkuyruk Sâye'yi dağlarla çevrili gizli bir vadiye çıkardı: Ergenekon. Sönmüş bir ocağın başında yaşlı bir demirci oturuyordu. “Atalarım buraya kaçıp gelmiş,” dedi. “Kıyan ile Nüküz, eşleriyle; savaşta her şeylerini yitirmişler.”
-   *Çalkuyruk brought Saye out into a hidden valley ringed by mountains: Ergenekon. An old blacksmith sat by a cold forge. “My ancestors fled here,” he said. “Kıyan and Nüküz, with their wives; they had lost everything in a war.”*
+1. Çalkuyruk Sâye'yi dağlarla çevrili gizli bir vadiye çıkardı: Ergenekon. Sönmüş bir ocağın başında yaşlı bir demirci oturuyordu. “Atalarım buraya kaçıp gelmiş. Kıyan ile Nüküz, eşleriyle; savaşta her şeylerini yitirmişler.”
+   *Çalkuyruk brought Saye out into a hidden valley ringed by mountains: Ergenekon. An old blacksmith sat by a cold forge. “My ancestors fled here. Kıyan and Nüküz, with their wives; they had lost everything in a war.”*
 2. “Vadiye giden yol keçi yolundan bile darmış. Ama içerisi cennet gibiymiş: çayırlar, ırmaklar, meyve ağaçları, bol av.”
    *“The path into the valley was narrower than a goat track. But inside it was like paradise: meadows, rivers, fruit trees and plenty of game.”*
 3. “Dört yüz yıl geçmiş. Boy çoğalmış, çoğalmış; vadi onlara dar gelmiş. Ama dört yanlarında aşılmaz dağlar varmış.”
    *“Four hundred years passed. The people grew and grew, until the valley was too small for them. But impassable mountains stood on every side.”*
-4. “Dedemin dedesinin dedesi de bir demirciymiş,” dedi ihtiyar, gözleri parlayarak. “'Şu dağ demirdir!' demiş. 'Körük kuralım, eritelim!' Deriden yetmiş körük yapmışlar.”
-   *“My grandfather's grandfather's grandfather was a blacksmith too,” said the old man, his eyes shining. “'That mountain is iron!' he said. 'Let us build bellows and melt it!' They made seventy bellows of hide.”*
+4. “Dedemin dedesinin dedesi de bir demirciymiş. 'Şu dağ demirdir!' demiş. 'Körük kuralım, eritelim!' Deriden yetmiş körük yapmışlar.”
+   *“My grandfather's grandfather's grandfather was a blacksmith too. 'That mountain is iron!' he said. 'Let us build bellows and melt it!' They made seventy bellows of hide.”*
 5. “Demir erimiş; yüklü bir devenin geçeceği kadar yol açılmış. Yolu onlara bir boz kurt göstermiş.” Sâye gülümsedi; kurtlar hep yol gösteriyordu.
    *“The iron melted, and a way opened wide enough for a laden camel. A grey wolf showed them the road.” Saye smiled; wolves always showed the way.*
 6. “O günü bayram bilmişler. Her yıl bir parça demiri kızdırıp örste dövmüşler: tak, tak, tak.” İhtiyarın elleri çekiç tutar gibi kalktı.
@@ -414,10 +414,10 @@ perde başlığıdır, seslendirilmez.
    *“On the highest layer sits Ulgen, the source of all light. Erlik's darkness at the bottom of the earth; Ulgen's light at the top of the sky.”*
 3. Sâye yükseldikçe gördü: bir katta ay soğuk, yumuşak bir ışıkla yanıyordu. Bir başkasında yıldızlar Demir Kazık'ın, yani Kutup Yıldızı'nın çevresinde dönüyordu.
    *As Saye rose, she saw it: on one layer the moon burned with a cold, soft light. On another, the stars circled the Iron Stake, the Pole Star.*
-4. Katların arasında rüzgârların anası Yel Ana esiyordu. Uzakta bir kuş süzüldü, gölgesi bulutlara düştü. “Hüma kuşu,” dedi kam. “Gölgesi kimin başına düşerse ona kut verir: güç, şans, yiğitlik.”
-   *Between the layers blew Yel Ana, the mother of the winds. Far off a bird glided, and its shadow fell on the clouds. “The Huma bird,” said the kam. “Whoever its shadow falls upon receives kut: strength, luck and courage.”*
-5. “Kandilciler kırık güneşin bir parçasını en yüksek kata taşıdı,” dedi kam. Davuluna son kez vurdu. Sâye davulun sesiyle bulutların üstüne fırladı.
-   *“The Lamplighters carried a piece of the broken sun to the highest layer,” said the kam. He struck his drum one last time. On the sound of the drum, Saye shot up above the clouds.*
+4. Katların arasında rüzgârların anası Yel Ana esiyordu. Uzakta bir kuş süzüldü, gölgesi bulutlara düştü. “Hüma kuşu. Gölgesi kimin başına düşerse ona kut verir: güç, şans, yiğitlik.”
+   *Between the layers blew Yel Ana, the mother of the winds. Far off a bird glided, and its shadow fell on the clouds. “The Huma bird. Whoever its shadow falls upon receives kut: strength, luck and courage.”*
+5. “Kandilciler kırık güneşin bir parçasını en yüksek kata taşıdı.” Davuluna son kez vurdu. Sâye davulun sesiyle bulutların üstüne fırladı.
+   *“The Lamplighters carried a piece of the broken sun to the highest layer.” He struck his drum one last time. On the sound of the drum, Saye shot up above the clouds.*
 
 ## XVIII · GÖĞÜN KATLARI · Hikâye köprüsü
 
@@ -450,8 +450,8 @@ perde başlığıdır, seslendirilmez.
 
 1. Tulpar Sâye'yi sırtına alıp bulutların arasından indi. Gökte ay vardı, aşağıda uçsuz bucaksız bir kar ovası.
    *With Saye on his back, Tulpar came down through the clouds. Above was the moon; below, an endless plain of snow.*
-2. Batıda bir şehrin kubbeleri parlıyordu: Konya. “Ustan orada,” dedi Tulpar. Sâye'nin kalbi küt küt atıyordu. Ona hiç bu kadar yaklaşmamıştı.
-   *To the west, the domes of a city shone: Konya. “Your master is there,” said Tulpar. Saye's heart was pounding. She had never been so close to him.*
+2. Batıda bir şehrin kubbeleri parlıyordu: Konya. “Ustan orada.” Sâye'nin kalbi küt küt atıyordu. Ona hiç bu kadar yaklaşmamıştı.
+   *To the west, the domes of a city shone: Konya. “Your master is there.” Saye's heart was pounding. She had never been so close to him.*
 3. O gece Şeb-i Arûs'tu, yani düğün gecesi. Şehrin semâhanesinde semâzenler beyaz eteklerini açmış, dönüyordu.
    *That night was Şeb-i Arûs, the wedding night. In the city's hall, the whirling dervishes had spread their white skirts and were turning.*
 4. Yüzyıllar önce bu şehirde Mevlânâ adında bir şair ölmüştü. Giderken sevdiklerine, “Ağlamayın,” demişti. “Bu benim düğün gecemdir.”
@@ -500,12 +500,12 @@ perde başlığıdır, seslendirilmez.
    *At the top of the Green Dome, beneath the falling snow, a small lamp trembled. Saye climbed the last step and stood still.*
 2. Ustası oradaydı. Yaşlanmış, küçülmüştü; omuzlarına kar birikmişti. Kandilciler çevresinde bir halka kurmuş, fenerlerini onun kandiline tutuyordu.
    *Her master was there. He had grown old, and small; snow had gathered on his shoulders. The Lamplighters stood in a ring around him, their lanterns held toward his lamp.*
-3. Usta başını kaldırdı. Sâye'yi görünce yüzündeki bütün yorgunluk silindi. “Geldin,” dedi. Sesi titriyordu. “Geleceğini biliyordum. Dua karşılıksız kalmaz.”
-   *The master raised his head. When he saw Saye, all the weariness left his face. “You came,” he said. His voice was shaking. “I knew you would. No prayer goes unanswered.”*
+3. Usta başını kaldırdı. Sâye'yi görünce yüzündeki bütün yorgunluk silindi. “Geldin.” Sesi titriyordu. “Geleceğini biliyordum. Dua karşılıksız kalmaz.”
+   *The master raised his head. When he saw Saye, all the weariness left his face. “You came.” His voice was shaking. “I knew you would. No prayer goes unanswered.”*
 4. Sâye halkayı yarıp ustasına koştu, dizlerinin dibine çöktü. Kandilciler kıpırdamadı. Hiçbirinin karda gölgesi yoktu; ışığı kendine saklayanın gölgesi kalmazdı.
    *Saye broke through the ring and ran to him, and sank down at his knees. The Lamplighters did not move. None of them cast a shadow on the snow; those who keep the light for themselves are left with no shadow.*
-5. “Güneşi yalnız kendilerine istediler; güneş kırıldı,” dedi usta. “Şimdi onu benim kandilimle yakacaklar. Mevlânâ'nın düğün gecesinde ışığın ölmeyeceğine inanıyorlar.”
-   *“They wanted the sun for themselves alone, and the sun broke,” said the master. “Now they mean to light it with my lamp. They believe that on Mevlana's wedding night, light cannot die.”*
+5. “Güneşi yalnız kendilerine istediler; güneş kırıldı. Şimdi onu benim kandilimle yakacaklar. Mevlânâ'nın düğün gecesinde ışığın ölmeyeceğine inanıyorlar.”
+   *“They wanted the sun for themselves alone, and the sun broke. Now they mean to light it with my lamp. They believe that on Mevlana's wedding night, light cannot die.”*
 6. Sonra gülümsedi. “Haklılar, Sâye. Bu gece ışık ölmez. Yalnızca kavuşur.”
    *Then he smiled. “They are right, Saye. Tonight light does not die. It only comes home.”*
 7. Semâhaneden bir ney sesi yükseldi. Usta, titreyen elleriyle kandili Sâye'nin avuçlarına bıraktı. Kandil ılıktı; tıpkı ustasının elleri gibi.
@@ -520,7 +520,7 @@ perde başlığıdır, seslendirilmez.
    *Then, in Saye's palms, a light was born from within her. The shadow had not vanished. She was carrying her master's light now.*
 12. Kandilcilerin yüzyıllardır sakladığı bütün ışık o ışığa döndü ve göğe yükseldi. Kandilciler karın üstüne baktı. Gölgeleri geri gelmişti. Hıçkıra hıçkıra ağladılar.
    *All the light the Lamplighters had hoarded for centuries turned toward that light and rose into the sky. The Lamplighters looked down at the snow. Their shadows had returned. They wept and wept.*
-13. Derken bir kanat hışırtısı duyuldu. Hüdhüd sözünü tutmuş, gelip Sâye'nin omzuna konmuştu. Bir süre hiçbir şey söylemedi. Sonra, “Kırık güneşin yalnız bir parçası buradaydı,” dedi. “Ötekiler hâlâ dünyanın dört bir yanında.”
+13. Derken bir kanat hışırtısı duyuldu. Hüdhüd sözünü tutmuş, gelip Sâye'nin omzuna konmuştu. Bir süre hiçbir şey söylemedi. Sonra, “Kırık güneşin yalnız bir parçası buradaydı. Ötekiler hâlâ dünyanın dört bir yanında.”
    *Then wings rustled. The Hoopoe had kept its word; it came and settled on Saye's shoulder. For a while it said nothing. Then: “Only one piece of the broken sun was here. The others are still scattered across the world.”*
 14. Ustasının oturduğu yeri kar çoktan örtmüştü. Sâye perdenin ardına baktı. Önünde, yeni yağmış karın üstünde bir yol uzanıyordu.
    *The snow had already covered the place where her master had sat. Saye looked beyond the screen. Ahead, a road stretched over the newly fallen snow.*

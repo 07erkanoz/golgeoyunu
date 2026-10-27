@@ -119,6 +119,7 @@ CUMLE = False
 # A yolu (--ayri): anlatıcının her cümlesi ayrı ve bağlamsız istek; her biri
 # "ilk cümle" gibi başlar, ses satırın sonuna dek düzleşmez.
 AYRI = False
+BAGLI = False
 STORY = {
     "[slowly, like an old storyteller beginning a tale]": "[slowly, like an old storyteller beginning a tale]",
     "[warm storyteller]": "[warmly, like an old storyteller]",
@@ -144,16 +145,23 @@ STORY = {
 }
 
 
-def narrator_pieces(lang: str, seg: str) -> list[bytes]:
-    """A yolu: parçanın cümleleri tek tek, bağlamsız, masalcı tarifiyle."""
+def narrator_pieces(lang: str, seg: str, before: str | None = None, after: str | None = None) -> list[bytes]:
+    """A yolu: parçanın cümleleri tek tek, masalcı tarifiyle. Bağlı yolda
+    (--bagli) her cümleye önceki ve sonraki cümle bağlam olarak verilir; sıfırdan
+    başlayan cümlenin başına ses modeli fazladan hece/nefes ekliyordu."""
     m = re.match(r"(\[[^\]]*\])\s*(.*)", seg, re.S)
     tag, body = (m.group(1), m.group(2)) if m else ("[warm storyteller]", seg)
     rich = STORY.get(tag, tag)
     out = []
-    for snt in sentences(body):
+    snts = sentences(body)
+    for j, snt in enumerate(snts):
+        prev = nxt = None
+        if BAGLI:
+            prev = " ".join(snts[max(0, j - 2):j]) or before
+            nxt = snts[j + 1] if j + 1 < len(snts) else after
         best = None
         for attempt in range(4):
-            mp3 = tts(lang, f"{rich} {snt}", None, None, "anlatici")
+            mp3 = tts(lang, f"{rich} {snt}", prev, nxt, "anlatici")
             heard = s.transcribe(wav16(mp3))
             bad = doubled(heard, snt)
             if not bad:
@@ -415,14 +423,16 @@ def main() -> None:
     ap.add_argument("--kuru", action="store_true", help="üretmeden seslendirme kopyasını yaz")
     ap.add_argument("--cumle", action="store_true", help="anlatıcının her cümlesine masalcı tarifi")
     ap.add_argument("--ayri", action="store_true", help="A yolu: anlatıcının her cümlesi ayrı, bağlamsız")
+    ap.add_argument("--bagli", action="store_true", help="A yolu, ama her cümleye önceki/sonraki cümle bağlam")
     ap.add_argument("--deneme", help="oyuna yazmadan bu klasöre üret (karşılaştırma)")
     ap.add_argument("--oyunici", action="store_true", help="hatıralar (Sâye ve usta) ve Gökyolu/Kaf fısıltıları (Hüdhüd)")
     a = ap.parse_args()
     if a.oyunici:
         return game_lines(a)
-    global CUMLE, AYRI
+    global CUMLE, AYRI, BAGLI
     CUMLE = a.cumle
-    AYRI = a.ayri
+    BAGLI = a.bagli
+    AYRI = a.ayri or BAGLI
 
     sc = scenes(a.dil)
     texts = scripted(a.dil, sc)
@@ -442,7 +452,7 @@ def main() -> None:
             segs = segments(a.dil, w, i, tx[i])
             sig = tx[i] + "|" + ",".join(who for who, _ in segs)
             if AYRI and any(who == "anlatici" for who, _ in segs):
-                sig += "|ayri"
+                sig += "|bagli" if BAGLI else "|ayri"
             if a.kuru:
                 print(f"{w} {e['id']} " + " ‖ ".join(f"{who}: {p}" for who, p in segs))
                 continue
@@ -462,11 +472,11 @@ def main() -> None:
             for attempt in range(3 if AYRI else 4):
                 pieces = []
                 for k, (who, piece) in enumerate(segs):
-                    if AYRI and who == "anlatici":
-                        pieces += narrator_pieces(a.dil, piece)
-                        continue
                     p_prev = segs[k - 1][1] if k > 0 else prev
                     p_next = segs[k + 1][1] if k + 1 < len(segs) else nxt
+                    if AYRI and who == "anlatici":
+                        pieces += narrator_pieces(a.dil, piece, p_prev and plain(p_prev), p_next and plain(p_next))
+                        continue
                     pieces.append(tts(a.dil, piece, p_prev, p_next, who))
                 mp3 = join(pieces)
                 heard = s.transcribe(wav16(mp3))
