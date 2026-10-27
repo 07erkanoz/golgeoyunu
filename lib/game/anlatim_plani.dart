@@ -190,8 +190,8 @@ const whisperPlan = <int, Map<int, (WhisperPlace, int?)>>{
     4: (WhisperPlace.tehlike, null),
     5: (WhisperPlace.yazi, null),
     6: (WhisperPlace.agac, 220),
-    7: (WhisperPlace.agac, 258),
-    8: (WhisperPlace.agac, 258),
+    7: (WhisperPlace.agac, 308),
+    8: (WhisperPlace.agac, 308),
   },
   15: {
     0: (WhisperPlace.agac, 32),

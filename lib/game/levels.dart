@@ -168,6 +168,7 @@ class LevelDef {
     this.gokboruRun = false,
     this.shadowStones = const [],
     this.rollingDoors = const [],
+    this.hairBridges = const [],
     this.coldRuns = const [],
     this.vistas = const [],
     this.surprises = const [],
@@ -293,6 +294,10 @@ class LevelDef {
   /// Derinkuyu: yuvarlak taş kapılar (sütun, geçidin alt satırı, içerinin
   /// yönü: 1 sağ, -1 sol); yalnız içeriden yuvarlanır.
   final List<(int, int, int)> rollingDoors;
+
+  /// Erlik'in katı: kıl köprüler (ilk sütun, son sütun, satır); koşanın
+  /// altında sallanır.
+  final List<(int, int, int)> hairBridges;
 
   /// Kayak bölümünde çığ uyanınca Gökbörü önde koşup güvenli hattı gösterir.
   final bool gokboruRun;
@@ -2176,11 +2181,14 @@ const levels = <LevelDef>[
     placeEn: 'Ötüken · Beneath the earth, Erlik\'s realm',
     gokboruHelp: true,
     cameos: [('erTostuk', 20, 27)],
+    // Kıl Köprü: yeraltı ırmağının üstünde, ortada dinlenme kayası.
+    hairBridges: [(257, 271, 31), (274, 288, 31)],
     areas: [
       'Kara Kapı',
       'Mürekkep Köprüler',
       'Körmös Mağarası',
       'Kut Zindanı',
+      'Kıl Köprü',
       'Çalkuyruk Kuyusu',
     ],
     areasEn: [
@@ -2188,6 +2196,7 @@ const levels = <LevelDef>[
       'The Ink Bridges',
       'The Cave of the Körmös',
       'The Dungeon of Kut',
+      'The Hair Bridge',
       'Çalkuyruk\'s Well',
     ],
     whispers: [

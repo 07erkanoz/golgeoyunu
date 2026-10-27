@@ -174,6 +174,17 @@ def load(name):
         line = line.strip()
         if line.startswith("'"):
             rows.append(line[1:-2].replace("\\'", "'").replace('\\$', '$'))
+    # Erlik'in kıl köprüleri bölüm tanımında: üstüne basılan tahta sayılır.
+    block = _def_block(name)
+    k = block.find('hairBridges: [')
+    if k >= 0:
+        body = block[k:block.index(']', k)]
+        for c0, c1, r in re.findall(r'\((\d+),\s*(\d+),\s*(\d+)\)', body):
+            r = int(r)
+            row = list(rows[r])
+            for c in range(int(c0), int(c1) + 1):
+                row[c] = '='
+            rows[r] = ''.join(row)
     return rows
 
 
