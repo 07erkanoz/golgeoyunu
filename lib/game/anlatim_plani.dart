@@ -255,11 +255,12 @@ const whisperPlan = <int, Map<int, (WhisperPlace, int?)>>{
     7: (WhisperPlace.tehlike, null),
     8: (WhisperPlace.yazi, null),
   },
-  // Ak Ana'nın Denizi (elle eklendi): rivayetler hava ceplerinin ve Kişi'nin
-  // taşının Umay köklerinde.
+  // Ak Ana'nın Denizi (elle eklendi): ilk rivayet kıyıdaki Umay ağacında
+  // (Yunus Koyu araya girince ilk hava cebi uzaklaştı), sonrakiler hava
+  // ceplerinin ve Kişi'nin taşının Umay köklerinde.
   20: {
     0: (WhisperPlace.yazi, null),
-    1: (WhisperPlace.agac, 254),
+    1: (WhisperPlace.agac, 9),
     2: (WhisperPlace.tehlike, null),
     3: (WhisperPlace.agac, 400),
     4: (WhisperPlace.yazi, null),

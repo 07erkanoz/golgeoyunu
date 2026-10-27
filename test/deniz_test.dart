@@ -496,4 +496,29 @@ void main() {
       expect(shoal.following, isTrue);
     },
   );
+
+  testWithGame<GolgeGame>(
+    'kıyıdaki Umay ağacı bölümün ilk rivayetini anlatır',
+    GolgeGame.new,
+    (game) async {
+      await load(game);
+      game.narration.resetScene();
+      final tree = game.level.checkpointCells.reduce(
+        (a, b) => a.x < b.x ? a : b,
+      );
+      final p = game.player!;
+      p.position.setFrom(Level.standOn(tree, Player.w, Player.h));
+      p.velocity.setZero();
+      final text = levels[_sea].whisperTexts[1];
+      var heard = false;
+      for (var i = 0; i < 60 * 5 && !heard; i++) {
+        game.update(1 / 60);
+        // Sessiz test ortamında yazı parça parça akar.
+        heard = game.narration.debugWhispers.any(
+          (w) => text.startsWith(w.split(';').first),
+        );
+      }
+      expect(heard, isTrue);
+    },
+  );
 }
