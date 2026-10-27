@@ -890,7 +890,20 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
 
   bool _free(int c, int r) {
     final ch = level.cell(c, r);
-    return ch != '#' && ch != '=';
+    return ch != '#' && ch != '=' && !_crumbleAt(c, r);
+  }
+
+  /// Yerinde duran kayan kaya bu hücrede mi: kenarına da tutunulur (kısa
+  /// kalan sıçrayış kayayı kaçırıp uzun bir düşüşe dönmesin). Tutunmak
+  /// kayayı sallamaz; üstüne çıkınca sallanır.
+  bool _crumbleAt(int c, int r) {
+    for (final d in game.world.children.whereType<CrumbleRock>()) {
+      if (!d.active || !d.atRest) continue;
+      final rc = (d.position.x / kTile).round();
+      final rr = (d.position.y / kTile).round();
+      if (rr == r && (c == rc || c == rc + 1)) return true;
+    }
+    return false;
   }
 
   void _tryLedgeGrab() {
@@ -935,6 +948,13 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     bool jumpPressed,
     bool upPressed,
   ) {
+    // Tutunulan kayan kaya düştüyse eller boşta kalır.
+    if (_free(_hangCol, _hangRow)) {
+      _setState(PlayerState.normal);
+      velocity.setZero();
+      _grabCooldown = 0.35;
+      return;
+    }
     if (jumpPressed && dir == -_hangDir) {
       _setState(PlayerState.normal);
       facing = -_hangDir;

@@ -182,6 +182,9 @@ class CrumbleRock extends Deck {
   @override
   bool get active => _fall < 0.12 && _back <= 0;
 
+  /// Yerinde mi (kopmamış; sallanıyor olabilir).
+  bool get atRest => _fall < 0 && _back <= 0;
+
   @override
   void step(double dt) {
     if (_back > 0) {
