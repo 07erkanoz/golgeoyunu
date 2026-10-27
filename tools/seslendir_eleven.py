@@ -276,6 +276,11 @@ OYUN_TAG = {"saye": "[soft, nostalgic, gentle]", "usta": "[old, warm, gentle]", 
             "anlatici": "[warm storyteller]", "akana": "[calm, luminous]", "demirci": "[hearty, encouraging]",
             "calkuyruk": "[brave, urgent]", "tulpar": "[noble, proud]"}
 # Oyun içinde kadrodaki bir kahramanın konuştuğu sözler: tırnak dışı anlatıcı.
+FISILTI_TAG = {"fisilti": "[whispering, mysterious, slow storyteller]",
+               "rivayet": "[slowly, like an old storyteller]"}
+# Ucuz yol (--kisa): tarif de krediden düşer; kısa satırlar tek seferde.
+FISILTI_TAG_KISA = {"fisilti": "[whispers]", "rivayet": "[storyteller]"}
+KISA = False
 OYUN_SOZ = {"soz:cameo_akAna": "akana", "soz:cameo_demirci": "demirci",
             "soz:calkuyrukMount": "calkuyruk", "soz:tulparMount": "tulpar"}
 ASKED = re.compile(r"^\W*(dedim|sordum|diye sordum|I asked|I said)\b", re.I)
@@ -288,6 +293,15 @@ def game_segments(lang: str, e: dict) -> list[tuple[str, str]] | None:
     if w in ("fisilti:2", "fisilti:3"):
         t = s.words_for_numbers(text, lang)
         return [("hudhud", f"{OYUN_TAG['hudhud']} {t}")]
+    # Umay ağaçlarının rivayetleri ve yoldaki fısıltılar: masalcı anlatıcı
+    # (fısıltı gizemli ve alçak, rivayet yavaş).
+    if e["role"] in ("fisilti", "rivayet") and w.startswith("fisilti:"):
+        t = s.words_for_numbers(s.spoken(text, lang), lang)
+        if lang == "en":
+            for a, b in EN_SAY.items():
+                t = t.replace(a, b)
+        tags = FISILTI_TAG_KISA if KISA else FISILTI_TAG
+        return [("anlatici", f"{tags[e['role']]} {t}")]
     if w in OYUN_SOZ:
         out = []
         for part in re.split(r"([\"“][^\"“”]*[\"”])", s.words_for_numbers(text, lang)):
@@ -423,6 +437,7 @@ def main() -> None:
     ap.add_argument("--kuru", action="store_true", help="üretmeden seslendirme kopyasını yaz")
     ap.add_argument("--cumle", action="store_true", help="anlatıcının her cümlesine masalcı tarifi")
     ap.add_argument("--ayri", action="store_true", help="A yolu: anlatıcının her cümlesi ayrı, bağlamsız")
+    ap.add_argument("--kisa", action="store_true", help="oyun içi fısıltılar: kısa tarif, satır tek seferde (ucuz)")
     ap.add_argument("--bagli", action="store_true", help="A yolu, ama her cümleye önceki/sonraki cümle bağlam")
     ap.add_argument("--deneme", help="oyuna yazmadan bu klasöre üret (karşılaştırma)")
     ap.add_argument("--oyunici", action="store_true", help="hatıralar (Sâye ve usta) ve Gökyolu/Kaf fısıltıları (Hüdhüd)")
@@ -499,6 +514,9 @@ def main() -> None:
 
 
 def game_lines(a) -> None:
+    global BAGLI, KISA
+    BAGLI = True
+    KISA = a.kisa
     lines = json.loads(pathlib.Path(f"build/ses/satirlar_{a.dil}.json").read_text())
     out_dir = pathlib.Path(f"assets/voice/{a.dil}")
     done_file = pathlib.Path(f"build/ses/eleven_oyun_{a.dil}.json")
@@ -514,13 +532,21 @@ def game_lines(a) -> None:
             continue
         if not a.yeniden and done.get(e["id"]) == sig and (out_dir / f"{e['id']}.mp3").exists():
             continue
+        # Eski seslendirmeyle (kayıtsız) var olan fısıltılar ancak --yeniden
+        # ile yenilenir: yanlışlıkla toplu kredi harcanmasın.
+        if not a.yeniden and e["id"] not in done and (out_dir / f"{e['id']}.mp3").exists():
+            continue
         whole = " ".join(plain(p) for _, p in segs)
         best = None
-        for attempt in range(4):
+        for attempt in range(2 if KISA else 4):
             pieces = []
             for k, (who, piece) in enumerate(segs):
                 p_prev = segs[k - 1][1] if k > 0 else None
                 p_next = segs[k + 1][1] if k + 1 < len(segs) else None
+                if who == "anlatici" and e["role"] in ("fisilti", "rivayet") and not KISA:
+                    # Bağlı yol: cümleler ayrı, her biri öncekini bağlam alır.
+                    pieces += narrator_pieces(a.dil, piece)
+                    continue
                 pieces.append(tts(a.dil, piece, p_prev, p_next, who))
             mp3 = join(pieces)
             heard = s.transcribe(wav16(mp3))
