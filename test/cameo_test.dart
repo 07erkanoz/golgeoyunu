@@ -92,7 +92,7 @@ void main() {
     GolgeGame.new,
     (game) async {
       await _level(game, 4);
-      _standAt(game, 236, 16);
+      _standAt(game, 296, 16);
       run(game, 0.5);
       expect(game.world.children.whereType<Apparition>(), hasLength(1));
       expect(game.mythsSeen, contains('ayazAta'));

@@ -1187,12 +1187,29 @@ void main() {
     });
 
     testWithGame<GolgeGame>(
+      'Rüzgârlı Sırt: üç yarık iplerle geçilir',
+      GolgeGame.new,
+      (game) async {
+        final p = await place(game, 4, 195, 16);
+        game.blizzard = 0;
+        run(game, 0.3);
+        swingAcross(game, p, jumpFrom: 196.6, release: 0.8, goal: 207);
+        expect(p.isDead, isFalse, reason: 'birinci yarık');
+        swingAcross(game, p, jumpFrom: 211.6, release: 0.8, goal: 222);
+        expect(p.isDead, isFalse, reason: 'ikinci yarık');
+        swingAcross(game, p, jumpFrom: 226.6, release: 0.8, goal: 239);
+        expect(p.isDead, isFalse, reason: 'üçüncü yarık');
+        expect(p.position.x, greaterThan(239 * kTile));
+      },
+    );
+
+    testWithGame<GolgeGame>(
       'tufanın eşiğinde iple yukarı rafa',
       GolgeGame.new,
       (game) async {
-        final p = await place(game, 4, 271, 14);
+        final p = await place(game, 4, 331, 14);
         run(game, 0.3);
-        swingAcross(game, p, jumpFrom: 273.6, release: 0.8, goal: 283);
+        swingAcross(game, p, jumpFrom: 333.6, release: 0.8, goal: 343);
         expect(p.isDead, isFalse);
         expect(p.position.y, lessThan(12 * kTile));
       },
@@ -1525,12 +1542,12 @@ void main() {
       'revakta koşan sarkıtlardan kurtulur',
       GolgeGame.new,
       (game) async {
-        final p = await place(game, 4, 205, 16);
+        final p = await place(game, 4, 265, 16);
         for (final g in game.world.children.whereType<Guard>().toList()) {
           g.removeFromParent();
         }
         keys(game).right = true;
-        for (var i = 0; i < _hz * 4 && p.position.x < 232 * kTile; i++) {
+        for (var i = 0; i < _hz * 4 && p.position.x < 292 * kTile; i++) {
           game.update(_dt);
         }
         run(game, 1);
@@ -1542,7 +1559,7 @@ void main() {
       'parmak ucunda yürüyeni sarkıt bulur',
       GolgeGame.new,
       (game) async {
-        final p = await place(game, 4, 205, 16);
+        final p = await place(game, 4, 265, 16);
         for (final g in game.world.children.whereType<Guard>().toList()) {
           g.removeFromParent();
         }
