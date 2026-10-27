@@ -75,3 +75,15 @@ List<double>? numbers(Object? state, int count) {
   }
   return out;
 }
+
+/// Bölüm haritasının imzası (FNV-1a): kayıttaki bulmaca durumu ancak aynı
+/// haritaya uygulanır. Parçalar türünde sırayla eşlendiğinden ("crate#1"),
+/// araya yeni bir sandık ya da kol girince eski durum yanlış parçaya düşer.
+String layoutKey(List<String> rows) {
+  var h = 0x811c9dc5;
+  for (final u in rows.join('\n').codeUnits) {
+    h ^= u;
+    h = (h * 0x01000193) & 0xffffffff;
+  }
+  return h.toRadixString(16).padLeft(8, '0');
+}

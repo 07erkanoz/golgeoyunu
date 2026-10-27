@@ -135,6 +135,44 @@ void main() {
   );
 
   testWithGame<GolgeGame>(
+    'bölüm haritası kayıttan sonra değiştiyse eski düzen uygulanmaz',
+    GolgeGame.new,
+    (game) async {
+      await _load(game);
+      game.world.children.whereType<Lever>().first.pull();
+      run(game, 1);
+      _standAt(game, 20);
+      run(game, 0.3);
+      await SaveGame.flush();
+      SaveGame.current = SaveData.decode(SaveGame.current!.encode());
+      expect(SaveGame.current!.layout, layoutKey(_room));
+      game.backToMenu();
+      run(game, 0.2);
+      // Bölüm uzatıldı: araya yeni bir sandık girdi ("crate#0" artık o).
+      GolgeGame.debugLevels = [
+        LevelDef(
+          title: 'KAYIT',
+          subtitle: '',
+          theme: LevelTheme.cistern,
+          map: [
+            for (final r in _room)
+              r == _room[9] ? '#P..L...C.....H.....K..........C.......#' : r,
+          ],
+        ),
+      ];
+      game.continueGame();
+      run(game, 0.5);
+      expect(game.world.children.whereType<Crate>(), hasLength(2));
+      expect(game.world.children.whereType<Gate>().first.solid, isTrue);
+      expect(
+        game.player!.position.x,
+        closeTo(20 * kTile, kTile),
+        reason: 'kayıttaki Umay ağacı yerinde: oradan devam',
+      );
+    },
+  );
+
+  testWithGame<GolgeGame>(
     'yeni bölümde ya da bölüm seçince eski düzen taşınmaz',
     GolgeGame.new,
     (game) async {

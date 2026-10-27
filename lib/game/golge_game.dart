@@ -574,8 +574,21 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     _respawn = Vector2(save.x, save.y);
     _puzzle = save.puzzle.isEmpty ? null : save.puzzle;
     _checkpointFireflies = save.fireflies;
+    final index = save.level.clamp(0, levels.length - 1);
+    final def = (debugLevels ?? levels)[index];
+    if (save.layout != layoutKey(def.map)) {
+      // Bölüm kayıttan sonra değişmiş: bulmacalar baştan kurulur; kayıttaki
+      // yer bir Umay ağacı değilse bölüm başından.
+      _puzzle = null;
+      final lv = Level(def);
+      final r = _respawn!;
+      final atTree = lv.checkpointCells.any(
+        (k) => (Level.standOn(k, Player.w, Player.h) - r).length < 2,
+      );
+      if (!atTree) _respawn = Level.standOn(lv.playerStart, Player.w, Player.h);
+    }
     _leaveMenu();
-    _buildLevel(save.level.clamp(0, levels.length - 1), respawn: true);
+    _buildLevel(index, respawn: true);
     // Kayıttaki konum bu bölümün içinde değilse bölüm başından.
     final r = _respawn!;
     if (r.x < 0 ||
@@ -622,6 +635,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         fireflies: fireflies,
         wings: wingsCollected,
         puzzle: _puzzle ?? const {},
+        layout: layoutKey(level.def.map),
       ),
     );
   }

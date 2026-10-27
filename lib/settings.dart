@@ -306,6 +306,7 @@ class SaveData {
     required this.fireflies,
     required this.wings,
     this.puzzle = const {},
+    this.layout = '',
     int? time,
   }) : time = time ?? DateTime.now().millisecondsSinceEpoch;
 
@@ -320,6 +321,10 @@ class SaveData {
   /// Kontrol noktasındaki bulmaca durumu (açılan kapılar, çekilen kollar,
   /// alınan tüyler, sürülen sandıklar...): devam edince dünya böyle kurulur.
   final Map<String, Object?> puzzle;
+
+  /// Kaydedildiği andaki bölüm haritasının imzası: bölüm sonradan
+  /// değiştiyse (uzatıldı, parça eklendi) bulmaca durumu sırayla eşlenemez.
+  final String layout;
 
   /// Yazıldığı an: iki kopyadan yenisini seçmek için.
   final int time;
@@ -350,6 +355,7 @@ class SaveData {
     'fireflies': fireflies,
     'wings': wings,
     'puzzle': puzzle,
+    'layout': layout,
   });
 
   static SaveData? decode(String? raw) {
@@ -368,6 +374,7 @@ class SaveData {
         puzzle: m['puzzle'] is Map
             ? Map<String, Object?>.from(m['puzzle'] as Map)
             : const {},
+        layout: m['layout'] is String ? m['layout'] as String : '',
         time: (m['time'] as num?)?.toInt() ?? 0,
       )._valid();
     } catch (_) {
