@@ -160,6 +160,7 @@ class LevelDef {
     this.wheels = const [],
     this.skies = const [],
     this.yel = const [],
+    this.lodos = const [],
     this.stormSteps = const [],
     this.strikes = const [],
     this.karakci = const [],
@@ -342,6 +343,10 @@ class LevelDef {
   /// Yel Katı: Yel Ana'nın soluğu esen alanlar (sol, üst, sağ, alt,
   /// yön: +1 sağa, -1 sola). Haritadaki `c` göklerde yada taşıdır.
   final List<(int, int, int, int, int)> yel;
+
+  /// Gökyolu: hep arkadan esen lodos (sol, üst, sağ, alt); yolcuyu sağa
+  /// taşır.
+  final List<(int, int, int, int)> lodos;
 
   /// Şimşek Katı: yalnızca şimşek çakınca görünen kara bulut basamakları
   /// (sütun, satır, genişlik) ve yıldırımın düştüğü yerler (sütun, satır,
@@ -1334,7 +1339,8 @@ const levels = <LevelDef>[
     bardEn: 'The bard says: the cloud becomes a road, the brave its traveller; the winged horse knows the way ahead.',
     cameos: [('tulpar', 140, 8)],
     // Uzatma: lodos (arkadan), poyraz (önden) ve uçurtmalar.
-    yel: [(290, 0, 299, 12, 1), (300, 0, 314, 12, -1), (318, 0, 331, 12, 1)],
+    yel: [(300, 0, 314, 12, -1)],
+    lodos: [(290, 0, 299, 12), (318, 0, 331, 12)],
     kites: [
       (353, 9, 0),
       (361, 8, 1.2),

@@ -132,6 +132,7 @@ class Hints {
     'karakci':
         'Yedi Karakçı · kara yıldızlara değme · dönüşlerini izle, aradan geç',
     'yel': 'Yel Ana üfleyecek · çizgiler sıklaşınca {down} çömel · arkadan eserken süzül: {glide}',
+    'lodos': 'Lodos arkadan hep eser · atla ve süzül: {glide} · rüzgâr seni öbür yana taşır',
     'yada': '{up} Yada taşına dokun · Yel Ana\'nın soluğu yön değiştirir',
     'lightning':
         'Yer kızarırsa çekil · yıldırımın ışığında bulut basamaklarını ezberle',
@@ -259,6 +260,7 @@ class Hints {
     'starWheel': 'The star turns around its stake · jump on, it carries you · leap off when you like: {jump}',
     'karakci': 'The Seven Thieves · do not touch the black stars · watch them turn and slip between',
     'yel': 'The Wind Mother will blow · when the lines thicken, crouch: {down} · with the wind at your back, glide: {glide}',
+    'lodos': 'The lodos always blows at your back · jump and glide: {glide} · the wind carries you across',
     'yada':
         'Touch the yada stone: {up} · the Wind Mother\'s breath turns around',
     'lightning': 'If the ground glows red, step away · in the lightning\'s flash, memorise the cloud steps',

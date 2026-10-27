@@ -288,9 +288,15 @@ class YediKarakci extends Component with HasGameReference<GolgeGame> {
 /// keser ve uğultu yükselir (uyarı), sonra soluk gelir: arkadan eserse
 /// süzülüş uzar, önden eserse yerde çömelmeyeni sürükler.
 class YelZone extends PositionComponent with HasGameReference<GolgeGame> {
-  YelZone(this.area, {required this.dir}) : super(priority: 22);
+  YelZone(this.area, {required this.dir, this.steady = false})
+    : super(priority: 22);
 
   final Rect area;
+
+  /// Gökyolu'nun lodosu: soluk soluk değil, hep eser (gücü hafifçe
+  /// dalgalanır); arkadan esip yolcuyu boşluğun öbür yanına taşır.
+  final bool steady;
+  double _gustCool = 0;
 
   /// Esiş yönü (+1 sağa, -1 sola); yada taşı çevirir.
   int dir;
@@ -308,12 +314,13 @@ class YelZone extends PositionComponent with HasGameReference<GolgeGame> {
   static const double force = 230;
 
   double get _ph => _t % period;
-  bool get warning => _awake && _ph >= calm && _ph < calm + warn;
-  bool get blowing => _awake && _ph >= calm + warn;
+  bool get warning => _awake && !steady && _ph >= calm && _ph < calm + warn;
+  bool get blowing => _awake && (steady || _ph >= calm + warn);
 
   /// Soluğun gücü (0-1): yumuşak başlar, yumuşak biter.
   double get strength {
     if (!blowing) return 0;
+    if (steady) return 0.85 + 0.15 * math.sin(_t * 1.4);
     final k = (_ph - calm - warn) / blow;
     return math.sin(math.pi * k.clamp(0.0, 1.0)).clamp(0.0, 1.0) * 0.4 +
         (k > 0.08 && k < 0.92 ? 0.6 : 0.0);
@@ -340,12 +347,21 @@ class YelZone extends PositionComponent with HasGameReference<GolgeGame> {
     final near =
         p != null &&
         area.inflate(4 * kTile).contains(Offset(p.center.x, p.center.y));
-    if (phase != _lastPhase && near) {
+    if (steady) {
+      _gustCool -= dt;
+      if (near && _gustCool <= 0) {
+        GameAudio.instance.play('gust', volume: 0.6);
+        _gustCool = 3.2;
+      }
+    } else if (phase != _lastPhase && near) {
       if (phase == 1) GameAudio.instance.play('gust', volume: 0.35);
       if (phase == 2) GameAudio.instance.play('gust', volume: 0.9);
     }
     _lastPhase = phase;
     if (p == null || p.isDead) return;
+    // Lodos yerde durana dokunmaz (adacıktan itip düşürmesin): sıçrayanı
+    // havada yakalar, öbür yana taşır.
+    if (steady && p.onGround) return;
     if (blowing && area.contains(Offset(p.center.x, p.center.y))) {
       p.windX += dir * force * strength;
     }

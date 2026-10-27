@@ -1564,6 +1564,18 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         dir: dir,
       );
     }
+    for (final (c0, r0, c1, r1) in level.def.lodos) {
+      yield YelZone(
+        Rect.fromLTRB(
+          c0 * kTile.toDouble(),
+          r0 * kTile.toDouble(),
+          (c1 + 1) * kTile.toDouble(),
+          (r1 + 1) * kTile.toDouble(),
+        ),
+        dir: 1,
+        steady: true,
+      );
+    }
     for (final c in level.yadaCells) {
       yield YadaStone(c);
     }
@@ -2486,7 +2498,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
             when z.area
                 .inflate(2 * kTile)
                 .contains(Offset(p.center.x, p.center.y)) =>
-          'yel',
+          z.steady ? 'lodos' : 'yel',
         YadaStone y when near(y, 4, 3) => 'yada',
         LightningStrike l when near(l, 8, 6) => 'lightning',
         StormStep k when near(k, 6, 5) => 'lightning',
