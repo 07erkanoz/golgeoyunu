@@ -138,12 +138,12 @@ void main() {
     (game) async {
       await _level(game, 11);
       // Nalın yanında beklemek güvenli.
-      _standAt(game, 203, 25);
+      _standAt(game, 273, 25);
       run(game, 6);
       expect(game.world.children.whereType<Horseshoe>(), hasLength(1));
       expect(game.world.children.whereType<AlbastiShade>(), isEmpty);
       // Mağaranın derinliğinde kıpırdamadan bekleyince belirir.
-      _standAt(game, 226, 25);
+      _standAt(game, 296, 25);
       run(game, 5);
       expect(game.world.children.whereType<AlbastiShade>(), hasLength(1));
       run(game, 2);

@@ -241,6 +241,7 @@ class Hints {
         'Yuvarlak taş yalnız içeriden yuvarlanır · içeriye başka bir yol bul',
     'hairBridge': 'Kıl köprü · koşanın altında sallanır · parmak ucunda yürü ya da durup dinlenmesini bekle',
     'chimney': 'Bacanın sıcak dumanı yukarı taşır · içinde kanadını aç: {glide} · fırtına dinince süzül',
+    'albasti': 'Albastı ışığa gelir · demir nalın yanında dur, yaklaşamaz · çömel, ışığını ört: {down}',
     'frozenCat':
         'Evliya Çelebi doğru söylemiş: damdan dama atlayan kedi havada donmuş!',
     'semazen': '{sneak} Önden geçen semâzenin eteğinde yürü',
@@ -371,6 +372,7 @@ class Hints {
         'The round stone rolls only from inside · find another way in',
     'hairBridge': 'The hair bridge · it sways under a runner · tiptoe, or stop and let it settle',
     'chimney': 'Warm chimney smoke lifts you · spread your wings in it: {glide} · glide when the storm drops',
+    'albasti': 'The Albastı comes to light · stand by the iron horseshoe, she cannot near it · crouch to hide your light: {down}',
     'frozenCat': 'Evliya Çelebi was right: the cat leaping from roof to roof froze in mid-air!',
     'semazen': '{sneak} Walk in the skirt of the dervish passing in front',
     'chandelier': 'Jump onto a candle tray · the chandelier carries you',

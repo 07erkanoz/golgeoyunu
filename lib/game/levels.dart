@@ -170,6 +170,8 @@ class LevelDef {
     this.rollingDoors = const [],
     this.hairBridges = const [],
     this.houses = const [],
+    this.irons = const [],
+    this.albastis = const [],
     this.coldRuns = const [],
     this.vistas = const [],
     this.surprises = const [],
@@ -303,6 +305,12 @@ class LevelDef {
   /// Kar Yolu: Erzurum evlerinin cepheleri (ilk sütun, son sütun, dam
   /// satırı); yalnızca görünüş, ev haritadaki kaya bloğudur.
   final List<(int, int, int)> houses;
+
+  /// Peri Bacaları: demir nallar (sütun, satır); çevresine Albastı giremez.
+  final List<(int, int)> irons;
+
+  /// Peri Bacaları: Albastılar (sütun, satır); ışığa gelir, demirden korkar.
+  final List<(int, int)> albastis;
 
   /// Kayak bölümünde çığ uyanınca Gökbörü önde koşup güvenli hattı gösterir.
   final bool gokboruRun;
@@ -1965,7 +1973,10 @@ const levels = <LevelDef>[
     title: 'XII · PERİ BACALARI',
     bard: 'Ozan der ki: Peri bacası gölgede uzar; kızıl gölge ışığını ister, demirden korkar.',
     bardEn: 'The bard says: the fairy chimneys stretch in shadow; the red shade wants your light and fears iron.',
-    cameos: [('albasti', 207, 25)],
+    cameos: [('albasti', 277, 25)],
+    // Kızıl Vadi: Albastı ışığa gelir, demir nalların çevresine giremez.
+    irons: [(207, 25), (222, 25), (237, 25), (252, 25), (262, 25)],
+    albastis: [(231, 19), (247, 17)],
     subtitle: 'İnsanlar aşağıda, periler yukarıda yaşardı.',
     theme: LevelTheme.peri,
     wings: true,
@@ -1977,6 +1988,7 @@ const levels = <LevelDef>[
       'Muşkara',
       'Peri Bacaları',
       'Güvercinlik Vadisi',
+      'Kızıl Vadi',
       'Kaya Kilisesi',
       'Perilerin Dansı',
       'Uçhisar',
@@ -1985,6 +1997,7 @@ const levels = <LevelDef>[
       'Muşkara',
       'The Fairy Chimneys',
       'Pigeon Valley',
+      'The Red Valley',
       'The Rock Church',
       'The Dance of the Fairies',
       'Uçhisar',

@@ -21,6 +21,7 @@ import 'guide.dart';
 import 'surprises.dart';
 import 'vistas.dart';
 import 'creatures.dart';
+import 'albasti.dart';
 import 'deniz.dart';
 import 'deniz_koy.dart';
 import 'derinkuyu.dart';
@@ -1155,6 +1156,10 @@ class GolgeGame extends FlameGame with KeyboardEvents {
           RollingDoor(c, r, inside: side),
         for (final (c0, c1, r) in level.def.hairBridges) HairBridge(c0, c1, r),
         for (final (c0, c1, r) in level.def.houses) ErzurumHouse(c0, c1, r),
+        for (final (c, r) in level.def.irons)
+          IronCharm(Vector2(c * kTile.toDouble(), r * kTile.toDouble())),
+        for (final (c, r) in level.def.albastis)
+          AlbastiHunter(Vector2(c * kTile.toDouble(), r * kTile.toDouble())),
         for (final (c, r, n) in level.glowRuns)
           PhasePlank(Vector2(c * kTile, r * kTile.toDouble()), n, shade: false),
         // Kandilci yolu: yalnız Kandilcinin feneriyle belirir.
