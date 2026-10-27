@@ -34,7 +34,7 @@ void main() {
     GolgeGame.new,
     (game) async {
       await _level(game, 0);
-      _standAt(game, 157, 9);
+      _standAt(game, 267, 9);
       run(game, 1.5);
       expect(
         game.world.children.whereType<WaterFace>(),
@@ -66,7 +66,7 @@ void main() {
       basin
         ..target = basin.area.bottom - 6
         ..surface = basin.area.bottom - 6;
-      _standAt(game, 157, 9);
+      _standAt(game, 267, 9);
       run(game, 4);
       expect(game.world.children.whereType<WaterFace>(), isEmpty);
       expect(game.mythsSeen, isNot(contains('suIyesi')));

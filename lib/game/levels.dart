@@ -1178,6 +1178,8 @@ const levels = <LevelDef>[
     placeEn: 'The Basilica Cistern · Istanbul, July 1660',
     areas: [
       'Sütunlar Ormanı',
+      'Eski Depo',
+      'Fener Dersi',
       'Medusa\'nın Başları',
       'Paslı Kapı',
       'Yarasa Galerisi',
@@ -1192,6 +1194,8 @@ const levels = <LevelDef>[
     ],
     areasEn: [
       'The Forest of Columns',
+      'The Old Storeroom',
+      'The Lantern Lesson',
       'The Heads of Medusa',
       'The Rusted Gate',
       'The Bat Gallery',
@@ -1205,26 +1209,26 @@ const levels = <LevelDef>[
       'The Dark Channels',
     ],
     map: kMapYerebatan,
-    echoes: [(20, 31), (72, 89)],
+    echoes: [(20, 23), (134, 141), (182, 199)],
     // Su haznesinin çıkışında isteğe bağlı ritim yolu: basınca kalkan geniş
     // kaya, sonra biri yükselirken öbürü inen iki kaya; uçta bir ateşböceği.
     // Yarasa Galerisi'nin çıkışında sola bakan Gözcü: son sütunlarla çıkış
     // arasını tarar; bekçiyi çana çekip onun dönüşünü bekleyen geçer.
     watchers: [
       (
-        95,
+        205,
         11,
         WatcherProfile(facing: -1, center: 0.42, sweep: 0.3, speed: 0.9),
       ),
     ],
     rocks: [
-      (173, 10, RockProfile(onStep: true, width: 3, pause: 1.2, period: 6)),
-      (177, 10, RockProfile(period: 5, pause: 1.2, phase: 0)),
-      (180, 10, RockProfile(period: 5, pause: 1.2, phase: 0.5)),
+      (283, 10, RockProfile(onStep: true, width: 3, pause: 1.2, period: 6)),
+      (287, 10, RockProfile(period: 5, pause: 1.2, phase: 0)),
+      (290, 10, RockProfile(period: 5, pause: 1.2, phase: 0.5)),
     ],
     // S2a · Unutulmuş Gölgehane: yolun sonundaki boşluğun dibinde taş gibi
     // boyanmış perde (sahanlığın sol üst hücresi); ardında ustanın odası.
-    surprises: [('golgehane', 45, 15), ('karagoz', 44, 13)],
+    surprises: [('golgehane', 155, 15), ('karagoz', 154, 13)],
   ),
   LevelDef(
     title: 'II · KULE',

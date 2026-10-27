@@ -271,7 +271,7 @@ void main() {
 
   group('Sarnıcın iki yüzü', () {
     Future<(GiantPerde, Gate)> load(GolgeGame game) async {
-      final p = await place(game, 0, 112, 9);
+      final p = await place(game, 0, 222, 9);
       p.hidden = false;
       final perde = game.world.children.whereType<GiantPerde>().first;
       final gate = game.world.children
@@ -341,7 +341,7 @@ void main() {
 
   group('Perde bulmacası öğretir', () {
     Future<(GiantPerde, Gate)> load(GolgeGame game) async {
-      final p = await place(game, 0, 112, 9);
+      final p = await place(game, 0, 222, 9);
       p.hidden = false;
       final perde = game.world.children.whereType<GiantPerde>().firstWhere(
         (g) => g.puzzle,

@@ -23,7 +23,7 @@ void main() {
   // Sarnıçta sütunlar beş karede bir: hangi sütunun önünde durulursa durulsun
   // sürpriz çıkmalı (önceden önü üç kare sütunsuz olmalıydı, telefonda
   // neredeyse hiç çıkmıyordu).
-  for (final start in [20.0, 23.0, 27.0, 33.0]) {
+  for (final start in [20.0, 23.0, 137.0, 143.0]) {
     testWithGame<GolgeGame>(
       'utangaç gölge: $start. sütundan koşup durunca',
       GolgeGame.new,

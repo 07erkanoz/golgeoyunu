@@ -59,7 +59,7 @@ void main() {
       expect(kapi.opened, isFalse);
       expect(sahne.lit, isFalse, reason: 'oda aralanmadan ışık sızmaz');
       // Boşluğun üstünden bırakılır.
-      p.position.setValues(45.5 * kTile - Player.w / 2, 12.2 * kTile);
+      p.position.setValues(155.5 * kTile - Player.w / 2, 12.2 * kTile);
       p.velocity.setZero();
       run(game, 1.5);
       expect(p.isDead, isFalse);
@@ -70,7 +70,7 @@ void main() {
       expect(kapi.open, 1);
       expect(sahne.lit, isTrue);
       // Sahanlığın solunda su: düşen ölür.
-      p.position.setValues(43.5 * kTile - Player.w / 2, 15.2 * kTile);
+      p.position.setValues(153.5 * kTile - Player.w / 2, 15.2 * kTile);
       p.velocity.setZero();
       run(game, 1.5);
       expect(p.isDead, isTrue);
@@ -84,15 +84,15 @@ void main() {
     GolgeGame.new,
     (game) async {
       final (_, p, kapi, _, _) = await load(game);
-      put(p, 38, 13);
+      put(p, 148, 13);
       run(game, 0.5);
       expect(kapi.debugCalled, 0);
-      put(p, 42, 13);
+      put(p, 152, 13);
       run(game, 0.5);
       expect(kapi.debugCalled, 1);
-      put(p, 38, 13);
+      put(p, 148, 13);
       run(game, 1);
-      put(p, 42, 13);
+      put(p, 152, 13);
       run(game, 1);
       expect(kapi.debugCalled, 1);
     },
@@ -112,7 +112,7 @@ void main() {
       put(p, tasvirler[0].position.x / kTile - 0.5, 18);
       run(game, 0.3);
       expect(tasvirler[0].canUse(p.center), isFalse);
-      put(p, 45.5, 15);
+      put(p, 155.5, 15);
       run(game, 1.5);
       expect(kapi.opened, isTrue);
       expect(
@@ -120,7 +120,7 @@ void main() {
         greaterThan(GolgehaneSahne.shadowScale(150)),
       );
       // Kandili sağa iter.
-      put(p, 49.5, 18);
+      put(p, 159.5, 18);
       run(game, 0.5);
       final before = sahne.lampX;
       game.controls.keyboard.right = true;

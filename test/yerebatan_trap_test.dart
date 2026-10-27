@@ -22,7 +22,7 @@ void main() {
       run(game, 0.2);
       final p = game.player!;
       p.position.setFrom(
-        Level.standOn(Vector2(58 * kTile, 13 * kTile), Player.w, Player.h),
+        Level.standOn(Vector2(168 * kTile, 13 * kTile), Player.w, Player.h),
       );
       run(game, 0.3);
       // Zincire git, tırman.
@@ -43,7 +43,7 @@ void main() {
       // Rafın üstünde durur (satır 9); kol oradadır.
       expect(p.onGround, isTrue);
       expect(p.position.y + Player.h, closeTo(10 * kTile, 1));
-      expect(p.position.x, inInclusiveRange(53 * kTile, 57 * kTile));
+      expect(p.position.x, inInclusiveRange(163 * kTile, 167 * kTile));
     },
   );
 }
