@@ -377,8 +377,11 @@ def join(pieces: list[bytes]) -> bytes:
             f = pathlib.Path(d) / f"{j}.mp3"
             f.write_bytes(mp3)
             ins += ["-i", str(f)]
+            # Kesilen uçlara kısa yumuşak geçiş: yoksa birleşme yerinde "çıt"
+            # oluşuyordu (plak cızırtısı gibi duyuldu).
             flt.append(f"[{j}:a]aresample=32000,silenceremove=start_periods=1:start_threshold=-48dB,"
-                       "areverse,silenceremove=start_periods=1:start_threshold=-48dB,areverse,"
+                       "areverse,silenceremove=start_periods=1:start_threshold=-48dB,"
+                       "afade=t=in:d=0.015,areverse,afade=t=in:d=0.01,"
                        f"loudnorm=I=-18:TP=-2:LRA=7,aresample=32000,apad=pad_dur=0.3[a{j}]")
         flt.append("".join(f"[a{j}]" for j in range(len(pieces))) + f"concat=n={len(pieces)}:v=0:a=1[o]")
         out = pathlib.Path(d) / "o.mp3"
