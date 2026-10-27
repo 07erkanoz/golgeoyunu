@@ -315,7 +315,8 @@ class _GestureControlsState extends State<_GestureControls> {
       ..left = d.dx < -_dead
       ..right = d.dx > _dead
       ..up = d.dy < -_vertical
-      ..down = d.dy > _vertical;
+      ..down = d.dy > _vertical
+      ..stick = d.distance > _dead ? d / reach : Offset.zero;
     setState(() {});
   }
 
@@ -326,7 +327,8 @@ class _GestureControlsState extends State<_GestureControls> {
         ..left = false
         ..right = false
         ..up = false
-        ..down = false;
+        ..down = false
+        ..stick = Offset.zero;
     }
     _jumpPointers.remove(e.pointer);
     if (_jumpPointers.isEmpty) _t.jump = false;

@@ -135,12 +135,29 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
   /// Onu taşıyan (su kaplumbağası): taşınırken kendi yüzmez.
   Object? carrier;
 
-  static const double swimAccel = 430;
-  static const double swimMax = 105;
+  static const double swimAccel = 640;
+  static const double swimMax = 145;
 
   /// Bir kulacın toplam itişi (px/sn) ve süresi.
-  static const double strokePush = 210;
-  static const double strokeTime = 0.9;
+  static const double strokePush = 280;
+  static const double strokeTime = 0.6;
+
+  /// Hızlı yüzüş: kulaçtan sonra atılış basılı tutulursa Sâye hızını korur
+  /// (nefesi de çabuk biter). Yunusların yanında bir süre daha da hızlanır.
+  static const double boostMax = 235;
+  bool boosting = false;
+  double dolphinBoost = 0;
+
+  /// Sudan hızla çıkınca havada atılan takla (çizim; radyan ve hız).
+  double _flip = 0;
+  double _flipRate = 0;
+
+  /// Sudan sıçrayış: hıza göre takla başlar.
+  void breach(double speed) {
+    if (speed < 210 || _flipRate != 0) return;
+    _flip = 0;
+    _flipRate = facing * (speed > 300 ? 9.0 : 7.0);
+  }
 
   /// Kulacın evresi (0-1; 1: kulaç yok, süzülüş).
   double _stroke = 1;
@@ -243,7 +260,15 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
 
     switch (state) {
       case PlayerState.normal when swimming:
-        _updateSwim(dt, dir, up, down, jumpPressed);
+        _updateSwim(
+          dt,
+          dir,
+          up,
+          down,
+          jumpPressed,
+          jump,
+          active ? c.stick : Offset.zero,
+        );
       case PlayerState.normal when game.skiSurface != null:
         _updateSki(dt, dir, jump, jumpPressed);
       case PlayerState.normal:
@@ -271,6 +296,14 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
 
     if (lurePressed && state != PlayerState.climbUp) {
       game.releaseFirefly(light.$1, facing);
+    }
+    // Sudan sıçrayışın taklası: bir tur döner, yere ya da suya değince biter.
+    if (_flipRate != 0) {
+      _flip += _flipRate * dt;
+      if (_flip.abs() >= 2 * math.pi || onGround || isDead) {
+        _flip = 0;
+        _flipRate = 0;
+      }
     }
     if (!isDead && game.skiSurface == null && !swimming) _checkHazards();
     inShadow = level.rectHits(
@@ -522,28 +555,50 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     }
   }
 
-  void _updateSwim(double dt, int dir, bool up, bool down, bool stroke) {
+  void _updateSwim(
+    double dt,
+    int dir,
+    bool up,
+    bool down,
+    bool stroke,
+    bool held,
+    Offset stick,
+  ) {
     var ix = dir.toDouble();
     var iy = ((down ? 1 : 0) - (up ? 1 : 0)).toDouble();
+    // Dokunmatik çubuk: parmağın açısı olduğu gibi (sekiz yöne yuvarlanmaz);
+    // hafif itişte yavaş yüzer.
+    var power = 1.0;
+    if (stick.distance > 0.15) {
+      ix = stick.dx;
+      iy = stick.dy;
+      power = math.min(1.0, stick.distance * 1.4);
+    }
     final len = math.sqrt(ix * ix + iy * iy);
     if (len > 0) {
       ix /= len;
       iy /= len;
-      if (ix != 0) facing = ix.sign.toInt();
+      if (ix.abs() > 0.2) facing = ix.sign.toInt();
     }
+    _flip = 0;
+    _flipRate = 0;
+    dolphinBoost = math.max(0, dolphinBoost - dt);
     // Su yüzünde: başı dışarıda süzülür (nefes alır); yukarı basmak onu
     // sudan çıkarmaz, kulaç burada sudan çıkış hamlesidir. Aşağı basan
     // yeniden dalar.
     final line = level.surfaceAbove(center.x, center.y);
     final float = line == null ? 0.0 : line + 5 + math.sin(_anim * 2.4) * 1.2;
+    // Hızla yükselen yüzeyde tutulmaz: sudan fırlar (yunus gibi).
     final atSurface =
         line != null &&
         iy <= 0 &&
         carrier == null &&
         center.y < float + 10 &&
-        velocity.y < 30;
-    velocity.x += ix * swimAccel * dt;
-    velocity.y += (atSurface ? 0 : iy) * swimAccel * dt;
+        velocity.y < 30 &&
+        velocity.y > -150;
+    final accel = swimAccel * power * (dolphinBoost > 0 ? 1.5 : 1);
+    velocity.x += ix * accel * dt;
+    velocity.y += (atSurface ? 0 : iy) * accel * dt;
     if (atSurface) {
       {
         velocity.y +=
@@ -556,8 +611,8 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
         }
       }
     }
-    // Kulaç: bir öncekinin bacakları açılmadan yenisi başlamaz.
-    if (stroke && _stroke > 0.7) {
+    // Kulaç: bir öncekinin bacakları açılınca yenisi başlayabilir.
+    if (stroke && _stroke > 0.5) {
       _stroke = 0;
       final sp = velocity.length;
       _strokeDir = len > 0
@@ -584,7 +639,18 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     // Kendi itişiyle en çok bu hıza varır; dışarıdan gelen (sokma,
     // akıntı, kabarcık) itişleri yalnız su direnci söndürür.
     final sp = velocity.length;
-    final cap = _stroke < 1 ? swimMax + strokePush * 0.8 : swimMax;
+    // Hızlı yüzüş: kulaçtan sonra atılış basılı tutuldukça.
+    boosting = held && len > 0 && !atSurface && carrier == null;
+    var cap = _stroke < 1 ? swimMax + strokePush * 0.8 : swimMax;
+    if (boosting) {
+      cap = math.max(cap, boostMax);
+      if (sp < boostMax) {
+        final d = len > 0 ? Offset(ix, iy) : _strokeDir;
+        velocity.x += d.dx * swimAccel * 0.6 * dt;
+        velocity.y += d.dy * swimAccel * 0.6 * dt;
+      }
+    }
+    if (dolphinBoost > 0) cap += 110;
     if (len > 0 && sp > cap) {
       velocity.scale(1 - (1 - cap / sp) * math.min(1, dt * 6));
     }
@@ -2581,6 +2647,11 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       const pivot = Offset(cx, 20);
       canvas.translate(pivot.dx, pivot.dy);
       canvas.rotate(_swimPitch);
+      canvas.translate(-pivot.dx, -pivot.dy);
+    } else if (_flip != 0) {
+      const pivot = Offset(cx, 20);
+      canvas.translate(pivot.dx, pivot.dy);
+      canvas.rotate(_flip);
       canvas.translate(-pivot.dx, -pivot.dy);
     }
     if (isDead && !_fell) {

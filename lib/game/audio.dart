@@ -83,12 +83,22 @@ class GameAudio {
     'bird_2',
     'bird_3',
     'bird_4',
+    // Yunus Koyu: uzakta geçen balinanın sesi (tools ile sentezlendi).
+    'whale',
   ];
 
   /// Uzun döngüler diskten akar (belleği şişirmesin); kısa efektler bellekte.
   /// Uzun efektler Ogg Vorbis (asılları assets_src/audio; bkz.
   /// tools/sesleri_sikistir.py). Kısa efektler WAV.
-  static const _ogg = {'thunder', 'howl', 'sting', 'memory', 'death', 'gust'};
+  static const _ogg = {
+    'thunder',
+    'howl',
+    'sting',
+    'memory',
+    'death',
+    'gust',
+    'whale',
+  };
 
   static const _streamed = [
     'amb_cistern.ogg',

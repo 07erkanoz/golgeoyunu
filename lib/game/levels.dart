@@ -2606,6 +2606,8 @@ const levels = <LevelDef>[
     placeEn: 'The First Water · The sea of Ak Ana',
     areas: [
       'Köklerin Ucu',
+      'Yunus Koyu',
+      'Batık Gemi',
       'Yosun Ormanı',
       'Denizanası Mağaraları',
       'Akıntı Koridorları',
@@ -2614,6 +2616,8 @@ const levels = <LevelDef>[
     ],
     areasEn: [
       "The Roots' End",
+      'Dolphin Bay',
+      'The Sunken Ship',
       'The Kelp Forest',
       'The Jellyfish Caves',
       'The Current Corridors',

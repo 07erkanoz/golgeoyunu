@@ -259,11 +259,11 @@ const whisperPlan = <int, Map<int, (WhisperPlace, int?)>>{
   // taşının Umay köklerinde.
   20: {
     0: (WhisperPlace.yazi, null),
-    1: (WhisperPlace.agac, 104),
+    1: (WhisperPlace.agac, 254),
     2: (WhisperPlace.tehlike, null),
-    3: (WhisperPlace.agac, 250),
+    3: (WhisperPlace.agac, 400),
     4: (WhisperPlace.yazi, null),
-    5: (WhisperPlace.agac, 346),
+    5: (WhisperPlace.agac, 496),
     6: (WhisperPlace.tehlike, null),
     7: (WhisperPlace.yazi, null),
   },

@@ -5,6 +5,7 @@ import 'package:flame/components.dart';
 import 'package:flame_test/flame_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:golge/game/deniz.dart';
+import 'package:golge/game/deniz_koy.dart';
 import 'package:golge/game/entities.dart';
 import 'package:golge/game/erlik.dart';
 import 'package:golge/game/golge_game.dart';
@@ -69,7 +70,7 @@ void main() {
     GolgeGame.new,
     (game) async {
       final p = await load(game);
-      put(p, 120, 22);
+      put(p, 270, 22);
       run(game, 0.2);
       expect(p.swimming, isTrue);
       run(game, 5);
@@ -87,7 +88,7 @@ void main() {
     game,
   ) async {
     final p = await load(game);
-    put(p, 120, 22);
+    put(p, 270, 22);
     run(game, 0.2);
     game.breath = 0;
     run(game, GolgeGame.drownTime - 0.5);
@@ -162,9 +163,9 @@ void main() {
       }
     }
     await game.ready();
-    put(p, 290, 28);
+    put(p, 440, 28);
     run(game, 1.5);
-    expect(p.center.x, lessThan(287 * kTile), reason: 'sola taşındı');
+    expect(p.center.x, lessThan(437 * kTile), reason: 'sola taşındı');
   });
 
   testWithGame<GolgeGame>(
@@ -175,7 +176,7 @@ void main() {
       final jelly = StingingJelly(150, 20, 0);
       game.world.add(jelly);
       await game.ready();
-      put(p, 150, 26);
+      put(p, 300, 26);
       run(game, 0.3);
       p.position.setValues(jelly.position.x - Player.w / 2, jelly.position.y);
       p.velocity.setZero();
@@ -349,7 +350,7 @@ void main() {
     GolgeGame.new,
     (game) async {
       final p = await load(game);
-      put(p, 341, kDenizSurface + 2.0);
+      put(p, 491, kDenizSurface + 2.0);
       run(game, 0.3);
       expect(p.swimming, isTrue);
       game.controls.keyboard.up = true;
@@ -361,19 +362,138 @@ void main() {
       game.controls.keyboard.jump = true;
       run(game, 0.05);
       game.controls.keyboard.jump = false;
-      run(game, 1.2);
+      // Yüzüş hızlandı: taşa daha erken varır; sağ tuşu bırakılmazsa taşın
+      // öbür ucundan suya iner.
+      run(game, 0.75);
       game.controls.keyboard.right = false;
       run(game, 1.0);
       expect(p.swimming, isFalse, reason: 'taşın üstünde');
       expect(p.onGround, isTrue, reason: '${p.state} ${p.position / kTile}');
-      expect(p.center.x, greaterThan(344 * kTile));
+      expect(p.center.x, greaterThan(494 * kTile));
       // Öbür yana yürüyüp yeniden suya.
       game.controls.keyboard.right = true;
       run(game, 2);
       game.controls.keyboard.right = false;
       run(game, 0.5);
       expect(p.swimming, isTrue);
-      expect(p.center.x, greaterThan(349 * kTile));
+      expect(p.center.x, greaterThan(499 * kTile));
+    },
+  );
+
+  testWithGame<GolgeGame>(
+    'Yunus Koyu: basılı tutulan kulaç hızlı yüzdürür, nefes çabuk biter',
+    GolgeGame.new,
+    (game) async {
+      final p = await load(game);
+      put(p, 110, 20);
+      run(game, 0.2);
+      game.controls.keyboard.right = true;
+      run(game, 1.5);
+      final cruise = p.velocity.length;
+      final b0 = game.breath;
+      game.controls.keyboard.jump = true;
+      run(game, 1.5);
+      expect(p.boosting, isTrue);
+      expect(p.velocity.length, greaterThan(cruise + 60));
+      final used = b0 - game.breath;
+      expect(used, greaterThan(1.5 / GolgeGame.breathTime * 1.4));
+      game.controls.keyboard
+        ..jump = false
+        ..right = false;
+    },
+  );
+
+  testWithGame<GolgeGame>(
+    'Yunus Koyu: hızla yüzeye çıkan sıçrar, takla atar; gökte kara kaz',
+    GolgeGame.new,
+    (game) async {
+      final p = await load(game);
+      put(p, 120, 16);
+      run(game, 0.2);
+      game.controls.keyboard
+        ..up = true
+        ..jump = true;
+      var top = p.center.y;
+      for (var i = 0; i < 120; i++) {
+        run(game, 1 / 60);
+        top = top < p.center.y ? top : p.center.y;
+      }
+      game.controls.keyboard
+        ..up = false
+        ..jump = false;
+      final surface = kDenizSurface * kTile;
+      expect(surface - top, greaterThan(3 * kTile), reason: 'sudan sıçradı');
+      expect(game.secretSeen('karaKaz'), isTrue);
+      run(game, 2);
+      expect(p.swimming, isTrue, reason: 'suya döndü');
+    },
+  );
+
+  testWithGame<GolgeGame>(
+    'Yunus Koyu: yunusların yanında hızlanılır',
+    GolgeGame.new,
+    (game) async {
+      final p = await load(game);
+      final pod = game.world.children.whereType<DolphinPod>().first;
+      run(game, 0.5);
+      put(p, kDenizDolphins.first.$1 + 4.0, kDenizDolphins.first.$3.toDouble());
+      var boosted = false;
+      for (var i = 0; i < 600 && !boosted; i++) {
+        run(game, 1 / 60);
+        boosted = p.dolphinBoost > 0;
+      }
+      expect(pod.isMounted, isTrue);
+      expect(boosted, isTrue);
+    },
+  );
+
+  testWithGame<GolgeGame>(
+    'Yunus Koyu: açık midyenin incisi nefes verir',
+    GolgeGame.new,
+    (game) async {
+      final p = await load(game);
+      final clam = game.world.children.whereType<PearlClam>().first;
+      game.breathe(-0.6);
+      while (clam.open < 1) {
+        run(game, 0.05);
+      }
+      p.position.setValues(clam.x - Player.w / 2, clam.y - 9 - Player.h / 2);
+      p.velocity.setZero();
+      run(game, 0.1);
+      expect(clam.hasPearl, isFalse);
+      expect(game.breath, greaterThan(0.95));
+    },
+  );
+
+  testWithGame<GolgeGame>(
+    'Yunus Koyu: batık geminin sandığı ateşböceği verir',
+    GolgeGame.new,
+    (game) async {
+      final p = await load(game);
+      final chest = game.world.children.whereType<TreasureChest>().first;
+      final before = game.world.children.whereType<FireflySwarm>().length;
+      p.position.setValues(chest.x - Player.w / 2, chest.y - 20 - Player.h / 2);
+      p.velocity.setZero();
+      run(game, 0.2);
+      expect(chest.opened, isTrue);
+      expect(game.world.children.whereType<FireflySwarm>().length, before + 3);
+    },
+  );
+
+  testWithGame<GolgeGame>(
+    'Yunus Koyu: balık sürüsü ardına takılır',
+    GolgeGame.new,
+    (game) async {
+      final p = await load(game);
+      final shoal = game.world.children.whereType<FriendlyShoal>().first;
+      put(p, kDenizShoal.$1.toDouble(), kDenizShoal.$2.toDouble());
+      run(game, 0.5);
+      expect(shoal.following, isTrue);
+      game.controls.keyboard.right = true;
+      run(game, 3);
+      game.controls.keyboard.right = false;
+      run(game, 1.5);
+      expect(shoal.following, isTrue);
     },
   );
 }

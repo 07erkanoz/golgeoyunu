@@ -22,6 +22,8 @@ import 'surprises.dart';
 import 'vistas.dart';
 import 'creatures.dart';
 import 'deniz.dart';
+import 'deniz_koy.dart';
+import 'maps.dart';
 import 'frame_pacer.dart';
 import 'mechanics.dart';
 import 'entities.dart';
@@ -76,6 +78,10 @@ class Buttons {
   bool jump = false;
   bool sneak = false;
 
+  /// Dokunmatik çubuğun yönü ve gücü (boy en çok 1; klavyede sıfır). Suyun
+  /// altında Sâye bu açıya yüzer: sekiz yöne sınırlı kalmaz.
+  Offset stick = Offset.zero;
+
   /// Basılı tutulan yön ve zıplama bırakılır.
   void release() {
     left = false;
@@ -83,6 +89,7 @@ class Buttons {
     up = false;
     down = false;
     jump = false;
+    stick = Offset.zero;
   }
 }
 
@@ -97,6 +104,7 @@ class Controls {
   bool get down => keyboard.down || touch.down;
   bool get jump => keyboard.jump || touch.jump;
   bool get sneak => keyboard.sneak || touch.sneak;
+  Offset get stick => touch.stick;
 
   /// Ateşböceği salma tek seferlik bir eylem: tuşa basıldığı an kuyruğa girer,
   /// oyuncu bir sonraki karede tüketir.
@@ -2100,6 +2108,17 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     if (Settings.secrets.add('$levelIndex:$name')) Settings.save();
   }
 
+  /// Yunus Koyu'nun inci midyeleri: her inci bir kez sayılır; hepsini
+  /// bulmak bir sırdır.
+  void foundPearl(int i) {
+    markEvent('inci:$levelIndex:$i');
+    final all = [
+      for (var k = 0; k < PearlClam.total; k++)
+        eventSeen('inci:$levelIndex:$k'),
+    ].every((x) => x);
+    if (all && !secretSeen('inciler')) foundSecret('inciler');
+  }
+
   /// Şu an sürpriz için güvenli mi: tehlike yok, perde ya da giriş yok.
   bool get calmMoment =>
       !cinematic &&
@@ -2654,6 +2673,32 @@ class GolgeGame extends FlameGame with KeyboardEvents {
       if (d.turtle.length > 1) SeaTurtle(d.turtle),
       for (final (c0, c1) in d.boats) LanternBoat(c0, c1, top),
       if (d.akAna case (final c, final r)) AkAnaSea(c, r),
+      ...?(identical(d.map, kMapDeniz) ? _yunusKoyu(top) : null),
+    ];
+  }
+
+  /// Ak Ana'nın Denizi'nin açık koyu (deniz_koy.dart).
+  List<Component> _yunusKoyu(double top) {
+    final (c0, c1) = kDenizKoy;
+    return [
+      for (final (a, b, r) in kDenizDolphins) DolphinPod(a, b, r, top, seed: a),
+      for (final (i, (c, r)) in kDenizClams.indexed)
+        PearlClam(level, c, r, index: i),
+      Wreck(level, kDenizWreck.$1, kDenizWreck.$2),
+      TreasureChest(level, kDenizChest.$1, kDenizChest.$2),
+      FriendlyShoal(
+        Vector2((kDenizShoal.$1 + 0.5) * kTile, (kDenizShoal.$2 + 0.5) * kTile),
+        c0 * kTile,
+        c1 * kTile,
+        top,
+      ),
+      PassingWhale(
+        (c0 + 20) * kTile,
+        (c1 + 14) * kTile,
+        (c0 - 14) * kTile,
+        30 * kTile,
+      ),
+      BlackGoose(c0 * kTile, c1 * kTile, top),
     ];
   }
 
@@ -2668,7 +2713,15 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     p.swimming = now;
     if (_wasSwimming && !now && p.velocity.y < -10) {
       // Sudan çıkarken bir hamlede yukarı: cebin kıyısına tutunabilsin.
-      p.velocity.y = math.min(p.velocity.y, -470);
+      // Açık denizde hızla çıkan sıçrar (yunus gibi): hızı yükseklik olur,
+      // havada takla atar.
+      final sp = p.velocity.length;
+      final open = (p.center.y - level.seaTop!).abs() < 2 * kTile;
+      p.velocity.y = math.min(
+        p.velocity.y,
+        open ? -math.min(880.0, math.max(470.0, sp * 2.8)) : -470.0,
+      );
+      if (open) p.breach(sp);
       GameAudio.instance.play('splash', volume: 0.3, minGapMs: 400);
     } else if (!_wasSwimming && now) {
       p.velocity.y *= 0.35;
@@ -2678,7 +2731,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     _wasSwimming = now;
     final head = level.inWater(p.center.x, p.center.y - 9);
     if (head && !akNefes && p.carrier == null) {
-      breathe(-dt / breathTime);
+      breathe(-dt / breathTime * (p.boosting ? 1.7 : 1));
     } else if (!head) {
       breathe(dt * 1.4);
     }

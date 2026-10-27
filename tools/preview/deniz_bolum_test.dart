@@ -46,13 +46,19 @@ void main() {
 
       await at(4, 3, vx: 0); // kıyı
       await at(36, 15); // sığlık, sandallar
-      await at(120, 26); // yosun ormanı, fenerbalığı
-      await at(100, 8, vx: 0); // hava cebi
-      await at(222, 26); // denizanası mağarası
-      await at(270, 27); // akıntı koridoru
-      await at(345, 12); // Kişi'nin taşı
-      await at(385, 55); // karanlık dip
-      await at(402, 68); // yarık
+      await at(98, 12); // Yunus Koyu: yunuslar, balık sürüsü
+      await at(118, 24); // taş sütunlar, midye
+      await at(150, 40); // batık gemi ve sandık
+      await at(176, 12); // kayalık sırt, tünel
+      await at(196, 3, vx: 0); // adacıktaki Umay ağacı
+      await at(214, 34); // ikinci havza, midyeler
+      await at(270, 26); // yosun ormanı, fenerbalığı
+      await at(250, 8, vx: 0); // hava cebi
+      await at(372, 26); // denizanası mağarası
+      await at(420, 27); // akıntı koridoru
+      await at(495, 12); // Kişi'nin taşı
+      await at(535, 55); // karanlık dip
+      await at(552, 68); // yarık
     },
   );
 }
