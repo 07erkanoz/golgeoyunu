@@ -441,6 +441,8 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     // Rüzgâr akımı yukarı iter; açık kanatları çok daha güçlü.
     if (inWind && !_inWind) {
       GameAudio.instance.play('gust', volume: 0.55, minGapMs: 2500);
+      // Kar Yolu: Erzurum damlarında bacanın sıcak dumanı.
+      if (level.def.theme.snowy) game.hint('chimney');
     }
     _inWind = inWind;
     if (inWind) {

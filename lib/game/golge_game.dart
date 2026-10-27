@@ -24,6 +24,7 @@ import 'creatures.dart';
 import 'deniz.dart';
 import 'deniz_koy.dart';
 import 'derinkuyu.dart';
+import 'erzurum.dart';
 import 'kil_kopru.dart';
 import 'maps.dart';
 import 'frame_pacer.dart';
@@ -1116,7 +1117,9 @@ class GolgeGame extends FlameGame with KeyboardEvents {
           if (name == 'tasBekci')
             TasBekci(Vector2(c * kTile.toDouble(), r * kTile.toDouble()))
           else if (name == 'golgehane')
-            ..._golgehane(c, r),
+            ..._golgehane(c, r)
+          else if (name == 'donmusKedi')
+            FrozenCat(Vector2(c * kTile.toDouble(), r * kTile.toDouble())),
         if (level.def.dawn case (final c0, final c1))
           _dawn = DawnShadows(c0, c1),
         if (level.def.lake case (final c0, final c1, final r))
@@ -1151,6 +1154,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         for (final (c, r, side) in level.def.rollingDoors)
           RollingDoor(c, r, inside: side),
         for (final (c0, c1, r) in level.def.hairBridges) HairBridge(c0, c1, r),
+        for (final (c0, c1, r) in level.def.houses) ErzurumHouse(c0, c1, r),
         for (final (c, r, n) in level.glowRuns)
           PhasePlank(Vector2(c * kTile, r * kTile.toDouble()), n, shade: false),
         // Kandilci yolu: yalnız Kandilcinin feneriyle belirir.

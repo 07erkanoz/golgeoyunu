@@ -417,7 +417,11 @@ void main() {
         final k = keys(game);
         // 1) Sandığı kolun rafının dibine it.
         k.right = true;
-        for (var i = 0; i < _hz * 6 && crate.position.x < 162 * kTile + 1; i++) {
+        for (
+          var i = 0;
+          i < _hz * 6 && crate.position.x < 162 * kTile + 1;
+          i++
+        ) {
           game.update(_dt);
         }
         k.right = false;
@@ -1920,7 +1924,7 @@ void main() {
       'handa çanın altından koşan onu çalar',
       GolgeGame.new,
       (game) async {
-        final p = await place(game, 8, 214, 19);
+        final p = await place(game, 8, 294, 19);
         for (final g in game.world.children.whereType<Guard>().toList()) {
           g.removeFromParent();
         }
@@ -1933,7 +1937,7 @@ void main() {
         }
         keys(game).right = false;
         expect(rang, isTrue);
-        expect(p.center.x, lessThan(222 * kTile));
+        expect(p.center.x, lessThan(302 * kTile));
       },
     );
 

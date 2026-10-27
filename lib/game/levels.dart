@@ -169,6 +169,7 @@ class LevelDef {
     this.shadowStones = const [],
     this.rollingDoors = const [],
     this.hairBridges = const [],
+    this.houses = const [],
     this.coldRuns = const [],
     this.vistas = const [],
     this.surprises = const [],
@@ -298,6 +299,10 @@ class LevelDef {
   /// Erlik'in katı: kıl köprüler (ilk sütun, son sütun, satır); koşanın
   /// altında sallanır.
   final List<(int, int, int)> hairBridges;
+
+  /// Kar Yolu: Erzurum evlerinin cepheleri (ilk sütun, son sütun, dam
+  /// satırı); yalnızca görünüş, ev haritadaki kaya bloğudur.
+  final List<(int, int, int)> houses;
 
   /// Kayak bölümünde çığ uyanınca Gökbörü önde koşup güvenli hattı gösterir.
   final bool gokboruRun;
@@ -1771,6 +1776,15 @@ const levels = <LevelDef>[
     gokboruGuard: true,
     gokboruHelp: true,
     gokboruLead: 131,
+    // Erzurum Damları: Evliya Çelebi'nin havada donan kedisi.
+    surprises: [('donmusKedi', 238, 9)],
+    houses: [
+      (200, 207, 14),
+      (214, 220, 13),
+      (228, 234, 12),
+      (242, 249, 14),
+      (257, 265, 11),
+    ],
     subtitle: 'Palanlarını döken kervanların yolu.',
     theme: LevelTheme.snow,
     variant: 1,
@@ -1785,6 +1799,7 @@ const levels = <LevelDef>[
       'Kervan Yolu',
       'Kurtların Ormanı',
       'Donmuş Göl',
+      'Erzurum Damları',
       'Terk Edilmiş Han',
       'Ejder\'in Eteği',
     ],
@@ -1792,6 +1807,7 @@ const levels = <LevelDef>[
       'The Caravan Road',
       'The Wolves\' Forest',
       'The Frozen Lake',
+      'The Rooftops of Erzurum',
       'The Abandoned Inn',
       'The Foot of the Dragon',
     ],
