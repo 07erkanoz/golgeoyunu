@@ -2881,6 +2881,9 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     return true;
   }
 
+  /// Kameranın şu an döndüğü yer (yoksa null; testler için).
+  Vector2? get focusTarget => _focusT > 0 ? _focusAt : null;
+
   /// Eski ad (kol): kapıya bakış.
   void peek(Vector2 at) => focus(at);
 

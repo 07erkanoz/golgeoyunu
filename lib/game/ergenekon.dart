@@ -183,11 +183,7 @@ class IronVein extends Gate {
         _flash = 1;
         GameAudio.instance.play('fire', volume: 0.6);
         GameAudio.instance.play('bell', volume: 0.25 + 0.05 * beats);
-        if (beats >= beatsNeeded) {
-          opening = true;
-          GameAudio.instance.play('grind', volume: 0.7);
-          GameAudio.instance.play('gate', volume: 0.6);
-        }
+        if (beats >= beatsNeeded) _open();
       } else {
         GameAudio.instance.play('fizzle', volume: 0.5);
       }
@@ -199,14 +195,22 @@ class IronVein extends Gate {
       heat = math.min(1, (next - 1) / bellowsCount);
       _flash = 1;
       GameAudio.instance.play('fire', volume: 0.6);
-      if (next > bellowsCount) {
-        opening = true;
-        GameAudio.instance.play('grind', volume: 0.7);
-        GameAudio.instance.play('gate', volume: 0.6);
-      }
+      if (next > bellowsCount) _open();
     } else {
       _cool();
     }
+  }
+
+  /// Isı doldu, damar erir. Kamera damara döner ve erime bitene dek orada
+  /// kalır: son körük basılınca kapının açıldığı görülsün.
+  void _open() {
+    opening = true;
+    GameAudio.instance.play('grind', volume: 0.7);
+    GameAudio.instance.play('gate', volume: 0.6);
+    game.focus(
+      Vector2(position.x + kTile / 2, position.y + _h / 2),
+      hold: 1 / 0.45 + 0.4,
+    );
   }
 
   void _cool() {

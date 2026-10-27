@@ -91,6 +91,10 @@ void main() {
       _press(game);
       expect(vein.opening, isTrue);
       expect(vein.solid, isTrue, reason: 'erimesi zaman alır');
+      // Son körükte kamera damara döner: kapının açıldığı görülür.
+      final look = game.focusTarget;
+      expect(look, isNotNull);
+      expect((look!.x - vein.position.x).abs(), lessThan(kTile));
       run(game, 2.5);
       expect(vein.solid, isFalse, reason: 'erimiş damardan geçilir');
       // Kontrol noktasında saklanır, ölünce erimiş kalır.
@@ -129,6 +133,21 @@ void main() {
       expect(vein.lit, isTrue);
     },
   );
+
+  test('oyunda: ilk damarla akan demir arasında Umay ağacı var', () {
+    // Akan demirde ölen körüklerin başına dönmesin.
+    final lv = Level(levels[15]);
+    final vein = lv.def.map[34].indexOf('d');
+    expect(vein, greaterThan(0));
+    final channel = lv.def.map[35].indexOf('u');
+    expect(
+      lv.checkpointCells.any((c) {
+        final col = (c.x / kTile).round();
+        return col > vein && col < channel;
+      }),
+      isTrue,
+    );
+  });
 
   testWithGame<GolgeGame>(
     'körükler arasında geç kalınırsa ateş söner',
