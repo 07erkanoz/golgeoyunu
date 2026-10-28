@@ -1,5 +1,6 @@
 // II · Kule: zindandaki kayan kayaların kenarına tutunulur; kaçıran
-// altındaki tahtaya düşer (uzun düşüş yok).
+// altındaki tahtaya düşer (uzun düşüş yok). Başlangıçtaki basamaklar
+// tutunmadan, düz sıçrayışla çıkılır.
 import 'package:flame/components.dart';
 import 'package:flame_test/flame_test.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -87,6 +88,53 @@ void main() {
         closeTo(185 * kTile, 2),
         reason: 'tahtada',
       );
+    },
+  );
+
+  testWithGame<GolgeGame>(
+    'başlangıçtaki tahta basamaklar tutunmadan sıçrayarak çıkılır',
+    GolgeGame.new,
+    (game) async {
+      await load(game);
+      final p = game.player!;
+      final k = game.controls.keyboard;
+      var hung = false;
+      // Basamaklar: (kalkış sütunu, varış satırı). Her biri iki kare yukarıda.
+      var row = 209;
+      for (final (from, to) in [(7, 207), (12, 205), (17, 203), (22, 201)]) {
+        p.position.setFrom(
+          Level.standOn(
+            Vector2((from - 3) * kTile, row * kTile),
+            Player.w,
+            Player.h,
+          ),
+        );
+        p.velocity.setZero();
+        run(game, 0.3);
+        expect(p.onGround, isTrue);
+        // Koşarak gelip basamağın ucundan sıçrar.
+        k.right = true;
+        for (var i = 0; i < 60 && p.position.x < from * kTile; i++) {
+          game.update(1 / 60);
+        }
+        k.jump = true;
+        var landed = false;
+        for (var i = 0; i < 90 && !landed; i++) {
+          game.update(1 / 60);
+          if (i > 10) k.jump = false;
+          hung |= p.state == PlayerState.hang;
+          landed = i > 6 &&
+              p.onGround &&
+              (p.position.y + Player.h - (to + 1) * kTile).abs() < 2;
+        }
+        k
+          ..right = false
+          ..jump = false;
+        expect(landed, isTrue, reason: 'satır ${to + 1} basamağına çıkılamadı');
+        row = to;
+      }
+      expect(hung, isFalse, reason: 'tutunmaya gerek kalmamalı');
+      expect(p.isDead, isFalse);
     },
   );
 }
