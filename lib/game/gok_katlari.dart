@@ -386,8 +386,16 @@ class YelZone extends PositionComponent with HasGameReference<GolgeGame> {
       final span = area.width + len * 2;
       final run = (_t * speed * (0.7 + (h % 5) * 0.12) + h) % span;
       final x = dir > 0 ? area.left - len + run : area.right + len - run;
+      // Bölgenin kenarlarında çizgiler birden belirip kaybolmaz: girişte
+      // yavaşça belirir, çıkışta söner; üst ve alt kıyıda da incelir.
+      final edge = math.min(x - area.left, area.right - x);
+      final fadeX = ((edge + len) / (3 * kTile)).clamp(0.0, 1.0);
+      final fadeY = (math.min(y - area.top, area.bottom - y) / (1.5 * kTile))
+          .clamp(0.0, 1.0);
+      final fade = fadeX * (0.35 + 0.65 * fadeY);
+      if (fade <= 0.01) continue;
       line.color = const Color(0xFFF4F8FF)
-          .withValues(alpha: k * (0.4 + (h % 3) * 0.2));
+          .withValues(alpha: k * fade * (0.4 + (h % 3) * 0.2));
       canvas.drawLine(Offset(x, y), Offset(x - dir * len, y), line);
     }
   }
