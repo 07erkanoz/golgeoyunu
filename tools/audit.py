@@ -48,6 +48,24 @@ FOREST = {'kMapOtuken'}
 # Yeşil Kubbe: kafesler (levels.dart cages) kol gibi en yakın kapıyı açar;
 # finalin üç aynasına varılınca Kandilci Başı çıkış kapısını açar; avlunun
 # ay kilidi havadadır (aynalara varmak yeter).
+# Gölge taşları (levels.dart shadowStones): gönderilen gölge sağa yürür,
+# parmaklıktan geçer (duvarda, boşlukta durur), 16 kare içindeki kolu çeker.
+SHADOW_STONES = {
+    'kMapYerebatan': [(380, 13)],
+}
+
+
+def shadow_levers(rows, stone):
+    c, r = stone
+    for d in range(1, 17):
+        x = c + d
+        if rows[r][x] == '#' or rows[r - 1][x] == '#' or rows[r + 1][x] not in '#=-':
+            return []
+        if rows[r][x] == 'L':
+            return [(x, r)]
+    return []
+
+
 CAGES = {'kMapYesilKubbe': [(92, 51), (132, 51), (182, 51)]}
 FINALE = {'kMapYesilKubbe': [(266, 9), (272, 7), (296, 9)],
           # Gemi'nin Delikli Ambarı: üç deliğe (sandıkla) varılınca kapı açılır.
@@ -616,6 +634,10 @@ def audit(idx):
             for c in cells(rows, 's'):
                 if c in reach and ('s', c) not in used:
                     new.append((('s', c), nearest_gate(gs, opened_gates, c)))
+        for st in SHADOW_STONES.get(name, []):
+            for c in shadow_levers(rows, st) if st in reach else []:
+                if ('L', c) not in used:
+                    new.append((('L', c), nearest_gate(gs, opened_gates, c)))
         for c in CAGES.get(name, []):
             if c in reach and ('L', c) not in used:
                 new.append((('L', c), nearest_gate(gs, opened_gates, c)))

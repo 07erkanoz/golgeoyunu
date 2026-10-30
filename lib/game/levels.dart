@@ -1219,6 +1219,7 @@ const levels = <LevelDef>[
       'Medusa Salonu',
       'Sal Kanalı',
       'Karanlık Kanallar',
+      'Gölge Kapısı',
     ],
     areasEn: [
       'The Forest of Columns',
@@ -1235,6 +1236,7 @@ const levels = <LevelDef>[
       'The Hall of Medusa',
       'The Raft Channel',
       'The Dark Channels',
+      'The Shadow Gate',
     ],
     map: kMapYerebatan,
     echoes: [(20, 23), (134, 141), (182, 199)],
@@ -1257,6 +1259,8 @@ const levels = <LevelDef>[
     // S2a · Unutulmuş Gölgehane: yolun sonundaki boşluğun dibinde taş gibi
     // boyanmış perde (sahanlığın sol üst hücresi); ardında ustanın odası.
     surprises: [('golgehane', 155, 15), ('karagoz', 154, 13)],
+    // Gölge Kapısı: gölge parmaklıklı kapıdan geçip ardındaki kolu çeker.
+    shadowStones: [(380, 13)],
   ),
   LevelDef(
     title: 'II · KULE',

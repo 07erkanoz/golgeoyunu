@@ -614,7 +614,7 @@ void main() {
     testWithGame<GolgeGame>('Karabasan duranı yakalar', GolgeGame.new, (
       game,
     ) async {
-      final p = await place(game, 0, 381, 9);
+      final p = await place(game, 0, 405, 9);
       run(game, 0.2);
       expect(game.world.children.whereType<Karabasan>().first.awake, isTrue);
       run(game, 6);
@@ -625,10 +625,10 @@ void main() {
       'Karabasan bitiş çizgisinde dağılır',
       GolgeGame.new,
       (game) async {
-        final p = await place(game, 0, 381, 9);
+        final p = await place(game, 0, 405, 9);
         run(game, 0.2);
         p.position.setFrom(
-          Level.standOn(Vector2(397 * kTile, 7 * kTile), Player.w, Player.h),
+          Level.standOn(Vector2(421 * kTile, 7 * kTile), Player.w, Player.h),
         );
         run(game, 2.5);
         expect(game.world.children.whereType<Karabasan>(), isEmpty);

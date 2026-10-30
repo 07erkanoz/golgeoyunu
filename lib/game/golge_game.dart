@@ -2512,7 +2512,13 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         TulparMount t when near(t, 5, 4) && !onHorse => 'tulpar',
         Valve v when near(v, 4, 3) => 'valve',
         PerdeCord k when near(k, 4, 3) => 'cord',
-        ShadowStone k when near(k, 4, 3) => 'shadowStone',
+        ShadowStone k when near(k, 4, 3) =>
+          world.children.whereType<Lever>().any(
+                (l) =>
+                    !l.pulled && (l.position - k.position).length < 16 * kTile,
+              )
+              ? 'shadowLever'
+              : 'shadowStone',
         PhasePlank k when k.cold && near(k, 5, 4) => 'coldBridge',
         ArkScale s when near(s.lift.a, 6, 4) || near(s.lift.b, 6, 4) => 'scale',
         EyeStone e when near(e, 5, 3) => 'eyeStone',

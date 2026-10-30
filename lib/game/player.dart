@@ -1690,7 +1690,9 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
 
   // ------------------------------------------------- gönderilen gölge
   // Gölge taşında ↑: gölge Sâye'den ayrılıp baktığı yöne yürür, durduğu
-  // yerde oyalanır (Kandilci görürse daha uzun), sonra geri döner.
+  // yerde oyalanır (Kandilci görürse daha uzun), sonra geri döner. Yolunda
+  // çekilmemiş bir kol varsa (parmaklıklı kapının ardında bile) orada durup
+  // onu çeker.
 
   static const double _sentSpeed = 95;
   static const double _sentReach = 16 * kTile;
@@ -1699,6 +1701,8 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
   double _sentDist = 0;
   double _sentHold = 0;
   double _sentLook = 0;
+  Lever? _sentLever;
+  double _sentPullAt = 0;
 
   /// Gölge gönderildi (dönene dek).
   bool get shadowSent => _mood == _ShadowMood.sent;
@@ -1717,6 +1721,7 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     _sentDist = 0;
     _sentSeen = false;
     _sentHold = _sentLinger;
+    _sentLever = null;
     _shadowX = center.x + facing * 12;
     _shadowY = position.y + h;
     _shadowFacing = facing;
@@ -1833,7 +1838,23 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
             level.cellAt(nx, _shadowY - 40) == '#';
         final below = level.cellAt(nx, _shadowY + 4);
         final floor = below == '#' || below == '=' || below == '-';
-        if (wall || !floor || _sentDist >= _sentReach) {
+        for (final lv in game.world.children.whereType<Lever>()) {
+          if (!lv.pulled &&
+              (lv.position.x - nx).abs() < 6 &&
+              (lv.position.y - _shadowY).abs() < 20) {
+            _sentLever = lv;
+            break;
+          }
+        }
+        final lever = _sentLever;
+        if (lever != null) {
+          // Kola vardı: durur, uzanıp çeker; kamera kola bakar.
+          _shadowX = lever.position.x - f * 10;
+          _sentPhase = 1;
+          _sentPullAt = _moodT + 0.5;
+          _sentHold = _moodT + 2.2;
+          game.focus(lever.position - Vector2(0, 24), hold: 1.8);
+        } else if (wall || !floor || _sentDist >= _sentReach) {
           _sentPhase = 1;
           _sentHold = _moodT + _sentLinger + (_sentSeen ? 1.5 : 0);
         } else {
@@ -1841,6 +1862,12 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
           _sentDist += step;
           _shadowGait += step / 30;
         }
+      case 1 when _sentLever != null:
+        // Kolu çeker, sonra döner.
+        final lever = _sentLever!;
+        _shadowFacing = lever.position.x >= _shadowX ? 1 : -1;
+        if (!lever.pulled && _moodT >= _sentPullAt) lever.pull();
+        if (_moodT > _sentHold) _sentPhase = 2;
       case 1:
         // Oyalanır: arada bir döner, bakınır.
         _sentLook += dt;
