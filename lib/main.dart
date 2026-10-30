@@ -1,3 +1,5 @@
+import 'dart:io' show exit;
+
 import 'package:flame/flame.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/foundation.dart';
@@ -135,6 +137,11 @@ class _GolgeAppState extends State<GolgeApp> with WindowListener {
       await Settings.save();
       await SaveGame.flush().timeout(const Duration(seconds: 2));
     } catch (_) {}
+    // Linux'ta destroy, GTK penceresini motorun kendi çağrısının içinde
+    // kapatıyor: motor bu sırada sökülüyor, kuyruktaki bir görevi serbest
+    // kalmış nesneye dokunup çöküyordu (kapanışta SIGSEGV). Kayıt yazıldı;
+    // süreç doğrudan bitirilir.
+    if (defaultTargetPlatform == TargetPlatform.linux) exit(0);
     await windowManager.destroy();
   }
 
