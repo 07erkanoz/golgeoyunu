@@ -2604,8 +2604,9 @@ void main() {
           expect(found, isTrue, reason: 'atlayış ${stage + 1}: $plan');
         }
       },
-      // Kaba kuvvetle atlayış anı arar: onlarca kez bölüm kurar.
-      timeout: const Timeout(Duration(minutes: 10)),
+      // Kaba kuvvetle atlayış anı arar: onlarca kez bölüm kurar. 144 Hz'de
+      // adım 2,4 kat; CI makinesinde 9-10 dakika sürüyor.
+      timeout: const Timeout(Duration(minutes: 20)),
     );
 
     testWithGame<GolgeGame>(
