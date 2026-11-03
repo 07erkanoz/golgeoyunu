@@ -8,6 +8,7 @@ import 'deer_rig.dart';
 import 'myth_figures.dart';
 import 'myth_shapes.dart';
 import 'palette.dart';
+import 'tasvir_images.dart';
 
 part 'perde_east.dart';
 part 'perde_giris.dart';

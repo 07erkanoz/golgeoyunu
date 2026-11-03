@@ -1068,6 +1068,33 @@ void paintKaragozHacivat(
     hy = -math.sin(t * 3).abs() * 1.2;
     ky = -math.sin(t * 3 + 1).abs() * 1.2;
   }
+  final hImg = TasvirImages.hacivat;
+  final kImg = TasvirImages.karagoz;
+  if (hImg != null && kImg != null) {
+    // Gerçek tasvirler (British Museum): kolları ayrı oynamaz; selam,
+    // söze başlama ve gösterme bütün bedenin eğilişiyle anlatılır.
+    TasvirImages.draw(
+      c,
+      hImg,
+      ground + Offset(hx * h, hy),
+      h * 1.08,
+      naturalLeft: false,
+      faceLeft: hFlip,
+      rot: hRot + hArm * 0.06,
+      a: a,
+    );
+    TasvirImages.draw(
+      c,
+      kImg,
+      ground + Offset(kx * h, ky),
+      h * 1.04,
+      naturalLeft: true,
+      faceLeft: kFlip,
+      rot: kRot - kArm * 0.06,
+      a: a,
+    );
+    return;
+  }
   _person(
     c,
     ground + Offset(hx * h, hy),

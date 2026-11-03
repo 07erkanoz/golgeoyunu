@@ -46,6 +46,7 @@ import 'kaf_vadi.dart';
 import 'kus_yolu.dart';
 import 'levels.dart';
 import 'lesson.dart';
+import 'tasvir_images.dart';
 import 'narration.dart';
 import 'perde.dart';
 import 'persist.dart';
@@ -341,6 +342,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     NemrutImages.load();
     GiantPuppet.load();
     ShadowArt.load();
+    TasvirImages.load();
     camera.viewfinder.anchor = Anchor.center;
     camera.backdrop = Backdrop();
     effects = ScreenEffects();

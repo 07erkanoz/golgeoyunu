@@ -69,6 +69,7 @@ flutter:
     - assets/audio/
     - assets/icon/
     - assets/images/nemrut/
+    - assets/images/karagoz/
     - assets/art/
     # Anlatım sesleri (tools/seslendir.py üretir).
     - assets/voice/tr/
