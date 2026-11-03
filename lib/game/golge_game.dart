@@ -478,8 +478,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     );
     effects.setFade(1, kInk);
     effects.fadeTo(0, 1.6);
-    // İlk açılışta önce giriş oynar; menü müziği onun sonunda gelir.
-    if (Settings.introSeen) GameAudio.instance.menuMusic(true);
+    GameAudio.instance.menuMusic(true);
     overlays.remove(settingsOverlay);
     overlays.remove(recentOverlay);
     _settingsShown = false;
@@ -765,11 +764,12 @@ class GolgeGame extends FlameGame with KeyboardEvents {
   void _startPrologue() {
     cinematic = true;
     effects.setFade(1, kInk);
+    // Açılış Sâye'yi Yerebatan'ın suyuna düşürüp ayağa kaldırır: bölümün
+    // düşüş girişi bir daha oynamaz (yalnız bölüm listesinden girilince).
     _playPerde('prologue', prologueText, PerdeScene.prologue, () {
       cinematic = false;
       effects.fadeTo(0, 1.8);
       _showLevelTitle();
-      _startEntrance();
     });
   }
 

@@ -227,7 +227,8 @@ class Narration extends Component with HasGameReference<GolgeGame> {
   /// "Az önce" paneline yazılır; [story] false olanlar (oynanışı da
   /// anlatanlar) her zaman söylenir.
   /// Uzun yazıyı ekranda tek tek akacak parçalara böler: önce satırlara,
-  /// sonra cümlelere; kısa cümleler [max] harfi aşmadan birleşir.
+  /// sonra cümlelere; kısa cümleler [max] harfi aşmadan birleşir (tırnak
+  /// içi sözler ayrı parça).
   static List<String> chunks(String text, {int max = 80}) {
     final out = <String>[];
     for (final line in text.split('\n')) {
@@ -237,12 +238,16 @@ class Narration extends Component with HasGameReference<GolgeGame> {
         out.add(l);
         continue;
       }
-      final parts = l.split(RegExp(r'(?<=[.!?…;])\s+'));
+      // Cümle sonlarında ve iki konuşanın sözü arasında bölünür; bir
+      // kahramanın sözü başka sözle aynı parçaya girmez.
+      final parts = l.split(RegExp(r'(?<=[.!?…;])\s+|(?<=”)\s+(?=“)'));
       var cur = '';
       for (final p in parts) {
         if (cur.isEmpty) {
           cur = p;
-        } else if (cur.length + 1 + p.length <= max) {
+        } else if (cur.length + 1 + p.length <= max &&
+            !p.startsWith('“') &&
+            !cur.endsWith('”')) {
           cur = '$cur $p';
         } else {
           out.add(cur);
@@ -252,6 +257,21 @@ class Narration extends Component with HasGameReference<GolgeGame> {
       if (cur.isNotEmpty) out.add(cur);
     }
     return out;
+  }
+
+  /// Uzun perde satırının o an görünen parçası ([f] satırın 0-1 arası
+  /// ilerleyişi): satır cümle cümle akar, her parça en çok iki satır;
+  /// parçalar uzunluklarıyla orantılı sürer (sesle aşağı yukarı eş).
+  static String chunkAt(String line, double f, {int max = 100}) {
+    final parts = chunks(line, max: max);
+    if (parts.length < 2) return line;
+    final total = parts.fold(0, (a, p) => a + p.length);
+    var acc = 0;
+    for (final p in parts) {
+      acc += p.length;
+      if (f * total < acc) return p;
+    }
+    return parts.last;
   }
 
   void whisper(String text, {bool story = true}) {
@@ -789,6 +809,9 @@ class Narration extends Component with HasGameReference<GolgeGame> {
         // Perde: satırlar altında, son satır (başlık) perdenin üstüne düşen
         // bir gölge yazı olarak.
         final progress = _lineIndex + (_lineT / (_lineIn + _hold + _lineOut));
+        // Açılışta oyunun adını ateşböcekleri yazar (levha asılmaz).
+        final opening = scene == PerdeScene.prologue;
+        if (opening) PerdePainter.openingTitle = S.of('gameTitle');
         PerdePainter.paint(
           canvas,
           Size(w, h),
@@ -800,11 +823,14 @@ class Narration extends Component with HasGameReference<GolgeGame> {
         final r = PerdePainter.screenRect(Size(w, h));
         if (isEnd) {
           // Perdenin adı perdeye bir göstermelik olarak konur.
-          PerdePainter.gostermelik(canvas, r, line, _sceneT, a);
+          if (!opening) PerdePainter.gostermelik(canvas, r, line, _sceneT, a);
         } else if (!_voiced(line)) {
+          // Ekranda en çok iki satır: uzun satır sesle birlikte cümle
+          // cümle akar.
+          final end = _lineVoice > 0 ? _lineVoice : _lineIn + _hold;
           _text(
             canvas,
-            line,
+            chunkAt(line, _lineT / end),
             Offset(w / 2, (r.bottom + h) / 2 + r.height * 0.02),
             math.max(15.0, unit * 0.034) * Settings.textScale,
             a,

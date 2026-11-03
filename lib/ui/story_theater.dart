@@ -5,6 +5,7 @@ import 'package:flutter/scheduler.dart';
 
 import '../game/audio.dart';
 import '../game/levels.dart';
+import '../game/narration.dart';
 import '../game/perde.dart';
 import '../game/strings.dart';
 import '../settings.dart';
@@ -271,8 +272,8 @@ class _TheaterPainter extends CustomPainter {
     final (scene, lines, title, bridge) = s._acts[s._act];
     final r = PerdePainter.screenRect(size);
     if (s._ended) {
-      // Kapalı perde: devamı oynayarak açılır.
-      PerdePainter.paint(canvas, size, PerdeScene.prologue, s._sceneT, 2.9, 1);
+      // Kapalı perde: devamı oynayarak açılır (açılışın kandil sönmüş anı).
+      PerdePainter.paint(canvas, size, PerdeScene.prologue, s._sceneT, 3.98, 1);
       _write(
         canvas,
         StoryTheater.complete ? S.of('storyAllPlayed') : S.of('storyMore'),
@@ -285,6 +286,9 @@ class _TheaterPainter extends CustomPainter {
       return;
     }
     final progress = s._card > 0 ? 0.0 : s._line + (s._lineT / s._lineLen);
+    // Açılışta oyunun adını ateşböcekleri yazar (levha asılmaz).
+    final opening = scene == PerdeScene.prologue && bridge == null;
+    if (opening) PerdePainter.openingTitle = S.of('gameTitle');
     PerdePainter.paint(
       canvas,
       size,
@@ -314,12 +318,13 @@ class _TheaterPainter extends CustomPainter {
         : 1.0;
     final isEnd = line == line.toUpperCase();
     if (isEnd) {
-      PerdePainter.gostermelik(canvas, r, line, s._sceneT, a);
+      if (!opening) PerdePainter.gostermelik(canvas, r, line, s._sceneT, a);
     } else if (Settings.subtitles || !GameAudio.instance.speaks(line)) {
-      // Seslendirilen satırın yazısı gösterilmez (altyazı kapalıyken).
+      // Seslendirilen satırın yazısı gösterilmez (altyazı kapalıyken);
+      // uzun satır cümle cümle akar (ekranda en çok iki satır).
       _write(
         canvas,
-        line,
+        Narration.chunkAt(line, t / (_StoryTheaterState._lineIn + s._hold)),
         Offset(w / 2, (r.bottom + h) / 2 + r.height * 0.02),
         unit * 0.034,
         a,

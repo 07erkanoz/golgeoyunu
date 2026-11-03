@@ -1613,6 +1613,13 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
   /// ateşböceği kavanozlu çocuk.
   static bool jarStyle = true;
 
+  /// Kavanozsuz çizim (yalnız önizleme aracı: açılış perdesindeki Sâye
+  /// tasviri, kavanozu henüz edinmemiş Sâye).
+  static bool debugNoJar = false;
+
+  /// Ayak ışığısız çizim (yalnız önizleme aracı: perdeye taşınan kareler).
+  static bool debugBare = false;
+
   /// Kenar ışığı geçişi: yalnızca siluet çizilir; ışıklar, kavanoz ve
   /// kanatlar atlanır.
   static bool _rimPass = false;
@@ -2451,7 +2458,7 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       _drawBreath(canvas);
     }
     // Ayak altında ılık ışık: koyu sahnede durduğu yer seçilir.
-    if (onGround && !isDead && entranceAlpha > 0.5) {
+    if (onGround && !isDead && entranceAlpha > 0.5 && !debugBare) {
       drawFootGlow(canvas, const Offset(w / 2, h), 1);
     }
     if (entranceAlpha < 1) {
@@ -3304,7 +3311,7 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     // Kavanozu tutan ön kol ve ip.
     final front = frontHand ?? jarHand;
     arm(front);
-    if (_rimPass) {
+    if (_rimPass || debugNoJar) {
       canvas.restore();
       return;
     }

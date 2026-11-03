@@ -1,17 +1,17 @@
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
-import 'package:flutter/animation.dart' show Curves;
 import 'package:flutter/painting.dart';
 
 import 'deer_rig.dart';
 import 'myth_figures.dart';
 import 'myth_shapes.dart';
 import 'palette.dart';
+import 'shadow_art.dart';
 import 'tasvir_images.dart';
 
+part 'perde_acilis.dart';
 part 'perde_east.dart';
-part 'perde_giris.dart';
 part 'perde_tasvir.dart';
 part 'perde_kisi.dart';
 part 'perde_kopru.dart';
@@ -137,6 +137,10 @@ class PerdePainter {
   /// Başlık " · " ile ikiye bölünür: üstte küçük satır, altta büyük ad.
   /// Önizleme araçları için yazı tipi ailesi (oyunda sistemin yazı tipi).
   static String? debugFontFamily;
+
+  /// Açılışta ateşböceklerinin aydınlattığı ad ve yazı tipi.
+  static set openingTitle(String t) => _Acilis.title = t;
+  static set openingTitleFont(String? f) => _Acilis.titleFont = f;
 
   /// En son çizilen sahne: göstermelik onun tasvirine göre yer seçer.
   static PerdeScene? _lastScene;
@@ -389,7 +393,7 @@ class PerdePainter {
     } else {
       switch (scene) {
         case PerdeScene.prologue:
-          _prologue(canvas, time, progress);
+          _Acilis.paint(canvas, time, progress);
         case PerdeScene.galata:
           _galata(canvas, time, progress);
         case PerdeScene.skyroad:
@@ -457,6 +461,14 @@ class PerdePainter {
           const [0.6, 1],
         ),
     );
+    // Açılışta karanlığın üstünde parlayan ateşböcekleri.
+    if (bridge == null && scene == PerdeScene.prologue) {
+      canvas.save();
+      canvas.translate(r.left, r.top);
+      canvas.scale(k, r.height / _vh);
+      _Acilis.glow(canvas, time, progress);
+      canvas.restore();
+    }
     canvas.restore();
 
     _frame(canvas, r, lamp);
@@ -466,12 +478,7 @@ class PerdePainter {
   static double _lampFor(PerdeScene scene, double u) {
     if (scene == PerdeScene.epilogue) return _endingLamp(u);
     if (scene != PerdeScene.prologue) return 1;
-    // Kandili söndürdüler: perde kararır (gölgenin düşüşü seçilecek kadar
-    // ışık kalır), sonra fidanla biraz aydınlanır.
-    if (u < 2.7) return 1;
-    if (u < 3.0) return 1 - 0.6 * _ease((u - 2.7) / 0.3);
-    if (u < 4.0) return 0.4;
-    return 0.4 + 0.3 * _ease((u - 4.0) / 0.6);
+    return _Acilis.lamp(u);
   }
 
   /// Menünün başlığı: oyunun adı (gölge harfler, kenarlarında kandilin
@@ -787,8 +794,62 @@ class PerdePainter {
     c.drawCircle(pin, 1.8, hole);
   }
 
-  /// Kandilci: kukuletalı, kambur, asasında fener (ayak noktası orijinde).
+  /// Kandilci (ayak noktası orijinde, sağa bakar, eski çizim boyunda): oyundaki
+  /// Kandilci'nin çizimi (drawShadowGuard): koyu siluet, nane renkli fener
+  /// ve gözler. [hole] mürekkeple aynıysa fener sönük. Çizim yüklenmemişse
+  /// eski kod çizimi ([_lamplighterCode]).
   static void _lamplighter(Paint ink, Paint hole, {double lanternLift = 0}) {
+    if (!ShadowArt.ready) {
+      _lamplighterCode(ink, hole, lanternLift: lanternLift);
+      return;
+    }
+    final c = _c;
+    final a = ink.color.a;
+    final lit = hole.color != ink.color;
+    const s = 4.4;
+    final swing = math.sin(_time * 1.1) * 0.1 - lanternLift * 0.004;
+    final cold = Cartoon.danger;
+    if (lit) {
+      final lantern =
+          (guardLampArt(0, 1, 0, 0, swing) - guardArtFeet) *
+          (guardArtScale * s);
+      c.drawCircle(
+        lantern,
+        46,
+        Paint()
+          ..shader = ui.Gradient.radial(lantern, 46, [
+            cold.withValues(alpha: 0.4 * a),
+            cold.withValues(alpha: 0),
+          ]),
+      );
+    }
+    c.save();
+    c.scale(s);
+    drawShadowGuard(
+      c,
+      feet: Offset.zero,
+      phase: 0,
+      weight: 1,
+      run: 0,
+      lean: 0,
+      lampAngle: swing,
+      doubt: 0,
+      ink: _isInk(ink.color) ? _ink.withValues(alpha: a) : ink.color,
+      rim: cold.withValues(alpha: 0.45 * a),
+      eye: cold.withValues(alpha: 0.9 * a),
+      lampGlass: lit
+          ? cold.withValues(alpha: 0.95 * a)
+          : _ink.withValues(alpha: a),
+    );
+    c.restore();
+  }
+
+  /// Eski kod çizimi Kandilci: kukuletalı, kambur, asasında fener.
+  static void _lamplighterCode(
+    Paint ink,
+    Paint hole, {
+    double lanternLift = 0,
+  }) {
     final c = _c;
     final lift = lanternLift;
     c.drawPath(
@@ -938,8 +999,54 @@ class PerdePainter {
     );
   }
 
-  /// Sâye: küçük gölge, dağınık saç, uzun atkı, kavanozun ışığı.
+  /// Sâye (ayak noktası orijinde, sağa bakar, boyu ~84): oyundaki Sâye'nin
+  /// kendi karesi (TasvirImages.frames); [jar] 0 ise kavanozsuz. Perdenin
+  /// koyu mürekkebiyle çağrılırsa oyundaki renkleriyle, başka bir renkle
+  /// (ışıyan gölge, soluk anı) çağrılırsa o renge boyanmış çizilir.
+  /// Kareler yüklenmemişse eski kod çizimi ([_sayeCode]).
   static void _saye(Paint ink, Paint hole, double time, {double jar = 1}) {
+    final name = jar > 0.05 ? 'dur_kavanoz' : 'dur';
+    if (!TasvirImages.frames.containsKey(name)) {
+      _sayeCode(ink, hole, time, jar: jar);
+      return;
+    }
+    // Karede saçın ucundan ayağa ~278 piksel.
+    const k = 84 / 278;
+    _frameTinted(ink.color, () {
+      TasvirImages.frame(
+        _c,
+        name,
+        Offset.zero,
+        k,
+        rot: math.sin(time * 0.9 + 0.4) * 0.02,
+        a: _isInk(ink.color) ? ink.color.a : 1,
+      );
+    });
+  }
+
+  /// Renk perdenin koyu mürekkebi mi (saydamlığı ne olursa olsun).
+  static bool _isInk(Color c) =>
+      (c.r - _ink.r).abs() < 0.02 &&
+      (c.g - _ink.g).abs() < 0.02 &&
+      (c.b - _ink.b).abs() < 0.02;
+
+  /// Mürekkep rengindeyse olduğu gibi, değilse [color] rengine boyayarak.
+  static void _frameTinted(Color color, void Function() draw) {
+    if (_isInk(color)) {
+      draw();
+      return;
+    }
+    _c.saveLayer(
+      null,
+      Paint()..colorFilter = ColorFilter.mode(color, BlendMode.srcIn),
+    );
+    draw();
+    _c.restore();
+  }
+
+  /// Eski kod çizimi Sâye: küçük gölge, dağınık saç, uzun atkı, kavanozun
+  /// ışığı.
+  static void _sayeCode(Paint ink, Paint hole, double time, {double jar = 1}) {
     final c = _c;
     // Baş ve saç boyun çivisinden: bakınır, hafifçe başını kaldırır.
     _hinge(const Offset(0, -56), math.sin(time * 0.9 + 0.4) * 0.07, hole, () {
@@ -1074,380 +1181,6 @@ class PerdePainter {
   }
 
   // ------------------------------------------------------------- sahneler
-
-  static void _prologue(Canvas canvas, double time, double u) {
-    _c = canvas;
-    // Başlıktan sonra şehir söner; perde sarnıcın içine iner.
-    final cityA = 1 - _span(u, 5.55, 6.05);
-    if (cityA <= 0) {
-      _cistern(canvas, time, u);
-      return;
-    }
-    // 0-1: duman göğü örter; ardında güneş mi ay mı belli olmayan soluk bir
-    // teker (gece ile gündüz karışmış).
-    final smokeA = cityA * (1 - _span(u, 2.6, 3.2));
-    if (smokeA > 0) {
-      canvas.drawCircle(const Offset(560, 96), 24, _holePaint(0.4 * smokeA));
-      for (var i = 0; i < 4; i++) {
-        final y = 36.0 + i * 36;
-        final x0 = (i * 260.0 + time * (5 + i * 2)) % 1040 - 130;
-        final bank = Path();
-        for (var k = 0; k < 7; k++) {
-          final px = x0 - 150 + k * 50.0;
-          bank.addOval(
-            Rect.fromCenter(
-              center: Offset(px, y + math.sin(k * 1.7 + i) * 6),
-              width: 70 + (k % 3) * 16,
-              height: 30 + (k % 2) * 12,
-            ),
-          );
-        }
-        canvas.drawPath(bank, _inkPaint(0.2 * smokeA));
-      }
-    }
-    _city(canvas, cityA);
-    // Şehir yanıyor; kandil sönerken alevler de çekilir.
-    _flames(canvas, time, cityA * (1 - _span(u, 2.5, 2.7)));
-
-    const g = _ground;
-    // 1: Kandilciler soldan gelir, ev ev dolaşır: önünden geçtikleri her
-    // pencerenin ışığı fenerlerine akar.
-    final ka = cityA * _span(u, 0.95, 1.12);
-    final walkA = _span(u, 1.05, 1.95);
-    final walkB = _span(u, 1.1, 1.95);
-    // 2: B kandili alıp önden çıkar; A ustayı zincirle sürükler.
-    final turnB = u > 2.45;
-    final turnA = u > 2.5;
-    final ax =
-        45 +
-        walkA * 125 -
-        50 * _span(u, 2.55, 2.88) -
-        270 * _span(u, 2.88, 3.15);
-    final bx = 160 + walkB * 140 - 450 * _span(u, 2.45, 2.85);
-    final lanternA = Offset(ax + 88, g - 188);
-    final lanternB = Offset(bx + (turnB ? -88 : 88), g - 188);
-    final houseA = cityA;
-    if (houseA > 0) {
-      final ink = _inkPaint(houseA);
-      for (final hx in [205.0, 310.0]) {
-        canvas.drawRect(Rect.fromLTWH(hx - 30, 306, 60, 46), ink);
-        canvas.drawPath(
-          Path()
-            ..moveTo(hx - 38, 308)
-            ..lineTo(hx, 282)
-            ..lineTo(hx + 38, 308)
-            ..close(),
-          ink,
-        );
-        // Fener geçince pencerenin ışığı söner, kıvılcımı fenere uçar.
-        final lantern = hx < 250 ? lanternA : lanternB;
-        final gone = u >= 1.95
-            ? 1.0
-            : (ka <= 0 ? 0.0 : _ease((lantern.dx - hx + 10) / 34));
-        final win = Rect.fromLTWH(hx - 8, 318, 16, 16);
-        canvas.drawRect(win, _holePaint(houseA * (1 - gone)));
-        if (gone > 0.02 && gone < 0.98) {
-          canvas.drawCircle(
-            Offset.lerp(win.center, lantern, gone)!,
-            4,
-            _holePaint(houseA),
-          );
-        }
-      }
-      // Kubbenin pencereleri de kararır.
-      final dome = _inkPaint(cityA * _span(u, 1.6, 1.95));
-      for (final x in [370.0, 390.0, 410.0]) {
-        canvas.drawRect(Rect.fromLTWH(x - 3.5, 321, 7, 12), dome);
-      }
-      canvas.drawCircle(const Offset(86, 318), 3.5, _inkPaint(ka));
-      canvas.drawCircle(
-        const Offset(725, 322),
-        3.5,
-        _inkPaint(cityA * _span(u, 2.6, 3)),
-      );
-    }
-
-    // 2: ustanın perdesi (iki direk, ışıklı bez, altında kandil).
-    final boothA = cityA * _span(u, 1.85, 2.1);
-    final lampOn = 1 - _span(u, 2.2, 2.42);
-    // 3: kandilin son ışığı perdede bir an daha titrer.
-    final lastLight =
-        0.4 *
-        _span(u, 2.5, 2.9) *
-        (1 - _span(u, 3.3, 3.75)) *
-        (0.8 + 0.2 * math.sin(time * 9));
-    const screen = Rect.fromLTRB(495, 192, 581, 262);
-    if (boothA > 0) {
-      final lit = math.max(lampOn, lastLight);
-      canvas.drawCircle(
-        screen.center,
-        90,
-        Paint()
-          ..shader = ui.Gradient.radial(screen.center, 90, [
-            const Color(0xFFFFE6B0).withValues(alpha: 0.5 * lit * boothA),
-            const Color(0x00FFE6B0),
-          ]),
-      );
-      canvas.drawRect(
-        screen,
-        Paint()
-          ..color = const Color(0xFFFFE8BC)
-              .withValues(alpha: boothA * (0.12 + 0.85 * lit)),
-      );
-      final wood = _inkPaint(boothA)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 5;
-      canvas.drawRect(screen, wood);
-      canvas.drawLine(const Offset(491, 186), const Offset(491, g), wood);
-      canvas.drawLine(const Offset(585, 186), const Offset(585, g), wood);
-      wood.strokeWidth = 2;
-      // Kandil: perdenin altında bir rafta; alevi ışık deliği.
-      canvas.drawLine(const Offset(512, 284), const Offset(566, 284), wood);
-      canvas.drawPath(
-        Path()
-          ..moveTo(526, 276)
-          ..quadraticBezierTo(538, 288, 552, 276)
-          ..lineTo(548, 272)
-          ..lineTo(530, 272)
-          ..close(),
-        _inkPaint(boothA),
-      );
-      if (lampOn > 0) {
-        canvas.drawPath(
-          Path()
-            ..moveTo(539, 272)
-            ..quadraticBezierTo(533, 266, 539 + math.sin(time * 9) * 1.5, 258)
-            ..quadraticBezierTo(545, 266, 539, 272)
-            ..close(),
-          _holePaint(boothA * lampOn),
-        );
-      }
-      // Kandilin ışığı Kandilcinin fenerine akar.
-      final take = _span(u, 2.2, 2.45);
-      if (take > 0 && take < 1) {
-        canvas.drawCircle(
-          Offset.lerp(const Offset(539, 264), lanternB, take)!,
-          5,
-          _holePaint(boothA),
-        );
-      }
-    }
-
-    // Usta: önce Kandilcilere döner; sürüklenirken başını çevirip perdesine
-    // bakar.
-    final ma = cityA * _span(u, 1.9, 2.1) * (1 - _span(u, 3.88, 4.0));
-    final dragged = u > 2.55;
-    final mx = 440 - 110 * _span(u, 2.55, 2.88) - 230 * _span(u, 2.88, 3.85);
-    if (ma > 0) {
-      canvas.save();
-      canvas.translate(mx, g);
-      canvas.rotate(dragged ? 0.1 : 0);
-      canvas.translate(-mx, -g);
-      _puppet(canvas, Offset(mx, g), time, 2.9, ma, _master, flip: !dragged);
-      canvas.restore();
-    }
-    // Zincir: ustanın arkada bağlı ellerinden Kandilcinin eline (o perdeden
-    // çıkınca perdenin dışına).
-    final chainA = ma * _span(u, 2.5, 2.6);
-    if (chainA > 0) {
-      final from = Offset(mx - 30, g - 60);
-      final to = u < 3.1 ? Offset(ax + 26, g - 88) : const Offset(-20, g - 96);
-      final mid = Offset.lerp(from, to, 0.5)! + const Offset(0, 14);
-      final links = _inkPaint(chainA)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2;
-      for (var i = 0; i <= 14; i++) {
-        final t = i / 14;
-        final p = Offset.lerp(
-          Offset.lerp(from, mid, t)!,
-          Offset.lerp(mid, to, t)!,
-          t,
-        )!;
-        canvas.drawOval(Rect.fromCenter(center: p, width: 8, height: 5), links);
-      }
-    }
-    // Kandilciler (kandili alan B önden çıkar).
-    final aA = ka * (1 - _span(u, 3.05, 3.15));
-    _puppet(canvas, Offset(ax, g), time, 0.3, aA, (ink, hole) {
-      _lamplighter(ink, hole);
-    }, flip: turnA);
-    final aB = ka * (1 - _span(u, 2.75, 2.85));
-    if (aB > 0) {
-      // B'nin feneri topladığı ışıkla parlar.
-      final glow = 0.25 + 0.5 * _span(u, 2.3, 2.45);
-      canvas.drawCircle(
-        lanternB,
-        34,
-        Paint()
-          ..shader = ui.Gradient.radial(lanternB, 34, [
-            const Color(0xFFFFE0A0).withValues(alpha: glow * aB),
-            const Color(0x00FFE0A0),
-          ]),
-      );
-    }
-    _puppet(canvas, Offset(bx, g), time, 1.7, aB, (ink, hole) {
-      _lamplighter(ink, hole);
-    }, flip: turnB);
-
-    // 3: perde karardı; kandilin son ışığında perdedeki küçük gölge
-    // perdeden ayrılır (büyüyerek bize doğru), yere düşer ve yatar.
-    if (boothA > 0) {
-      final peel = _span(u, 3.05, 3.3);
-      final fall = _span(u, 3.3, 3.62);
-      final s = 0.42 + 0.68 * peel;
-      final feet = fall > 0
-          ? Offset.lerp(
-              const Offset(552, 250),
-              const Offset(548, 339),
-              fall * fall,
-            )!
-          : Offset.lerp(const Offset(556, 258), const Offset(552, 250), peel)!;
-      // Kandilin son ışığı düştüğü yerde bir süre daha onu seçik kılar.
-      final glowA = boothA * _span(u, 3.3, 3.5) * (1 - _span(u, 4.5, 5.0));
-      if (glowA > 0) {
-        const at = Offset(510, 336);
-        canvas.drawCircle(
-          at,
-          70,
-          Paint()
-            ..shader = ui.Gradient.radial(at, 70, [
-              const Color(0xFFFFE6B0).withValues(alpha: 0.45 * glowA),
-              const Color(0x00FFE6B0),
-            ]),
-        );
-      }
-      canvas.save();
-      canvas.translate(feet.dx, feet.dy);
-      canvas.rotate(-math.pi / 2 * fall);
-      _puppet(
-        canvas,
-        Offset.zero,
-        time,
-        4.1,
-        boothA,
-        (ink, hole) => _saye(ink, hole, time, jar: _span(u, 4.3, 4.8)),
-        scale: s,
-        rod: false,
-      );
-      canvas.restore();
-    }
-
-    // 4: düştüğü yerde küller yarılır, bir kayın fidanı filizlenir; dalında
-    // tek bir ak çaput (Umay'ın işareti).
-    final ash = cityA * _span(u, 3.55, 3.7);
-    if (ash > 0) {
-      final split = _span(u, 4.0, 4.3) * 9;
-      for (final side in [-1.0, 1.0]) {
-        canvas.drawOval(
-          Rect.fromCenter(
-            center: Offset(566 + side * (8 + split), g + 2),
-            width: 20,
-            height: 14,
-          ),
-          _inkPaint(ash),
-        );
-      }
-    }
-    final grow = _span(u, 4.05, 4.75);
-    if (grow > 0) {
-      _birchShoot(canvas, time, const Offset(566, g), grow, cityA);
-    }
-  }
-
-  /// Kayın fidanı: incecik bir gövde (ak kabuğu ışık çentikleriyle), birkaç
-  /// dal ve yaprak; [grow] 0→1 boy atar. Alt dalda rüzgârda dalgalanan tek
-  /// bir ak çaput (perdede ışık sızan bir şerit).
-  static void _birchShoot(
-    Canvas canvas,
-    double time,
-    Offset base,
-    double grow,
-    double a,
-  ) {
-    final h = 165 * grow;
-    final sway = math.sin(time * 1.3) * 3 * grow;
-    Offset at(double t) =>
-        base + Offset(sway * t * t + math.sin(t * 3) * 3, -h * t);
-    final ink = _inkPaint(a);
-    final trunk = Path()..moveTo(base.dx - 3, base.dy);
-    for (var i = 1; i <= 8; i++) {
-      final p = at(i / 8);
-      trunk.lineTo(p.dx - 3 * (1 - i / 8) - 0.6, p.dy);
-    }
-    for (var i = 8; i >= 0; i--) {
-      final p = at(i / 8);
-      trunk.lineTo(p.dx + 3 * (1 - i / 8) + 0.6, p.dy);
-    }
-    canvas.drawPath(trunk..close(), ink);
-    // Kayının ak kabuğu: gövdede ince ışık çentikleri.
-    final mark = _holePaint(0.55 * a)..strokeWidth = 1;
-    for (var i = 1; i < 5; i++) {
-      final p = at(i / 7);
-      canvas.drawLine(
-        p + const Offset(-1.5, 0),
-        p + const Offset(1.5, -1),
-        mark,
-      );
-    }
-    // Dallar ve yapraklar: boy attıkça birer birer çıkar.
-    const branches = [(0.42, -1.0), (0.58, 1.0), (0.74, -1.0), (0.86, 1.0)];
-    Offset? ragKnot;
-    for (final (t, side) in branches) {
-      final out = _ease((grow - t) / 0.25);
-      if (out <= 0) continue;
-      final p0 = at(t);
-      final len = 26 * out * (1.1 - t * 0.5);
-      final p1 = p0 + Offset(side * len, -len * 0.55);
-      canvas.drawLine(
-        p0,
-        p1,
-        _inkPaint(a)
-          ..strokeWidth = 1.6
-          ..strokeCap = StrokeCap.round,
-      );
-      for (var k = 0; k < 3; k++) {
-        final q = Offset.lerp(p0, p1, 0.45 + k * 0.27)!;
-        final leaf = 3.2 * out;
-        canvas.save();
-        canvas.translate(q.dx, q.dy);
-        canvas.rotate(side * 0.6 + math.sin(time * 2 + k + t * 9) * 0.25);
-        canvas.drawOval(
-          Rect.fromCenter(
-            center: Offset(0, k.isEven ? -leaf : leaf),
-            width: leaf * 1.4,
-            height: leaf * 2.2,
-          ),
-          ink,
-        );
-        canvas.restore();
-      }
-      ragKnot ??= Offset.lerp(p0, p1, 0.75);
-    }
-    final top = at(1);
-    canvas.drawOval(
-      Rect.fromCenter(center: top + const Offset(0, -3), width: 5, height: 9),
-      ink,
-    );
-    // Çaput: alt daldan sarkan ak şerit.
-    final ra = a * _ease((grow - 0.6) / 0.3);
-    if (ra <= 0 || ragKnot == null) return;
-    final cloth = Path()..moveTo(ragKnot.dx, ragKnot.dy);
-    for (var i = 1; i <= 6; i++) {
-      final k = i / 6;
-      cloth.lineTo(
-        ragKnot.dx - k * 10 + math.sin(time * 2.4 - k * 3) * 4 * k,
-        ragKnot.dy + k * 24,
-      );
-    }
-    canvas.drawPath(
-      cloth,
-      _holePaint(ra)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 4
-        ..strokeCap = StrokeCap.round,
-    );
-    canvas.drawCircle(ragKnot, 2.5, _holePaint(ra));
-  }
 
   /// Galata perdesi: her satırın kendi tasviri (bkz. satırlar). Hezarfen'in
   /// gölgesi kulenin duvarından Sâye'yle konuşur; arada kendi hikâyesi.
@@ -2568,30 +2301,6 @@ class PerdePainter {
 
   /// Ana menünün perdesi: kandille aydınlanan bez, oymalı çerçeve, gölge
   /// harflerle oyunun adı, önünde Sâye ve Hüdhüd.
-  /// Oyunun ilk açılışındaki giriş (bkz. perde_giris.dart): [t] saniye;
-  /// [target] menüdeki perdenin ekrandaki yeri (sonda oraya kayar).
-  static void paintIntro(
-    Canvas canvas,
-    Size size,
-    double t,
-    String title,
-    String tagline, {
-    Rect? target,
-    double? menuTime,
-    String? creditLabel,
-    String? creditName,
-  }) => _paintIntro(
-    canvas,
-    size,
-    t,
-    title,
-    tagline,
-    target: target,
-    menuTime: menuTime,
-    creditLabel: creditLabel,
-    creditName: creditName,
-  );
-
   static void paintMenu(
     Canvas canvas,
     Size size,

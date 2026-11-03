@@ -1,5 +1,5 @@
 {
- "_aciklama": "Masalcı rejisi: her sahnede satır sırasıyla birer etiket kodu (başlık kartları sayılmaz). İngilizce aynı sıradaki etiketi alır. Etiketler yalnız seslendirmeye gider, altyazıya girmez. 'durak': seslendirme kopyasında yapılan yer değiştirmeler (üç nokta = masalcı durağı). 'etiket_en': İngilizcede farklı okunan etiketler (uzun açılış etiketi İngiliz seste ilk cümleyi iki kez okuttu).",
+ "_aciklama": "Masalcı rejisi: her sahnede satır sırasıyla birer etiket kodu (başlık kartları sayılmaz). İngilizce aynı sıradaki etiketi alır. Etiketler yalnız seslendirmeye gider, altyazıya girmez. 'durak': seslendirme kopyasında yapılan yer değiştirmeler (üç nokta = masalcı durağı). 'etiket_en': İngilizcede farklı okunan etiketler (uzun açılış etiketi İngiliz seste ilk cümleyi iki kez okuttu). 'soz': tırnak içi sözlerin söze özel seslendirme metni (oyunculuk tarifleriyle), dile göre 'sahne:satır' -> sırayla sözler.",
  "etiket": {
   "acilis": "[slowly, like an old storyteller beginning a tale]",
   "masal": "[warm storyteller]",
@@ -29,12 +29,8 @@
    "tekin",
    "gergin",
    "huzun",
-   "umut",
    "hayret",
-   "yakin",
-   "huzun",
-   "yakin",
-   "umut"
+   "karar"
   ],
   "kopru:0": [
    "hayret",
@@ -305,36 +301,6 @@
  "durak": {
   "tr": [
    [
-    "prologue",
-    0,
-    "altmış yazıydı.",
-    "altmış yazıydı…"
-   ],
-   [
-    "prologue",
-    1,
-    "bıraktılar ne bir mum;",
-    "bıraktılar… ne bir mum;"
-   ],
-   [
-    "prologue",
-    2,
-    "Ardından ustayı",
-    "Ardından… ustayı"
-   ],
-   [
-    "prologue",
-    3,
-    "son gördüğü şey oydu",
-    "son gördüğü şey… oydu"
-   ],
-   [
-    "prologue",
-    4,
-    "işaretiydi bu;",
-    "işaretiydi bu…"
-   ],
-   [
     "perde:1",
     5,
     "Sâye. Yine de uç.",
@@ -351,24 +317,30 @@
     3,
     "Ve kar aktı.",
     "Ve kar… aktı."
-   ]
-  ],
-  "en": [
-   [
-    "prologue",
-    2,
-    "Then they dragged",
-    "Then… they dragged"
    ],
    [
     "prologue",
     3,
-    "the master saw as",
-    "the master saw… as"
+    "perdeden küçük bir gölge düştü.",
+    "perdeden… küçük bir gölge düştü."
    ]
-  ]
+  ],
+  "en": []
  },
  "etiket_en": {
   "acilis": "[slow, warm storyteller]"
+ },
+ "soz": {
+  "tr": {
+   "prologue:0": [
+    "[delighted with himself, playful] Hay Hak! Yâr bana bir eğlence…",
+    "[rowdy, cheeky] Eğlence mi istersin? [shouts] Al sana eğlence!"
+   ],
+   "prologue:2": [
+    "[whispering, weak, from the dark] Sâye… Işığı bul, kızım.",
+    "[shaken, mournful] Yıktın perdeyi, eyledin yeksan…"
+   ]
+  },
+  "en": {}
  }
 }

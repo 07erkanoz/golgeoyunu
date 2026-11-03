@@ -39,6 +39,12 @@ SPEAKERS = json.loads(pathlib.Path("tools/perde_metni/konusanlar.json").read_tex
 METIN = json.loads(pathlib.Path("tools/perde_metni/metin.json").read_text())
 MODEL = "eleven_v4"
 SETTINGS = {"stability": 0.4, "similarity_boost": 0.8, "style": 0.5, "use_speaker_boost": True}
+# Karagöz ve Hacivat: ortak ayar sesi düzleştirdi (2026-11-03 denemeleri);
+# kararlılık 0, yüksek üslup ve söze özel oyunculuk tarifi işe yaradı.
+CHAR_SETTINGS = {
+    who: {"stability": 0.0, "similarity_boost": 0.8, "style": 0.8, "use_speaker_boost": True}
+    for who in ("hacivat", "karagoz")
+}
 REJI = pathlib.Path("tools/perde_metni/reji.json")
 # İngiliz ses Türkçe adları yazıldığı gibi okusun diye (yalnız seslendirmede).
 EN_SAY = {"Hayalî": "Hayali", "Mevlânâ": "Mevlana", "Ülgen": "Ulgen", "Yel Ana": "Yell Ana"}
@@ -239,6 +245,10 @@ def segments(lang: str, w: str, i: int, text: str) -> list[tuple[str, str]]:
     m = re.match(r"(\[[^\]]*\])\s*(.*)", text, re.S)
     tag, body = (m.group(1), m.group(2)) if m else ("", text)
     spec = SPEAKERS.get(w, {}).get(str(full_index(lang, w, i)))
+    # reji.json "soz": söze özel seslendirme metni (oyunculuk tarifleriyle);
+    # verilmişse satırın etiketi o söze eklenmez.
+    own = json.loads(REJI.read_text()).get("soz", {}).get(lang, {}).get(f"{w}:{full_index(lang, w, i)}", [])
+    told: set[int] = set()
     if not spec:
         return [("anlatici", per_sentence(tag, body) if CUMLE else text)]
     out: list[tuple[str, str]] = []
@@ -246,8 +256,11 @@ def segments(lang: str, w: str, i: int, text: str) -> list[tuple[str, str]]:
     for part in re.split(r"(“[^”]*”)", body):
         if part.startswith("“"):
             who = spec if isinstance(spec, str) else spec[min(n, len(spec) - 1)]
-            n += 1
             piece = part.strip("“”").strip()
+            if n < len(own) and own[n]:
+                piece = own[n]
+                told.add(len(out))
+            n += 1
         else:
             who = "anlatici"
             piece = part.strip().lstrip(",;").strip()
@@ -268,8 +281,9 @@ def segments(lang: str, w: str, i: int, text: str) -> list[tuple[str, str]]:
             out.append((who, piece))
     out = [(who, p[:-1] + "." if p.endswith(",") else p) for who, p in out]
     if CUMLE:
-        return [(who, per_sentence(tag, piece) if who == "anlatici" else f"{tag} {piece}".strip()) for who, piece in out]
-    return [(who, f"{tag} {piece}".strip()) for who, piece in out]
+        return [(who, piece if k in told else per_sentence(tag, piece) if who == "anlatici" else f"{tag} {piece}".strip())
+                for k, (who, piece) in enumerate(out)]
+    return [(who, piece if k in told else f"{tag} {piece}".strip()) for k, (who, piece) in enumerate(out)]
 
 
 OYUN_TAG = {"saye": "[soft, nostalgic, gentle]", "usta": "[old, warm, gentle]", "hudhud": "[warm, wise, confidential]",
@@ -358,7 +372,7 @@ def check(heard: str, text: str) -> tuple[bool, float]:
 
 
 def tts(lang: str, text: str, prev: str | None, nxt: str | None, who: str = "anlatici") -> bytes:
-    body = {"text": text, "model_id": MODEL, "voice_settings": SETTINGS}
+    body = {"text": text, "model_id": MODEL, "voice_settings": CHAR_SETTINGS.get(who, SETTINGS)}
     if lang == "tr":
         body["language_code"] = "tr"
     if prev:

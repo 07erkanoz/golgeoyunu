@@ -1,6 +1,7 @@
 // Bütün perdelerin ve Hikâye köprülerinin her satırı iki anda (satırın
 // başı ve sonu): resimlerin anlatıma uyup uymadığını denetlemek için.
-// `flutter test tools/preview/perde_denetim_test.dart` → build/preview/denetim/
+// `flutter test tools/preview/perde_denetim_test.dart --dart-define=CARTOON=true`
+// → build/preview/denetim/ (ya da OUT klasörü)
 // (tools/preview/perde_denetim_sayfa.py metinle birleştirip sayfa yapar).
 import 'dart:convert';
 import 'dart:io';
@@ -9,6 +10,8 @@ import 'dart:ui' as ui;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:golge/game/levels.dart';
 import 'package:golge/game/perde.dart';
+import 'package:golge/game/shadow_art.dart';
+import 'package:golge/game/tasvir_images.dart';
 
 Future<void> _shot(String path, void Function(ui.Canvas) paint) async {
   final rec = ui.PictureRecorder();
@@ -19,22 +22,41 @@ Future<void> _shot(String path, void Function(ui.Canvas) paint) async {
 }
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   test('perde denetimi', () async {
-    final dir = Directory('build/preview/denetim')..createSync(recursive: true);
+    // Oyundaki gibi: tasvirler ve Kandilci çizimi yüklü.
+    await TasvirImages.load();
+    await ShadowArt.load();
+    // OUT: başka klasöre (ör. eski/yeni karşılaştırması).
+    final dir = Directory(
+      Platform.environment['OUT'] ?? 'build/preview/denetim',
+    )..createSync(recursive: true);
     for (final f in dir.listSync()) {
       f.deleteSync();
     }
     final index = <Map<String, Object>>[];
-    Future<void> act(String key, PerdeScene scene, List<String> lines,
-        {int? bridge}) async {
+    Future<void> act(
+      String key,
+      PerdeScene scene,
+      List<String> lines, {
+      int? bridge,
+    }) async {
       for (var k = 0; k < lines.length; k++) {
         final shots = <String>[];
         for (final f in [0.2, 0.85]) {
-          final p = '${dir.path}/${key.replaceAll(':', '_')}_${k}_${(f * 100).round()}.png';
+          final p =
+              '${dir.path}/${key.replaceAll(':', '_')}_${k}_${(f * 100).round()}.png';
           await _shot(p, (c) {
-            PerdePainter.paint(c, const ui.Size(480, 270), scene,
-                (k + f) * 4.4, k + f, 1,
-                bridge: bridge, bridgeLines: lines.length);
+            PerdePainter.paint(
+              c,
+              const ui.Size(480, 270),
+              scene,
+              (k + f) * 4.4,
+              k + f,
+              1,
+              bridge: bridge,
+              bridgeLines: lines.length,
+            );
           });
           shots.add(p);
         }

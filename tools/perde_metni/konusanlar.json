@@ -1,9 +1,14 @@
 {
  "_aciklama": "Tırnak içindeki sözleri kim söyler (kadro.json'daki adlar). Sahne -> satır sırası (başlık kartları dahil) -> konuşan. Bir satırda birden çok konuşan varsa dile göre sıralı liste. Tırnak dışı her şey anlatıcının; burada olmayan tırnaklar da anlatıcıda kalır.",
  "prologue": {
-  "7": "suiyesi",
-  "8": "suiyesi",
-  "9": "suiyesi"
+  "0": [
+   "hacivat",
+   "karagoz"
+  ],
+  "2": [
+   "usta",
+   "hacivat"
+  ]
  },
  "kopru:0": {
   "0": "suiyesi",

@@ -70,10 +70,19 @@ flutter:
     - assets/icon/
     - assets/images/nemrut/
     - assets/images/karagoz/
+    # Perdeye taşınan oyun çizimleri (tools/preview/saye_kareler_cikar_test.dart).
+    - assets/images/perde/
     - assets/art/
     # Anlatım sesleri (tools/seslendir.py üretir).
     - assets/voice/tr/
     - assets/voice/en/
+
+  # Açılışta oyunun adı (Rakkas, Zeynep Akay; SIL OFL 1.1, bkz.
+  # assets/fonts/Rakkas-OFL.txt ve Lisanslar).
+  fonts:
+    - family: Rakkas
+      fonts:
+        - asset: assets/fonts/Rakkas-Regular.ttf
 
   # To add assets to your application, add an assets section, like this:
   # assets:

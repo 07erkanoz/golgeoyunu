@@ -139,7 +139,8 @@ class GameAudio {
   /// Bu ses yüklendi mi.
   bool has(String name) => _src.containsKey(name);
 
-  /// Açılış girişinin efektleri: ses motoru bunları ilk yükler.
+  /// Menünün ve açılış perdesinin ilk duyulan efektleri: ses motoru
+  /// bunları ilk yükler.
   static const introEffects = [
     'match',
     'fire',
@@ -148,9 +149,6 @@ class GameAudio {
     'fizzle',
     'firefly',
   ];
-
-  /// Girişin sesleri yüklendi mi (giriş başlamadan bekler).
-  bool get introReady => _ready && has('perde_ney') && introEffects.every(has);
 
   /// Arka plan sesini (müzik, ney) geçici olarak kısar: 0 normal, 1 sessiz.
   /// Girişte Kandilci geçerken ney susmaz, uzaklaşır (yeniden başlarsa
@@ -636,8 +634,8 @@ class GameAudio {
     await load('menu_theme.mp3', LoadMode.disk);
     await load('perde_ney.ogg', LoadMode.disk);
     _updateBed();
-    // Açılış girişinin sesleri önce: giriş onları bekler (kibrit listenin
-    // sonundaydı, giriş başladığında henüz yüklenmemiş oluyordu).
+    // İlk duyulanlar önce (kibrit listenin sonundaydı, açılışta henüz
+    // yüklenmemiş oluyordu).
     for (final e in introEffects) {
       await load(_ogg.contains(e) ? '$e.ogg' : '$e.wav', LoadMode.memory);
     }

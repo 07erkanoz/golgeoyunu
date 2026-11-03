@@ -999,6 +999,7 @@ const double karagozLength = 8.5;
 /// Karagöz sözünü keser, kafa atar, Hacivat fırıl fırıl döner, Karagöz
 /// hoplayıp güler; sonunda ikisi birden [point] yönünü (1 sağ, -1 sol)
 /// gösterir. [ground] perdenin taban ortası, [h] tasvir boyu, [t] saniye.
+/// [rods]: tasvirleri tutan çubukların gölgesi de görünür (açılış perdesi).
 void paintKaragozHacivat(
   Canvas c,
   Offset ground,
@@ -1006,6 +1007,7 @@ void paintKaragozHacivat(
   double t, {
   int point = 1,
   double a = 1,
+  bool rods = false,
 }) {
   double span(double from, double to) =>
       ((t - from) / (to - from)).clamp(0.0, 1.0);
@@ -1093,6 +1095,14 @@ void paintKaragozHacivat(
       rot: kRot - kArm * 0.06,
       a: a,
     );
+    if (rods) {
+      // Çubuk göğüsteki delikten perdeye dik tutulur; gölgesi aşağı,
+      // ustanın eline doğru iner.
+      final hc = ground + Offset(hx * h, hy - h * 0.62);
+      final kc = ground + Offset(kx * h, ky - h * 0.6);
+      TasvirImages.rod(c, hc, hc + Offset(-h * 0.22, h * 1.1), h * 0.022, a);
+      TasvirImages.rod(c, kc, kc + Offset(h * 0.22, h * 1.1), h * 0.022, a);
+    }
     return;
   }
   _person(
