@@ -45,6 +45,7 @@ import 'joy.dart';
 import 'kaf_vadi.dart';
 import 'kus_yolu.dart';
 import 'levels.dart';
+import 'lesson.dart';
 import 'narration.dart';
 import 'perde.dart';
 import 'persist.dart';
@@ -1164,6 +1165,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
             Vector2((c + 0.5) * kTile, (r + 0.5) * kTile.toDouble()),
             kind,
           ),
+        if (level.def.lessons.isNotEmpty) LessonSigns(level.def.lessons),
         for (final (c, r) in level.def.shadowStones)
           ShadowStone(Vector2(c * kTile.toDouble(), r * kTile.toDouble())),
         for (final (c, r, side) in level.def.rollingDoors)

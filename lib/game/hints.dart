@@ -9,6 +9,12 @@ import 'strings.dart';
 class Hints {
   Hints._();
 
+  /// Dokunmatik cihaz mı (kontroller düğme ya da hareketle yazılır).
+  static bool get touch => _touch;
+
+  /// Tek bir kontrolün bu cihazdaki adı ('jump' → 'Boşluk' ya da düğme).
+  static String control(String key) => sides(_controls[key] ?? key);
+
   static bool get _touch =>
       const bool.fromEnvironment('TOUCH') ||
       (!kIsWeb &&
@@ -206,7 +212,8 @@ class Hints {
     'cord': '{up} İpi çek · kandil perdenin ardında kayar',
     'golgehane': '{up} Tasvire dokun · perdede canlanır · kandili iterek gölgeni büyüt, küçült',
     'shadowStone': '{up} Gölgeni önden gönder · Kandilciler ona bakarken geç',
-    'shadowLever': '{up} Gölgeni önden gönder · gölge parmaklıktan geçer, kolu çeker',
+    'shadowLever':
+        '{up} Gölgeni önden gönder · gölge parmaklıktan geçer, kolu çeker',
     'coldBridge': '{firefly} Kandilci yolu yalnız onların feneriyle belirir · ateşböceği at, Kandilci ona dalınca ışığında geç',
     'eyeStone': 'Dev gölgenin başı perdedeki göze · kavanozunun ışığı taştaki göze · ikisi birden: kapı açılır',
     'lift': 'Bir kefeye sandık koy · öteki yükselir',

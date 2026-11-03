@@ -2,6 +2,7 @@
 //
 // Harita gösterimi: lib/game/level.dart başındaki açıklamaya bakın.
 
+import 'lesson.dart';
 import 'maps.dart';
 import 'strings.dart';
 
@@ -168,6 +169,7 @@ class LevelDef {
     this.legends = const [],
     this.gokboruRun = false,
     this.shadowStones = const [],
+    this.lessons = const [],
     this.rollingDoors = const [],
     this.hairBridges = const [],
     this.houses = const [],
@@ -294,6 +296,9 @@ class LevelDef {
 
   /// Gölge taşları (sütun, satır): üstünde ↑ ile gölge önden gönderilir.
   final List<(int, int)> shadowStones;
+
+  /// Öğretim levhaları (lesson.dart): sırası gelince kendiliğinden belirir.
+  final List<Lesson> lessons;
 
   /// Derinkuyu: yuvarlak taş kapılar (sütun, geçidin alt satırı, içerinin
   /// yönü: 1 sağ, -1 sol); yalnız içeriden yuvarlanır.
@@ -1261,6 +1266,101 @@ const levels = <LevelDef>[
     surprises: [('golgehane', 155, 15), ('karagoz', 154, 13)],
     // Gölge Kapısı: gölge parmaklıklı kapıdan geçip ardındaki kolu çeker.
     shadowStones: [(380, 13)],
+    // Öğretim alanı: her durağın üstünde, sırası gelince kendiliğinden
+    // beliren levha (lesson.dart). Sıra önemli: aralık örtüşürse önceki.
+    lessons: [
+      (
+        key: 'move',
+        from: 0,
+        to: 6,
+        col: 3,
+        row: 12,
+        minRow: null,
+        maxRow: null,
+      ),
+      (
+        key: 'pickup',
+        from: 6,
+        to: 10,
+        col: 7,
+        row: 12,
+        minRow: null,
+        maxRow: null,
+      ),
+      (
+        key: 'jump',
+        from: 10,
+        to: 16,
+        col: 14,
+        row: 12,
+        minRow: null,
+        maxRow: null,
+      ),
+      (key: 'umay', from: 17, to: 24, col: 19, row: 5, minRow: null, maxRow: 7),
+      (
+        key: 'climb',
+        from: 16,
+        to: 19,
+        col: 17,
+        row: 12,
+        minRow: 8,
+        maxRow: null,
+      ),
+      (
+        key: 'ledge',
+        from: 31,
+        to: 35,
+        col: 33,
+        row: 10,
+        minRow: null,
+        maxRow: null,
+      ),
+      (
+        key: 'crate',
+        from: 24,
+        to: 31,
+        col: 29,
+        row: 12,
+        minRow: 11,
+        maxRow: null,
+      ),
+      (
+        key: 'lever',
+        from: 47,
+        to: 56,
+        col: 50,
+        row: 12,
+        minRow: null,
+        maxRow: null,
+      ),
+      (
+        key: 'hide',
+        from: 64,
+        to: 74,
+        col: 70,
+        row: 12,
+        minRow: null,
+        maxRow: null,
+      ),
+      (
+        key: 'throw',
+        from: 105,
+        to: 115,
+        col: 108,
+        row: 12,
+        minRow: null,
+        maxRow: null,
+      ),
+      (
+        key: 'help',
+        from: 124,
+        to: 132,
+        col: 126,
+        row: 12,
+        minRow: null,
+        maxRow: null,
+      ),
+    ],
   ),
   LevelDef(
     title: 'II · KULE',
