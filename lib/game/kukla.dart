@@ -1286,6 +1286,20 @@ class SayeKukla {
             ..color = const ui.Color(0xFFFF8A6A).withValues(alpha: 0.45 * (1 - 0.6 * _hide)),
         );
         c.restore();
+      } else if (n == 'kolF' || n == 'bacakF' || n == 'orgu') {
+        // Çizgi film cel-shading: ön kol, ön bacak/çizme ve saç örgüsü
+        // gövdenin içinde kaybolmasın diye kavanoz ışığıyla ince altın kontur alır.
+        c.save();
+        c.clipPath(paths[n]!);
+        c.translate(0.28, -0.25);
+        c.drawPath(
+          paths[n]!,
+          ui.Paint()
+            ..style = ui.PaintingStyle.stroke
+            ..strokeWidth = 0.42
+            ..color = const ui.Color(0xFFFFD88A).withValues(alpha: 0.42 * (1 - 0.7 * _hide)),
+        );
+        c.restore();
       }
     }
     // Göz: ışıyan hilal ve parıltı beneği, çevresinde ılık odaklanmış parıltı.
@@ -1406,6 +1420,29 @@ class SayeKukla {
         2.5,
         ui.Paint()..color = ui.Color.fromRGBO(255, 252, 232, bright),
       );
+    }
+    // Kavanozun çevresinde süzülen canlı ateşböceği kıvılcımları (çizgi film büyüsü).
+    if (_hide < 0.4) {
+      for (var s = 0; s < 3; s++) {
+        final a = _time * (1.8 + s * 0.45) + s * 2.09;
+        final pulse = 0.55 + 0.45 * math.sin(_time * 5.2 + s * 1.7);
+        final orbit = V(
+          math.cos(a) * (16.5 + s * 4.0),
+          math.sin(a * 1.3) * (14.0 + s * 3.0) - 2.0,
+        );
+        c.drawCircle(
+          orbit,
+          3.8 * pulse,
+          ui.Paint()
+            ..color = ui.Color.fromRGBO(255, 212, 102, 0.38 * bright * pulse),
+        );
+        c.drawCircle(
+          orbit,
+          1.45 * pulse,
+          ui.Paint()
+            ..color = ui.Color.fromRGBO(255, 250, 224, 0.88 * bright * pulse),
+        );
+      }
     }
     c.restore();
   }

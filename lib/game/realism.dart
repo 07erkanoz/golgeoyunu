@@ -70,7 +70,7 @@ const _violet = Color(0xFFB09AFF);
 /// Işığa bakan taş kenarları ve ışıkların çevresine taşan parlama: karanlık
 /// katmanının üstüne eklenir (ışık topluyormuş gibi).
 class RealismLayer extends Component with HasGameReference<GolgeGame> {
-  RealismLayer() : super(priority: 14);
+  RealismLayer() : super(priority: 42);
 
   /// Işık alabilen kenarlar: sütunların iki yanı ve basılabilir taşların
   /// üst dudağı (bölüm başına bir kez).
@@ -104,22 +104,22 @@ class RealismLayer extends Component with HasGameReference<GolgeGame> {
   }
 
   /// Görünen ışıklar: Kandilci fenerleri, Gözcüler, Sâye'nin kavanozu.
-  List<(Offset, Color, double)> _lights(Rect view) {
-    final out = <(Offset, Color, double)>[];
+  List<(Offset, Color, double, bool)> _lights(Rect view) {
+    final out = <(Offset, Color, double, bool)>[];
     for (final c in game.world.children) {
       switch (c) {
         case Guard g:
           final l = g.lanternWorld.toOffset();
-          if (view.inflate(300).contains(l)) out.add((l, _cyan, 320));
+          if (view.inflate(300).contains(l)) out.add((l, _cyan, 320, false));
         case Watcher w:
           final l = w.lamp.toOffset();
-          if (view.inflate(300).contains(l)) out.add((l, _violet, 300));
+          if (view.inflate(300).contains(l)) out.add((l, _violet, 300, false));
       }
     }
     final p = game.player;
     if (p != null && p.isMounted && !p.isDead) {
       final strength = p.crouching ? 0.35 : 1.0;
-      out.add((p.lightVisual.toOffset(), _amber, 230 * strength));
+      out.add((p.lightVisual.toOffset(), _amber, 230 * strength, true));
     }
     return out;
   }
@@ -188,7 +188,7 @@ class RealismLayer extends Component with HasGameReference<GolgeGame> {
     final view = game.camera.visibleWorldRect;
     final kind = depthKind(game.level)!;
     _drawGodRays(canvas, view, kind);
-    for (final (at, color, radius) in _lights(view)) {
+    for (final (at, color, radius, isPlayer) in _lights(view)) {
       final area = Rect.fromCircle(center: at, radius: radius);
       // Kenar ışığı: ışığa bakan yan, uzaklıkla söner. Yumuşaklık bir
       // geniş-soluk, bir dar-parlak çizgiyle verilir (her çizgiyi ayrı
@@ -225,6 +225,8 @@ class RealismLayer extends Component with HasGameReference<GolgeGame> {
         canvas.drawLine(Offset(x0, y + 1.5), Offset(x1, y + 1.5), lipNarrow);
       }
       // Yüzey: ışık taşın üstüne yumuşakça yayılır (sinematik bloom).
+      // Sâye kendi arka-ışığını siluetinin arkasında çizdiği için üstüne
+      // sis basılmaz (siyah silueti bozulmasın).
       final glowR = radius * 0.78;
       canvas.drawCircle(
         at,
@@ -232,28 +234,30 @@ class RealismLayer extends Component with HasGameReference<GolgeGame> {
         Paint()
           ..blendMode = BlendMode.screen
           ..shader = ui.Gradient.radial(at, glowR, [
-            color.withValues(alpha: 0.13),
-            color.withValues(alpha: 0.04),
+            color.withValues(alpha: isPlayer ? 0.05 : 0.13),
+            color.withValues(alpha: isPlayer ? 0.02 : 0.04),
             color.withValues(alpha: 0),
           ], const [0, 0.5, 1]),
       );
-      // Parlama: ışık kaynağın çevresine hafifçe taşar.
-      canvas.drawCircle(
-        at,
-        radius * 0.22,
-        Paint()
-          ..blendMode = BlendMode.plus
-          ..shader = ui.Gradient.radial(
-            at,
-            radius * 0.22,
-            [
-              color.withValues(alpha: 0.28),
-              color.withValues(alpha: 0.08),
-              color.withValues(alpha: 0),
-            ],
-            const [0, 0.4, 1],
-          ),
-      );
+      if (!isPlayer) {
+        // Parlama: ışık kaynağın çevresine hafifçe taşar.
+        canvas.drawCircle(
+          at,
+          radius * 0.22,
+          Paint()
+            ..blendMode = BlendMode.plus
+            ..shader = ui.Gradient.radial(
+              at,
+              radius * 0.22,
+              [
+                color.withValues(alpha: 0.28),
+                color.withValues(alpha: 0.08),
+                color.withValues(alpha: 0),
+              ],
+              const [0, 0.4, 1],
+            ),
+        );
+      }
     }
   }
 }

@@ -93,7 +93,7 @@ class Settings {
 
   /// Kayıtlı ayarların sürümü: varsayılanlar değişince eski kayıttaki
   /// görüntü ayarları bir kez yeni varsayılana çekilir.
-  static const _version = 3;
+  static const _version = 4;
 
   /// Dokunmatik düğmelerin görünürlüğü (0.1 – 1).
   static double touchOpacity = 0.7;
@@ -217,6 +217,13 @@ class Settings {
     }
     // 3. sürüm: altyazı açık başlar (eski kayıtta kapalıysa bir kez açılır).
     if ((version ?? 0) < 3) subtitles = true;
+    // 4. sürüm: çizgi film doku/renk ve derinlik/ışık katmanları varsayılan
+    // olarak açıldı; eski kayıttaki kapalı değerler bir kez açık konuma çekilir.
+    if ((version ?? 0) < 4) {
+      lowGraphics = false;
+      texture = Cartoon.trialBuild;
+      realism = Cartoon.trialBuild;
+    }
     // "unlocked": oynanış sırasındaki en ileri yer. Sıra değiştiyse (yeni
     // bölümler araya girdiyse) eski yer yeni sıraya çevrilir.
     final u = p == null ? null : _read(() => p.getInt('unlocked'));

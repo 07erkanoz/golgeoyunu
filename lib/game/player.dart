@@ -2413,8 +2413,8 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     final squash = (_landDip / 0.22).clamp(0.0, 1.0);
     final stretch = (_stretchT / 0.14).clamp(0.0, 1.0);
     final vis = solid == null ? _kuklaVisScale : 1.0;
-    final sy = (1.0 + 0.08 * stretch - 0.09 * squash) * vis;
-    final sx = (1.0 - 0.05 * stretch + 0.07 * squash) * vis;
+    final sy = (1.0 + 0.13 * stretch - 0.14 * squash) * vis;
+    final sx = (1.0 - 0.08 * stretch + 0.11 * squash) * vis;
     final turnK = _turnT > 0
         ? 0.45 + 0.55 * (1 - math.sin((_turnT / 0.085).clamp(0.0, 1.0) * math.pi))
         : 1.0;
