@@ -302,10 +302,11 @@ class _Pose {
 /// kavanoz) ve adım evresi; parçalar bütün kuklalarda ortak.
 class SayeKukla {
   // ------------------------------------------------------ ortak parçalar
-  static const ink = ui.Color(0xFF07050F);
-  static const red = ui.Color(0xFFC2402E);
-  // Uzaktaki kol ve bacak bir ton açık: iki bacak birbirine karışmaz.
-  static const far = ui.Color(0xFF1F1829);
+  // Simsiyah (0xFF07050F) yerine yumuşak, kadifemsi mat kömür-mürdüm tonu.
+  static const ink = ui.Color(0xFF28202E);
+  static const red = ui.Color(0xFFC84B38);
+  // Uzaktaki kol ve bacak bir ton açık mat duman-mürdüm: iki bacak birbirine karışmaz.
+  static const far = ui.Color(0xFF3A2E44);
 
   // Kemikler.
   static const _torso = 0, _skirt = 1, _head = 2;
@@ -1259,7 +1260,34 @@ class SayeKukla {
       }
     }
     for (final n in _order) {
-      c.drawPath(paths[n]!, ui.Paint()..color = _layers[n]!.color);
+      if (n == 'govde' || n == 'bas' || n == 'kolF' || n == 'bacakF' || n == 'orgu') {
+        // Simsiyah yerine kadifemsi mat kömür-mürdüm ve kavanoz yönünden
+        // vuran yumuşak mat ılık ton geçişi.
+        final baseMatte = switch (n) {
+          'govde' => const ui.Color(0xFF2D2336),
+          'kolF' || 'bacakF' => const ui.Color(0xFF32273C),
+          _ => const ui.Color(0xFF261E2E),
+        };
+        final litMatte = switch (n) {
+          'govde' => const ui.Color(0xFF42324A),
+          'kolF' || 'bacakF' => const ui.Color(0xFF46354E),
+          _ => const ui.Color(0xFF382B40),
+        };
+        c.drawPath(
+          paths[n]!,
+          ui.Paint()
+            ..shader = ui.Gradient.linear(
+              const V(-8, -32),
+              const V(10, -4),
+              [
+                baseMatte,
+                ui.Color.lerp(baseMatte, litMatte, (1 - 0.65 * _hide))!,
+              ],
+            ),
+        );
+      } else {
+        c.drawPath(paths[n]!, ui.Paint()..color = _layers[n]!.color);
+      }
       if (n == 'govde') {
         // Elbisenin göğsündeki ve etek ucundaki çiçek oymaları A1 çizimindeki
         // gibi sıcak fildişi-altın renginde ışıldar.
