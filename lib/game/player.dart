@@ -2405,7 +2405,7 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
   }
 
   /// Kukla, çarpışma kutusunun yerel uzayında (ayaklar kutunun dibinde).
-  static const double _kuklaVisScale = 1.24;
+  static const double _kuklaVisScale = 1.06;
 
   void _paintKukla(Canvas canvas, {Color? solid, double rim = 0}) {
     canvas.save();
@@ -2555,9 +2555,9 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     // Saklanırken gölge yok; ama korku anında gölge kendi başına kalabilir.
     if ((hidden || crouching) && mood == _ShadowMood.follow) return;
     final flicker = 0.85 + 0.15 * math.sin(_anim * 11) * math.sin(_anim * 3.7);
-    var alpha = 0.25 * flicker;
+    var alpha = 0.24 * flicker;
     // Gölgenin ayak noktası (yerel koordinat) ve yönü.
-    var foot = Offset(w / 2 - facing * (24 + math.sin(_anim * 1.3)), h);
+    var foot = Offset(w / 2 - facing * (19 + math.sin(_anim * 1.3)), h);
     var dirFacing = facing;
     var walking = false;
     switch (mood) {
@@ -2641,8 +2641,8 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       // Işık yakında ve aşağıda: gölge ayaklardan büyüyerek yukarı uzanır.
       canvas.translate(foot.dx, foot.dy);
       canvas.scale(
-        (sent ? 1.15 : 1.45) * (1 + grow),
-        (sent ? 1.3 : 1.7) * (1 + grow * 0.6),
+        (sent ? 1.08 : 1.18) * (1 + grow),
+        (sent ? 1.18 : 1.30) * (1 + grow * 0.6),
       );
       canvas.translate(-w / 2, -h);
       if (_useKukla) {
