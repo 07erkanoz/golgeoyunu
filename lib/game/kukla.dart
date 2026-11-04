@@ -527,8 +527,9 @@ class SayeKukla {
     double stance,
     double e,
     double run,
-    double rest,
-  ) {
+    double rest, [
+    double liftK = 1,
+  ]) {
     final heelBack = (_toe.dx - _heel.dx) * k;
     final base = _footX(shift) - 4 * _px + rest;
     if (ph < stance) {
@@ -547,6 +548,7 @@ class SayeKukla {
         math.pow(math.sin(math.pi * math.pow(u, 1 - 0.3 * run)), 0.8) *
         _legLen *
         (0.11 + 0.25 * run) *
+        liftK *
         e;
     final p = (0.55 * (1 - sm(u / 0.5)) - 0.22 * sm((u - 0.5) / 0.5)) * e;
     // Yay dünyada ve basan uçtan çizilir: kalkışta parmak ucu yerinde kalır,
@@ -567,7 +569,9 @@ class SayeKukla {
 
   _Pose _ground(KuklaInput i, double dt) {
     final v = i.forward.abs();
-    _amp = _approach(_amp, (v / 25).clamp(0.0, 1.0), dt, 0.06);
+    // Yavaş giderken de belirgin yürüyüş (perdede ağır yürüyüş): adım
+    // kısalır ama saniyede iki adımın altına inmez, kollar yine sallanır.
+    _amp = _approach(_amp, (v / 4).clamp(0.0, 1.0), dt, 0.06);
     _run = _approach(_run, ((v - 60) / 80).clamp(0.0, 1.0), dt, 0.15);
     _crouch = _approach(
       _crouch,
@@ -580,8 +584,10 @@ class SayeKukla {
     final e = _amp, run = _run, kk = _crouch;
     // Yerdeki ayak menzili; küçük çocuk hızlı ve kısa adımlarla gider.
     final gBase = _legLen * (0.85 + 0.2 * run - 0.3 * kk - 0.1 * _push);
-    final g = gBase * e;
     final st0 = 0.58 - 0.36 * run;
+    final g = math.min(gBase, v * st0 / 0.9) * e;
+    // Kısa adımda ayak da az kalkar.
+    final size = gBase > 0 ? (g / gBase).clamp(0.0, 1.0) : 0.0;
     var cad = 0.0;
     var stance = st0;
     if (v > 1 && g > 0.05) {
@@ -591,8 +597,26 @@ class SayeKukla {
     // Geri geri yürüyüşte evre tersine akar.
     _q = (_q + cad * dt * (i.forward < 0 ? -1 : 1)) % 1.0;
     final q = _q, qB = (q + 0.5) % 1.0;
-    final fF = _gaitFoot(q, _nearLeg, g, stance, e, run, -6 * _px * (1 - e));
-    final fB = _gaitFoot(qB, _backLeg, g, stance, e, run, 4 * _px * (1 - e));
+    final fF = _gaitFoot(
+      q,
+      _nearLeg,
+      g,
+      stance,
+      e,
+      run,
+      -6 * _px * (1 - e),
+      0.45 + 0.55 * size,
+    );
+    final fB = _gaitFoot(
+      qB,
+      _backLeg,
+      g,
+      stance,
+      e,
+      run,
+      4 * _px * (1 - e),
+      0.45 + 0.55 * size,
+    );
     final two = math.cos(4 * math.pi * (q - stance / 2));
     final bob = (run < 0.5 ? two * 4.5 : -two * 5.5) * _px;
     final breath = math.sin(_time * 2.6) * 1.2 * _px * (1 - e);
@@ -1127,6 +1151,11 @@ abstract final class PerdeSaye {
   static final _in = KuklaInput();
   static double? _last;
 
+  // Perdedeki gerçek ilerleyiş: ayak noktasının ekrandaki yeri ve hızı
+  // (kukla yürütülünce adımı bu hıza göre atar, ayak kaymaz).
+  static double _lastX = 0;
+  static double _vx = 0;
+
   static bool get ready => SayeKukla.ready;
 
   /// Ayakları [feet]'te, [scale] perde pikseli = 1 oyun birimi (Sâye ~36
@@ -1155,10 +1184,15 @@ abstract final class PerdeSaye {
   }) {
     if (!ready || a <= 0) return;
     final last = _last;
+    final m = c.getTransform();
+    final sx = math.sqrt(m[0] * m[0] + m[1] * m[1]);
+    final screenX = m[0] * feet.dx + m[4] * feet.dy + m[12];
     if (last == null || time < last - 0.001 || time - last > 2) {
       // Yeni perde: kukla baştan (yaylı parçalar yerine otursun).
       _k = SayeKukla();
       _last = time;
+      _lastX = screenX;
+      _vx = 0;
       _in
         ..mode = KuklaMode.ground
         ..forward = 0
@@ -1170,9 +1204,16 @@ abstract final class PerdeSaye {
       // [mode] verilirse oyundaki hâller: havada düşüş ([vy] perde
       // pikseli/sn), kenara tutunma ve çıkış ([grip]: tutunulan köşe, ayağa
       // göre perde pikseli; [climb] çıkışın ilerlemesi), yüzüş ([stroke]).
+      final dt0 = time - last;
+      final moved = (screenX - _lastX) / dt0 / (scale * (sx > 0 ? sx : 1));
+      _vx += (moved - _vx) * (1 - math.exp(-dt0 / 0.08));
+      _lastX = screenX;
+      final ahead = (faceLeft ? -1 : 1) * _vx;
       _in
         ..mode = mode ?? (swim ? KuklaMode.swim : KuklaMode.ground)
-        ..forward = swim || mode == KuklaMode.swim ? 70 : walk / scale
+        ..forward = swim || mode == KuklaMode.swim
+            ? 70
+            : (walk != 0 ? walk / scale : ahead)
         ..vy = vy / scale
         ..grip = ui.Offset(faceLeft ? -grip.dx : grip.dx, grip.dy) / scale
         ..climb = climb
