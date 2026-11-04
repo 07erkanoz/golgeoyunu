@@ -775,19 +775,19 @@ class SayeKukla {
     final hasJar = i.light > 0.02;
     return _Pose(
       hip: V(_hipX, hipY),
-      lean: 0.05 * rise - 0.06 * fall + 0.10 * fwd + 0.025 * fl * fall,
-      headA: -0.06 * rise - 0.14 * fall + 0.04 * tuck,
+      lean: 0.08 * rise - 0.05 * fall + 0.14 * fwd + 0.025 * fl * fall,
+      headA: -0.08 * rise + 0.10 * fall + 0.04 * tuck,
       fF: aF,
       pF: -0.15 * tuck + 0.48 * fall + 0.2 * rise,
       fB: aB,
       pB: 0.35 * tuck + 0.62 * fall + 0.45 * rise,
-      sb: 0.81 - 1.65 * sm(rise * 1.4) - (1.45 + 0.14 * fl) * fall,
-      eb: 0.55 - 0.35 * tuck - 0.35 * fall,
+      sb: 0.81 - 1.45 * sm(rise * 1.4) - (1.35 + 0.14 * fl) * fall,
+      eb: 0.50 - 0.30 * tuck - 0.30 * fall,
       sf: hasJar
-          ? (0.22 - 0.45 * tuck - (0.85 - 0.12 * fl) * fall)
+          ? (0.12 - 0.20 * tuck - 0.18 * rise - (0.28 - 0.06 * fl) * fall)
           : (0.65 - 1.15 * sm(rise * 1.4) - (1.55 - 0.14 * fl) * fall),
       ef: hasJar
-          ? (0.45 - 0.20 * tuck - 0.25 * fall)
+          ? (-0.05 - 0.12 * tuck + 0.08 * fall)
           : (0.40 - 0.25 * tuck - 0.25 * fall),
     );
   }
@@ -813,34 +813,33 @@ class SayeKukla {
       hip + rot(_sF + off - _hip0, lean) * k;
 
   _Pose _hang(KuklaInput i) {
-    // Kenara asılı: eller köşede, gövde altında sarkar, bacaklar hafif
-    // asimetrik sallanır; [pull] arttıkça dirsekler bükülüp göğüs setin
-    // üstüne yükselir.
-    final grip = i.grip + const V(0.6, 0.3);
-    final lean = -0.04 + 0.16 * i.pull;
-    final reach = (_upper + _fore) * k * 0.94;
+    // Kenara asılı: eller köşenin üstünde, gövde kenarın altında sarkar,
+    // [pull] arttıkça dirsekler bükülüp omuzlar kenarın üstüne yükselir.
+    final grip = i.grip + const V(1.4, 0.2);
+    final lean = 0.06 + 0.18 * i.pull;
+    final reach = (_upper + _fore) * k * 0.92;
     final shoulder =
-        grip + V(-1.4 - 0.6 * i.pull, reach * (0.72 - 1.15 * i.pull));
+        grip + V(-1.6 - 0.4 * i.pull, reach * (0.58 - 0.95 * i.pull));
     final hip = shoulder - rot(_sF - _hip0, lean) * k;
-    final (sf, ef) = _armTo(_shoulder(hip, lean, V.zero), grip, lean, -1);
+    final (sf, ef) = _armTo(_shoulder(hip, lean, V.zero), grip, lean, -0.85);
     final (sb, eb) = _armTo(
       _shoulder(hip, lean, _backArm),
-      grip - const V(0.8, 0),
+      grip - const V(0.7, 0),
       lean,
-      -1,
+      -0.85,
     );
-    final sway = math.sin(_time * 2.4) * 1.1;
+    final sway = math.sin(_time * 2.4) * 0.8 * (1 - 0.5 * i.pull);
     final hx = hip.dx + (_legH.dx - _hip0.dx) * k;
-    final dropF = hip.dy + _legLen * (0.86 - 0.18 * i.pull);
-    final dropB = hip.dy + _legLen * (0.93 - 0.08 * i.pull);
+    final dropF = hip.dy + _legLen * (0.82 - 0.26 * i.pull);
+    final dropB = hip.dy + _legLen * (0.92 - 0.10 * i.pull);
     return _Pose(
       hip: hip,
       lean: lean,
-      headA: -0.18 - 0.10 * i.pull,
-      fF: V(hx + 1.4 + 1.2 * i.pull + sway, dropF),
-      pF: 0.45,
-      fB: V(hx - 0.6 - sway * 0.7, dropB),
-      pB: 0.6,
+      headA: -0.14 - 0.12 * i.pull,
+      fF: V(hx + 1.6 + 1.8 * i.pull + sway, dropF),
+      pF: 0.38,
+      fB: V(hx - 0.6 - sway * 0.6, dropB),
+      pB: 0.55,
       sf: sf,
       ef: ef,
       sb: sb,
@@ -849,56 +848,71 @@ class SayeKukla {
   }
 
   _Pose _climbUp(KuklaInput i, double dt) {
-    // 1) Kollarla bastırıp çekinir, göğsü taş setin üstüne çıkar (c: 0..0.38)
-    // 2) Ön dizini/ayağını setin kenarına atar, arka bacak aşağıdan iter (c: 0.22..0.68)
-    // 3) Elleriyle seti iterek çömelik vaziyetten doğrulur (c: 0.58..1.0)
+    // Doğal 3 evreli tırmanış (saye_A1_sudan_cikis_codex.png):
+    // 1) Ellerle sete bastırıp göğsü yukarı çeker, ön dizini sete kaldırır (c: 0..0.35)
+    // 2) Ön ayağı sete basar, gövdeyi dizin üstüne öne aktarır (c: 0.30..0.65)
+    // 3) Ellerini setten çekip çömelik vaziyetten yumuşakça doğrulur (c: 0.60..1.0)
     final c = i.climb.clamp(0.0, 1.0);
-    final grip = i.grip + const V(0.6, 0.3);
-    final pullPhase = sm(c / 0.34);
-    final kneePhase = sm((c - 0.18) / 0.44);
-    final standPhase = sm((c - 0.55) / 0.45);
+    final handGrip = i.grip + const V(2.2, 0.2);
+    final pullPhase = sm(c / 0.32);
+    final kneePhase = sm((c - 0.12) / 0.38);
+    final standPhase = sm((c - 0.52) / 0.48);
 
     final hang = _hang(
       KuklaInput()
         ..grip = i.grip
         ..pull = math.max(i.pull, pullPhase),
     );
-    final up = _ground(
+    final crouchGround = _ground(
       KuklaInput()
-        ..crouching = c < 0.85
+        ..crouching = true
+        ..bend = 1.0 - 0.65 * standPhase
         ..light = i.light,
       dt,
     );
+    final standGround = _ground(
+      KuklaInput()
+        ..crouching = false
+        ..bend = 0.25 * (1 - standPhase)
+        ..light = i.light,
+      dt,
+    );
+    final up = crouchGround.lerp(standGround, standPhase);
 
-    final bodyBlend = sm((c - 0.18) / 0.68);
+    final bodyBlend = sm((c - 0.14) / 0.56);
     final pose = hang.lerp(up, bodyBlend);
-    final mantleLean = 0.32 * math.sin(c * math.pi);
+    // Çıkışın ortasında ağırlık ön dizin üstüne aktarılır, kalkarken doğrulur.
+    final mantleLean = 0.34 * math.sin(math.pow(c, 0.85) * math.pi);
     pose.lean += mantleLean;
-    pose.headA = -0.22 * (1 - standPhase) - 0.06 * standPhase;
+    pose.headA = -0.20 * (1 - standPhase) - 0.04 * standPhase;
 
-    final ledgeFoot = grip + const V(1.6, 0.0);
+    // Ön ayak (fF) erken yükselip taş setin üstüne basar; arka ayak (fB)
+    // aşağıdan itip ardından sete gelir.
+    final ledgeFoot = i.grip + const V(1.6, 0.0);
     final fFStep = V.lerp(hang.fF, ledgeFoot, kneePhase)!;
-    pose.fF = V.lerp(fFStep, up.fF, standPhase)!;
-    pose.pF = 0.45 * (1 - kneePhase);
+    pose.fF = V.lerp(fFStep, up.fF, sm((c - 0.36) / 0.48))!;
+    pose.pF = 0.38 * (1 - kneePhase);
 
-    final backLift = sm((c - 0.46) / 0.46);
+    final backLift = sm((c - 0.38) / 0.44);
     pose.fB = V.lerp(hang.fB, up.fB, backLift)!;
-    pose.pB = 0.6 * (1 - backLift);
+    pose.pB = 0.55 * (1 - backLift);
 
-    final elbowDir = c > 0.32 ? 1.0 : -1.0;
+    // Dirsek yönü keskin sıçrama yapmaz (-0.85'ten +0.75'e yumuşak geçiş);
+    // gövde dizin üstüne çıkınca eller seti bırakıp doğal duruşa geçer.
+    final elbowDir = -0.85 + 1.60 * sm((c - 0.16) / 0.32);
     final (sf, ef) = _armTo(
       _shoulder(pose.hip, pose.lean, V.zero),
-      grip,
+      handGrip,
       pose.lean,
       elbowDir,
     );
     final (sb, eb) = _armTo(
       _shoulder(pose.hip, pose.lean, _backArm),
-      grip - const V(0.8, 0),
+      handGrip - const V(0.7, 0),
       pose.lean,
       elbowDir,
     );
-    final let = sm((c - 0.72) / 0.28);
+    final let = sm((c - 0.42) / 0.32);
     pose
       ..sf = sf + (pose.sf - sf) * let
       ..ef = ef + (pose.ef - ef) * let

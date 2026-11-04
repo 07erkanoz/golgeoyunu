@@ -1448,11 +1448,12 @@ abstract final class _Acilis {
     final edge = Offset(_ledge.left + 22, _ledge.top);
     final corner = Offset(_ledge.left, _ledge.top);
     // Kenara asılıyken ayak noktası: eller köşede, göğüs su yüzünde.
-    final hangFeet = corner + const Offset(-8, 36);
+    final hangFeet = corner + const Offset(-6, 26);
     final fallEnd = Offset(fallX + tHit * 22, _water + 10);
-    const swimY = _water + 32.0;
+    const swimY = _water + 30.0;
     final swimFrom = Offset(fallEnd.dx + 16, swimY);
-    final swimTo = Offset(_ledge.left - 34, swimY);
+    final swimTo = Offset(_ledge.left - 24, swimY);
+    var pull = 0.45;
     if (w < hit) {
       // Düşüş: kollar yukarıda, atkı ve örgüler savrulur, yavaşça döner.
       final tf = math.max(0.0, w - t0);
@@ -1488,29 +1489,32 @@ abstract final class _Acilis {
       frame = 'dur';
       clip = 3;
     } else if (w < g1) {
-      // Kenara uzanır: gövde doğrulur, elleri setin kenarını kavrar.
+      // Kenara uzanır: gövde doğrulurken elleri taş setin üst kenarını kavrar.
       final k = ease(spw(sw1, g1));
       feet = Offset.lerp(swimTo, hangFeet, k)!;
       rot = 1.02 * (1 - k);
-      mode = KuklaMode.swim;
+      mode = k < 0.45 ? KuklaMode.swim : KuklaMode.hang;
+      grip = corner - feet;
+      pull = ((k - 0.45) / 0.55).clamp(0.0, 1.0) * 0.45;
       stroke = 3 + 0.25 * k;
       frame = 'dur';
       clip = 3;
     } else if (w < c1) {
-      // Çıkış (oyundaki gibi): kollarla çekinir, ön dizini sete atar, üstüne
-      // geçer; önce yükselir, sonra öne kayar.
+      // Çıkış (oyundaki gibi): kollarla bastırıp çekinir, ön dizini sete atar,
+      // ağırlığını öne aktarıp doğrulur.
       final t = spw(g1, c1);
-      final v = 1 - math.pow(1 - (t / 0.58).clamp(0.0, 1.0), 2.2).toDouble();
-      final hx = ease(((t - 0.34) / 0.66).clamp(0.0, 1.0));
+      final v = ease((t / 0.64).clamp(0.0, 1.0));
+      final hx = ease(((t - 0.22) / 0.68).clamp(0.0, 1.0));
       feet = Offset(
         hangFeet.dx + (edge.dx - hangFeet.dx) * hx,
         hangFeet.dy + (edge.dy - hangFeet.dy) * v,
       );
       mode = KuklaMode.climbUp;
       climb = t;
+      pull = 0.45 + 0.55 * ease((t / 0.35).clamp(0.0, 1.0));
       grip = corner - feet;
       frame = 'dur';
-      clip = t < 0.45 ? 3 : 0;
+      clip = t < 0.35 ? 3 : 0;
     } else {
       feet = edge;
       frame = s < 3.15 ? 'comel' : 'dur';
@@ -1695,7 +1699,7 @@ abstract final class _Acilis {
         vy: vy,
         grip: grip,
         climb: climb,
-        pull: 0.85,
+        pull: pull,
         reach: reachPose,
         stroke: stroke,
         rot: rot,
@@ -1729,7 +1733,7 @@ abstract final class _Acilis {
         vy: vy,
         grip: grip,
         climb: climb,
-        pull: 0.85,
+        pull: pull,
         reach: reachPose,
         stroke: stroke,
         rot: rot,
@@ -1781,7 +1785,11 @@ abstract final class _Acilis {
       walk: PerdeSaye.ready ? 0 : 30,
       mode: mode,
       vy: vy,
+      grip: grip,
+      climb: climb,
+      pull: pull,
       reach: reachPose,
+      stroke: stroke,
       faceLeft: faceLeft,
       rot: rot,
     );

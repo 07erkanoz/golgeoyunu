@@ -471,8 +471,10 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     // Sesler: koşarken adımlar, sert inişler. Tahta iskele daha çok gıcırdar.
     final quiet = sneaking || crouching;
     if (onGround && !wasOnGround) {
-      // Yüksekten inişte daha derin çöker, toparlanır.
-      if (impact > 420) _landDip = impact > 680 ? 0.21 : 0.16;
+      // Her inişte hıza orantılı diz esnemesi; yüksekten inişte daha derin çöker.
+      if (impact > 140) {
+        _landDip = (impact / 720).clamp(0.08, 0.22);
+      }
       // Yalnız yüksekten inişte zeminden birkaç zerre (karda kar tozu); düz
       // zıplayıştan inişte toz kalkmaz.
       if (impact > 680) {
@@ -989,14 +991,14 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
   }
 
   void _updateClimbUp() {
-    const duration = 0.32;
+    const duration = 0.42;
     final t = (_stateTime / duration).clamp(0.0, 1.0);
     // Önce kollarla çekinir (hızlı başlar, kenara yaklaşınca yavaşlar),
     // yükselişin sonuna doğru beden kenarın üstüne kayar: iki hareket
     // birbirine karışır, köşe kırılmaz.
     double ease(double x) => x * x * (3 - 2 * x);
-    final v = 1 - math.pow(1 - (t / 0.65).clamp(0.0, 1.0), 2.2).toDouble();
-    final hx = ease(((t - 0.45) / 0.55).clamp(0.0, 1.0));
+    final v = ease((t / 0.64).clamp(0.0, 1.0));
+    final hx = ease(((t - 0.24) / 0.68).clamp(0.0, 1.0));
     position.setValues(
       _climbFrom.x + (_climbTo.x - _climbFrom.x) * hx,
       _climbFrom.y + (_climbTo.y - _climbFrom.y) * v,
@@ -1005,6 +1007,7 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       position.setFrom(_climbTo);
       velocity.setZero();
       onGround = true;
+      _landDip = 0.10;
       _jumpBuffer = 0;
       _setState(PlayerState.normal);
     }
@@ -2290,7 +2293,13 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       ..pushing = pushing
       ..shield = _shieldS
       ..landDip = _landDip
-      ..climb = (_stateTime / 0.32).clamp(0.0, 1.0)
+      ..climb = (_stateTime / 0.42).clamp(0.0, 1.0)
+      ..pull = state == PlayerState.hang
+          ? (_stateTime / 0.22).clamp(0.0, 0.35)
+          : (state == PlayerState.climbUp ? 0.65 : 0.0)
+      ..stroke = swimming
+          ? (_stroke < 1 ? _stroke : (_kick * 0.18) % 1.0)
+          : null
       ..worldY = position.y + h;
     if (state == PlayerState.hang || state == PlayerState.climbUp) {
       final cx = _hangDir > 0 ? _hangCol * kTile : (_hangCol + 1) * kTile;
@@ -2326,6 +2335,9 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       turn(const Offset(0, -14), _swimPitch);
     } else if (_flip != 0) {
       turn(const Offset(0, -14), _flip);
+    } else if (gliding && !isDead) {
+      final glideLean = (velocity.x * facing / 205.0).clamp(-0.3, 0.45) * 0.36;
+      turn(const Offset(0, -14), glideLean);
     }
     if (isDead && !_fell) {
       turn(Offset.zero, math.min(_stateTime * 5, 1) * math.pi / 2);
