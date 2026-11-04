@@ -1050,6 +1050,7 @@ class PerdePainter {
     double k,
     double time, {
     double walk = 0,
+    bool swim = false,
     bool faceLeft = false,
     double rot = 0,
     double a = 1,
@@ -1065,6 +1066,7 @@ class PerdePainter {
       time,
       walk: frame.startsWith('yuru') ? walk : 0,
       crouch: frame.startsWith('comel'),
+      swim: swim,
       jar: frame.contains('kavanoz') ? 1 : 0,
       faceLeft: faceLeft,
       rot: rot,

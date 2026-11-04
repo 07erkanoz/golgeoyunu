@@ -1125,6 +1125,7 @@ abstract final class PerdeSaye {
     double time, {
     double walk = 0,
     bool crouch = false,
+    bool swim = false,
     double jar = 1,
     bool faceLeft = false,
     double rot = 0,
@@ -1146,8 +1147,8 @@ abstract final class PerdeSaye {
       }
     } else if (time > last) {
       _in
-        ..mode = KuklaMode.ground
-        ..forward = walk / scale
+        ..mode = swim ? KuklaMode.swim : KuklaMode.ground
+        ..forward = swim ? 70 : walk / scale
         ..crouching = crouch
         ..shield = crouch ? 1 : 0
         ..light = jar.clamp(0.0, 1.0);

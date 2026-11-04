@@ -1389,16 +1389,24 @@ abstract final class _Acilis {
     } else if (s < 2.5) {
       final k = sp(hit, 2.5);
       if (PerdeSaye.ready) {
-        // Yeni Sâye uzun: suyun altında yatık süzülür (dik dursa başı
-        // suyun üstüne taşar, yalnız bacakları görünürdü), sete doğru.
-        feet = Offset(fallX + 6 + 80 * k, _water + 26 - 5 * math.sin(k * 3));
-        rot = 1.45 + 0.08 * math.sin(s * 3) - 0.25 * ease(sp(2.2, 2.5));
+        // Yeni Sâye: dalar, yüzeye çıkar, başı suyun üstünde sete doğru
+        // yüzer (gövdesi suyun altında soluk); setin dibinde doğrulur.
+        final up = ease(sp(hit, hit + 0.45));
+        final stand = ease(sp(2.2, 2.5));
+        feet = Offset.lerp(
+          Offset(fallX - 10 + 60 * k, _water + 62 + 40 * (1 - up)),
+          Offset(_ledge.left - 12, _water + 64),
+          stand,
+        )!;
+        feet += Offset(0, math.sin(s * 5) * 2 * (1 - stand));
+        rot = (0.7 + 0.05 * math.sin(s * 5)) * (1 - stand);
         frame = 'dur';
+        clip = 3;
       } else {
         feet = Offset(fallX + 20 + 80 * k, _water + 46 - 8 * math.sin(k * 3));
         rot = 1.2 * (1 - k);
+        clip = 1;
       }
-      clip = 1;
     } else if (s < 2.9) {
       final k = ease(sp(2.5, 2.9));
       feet = Offset(_ledge.left - 12, _water + 64 - 46 * k);
@@ -1564,6 +1572,27 @@ abstract final class _Acilis {
           : '${frame}_kavanoz';
     }
     if (s >= 6.3) faceLeft = false;
+    if (clip == 3) {
+      // Yüzeyde yüzer: suyun üstü tam, altı soluk.
+      canvas.save();
+      canvas.clipRect(const Rect.fromLTRB(0, _water + 2, 780, 400));
+      _P._sayeFrame(
+        canvas,
+        frame,
+        feet,
+        _sayeK,
+        time,
+        swim: true,
+        rot: rot,
+        a: 0.35,
+      );
+      canvas.restore();
+      canvas.save();
+      canvas.clipRect(const Rect.fromLTRB(0, 0, 780, _water + 2));
+      _P._sayeFrame(canvas, frame, feet, _sayeK, time, swim: true, rot: rot);
+      canvas.restore();
+      return;
+    }
     if (clip == 1) {
       // Suyun altında: soluk bir gölge, kabarcıklar yükselir.
       canvas.save();
