@@ -7,11 +7,14 @@ import 'package:flame_test/flame_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:golge/game/golge_game.dart';
 import 'package:golge/game/levels.dart';
+import 'package:golge/game/palette.dart';
 import 'package:golge/game/terrain.dart';
 
 void main() {
   testWithGame<GolgeGame>('sıradaki bölümün hazırlığı eski bölüm çizilince '
       'silinmez', GolgeGame.new, (game) async {
+    Cartoon.on = true;
+    Realism.on = true;
     game.onGameResize(Vector2(1280, 720));
     game.debugLoadLevel(0);
     await game.ready();

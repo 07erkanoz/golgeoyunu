@@ -543,6 +543,7 @@ class Backdrop extends Component with HasGameReference<GolgeGame> {
               const Color(0xFFFFB870).withValues(alpha: 0.045 + layer * 0.015),
               const Color(0x00000000),
             ],
+            const [0.0, 0.5, 1.0],
           ),
       );
     }
