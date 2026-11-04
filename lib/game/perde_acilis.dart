@@ -68,6 +68,23 @@ abstract final class _Acilis {
     return time - t0;
   }
 
+  /// 6. sahnede sudaki bölümün (dalış, yüzüş, çıkış) setin üstündeki
+  /// olayları ne kadar geciktirdiği (sn).
+  static double get _wetShift {
+    const gravity = 1100.0, top = -90.0, t0 = 0.25;
+    final hit = t0 + math.sqrt(2 * (_water + 4 - top) / gravity);
+    return hit + 0.45 + 1.7 + 0.3 + 1.1 - 3.35;
+  }
+
+  /// 7. sahnenin saniyesi: 7. satırla başlar, ama 6. sahne (sudan çıkış,
+  /// fidan, kavanozun dolması) bitmeden başlamaz; satır erken geçse de
+  /// Kandilci Sâye sudan çıkıp kavanozunu almadan gelmez.
+  static double _secs7(double u) {
+    final s = _secs(u, 6);
+    if (s < 0) return -1;
+    return math.min(s, _secs(u, 5) - (7.0 + _wetShift));
+  }
+
   /// Açılışın bütün sahneleri: her sahne kendi satır aralığında çizilir,
   /// geçişlerde bir öncekiyle karışır. Ustanın perdesinin önündeki çocuklar,
   /// kenarda bekleyen Sâye ve kavanoz ustanın perdesindeki sahnelerde (1, 3)
@@ -1050,8 +1067,21 @@ abstract final class _Acilis {
     for (var i = 0; i < flies.length; i++) {
       _firefly(canvas, flies[i], out, time, i);
     }
-    // Sâye: ateşböceklerinin ışığına karşı koyu bir siluet.
-    if (saye.dy < 520) _sayeTasvir(canvas, saye, time, rot: sayeRot, a: out);
+    // Sâye: ateşböceklerinin ışığına karşı koyu bir siluet. Çubuktan
+    // kopunca havada (oyundaki düşüş hâli): kolları açılır, çırpınır,
+    // örgüleri ve atkısı savrulur.
+    if (saye.dy < 520) {
+      final falling = u >= 3.14;
+      _sayeTasvir(
+        canvas,
+        saye,
+        time,
+        rot: sayeRot,
+        a: out,
+        mode: falling ? KuklaMode.air : null,
+        vy: 1300 + 700 * math.sin(time * 5.3),
+      );
+    }
   }
 
   /// Perdedeki Sâye tasviri (sola bakar, boyu ~100, kavanozsuz): yeni
@@ -1062,6 +1092,8 @@ abstract final class _Acilis {
     double time, {
     double rot = 0,
     double a = 1,
+    KuklaMode? mode,
+    double vy = 0,
   }) {
     if (PerdeSaye.ready) {
       PerdeSaye.draw(
@@ -1069,6 +1101,8 @@ abstract final class _Acilis {
         feet,
         100 / 36,
         time,
+        mode: mode,
+        vy: vy,
         jar: 0,
         faceLeft: true,
         rot: rot,
@@ -1108,7 +1142,14 @@ abstract final class _Acilis {
     for (var row = 0; row < 2; row++) {
       final back = row == 0;
       // Uzaktaki Kandilci iki sıranın arasından geçer.
-      if (!back) _farGuard(canvas, time, u, glow: false);
+      if (!back) {
+        // Arka sıranın dibinde uzak bir taş yol: Kandilci oradan geçer.
+        canvas.drawRect(
+          const Rect.fromLTWH(0, _water - 30, 780, 4),
+          PerdePainter._inkPaint(a * 0.4),
+        );
+        _farGuard(canvas, time, u, glow: false);
+      }
       final spacing = back ? 74.0 : 150.0;
       final colW = back ? 14.0 : 26.0;
       final top = back ? 70.0 : 14.0;
@@ -1227,11 +1268,12 @@ abstract final class _Acilis {
     double u, {
     required bool glow,
   }) {
-    final k = (_secs(u, 6) - 0.1) / 4.2;
+    final k = (_secs7(u) - 0.1) / 4.2;
     if (k <= 0 || k >= 1) return null;
     final x = -60 + k * 900;
-    const y = _water - 4;
-    const sc = 2.0;
+    // Uzakta: arka sıradaki yolda, küçük ve soluk.
+    const y = _water - 30;
+    const sc = 1.15;
     final phase = (x / sc / 26) % 1.0;
     final swing = math.sin(time * 2) * 0.15;
     final art = guardLampArt(phase, 1, 0, 0, swing);
@@ -1240,10 +1282,10 @@ abstract final class _Acilis {
     if (glow) {
       canvas.drawCircle(
         lantern,
-        60,
+        44,
         Paint()
-          ..shader = ui.Gradient.radial(lantern, 60, [
-            cold.withValues(alpha: 0.35),
+          ..shader = ui.Gradient.radial(lantern, 44, [
+            cold.withValues(alpha: 0.3),
             cold.withValues(alpha: 0),
           ]),
       );
@@ -1263,8 +1305,8 @@ abstract final class _Acilis {
         lean: 0,
         lampAngle: swing,
         doubt: 0,
-        ink: PerdePainter._ink.withValues(alpha: 0.8),
-        rim: cold.withValues(alpha: 0.4),
+        ink: PerdePainter._ink.withValues(alpha: 0.55),
+        rim: cold.withValues(alpha: 0.3),
         eye: cold.withValues(alpha: 0.9),
         lampGlass: cold,
       );
@@ -1379,7 +1421,7 @@ abstract final class _Acilis {
     final c1 = g1 + 1.1;
     // Sonraki her şey (sendeleme, fidan, kavanoz) setin üstünde başlar:
     // eski zamanlamayla aynı sırada, sudaki bölüm kadar sonra.
-    final d = c1 - 3.35;
+    final d = _wetShift;
     final s = w <= 2.5 ? w : (w < 2.5 + d ? 2.5 : w - d);
     double sp(double a, double b) => ((s - a) / (b - a)).clamp(0.0, 1.0);
 
@@ -1601,14 +1643,14 @@ abstract final class _Acilis {
     // 7: uzaktaki Kandilcinin feneri; Sâye çömelip kavanozun ışığını
     // saklar, fener gidince doğrulur, onun gittiği yöne yürür.
     _farGuard(canvas, time, u, glow: true);
-    final s7 = _secs(u, 6);
+    final s7 = _secs7(u);
     if (s7 >= 0.6 && s7 < 4.1) frame = 'comel';
     final walk = s7 - 4.7;
-    final walking = walk > 0;
     if (walk > 0) {
-      // Kuklanın kalçası adımla kendi iner kalkar; eski karede sekme eklenirdi.
+      // Fenerin gittiği yöne, setin ucuna dek yürür (oyundaki gibi gerçek
+      // adımlarla; kukla adımını ilerleyişe göre atar). Eski karede sekme.
       feet += Offset(
-        walk * 30,
+        math.min(_ledge.right - 22 - feet.dx, walk * 62),
         PerdeSaye.ready ? 0 : -(math.sin(time * 12)).abs() * 1.5,
       );
       frame = 'yuru${(time * 16).floor() % TasvirImages.walkFrames}';
@@ -1700,7 +1742,7 @@ abstract final class _Acilis {
       feet,
       _sayeK,
       time,
-      walk: walking ? 30 : 0,
+      walk: PerdeSaye.ready ? 0 : 30,
       mode: mode,
       vy: vy,
       faceLeft: faceLeft,
@@ -1784,9 +1826,10 @@ abstract final class _Acilis {
     if (u >= 5) {
       // Düşüş karanlıkta; sıçrayınca sarnıç seçilir, fidanla biraz açılır.
       final s = _secs(u, 5);
+      final d = _wetShift;
       return 0.04 +
           0.16 * ((s - 1.04) / 0.56).clamp(0.0, 1.0) +
-          0.12 * ((s - 3.85) / 0.8).clamp(0.0, 1.0);
+          0.12 * ((s - d - 3.85) / 0.8).clamp(0.0, 1.0);
     }
     if (u >= 3) {
       // Kandilin son ışığı bir an kabarır, sonra karanlık.

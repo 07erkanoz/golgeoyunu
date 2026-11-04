@@ -1152,9 +1152,27 @@ abstract final class PerdeSaye {
   static double? _last;
 
   // Perdedeki gerçek ilerleyiş: ayak noktasının ekrandaki yeri ve hızı
-  // (kukla yürütülünce adımı bu hıza göre atar, ayak kaymaz).
+  // (birim/sn; kukla yürütülünce adımı bu hıza göre atar, ayak kaymaz).
   static double _lastX = 0;
+  static double _lastY = 0;
   static double _vx = 0;
+  static double _vy = 0;
+
+  // Perde Sâye'yi çoğu yerde oyundaki en yavaş yürüyüşünden kat kat yavaş
+  // kaydırır; o hızda adım kısacık kalır, kayıyor gibi görünür. Kukla
+  // perdenin istediği yerin biraz ardında kalır, sonra gerçek bir
+  // yürüyüşle yetişir, durur (birkaç adım, bir soluk). [_off]: çizildiği
+  // yerin istenen yerden farkı (ekran pikseli), [_gx]: kendi hızı.
+  static double _off = 0;
+  static double _gx = 0;
+  static bool _going = false;
+
+  /// Perdede taşınırken (sal, kızak, at, kaplumbağa, kanatla uçuş) Sâye
+  /// yürümez; çizimden önce açılıp sonra kapatılır.
+  static bool riding = false;
+
+  /// Kanatla uçarken: havada süzülür (bacaklar yürümez).
+  static bool flying = false;
 
   static bool get ready => SayeKukla.ready;
 
@@ -1187,12 +1205,21 @@ abstract final class PerdeSaye {
     final m = c.getTransform();
     final sx = math.sqrt(m[0] * m[0] + m[1] * m[1]);
     final screenX = m[0] * feet.dx + m[4] * feet.dy + m[12];
+    final screenY = m[1] * feet.dx + m[5] * feet.dy + m[13];
+    final unit = scale * (sx > 0 ? sx : 1); // ekran pikseli / oyun birimi
+    // Ekranda yüzü hangi yana: perdenin aynalaması ile [faceLeft].
+    final facing = (m[0] < 0 ? -1.0 : 1.0) * (faceLeft ? -1 : 1);
     if (last == null || time < last - 0.001 || time - last > 2) {
       // Yeni perde: kukla baştan (yaylı parçalar yerine otursun).
       _k = SayeKukla();
       _last = time;
       _lastX = screenX;
+      _lastY = screenY;
       _vx = 0;
+      _vy = 0;
+      _off = 0;
+      _gx = 0;
+      _going = false;
       _in
         ..mode = KuklaMode.ground
         ..forward = 0
@@ -1205,16 +1232,69 @@ abstract final class PerdeSaye {
       // pikseli/sn), kenara tutunma ve çıkış ([grip]: tutunulan köşe, ayağa
       // göre perde pikseli; [climb] çıkışın ilerlemesi), yüzüş ([stroke]).
       final dt0 = time - last;
-      final moved = (screenX - _lastX) / dt0 / (scale * (sx > 0 ? sx : 1));
-      _vx += (moved - _vx) * (1 - math.exp(-dt0 / 0.08));
+      final movedX = (screenX - _lastX) / unit;
+      final movedY = (screenY - _lastY) / unit;
       _lastX = screenX;
-      final ahead = (faceLeft ? -1 : 1) * _vx;
+      _lastY = screenY;
+      final ease = 1 - math.exp(-dt0 / 0.08);
+      _vx += (movedX / dt0 - _vx) * ease;
+      _vy += (movedY / dt0 - _vy) * ease;
+      // Kendi başına mı: perde bir hâl vermemiş, taşınmıyor, yatık değil.
+      final free =
+          mode == null &&
+          !swim &&
+          walk == 0 &&
+          !riding &&
+          !flying &&
+          rot.abs() < 0.25;
+      // Havada (sıçrayış, düşüş, yükseliş, uçuş): bacaklar yürümez.
+      final airborne = (free && _vy.abs() > 18) || (flying && mode == null);
+      if ((movedX / dt0).abs() > 400) {
+        // Perde atladı (satır geçildi): olduğu yere geçer.
+        _off = 0;
+        _gx = 0;
+        _going = false;
+      } else if (free && !airborne && !crouch) {
+        // Yavaşsa ardında kalır, birkaç adımla yetişir; hızlıysa onunla
+        // yürür (oyundaki gibi gerçek bir yürüyüş, ayak kaymaz).
+        const pace = 24.0, gap = 12.0, follow = 16.0;
+        final e = -_off / unit; // istenen yer - çizildiği yer (birim)
+        var want = 0.0;
+        if (_vx.abs() >= follow) {
+          want = _vx + e * 3;
+          _going = true;
+        } else {
+          if (!_going &&
+              (e.abs() > gap || (_vx.abs() < 0.5 && e.abs() > 1.5))) {
+            _going = true;
+          }
+          if (_going && e.abs() < 1) _going = false;
+          if (_going) {
+            want = e.sign * math.min(pace, math.sqrt(2 * 90 * e.abs()));
+          }
+        }
+        _gx += (want - _gx).clamp(-180 * dt0, 180 * dt0);
+        _off += (_gx * dt0 - movedX) * unit;
+      } else {
+        // Perde bir hâl verdi: istenen yere yumuşakça oturur.
+        _off *= math.exp(-dt0 / 0.2);
+        _gx = 0;
+        _going = false;
+      }
+      final ahead = facing *
+          (free && !airborne && !crouch
+              ? _gx
+              : (riding ? 0.0 : _vx));
       _in
-        ..mode = mode ?? (swim ? KuklaMode.swim : KuklaMode.ground)
+        ..mode =
+            mode ??
+            (swim
+                ? KuklaMode.swim
+                : (airborne ? KuklaMode.air : KuklaMode.ground))
         ..forward = swim || mode == KuklaMode.swim
             ? 70
             : (walk != 0 ? walk / scale : ahead)
-        ..vy = vy / scale
+        ..vy = airborne ? (flying ? math.max(_vy, 160.0) : _vy) : vy / scale
         ..grip = ui.Offset(faceLeft ? -grip.dx : grip.dx, grip.dy) / scale
         ..climb = climb
         ..pull = pull
@@ -1227,7 +1307,8 @@ abstract final class PerdeSaye {
       _last = time;
     }
     c.save();
-    c.translate(feet.dx, feet.dy);
+    // Yürüyerek yetişirken istenen yerin biraz ardında çizilir.
+    c.translate(feet.dx + (m[0].abs() > 1e-6 ? _off / m[0] : 0), feet.dy);
     if (rot != 0) c.rotate(rot);
     c.scale(faceLeft ? -scale : scale, scale);
     final layer = a < 1;

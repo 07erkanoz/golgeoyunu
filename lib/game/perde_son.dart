@@ -1182,7 +1182,9 @@ void _semaLines(Canvas c, double time, double u) {
     final k = _span(u, 0.05, 0.85);
     final at = Offset(150 + k * 320, 205 + k * 157);
     _tulparFig(c, at, 120, time, a, spread: 0.45);
+    PerdeSaye.riding = true;
     _tasvirSaye(c, at + const Offset(-4, -66), 0.72, time, a);
+    PerdeSaye.riding = false;
   });
   // 1: Batıda Konya'nın kubbeleri; "Ustan orada," dedi Tulpar.
   _satir(c, u, 1, (a) {
@@ -1202,7 +1204,9 @@ void _semaLines(Canvas c, double time, double u) {
     const feet = Offset(290, g + 12);
     _tulparFig(c, feet, 150, time, a, spread: 0.15, flap: false);
     final saye = feet + const Offset(-4, -84);
+    PerdeSaye.riding = true;
     _tasvirSaye(c, saye, 0.8, time, a);
+    PerdeSaye.riding = false;
     // Kalbi küt küt atar.
     final beat = math.pow(math.max(0, math.sin(time * 7)), 6).toDouble();
     c.drawCircle(

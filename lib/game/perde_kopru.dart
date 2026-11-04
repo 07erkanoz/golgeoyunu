@@ -278,8 +278,19 @@ void _bCistern(Canvas c, double time, double u, double n) {
       rip,
     );
   }
-  // Sâye'nin yolu: 0'da suya bakar, 1'de başların arasından geçer, 2'de
-  // döner, sala atlar, kanaldan kaçar.
+  // Sâye'nin yolu: suyun üstünde, kazıklara oturmuş tahta iskele (sarnıçta
+  // gezilen yol gibi); sal iskelenin ucunda bekler.
+  final deck = water - 10;
+  c.drawRect(Rect.fromLTRB(-10, deck, 470, deck + 5), _ink(0.95));
+  for (var px = 14.0; px < 470; px += 46) {
+    c.drawRect(Rect.fromLTWH(px - 2.5, deck + 5, 5, 30), _ink(0.85));
+  }
+  final plank = _stroke(_hole(0.2), 0.8);
+  for (var px = 0.0; px < 470; px += 23) {
+    c.drawLine(Offset(px, deck + 0.5), Offset(px, deck + 4.5), plank);
+  }
+  // 0'da suya bakar, 1'de başların arasından geçer, 2'de döner, sala
+  // atlar, kanaldan kaçar.
   final hop = _span(u, 2.35, 2.47);
   // Sal 520'de bekler; Sâye atlayınca sağa, merdivene akar.
   final ride = _span(u, 2.47, 2.95);
@@ -287,8 +298,8 @@ void _bCistern(Canvas c, double time, double u, double n) {
       150 +
       50 * _span(u, 0.05, 0.4) +
       70 * _span(u, 0.9, 1.15) +
-      200 * _span(u, 1.15, 1.9) +
-      50 * hop +
+      182 * _span(u, 1.15, 1.9) +
+      68 * hop +
       130 * ride;
   // 0: su kıpırdar, su iyesi sudan yükselir, paslı vanayı gösterir.
   final a0 = _heroA(u, 0);
@@ -408,8 +419,12 @@ void _bCistern(Canvas c, double time, double u, double n) {
     }
   }
   final turned = u > 2.08 && u < 2.33;
-  final y = water - 4 * _span(u, 2.4, 2.47) - math.sin(hop * math.pi) * 30;
+  // İskeleden (deck) salın tahtasına (water - 4) atlar.
+  final y =
+      deck + 6 * _span(u, 2.4, 2.47) - math.sin(hop * math.pi) * 30;
+  PerdeSaye.riding = ride > 0;
   _sayeFacing(c, Offset(x, y), time, left: turned);
+  PerdeSaye.riding = false;
 }
 
 /// Su iyesi: sudan yapılmış kız; yosun gibi dalgalanan ışık saçları, üstünden
@@ -571,6 +586,7 @@ void _wingedSaye(
   double flap = 0.15,
   double rot = 0,
   double size = 1,
+  bool? fly,
 }) {
   if (a <= 0) return;
   c.save();
@@ -583,7 +599,10 @@ void _wingedSaye(
     spread + math.sin(time * 4) * flap,
     a,
   );
+  // Yerin (ya da bulutun) epey üstündeyse uçuyordur: yürümez, süzülür.
+  PerdeSaye.flying = fly ?? feet.dy < _gb - 60;
   _tasvirSaye(c, Offset.zero, s, time, a);
+  PerdeSaye.flying = false;
   c.restore();
 }
 
@@ -1157,6 +1176,7 @@ void _bQaf(Canvas c, double time, double u, double n) {
       flap: glide > 0 ? 0.06 : 0.02,
       size: glide > 0 ? 1 : 0.72,
       rot: 0.2 * glide,
+      fly: glide > 0,
     );
   }
   // 1: Simurg'un tüyleri birer birer; her tüye dokununca dağın bir yerinde
@@ -2131,6 +2151,7 @@ void _bSki(Canvas c, double time, double u, double n) {
     final hop = _span(u, 0.42, 0.52);
     final sayeX = 250 + hop * 22;
     final onSled = ride > 0 || hop > 0;
+    PerdeSaye.riding = ride > 0;
     _krSaye(
       c,
       onSled
@@ -2147,6 +2168,7 @@ void _bSki(Canvas c, double time, double u, double n) {
       flip: !onSled,
       rot: ride > 0 ? sAng : 0,
     );
+    PerdeSaye.riding = false;
     _krSnow(c, time, a0, n: 50);
   }
   // 1: fenerli balonların altından, mıknatıslı tepenin üstünden; tümsekte
@@ -2989,7 +3011,9 @@ void _bErlik(Canvas c, double time, double u, double n) {
       speak: speak,
     );
     if (mount > 0) {
+      PerdeSaye.riding = true;
       _sayeJ(c, const Offset(-6, -50), 1.2, time, a2 * mount);
+      PerdeSaye.riding = false;
     }
     c.restore();
     if (u < 2.45) {
