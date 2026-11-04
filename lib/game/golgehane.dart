@@ -534,13 +534,16 @@ class GolgehaneSahne extends PositionComponent
     canvas.save();
     canvas.translate(sx, feet);
     canvas.scale(p.facing * s, s);
-    PerdePainter.drawSaye(
-      canvas,
-      Paint()..color = const Color(0xFF1A0A04).withValues(alpha: 0.78),
-      Paint()..color = const Color(0x00000000),
-      _t,
-      jar: 0,
-    );
+    final color = const Color(0xFF1A0A04).withValues(alpha: 0.78);
+    if (!p.paintScreenShadow(canvas, color)) {
+      PerdePainter.drawSaye(
+        canvas,
+        Paint()..color = color,
+        Paint()..color = const Color(0x00000000),
+        _t,
+        jar: 0,
+      );
+    }
     canvas.restore();
   }
 

@@ -2359,6 +2359,27 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     canvas.restore();
   }
 
+  /// Hayal perdesine düşen yansıma: Sâye'nin o anki gerçek duruşuyla (dururken
+  /// durur, yürürken yürür, çömelirken çömelir) ayak noktası orijinde, sağa
+  /// bakar biçimde boyu ~84 birim olarak çizilir.
+  bool paintScreenShadow(Canvas canvas, Color color) {
+    if (!_useKukla) return false;
+    canvas.save();
+    const s = 84 / 36;
+    canvas.scale(s, s);
+    final a = color.a.clamp(0.0, 1.0);
+    if (a < 1) {
+      canvas.saveLayer(
+        null,
+        Paint()..color = Color.fromRGBO(255, 255, 255, a),
+      );
+    }
+    _kukla.paint(canvas, rim: 0.35, jar: false);
+    if (a < 1) canvas.restore();
+    canvas.restore();
+    return true;
+  }
+
   /// Çizim uzayından (yöne çevrilmiş, ölçekli) dünyaya.
   Vector2 _toWorld(Offset a) => Vector2(
     position.x +

@@ -328,8 +328,8 @@ class SayeKukla {
   static final double _legLen = (_lt + _ls) * k;
   static final _upper = (_eF - _sF).distance, _fore = (_hF - _eF).distance;
 
-  /// Ayakta kalçanın yüksekliği (ayak merkezine göre): dizler hafif kırık.
-  static final double _standY = -(_sole - _legA.dy) * k - _legLen * 0.955;
+  /// Ayakta kalçanın yüksekliği (ayak merkezine göre): bacaklar doğal dik.
+  static final double _standY = -(_sole - _legA.dy) * k - _legLen * 0.968;
 
   /// Kalçanın yatay yeri: ayaklar ayak merkezinin (kutunun ortasının)
   /// altında.
@@ -553,26 +553,20 @@ class SayeKukla {
       return (_onToe(xt, 0, p), p);
     }
     final u = (ph - stance) / (1 - stance);
-    // Koşuda arka bacak topuğunu erken ve yukarı teper.
+    final p = (0.55 * (1 - sm(u / 0.55)) - 0.22 * sm((u - 0.45) / 0.55)) * e;
+    // Havadaki ayak kavisli bir yayla doğrudan arkadan öne süzülür (havada
+    // geri gitmez ya da gövdenin önüne fırlamaz).
+    final arc = math.sin(math.pi * math.pow(u, 1 - 0.25 * run));
     final lift =
-        math.pow(math.sin(math.pi * math.pow(u, 1 - 0.3 * run)), 0.8) *
-        _legLen *
-        (0.19 + 0.24 * run) *
-        liftK *
+        (0.68 * (1 - 0.45 * _crouch) +
+            arc * _legLen * (0.13 + 0.18 * run) * liftK) *
         e;
-    final p = (0.55 * (1 - sm(u / 0.5)) - 0.22 * sm((u - 0.5) / 0.5)) * e;
-    // Yay dünyada ve basan uçtan çizilir: kalkışta parmak ucu yerinde kalır,
-    // topuk onun çevresinde döner, ayak önce kalkar sonra ilerler; inişte
-    // önce yerine gelir, topuk dikine basar. Ayak yere göre durur, gövdeye
-    // göre geri akar (yoksa basmadan önce ileri kayar, kalkarken sürtünür).
-    final travel = g * (1 - stance) / stance;
     final c0 = base - g / 2, c1 = base + g / 2 - heelBack;
-    final h = sm((u - 0.12) / 0.62);
-    final cx = c0 + (c1 + travel - c0) * h - travel * u;
+    final cx = c0 + (c1 - c0) * sm(u);
     final ankle = V.lerp(
       _onToe(cx, -lift, p),
       _onHeel(cx, -lift, p),
-      sm((u - 0.3) / 0.6),
+      sm((u - 0.25) / 0.55),
     )!;
     return (ankle, p);
   }
@@ -596,17 +590,18 @@ class SayeKukla {
     _reach = _approach(_reach, i.reach.clamp(0.0, 1.0), dt, 0.07);
     _push = _approach(_push, i.pushing ? 1 : 0, dt, 0.1);
     final e = _amp, run = _run, kk = _crouch;
-    // Yerdeki ayak menzili; küçük çocuk hızlı ve kısa adımlarla gider.
-    final gBase = _legLen * (0.85 + 0.22 * run - 0.3 * kk - 0.1 * _push);
-    final st0 = 0.58 - 0.36 * run;
-    final g = math.min(gBase, v * st0 / 0.9) * e;
+    // Kalça salınımıyla desteklenen doğal adım açıklığı: çok sık ve telaşlı
+    // adımlar yerine akıcı, okunaklı adım ritmi.
+    final gBase = _legLen * (1.14 + 0.32 * run - 0.32 * kk - 0.12 * _push);
+    final st0 = 0.58 - 0.28 * run;
+    final g = math.min(gBase, v * st0 / 0.85) * e;
     // Kısa adımda ayak da az kalkar.
     final size = gBase > 0 ? (g / gBase).clamp(0.0, 1.0) : 0.0;
     var cad = 0.0;
     var stance = st0;
     if (v > 1 && g > 0.05) {
-      cad = math.min(4.4, v * st0 / g);
-      stance = (g * cad / v).clamp(0.14, 0.7);
+      cad = math.min(2.4 + 0.7 * run, v * st0 / g);
+      stance = (g * cad / v).clamp(0.22, 0.68);
     }
     // Geri geri yürüyüşte evre tersine akar.
     _q = (_q + cad * dt * (i.forward < 0 ? -1 : 1)) % 1.0;
@@ -618,7 +613,7 @@ class SayeKukla {
       stance,
       e,
       run,
-      -6 * _px * (1 - e),
+      -3 * _px * (1 - e),
       0.45 + 0.55 * size,
     );
     final fB = _gaitFoot(
@@ -628,46 +623,45 @@ class SayeKukla {
       stance,
       e,
       run,
-      4 * _px * (1 - e),
+      2 * _px * (1 - e),
       0.45 + 0.55 * size,
     );
     final two = math.cos(4 * math.pi * (q - stance / 2));
-    final bob = (run < 0.5 ? two * 9.5 : -two * 11.5) * _px;
-    final breath = math.sin(_time * 2.6) * 1.5 * _px * (1 - e);
+    final bob = (run < 0.5 ? two * 3.8 : -two * 4.8) * _px;
+    final breath = math.sin(_time * 2.6) * 1.2 * _px * (1 - e);
     final dip = sm(i.landDip / 0.16);
     final farFwd = math.sin(2 * math.pi * (q - 0.07));
     final nearFwd = -math.sin(2 * math.pi * (q - 0.05));
     // Gövde dik; yürürken her adımda yumuşak ağırlık aktarımı; çömelince,
     // uzanırken ve iterken doğal öne eğiliş.
     final lean =
-        (0.05 + 0.16 * run + 0.042 * two) * e +
+        (0.04 + 0.15 * run + 0.016 * two) * e +
         0.02 +
-        0.44 * kk +
+        0.38 * kk +
         0.22 * _reach +
         0.3 * _push +
-        0.22 * dip;
+        0.20 * dip;
     final hipY =
         _standY -
         bob * e +
-        _legLen * 0.04 * run * e -
+        _legLen * 0.035 * run * e -
         breath +
-        kk * _legLen * 0.68 +
-        dip * 36 * _px;
+        kk * _legLen * 0.58 +
+        dip * 32 * _px;
     // Bacak basan ayağa yetişmeli (yetişmezse ayak kayar, havada kalır):
-    // adım açıldıkça kalça yumuşakça alçalır (keskin diz kırılması olmaz).
-    final hipX = _hipX - 18 * _px * kk;
+    // yalnız bacak boyu yetmediğinde kalça gerektiği kadar alçalır; dururken
+    // dizler bükülmez.
+    final hipX = _hipX - 16 * _px * kk;
     var y = hipY;
     for (final (f, shift) in [(fF.$1, _nearLeg), (fB.$1, _backLeg)]) {
-      final legHip = V(hipX, 0) + rot(_legH + shift - _hip0, lean) * k;
-      final dx = f.dx - legHip.dx;
-      final reach = _legLen * 0.985;
-      if (dx.abs() < reach) {
-        final reqY = f.dy - legHip.dy - math.sqrt(reach * reach - dx * dx);
-        final diff = reqY - y;
-        if (diff > -0.6) {
-          y += math.max(0.0, diff) +
-              0.3 * math.exp(-diff.abs() * 3.0) * (diff > 0 ? 0.2 : 1.0);
-        }
+      final h0 = V(hipX, 0) + rot(_legH + shift - _hip0, lean) * k;
+      final pelvisDx = ((f.dx - h0.dx) * 0.24).clamp(-1.8, 1.8);
+      final legHip = V(h0.dx + pelvisDx, h0.dy);
+      final dx = (f.dx - legHip.dx).abs();
+      final reach = _legLen * 0.992;
+      if (dx < reach) {
+        final maxRise = f.dy - math.sqrt(reach * reach - dx * dx) - legHip.dy;
+        if (y < maxRise) y = maxRise;
       }
     }
     final hasJar = i.light > 0.02;
@@ -988,9 +982,11 @@ class SayeKukla {
     );
   }
 
-  // İki kemik bacak (diz öne).
+  // İki kemik bacak (diz öne; kalça etek altında adımla doğal esner).
   (Af, Af, Af) _leg(Af torsoM, V shift, V ankle, double pitch) {
-    final h = torsoM(_legH + shift);
+    final h0 = torsoM(_legH + shift);
+    final pelvisDx = ((ankle.dx - h0.dx) * 0.24).clamp(-1.8, 1.8);
+    final h = V(h0.dx + pelvisDx, h0.dy);
     final l1 = _lt * k, l2 = _ls * k;
     var d = ankle - h;
     final dist = d.distance.clamp((l1 - l2).abs() + 0.01, l1 + l2 - 0.01);
@@ -1424,15 +1420,21 @@ abstract final class PerdeSaye {
         _off = 0;
         _gx = 0;
       } else if (free && !airborne && !crouch) {
-        // Dur-kalk yapmadan kesintisiz, akıcı yürüyüş: perde yavaş ilerlese
-        // bile Sâye donup beklemez, akıcı adımlarla hedefi izler.
-        _off *= math.exp(-dt0 / 0.12);
-        final vAbs = _vx.abs();
-        final want = vAbs < 0.6
-            ? 0.0
-            : _vx.sign *
-                math.max(vAbs, 14.0 * ((vAbs - 0.6) / 5.0).clamp(0.0, 1.0));
-        _gx += (want - _gx) * (1 - math.exp(-dt0 / 0.07));
+        final rawV = movedX / dt0;
+        if (rawV.abs() < 1.8) {
+          // Hedef durduysa yürüyüşü anında kes (yerinde saymasın).
+          _vx = 0;
+          _gx *= math.exp(-dt0 / 0.04);
+          _off *= math.exp(-dt0 / 0.08);
+        } else {
+          _off *= math.exp(-dt0 / 0.12);
+          final vAbs = _vx.abs();
+          final want = vAbs < 1.8
+              ? 0.0
+              : _vx.sign *
+                  math.max(vAbs, 15.0 * ((vAbs - 1.8) / 6.0).clamp(0.0, 1.0));
+          _gx += (want - _gx) * (1 - math.exp(-dt0 / 0.06));
+        }
       } else {
         // Perde bir hâl verdi: istenen yere yumuşakça oturur.
         _off *= math.exp(-dt0 / 0.15);

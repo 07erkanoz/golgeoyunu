@@ -1668,15 +1668,18 @@ class GiantPerde extends PositionComponent
         canvas.save();
         canvas.translate(shadowX(sx) - position.x, h - 4);
         canvas.scale(facing * 1.75, 1.75);
-        final ink = Paint()
-          ..color = const Color(0xFF1A0A04).withValues(alpha: 0.8);
-        PerdePainter.drawSaye(
-          canvas,
-          ink,
-          Paint()..color = const Color(0x00000000),
-          _t,
-          jar: 0,
-        );
+        final color = const Color(0xFF1A0A04).withValues(alpha: 0.8);
+        final p = game.player;
+        final live = p != null && (lagT < 0 || lagT >= lagLength);
+        if (!live || !p.paintScreenShadow(canvas, color)) {
+          PerdePainter.drawSaye(
+            canvas,
+            Paint()..color = color,
+            Paint()..color = const Color(0x00000000),
+            _t,
+            jar: 0,
+          );
+        }
         canvas.restore();
       }
     }
