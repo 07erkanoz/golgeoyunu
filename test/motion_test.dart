@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 import 'package:flame_test/flame_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:golge/game/golge_game.dart';
+import 'package:golge/game/kukla.dart';
 import 'package:golge/game/levels.dart';
 import 'package:golge/game/player.dart';
 import 'package:golge/game/rig.dart';
@@ -25,17 +26,28 @@ void _draw(Player p) {
 }
 
 void main() {
-  tearDown(() => GolgeGame.debugLevels = null);
+  TestWidgetsFlutterBinding.ensureInitialized();
+  tearDown(() {
+    GolgeGame.debugLevels = null;
+    Player.kuklaLevels = {0};
+  });
 
-  for (final (name, hz, sneak) in [
-    ('koşu 60 Hz', 60, false),
-    ('koşu 144 Hz', 144, false),
-    ('koşu 30 Hz', 30, false),
-    ('parmak ucu', 60, true),
+  for (final (name, hz, sneak, kukla) in [
+    ('koşu 60 Hz', 60, false, false),
+    ('koşu 144 Hz', 144, false, false),
+    ('koşu 30 Hz', 30, false, false),
+    ('parmak ucu', 60, true, false),
+    // Yeni Sâye (A1) kuklası.
+    ('kukla koşu 60 Hz', 60, false, true),
+    ('kukla koşu 144 Hz', 144, false, true),
+    ('kukla koşu 30 Hz', 30, false, true),
+    ('kukla parmak ucu', 60, true, true),
   ]) {
     testWithGame<GolgeGame>('yerdeki ayak kaymaz: $name', GolgeGame.new, (
       game,
     ) async {
+      Player.kuklaLevels = kukla ? {0} : {};
+      if (kukla) await SayeKukla.load();
       GolgeGame.debugLevels = [
         const LevelDef(
           title: 'ADIM',
@@ -56,6 +68,7 @@ void main() {
       for (var t = 0.0; t < 0.8; t += dt) {
         game.update(dt);
       }
+      expect(p.kuklaOn, kukla);
       final ground = p.position.y + Player.h;
       _draw(p);
       var prev = [...p.debugFeet];
@@ -65,7 +78,8 @@ void main() {
         game.update(dt);
         _draw(p);
         final now = p.debugFeet;
-        for (var k = 0; k < 2; k++) {
+        // Eski çizimde iki ayak, kuklada her ayağın topuğu ve parmak ucu.
+        for (var k = 0; k < now.length; k++) {
           // İki karede de yerdeyse aynı yerde durmalı.
           final onFloor =
               (now[k].y - ground).abs() < 0.6 &&
@@ -73,6 +87,11 @@ void main() {
           if (!onFloor) continue;
           planted++;
           final slip = (now[k].x - prev[k].x).abs();
+          if (kukla && slip > 0.6 && const bool.fromEnvironment('TANI')) {
+            // ignore: avoid_print
+            print('kare $i uç $k kayma ${slip.toStringAsFixed(2)} '
+                'önce ${prev[k]} şimdi ${now[k]} hepsi $now');
+          }
           if (slip > worst) worst = slip;
         }
         prev = [...now];

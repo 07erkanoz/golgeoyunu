@@ -53,6 +53,7 @@ import 'persist.dart';
 import 'palette.dart';
 import 'player.dart';
 import 'konya.dart';
+import 'kukla.dart';
 import 'hints.dart';
 import 'legends.dart';
 import 'umay.dart';
@@ -343,6 +344,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     GiantPuppet.load();
     ShadowArt.load();
     TasvirImages.load();
+    SayeKukla.load();
     camera.viewfinder.anchor = Anchor.center;
     camera.backdrop = Backdrop();
     effects = ScreenEffects();

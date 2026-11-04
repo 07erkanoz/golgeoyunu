@@ -16,7 +16,8 @@ import 'package:golge/game/legends.dart';
 import 'package:golge/game/player.dart';
 import 'package:golge/settings.dart';
 
-const scale = 12.0;
+/// SCALE ortam değişkeniyle büyütülür (ör. 24: tasarım örneği için).
+final scale = double.parse(Platform.environment['SCALE'] ?? '12');
 const pad = Offset(16, 20);
 
 Future<void> save(
@@ -34,14 +35,16 @@ Future<void> save(
   (c as PositionComponent).render(canvas);
   final img = await rec.endRecording().toImage(w.round(), h.round());
   final png = await img.toByteData(format: ui.ImageByteFormat.png);
-  File('build/preview/saye_kare/$name.png')
+  File('${_out()}/$name.png')
       .writeAsBytesSync(png!.buffer.asUint8List());
 }
+
+String _out() => Platform.environment['OUT'] ?? 'build/preview/saye_kare';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   testWithGame<GolgeGame>('Sâye kareleri', GolgeGame.new, (game) async {
-    Directory('build/preview/saye_kare').createSync(recursive: true);
+    Directory(_out()).createSync(recursive: true);
     game.onGameResize(Vector2(960, 540));
     game.debugLoadLevel(0);
     await game.ready();

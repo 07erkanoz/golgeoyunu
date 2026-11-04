@@ -16,6 +16,7 @@ import 'mechanics.dart';
 import 'myth_shapes.dart';
 import 'palette.dart';
 import 'konya.dart';
+import 'kukla.dart';
 import 'legends.dart';
 import 'ski.dart';
 import 'strings.dart';
@@ -207,9 +208,11 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     dt = math.min(dt, 1 / 30);
     _anim += dt;
     _stateTime += dt;
+    _shieldS = approach(_shieldS, hidden || crouching ? 1 : 0, dt, 0.06);
     _landDip = math.max(0, _landDip - dt);
     _updateShadow(dt);
     _updateMotion(dt);
+    _stepKukla(dt);
 
     final c = game.controls;
     final active = !game.cinematic && !isDead;
@@ -1624,6 +1627,44 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
   /// kanatlar atlanır.
   static bool _rimPass = false;
 
+  // Hâller arası geçiş: her hâl (duruş, çömelme, itme, tutunma, sarkma...)
+  // kendi pozunu hesaplar; hâl değişince poz bir karede atlamasın diye son
+  // çizilen duruş dünyadaki yeriyle saklanır, yeni hâlin pozuna kısa bir
+  // sürede yumuşakça geçilir (geçiş bitince poz tam yenisidir: basan ayak
+  // kaymaz).
+  int _poseMode = -1;
+  double _blendStart = 0;
+  double _blendDur = 0.15;
+  _Pose? _blendFrom;
+  _Pose? _lastPose;
+
+  /// Kavanozun örtülmesi (çömelince, saklanınca) yavaşça.
+  double _shieldS = 0;
+
+  /// Pozu belirleyen hâl: değişince geçiş başlar (yürüyüş, havaya kalkış
+  /// kendi içinde zaten yumuşak).
+  int get _poseKey =>
+      state.index * 32 +
+      (crouching ? 1 : 0) +
+      (pushing ? 2 : 0) +
+      (sneaking ? 4 : 0) +
+      (swimming ? 8 : 0) +
+      (skiing ? 16 : 0);
+
+  /// Geçişin süresi: tutunurken kavrayış çabuk, çömelip kalkmak, suya
+  /// girmek daha yavaş.
+  double _blendFor(int from, int to) {
+    final a = from ~/ 32, b = to ~/ 32;
+    if (b == PlayerState.hang.index) return 0.08;
+    if (a == PlayerState.hang.index && b == PlayerState.climbUp.index) {
+      return 0.06;
+    }
+    if (b == PlayerState.dead.index) return 0.08;
+    if ((from ^ to) & 8 != 0) return 0.25;
+    if ((from ^ to) & 1 != 0) return to & 1 != 0 ? 0.16 : 0.14;
+    return 0.15;
+  }
+
   // Çizimler 18x40'lık bir gövde için yapıldı; küçük çocuğa ölçeklenir.
   static const double _artW = 18;
   static const double _artH = 40;
@@ -2208,6 +2249,75 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
   /// Testler için: son çizimde ayakların dünyadaki yeri.
   final debugFeet = <Vector2>[];
 
+  // ------------------------------------------------------- yeni Sâye (A1)
+  // Deneme: Yerebatan'da Sâye A1 çiziminden yapılmış kukla olarak çizilir
+  // (kukla.dart). Kuklanın pozu olmayan hâllerde (yüzme, kayak, ip, ölüm,
+  // süzülme, at sırtı) eski çizime düşülür.
+
+  /// Kukla hangi bölümlerde (deneme: yalnız Yerebatan).
+  static Set<int> kuklaLevels = {0};
+
+  /// Kukla bu karede çiziliyor mu (testler).
+  bool get kuklaOn => _useKukla;
+
+  final _kukla = SayeKukla();
+  final _kuklaIn = KuklaInput();
+
+  bool get _useKukla =>
+      SayeKukla.ready &&
+      kuklaLevels.contains(game.levelIndex) &&
+      !swimming &&
+      !skiing &&
+      !isDead &&
+      !gliding &&
+      !game.onHorse &&
+      (state == PlayerState.normal ||
+          state == PlayerState.hang ||
+          state == PlayerState.climbUp ||
+          state == PlayerState.vine);
+
+  void _stepKukla(double dt) {
+    if (!_useKukla) return;
+    final i = _kuklaIn
+      ..mode = switch (state) {
+        PlayerState.hang => KuklaMode.hang,
+        PlayerState.climbUp => KuklaMode.climbUp,
+        PlayerState.vine => KuklaMode.vine,
+        _ => onGround ? KuklaMode.ground : KuklaMode.air,
+      }
+      ..forward = velocity.x * facing
+      ..vy = velocity.y
+      ..crouching = crouching
+      ..sneaking = sneaking
+      ..pushing = pushing
+      ..shield = _shieldS
+      ..landDip = _landDip
+      ..climb = (_stateTime / 0.32).clamp(0.0, 1.0)
+      ..worldY = position.y + h;
+    if (state == PlayerState.hang || state == PlayerState.climbUp) {
+      final cx = _hangDir > 0 ? _hangCol * kTile : (_hangCol + 1) * kTile;
+      final cy = _hangRow * kTile.toDouble();
+      i.grip = Offset(
+        (cx - (position.x + w / 2)) * facing,
+        cy - (position.y + h),
+      );
+    }
+    _kukla.step(dt, i);
+  }
+
+  /// Kukla, çarpışma kutusunun yerel uzayında (ayaklar kutunun dibinde).
+  void _paintKukla(Canvas canvas, {Color? solid, double rim = 0}) {
+    canvas.save();
+    canvas.translate(w / 2, h);
+    if (facing < 0) canvas.scale(-1, 1);
+    if (solid != null) {
+      _kukla.paintSolid(canvas, solid);
+    } else {
+      _kukla.paint(canvas, rim: rim);
+    }
+    canvas.restore();
+  }
+
   /// Çizim uzayından (yöne çevrilmiş, ölçekli) dünyaya.
   Vector2 _toWorld(Offset a) => Vector2(
     position.x +
@@ -2374,6 +2484,11 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
         (sent ? 1.3 : 1.7) * (1 + grow * 0.6),
       );
       canvas.translate(-w / 2, -h);
+      if (_useKukla) {
+        _paintKukla(canvas, solid: _fill.color);
+        canvas.restore();
+        return;
+      }
       canvas.translate((w - _artW * _artScale) / 2, 0);
       canvas.scale(_artScale);
       _renderJar(canvas);
@@ -2497,6 +2612,27 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
         // parçası (utangaç gölge de bir sır): bulanıklıksız düz siluet.
         _wallShadow(canvas, plain: true);
       }
+    }
+    if (_useKukla) {
+      final flicker =
+          0.85 + 0.15 * math.sin(_anim * 11) * math.sin(_anim * 3.7);
+      _kuklaIn.light = flicker;
+      _paintKukla(
+        canvas,
+        rim: Settings.lowGraphics ? 0 : 0.42 * flicker * (1 - _shieldS),
+      );
+      final j = _kukla.jar;
+      _jarWorld = Vector2(
+        position.x + w / 2 + j.dx * facing,
+        position.y + h + j.dy,
+      );
+      debugFeet
+        ..clear()
+        ..addAll([
+          for (final s in _kukla.soles)
+            Vector2(position.x + w / 2 + s.dx * facing, position.y + h + s.dy),
+        ]);
+      return;
     }
     if (jarStyle && !hidden && !crouching && !isDead && !Settings.lowGraphics) {
       // Kenar ışığı: kavanozun sıcak ışığı siluetin önünü ve tepesini yalar.
@@ -2988,9 +3124,46 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
         }
     }
 
+    // Hâl değiştiyse önceki duruştan yenisine geçiş (yalnız asıl çizimde
+    // başlar; kenar ışığı ve gölge aynı geçişi kullanır).
+    if (!_rimPass) {
+      final key = _poseKey;
+      if (key != _poseMode) {
+        if (_poseMode >= 0 && _lastPose != null) {
+          _blendFrom = _lastPose;
+          _blendStart = _anim;
+          _blendDur = _blendFor(_poseMode, key);
+        }
+        _poseMode = key;
+      }
+    }
+    final from = _blendFrom;
+    var mix = 1.0;
+    if (from != null) {
+      final k = ((_anim - _blendStart) / _blendDur).clamp(0.0, 1.0);
+      mix = k * k * (3 - 2 * k);
+      if (k >= 1 && !_rimPass) _blendFrom = null;
+    }
+    Offset fromArt(Offset world) => toArt(world.dx, world.dy);
+    if (mix < 1) {
+      hipY =
+          (from!.hipY - position.y) / _artScale +
+          (hipY - (from.hipY - position.y) / _artScale) * mix;
+      lean = from.lean + (lean - from.lean) * mix;
+      foot1 = Offset.lerp(fromArt(from.foot1), foot1, mix)!;
+      foot2 = Offset.lerp(fromArt(from.foot2), foot2, mix)!;
+    }
+
+    // Yürürken ağırlık ayaktan ayağa geçer: omuz adımla hafifçe öne arkaya
+    // salınır, baş bir parça geriden gelir (adımın iki katı sıklıkta iner
+    // kalkar).
+    final gaitSway = walking && !crouching && !pushing ? amount : 0.0;
     final hip = Offset(cx, hipY);
-    final headY = hipY - 18.5;
-    final shoulder = Offset(cx + lean * 6, hipY - 10);
+    final headY = hipY - 18.5 + math.sin(cycle * 2 + 0.9) * 0.45 * gaitSway;
+    final shoulder = Offset(
+      cx + lean * 6 + math.sin(cycle) * 0.35 * gaitSway,
+      hipY - 10,
+    );
     final head = Offset(cx + 1 + lean * 9, headY);
 
     // Kavanozu tutan kol öne uzanır; yürürken hafifçe sallanır.
@@ -3000,7 +3173,7 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
         ? 1.9
         : (jarAtHip
               ? (pushing ? 1.4 : math.pi - 0.15)
-              : (sneaking ? 1.5 : 0.55 + math.sin(cycle) * 0.1 * amount) +
+              : (sneaking ? 1.5 : 0.55 + math.sin(cycle) * 0.22 * amount) +
                     still * (0.75 + math.sin(_anim * 37) * 0.03));
     Offset limbEnd(Offset from, double angle, double len) =>
         from + Offset(math.sin(angle) * len, math.cos(angle) * len);
@@ -3033,7 +3206,7 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
         _jarSwing.value +
         math.sin(cycle * 2) * 0.06 * amount * (1 - _air) +
         math.sin(_anim * 1.7) * 0.03;
-    final jar = swim
+    var jar = swim
         ? hip.translate(
             7.5 + math.sin(_anim * 1.5) * 0.8,
             2 + _swimGlide * 2 + math.cos(_anim * 1.3) * 0.6,
@@ -3043,8 +3216,33 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
         : (shielded
               ? jarHand.translate(-1.5, 1.5)
               : jarHand + Offset(math.sin(swing) * 4.5, math.cos(swing) * 4.5));
+    // Eller ve kavanoz da önceki duruştan geçer.
+    var back = backHand ?? limbEnd(shoulder, arm2, 9.5);
+    var front = frontHand ?? jarHand;
+    if (mix < 1) {
+      back = Offset.lerp(fromArt(from!.back), back, mix)!;
+      front = Offset.lerp(fromArt(from.front), front, mix)!;
+      jar = Offset.lerp(fromArt(from.jar), jar, mix)!;
+    }
+    if (!_rimPass) {
+      Offset world(Offset a) {
+        final v = _toWorld(a);
+        return Offset(v.x, v.y);
+      }
+
+      _lastPose = _Pose(
+        hipY: position.y + hipY * _artScale,
+        lean: lean,
+        foot1: world(foot1),
+        foot2: world(foot2),
+        back: world(back),
+        front: world(front),
+        jar: world(jar),
+      );
+    }
+
     final flicker = 0.85 + 0.15 * math.sin(_anim * 11) * math.sin(_anim * 3.7);
-    final lightAmount = isDead ? 0.0 : (shielded ? 0.12 : 1.0) * flicker;
+    final lightAmount = isDead ? 0.0 : (1 - 0.88 * _shieldS) * flicker;
 
     if (lightAmount > 0 && !_rimPass) {
       canvas.drawCircle(
@@ -3074,7 +3272,29 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
               ? Cartoon.charLit
               : Color.lerp(kInk, const Color(0xFF5A3A26), 0.32)!);
 
-    void leg(Offset target, {bool back = false}) {
+    // Topuktan parmağa: basışın sonunda topuk kalkar (burun yere iner),
+    // havada burun yukarı döner, topuk yere değince ayak düzleşir.
+    final rollK = walking && !swim ? amount * (1 - _air) : 0.0;
+    double roll(double phase) {
+      if (rollK <= 0) return 0;
+      final p = (phase % (2 * math.pi)) / (2 * math.pi);
+      double sm(double x) {
+        final c = x.clamp(0.0, 1.0);
+        return c * c * (3 - 2 * c);
+      }
+
+      if (p < stance) {
+        final q = p / stance;
+        return rollK *
+            (q < 0.12
+                ? -0.25 * (1 - sm(q / 0.12))
+                : 0.45 * sm((q - 0.78) / 0.22));
+      }
+      final q = (p - stance) / (1 - stance);
+      return rollK * (0.45 + (-0.25 - 0.45) * sm(q));
+    }
+
+    void leg(Offset target, {bool back = false, double pitch = 0}) {
       final (knee, foot) = solveLimb(hip, target, thigh, shin);
       if (!_rimPass) debugFeet.add(_toWorld(foot));
       _limb
@@ -3104,7 +3324,13 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
         _fill.color = ink;
         return;
       }
-      // Küçük bot (denemede iri, karikatür pabuç).
+      // Küçük bot (denemede iri, karikatür pabuç); bilekten döner.
+      if (pitch != 0) {
+        canvas.save();
+        canvas.translate(foot.dx, foot.dy);
+        canvas.rotate(pitch);
+        canvas.translate(-foot.dx, -foot.dy);
+      }
       canvas.drawOval(
         Rect.fromCenter(
           center: foot.translate(toon ? 2.4 : 1.6, toon ? -1 : -0.6),
@@ -3113,6 +3339,7 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
         ),
         _fill,
       );
+      if (pitch != 0) canvas.restore();
       _limb.color = ink;
       _fill.color = ink;
     }
@@ -3133,8 +3360,8 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     }
 
     // Arka kol ve arka bacak.
-    arm(backHand ?? limbEnd(shoulder, arm2, 9.5), back: true);
-    leg(foot2, back: true);
+    arm(back, back: true);
+    leg(foot2, back: true, pitch: roll(cycle + math.pi));
 
     // İnce gövde; dizlere inen, arkası rüzgârla açılan uzun bir hırka.
     // Atkı, saç ve hırka bir yaya bağlı: hızlanınca açılır, frenlenince bir
@@ -3163,7 +3390,7 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       _drawWings(canvas, Offset(cx - 1 + lean * 6, hipY - 10));
     }
 
-    leg(foot1);
+    leg(foot1, pitch: roll(cycle));
 
     // Arkadan bir ses: baş geriye döner (beden yerinde kalır).
     final looking = _lookBackT > 0;
@@ -3309,7 +3536,6 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     }
 
     // Kavanozu tutan ön kol ve ip.
-    final front = frontHand ?? jarHand;
     arm(front);
     if (_rimPass || debugNoJar) {
       canvas.restore();
@@ -3326,7 +3552,7 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       );
     } else if (!jarAtHip && !shielded) {
       canvas.drawLine(
-        jarHand,
+        front,
         jar.translate(0, -5.4),
         Paint()
           ..color = kInk
@@ -3466,3 +3692,24 @@ enum _ShadowMood { follow, lag, astray, sent, shy, guide, play }
 
 /// Gölgenin oyunda dönüştüğü hayvanlar.
 enum ShadowAnimal { rabbit, fox, deer, wolf, lion, horse, bird }
+
+/// Bir karede çizilen duruş, dünyadaki yerleriyle (hâller arası geçiş için).
+class _Pose {
+  const _Pose({
+    required this.hipY,
+    required this.lean,
+    required this.foot1,
+    required this.foot2,
+    required this.back,
+    required this.front,
+    required this.jar,
+  });
+
+  final double hipY;
+  final double lean;
+  final Offset foot1;
+  final Offset foot2;
+  final Offset back;
+  final Offset front;
+  final Offset jar;
+}

@@ -72,6 +72,8 @@ flutter:
     - assets/images/karagoz/
     # Perdeye taşınan oyun çizimleri (tools/preview/saye_kareler_cikar_test.dart).
     - assets/images/perde/
+    # Yeni Sâye (A1) kuklasının parçaları (build/kukla/kukla2.json).
+    - assets/kukla/
     - assets/art/
     # Anlatım sesleri (tools/seslendir.py üretir).
     - assets/voice/tr/
