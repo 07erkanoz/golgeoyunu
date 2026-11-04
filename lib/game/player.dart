@@ -2405,13 +2405,16 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
   }
 
   /// Kukla, çarpışma kutusunun yerel uzayında (ayaklar kutunun dibinde).
+  static const double _kuklaVisScale = 1.24;
+
   void _paintKukla(Canvas canvas, {Color? solid, double rim = 0}) {
     canvas.save();
     canvas.translate(w / 2, h);
     final squash = (_landDip / 0.22).clamp(0.0, 1.0);
     final stretch = (_stretchT / 0.14).clamp(0.0, 1.0);
-    final sy = 1.0 + 0.08 * stretch - 0.09 * squash;
-    final sx = 1.0 - 0.05 * stretch + 0.07 * squash;
+    final vis = solid == null ? _kuklaVisScale : 1.0;
+    final sy = (1.0 + 0.08 * stretch - 0.09 * squash) * vis;
+    final sx = (1.0 - 0.05 * stretch + 0.07 * squash) * vis;
     final turnK = _turnT > 0
         ? 0.45 + 0.55 * (1 - math.sin((_turnT / 0.085).clamp(0.0, 1.0) * math.pi))
         : 1.0;
@@ -2552,9 +2555,9 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     // Saklanırken gölge yok; ama korku anında gölge kendi başına kalabilir.
     if ((hidden || crouching) && mood == _ShadowMood.follow) return;
     final flicker = 0.85 + 0.15 * math.sin(_anim * 11) * math.sin(_anim * 3.7);
-    var alpha = 0.38 * flicker;
+    var alpha = 0.25 * flicker;
     // Gölgenin ayak noktası (yerel koordinat) ve yönü.
-    var foot = Offset(w / 2 - facing * (20 + math.sin(_anim * 1.3)), h);
+    var foot = Offset(w / 2 - facing * (24 + math.sin(_anim * 1.3)), h);
     var dirFacing = facing;
     var walking = false;
     switch (mood) {
@@ -2778,12 +2781,12 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       _kuklaIn.light = flicker;
       _paintKukla(
         canvas,
-        rim: Settings.lowGraphics ? 0 : 0.42 * flicker * (1 - _shieldS),
+        rim: Settings.lowGraphics ? 0 : 0.62 * flicker * (1 - _shieldS),
       );
       final j = _kukla.jar;
       _jarWorld = Vector2(
-        position.x + w / 2 + j.dx * facing,
-        position.y + h + j.dy,
+        position.x + w / 2 + j.dx * _kuklaVisScale * facing,
+        position.y + h + j.dy * _kuklaVisScale,
       );
       debugFeet
         ..clear()

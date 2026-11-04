@@ -76,6 +76,25 @@ class Layer {
     }
     return p;
   }
+
+  /// Etek oymaları gibi iç halkaların yolu (altın işlemeler için).
+  ui.Path innerPath(List<Af> bones) {
+    final p = ui.Path();
+    for (var r = 1; r < rings.length; r++) {
+      final pts = <V>[];
+      for (var i = 0; i < rings[r].length; i++) {
+        var x = 0.0, y = 0.0;
+        for (final (b, w) in weights[r][i]) {
+          final q = bones[b](rings[r][i]);
+          x += q.dx * w;
+          y += q.dy * w;
+        }
+        pts.add(V(x, y));
+      }
+      p.addPolygon(pts, true);
+    }
+    return p;
+  }
 }
 
 /// Zincirin (örgü, atkı) yaylı fiziği: uçlar ağırlıkla sarkar, köke geç
@@ -666,17 +685,17 @@ class SayeKukla {
     }
     final hasJar = i.light > 0.02;
     // Çizimde üst kol +46,5°, önkol 0° (yatay) çizilidir: ef=0 iken dirsek
-    // doğal ~47° kırıktır. Kavanoz taşırken üst kol bele yakın (sf≈0.20),
-    // önkol hafif eğimli yatay (ef≈-0.04) durur ve adımla esner.
+    // doğal ~47° kırıktır. Kavanoz taşırken kol gövdenin önünde seçik ve
+    // zarifçe uzanır (sf≈-0.06, ef≈0.04) ve adımla yumuşakça esner.
     final sfJar =
-        0.20 * (1 - 0.3 * run * e) +
-        (0.04 + 0.24 * run) * e -
-        (0.11 + 0.18 * run) * nearFwd * e +
+        -0.06 * (1 - 0.3 * run * e) +
+        (-0.02 + 0.22 * run) * e -
+        (0.10 + 0.16 * run) * nearFwd * e +
         math.sin(_time * 2.2) * 0.025 * (1 - e);
     final efJar =
-        -0.04 +
-        (0.06 + 0.22 * run) * e +
-        (0.06 + 0.09 * run) * math.sin(2 * math.pi * (q - 0.16)) * e +
+        0.04 +
+        (0.08 + 0.18 * run) * e +
+        (0.06 + 0.08 * run) * math.sin(2 * math.pi * (q - 0.16)) * e +
         math.cos(_time * 2.2) * 0.02 * (1 - e);
     final sfEmpty =
         0.70 +
@@ -1155,41 +1174,134 @@ class SayeKukla {
   /// [rim] kavanozun ılık ışığının siluetin kenarını yalaması.
   void paint(ui.Canvas c, {double rim = 0.4, bool jar = true}) {
     if (_bones.isEmpty) return;
-    final paths = {for (final n in _order) n: _layers[n]!.path(_bones)};
+    final glow = _light * (1 - 0.85 * _hide);
+    // 1) Kavanoz ve Sâye'nin arkasındaki sıcak altın arka-ışık (backlight):
+    // Sâye'nin simsiyah siluetinden ÖNCE çizilir ki Sâye'nin siyah elbisesini
+    // bozmasın; tam tersine koyu sarnıç duvarını arkadan aydınlatarak Sâye'nin
+    // yüz profilini, saç örgüsünü ve elbisesini tıpkı A1 konseptindeki gibi
+    // net ve keskin biçimde öne çıkarsın.
+    if (jar && glow > 0) {
+      // Sâye'nin başı, örgüsü ve gövdesinin arkasında yumuşak altın arka-ışık.
+      const bodyBack = V(-1.5, -18.5);
+      c.drawCircle(
+        bodyBack,
+        30,
+        ui.Paint()
+          ..shader = ui.Gradient.radial(
+            bodyBack,
+            30,
+            [
+              ui.Color.fromRGBO(255, 216, 134, 0.36 * glow),
+              ui.Color.fromRGBO(255, 188, 96, 0.16 * glow),
+              const ui.Color(0x00FFB048),
+            ],
+            const [0, 0.52, 1],
+          ),
+      );
+      // Kavanozdan çevreye yayılan belirgin sıcak kehribar-altın ışık halesi.
+      c.drawCircle(
+        _jar,
+        42,
+        ui.Paint()
+          ..shader = ui.Gradient.radial(
+            _jar,
+            42,
+            [
+              ui.Color.fromRGBO(255, 224, 136, 0.56 * glow),
+              ui.Color.fromRGBO(255, 192, 92, 0.24 * glow),
+              const ui.Color(0x00FFB048),
+            ],
+            const [0, 0.42, 1],
+          ),
+      );
+      c.drawCircle(
+        _jar,
+        18,
+        ui.Paint()
+          ..shader = ui.Gradient.radial(
+            _jar,
+            18,
+            [
+              ui.Color.fromRGBO(255, 242, 176, 0.78 * glow),
+              ui.Color.fromRGBO(255, 206, 108, 0.34 * glow),
+              const ui.Color(0x00FFC46B),
+            ],
+            const [0, 0.48, 1],
+          ),
+      );
+    }
+    final paths = {
+      for (final n in _order)
+        n: _layers[n]!.path(_bones)..fillType = ui.PathFillType.nonZero,
+    };
     if (rim > 0) {
-      // Ilık hale: siluet ışık renginde, dört yana biraz kaydırılarak önce
-      // çizilir; mürekkep üstüne gelince kenarda ince bir ışık kalır
-      // (bulanıklık yok: her karede bulanıklık telefonda pahalı).
+      // İnce sıcak altın kontur: yüz profilini, burnu, çeneyi ve örgüyü
+      // çıkartma gibi kalınlaştırmadan zarifçe ayırır.
       final all = ui.Path();
       for (final p in paths.values) {
         all.addPath(p, V.zero);
       }
-      final paint = ui.Paint()
-        ..color = const ui.Color(0xFFFFC46B).withValues(alpha: rim * 0.5);
-      for (final o in const [V(0.45, -0.3), V(-0.3, -0.45), V(0.3, 0.25)]) {
+      final backRim = ui.Paint()
+        ..color = const ui.Color(0xFFFFD280).withValues(alpha: (rim * 0.42).clamp(0.0, 0.32));
+      for (final o in const [V(-0.32, -0.28), V(-0.28, 0.22)]) {
         c.save();
         c.translate(o.dx, o.dy);
-        c.drawPath(all, paint);
+        c.drawPath(all, backRim);
+        c.restore();
+      }
+      final frontRim = ui.Paint()
+        ..color = const ui.Color(0xFFFFE49C).withValues(alpha: (rim * 0.85).clamp(0.0, 0.62));
+      for (final o in const [V(0.42, -0.20), V(0.35, 0.20)]) {
+        c.save();
+        c.translate(o.dx, o.dy);
+        c.drawPath(all, frontRim);
         c.restore();
       }
     }
     for (final n in _order) {
       c.drawPath(paths[n]!, ui.Paint()..color = _layers[n]!.color);
+      if (n == 'govde') {
+        // Elbisenin göğsündeki ve etek ucundaki çiçek oymaları A1 çizimindeki
+        // gibi sıcak fildişi-altın renginde ışıldar.
+        final motif = _layers['govde']!.innerPath(_bones);
+        c.drawPath(
+          motif,
+          ui.Paint()
+            ..color = ui.Color.fromRGBO(
+              255,
+              236,
+              184,
+              0.82 * (1 - 0.65 * _hide),
+            ),
+        );
+      } else if (n == 'atki' || n == 'dugum' || n == 'kurdele') {
+        c.save();
+        c.clipPath(paths[n]!);
+        c.translate(0.3, -0.3);
+        c.drawPath(
+          paths[n]!,
+          ui.Paint()
+            ..style = ui.PaintingStyle.stroke
+            ..strokeWidth = 0.45
+            ..color = const ui.Color(0xFFFF8A6A).withValues(alpha: 0.45 * (1 - 0.6 * _hide)),
+        );
+        c.restore();
+      }
     }
-    // Göz: ışıyan hilal ve parıltı beneği, çevresinde ılık parıltı.
+    // Göz: ışıyan hilal ve parıltı beneği, çevresinde ılık odaklanmış parıltı.
     final eyeC = _bones[_head](const V(940, 465));
     c.drawCircle(
       eyeC,
-      26 * _px,
+      15 * _px,
       ui.Paint()
-        ..shader = ui.Gradient.radial(eyeC, 26 * _px, [
-          ui.Color.fromRGBO(255, 217, 138, 0.53 * (1 - 0.6 * _hide)),
+        ..shader = ui.Gradient.radial(eyeC, 15 * _px, [
+          ui.Color.fromRGBO(255, 224, 152, 0.42 * (1 - 0.6 * _hide)),
           const ui.Color(0x00FFD98A),
         ]),
     );
     c.drawPath(
       _layers['goz']!.path(_bones),
-      ui.Paint()..color = _layers['goz']!.color,
+      ui.Paint()..color = const ui.Color(0xFFFFF8E4),
     );
     if (jar) _paintJar(c);
   }
@@ -1208,81 +1320,91 @@ class SayeKukla {
     final glow = _light * (1 - 0.85 * _hide);
     final jar = _jar;
     if (glow > 0) {
+      // Kavanozun hemen çevresindeki sıcak altın parıltı.
       c.drawCircle(
         jar,
-        36,
+        9.5,
         ui.Paint()
           ..shader = ui.Gradient.radial(
             jar,
-            36,
+            9.5,
             [
-              ui.Color.fromRGBO(255, 196, 107, 0.24 * glow),
-              ui.Color.fromRGBO(255, 196, 107, 0.07 * glow),
+              ui.Color.fromRGBO(255, 240, 175, 0.65 * glow),
+              ui.Color.fromRGBO(255, 200, 100, 0.25 * glow),
               const ui.Color(0x00FFC46B),
             ],
-            const [0, 0.35, 1],
+            const [0, 0.48, 1],
           ),
       );
-      c.drawCircle(
-        jar,
-        70 * _px,
-        ui.Paint()
-          ..shader = ui.Gradient.radial(jar, 70 * _px, [
-            ui.Color.fromRGBO(255, 200, 110, 0.55 * glow),
-            const ui.Color(0x00FFC46B),
-          ]),
-      );
     }
+    const jarScale = 1.92;
     c.drawLine(
       _hand,
-      jar - V(0, 21 * _px * 1.5),
+      jar - V(0, 15 * _px * jarScale),
       ui.Paint()
-        ..color = const ui.Color(0xFF2A1A10)
-        ..strokeWidth = 0.35,
+        ..color = const ui.Color(0xFF4A2C18)
+        ..strokeWidth = 0.48,
     );
     c.save();
     c.translate(jar.dx, jar.dy);
     c.rotate(_jarA * 0.6);
-    // A1'deki gibi iri kavanoz.
-    c.scale(1.5 * _px);
+    c.scale(jarScale * _px);
     final body = ui.RRect.fromRectAndRadius(
       const ui.Rect.fromLTWH(-11, -12, 22, 26),
-      const ui.Radius.circular(6),
+      const ui.Radius.circular(6.5),
     );
     c.drawRRect(
       body,
       ui.Paint()
         ..shader = ui.Gradient.radial(V.zero, 18, [
           ui.Color.lerp(
-            const ui.Color(0xFFFFE08A),
+            const ui.Color(0xFFFFF2B2),
             const ui.Color(0xFF6A4A20),
             _hide,
           )!,
           ui.Color.lerp(
-            const ui.Color(0xFFD9832A),
+            const ui.Color(0xFFE68E28),
             const ui.Color(0xFF3A2410),
             _hide,
           )!,
         ]),
     );
+    // Cam kavanozun sol kenarında parlak cam yansıması.
+    c.drawLine(
+      const V(-7.2, -7.5),
+      const V(-7.2, 8.5),
+      ui.Paint()
+        ..color = ui.Color.fromRGBO(255, 255, 240, 0.55 * (1 - 0.8 * _hide))
+        ..strokeWidth = 2.0
+        ..strokeCap = ui.StrokeCap.round,
+    );
     c.drawRRect(
       body,
       ui.Paint()
         ..style = ui.PaintingStyle.stroke
-        ..strokeWidth = 1.6
-        ..color = const ui.Color(0xFF6A3A14),
+        ..strokeWidth = 2.0
+        ..color = const ui.Color(0xFF4E280C),
     );
-    c.drawRect(
-      const ui.Rect.fromLTWH(-9, -16, 18, 5),
-      ui.Paint()..color = const ui.Color(0xFF5A3A1A),
+    c.drawRRect(
+      ui.RRect.fromRectAndRadius(
+        const ui.Rect.fromLTWH(-9.5, -16.5, 19, 5.5),
+        const ui.Radius.circular(2.0),
+      ),
+      ui.Paint()..color = const ui.Color(0xFF3E220E),
     );
     final bright = 1 - 0.85 * _hide;
     for (var j = 0; j < 3; j++) {
-      final t = _time * (1.4 + j * 0.5) + j * 2.1;
+      final t = _time * (1.6 + j * 0.55) + j * 2.1;
+      final fx = V(math.sin(t) * 5.2, math.cos(t * 1.3) * 6.2);
       c.drawCircle(
-        V(math.sin(t) * 5, math.cos(t * 1.3) * 6),
-        2.2,
-        ui.Paint()..color = ui.Color.fromRGBO(255, 248, 220, bright),
+        fx,
+        4.6,
+        ui.Paint()..color = ui.Color.fromRGBO(255, 220, 110, 0.55 * bright),
+      );
+      c.drawCircle(
+        fx,
+        2.5,
+        ui.Paint()..color = ui.Color.fromRGBO(255, 252, 232, bright),
       );
     }
     c.restore();

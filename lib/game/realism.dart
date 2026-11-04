@@ -70,7 +70,7 @@ const _violet = Color(0xFFB09AFF);
 /// Işığa bakan taş kenarları ve ışıkların çevresine taşan parlama: karanlık
 /// katmanının üstüne eklenir (ışık topluyormuş gibi).
 class RealismLayer extends Component with HasGameReference<GolgeGame> {
-  RealismLayer() : super(priority: 42);
+  RealismLayer() : super(priority: 14);
 
   /// Işık alabilen kenarlar: sütunların iki yanı ve basılabilir taşların
   /// üst dudağı (bölüm başına bir kez).

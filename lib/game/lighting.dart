@@ -120,8 +120,11 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
     // ışık birkaç komşu noktadan gelir, her biri kendi gölgesini düşürür;
     // gölge kenarı uzaklaştıkça genişleyen yumuşak bir geçiş olur.
     final spread = (radius * 0.05).clamp(6.0, 12.0);
+    // Merkezde karanlık örtü tamamen kalkar (Sâye ve kavanozu kararmaz);
+    // kenarlarda 6 komşu tarama yumuşak yarı-gölge geçişi sağlar.
+    _light(canvas, c, radius * 0.72, (s * 0.92).clamp(0.0, 1.0), shape);
     const n = 6;
-    final each = math.min(1.0, s * 1.5 / n);
+    final each = math.min(1.0, s * 1.35 / n);
     for (var i = 0; i < n; i++) {
       final a = i * 2 * math.pi / n + 0.3;
       final o = c + Offset(math.cos(a), math.sin(a)) * spread;
