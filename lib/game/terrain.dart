@@ -970,7 +970,7 @@ void _cisternVaults(Canvas canvas, Level lv, int c0, int c1) {
       ink,
     );
     if (cartoon) {
-      // Kemerin ışık alan alt kenarı.
+      // Kemerin ışık alan kalın çizgi film kenarı ve dizili kemer taşları.
       canvas.drawPath(
         Path()
           ..moveTo(x, ceiling + 64)
@@ -982,9 +982,36 @@ void _cisternVaults(Canvas canvas, Level lv, int c0, int c1) {
           ),
         Paint()
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 2.5
-          ..color = Cartoon.archRim,
+          ..strokeWidth = 5.0
+          ..color = Cartoon.archRim.withValues(alpha: 0.55),
       );
+      canvas.drawPath(
+        Path()
+          ..moveTo(x, ceiling + 62)
+          ..quadraticBezierTo(
+            x + span / 2,
+            ceiling - 26,
+            x + span,
+            ceiling + 62,
+          ),
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.8
+          ..color = Cartoon.lipHot.withValues(alpha: 0.65),
+      );
+      // Kemer boyunca radyal taş derzleri (voussoir) ve tepe kilit taşı.
+      final jointPaint = Paint()
+        ..color = Cartoon.seam.withValues(alpha: 0.75)
+        ..strokeWidth = 1.4;
+      for (var k = 1; k < 8; k++) {
+        final t = k / 8.0;
+        final ax = x + span * t;
+        final ay = (1 - t) * (1 - t) * (ceiling + 64) +
+            2 * (1 - t) * t * (ceiling - 24) +
+            t * t * (ceiling + 64);
+        final nx = (t - 0.5) * 10;
+        canvas.drawLine(Offset(ax, ay + 2), Offset(ax + nx, ay - 9), jointPaint);
+      }
     }
     final c = (x / kTile).floor();
     var hasFront = false;
@@ -1661,8 +1688,8 @@ void _surfaceLight(
 
 // --------------------------------------------------------- görsel deneme
 
-/// Karikatürize taş: sıcak kahve gövde, sıra sıra taş derzleri; yüzeyde
-/// ışık alan kalın bir dudak (basılacak kenar tek bakışta okunur).
+/// Karikatürize taş: sıcak kahve gövde, her tuğlada ton çeşitliliği ve iç pah;
+/// yüzeyde yuvarlatılmış el çizimi kaldırım taşları ve aralarında minik yosunlar.
 void _cartoonStone(
   Canvas canvas,
   Level lv,
@@ -1673,66 +1700,118 @@ void _cartoonStone(
   math.Random rnd,
 ) {
   final top = r > 0 && !lv.solid(c, r - 1);
-  // Yüzeyden derinlik (0 = üst karo): taş derinleştikçe koyulaşır, derz
-  // kaybolur; göz yalnız basılacak kenarda kalır.
   var depth = 0;
-  while (depth < 4 && r - depth - 1 >= 0 && lv.solid(c, r - depth - 1)) {
+  while (depth < 6 && r - depth - 1 >= 0 && lv.solid(c, r - depth - 1)) {
     depth++;
   }
-  final deep = depth >= 2;
+  final baseCol = Color.lerp(
+    Cartoon.stone,
+    Cartoon.stoneBottom,
+    (depth / 5).clamp(0.0, 1.0),
+  )!;
   canvas.drawRect(
     Rect.fromLTWH(x - 0.5, y - 0.5, kTile + 1, kTile + 1),
-    Paint()
-      ..color = Color.lerp(
-        Cartoon.stone,
-        Cartoon.stoneBottom,
-        (depth / 3).clamp(0.0, 1.0),
-      )!,
+    Paint()..color = baseCol,
   );
-  if (depth >= 3) return;
-  // Derzler: yarım karo kaymalı taş sıraları.
-  final seam = Paint()
-    ..color = Cartoon.seam.withValues(alpha: deep ? 0.25 : 0.55)
-    ..strokeWidth = 1.2;
+  if (depth >= 5) return;
+
+  final fade = (1.0 - depth * 0.18).clamp(0.18, 1.0);
+  // Yuvarlatılmış, sıcak ton farklılıklı çizgi film tuğlaları.
   for (var row = 0; row < 2; row++) {
-    final sy = y + row * 16.0 + (top ? 8 : 0);
-    if (sy > y + kTile - 2) continue;
+    final sy = y + row * 16.0 + (top ? 8.0 : 0.0);
+    final bh = math.min(15.0, y + kTile - sy);
+    if (bh <= 3) continue;
+    final shift = (r + row).isEven ? 0.0 : 8.0;
+    final split = 14.0 + (rnd.nextDouble() - 0.5) * 4.0;
+    final bricks = shift == 0.0
+        ? [(0.5, split - 1.2), (split + 0.4, kTile - split - 1.0)]
+        : [(0.5, shift - 1.0), (shift + 0.4, kTile - shift - 1.0)];
+    for (final (bx, bw) in bricks) {
+      if (bw <= 2) continue;
+      final warmShift = (rnd.nextDouble() - 0.42) * 0.18 * fade;
+      final brickCol = warmShift >= 0
+          ? Color.lerp(baseCol, Cartoon.lip, warmShift)!
+          : Color.lerp(baseCol, Cartoon.seam, -warmShift * 1.4)!;
+      final br = RRect.fromRectAndRadius(
+        Rect.fromLTWH(x + bx, sy + 0.6, bw, bh - 1.2),
+        const Radius.circular(2.6),
+      );
+      canvas.drawRRect(br, Paint()..color = brickCol);
+      // Tuğlanın üst kenarında ince çizgi film pah ışığı.
+      canvas.drawLine(
+        Offset(x + bx + 1.8, sy + 1.3),
+        Offset(x + bx + bw - 1.8, sy + 1.3),
+        Paint()
+          ..color = Cartoon.lip.withValues(alpha: 0.22 * fade)
+          ..strokeWidth = 1.1,
+      );
+    }
+    // Yatay ve dikey derz gölgesi.
+    final seam = Paint()
+      ..color = Cartoon.seam.withValues(alpha: 0.62 * fade)
+      ..strokeWidth = 1.3;
     canvas.drawLine(Offset(x, sy), Offset(x + kTile, sy), seam);
-    final off = (r + row).isEven ? 0.0 : 16.0;
-    final vx = x + off + 8 * rnd.nextDouble() * 0.2;
+    final vx = x + (shift == 0.0 ? split : shift);
+    canvas.drawLine(Offset(vx, sy), Offset(vx, sy + bh), seam);
+  }
+
+  if (!top) return;
+  // Üst dudak: cetvelle çizilmiş düz şerit yerine yuvarlatılmış, bombeli
+  // kaldırım taşları (flagstones) ve taş aralarında minik yosun tutamları.
+  canvas.drawRect(
+    Rect.fromLTWH(x - 0.5, y + 6.5, kTile + 1, 2.2),
+    Paint()..color = Cartoon.seam.withValues(alpha: 0.85),
+  );
+  final splitX = 14.0 + (rnd.nextDouble() - 0.5) * 5.0;
+  final stones = [(0.4, splitX - 1.0), (splitX + 0.6, kTile - splitX - 1.0)];
+  for (final (sx, sw) in stones) {
+    final tone = (rnd.nextDouble() - 0.45) * 0.22;
+    final stoneTop = tone >= 0
+        ? Color.lerp(Cartoon.lip, Cartoon.lipHot, tone)!
+        : Color.lerp(Cartoon.lip, Cartoon.stone, -tone)!;
+    final stoneRect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(x + sx, y - 0.6, sw, 7.6),
+      const Radius.circular(3.2),
+    );
+    canvas.drawRRect(
+      stoneRect,
+      Paint()
+        ..shader = ui.Gradient.linear(
+          Offset(x + sx, y - 0.6),
+          Offset(x + sx, y + 7.0),
+          [stoneTop, Color.lerp(stoneTop, Cartoon.stone, 0.38)!],
+        ),
+    );
+    // Kaldırım taşının üst kubbe parıltısı.
     canvas.drawLine(
-      Offset(vx, sy),
-      Offset(vx, math.min(sy + 16, y + kTile)),
-      seam,
+      Offset(x + sx + 2.2, y + 0.7),
+      Offset(x + sx + sw - 2.2, y + 0.7),
+      Paint()
+        ..color = Cartoon.lipHot.withValues(alpha: 0.88)
+        ..strokeWidth = 1.6
+        ..strokeCap = StrokeCap.round,
+    );
+    // Koyu çizgi film dış konturu.
+    canvas.drawRRect(
+      stoneRect,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 0.9
+        ..color = Cartoon.seam.withValues(alpha: 0.75),
     );
   }
-  if (!top) return;
-  // Üst dudak: aydınlık bant, en üstte sıcak çizgi, altında koyu kesik.
-  canvas.drawRect(
-    Rect.fromLTWH(x - 0.5, y, kTile + 1, 6),
-    Paint()..color = Cartoon.lip,
-  );
-  canvas.drawRect(
-    Rect.fromLTWH(x - 0.5, y, kTile + 1, 1.8),
-    Paint()..color = Cartoon.lipHot,
-  );
-  canvas.drawRect(
-    Rect.fromLTWH(x - 0.5, y + 6, kTile + 1, 1.6),
-    Paint()..color = Cartoon.seam.withValues(alpha: 0.8),
-  );
-  // Dudakta birkaç çentik.
-  final notch = Paint()..color = Cartoon.stone.withValues(alpha: 0.5);
-  for (var i = 0; i < 2; i++) {
-    final nx = x + 4 + rnd.nextDouble() * (kTile - 10);
-    canvas.drawRect(
-      Rect.fromLTWH(nx, y + 2.5, 3 + rnd.nextDouble() * 3, 1.4),
-      notch,
-    );
+  // Taş derzinde minik sarnıç yosunu veya çakıl detayı.
+  if (rnd.nextDouble() < 0.58) {
+    final mx = x + splitX;
+    final moss = Paint()..color = const Color(0xFF7CA850).withValues(alpha: 0.78);
+    canvas.drawCircle(Offset(mx, y + 1.2), 1.7, moss);
+    canvas.drawCircle(Offset(mx - 1.4, y + 2.0), 1.2, moss);
+    canvas.drawCircle(Offset(mx + 1.3, y + 1.9), 1.1, moss);
   }
 }
 
-/// Karikatürize sütun: kalın gövde, iri başlık ve kaide, ışık alan sol
-/// kenar, tavus gözü oymaları.
+/// Karikatürize sütun: kalın gövde, kıvrımlı Bizans başlığı, taş tambur
+/// halkaları, ışıyan tavus gözü madalyonları ve kaidede yosun dokusu.
 void _cartoonColumn(
   Canvas canvas,
   double cx,
@@ -1753,7 +1832,7 @@ void _cartoonColumn(
   final cap = Paint()..color = back ? Cartoon.backCol : Cartoon.stone;
   final capW = back ? 5.0 : 12.0;
   canvas.drawRect(Rect.fromLTRB(cx - hw, top, cx + hw, bottom), body);
-  // Başlık: iki kademe.
+  // Başlık: iki kademe ve kıvrımlı yan volütler.
   canvas.drawPath(
     Path()
       ..moveTo(cx - hw - capW, top)
@@ -1766,39 +1845,63 @@ void _cartoonColumn(
     cap,
   );
   canvas.drawRect(
-    Rect.fromLTRB(cx - hw - capW, top, cx + hw + capW, top + 2.5),
-    Paint()..color = Cartoon.lip.withValues(alpha: back ? 0.35 : 0.8),
+    Rect.fromLTRB(cx - hw - capW, top, cx + hw + capW, top + 2.8),
+    Paint()..color = Cartoon.lip.withValues(alpha: back ? 0.35 : 0.85),
   );
+  if (!back) {
+    final volute = Paint()
+      ..color = Cartoon.lip.withValues(alpha: 0.72)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.6;
+    canvas.drawCircle(Offset(cx - hw - 4, top + 8), 3.4, volute);
+    canvas.drawCircle(Offset(cx + hw + 4, top + 8), 3.4, volute);
+  }
   // Kaide.
-  canvas.drawRect(
-    Rect.fromLTRB(cx - hw - 6, bottom - 12, cx + hw + 6, bottom),
+  canvas.drawRRect(
+    RRect.fromRectAndRadius(
+      Rect.fromLTRB(cx - hw - 6, bottom - 12, cx + hw + 6, bottom),
+      const Radius.circular(2.5),
+    ),
     cap,
   );
   canvas.drawRect(
-    Rect.fromLTRB(cx - hw - 6, bottom - 12, cx + hw + 6, bottom - 10),
-    Paint()..color = Cartoon.lip.withValues(alpha: back ? 0.3 : 0.7),
+    Rect.fromLTRB(cx - hw - 6, bottom - 12, cx + hw + 6, bottom - 9.5),
+    Paint()..color = Cartoon.lip.withValues(alpha: back ? 0.3 : 0.78),
   );
   if (back) return;
+  // Sol kenar çizgi film vurgu ışığı.
   canvas.drawLine(
-    Offset(cx - hw + 1.5, top + 18),
-    Offset(cx - hw + 1.5, bottom - 12),
+    Offset(cx - hw + 1.8, top + 18),
+    Offset(cx - hw + 1.8, bottom - 12),
     Paint()
-      ..color = Cartoon.lip.withValues(alpha: 0.55)
-      ..strokeWidth = 2.5,
+      ..color = Cartoon.lipHot.withValues(alpha: 0.62)
+      ..strokeWidth = 2.8,
   );
+  // Sütun gövdesinde yatay taş tambur derzleri ve ince ışık çizgisi.
+  final drumSeam = Paint()
+    ..color = Cartoon.seam.withValues(alpha: 0.55)
+    ..strokeWidth = 1.3;
+  final drumLit = Paint()
+    ..color = Cartoon.lip.withValues(alpha: 0.32)
+    ..strokeWidth = 1.0;
+  for (var y = top + 66; y < bottom - 28; y += 80) {
+    canvas.drawLine(Offset(cx - hw, y), Offset(cx + hw, y), drumSeam);
+    canvas.drawLine(Offset(cx - hw + 1, y + 1.4), Offset(cx + hw - 1, y + 1.4), drumLit);
+  }
+  // Yerebatan tavus gözü (gözyaşı) madalyonları: iç dolgulu ve sıcak parıltılı.
+  final eyeFill = Paint()..color = Cartoon.seam.withValues(alpha: 0.45);
   final eye = Paint()
-    ..color = Cartoon.lip.withValues(alpha: 0.45)
+    ..color = Cartoon.lip.withValues(alpha: 0.65)
     ..style = PaintingStyle.stroke
-    ..strokeWidth = 1.8;
+    ..strokeWidth = 1.9;
   for (var y = top + 46; y < bottom - 36; y += 40) {
-    canvas.drawOval(
-      Rect.fromCenter(center: Offset(cx, y), width: 12, height: 20),
-      eye,
-    );
+    final oval = Rect.fromCenter(center: Offset(cx, y), width: 12, height: 20);
+    canvas.drawOval(oval, eyeFill);
+    canvas.drawOval(oval, eye);
     canvas.drawCircle(
-      Offset(cx, y),
-      2,
-      Paint()..color = Cartoon.lip.withValues(alpha: 0.4),
+      Offset(cx - 0.6, y - 1.2),
+      2.6,
+      Paint()..color = Cartoon.lipHot.withValues(alpha: 0.55),
     );
   }
 }

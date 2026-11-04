@@ -132,7 +132,8 @@ class RealismLayer extends Component with HasGameReference<GolgeGame> {
     _t += dt;
   }
 
-  /// Kemerlerden ve tavan açıklıklarından süzülen eğik hacimsel ışık hüzmeleri.
+  /// Kemerlerden süzülen çok telli çizgi film ışık perdeleri ve içinde
+  /// uçuşan sıcak altın toz parıltıları.
   void _drawGodRays(Canvas canvas, Rect view, DepthKind kind) {
     final rayColor = switch (kind) {
       DepthKind.cistern ||
@@ -145,40 +146,63 @@ class RealismLayer extends Component with HasGameReference<GolgeGame> {
     };
     if (rayColor == null) return;
     final camX = game.camera.viewfinder.position.x;
-    const spacing = 340.0;
-    final first = ((view.left - 180) / spacing).floor();
-    final last = ((view.right + 180) / spacing).ceil();
+    const spacing = 220.0;
+    final first = ((view.left - 140) / spacing).floor();
+    final last = ((view.right + 140) / spacing).ceil();
     for (var i = first; i <= last; i++) {
       final seed = (i * 73) & 0xFF;
-      final pulse = 0.65 + 0.35 * math.sin(_t * 0.7 + i * 1.9);
+      final pulse = 0.72 + 0.28 * math.sin(_t * 0.8 + i * 1.9);
       final baseX =
-          i * spacing + (seed % 90) - (camX - i * spacing) * 0.08;
-      final topW = 26.0 + (seed % 22);
-      final botW = topW * 2.9;
-      final slant = 68.0 + (seed % 28);
-      final topY = view.top - 20;
-      final botY = view.bottom + 20;
-      final path = Path()
-        ..moveTo(baseX - topW * 0.5, topY)
-        ..lineTo(baseX + topW * 0.5, topY)
-        ..lineTo(baseX + slant + botW * 0.5, botY)
-        ..lineTo(baseX + slant - botW * 0.5, botY)
-        ..close();
-      canvas.drawPath(
-        path,
-        Paint()
-          ..blendMode = BlendMode.screen
-          ..shader = ui.Gradient.linear(
-            Offset(baseX, topY),
-            Offset(baseX + slant, botY),
-            [
-              rayColor.withValues(alpha: 0.075 * pulse),
-              rayColor.withValues(alpha: 0.032 * pulse),
-              rayColor.withValues(alpha: 0),
-            ],
-            const [0, 0.55, 1],
-          ),
-      );
+          i * spacing + (seed % 64) - (camX - i * spacing) * 0.08;
+      final slant = 56.0 + (seed % 22);
+      final topY = view.top - 16;
+      final botY = view.bottom + 16;
+      // Tek bir kaba yamuk yerine 3 ince ışık teli (daha sinematik perde hissi).
+      for (var s = 0; s < 3; s++) {
+        final subOff = (s - 1) * 14.0;
+        final topW = (10.0 + (seed % 9) + (s == 1 ? 6.0 : 0.0));
+        final botW = topW * 2.4;
+        final path = Path()
+          ..moveTo(baseX + subOff - topW * 0.5, topY)
+          ..lineTo(baseX + subOff + topW * 0.5, topY)
+          ..lineTo(baseX + subOff * 1.4 + slant + botW * 0.5, botY)
+          ..lineTo(baseX + subOff * 1.4 + slant - botW * 0.5, botY)
+          ..close();
+        final aScale = s == 1 ? 1.0 : 0.58;
+        canvas.drawPath(
+          path,
+          Paint()
+            ..blendMode = BlendMode.screen
+            ..shader = ui.Gradient.linear(
+              Offset(baseX + subOff, topY),
+              Offset(baseX + subOff * 1.4 + slant, botY),
+              [
+                rayColor.withValues(alpha: 0.055 * pulse * aScale),
+                rayColor.withValues(alpha: 0.024 * pulse * aScale),
+                rayColor.withValues(alpha: 0),
+              ],
+              const [0, 0.58, 1],
+            ),
+        );
+      }
+      // Işık hüzmesinin içinde süzülüp parıldayan altın toz zerreleri.
+      for (var m = 0; m < 4; m++) {
+        final u = ((_t * (0.04 + m * 0.012) + (seed + m * 29) * 0.07) % 1.0);
+        final my = topY + (botY - topY) * (0.12 + 0.72 * u);
+        final mx =
+            baseX + slant * (0.12 + 0.72 * u) +
+            math.sin(_t * 1.3 + i * 2 + m * 1.7) * 12.0;
+        final twinkle = (0.5 + 0.5 * math.sin(_t * 3.4 + m * 2.1 + i)) *
+            (1 - (u - 0.5).abs() * 1.6).clamp(0.0, 1.0);
+        if (twinkle <= 0.05) continue;
+        canvas.drawCircle(
+          Offset(mx, my),
+          1.2 + (m % 2) * 0.5,
+          Paint()
+            ..blendMode = BlendMode.plus
+            ..color = rayColor.withValues(alpha: 0.42 * twinkle),
+        );
+      }
     }
   }
 

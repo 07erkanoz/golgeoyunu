@@ -377,7 +377,7 @@ class Backdrop extends Component with HasGameReference<GolgeGame> {
   }
 
   /// Görsel deneme: patlıcan moru sarnıç; kat kat, düşük karşıtlıklı
-  /// kemerler ve sütunlar, uzakta sıcak pencereler.
+  /// kemerler ve sütunlar, uzakta sıcak pencereler, kandiller ve sarkan sarmaşıklar.
   void _cartoonCistern(
     Canvas canvas,
     Rect rect,
@@ -386,7 +386,7 @@ class Backdrop extends Component with HasGameReference<GolgeGame> {
     double camX,
   ) {
     _gradient(canvas, rect, [Cartoon.skyTop, Cartoon.skyMid, Cartoon.skyLow]);
-    // En uzakta: kemer sıraları ve aralarında sıcak ışık.
+    // En uzakta: kemer sıraları, sıcak kandiller, kemer taşları ve sarkan sarmaşıklar.
     for (var layer = 0; layer < 3; layer++) {
       final par = 0.15 + layer * 0.17;
       final spacing = 70.0 + layer * 46;
@@ -396,6 +396,7 @@ class Backdrop extends Component with HasGameReference<GolgeGame> {
         Cartoon.farCol,
         0.45 + layer * 0.28,
       )!;
+      final colEdge = Color.lerp(col, Cartoon.archRim, 0.35 + layer * 0.12)!;
       final top = h * (0.30 - layer * 0.08);
       final bottom = h * (0.78 + layer * 0.04);
       final paint = Paint()..color = col;
@@ -403,24 +404,72 @@ class Backdrop extends Component with HasGameReference<GolgeGame> {
       final first = (offset / spacing).floor() - 1;
       for (var i = first; i * spacing - offset < w + spacing; i++) {
         final x = i * spacing - offset;
-        if (layer == 0 && i % 3 == 0) {
-          // Uzak sıcak pencere.
+        if (layer == 0 && i % 2 == 0) {
+          // Uzak sıcak kemer parıltısı.
           glowDot(
             canvas,
-            Offset(x + spacing / 2, bottom - h * 0.12),
-            spacing * 0.5,
-            const Color(0xFFE08A48),
-            Cartoon.windowGlow,
+            Offset(x + spacing / 2, bottom - h * 0.14),
+            spacing * 0.65,
+            const Color(0xFFE8944A),
+            Cartoon.windowGlow * 1.35,
           );
         }
+        // Sütun gövdesi + sol kenarda çizgi film ışık şeridi.
         canvas.drawRect(
           Rect.fromLTRB(x - width / 2, top, x + width / 2, bottom),
           paint,
         );
         canvas.drawRect(
-          Rect.fromLTRB(x - width, top, x + width, top + width * 0.7),
+          Rect.fromLTRB(x - width / 2, top, x - width / 2 + 2.0 + layer * 0.8, bottom),
+          Paint()..color = colEdge.withValues(alpha: 0.55),
+        );
+        // Sütun halkaları (taş tambur birleşimleri).
+        final ringPaint = Paint()
+          ..color = Cartoon.skyTop.withValues(alpha: 0.35)
+          ..strokeWidth = 1.1;
+        for (var ry = top + 24.0; ry < bottom - 14; ry += 28.0 + layer * 6) {
+          canvas.drawLine(
+            Offset(x - width / 2, ry),
+            Offset(x + width / 2, ry),
+            ringPaint,
+          );
+        }
+        // Kademeli başlık ve kaide.
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(
+            Rect.fromLTRB(x - width * 1.05, top, x + width * 1.05, top + width * 0.72),
+            const Radius.circular(2.5),
+          ),
           paint,
         );
+        canvas.drawRect(
+          Rect.fromLTRB(x - width * 1.05, top, x + width * 1.05, top + 2.0),
+          Paint()..color = colEdge.withValues(alpha: 0.65),
+        );
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(
+            Rect.fromLTRB(x - width * 0.85, bottom - width * 0.55, x + width * 0.85, bottom),
+            const Radius.circular(2),
+          ),
+          paint,
+        );
+        // Sütunda titreyen sıcak kandil (orta ve yakın arka katmanlarda).
+        if (layer >= 1 && (i + layer).isEven && !Settings.lowGraphics) {
+          final sy = top + (bottom - top) * 0.34;
+          final flicker = 0.82 + 0.18 * math.sin(_t * 7.5 + i * 2.3 + layer);
+          glowDot(
+            canvas,
+            Offset(x + width * 0.65, sy),
+            (18.0 + layer * 9.0) * flicker,
+            const Color(0xFFFFB858),
+            0.26 * flicker,
+          );
+          canvas.drawCircle(
+            Offset(x + width * 0.65, sy),
+            1.8 + layer * 0.7,
+            Paint()..color = const Color(0xFFFFF2B8),
+          );
+        }
         canvas.drawPath(
           Path()
             ..moveTo(x, top)
@@ -431,7 +480,7 @@ class Backdrop extends Component with HasGameReference<GolgeGame> {
             ..close(),
           paint,
         );
-        // Kemerin ışık alan kenarı.
+        // Kemerin ışık alan kenarı ve kilit taşı çizgileri.
         canvas.drawPath(
           Path()
             ..moveTo(x, top)
@@ -443,9 +492,33 @@ class Backdrop extends Component with HasGameReference<GolgeGame> {
             ),
           Paint()
             ..style = PaintingStyle.stroke
-            ..strokeWidth = 1.5 + layer
-            ..color = Cartoon.archRim.withValues(alpha: 0.25 + layer * 0.15),
+            ..strokeWidth = 2.2 + layer * 1.1
+            ..color = Cartoon.archRim.withValues(alpha: 0.38 + layer * 0.16),
         );
+        // Kemerden sarkan çizgi film sarmaşık/yosun filizleri.
+        if (layer >= 1 && !Settings.lowGraphics) {
+          final vinePaint = Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeCap = StrokeCap.round
+            ..strokeWidth = 1.2 + layer * 0.4
+            ..color = colEdge.withValues(alpha: 0.45);
+          for (var v = 0; v < 2; v++) {
+            final u = 0.28 + v * 0.44 + ((i * 7 + v) % 3) * 0.05;
+            final vx = x + spacing * u;
+            final archY = top - 4 * u * (1 - u) * (spacing * 0.3);
+            final vLen = 14.0 + ((i * 13 + v * 7) % 18) + layer * 6.0;
+            final sway = math.sin(_t * 1.6 + i + v) * (2.5 + layer);
+            final vp = Path()
+              ..moveTo(vx, archY)
+              ..quadraticBezierTo(
+                vx + sway * 0.6,
+                archY + vLen * 0.5,
+                vx + sway,
+                archY + vLen,
+              );
+            canvas.drawPath(vp, vinePaint);
+          }
+        }
         // Suda yansıma.
         canvas.drawRect(
           Rect.fromLTRB(
@@ -457,6 +530,21 @@ class Backdrop extends Component with HasGameReference<GolgeGame> {
           Paint()..color = col.withValues(alpha: 0.35),
         );
       }
+      // Katmanlar arasında süzülen sıcak çizgi film sis kuşağı.
+      final mistY = bottom - 18.0 - layer * 10.0;
+      canvas.drawRect(
+        Rect.fromLTRB(rect.left, mistY - 16, rect.right, mistY + 18),
+        Paint()
+          ..shader = ui.Gradient.linear(
+            Offset(0, mistY - 16),
+            Offset(0, mistY + 18),
+            [
+              const Color(0x00000000),
+              const Color(0xFFFFB870).withValues(alpha: 0.045 + layer * 0.015),
+              const Color(0x00000000),
+            ],
+          ),
+      );
     }
     if (!Settings.lowGraphics) {
       _lightShafts(canvas, w, h, offset: camX * 0.2);
