@@ -183,6 +183,13 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
   /// Tetikte: kavanozu göğsüne çeker, eli hafifçe titrer. Güvenli yerde
   /// yavaşça gevşer.
   double _wary = 0;
+
+  /// Çizgi film esnekliği: zıplarken dikey uzama (_stretchT) ve yön
+  /// değiştirirken yumuşak dönüş (_turnT); kavanozun hareket izi (_jarTrail).
+  double _stretchT = 0;
+  double _turnT = 0;
+  double _trailCd = 0;
+  final _jarTrail = <(Vector2, double)>[];
   bool _jumpCut = true;
   bool _prevJump = false;
   bool _prevUp = false;
@@ -210,6 +217,9 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     _stateTime += dt;
     _shieldS = approach(_shieldS, hidden || crouching ? 1 : 0, dt, 0.06);
     _landDip = math.max(0, _landDip - dt);
+    _stretchT = math.max(0, _stretchT - dt);
+    _turnT = math.max(0, _turnT - dt);
+    _updateJarTrail(dt);
     _updateShadow(dt);
     _updateMotion(dt);
     _stepKukla(dt);
@@ -379,9 +389,23 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     if (onGround && _onIce) accel *= 0.18;
     velocity.x = _approach(velocity.x, target, accel * dt);
     if (dir != 0 && dir != facing) {
-      // Dönerken gövde bir an eski yöne yaslı kalır (ağırlık hissi).
+      // Dönerken gövde bir an eski yöne yaslı kalır (ağırlık hissi) ve
+      // yumuşak dönüş geçişi (_turnT) başlar.
       _leanS = -_leanS;
       _jarSwing.kick(2.5);
+      _turnT = 0.085;
+      if (onGround && velocity.x.abs() > 95 && !sneaking && !crouching) {
+        final theme = game.level.def.theme;
+        game.dust(
+          Vector2(center.x, position.y + h),
+          color: theme.snowy
+              ? const Color(0xFFE8EEF4)
+              : theme == LevelTheme.cistern && !_onWalkway
+              ? const Color(0xFF9FC4C8)
+              : null,
+          count: 3,
+        );
+      }
     }
     if (dir != 0) facing = dir;
     _runPhase += velocity.x.abs() * dt * 0.075;
@@ -401,6 +425,7 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       _jumpBuffer = 0;
       _flapCd = 0.22;
       velocity.y = -jumpVelocity * 0.85;
+      _stretchT = 0.13;
       _jumpCut = true;
       GameAudio.instance.play('glide', volume: 0.5, minGapMs: 120);
     }
@@ -413,7 +438,20 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       } else {
         // Atın sıçrayışı çok daha yüksektir (yaklaşık iki katı).
         velocity.y = -jumpVelocity * (game.onHorse ? 1.42 : 1);
+        _stretchT = 0.14;
         _jumpCut = false;
+        if (!sneaking) {
+          final theme = game.level.def.theme;
+          game.dust(
+            Vector2(center.x, position.y + h),
+            color: theme.snowy
+                ? const Color(0xFFE8EEF4)
+                : theme == LevelTheme.cistern && !_onWalkway
+                ? const Color(0xFF9FC4C8)
+                : null,
+            count: 3,
+          );
+        }
         GameAudio.instance.play('jump', volume: sneaking ? 0.3 : 0.6);
       }
       onGround = false;
@@ -475,9 +513,8 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       if (impact > 140) {
         _landDip = (impact / 720).clamp(0.08, 0.22);
       }
-      // Yalnız yüksekten inişte zeminden birkaç zerre (karda kar tozu); düz
-      // zıplayıştan inişte toz kalkmaz.
-      if (impact > 680) {
+      // İnişte zeminden toz/su damlası kalkar.
+      if (impact > 240) {
         // Taşta toz, karda kar tozu, sarnıcın ıslak taşında su damlası.
         final theme = game.level.def.theme;
         game.dust(
@@ -487,7 +524,7 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
               : theme == LevelTheme.cistern && !_onWalkway
               ? const Color(0xFF9FC4C8)
               : null,
-          count: (impact / 120).clamp(4, 7).round(),
+          count: (impact / 115).clamp(3, 7).round(),
         );
       }
       if (impact > 420 && !quiet) _noise(220);
@@ -2315,11 +2352,70 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     _kukla.step(dt, i);
   }
 
+  void _updateJarTrail(double dt) {
+    for (var i = _jarTrail.length - 1; i >= 0; i--) {
+      final (pos, age) = _jarTrail[i];
+      final next = age + dt;
+      if (next >= 0.28) {
+        _jarTrail.removeAt(i);
+      } else {
+        _jarTrail[i] = (pos, next);
+      }
+    }
+    _trailCd -= dt;
+    final jw = _jarWorld;
+    if (jw != null &&
+        jarStyle &&
+        !isDead &&
+        !crouching &&
+        !hidden &&
+        !swimming &&
+        (velocity.length > 70 || !onGround) &&
+        _trailCd <= 0) {
+      _trailCd = 0.026;
+      _jarTrail.add((jw.clone(), 0.0));
+      if (_jarTrail.length > 12) _jarTrail.removeAt(0);
+    }
+  }
+
+  void _drawJarTrail(Canvas canvas) {
+    if (_jarTrail.isEmpty || Settings.lowGraphics || debugBare || !jarStyle) {
+      return;
+    }
+    for (var i = 0; i < _jarTrail.length; i++) {
+      final (pos, age) = _jarTrail[i];
+      final u = (1 - age / 0.28).clamp(0.0, 1.0);
+      final local = Offset(pos.x - position.x, pos.y - position.y - age * 6);
+      final r = (1.6 + 2.8 * u);
+      canvas.drawCircle(
+        local,
+        r * 2.4,
+        Paint()
+          ..blendMode = BlendMode.plus
+          ..color = const Color(0xFFFFC468).withValues(alpha: 0.14 * u * u),
+      );
+      canvas.drawCircle(
+        local,
+        r * 0.55,
+        Paint()
+          ..blendMode = BlendMode.plus
+          ..color = const Color(0xFFFFF0C8).withValues(alpha: 0.36 * u * u),
+      );
+    }
+  }
+
   /// Kukla, çarpışma kutusunun yerel uzayında (ayaklar kutunun dibinde).
   void _paintKukla(Canvas canvas, {Color? solid, double rim = 0}) {
     canvas.save();
     canvas.translate(w / 2, h);
-    if (facing < 0) canvas.scale(-1, 1);
+    final squash = (_landDip / 0.22).clamp(0.0, 1.0);
+    final stretch = (_stretchT / 0.14).clamp(0.0, 1.0);
+    final sy = 1.0 + 0.08 * stretch - 0.09 * squash;
+    final sx = 1.0 - 0.05 * stretch + 0.07 * squash;
+    final turnK = _turnT > 0
+        ? 0.45 + 0.55 * (1 - math.sin((_turnT / 0.085).clamp(0.0, 1.0) * math.pi))
+        : 1.0;
+    canvas.scale((facing < 0 ? -1.0 : 1.0) * sx * turnK, sy);
     void turn(Offset pivot, double a) {
       canvas.translate(pivot.dx, pivot.dy);
       canvas.rotate(a);
@@ -2676,6 +2772,7 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       }
     }
     if (_useKukla) {
+      _drawJarTrail(canvas);
       final flicker =
           0.85 + 0.15 * math.sin(_anim * 11) * math.sin(_anim * 3.7);
       _kuklaIn.light = flicker;

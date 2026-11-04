@@ -1459,6 +1459,33 @@ class WaterComponent extends Component with HasGameReference<GolgeGame> {
             const [0, 0.6, 1],
           ),
       );
+      // Sâye'nin kavanoz ışığının su yüzeyindeki dalgalı altın yansıması.
+      final p = game.player;
+      if (p != null && !p.isDead) {
+        final lv = p.lightVisual;
+        final dy = (top - lv.y).abs();
+        if (lv.x >= x0 - 36 && lv.x <= x1 + 36 && dy < 130) {
+          final k = (1 - dy / 130).clamp(0.0, 1.0) * (p.crouching ? 0.35 : 1.0);
+          final rx = lv.x.clamp(x0 + 6, x1 - 6);
+          final jarRef = Paint()
+            ..blendMode = BlendMode.plus
+            ..strokeCap = StrokeCap.round
+            ..strokeWidth = 2.0;
+          for (var r = 0; r < 6; r++) {
+            final ry = top + 3.0 + r * 6.5;
+            final wave = math.sin(_t * 4.2 + r * 1.4) * (2.5 + r * 0.6);
+            final halfW = (14.0 - r * 1.8) * (0.75 + 0.25 * math.cos(_t * 3 + r));
+            jarRef.color = const Color(0xFFFFC868).withValues(
+              alpha: (0.32 - r * 0.045) * k,
+            );
+            canvas.drawLine(
+              Offset((rx + wave - halfW).clamp(x0, x1), ry),
+              Offset((rx + wave + halfW).clamp(x0, x1), ry),
+              jarRef,
+            );
+          }
+        }
+      }
     }
   }
 

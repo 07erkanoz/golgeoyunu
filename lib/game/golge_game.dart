@@ -2909,6 +2909,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
   /// Odak sürerken istenen yakınlaştırma çarpanı (1: değişmez).
   double _focusZoom = 1;
   double _focusZoomS = 1;
+  double _dynZoom = 1;
 
   /// Kamera [at] noktasına odaklanır; [hold] orada kalış süresi.
   /// Kamerayı bir an [at]a çevirip geri getirir. Tehlike varken çevrilmez:
@@ -3057,15 +3058,22 @@ class GolgeGame extends FlameGame with KeyboardEvents {
       );
       _perdeZoom = 1 + (fit - 1) * _perdeFrame;
     }
-    final zoom = _zoomS * _focusZoomS * (1 - 0.2 * vista) * _perdeZoom;
+    final baseZoom = _zoomS * _focusZoomS * (1 - 0.2 * vista) * _perdeZoom;
+    final wantDyn = p.crouching || p.hidden
+        ? 1.035
+        : (p.onGround && p.velocity.x.abs() > Player.runSpeed * 0.8
+              ? 0.972
+              : 1.0);
+    _dynZoom = _snapCamera ? 1.0 : approach(_dynZoom, wantDyn, dt, 0.45);
+    final zoom = baseZoom * _dynZoom;
     camera.viewfinder.zoom = zoom;
 
     // Gidilen yöne doğru ileriyi gösterir; hızlandıkça daha çok.
     _lookAhead +=
         ((p.facing * 60 + p.velocity.x * 0.35) - _lookAhead) *
         (1 - math.exp(-dt * 1.5));
-    final halfW = view.x / zoom / 2;
-    final halfH = view.y / zoom / 2;
+    final halfW = view.x / baseZoom / 2;
+    final halfH = view.y / baseZoom / 2;
     // Dikey: basılan zemine göre; zıplama, ip ve kenara tutunma kamerayı
     // oynatmaz. Bandın dışına çıkınca (ya da düşerken) izler.
     final y = p.center.y;

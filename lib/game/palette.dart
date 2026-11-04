@@ -106,14 +106,15 @@ void glowDot(
 class Cartoon {
   Cartoon._();
 
-  /// `--dart-define=CARTOON=true` ile açık başlar; deneme yapısında K tuşu.
-  static bool on = const bool.fromEnvironment('CARTOON');
+  /// Varsayılan olarak açık başlar; K tuşu ya da Ayarlar panelinden
+  /// açılıp kapatılabilir.
+  static bool on = const bool.fromEnvironment('CARTOON', defaultValue: true);
 
-  /// Deneme yapısı mı (CARTOON ya da DEV tanımlı): ayarlar panelinde
-  /// denemeyi açıp kapatan anahtar ve ton kaydırıcısı görünür (dokunmatikte
-  /// K tuşu yok).
+  /// Ayarlar panelinde görsel derinlik, doku ve renk tonu kontrolleri
+  /// varsayılan olarak açıktır.
   static const bool trialBuild =
-      bool.fromEnvironment('CARTOON') || bool.fromEnvironment('DEV');
+      bool.fromEnvironment('CARTOON', defaultValue: true) ||
+      bool.fromEnvironment('DEV');
 
   /// Sâye'nin karikatürize görünüşü: bütün bölümlerde açık.
   static bool saye = true;

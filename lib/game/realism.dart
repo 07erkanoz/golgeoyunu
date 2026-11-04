@@ -124,10 +124,70 @@ class RealismLayer extends Component with HasGameReference<GolgeGame> {
     return out;
   }
 
+  double _t = 0;
+
+  @override
+  void update(double dt) {
+    super.update(dt);
+    _t += dt;
+  }
+
+  /// Kemerlerden ve tavan açıklıklarından süzülen eğik hacimsel ışık hüzmeleri.
+  void _drawGodRays(Canvas canvas, Rect view, DepthKind kind) {
+    final rayColor = switch (kind) {
+      DepthKind.cistern ||
+      DepthKind.cave ||
+      DepthKind.ark => const Color(0xFFFFC878),
+      DepthKind.forest => const Color(0xFFD8F090),
+      DepthKind.peri || DepthKind.cliffs => const Color(0xFFFFB878),
+      DepthKind.kaf || DepthKind.heavens => const Color(0xFFA8F0E0),
+      _ => null,
+    };
+    if (rayColor == null) return;
+    final camX = game.camera.viewfinder.position.x;
+    const spacing = 340.0;
+    final first = ((view.left - 180) / spacing).floor();
+    final last = ((view.right + 180) / spacing).ceil();
+    for (var i = first; i <= last; i++) {
+      final seed = (i * 73) & 0xFF;
+      final pulse = 0.65 + 0.35 * math.sin(_t * 0.7 + i * 1.9);
+      final baseX =
+          i * spacing + (seed % 90) - (camX - i * spacing) * 0.08;
+      final topW = 26.0 + (seed % 22);
+      final botW = topW * 2.9;
+      final slant = 68.0 + (seed % 28);
+      final topY = view.top - 20;
+      final botY = view.bottom + 20;
+      final path = Path()
+        ..moveTo(baseX - topW * 0.5, topY)
+        ..lineTo(baseX + topW * 0.5, topY)
+        ..lineTo(baseX + slant + botW * 0.5, botY)
+        ..lineTo(baseX + slant - botW * 0.5, botY)
+        ..close();
+      canvas.drawPath(
+        path,
+        Paint()
+          ..blendMode = BlendMode.screen
+          ..shader = ui.Gradient.linear(
+            Offset(baseX, topY),
+            Offset(baseX + slant, botY),
+            [
+              rayColor.withValues(alpha: 0.075 * pulse),
+              rayColor.withValues(alpha: 0.032 * pulse),
+              rayColor.withValues(alpha: 0),
+            ],
+            const [0, 0.55, 1],
+          ),
+      );
+    }
+  }
+
   @override
   void render(Canvas canvas) {
     if (!realismHere(game) || Realism.debugNoLight) return;
     final view = game.camera.visibleWorldRect;
+    final kind = depthKind(game.level)!;
+    _drawGodRays(canvas, view, kind);
     for (final (at, color, radius) in _lights(view)) {
       final area = Rect.fromCircle(center: at, radius: radius);
       // Kenar ışığı: ışığa bakan yan, uzaklıkla söner. Yumuşaklık bir
@@ -142,54 +202,53 @@ class RealismLayer extends Component with HasGameReference<GolgeGame> {
           at,
           radius,
           [
-            color.withValues(alpha: 0.32 * a),
-            color.withValues(alpha: 0.1 * a),
+            color.withValues(alpha: 0.42 * a),
+            color.withValues(alpha: 0.14 * a),
             color.withValues(alpha: 0),
           ],
-          const [0, 0.45, 1],
+          const [0, 0.48, 1],
         );
-      final colWide = edge(0.35, 9);
-      final colNarrow = edge(0.7, 3);
+      final colWide = edge(0.42, 11);
+      final colNarrow = edge(0.82, 3.2);
       for (final col in _columns) {
         if (!col.overlaps(area)) continue;
         final x = at.dx < col.center.dx ? col.left + 2 : col.right - 2;
         canvas.drawLine(Offset(x, col.top), Offset(x, col.bottom), colWide);
         canvas.drawLine(Offset(x, col.top), Offset(x, col.bottom), colNarrow);
       }
-      final lipWide = edge(0.35, 7);
-      final lipNarrow = edge(0.7, 2.5);
+      final lipWide = edge(0.42, 8.5);
+      final lipNarrow = edge(0.82, 2.8);
       for (final (x0, x1, y) in _lips) {
         if (x1 < area.left || x0 > area.right) continue;
         if (y < area.top || y > area.bottom) continue;
         canvas.drawLine(Offset(x0, y + 1.5), Offset(x1, y + 1.5), lipWide);
         canvas.drawLine(Offset(x0, y + 1.5), Offset(x1, y + 1.5), lipNarrow);
       }
-      // Yüzey: ışık taşın üstüne yumuşakça yayılır. "Screen" karışımı
-      // ekran kartında doğrudan yapılır (softLight her ışık için ekranı
-      // kopyalatıyordu).
-      final glowR = radius * 0.7;
+      // Yüzey: ışık taşın üstüne yumuşakça yayılır (sinematik bloom).
+      final glowR = radius * 0.78;
       canvas.drawCircle(
         at,
         glowR,
         Paint()
           ..blendMode = BlendMode.screen
           ..shader = ui.Gradient.radial(at, glowR, [
-            color.withValues(alpha: 0.09),
+            color.withValues(alpha: 0.13),
+            color.withValues(alpha: 0.04),
             color.withValues(alpha: 0),
-          ]),
+          ], const [0, 0.5, 1]),
       );
       // Parlama: ışık kaynağın çevresine hafifçe taşar.
       canvas.drawCircle(
         at,
-        radius * 0.16,
+        radius * 0.22,
         Paint()
           ..blendMode = BlendMode.plus
           ..shader = ui.Gradient.radial(
             at,
-            radius * 0.16,
+            radius * 0.22,
             [
-              color.withValues(alpha: 0.22),
-              color.withValues(alpha: 0.06),
+              color.withValues(alpha: 0.28),
+              color.withValues(alpha: 0.08),
               color.withValues(alpha: 0),
             ],
             const [0, 0.4, 1],
@@ -1220,7 +1279,7 @@ class NearLayer extends Component with HasGameReference<GolgeGame> {
         math.max(box.top - a.bottom, a.top - box.bottom),
       );
       final d = math.sqrt(dx * dx + dy * dy);
-      see = math.min(see, 0.12 + 0.88 * (d / (4 * kTile)).clamp(0.0, 1.0));
+      see = math.min(see, 0.26 + 0.74 * (d / (3.5 * kTile)).clamp(0.0, 1.0));
     }
     return see;
   }
@@ -1394,12 +1453,11 @@ class NearLayer extends Component with HasGameReference<GolgeGame> {
         0.6,
         6.0,
       ),
-      DepthKind.cistern => null,
+      // Yerebatan: kemerlerin arasından süzülen ılık altın toz zerreleri.
+      DepthKind.cistern => (_moteShape, 26, -8.0, 0.72, 5.0),
     };
-    if (dots != null) {
-      final (shape, count, fall, alpha, wind) = dots;
-      _dots(canvas, view, cam.x, k, shape, count, fall, alpha, wind);
-    }
+    final (shape, count, fall, alpha, wind) = dots;
+    _dots(canvas, view, cam.x, k, shape, count, fall, alpha, wind);
   }
 
   /// Fener camının çevresine taşan sıcak ışık.
