@@ -1365,8 +1365,16 @@ abstract final class _Acilis {
       hidden = s < t0;
     } else if (s < 2.5) {
       final k = sp(hit, 2.5);
-      feet = Offset(fallX + 20 + 80 * k, _water + 46 - 8 * math.sin(k * 3));
-      rot = 1.2 * (1 - k);
+      if (PerdeSaye.ready) {
+        // Yeni Sâye uzun: suyun altında yatık süzülür (dik dursa başı
+        // suyun üstüne taşar, yalnız bacakları görünürdü), sete doğru.
+        feet = Offset(fallX + 6 + 80 * k, _water + 26 - 5 * math.sin(k * 3));
+        rot = 1.45 + 0.08 * math.sin(s * 3) - 0.25 * ease(sp(2.2, 2.5));
+        frame = 'dur';
+      } else {
+        feet = Offset(fallX + 20 + 80 * k, _water + 46 - 8 * math.sin(k * 3));
+        rot = 1.2 * (1 - k);
+      }
       clip = 1;
     } else if (s < 2.9) {
       final k = ease(sp(2.5, 2.9));
