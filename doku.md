@@ -6,19 +6,19 @@ Bu belge; oyuna **2D animasyon film / çizgi film (cel-shaded & el çizimi illü
 
 ## 1. Sâye Karakter Görünümü ve Mat Dokulama (`lib/game/kukla.dart`, `lib/game/player.dart`)
 
-### 1.1. Simsiyah Siluetten Mat-Kadife (Matte Charcoal-Plum) Tonlamaya Geçiş
-Önceki durumda Sâye'nin tüm ana uzuvları (`bas`, `govde`, `kolF`, `bacakF`, `orgu`) `0xFF07050F` (`RGB(7, 5, 15)`) gibi neredeyse saf siyah bir renkle boyanıyordu. Bu durum Sâye'nin sıcak taş/sarnıç dokusu önünde keskin bir siyah delik gibi görünmesine yol açıyordu.
+### 1.1. Simsiyah Siluetten Doğal Mat İs-Antrasit (Matte Charcoal-Soot) Tonlamaya Geçiş
+Önceki durumda Sâye'nin tüm ana uzuvları (`bas`, `govde`, `kolF`, `bacakF`, `orgu`) `0xFF07050F` (`RGB(7, 5, 15)`) gibi soğuk/zifiri siyah bir renkle boyanıyordu. Bu durum Sâye'nin sıcak taş/sarnıç dokusu önünde keskin bir siyah delik gibi görünmesine yol açıyordu.
 
-Yapılan değişiklikle:
+Yapılan değişiklikle (hiçbir morumsu/mavi alt ton olmadan, tıpkı duvardaki gölgenin doğal mat is tonu gibi):
 - **Ana Mat Baz Tonları (`SayeKukla`):**
-  - `ink`: `0xFF07050F` yerine yumuşak mat kömür-mürdüm (`0xFF28202E`).
-  - `far` (arka kol ve arka bacak): İki bacağın ve kolun birbirine karışmaması için bir ton açık mat duman-mürdüm (`0xFF3A2E44`).
-  - `red` (atkı, düğüm ve saç kurdelesi): Sıcak mat kiremit-kızıl (`0xFFC84B38`).
+  - `ink`: `0xFF07050F` yerine doğal mat is-antrasit siyahı (`0xFF181514`).
+  - `far` (arka kol ve arka bacak): İki bacağın ve kolun birbirine karışmaması için bir ton açık mat antrasit (`0xFF24201E`).
+  - `red` (atkı, düğüm ve saç kurdelesi): Sıcak kiremit-kızıl (`0xFFC2402E`).
 - **Parça Bazlı Mat Işık Geçişi (`SayeKukla.paint`):**
-  - Sâye'nin elbisesi (`govde`), başı (`bas`), ön kolu (`kolF`), ön bacağı (`bacakF`) ve saç örgüsü (`orgu`) düz tek renk yerine, kavanoz ışığının geldiği sağ-ön yöne doğru hafifçe açılan **doğrusal mat gradyan (`ui.Gradient.linear`)** ile boyanır:
-    - `govde`: `0xFF2D2336` → `0xFF42324A`
-    - `kolF` / `bacakF`: `0xFF32273C` → `0xFF46354E`
-    - `bas` / `orgu`: `0xFF261E2E` → `0xFF382B40`
+  - Sâye'nin elbisesi (`govde`), başı (`bas`), ön kolu (`kolF`), ön bacağı (`bacakF`) ve saç örgüsü (`orgu`) düz zifiri siyah yerine, kavanoz ışığının geldiği sağ-ön yöne doğru hafifçe ısınan **doğal mat is-kömür gradyanı (`ui.Gradient.linear`)** ile boyanır:
+    - `govde`: `0xFF1A1715` → `0xFF26201C`
+    - `kolF` / `bacakF`: `0xFF1D1917` → `0xFF29231E`
+    - `bas` / `orgu`: `0xFF171413` → `0xFF211C19`
   - Çömelme/saklanma (`_hide`) durumunda bu sıcak mat aydınlanma doğal biçimde kısılır.
 
 ### 1.2. Elbise Dolgusu ve Çiçek İşlemeleri (`govde`)

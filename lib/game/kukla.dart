@@ -302,11 +302,11 @@ class _Pose {
 /// kavanoz) ve adım evresi; parçalar bütün kuklalarda ortak.
 class SayeKukla {
   // ------------------------------------------------------ ortak parçalar
-  // Simsiyah (0xFF07050F) yerine yumuşak, kadifemsi mat kömür-mürdüm tonu.
-  static const ink = ui.Color(0xFF28202E);
-  static const red = ui.Color(0xFFC84B38);
-  // Uzaktaki kol ve bacak bir ton açık mat duman-mürdüm: iki bacak birbirine karışmaz.
-  static const far = ui.Color(0xFF3A2E44);
+  // Simsiyah (0xFF07050F) veya morumsu ton yerine doğal mat is-antrasit siyahı.
+  static const ink = ui.Color(0xFF181514);
+  static const red = ui.Color(0xFFC2402E);
+  // Uzaktaki kol ve bacak bir ton açık mat antrasit: iki bacak birbirine karışmaz.
+  static const far = ui.Color(0xFF24201E);
 
   // Kemikler.
   static const _torso = 0, _skirt = 1, _head = 2;
@@ -1261,17 +1261,17 @@ class SayeKukla {
     }
     for (final n in _order) {
       if (n == 'govde' || n == 'bas' || n == 'kolF' || n == 'bacakF' || n == 'orgu') {
-        // Simsiyah yerine kadifemsi mat kömür-mürdüm ve kavanoz yönünden
-        // vuran yumuşak mat ılık ton geçişi.
+        // Morumsu veya zifiri siyah yerine, duvardaki gölgeyle aynı büyüyü
+        // koruyan doğal mat is-antrasit siyahı ve kavanozdan hafif sıcak yansıma.
         final baseMatte = switch (n) {
-          'govde' => const ui.Color(0xFF2D2336),
-          'kolF' || 'bacakF' => const ui.Color(0xFF32273C),
-          _ => const ui.Color(0xFF261E2E),
+          'govde' => const ui.Color(0xFF1A1715),
+          'kolF' || 'bacakF' => const ui.Color(0xFF1D1917),
+          _ => const ui.Color(0xFF171413),
         };
         final litMatte = switch (n) {
-          'govde' => const ui.Color(0xFF42324A),
-          'kolF' || 'bacakF' => const ui.Color(0xFF46354E),
-          _ => const ui.Color(0xFF382B40),
+          'govde' => const ui.Color(0xFF26201C),
+          'kolF' || 'bacakF' => const ui.Color(0xFF29231E),
+          _ => const ui.Color(0xFF211C19),
         };
         c.drawPath(
           paths[n]!,
@@ -1285,6 +1285,8 @@ class SayeKukla {
               ],
             ),
         );
+      } else if (n == 'kolB' || n == 'bacakB') {
+        c.drawPath(paths[n]!, ui.Paint()..color = far);
       } else {
         c.drawPath(paths[n]!, ui.Paint()..color = _layers[n]!.color);
       }
