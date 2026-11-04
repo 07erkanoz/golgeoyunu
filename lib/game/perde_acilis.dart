@@ -71,7 +71,7 @@ abstract final class _Acilis {
   /// 6. sahnede sudaki bölümün (dalış, yüzüş, çıkış) setin üstündeki
   /// olayları ne kadar geciktirdiği (sn).
   static double get _wetShift {
-    const gravity = 1100.0, top = -90.0, t0 = 0.25;
+    const gravity = 1100.0, top = -24.0, t0 = 0.08;
     final hit = t0 + math.sqrt(2 * (_water + 4 - top) / gravity);
     return hit + 0.45 + 1.7 + 0.3 + 1.1 - 3.35;
   }
@@ -1402,17 +1402,19 @@ abstract final class _Acilis {
     final w = _secs(u, 5); // sahnenin saniyesi
     double spw(double a, double b) => ((w - a) / (b - a)).clamp(0.0, 1.0);
     const gravity = 1100.0;
-    // Sâye setten uzağa düşer: sete kadar yüzecek yolu olsun. Boş kavanoz
-    // ondan önce, onun da soluna düşer (yüzerken yoluna çıkmaz).
+    // Sâye sola, suya düşer ve sağdaki taş sete yüzer; boş kavanoz ise
+    // sığ suya düşüp dalgayla taş setin üstüne (Sâye ile Umay fidanının
+    // arasına) sürüklenir: böylece Sâye sudan çıkınca hep sağa (Umay
+    // fidanına ve ateşböceklerine) dönük kalır.
     const fallX = 200.0;
-    const jarX = 120.0;
-    const top = -90.0;
-    const t0 = 0.25;
+    const jarX = 415.0;
+    const top = -24.0;
+    const t0 = 0.08;
     final tHit = math.sqrt(2 * (_water + 4 - top) / gravity);
     final hit = t0 + tHit;
-    const jarDelay = -0.25;
+    const jarDelay = -0.05;
     final jarHit =
-        t0 + jarDelay + math.sqrt(2 * (_water - 4 - top - 30) / gravity);
+        t0 + jarDelay + math.sqrt(2 * (_water - 4 - top - 20) / gravity);
     const tree = Offset(624, _water - 8);
     // Sudaki bölüm: suyun altı, yüzüş (üç kulaç), kenara uzanış, çıkış.
     final sw0 = hit + 0.45;
@@ -1427,7 +1429,7 @@ abstract final class _Acilis {
 
     _medusa(canvas, spw(1.1, 1.5));
     _splash(canvas, Offset(fallX + 18, _water + 2), w - hit, 1.2);
-    _splash(canvas, const Offset(jarX + 6, _water + 2), w - jarHit, 0.6);
+    _splash(canvas, const Offset(jarX + 8, _water + 2), w - jarHit, 0.65);
 
     // Sâye: düşüş, suyun altı, yüzüş, kenara tutunup çıkış (kuklanın oyundaki
     // hâlleriyle), sendeleme, kavanoz.
@@ -1445,17 +1447,17 @@ abstract final class _Acilis {
     double? stroke;
     final edge = Offset(_ledge.left + 22, _ledge.top);
     final corner = Offset(_ledge.left, _ledge.top);
-    // Kenara asılıyken ayak noktası: eller köşede, beden suyun içinde.
-    final hangFeet = corner + const Offset(-10, 58);
-    final fallEnd = Offset(fallX + tHit * 22, _water + 12);
-    const swimY = _water + 54.0;
-    final swimFrom = Offset(fallEnd.dx + 14, swimY);
-    final swimTo = Offset(_ledge.left - 56, swimY);
+    // Kenara asılıyken ayak noktası: eller köşede, göğüs su yüzünde.
+    final hangFeet = corner + const Offset(-8, 36);
+    final fallEnd = Offset(fallX + tHit * 22, _water + 10);
+    const swimY = _water + 32.0;
+    final swimFrom = Offset(fallEnd.dx + 16, swimY);
+    final swimTo = Offset(_ledge.left - 34, swimY);
     if (w < hit) {
       // Düşüş: kollar yukarıda, atkı ve örgüler savrulur, yavaşça döner.
       final tf = math.max(0.0, w - t0);
       feet = Offset(fallX + tf * 22, top + 0.5 * gravity * tf * tf);
-      rot = tf * 1.15;
+      rot = tf * 0.95;
       mode = KuklaMode.air;
       vy = gravity * tf;
       frame = 'dur';
@@ -1466,21 +1468,21 @@ abstract final class _Acilis {
       final k = ease(spw(hit, sw0));
       feet =
           Offset.lerp(fallEnd, swimFrom, k)! +
-          Offset(0, 38 * math.sin(k * math.pi));
-      rot = tHit * 1.15 + (0.68 - tHit * 1.15) * k;
+          Offset(0, 28 * math.sin(k * math.pi));
+      rot = tHit * 0.95 + (1.02 - tHit * 0.95) * k;
       mode = KuklaMode.swim;
       stroke = 0.35 * k;
       frame = 'dur';
       clip = 3;
     } else if (w < sw1) {
-      // Yüzüş: başı ve omuzları suyun üstünde, üç kurbağalama kulaç; her
+      // Yüzüş: başı suyun üstünde, gövde yatay, üç kurbağalama kulaç; her
       // kulaçta öne süzülür.
       final k = spw(sw0, sw1);
       const n = 3.0;
       final p = k - math.sin(2 * math.pi * n * k) / (2 * math.pi * n);
       feet =
-          Offset.lerp(swimFrom, swimTo, p)! + Offset(0, math.sin(w * 4.5) * 1.8);
-      rot = 0.68 + 0.06 * math.sin(2 * math.pi * n * k);
+          Offset.lerp(swimFrom, swimTo, p)! + Offset(0, math.sin(w * 4.5) * 1.6);
+      rot = 1.02 + 0.06 * math.sin(2 * math.pi * n * k);
       mode = KuklaMode.swim;
       stroke = n * k;
       frame = 'dur';
@@ -1489,7 +1491,7 @@ abstract final class _Acilis {
       // Kenara uzanır: gövde doğrulur, elleri setin kenarını kavrar.
       final k = ease(spw(sw1, g1));
       feet = Offset.lerp(swimTo, hangFeet, k)!;
-      rot = 0.68 * (1 - k);
+      rot = 1.02 * (1 - k);
       mode = KuklaMode.swim;
       stroke = 3 + 0.25 * k;
       frame = 'dur';
@@ -1498,8 +1500,8 @@ abstract final class _Acilis {
       // Çıkış (oyundaki gibi): kollarla çekinir, ön dizini sete atar, üstüne
       // geçer; önce yükselir, sonra öne kayar.
       final t = spw(g1, c1);
-      final v = 1 - math.pow(1 - (t / 0.65).clamp(0.0, 1.0), 2.2).toDouble();
-      final hx = ease(((t - 0.42) / 0.58).clamp(0.0, 1.0));
+      final v = 1 - math.pow(1 - (t / 0.58).clamp(0.0, 1.0), 2.2).toDouble();
+      final hx = ease(((t - 0.34) / 0.66).clamp(0.0, 1.0));
       feet = Offset(
         hangFeet.dx + (edge.dx - hangFeet.dx) * hx,
         hangFeet.dy + (edge.dy - hangFeet.dy) * v,
@@ -1508,60 +1510,61 @@ abstract final class _Acilis {
       climb = t;
       grip = corner - feet;
       frame = 'dur';
-      clip = 3;
+      clip = t < 0.45 ? 3 : 0;
     } else {
       feet = edge;
-      frame = 'dur';
-      // Sendeler, sonra fidan filizlenince ürker.
-      rot = math.sin(s * 9) * 0.06 * (1 - sp(3.35, 3.9));
-      final startle = sp(3.9, 4.05) * (1 - sp(4.25, 4.5));
+      frame = s < 3.15 ? 'comel' : 'dur';
+      // Sudan çıkınca dizlerinin üstünde soluklanır, doğrulur; fidan
+      // filizlenince hayretle bir adım geriler.
+      rot = math.sin(s * 7) * 0.04 * (1 - sp(3.35, 3.9));
+      final startle = sp(3.9, 4.08) * (1 - sp(4.28, 4.52));
       if (startle > 0) {
-        frame = 'comel';
-        feet += Offset(-8 * startle, 0);
+        feet += Offset(-6 * startle, 0);
       }
     }
-    // Kavanozu almak: setin sol ucuna yaklaşır, çömelip suya uzanır, kavanozu
-    // sudan çekip kaldırır ve ateşböcekleri içine girerken elinde tutar.
-    final reach = sp(4.6, 4.9);
-    final hold = sp(4.9, 5.1);
-    final reachPose = sp(4.55, 4.88) * (1 - sp(5.85, 6.12));
-    if (s >= 4.55) {
-      faceLeft = s < 6.3;
-      frame = s < 5.15 ? 'comel' : 'dur';
-      final edgeStep = ease(sp(4.55, 4.85)) * (1 - ease(sp(5.2, 5.8)));
-      feet += Offset(-10 * edgeStep, 0);
+    // Kavanozu almak: Sâye hep sağa (Umay fidanına) dönüktür; önünde taş
+    // setin üstünde duran kavanoza doğru iki adım atar, eğilip kavanozu
+    // yerden alır ve Umay fidanına doğru kaldırır; ateşböcekleri fidanın
+    // dallarından süzülüp Sâye'nin yüzüne karşı kavanoza girer.
+    final reach = sp(4.6, 4.92);
+    final hold = sp(4.92, 5.15);
+    final reachPose = sp(4.52, 4.86) * (1 - sp(5.88, 6.15));
+    if (s >= 4.45) {
+      faceLeft = false;
+      frame = (s >= 4.52 && s < 5.05) ? 'comel' : 'dur';
+      final stepFwd = ease(sp(4.45, 4.82));
+      feet += Offset(22 * stepFwd, 0);
     }
     final kuklaScale = _sayeK * TasvirImages.frameBody / 28;
     final standJar = PerdeSaye.ready
         ? PerdeSaye.jarAt(feet, kuklaScale, faceLeft: faceLeft, rot: rot)
         : feet + Offset(faceLeft ? -14 : 14, -19);
-    final crouchReachHand = PerdeSaye.ready
-        ? feet + Offset(faceLeft ? -28 : 28, -26)
-        : feet + Offset(faceLeft ? -14 : 14, -12);
+    final crouchReachHand = feet + const Offset(22, -16);
     final hand = Offset.lerp(
       crouchReachHand,
       standJar,
-      ease(sp(4.95, 5.30)),
+      ease(sp(4.90, 5.25)),
     )!;
 
-    // Kavanoz: düşer, suda yüzer, sete doğru sürüklenir; Sâye çeker alır.
+    // Kavanoz: sığ suya düşer, dalgayla taş setin üstüne (Sâye'nin önüne,
+    // x≈504) sürüklenip yan yatar; Sâye eğilip yerden alır ve kaldırır.
     Offset jarAt;
     var jarRot = 0.0;
     final js = s - t0 - jarDelay;
     if (s < jarHit) {
       final tf = math.max(0.0, js);
-      jarAt = Offset(jarX + tf * 8, top + 30 + 0.5 * gravity * tf * tf);
-      jarRot = tf * -5;
+      jarAt = Offset(jarX + tf * 18, top + 20 + 0.5 * gravity * tf * tf);
+      jarRot = tf * 3.2;
     } else {
-      // Suda yavaşça sete sürüklenir, Sâye'nin ardında kalır.
-      final drift = ease(spw(jarHit, 4.6 + d));
+      final wash = ease(spw(jarHit, jarHit + 1.35));
+      const ledgeJar = Offset(504, _water - 12);
       jarAt = Offset(
-        jarX + 6 + (_ledge.left - 12 - jarX - 6) * drift,
-        _water - 4 + math.sin(time * 3) * 2,
+        jarX + 14 + (ledgeJar.dx - jarX - 14) * wash,
+        (_water - 2) + (ledgeJar.dy - (_water - 2)) * ease(spw(jarHit, jarHit + 0.75)),
       );
-      jarRot = 0.5 + math.sin(time * 2.3) * 0.25;
+      jarRot = 0.6 + 0.72 * wash + math.sin(time * 2.5) * 0.12 * (1 - wash);
       jarAt = Offset.lerp(jarAt, hand, ease(math.max(reach, hold)))!;
-      jarRot *= 1 - hold;
+      jarRot *= 1 - ease(hold);
     }
 
     // Ateşböcekleri.
