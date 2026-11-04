@@ -8,6 +8,7 @@ import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:golge/game/kukla.dart';
 import 'package:golge/game/levels.dart';
 import 'package:golge/game/perde.dart';
 import 'package:golge/game/shadow_art.dart';
@@ -27,6 +28,7 @@ void main() {
     // Oyundaki gibi: tasvirler ve Kandilci çizimi yüklü.
     await TasvirImages.load();
     await ShadowArt.load();
+    await SayeKukla.load();
     // OUT: başka klasöre (ör. eski/yeni karşılaştırması).
     final dir = Directory(
       Platform.environment['OUT'] ?? 'build/preview/denetim',

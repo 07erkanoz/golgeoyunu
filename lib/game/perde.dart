@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/painting.dart';
 
 import 'deer_rig.dart';
+import 'kukla.dart' show PerdeSaye;
 import 'myth_figures.dart';
 import 'myth_shapes.dart';
 import 'palette.dart';
@@ -1005,6 +1006,21 @@ class PerdePainter {
   /// (ışıyan gölge, soluk anı) çağrılırsa o renge boyanmış çizilir.
   /// Kareler yüklenmemişse eski kod çizimi ([_sayeCode]).
   static void _saye(Paint ink, Paint hole, double time, {double jar = 1}) {
+    if (PerdeSaye.ready) {
+      // Yeni Sâye (A1) kuklası, boyu ~84.
+      final own = _isInk(ink.color);
+      PerdeSaye.draw(
+        _c,
+        Offset.zero,
+        84 / 36,
+        time,
+        jar: jar,
+        rot: math.sin(time * 0.9 + 0.4) * 0.02,
+        a: own ? ink.color.a : 1,
+        tint: own ? null : ink.color,
+      );
+      return;
+    }
     final name = jar > 0.05 ? 'dur_kavanoz' : 'dur';
     if (!TasvirImages.frames.containsKey(name)) {
       _sayeCode(ink, hole, time, jar: jar);
@@ -1022,6 +1038,38 @@ class PerdePainter {
         a: _isInk(ink.color) ? ink.color.a : 1,
       );
     });
+  }
+
+  /// Açılış perdesinde Sâye: oyundaki hareket karesinin adıyla ('dur',
+  /// 'comel', 'yuruN'; '_kavanoz' ekiyle kavanozlu), yeni kuklayla
+  /// oynatılır; kukla yüklenmemişse eski kare. [k] karenin ölçeği.
+  static void _sayeFrame(
+    Canvas c,
+    String frame,
+    Offset feet,
+    double k,
+    double time, {
+    double walk = 0,
+    bool faceLeft = false,
+    double rot = 0,
+    double a = 1,
+  }) {
+    if (!PerdeSaye.ready) {
+      TasvirImages.frame(c, frame, feet, k, faceLeft: faceLeft, rot: rot, a: a);
+      return;
+    }
+    PerdeSaye.draw(
+      c,
+      feet,
+      k * TasvirImages.frameBody / 28,
+      time,
+      walk: frame.startsWith('yuru') ? walk : 0,
+      crouch: frame.startsWith('comel'),
+      jar: frame.contains('kavanoz') ? 1 : 0,
+      faceLeft: faceLeft,
+      rot: rot,
+      a: a,
+    );
   }
 
   /// Renk perdenin koyu mürekkebi mi (saydamlığı ne olursa olsun).

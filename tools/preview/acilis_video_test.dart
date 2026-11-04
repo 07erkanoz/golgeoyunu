@@ -8,6 +8,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:golge/game/kukla.dart';
 import 'package:golge/game/perde.dart';
 import 'package:golge/game/shadow_art.dart';
 import 'package:golge/game/tasvir_images.dart';
@@ -17,6 +18,7 @@ void main() {
   test('açılış videosu', () async {
     await TasvirImages.load();
     await ShadowArt.load();
+    await SayeKukla.load();
     await (FontLoader(
       'Rakkas',
     )..addFont(rootBundle.load('assets/fonts/Rakkas-Regular.ttf'))).load();
@@ -25,7 +27,8 @@ void main() {
     for (final f in dir.listSync()) {
       f.deleteSync();
     }
-    const fps = 15;
+    // FPS: kare hızı (varsayılan 15); BASLA: bu satırdan başla (0'dan).
+    final fps = int.parse(Platform.environment['FPS'] ?? '15');
     // Satır süreleri (sn): DURS ortam değişkeninden (oyundaki gibi ses + 1,5;
     // başlık 5), yoksa her satır 8 sn.
     final durs = (Platform.environment['DURS'] ?? '8,8,8,8,8,8,8')
@@ -34,7 +37,11 @@ void main() {
         .toList();
     final total = durs.fold(0.0, (a, b) => a + b);
     final n = (total * fps).floor();
-    for (var i = 0; i < n; i++) {
+    final from = durs
+        .take(int.parse(Platform.environment['BASLA'] ?? '0'))
+        .fold(0.0, (a, b) => a + b);
+    var shot = 0;
+    for (var i = (from * fps).floor(); i < n; i++) {
       final t = i / fps;
       var line = 0;
       var start = 0.0;
@@ -55,7 +62,7 @@ void main() {
       final img = await rec.endRecording().toImage(960, 540);
       final png = await img.toByteData(format: ui.ImageByteFormat.png);
       File(
-        '${dir.path}/${i.toString().padLeft(4, '0')}.png',
+        '${dir.path}/${(shot++).toString().padLeft(4, '0')}.png',
       ).writeAsBytesSync(png!.buffer.asUint8List());
     }
   }, timeout: const Timeout(Duration(minutes: 20)));

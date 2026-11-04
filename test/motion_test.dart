@@ -29,7 +29,7 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   tearDown(() {
     GolgeGame.debugLevels = null;
-    Player.kuklaLevels = {0};
+    Player.kuklaLevels = null;
   });
 
   for (final (name, hz, sneak, kukla) in [

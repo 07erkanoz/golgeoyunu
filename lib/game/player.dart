@@ -2254,8 +2254,8 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
   // (kukla.dart). Kuklanın pozu olmayan hâllerde (yüzme, kayak, ip, ölüm,
   // süzülme, at sırtı) eski çizime düşülür.
 
-  /// Kukla hangi bölümlerde (deneme: yalnız Yerebatan).
-  static Set<int> kuklaLevels = {0};
+  /// Kukla hangi bölümlerde (boşsa hiçbirinde, null ise hepsinde).
+  static Set<int>? kuklaLevels;
 
   /// Kukla bu karede çiziliyor mu (testler).
   bool get kuklaOn => _useKukla;
@@ -2265,30 +2265,28 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
 
   bool get _useKukla =>
       SayeKukla.ready &&
-      kuklaLevels.contains(game.levelIndex) &&
-      !swimming &&
-      !skiing &&
-      !isDead &&
-      !gliding &&
-      !game.onHorse &&
-      (state == PlayerState.normal ||
-          state == PlayerState.hang ||
-          state == PlayerState.climbUp ||
-          state == PlayerState.vine);
+      (kuklaLevels?.contains(game.levelIndex) ?? true);
 
   void _stepKukla(double dt) {
     if (!_useKukla) return;
     final i = _kuklaIn
       ..mode = switch (state) {
-        PlayerState.hang => KuklaMode.hang,
+        _ when swimming && !isDead => KuklaMode.swim,
+        PlayerState.hang || PlayerState.swing => KuklaMode.hang,
         PlayerState.climbUp => KuklaMode.climbUp,
         PlayerState.vine => KuklaMode.vine,
+        PlayerState.dead => KuklaMode.ground,
+        _ when skiing || game.onHorse => KuklaMode.ground,
         _ => onGround ? KuklaMode.ground : KuklaMode.air,
       }
-      ..forward = velocity.x * facing
-      ..vy = velocity.y
-      ..crouching = crouching
+      ..forward = swimming
+          ? velocity.length
+          : (isDead || skiing || game.onHorse ? 0 : velocity.x * facing)
+      ..vy = isDead || skiing ? 0 : velocity.y
+      // Kayakta dizler kırık, at sırtında oturur.
+      ..crouching = crouching || game.onHorse
       ..sneaking = sneaking
+      ..bend = skiing ? 0.55 : 0
       ..pushing = pushing
       ..shield = _shieldS
       ..landDip = _landDip
@@ -2301,6 +2299,9 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
         (cx - (position.x + w / 2)) * facing,
         cy - (position.y + h),
       );
+    } else if (state == PlayerState.swing) {
+      // İpte: eller başın üstünde, ipi tutar.
+      i.grip = const Offset(-0.2, -h - 0.4);
     }
     _kukla.step(dt, i);
   }
@@ -2310,6 +2311,34 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     canvas.save();
     canvas.translate(w / 2, h);
     if (facing < 0) canvas.scale(-1, 1);
+    void turn(Offset pivot, double a) {
+      canvas.translate(pivot.dx, pivot.dy);
+      canvas.rotate(a);
+      canvas.translate(-pivot.dx, -pivot.dy);
+    }
+
+    // Eski çizimdeki gibi: ipte beden ellerin altında asılı, suda gidiş
+    // yönüne yatar, taklada döner, ölünce yana yıkılır.
+    if (state == PlayerState.swing) {
+      turn(const Offset(0, -h + 1.4), -_swingBody.value * facing);
+    }
+    if (swimming && !isDead) {
+      turn(const Offset(0, -14), _swimPitch);
+    } else if (_flip != 0) {
+      turn(const Offset(0, -14), _flip);
+    }
+    if (isDead && !_fell) {
+      turn(Offset.zero, math.min(_stateTime * 5, 1) * math.pi / 2);
+    }
+    if (hasWings && solid == null) {
+      // Kanatlar omuzda, sırtın ardında.
+      final s = _kukla.shoulder;
+      canvas.save();
+      canvas.translate(s.dx - 0.6, s.dy + 0.4);
+      canvas.scale(_artScale);
+      _drawWings(canvas, Offset.zero);
+      canvas.restore();
+    }
     if (solid != null) {
       _kukla.paintSolid(canvas, solid);
     } else {
@@ -2632,6 +2661,10 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
           for (final s in _kukla.soles)
             Vector2(position.x + w / 2 + s.dx * facing, position.y + h + s.dy),
         ]);
+      if (ski) {
+        drawSkis(canvas, Offset(w / 2, h), 34);
+        canvas.restore();
+      }
       return;
     }
     if (jarStyle && !hidden && !crouching && !isDead && !Settings.lowGraphics) {

@@ -1516,8 +1516,13 @@ abstract final class _Acilis {
     final s7 = _secs(u, 6);
     if (s7 >= 0.6 && s7 < 4.1) frame = 'comel';
     final walk = s7 - 4.7;
+    final walking = walk > 0;
     if (walk > 0) {
-      feet += Offset(walk * 30, -(math.sin(time * 12)).abs() * 1.5);
+      // Kuklanın kalçası adımla kendi iner kalkar; eski karede sekme eklenirdi.
+      feet += Offset(
+        walk * 30,
+        PerdeSaye.ready ? 0 : -(math.sin(time * 12)).abs() * 1.5,
+      );
       frame = 'yuru${(time * 16).floor() % TasvirImages.walkFrames}';
     }
 
@@ -1532,7 +1537,7 @@ abstract final class _Acilis {
       // Suyun altında: soluk bir gölge, kabarcıklar yükselir.
       canvas.save();
       canvas.clipRect(const Rect.fromLTRB(0, _water + 3, 780, 400));
-      TasvirImages.frame(canvas, frame, feet, _sayeK, rot: rot, a: 0.7);
+      _P._sayeFrame(canvas, frame, feet, _sayeK, time, rot: rot, a: 0.7);
       canvas.restore();
       final bubble = Paint()
         ..style = PaintingStyle.stroke
@@ -1552,11 +1557,13 @@ abstract final class _Acilis {
       canvas.save();
       canvas.clipRect(const Rect.fromLTRB(0, 0, 780, _water + 2));
     }
-    TasvirImages.frame(
+    _P._sayeFrame(
       canvas,
       frame,
       feet,
       _sayeK,
+      time,
+      walk: walking ? 30 : 0,
       faceLeft: faceLeft,
       rot: rot,
     );

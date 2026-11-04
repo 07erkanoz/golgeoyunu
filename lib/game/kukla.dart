@@ -199,6 +199,9 @@ class KuklaInput {
   bool sneaking = false;
   bool pushing = false;
 
+  /// Dizlerin kırılması (0..1; kayakta), çömelmeden ayrı: kavanoz saklanmaz.
+  double bend = 0;
+
   /// Kavanozun örtülmesi (0..1): çömelince, saklanınca.
   double shield = 0;
 
@@ -218,7 +221,7 @@ class KuklaInput {
   double light = 1;
 }
 
-enum KuklaMode { ground, air, hang, climbUp, vine }
+enum KuklaMode { ground, air, hang, climbUp, vine, swim }
 
 class _Pose {
   _Pose({
@@ -462,6 +465,7 @@ class SayeKukla {
   double _amp = 0;
   double _run = 0;
   double _crouch = 0;
+  double _hideArm = 0;
   double _push = 0;
   double _climbed = 0;
   double? _prevWorldY;
@@ -481,6 +485,9 @@ class SayeKukla {
 
   /// Kavanozun yeri (ayak merkezine göre, bakış yönünde +x).
   V get jar => _jar;
+
+  /// Omuz (ayak merkezine göre, bakış yönünde +x): kanatlar buraya takılır.
+  V get shoulder => _bones.isEmpty ? V(0, _standY - 11) : _bones[_torso](_sF);
 
   /// Ayakların topuğu ve parmak ucu (ayak merkezine göre): yere basan uç
   /// kaymaz (testler).
@@ -557,10 +564,11 @@ class SayeKukla {
     _run = _approach(_run, ((v - 60) / 80).clamp(0.0, 1.0), dt, 0.15);
     _crouch = _approach(
       _crouch,
-      i.crouching ? 1 : (i.sneaking ? 0.22 : 0),
+      i.crouching ? 1 : math.max(i.bend, i.sneaking ? 0.22 : 0),
       dt,
       0.08,
     );
+    _hideArm = _approach(_hideArm, i.crouching ? 1 : 0, dt, 0.08);
     _push = _approach(_push, i.pushing ? 1 : 0, dt, 0.1);
     final e = _amp, run = _run, kk = _crouch;
     // Yerdeki ayak menzili; küçük çocuk hızlı ve kısa adımlarla gider.
@@ -634,8 +642,8 @@ class SayeKukla {
       ef: (1.3 - 1.1 * run) * e,
     );
     // Çömelince kavanozu göğsüne saklar.
-    if (kk > 0) {
-      final hide = sm(kk / 0.8);
+    if (_hideArm > 0.001) {
+      final hide = sm(_hideArm / 0.8);
       pose
         ..sf += (0.55 - pose.sf) * hide
         ..ef += (-2.25 - pose.ef) * hide
@@ -798,6 +806,30 @@ class SayeKukla {
     );
   }
 
+  _Pose _swim(KuklaInput i) {
+    // Poz dik gövdeye göre (gövde sonra yüzüş yönüne yatar: yukarısı ileri).
+    // Kavanozlu kol ileri uzanır, öteki kol kürek çeker; ayaklar çırpar.
+    final pace = (i.forward.abs() / 145).clamp(0.0, 1.0);
+    final kick = math.sin(_time * (5 + 6 * pace)) * (0.6 + 1.6 * pace);
+    final row = math.sin(_time * (2.2 + 2.5 * pace));
+    final hip = V(_hipX, _standY);
+    final hx = hip.dx + (_legH.dx - _hip0.dx) * k;
+    final drop = hip.dy + _legLen * 0.93;
+    return _Pose(
+      hip: hip,
+      lean: 0,
+      headA: -0.15,
+      fF: V(hx + 0.8 + kick, drop),
+      pF: 0.9,
+      fB: V(hx - 0.6 - kick, drop - 0.3),
+      pB: 0.9,
+      sf: -1.75 + 0.25 * row,
+      ef: 0.25,
+      sb: 0.81 + 0.4 + 0.5 * row,
+      eb: 0.3,
+    );
+  }
+
   // İki kemik bacak (diz öne).
   (Af, Af, Af) _leg(Af torsoM, V shift, V ankle, double pitch) {
     final h = torsoM(_legH + shift);
@@ -833,6 +865,7 @@ class SayeKukla {
       KuklaMode.hang => _hang(i),
       KuklaMode.climbUp => _climbUp(i, dt),
       KuklaMode.vine => _vine(i),
+      KuklaMode.swim => _swim(i),
     };
     if (i.mode != _mode) {
       if (_shown != null) {
@@ -843,6 +876,7 @@ class SayeKukla {
           KuklaMode.climbUp => 0.05,
           KuklaMode.air => 0.1,
           KuklaMode.vine => 0.12,
+          KuklaMode.swim => 0.25,
           KuklaMode.ground => _mode == KuklaMode.climbUp ? 0.12 : 0.07,
         };
       }
@@ -1065,6 +1099,79 @@ class SayeKukla {
         ui.Paint()..color = ui.Color.fromRGBO(255, 248, 220, bright),
       );
     }
+    c.restore();
+  }
+}
+
+/// Perdedeki Sâye: oyundaki kuklanın kendisi, perdenin zamanıyla oynar
+/// (duruş ve nefes, yürüyüş, çömelip kavanozu saklama). Bir perdede tek
+/// Sâye olur; aynı karede bir daha çizilirse (gölgesi, ışıyan kopyası) aynı
+/// poz kullanılır.
+abstract final class PerdeSaye {
+  static var _k = SayeKukla();
+  static final _in = KuklaInput();
+  static double? _last;
+
+  static bool get ready => SayeKukla.ready;
+
+  /// Ayakları [feet]'te, [scale] perde pikseli = 1 oyun birimi (Sâye ~36
+  /// birim boyunda). [walk] perde pikseli/sn ile yürür; [crouch] çömelir,
+  /// kavanozu saklar; [jar] 0 ise kavanozsuz, arada ışığı kısık. [tint]
+  /// verilirse o renkte düz siluet (ışıyan gölge, soluk anı).
+  static void draw(
+    ui.Canvas c,
+    ui.Offset feet,
+    double scale,
+    double time, {
+    double walk = 0,
+    bool crouch = false,
+    double jar = 1,
+    bool faceLeft = false,
+    double rot = 0,
+    double a = 1,
+    ui.Color? tint,
+  }) {
+    if (!ready || a <= 0) return;
+    final last = _last;
+    if (last == null || time < last - 0.001 || time - last > 2) {
+      // Yeni perde: kukla baştan (yaylı parçalar yerine otursun).
+      _k = SayeKukla();
+      _last = time;
+      _in
+        ..mode = KuklaMode.ground
+        ..forward = 0
+        ..crouching = crouch;
+      for (var i = 0; i < 30; i++) {
+        _k.step(1 / 60, _in);
+      }
+    } else if (time > last) {
+      _in
+        ..mode = KuklaMode.ground
+        ..forward = walk / scale
+        ..crouching = crouch
+        ..shield = crouch ? 1 : 0
+        ..light = jar.clamp(0.0, 1.0);
+      final dt = math.min(time - last, 1 / 20);
+      _k.step(dt, _in);
+      _last = time;
+    }
+    c.save();
+    c.translate(feet.dx, feet.dy);
+    if (rot != 0) c.rotate(rot);
+    c.scale(faceLeft ? -scale : scale, scale);
+    final layer = a < 1;
+    if (layer) {
+      c.saveLayer(
+        null,
+        ui.Paint()..color = ui.Color.fromRGBO(255, 255, 255, a.clamp(0, 1)),
+      );
+    }
+    if (tint != null) {
+      _k.paintSolid(c, tint);
+    } else {
+      _k.paint(c, rim: 0.35, jar: jar > 0.05);
+    }
+    if (layer) c.restore();
     c.restore();
   }
 }
