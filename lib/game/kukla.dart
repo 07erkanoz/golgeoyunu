@@ -214,11 +214,18 @@ class KuklaInput {
   /// Kenara çıkışın ilerlemesi (0..1).
   double climb = 0;
 
+  /// Tutunurken kendini ne kadar yukarı çekmiş (0: kollar gergin asılı, 1:
+  /// dirsekler bükük, göğsü kenarda; alçak kenarlarda başı yukarıda kalsın).
+  double pull = 0;
+
   /// Ayak merkezinin dünyadaki yüksekliği (zincirde el el üstüne tırmanış).
   double worldY = 0;
 
   /// Kavanozun ışığı (0..1) ve titreşim.
   double light = 1;
+
+  /// Yüzüşte kulaç evresi (tam sayı = bir kulaç); boşsa kendi zamanıyla.
+  double? stroke;
 }
 
 enum KuklaMode { ground, air, hang, climbUp, vine, swim }
@@ -718,7 +725,8 @@ class SayeKukla {
     final grip = i.grip + const V(0.6, 0.3);
     const lean = -0.06;
     final reach = (_upper + _fore) * k * 0.94;
-    final shoulder = grip + V(-1.6, reach * 0.98);
+    final shoulder =
+        grip + V(-1.6 - 1.2 * i.pull, reach * 0.98 * (1 - 0.7 * i.pull));
     final hip = shoulder - rot(_sF - _hip0, lean) * k;
     final (sf, ef) = _armTo(_shoulder(hip, lean, V.zero), grip, lean, -1);
     final (sb, eb) = _armTo(
@@ -810,8 +818,15 @@ class SayeKukla {
     // Poz dik gövdeye göre (gövde sonra yüzüş yönüne yatar: yukarısı ileri).
     // Kavanozlu kol ileri uzanır, öteki kol kürek çeker; ayaklar çırpar.
     final pace = (i.forward.abs() / 145).clamp(0.0, 1.0);
-    final kick = math.sin(_time * (5 + 6 * pace)) * (0.6 + 1.6 * pace);
-    final row = math.sin(_time * (2.2 + 2.5 * pace));
+    final st = i.stroke;
+    // Kulaç verilirse kollar ve ayaklar ona göre: kollar öne uzanıp geri
+    // çekilirken ayaklar iki kez çırpar.
+    final kick = st != null
+        ? math.sin(4 * math.pi * st) * 1.1
+        : math.sin(_time * (5 + 6 * pace)) * (0.6 + 1.6 * pace);
+    final row = st != null
+        ? math.sin(2 * math.pi * st)
+        : math.sin(_time * (2.2 + 2.5 * pace));
     final hip = V(_hipX, _standY);
     final hx = hip.dx + (_legH.dx - _hip0.dx) * k;
     final drop = hip.dy + _legLen * 0.93;
@@ -1126,6 +1141,12 @@ abstract final class PerdeSaye {
     double walk = 0,
     bool crouch = false,
     bool swim = false,
+    KuklaMode? mode,
+    double vy = 0,
+    ui.Offset grip = ui.Offset.zero,
+    double climb = 0,
+    double pull = 0,
+    double? stroke,
     double jar = 1,
     bool faceLeft = false,
     double rot = 0,
@@ -1146,9 +1167,17 @@ abstract final class PerdeSaye {
         _k.step(1 / 60, _in);
       }
     } else if (time > last) {
+      // [mode] verilirse oyundaki hâller: havada düşüş ([vy] perde
+      // pikseli/sn), kenara tutunma ve çıkış ([grip]: tutunulan köşe, ayağa
+      // göre perde pikseli; [climb] çıkışın ilerlemesi), yüzüş ([stroke]).
       _in
-        ..mode = swim ? KuklaMode.swim : KuklaMode.ground
-        ..forward = swim ? 70 : walk / scale
+        ..mode = mode ?? (swim ? KuklaMode.swim : KuklaMode.ground)
+        ..forward = swim || mode == KuklaMode.swim ? 70 : walk / scale
+        ..vy = vy / scale
+        ..grip = ui.Offset(faceLeft ? -grip.dx : grip.dx, grip.dy) / scale
+        ..climb = climb
+        ..pull = pull
+        ..stroke = stroke
         ..crouching = crouch
         ..shield = crouch ? 1 : 0
         ..light = jar.clamp(0.0, 1.0);

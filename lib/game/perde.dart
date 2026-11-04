@@ -4,7 +4,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/painting.dart';
 
 import 'deer_rig.dart';
-import 'kukla.dart' show PerdeSaye;
+import 'kukla.dart' show KuklaMode, PerdeSaye;
 import 'myth_figures.dart';
 import 'myth_shapes.dart';
 import 'palette.dart';
@@ -1051,6 +1051,12 @@ class PerdePainter {
     double time, {
     double walk = 0,
     bool swim = false,
+    KuklaMode? mode,
+    double vy = 0,
+    Offset grip = Offset.zero,
+    double climb = 0,
+    double pull = 0,
+    double? stroke,
     bool faceLeft = false,
     double rot = 0,
     double a = 1,
@@ -1067,6 +1073,12 @@ class PerdePainter {
       walk: frame.startsWith('yuru') ? walk : 0,
       crouch: frame.startsWith('comel'),
       swim: swim,
+      mode: mode,
+      vy: vy,
+      grip: grip,
+      climb: climb,
+      pull: pull,
+      stroke: stroke,
       jar: frame.contains('kavanoz') ? 1 : 0,
       faceLeft: faceLeft,
       rot: rot,

@@ -41,7 +41,9 @@ void main() {
         .take(int.parse(Platform.environment['BASLA'] ?? '0'))
         .fold(0.0, (a, b) => a + b);
     var shot = 0;
-    for (var i = (from * fps).floor(); i < n; i++) {
+    // ADET: en çok bu kadar kare.
+    final most = int.parse(Platform.environment['ADET'] ?? '100000');
+    for (var i = (from * fps).floor(); i < n && shot < most; i++) {
       final t = i / fps;
       var line = 0;
       var start = 0.0;
@@ -50,16 +52,21 @@ void main() {
         line++;
       }
       final progress = line + (t - start) / durs[line];
+      // OLCEK: büyük kare (ör. 2 → 1920x1080).
+      final k = double.parse(Platform.environment['OLCEK'] ?? '1');
       final rec = ui.PictureRecorder();
+      final canvas = ui.Canvas(rec)..scale(k);
       PerdePainter.paint(
-        ui.Canvas(rec),
+        canvas,
         const ui.Size(960, 540),
         PerdeScene.prologue,
         t,
         progress,
         1,
       );
-      final img = await rec.endRecording().toImage(960, 540);
+      final img = await rec
+          .endRecording()
+          .toImage((960 * k).round(), (540 * k).round());
       final png = await img.toByteData(format: ui.ImageByteFormat.png);
       File(
         '${dir.path}/${(shot++).toString().padLeft(4, '0')}.png',
