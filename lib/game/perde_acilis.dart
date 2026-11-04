@@ -174,19 +174,17 @@ abstract final class _Acilis {
     double a, [
     double fear = 0,
   ]) {
-    final saye = TasvirImages.saye;
-    if (saye == null || a <= 0) return;
+    if (a <= 0) return;
     final feet = Offset(742, 300 + math.sin(time * 1.3) * 1.5);
-    TasvirImages.draw(
+    if (!_sayeTasvir(
       canvas,
-      saye,
       feet,
-      100,
-      naturalLeft: false,
-      faceLeft: true,
+      time,
       rot: math.sin(time * 0.9) * 0.04 + math.sin(time * 23) * 0.035 * fear,
       a: a,
-    );
+    )) {
+      return;
+    }
     TasvirImages.rod(
       canvas,
       feet + const Offset(2, -52),
@@ -1053,19 +1051,44 @@ abstract final class _Acilis {
       _firefly(canvas, flies[i], out, time, i);
     }
     // Sâye: ateşböceklerinin ışığına karşı koyu bir siluet.
-    final img = TasvirImages.saye;
-    if (img != null && saye.dy < 520) {
-      TasvirImages.draw(
+    if (saye.dy < 520) _sayeTasvir(canvas, saye, time, rot: sayeRot, a: out);
+  }
+
+  /// Perdedeki Sâye tasviri (sola bakar, boyu ~100, kavanozsuz): yeni
+  /// Sâye kuklası; yüklenmemişse eski resim. Çizilemezse false.
+  static bool _sayeTasvir(
+    Canvas canvas,
+    Offset feet,
+    double time, {
+    double rot = 0,
+    double a = 1,
+  }) {
+    if (PerdeSaye.ready) {
+      PerdeSaye.draw(
         canvas,
-        img,
-        saye,
-        100,
-        naturalLeft: false,
+        feet,
+        100 / 36,
+        time,
+        jar: 0,
         faceLeft: true,
-        rot: sayeRot,
-        a: out,
+        rot: rot,
+        a: a,
       );
+      return true;
     }
+    final img = TasvirImages.saye;
+    if (img == null) return false;
+    TasvirImages.draw(
+      canvas,
+      img,
+      feet,
+      100,
+      naturalLeft: false,
+      faceLeft: true,
+      rot: rot,
+      a: a,
+    );
+    return true;
   }
 
   /// Sarnıcın suyu.
