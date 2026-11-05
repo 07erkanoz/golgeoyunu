@@ -1,0 +1,38 @@
+GÖLGE OYUNU · AÇILIŞ VİDEOSU PAKETİ (Gemini)
+Perdeden düşüşten oyunun başlangıcına kadar olan bölüm.
+
+AKIŞ (oyunda sırayla oynar)
+  Video 0  Perdeden düşüş             (bu paketten üretilecek)
+  [Başlık] GÖLGE OYUNU                 (bizim çizim, 5 sn: ateşböcekleri adı aydınlatır)
+  Video 1  Yerebatan'a düşüş           (üretilecek)
+  Video 2  Yüzüş ve sudan çıkış        (HAZIR: 2_yuzus_ve_cikis_HAZIR.mp4)
+  Video 3  Umay'ın fidanı ve kavanoz   (üretilecek)
+  Video 4  Kandilci ve yola çıkış      (üretilecek, son video: ardından oyun başlar)
+
+Anlatıcının sesi videoların üstünde okunur (Türkçe, hazır):
+  Video 0: "Kandilin son ışığında perdeden küçük bir gölge düştü. Ustanın en sevdiği tasvirdi bu."
+  Video 1-3: "Sâye Yerebatan'ın karanlık sularına düştü. Düştüğü yerde bir kayın fidanı filizlendi,
+              dalında tek bir ak çaput. Umay'ın işaretiydi bu; düşen her çocuğun başında bekleyen Umay'ın."
+  Video 4: "Ustasını bulacak, kandilini yeniden yakacaktı. Kandilciler ışığı nereye götürdüyse,
+            oraya gidecekti."
+Süreleri sesle ben eşleştiririm; videoların sesi kapatılır (müzik ve anlatım bizden).
+
+NASIL ÜRETİLİR
+1. Hepsini AYNI Gemini sohbetinde üret (görünüş videodan videoya aynı kalsın).
+2. Her video: 16:9, 8-10 saniye. Başlangıç karesi olan videolarda o resmi ilk kare olarak ver.
+3. Her istekte tarifler.txt'teki ORTAK metni ve o videonun metnini birlikte yapıştır.
+4. Her istekte şu resimleri ekle:
+     saye_tasarim.jpg   (Sâye'nin tasarımı)
+     gorunus_ornegi.png (videoların görünüşü: hazır videodan bir kare)
+   Ek resimler:
+     Video 0: 0_baslangic_karesi.png  -> İLK KARE (perdenin kendisi: Sâye çubukta, kavanoz ipte)
+     Video 3: 3_baslangic_karesi.png  -> İLK KARE (hazır videonun son karesi)
+     Video 4: video 3'ün son karesi   -> İLK KARE (video 3'ü bana gönder, son karesini çıkarayım;
+                                         ya da videonun son anında ekran görüntüsü al)
+              kandilci.png            -> Kandilci'nin tasarımı
+5. Bir video beğenilmezse aynı tarifle yeniden üret; Sâye'nin boyu, örgüleri, atkısı, ışıyan
+   gözü ve başının arkasındaki hale önceki videolardaki gibi olmalı.
+6. Videoları bana gönder: 0_*.mp4, 1_*.mp4, 3_*.mp4, 4_*.mp4.
+
+NOT: Gemini uygulamasının videolarında sağ altta görünür bir Gemini işareti olur. Satışa
+çıkacak sürüm için işaretsiz sürümleri ayrıca üretmek gerekebilir (Google AI Studio / API).

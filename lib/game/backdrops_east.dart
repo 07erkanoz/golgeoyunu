@@ -219,6 +219,20 @@ extension _EastBackdrops on Backdrop {
       snow: const Color(0xFF3E8A72),
       snowline: 0.25,
     );
+    if (Cartoon.on) {
+      // Doku: Simurg'un yuvası, oyma tüy, zümrüt damarlar ve tüyler.
+      paintKafDetails(
+        canvas,
+        w,
+        h,
+        Offset(cam.x, cam.y),
+        _t,
+        peak: Offset(kx, kb - h * 0.72),
+        peakBase: kb,
+        nearBase: h * 0.86 + rise * 1.5,
+      );
+      return;
+    }
     // Süzülen tüyler.
     final feather = Paint()
       ..color = const Color(0xFFE8D58A).withValues(alpha: 0.55);

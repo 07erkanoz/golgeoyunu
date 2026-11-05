@@ -219,8 +219,8 @@ class Settings {
     if ((version ?? 0) < 3) subtitles = true;
     // 4. sürüm: çizgi film doku/renk ve derinlik/ışık katmanları varsayılan
     // olarak açıldı; eski kayıttaki kapalı değerler bir kez açık konuma çekilir.
+    // Düşük grafik oyuncunun seçimidir (zayıf telefon): ona dokunulmaz.
     if ((version ?? 0) < 4) {
-      lowGraphics = false;
       texture = Cartoon.trialBuild;
       realism = Cartoon.trialBuild;
     }

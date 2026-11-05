@@ -254,6 +254,25 @@ class KuklaInput {
 
   /// Yüzüşte kulaç evresi (tam sayı = bir kulaç); boşsa kendi zamanıyla.
   double? stroke;
+
+  /// Aynı girişin kopyası (gölge, Sâye'nin bir an önceki hâlini tekrar eder).
+  KuklaInput copy() => KuklaInput()
+    ..mode = mode
+    ..forward = forward
+    ..vy = vy
+    ..crouching = crouching
+    ..sneaking = sneaking
+    ..pushing = pushing
+    ..bend = bend
+    ..shield = shield
+    ..landDip = landDip
+    ..grip = grip
+    ..climb = climb
+    ..pull = pull
+    ..worldY = worldY
+    ..light = light
+    ..reach = reach
+    ..stroke = stroke;
 }
 
 enum KuklaMode { ground, air, hang, climbUp, vine, swim }
@@ -307,6 +326,17 @@ class SayeKukla {
   static const red = ui.Color(0xFFC2402E);
   // Uzaktaki kol ve bacak bir ton açık mat antrasit: iki bacak birbirine karışmaz.
   static const far = ui.Color(0xFF24201E);
+
+  /// Önizlemede uzuvlar ayrı renkte (yakın kol kırmızı, yakın bacak turuncu,
+  /// uzak kol mavi, uzak bacak camgöbeği): hangi kol hangi bacakla salınıyor
+  /// görünsün.
+  static bool debugLimbs = false;
+  static const _debugLimb = {
+    'kolF': ui.Color(0xFFE03020),
+    'bacakF': ui.Color(0xFFF09020),
+    'kolB': ui.Color(0xFF2040E0),
+    'bacakB': ui.Color(0xFF20C0D0),
+  };
 
   // Kemikler.
   static const _torso = 0, _skirt = 1, _head = 2;
@@ -579,7 +609,7 @@ class SayeKukla {
     final arc = math.sin(math.pi * math.pow(u, 1 - 0.25 * run));
     final lift =
         (0.68 * (1 - 0.45 * _crouch) +
-            arc * _legLen * (0.13 + 0.18 * run) * liftK) *
+            arc * _legLen * (0.13 + 0.26 * run) * liftK) *
         e;
     final c0 = base - g / 2, c1 = base + g / 2 - heelBack;
     final cx = c0 + (c1 - c0) * sm(u);
@@ -604,8 +634,9 @@ class SayeKukla {
       0.08,
     );
     // Yalnız kavanoz varken ve uzanmıyorken çömelince kavanozu göğsüne saklar.
-    final wantHide =
-        i.crouching && i.light > 0.02 && i.reach < 0.05 ? i.shield : 0.0;
+    final wantHide = i.crouching && i.light > 0.02 && i.reach < 0.05
+        ? i.shield
+        : 0.0;
     _hideArm = _approach(_hideArm, wantHide, dt, 0.08);
     _reach = _approach(_reach, i.reach.clamp(0.0, 1.0), dt, 0.07);
     _push = _approach(_push, i.pushing ? 1 : 0, dt, 0.1);
@@ -655,7 +686,7 @@ class SayeKukla {
     // Gövde dik; yürürken her adımda yumuşak ağırlık aktarımı; çömelince,
     // uzanırken ve iterken doğal öne eğiliş.
     final lean =
-        (0.04 + 0.15 * run + 0.016 * two) * e +
+        (0.05 + 0.22 * run + 0.016 * two) * e +
         0.02 +
         0.38 * kk +
         0.22 * _reach +
@@ -688,10 +719,12 @@ class SayeKukla {
     // Çizimde üst kol +46,5°, önkol 0° (yatay) çizilidir: ef=0 iken dirsek
     // doğal ~47° kırıktır. Kavanoz taşırken kol gövdenin önünde seçik ve
     // zarifçe uzanır (sf≈-0.06, ef≈0.04) ve adımla yumuşakça esner.
+    // Kollar bacakların tersine salınır: yakın bacak öndeyken yakın kol
+    // geride (aynı yandaki kol ve bacak birlikte gidince kukla gibi durur).
     final sfJar =
         -0.06 * (1 - 0.3 * run * e) +
-        (-0.02 + 0.22 * run) * e -
-        (0.10 + 0.16 * run) * nearFwd * e +
+        (-0.02 + 0.22 * run) * e +
+        (0.22 + 0.30 * run) * nearFwd * e +
         math.sin(_time * 2.2) * 0.025 * (1 - e);
     final efJar =
         0.04 +
@@ -700,11 +733,11 @@ class SayeKukla {
         math.cos(_time * 2.2) * 0.02 * (1 - e);
     final sfEmpty =
         0.70 +
-        (0.12 - 0.22 * run) * e -
-        (0.28 + 0.22 * run) * nearFwd * e +
+        (0.12 - 0.22 * run) * e +
+        (0.34 + 0.30 * run) * nearFwd * e +
         math.sin(_time * 2.2) * 0.025 * (1 - e);
     final efEmpty =
-        0.46 + (0.14 - 0.50 * run) * e - 0.18 * math.max(0, nearFwd) * e;
+        0.46 + (0.14 - 0.50 * run) * e - 0.18 * math.max(0, -nearFwd) * e;
     final headNod = math.sin(4 * math.pi * (q - stance / 2 - 0.08));
     var pose = _Pose(
       hip: V(hipX, y),
@@ -719,13 +752,14 @@ class SayeKukla {
       pF: fF.$2,
       fB: fB.$1 - V(12 * _px * kk, 0),
       pB: fB.$2 + 0.18 * kk * (1 - e),
-      // Uzaktaki kol geride, adımla salınır.
+      // Uzaktaki kol uzaktaki bacağın tersine salınır; öne gelince
+      // gövdenin önünden görünür.
       sb:
           0.81 +
-          (0.62 - 0.18 * run) * e -
-          (farFwd > 0 ? 0.22 + 0.22 * run : 0.34 + 0.22 * run) * farFwd * e +
+          (0.50 - 0.18 * run) * e +
+          (farFwd > 0 ? 0.30 + 0.25 * run : 0.50 + 0.40 * run) * farFwd * e +
           math.sin(_time * 2.6) * 0.025 * (1 - e),
-      eb: 0.54 + (0.24 - 0.80 * run) * e - 0.22 * math.max(0, farFwd) * e,
+      eb: 0.54 + (0.24 - 0.80 * run) * e - 0.30 * math.max(0, -farFwd) * e,
       sf: hasJar ? sfJar : sfEmpty,
       ef: hasJar ? efJar : efEmpty,
     );
@@ -760,49 +794,50 @@ class SayeKukla {
   }
 
   _Pose _air(KuklaInput i) {
-    // Kalkışta ön diz çekilirken arka bacak yeri iter; tepede asimetrik
-    // toplanır; düşerken kollar yukarıda, bacaklar ve etek rüzgârda dalgalanır.
-    final tuck = 1 - (i.vy.abs() / 700).clamp(0.0, 1.0);
-    final rise = (-i.vy / 580).clamp(0.0, 1.0);
-    final fall = (i.vy / 650).clamp(0.0, 1.0);
+    // A1 eylem sayfasındaki gibi üç anahtar poz arasında geçer:
+    // kalkış (uzak kol yukarı uzanır, kavanozlu kol aşağıda geride, ön diz
+    // karna çekilir, arka bacak gergin), tepe (dizler göğse toplanır, kollar
+    // dizleri sarar), düşüş (bacaklar inişe açılır, kollar dengede yukarıda).
+    // Kalça yerinde kalır: dizler toplanınca ayaklar yükselir, beden
+    // kutunun içinde aşağı inmez.
+    final rise = sm((-i.vy / 580).clamp(0.0, 1.0) * 1.5);
+    final tuck = 1 - (i.vy.abs() / 380).clamp(0.0, 1.0);
+    final fall = sm(((i.vy - 120) / 520).clamp(0.0, 1.0));
     final fwd = (i.forward.abs() / 160).clamp(0.0, 1.0);
-    final fl = math.sin(_time * 7.2);
-    // Ön bacak ve arka bacak aynı Y yüksekliğinde kilitlenmez (sandalye pozu
-    // önlenir): sıçrayışta ön diz yukarıda, düşüşte hafif asimetrik çırpınış.
-    final reachF =
-        _legLen *
-        (0.86 - 0.28 * tuck - 0.08 * rise + (0.04 * fl - 0.04) * fall);
-    final reachB =
-        _legLen *
-        (0.95 - 0.16 * tuck + 0.02 * rise - (0.04 * fl + 0.02) * fall);
-    final hipY = -(_sole - _legA.dy) * k - math.max(reachF, reachB);
+    final fl = math.sin(_time * 7.2) * fall;
+    final rest = math.max(0.0, 1 - rise - tuck - fall);
+    final sum = rest + rise + tuck + fall;
+    // [n]: duruş, [r]: kalkış, [t]: tepe, [f]: düşüş hedeflerinin karışımı.
+    double mix(double n, double r, double t, double f) =>
+        (n * rest + r * rise + t * tuck + f * fall) / sum;
+    final hasJar = i.light > 0.02;
+    final reachF = _legLen * mix(0.9, 0.52, 0.44, 0.9 + 0.03 * fl);
+    final reachB = _legLen * mix(0.95, 0.98, 0.5, 0.8 - 0.04 * fl);
+    final hipY = -(_sole - _legA.dy) * k - _legLen * 0.95;
     final hxF = _hipX + (_legH.dx - _hip0.dx + _nearLeg.dx) * k;
     final hxB = _hipX + (_legH.dx - _hip0.dx + _backLeg.dx) * k;
     final aF = V(
-      hxF + ((24 + 12 * fwd) * tuck + 14 * rise + (10 + 5 * fl) * fall) * _px,
+      hxF + (mix(6, 24, 24, 12 + 4 * fl) + 8 * fwd * (rise + tuck)) * _px,
       hipY + reachF,
     );
     final aB = V(
-      hxB + ((-10 - 12 * fwd) * tuck - 12 * rise + (-14 - 5 * fl) * fall) * _px,
+      hxB + (mix(-4, -16, 16, -10 - 4 * fl) - 6 * fwd * rise) * _px,
       hipY + reachB,
     );
-    final hasJar = i.light > 0.02;
     return _Pose(
       hip: V(_hipX, hipY),
-      lean: 0.08 * rise - 0.05 * fall + 0.14 * fwd + 0.025 * fl * fall,
-      headA: -0.08 * rise + 0.10 * fall + 0.04 * tuck,
+      lean: mix(0.03, -0.04, 0.12, -0.03 + 0.03 * fl) + 0.1 * fwd,
+      headA: mix(0, -0.14, 0.04, 0.12),
       fF: aF,
-      pF: -0.15 * tuck + 0.48 * fall + 0.2 * rise,
+      pF: mix(0, 0.2, -0.15, 0.45),
       fB: aB,
-      pB: 0.35 * tuck + 0.62 * fall + 0.45 * rise,
-      sb: 0.81 - 1.45 * sm(rise * 1.4) - (1.35 + 0.14 * fl) * fall,
-      eb: 0.50 - 0.30 * tuck - 0.30 * fall,
+      pB: mix(0, 0.5, 0.35, 0.55),
+      sb: mix(0.9, -1.9, 0.25, -1.0 + 0.15 * fl),
+      eb: mix(0.5, 0.15, -0.7, 0.3),
       sf: hasJar
-          ? (0.12 - 0.20 * tuck - 0.18 * rise - (0.28 - 0.06 * fl) * fall)
-          : (0.65 - 1.15 * sm(rise * 1.4) - (1.55 - 0.14 * fl) * fall),
-      ef: hasJar
-          ? (-0.05 - 0.12 * tuck + 0.08 * fall)
-          : (0.40 - 0.25 * tuck - 0.25 * fall),
+          ? mix(0.1, 0.75, -0.1, -0.35 - 0.06 * fl)
+          : mix(0.7, 0.9, 0.1, -0.8 + 0.12 * fl),
+      ef: hasJar ? mix(0, 0.1, -0.35, 0.15) : mix(0.4, 0.2, -0.6, 0.25),
     );
   }
 
@@ -832,8 +867,10 @@ class SayeKukla {
     final grip = i.grip + const V(1.4, 0.2);
     final lean = 0.06 + 0.18 * i.pull;
     final reach = (_upper + _fore) * k * 0.92;
+    // Asılıyken kollar yukarıda dimdik (beden ellerin altında sarkar);
+    // çekindikçe dirsekler bükülür.
     final shoulder =
-        grip + V(-1.6 - 0.4 * i.pull, reach * (0.58 - 0.95 * i.pull));
+        grip + V(-1.8 - 0.2 * i.pull, reach * (0.94 - 1.3 * i.pull));
     final hip = shoulder - rot(_sF - _hip0, lean) * k;
     final (sf, ef) = _armTo(_shoulder(hip, lean, V.zero), grip, lean, -0.85);
     final (sb, eb) = _armTo(
@@ -970,35 +1007,50 @@ class SayeKukla {
     // Poz dik gövdeye göre (gövde yüzüş yönüne yatar: yukarısı ileri).
     // Kurbağalama / makas yüzüşü: kollar suyun altından ileri uzanıp göğse
     // doğru suyu çekerken dizler karına çekilip geriye güçlüce teper.
+    // Yerinde dururken su çiğner: kollar aşağıda yanlara kürek çeker,
+    // bacaklar ağır ağır pedal çevirir, baş dik.
     final pace = (i.forward.abs() / 145).clamp(0.0, 1.0);
+    final tread = 1 - sm((pace * 1.6).clamp(0.0, 1.0));
     final ph = (i.stroke ?? (_time * (1.15 + 0.85 * pace))) % 1.0;
     final rad = 2 * math.pi * ph;
     final row = math.sin(rad);
     final glide = math.cos(rad);
+    final tw = _time * 2.6;
     // Diz çekişi: kollar suyu çekerken dizler toplanır, kollar ileri uzanırken
     // bacaklar geriye tam açılır ve makas vuruşu yapar.
     final tuckF = 0.5 - 0.5 * math.cos(rad - 0.4);
     final tuckB = 0.5 - 0.5 * math.cos(rad - 1.1);
     final scissor = math.sin(rad * 2) * (1.8 + 1.4 * pace);
+    final pedalF = 0.5 + 0.5 * math.sin(tw);
+    final pedalB = 0.5 - 0.5 * math.sin(tw);
+    double mix(double t, double s) => t * tread + s * (1 - tread);
 
-    final hip = V(_hipX, _standY + math.sin(rad) * 0.7);
+    final hip = V(_hipX, _standY + mix(math.sin(tw) * 0.5, row * 0.7));
     final hx = hip.dx + (_legH.dx - _hip0.dx) * k;
-    final dropF = hip.dy + _legLen * (0.94 - 0.32 * tuckF);
-    final dropB = hip.dy + _legLen * (0.94 - 0.28 * tuckB);
+    final dropF =
+        hip.dy + _legLen * mix(0.9 - 0.3 * pedalF, 0.94 - 0.32 * tuckF);
+    final dropB =
+        hip.dy + _legLen * mix(0.9 - 0.3 * pedalB, 0.94 - 0.28 * tuckB);
     return _Pose(
       hip: hip,
-      lean: 0.06 * glide,
-      // Gövde yatıkken baş yukarı/ileri bakar (su yüzünde yüzü karşıda).
-      headA: -0.66 - 0.08 * row,
-      fF: V(hx + 1.6 + 3.2 * tuckF + scissor, dropF),
-      pF: 0.55 + 0.35 * (1 - tuckF),
-      fB: V(hx - 1.2 + 2.4 * tuckB - scissor, dropB),
-      pB: 0.60 + 0.30 * (1 - tuckB),
-      // Kollar suyun içinden ileri uzanır (-1.30) ve göğse doğru suyu çeker (-0.25).
-      sf: -0.78 + 0.56 * row,
-      ef: 0.22 - 0.35 * math.max(0.0, row) + 0.32 * math.max(0.0, -row),
-      sb: -0.68 - 0.54 * glide,
-      eb: 0.25 + 0.30 * math.max(0.0, glide) - 0.30 * math.max(0.0, -glide),
+      lean: mix(0.04, 0.06 * glide),
+      // Yüzerken gövde yatık, baş yukarı/ileri bakar (yüzü karşıda).
+      headA: mix(-0.06 + 0.04 * math.sin(tw * 0.5), -0.66 - 0.08 * row),
+      fF: V(hx + mix(2 + 3 * pedalF, 1.6 + 3.2 * tuckF + scissor), dropF),
+      pF: mix(0.35, 0.55 + 0.35 * (1 - tuckF)),
+      fB: V(hx + mix(-1 + 3 * pedalB, -1.2 + 2.4 * tuckB - scissor), dropB),
+      pB: mix(0.4, 0.60 + 0.30 * (1 - tuckB)),
+      // Kollar suyun içinden ileri uzanır ve göğse doğru suyu çeker.
+      sf: mix(0.3 + 0.32 * math.sin(tw), -0.85 + 0.8 * row),
+      ef: mix(
+        0.3 + 0.2 * math.cos(tw),
+        0.22 - 0.35 * math.max(0.0, row) + 0.32 * math.max(0.0, -row),
+      ),
+      sb: mix(0.95 - 0.32 * math.sin(tw), -0.6 - 0.75 * glide),
+      eb: mix(
+        0.4 + 0.2 * math.cos(tw),
+        0.25 + 0.30 * math.max(0.0, glide) - 0.30 * math.max(0.0, -glide),
+      ),
     );
   }
 
@@ -1072,17 +1124,17 @@ class SayeKukla {
     // yüzerken hafifçe dalgalanır.
     final stepSway = i.mode == KuklaMode.ground
         ? (math.sin(2 * math.pi * _q) * 0.055 +
-                  math.sin(4 * math.pi * _q) * 0.03) *
-              _amp -
+                      math.sin(4 * math.pi * _q) * 0.03) *
+                  _amp -
               0.28 * _crouch
         : 0.0;
     final flutter = i.mode == KuklaMode.air
         ? math.sin(_time * 8.5) * 0.06 * (i.vy.abs() / 500).clamp(0.0, 1.0)
-        : (i.mode == KuklaMode.swim
-              ? math.sin(_time * 4.5) * 0.05
-              : stepSway);
-    final skirtTarget =
-        (-acc * 0.00008 - vel.dx * 0.0003 + flutter).clamp(-0.32, 0.25);
+        : (i.mode == KuklaMode.swim ? math.sin(_time * 4.5) * 0.05 : stepSway);
+    final skirtTarget = (-acc * 0.00008 - vel.dx * 0.0003 + flutter).clamp(
+      -0.32,
+      0.25,
+    );
     _skirtV += ((skirtTarget - _skirtA) * 140 - _skirtV * 9) * dt;
     _skirtA += _skirtV * dt;
     final skirtM = Af.bone(torsoM(_waist), pose.lean + _skirtA, k, _waist);
@@ -1153,8 +1205,7 @@ class SayeKukla {
     _handVel = hv;
     _jarV +=
         (-math.sin(_jarA) * 55 -
-            (ha.dx * 0.045 + acc * 0.025).clamp(-65.0, 65.0) *
-                math.cos(_jarA) -
+            (ha.dx * 0.045 + acc * 0.025).clamp(-65.0, 65.0) * math.cos(_jarA) -
             _jarV * 5.5) *
         dt;
     _jarA = (_jarA + _jarV * dt).clamp(-0.85, 0.85);
@@ -1243,7 +1294,8 @@ class SayeKukla {
         all.addPath(p, V.zero);
       }
       final backRim = ui.Paint()
-        ..color = const ui.Color(0xFFFFD280).withValues(alpha: (rim * 0.42).clamp(0.0, 0.32));
+        ..color = const ui.Color(0xFFFFD280)
+            .withValues(alpha: (rim * 0.42).clamp(0.0, 0.32));
       for (final o in const [V(-0.32, -0.28), V(-0.28, 0.22)]) {
         c.save();
         c.translate(o.dx, o.dy);
@@ -1251,7 +1303,8 @@ class SayeKukla {
         c.restore();
       }
       final frontRim = ui.Paint()
-        ..color = const ui.Color(0xFFFFE49C).withValues(alpha: (rim * 0.85).clamp(0.0, 0.62));
+        ..color = const ui.Color(0xFFFFE49C)
+            .withValues(alpha: (rim * 0.85).clamp(0.0, 0.62));
       for (final o in const [V(0.42, -0.20), V(0.35, 0.20)]) {
         c.save();
         c.translate(o.dx, o.dy);
@@ -1260,7 +1313,16 @@ class SayeKukla {
       }
     }
     for (final n in _order) {
-      if (n == 'govde' || n == 'bas' || n == 'kolF' || n == 'bacakF' || n == 'orgu') {
+      final debug = debugLimbs ? _debugLimb[n] : null;
+      if (debug != null) {
+        c.drawPath(paths[n]!, ui.Paint()..color = debug);
+        continue;
+      }
+      if (n == 'govde' ||
+          n == 'bas' ||
+          n == 'kolF' ||
+          n == 'bacakF' ||
+          n == 'orgu') {
         // Morumsu veya zifiri siyah yerine, duvardaki gölgeyle aynı büyüyü
         // koruyan doğal mat is-antrasit siyahı ve kavanozdan hafif sıcak yansıma.
         final baseMatte = switch (n) {
@@ -1276,14 +1338,10 @@ class SayeKukla {
         c.drawPath(
           paths[n]!,
           ui.Paint()
-            ..shader = ui.Gradient.linear(
-              const V(-8, -32),
-              const V(10, -4),
-              [
-                baseMatte,
-                ui.Color.lerp(baseMatte, litMatte, (1 - 0.65 * _hide))!,
-              ],
-            ),
+            ..shader = ui.Gradient.linear(const V(-8, -32), const V(10, -4), [
+              baseMatte,
+              ui.Color.lerp(baseMatte, litMatte, (1 - 0.65 * _hide))!,
+            ]),
         );
       } else if (n == 'kolB' || n == 'bacakB') {
         c.drawPath(paths[n]!, ui.Paint()..color = far);
@@ -1313,7 +1371,8 @@ class SayeKukla {
           ui.Paint()
             ..style = ui.PaintingStyle.stroke
             ..strokeWidth = 0.45
-            ..color = const ui.Color(0xFFFF8A6A).withValues(alpha: 0.45 * (1 - 0.6 * _hide)),
+            ..color = const ui.Color(0xFFFF8A6A)
+                .withValues(alpha: 0.45 * (1 - 0.6 * _hide)),
         );
         c.restore();
       } else if (n == 'kolF' || n == 'bacakF' || n == 'orgu') {
@@ -1327,7 +1386,8 @@ class SayeKukla {
           ui.Paint()
             ..style = ui.PaintingStyle.stroke
             ..strokeWidth = 0.42
-            ..color = const ui.Color(0xFFFFD88A).withValues(alpha: 0.42 * (1 - 0.7 * _hide)),
+            ..color = const ui.Color(0xFFFFD88A)
+                .withValues(alpha: 0.42 * (1 - 0.7 * _hide)),
         );
         c.restore();
       }
@@ -1501,6 +1561,7 @@ abstract final class PerdeSaye {
   // yerin istenen yerden farkı (ekran pikseli), [_gx]: kendi hızı.
   static double _off = 0;
   static double _gx = 0;
+  static bool _going = false;
 
   /// Perdede taşınırken (sal, kızak, at, kaplumbağa, kanatla uçuş) Sâye
   /// yürümez; çizimden önce açılıp sonra kapatılır.
@@ -1511,6 +1572,30 @@ abstract final class PerdeSaye {
 
   static bool get ready => SayeKukla.ready;
 
+  // Menünün perdesindeki Sâye'nin kendi kuklası: menü, üstünde açılan
+  // Hikâye perdesiyle aynı karede kendi saatiyle çizilir. Ortak kukla her
+  // karede iki ayrı zaman görüp baştan kuruluyordu; Hikâye'de Sâye hiç
+  // yürümüyor, yüzmüyordu.
+  static final _menuK = SayeKukla();
+  static final _menuIn = KuklaInput();
+  static double? _menuLast;
+
+  /// Menünün perdesinde yerinde duran Sâye (ayak noktası orijinde).
+  static void drawMenu(ui.Canvas c, double scale, double time) {
+    if (!ready) return;
+    final last = _menuLast;
+    final dt = last == null ? 0.5 : (time - last).clamp(0.0, 0.25);
+    _menuLast = time;
+    final steps = (dt / (1 / 60)).ceil().clamp(1, 30);
+    for (var i = 0; i < steps; i++) {
+      _menuK.step(dt / steps, _menuIn);
+    }
+    c.save();
+    c.scale(scale, scale);
+    _menuK.paint(c, rim: 0.35, jar: true);
+    c.restore();
+  }
+
   /// Son çizilen kuklanın elinde tuttuğu kavanozun perde koordinatındaki yeri.
   static ui.Offset jarAt(
     ui.Offset feet,
@@ -1520,10 +1605,13 @@ abstract final class PerdeSaye {
   }) {
     final j = _k.jar;
     final p = ui.Offset((faceLeft ? -j.dx : j.dx) * scale, j.dy * scale);
-    return feet + (rot == 0 ? p : V(
-      p.dx * math.cos(rot) - p.dy * math.sin(rot),
-      p.dx * math.sin(rot) + p.dy * math.cos(rot),
-    ));
+    return feet +
+        (rot == 0
+            ? p
+            : V(
+                p.dx * math.cos(rot) - p.dy * math.sin(rot),
+                p.dx * math.sin(rot) + p.dy * math.cos(rot),
+              ));
   }
 
   /// Ayakları [feet]'te, [scale] perde pikseli = 1 oyun birimi (Sâye ~36
@@ -1570,6 +1658,7 @@ abstract final class PerdeSaye {
       _vy = 0;
       _off = 0;
       _gx = 0;
+      _going = false;
       _in
         ..mode = KuklaMode.ground
         ..forward = 0
@@ -1587,9 +1676,18 @@ abstract final class PerdeSaye {
       final movedY = (screenY - _lastY) / unit;
       _lastX = screenX;
       _lastY = screenY;
-      final ease = 1 - math.exp(-dt0 / 0.08);
-      _vx += (movedX / dt0 - _vx) * ease;
-      _vy += (movedY / dt0 - _vy) * ease;
+      // Perde atladı (satır geçildi): Sâye yeni yerine geçer. Atlayışın
+      // hızı yürüyüşe sayılmaz (sayılınca yeni yerinde önce ileri, sonra
+      // geri yürüyordu).
+      final jumped = (movedX / dt0).abs() > 400 || (movedY / dt0).abs() > 400;
+      if (jumped) {
+        _vx = 0;
+        _vy = 0;
+      } else {
+        final ease = 1 - math.exp(-dt0 / 0.08);
+        _vx += (movedX / dt0 - _vx) * ease;
+        _vy += (movedY / dt0 - _vy) * ease;
+      }
       // Kendi başına mı: perde bir hâl vermemiş, taşınmıyor, yatık değil.
       final free =
           mode == null &&
@@ -1604,35 +1702,54 @@ abstract final class PerdeSaye {
       final airborne =
           (free && _vy.abs() > 42 && _vy.abs() > _vx.abs() * 1.35) ||
           (flying && mode == null);
-      if ((movedX / dt0).abs() > 400) {
-        // Perde atladı (satır geçildi): olduğu yere geçer.
+      if (jumped) {
         _off = 0;
         _gx = 0;
+        _going = false;
       } else if (free && !airborne && !crouch) {
-        final rawV = movedX / dt0;
-        if (rawV.abs() < 1.8) {
-          // Hedef durduysa yürüyüşü anında kes (yerinde saymasın).
+        // Yavaşsa ardında kalır, birkaç gerçek adımla yetişir, durur;
+        // hızlıysa onunla yürür. Çizildiği yer adımın hızıyla ilerler
+        // ([_gx]), bacak da o hızla adım atar: ayak yerde kaymaz. (Bacaklar
+        // en az bir hızla adım atıp gövde perdenin yavaş hızında kalırsa
+        // ayaklar geri geri kayar.)
+        const pace = 24.0, gap = 3.0, follow = 16.0;
+        final e = -_off / unit; // istenen yer - çizildiği yer (birim)
+        var want = 0.0;
+        if ((movedX / dt0).abs() < 1.8) {
+          // Perde durunca kalan yetişme adımını kes.
           _vx = 0;
-          _gx *= math.exp(-dt0 / 0.04);
-          _off *= math.exp(-dt0 / 0.08);
+          _off = 0;
+          _gx = 0;
+          _going = false;
         } else {
-          _off *= math.exp(-dt0 / 0.12);
-          final vAbs = _vx.abs();
-          final want = vAbs < 1.8
-              ? 0.0
-              : _vx.sign *
-                  math.max(vAbs, 15.0 * ((vAbs - 1.8) / 6.0).clamp(0.0, 1.0));
-          _gx += (want - _gx) * (1 - math.exp(-dt0 / 0.06));
+          if (_vx.abs() >= follow) {
+            want = _vx + e * 3;
+            _going = true;
+          } else {
+            if (!_going && e.abs() > gap) _going = true;
+            if (_going && e.abs() < 1) _going = false;
+            if (_going) {
+              want = e.sign * math.min(pace, math.sqrt(2 * 90 * e.abs()));
+            }
+          }
+          _gx += (want - _gx).clamp(-180 * dt0, 180 * dt0);
+          final nextOff = _off + (_gx * dt0 - movedX) * unit;
+          if (_gx != 0 && _off != 0 && nextOff.sign != _off.sign) {
+            _off = 0;
+            _gx = 0;
+            _going = false;
+          } else {
+            _off = nextOff;
+          }
         }
       } else {
         // Perde bir hâl verdi: istenen yere yumuşakça oturur.
         _off *= math.exp(-dt0 / 0.15);
         _gx = 0;
+        _going = false;
       }
-      final ahead = facing *
-          (free && !airborne && !crouch
-              ? _gx
-              : (riding ? 0.0 : _vx));
+      final ahead =
+          facing * (free && !airborne && !crouch ? _gx : (riding ? 0.0 : _vx));
       _in
         ..mode =
             mode ??

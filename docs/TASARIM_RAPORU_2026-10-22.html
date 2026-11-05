@@ -1,0 +1,825 @@
+<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Gölge Oyunu — Tasarım Raporu</title><style>*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:#f5f1e8;color:#302b31;font:17px/1.75 system-ui,sans-serif}a{color:#886022;text-decoration-thickness:1px;text-underline-offset:3px}aside{position:fixed;inset:0 auto 0 0;width:300px;background:#28222f;color:#e6dccd;padding:30px 24px;overflow:auto;font-size:12px;line-height:1.5}aside a{color:#e6dccd;text-decoration:none}aside li{margin:9px 0}aside ul{padding-left:17px}aside>strong{font-size:19px;color:#edb65f}main{margin-left:300px;padding:60px clamp(25px,5vw,95px);max-width:1510px}h1{font-size:clamp(30px,3.5vw,52px);line-height:1.16;letter-spacing:-1px;color:#302535;max-width:1000px}h2{font-size:29px;line-height:1.35;margin:80px 0 25px;padding-bottom:14px;border-bottom:3px solid #d8b374;scroll-margin-top:25px}h3{font-size:23px;line-height:1.4;margin:48px 0 20px;color:#63432d;scroll-margin-top:25px}p,li{max-width:1000px}strong{font-weight:720}table{border-collapse:collapse;width:100%;margin:25px 0 38px;font-size:14px;line-height:1.6}th{text-align:left;background:#302535;color:#fff3dc}td,th{padding:13px;vertical-align:top;border:1px solid #dacfbf}tr:nth-child(even){background:#ece5d9}code{background:#e9e1d4;color:#673b2f;padding:2px 5px;border-radius:4px;font-size:.87em}img{display:block;width:100%;max-width:1500px;margin:30px 0;border-radius:12px}blockquote{border-left:4px solid #d7a65e;margin:25px 0;padding:5px 25px;background:#eee5d6}main>p:first-of-type{color:#6d6068;font-size:14px}main>p:nth-of-type(3){font-size:20px;background:#ebe0cb;padding:22px 25px;border-radius:12px}footer{margin-top:65px;color:#776973;font-size:13px}button{background:#edb65f;border:0;border-radius:6px;padding:9px 14px;color:#302535;cursor:pointer;font-weight:700}@media(max-width:1000px){aside{position:relative;width:auto;max-height:290px}main{margin:0;padding:30px 20px}table{display:block;overflow-x:auto}td,th{min-width:140px}h2{margin-top:55px}}@media print{aside,button{display:none}main{margin:0;padding:0;font-size:11pt;max-width:none}body{background:white}h2{break-before:page;font-size:19pt;margin-top:0}h3{break-after:avoid;font-size:15pt}table{font-size:9pt}tr,img{break-inside:avoid}a{color:inherit}h1{font-size:28pt}img{max-height:190mm}}</style></head><body><aside><strong>GÖLGE OYUNU</strong><p>Tasarım raporu · 22 Ekim 2026</p><button onclick="window.print()">Yazdır / PDF kaydet</button><div class="toc">
+<ul>
+<li><a href="#1-once-hangi-sorun-cozulmeli">1. Önce hangi sorun çözülmeli?</a></li>
+<li><a href="#2-bekciden-kacs-zamanlama-ve-zeka-birlikte">2. Bekçiden kaçış: zamanlama ve zekâ birlikte</a><ul>
+<li><a href="#21-oyuncunun-uc-ayr-isi-olsun">2.1 Oyuncunun üç ayrı işi olsun</a></li>
+<li><a href="#22-kandilci-icin-durum-aks">2.2 Kandilci için durum akışı</a></li>
+<li><a href="#23-en-fazla-uc-temel-bekci-roluyle-basla">2.3 En fazla üç temel bekçi rolüyle başla</a></li>
+<li><a href="#24-atesbocegi-bir-plan-arac-olsun">2.4 Ateşböceği bir plan aracı olsun</a></li>
+</ul>
+</li>
+<li><a href="#3-gozcu-ve-fener-beklemekten-plan-kurmaya">3. Gözcü ve fener: beklemekten plan kurmaya</a><ul>
+<li><a href="#31-gozcu-kandilciden-farkl-bir-soru-sormal">3.1 Gözcü, Kandilci'den farklı bir soru sormalı</a></li>
+<li><a href="#32-uc-fener-davrans">3.2 Üç fener davranışı</a></li>
+<li><a href="#33-beceri-ile-zekay-birlestiren-alt-karslasma">3.3 Beceri ile zekâyı birleştiren altı karşılaşma</a></li>
+</ul>
+</li>
+<li><a href="#4-zplama-hareketli-kayalar-ve-keyif-alanlar">4. Zıplama, hareketli kayalar ve keyif alanları</a><ul>
+<li><a href="#41-mevcut-fizigi-tasarm-cetveli-yap">4.1 Mevcut fiziği tasarım cetveli yap</a></li>
+<li><a href="#42-hareketli-platform-dili">4.2 Hareketli platform dili</a></li>
+<li><a href="#43-tekrar-kullanlabilir-on-iki-keyif-alan">4.3 Tekrar kullanılabilir on iki keyif alanı</a></li>
+<li><a href="#44-bir-parkurda-uc-katman-olsun">4.4 Bir parkurda üç katman olsun</a></li>
+</ul>
+</li>
+<li><a href="#5-butun-17-bolum-icin-tasarm-plan">5. Bütün 17 bölüm için tasarım planı</a><ul>
+<li><a href="#i-yerebatan-golgenin-kurallarn-ogret">I · Yerebatan — gölgenin kurallarını öğret</a></li>
+<li><a href="#ii-kule-yukar-ckmak-bir-karar-zinciri-olsun">II · Kule — yukarı çıkmak bir karar zinciri olsun</a></li>
+<li><a href="#iii-gokyolu-surekli-basl-tutmak-butun-ucusu-cozmesin">III · Gökyolu — sürekli basılı tutmak bütün uçuşu çözmesin</a></li>
+<li><a href="#iv-kaf-ilk-buyuk-beceri-snav">IV · Kaf — ilk büyük beceri sınavı</a></li>
+<li><a href="#v-agr-ipin-ruzgarn-ve-sessizligin-bolumu">V · Ağrı — ipin, rüzgârın ve sessizliğin bölümü</a></li>
+<li><a href="#vi-nuhun-gemisi-agrlg-hareketle-birlestir">VI · Nuh'un Gemisi — ağırlığı hareketle birleştir</a></li>
+<li><a href="#vii-nemrut-dev-olcegi-kucuk-oyuncu-becerisi">VII · Nemrut — dev ölçeği, küçük oyuncu becerisi</a></li>
+<li><a href="#viii-gun-dogumu-devin-saldrsn-cozume-cevir">VIII · Gün Doğumu — devin saldırısını çözüme çevir</a></li>
+<li><a href="#ix-kar-yolu-kurdun-atlmasn-kendi-lehine-kullan">IX · Kar Yolu — kurdun atılmasını kendi lehine kullan</a></li>
+<li><a href="#x-palandoken-saf-hareket-keyfinin-bolumu">X · Palandöken — saf hareket keyfinin bölümü</a></li>
+<li><a href="#xi-cg-gerginlik-adil-bir-yetisme-basksyla-gelsin">XI · Çığ — gerginlik, adil bir yetişme baskısıyla gelsin</a></li>
+<li><a href="#xii-peri-bacalar-ayn-bacay-tekrar-etmek-yerine-uc-oyun">XII · Peri Bacaları — aynı bacayı tekrar etmek yerine üç oyun</a></li>
+<li><a href="#xiii-derinkuyu-dar-alan-zekas">XIII · Derinkuyu — dar alan zekâsı</a></li>
+<li><a href="#xiv-erlikin-kat-sg-acmak-da-kapatmak-da-karar">XIV · Erlik'in Katı — ışığı açmak da kapatmak da karar</a></li>
+<li><a href="#xv-ergenekon-mevcut-iyi-sistemleri-birlestir">XV · Ergenekon — mevcut iyi sistemleri birleştir</a></li>
+<li><a href="#xvi-gogun-katlar-yere-basmay-ve-ucmay-yeniden-dusun">XVI · Göğün Katları — yere basmayı ve uçmayı yeniden düşün</a></li>
+<li><a href="#xvii-seb-i-arus-final-butun-mekanikleri-ayn-anda-ygmasn">XVII · Şeb-i Arûs — final, bütün mekanikleri aynı anda yığmasın</a></li>
+</ul>
+</li>
+<li><a href="#6-daha-karikaturize-gorunum-render-m-degismeli">6. Daha karikatürize görünüm: render mı değişmeli?</a><ul>
+<li><a href="#61-uc-sanat-yonu-ve-tercih">6.1 Üç sanat yönü ve tercih</a></li>
+<li><a href="#62-saye-icin-somut-degisiklikler">6.2 Sâye için somut değişiklikler</a></li>
+<li><a href="#63-bekci-ve-gozcu-icin-somut-degisiklikler">6.3 Bekçi ve Gözcü için somut değişiklikler</a></li>
+<li><a href="#64-zemin-arka-plan-ve-sk-dili">6.4 Zemin, arka plan ve ışık dili</a></li>
+<li><a href="#65-mevcut-kodda-degisim-nerede-yaplr">6.5 Mevcut kodda değişim nerede yapılır?</a></li>
+<li><a href="#66-motor-degisimi-ne-zaman-yeniden-tartslr">6.6 Motor değişimi ne zaman yeniden tartışılır?</a></li>
+</ul>
+</li>
+<li><a href="#7-teknik-cozum-plan">7. Teknik çözüm planı</a><ul>
+<li><a href="#71-gorus-ile-cizim-tek-bilgiye-dayansn">7.1 Görüş ile çizim tek bilgiye dayansın</a></li>
+<li><a href="#72-bekci-verisini-bolumden-ayarla">7.2 Bekçi verisini bölümden ayarla</a></li>
+<li><a href="#73-bolum-parcalarn-yaplandr">7.3 Bölüm parçalarını yapılandır</a></li>
+<li><a href="#74-kontrol-noktas-ve-yeniden-deneme">7.4 Kontrol noktası ve yeniden deneme</a></li>
+</ul>
+</li>
+<li><a href="#8-zorluk-erisilebilirlik-ve-olcum">8. Zorluk, erişilebilirlik ve ölçüm</a></li>
+<li><a href="#9-uygulama-sras-ve-kabul-kaplar">9. Uygulama sırası ve kabul kapıları</a></li>
+<li><a href="#10-hangi-testler-gerekli">10. Hangi testler gerekli?</a></li>
+<li><a href="#11-oncelikle-eklenmemesi-gerekenler">11. Öncelikle eklenmemesi gerekenler</a></li>
+<li><a href="#12-inceleme-kaynaklar-ve-kapsam-snr">12. İnceleme kaynakları ve kapsam sınırı</a></li>
+</ul>
+</div>
+</aside><main><h1 id="golge-oyunu-bolum-beceri-ve-gorsel-yon-raporu">Gölge Oyunu — Bölüm, beceri ve görsel yön raporu</h1>
+<p><strong>22 Ekim 2026 · İncelenen temel: <code>80ad815</code> · Tasarım önerisi, uygulama yapılmadı.</strong></p>
+<p>Bu rapor 17 bölümün tanımlarına ve haritalarına; karakter fiziğine; Kandilci, Gözcü, fener, kurt, bulmaca ve çizim kodlarına; mevcut oyun görsellerine dayanır. Önceki incelemede ana test koşusundaki 191 test geçti. Bu çalışma 17 bölümün tamamının insan oyuncuyla bitirildiği bir oynanabilirlik testi değildir. Aşağıdaki süreler, hızlar ve başarı oranları <strong>prototipte sınanacak tasarım hedefleridir</strong>; ölçülmüş oyuncu sonuçları değildir. Eski <code>ZORLUK.md</code> notları güncel kodla karşılaştırılmıştır.</p>
+<p><strong>Ana karar:</strong> Oyunun yönü, karikatürize bir hayal perdesinde <strong>gözlem → plan → doğru anda hareket → tatmin edici kaçış</strong> olmalı. Platform alanları ise <strong>ritim → sıçrama → iyi iniş → kısa rahatlama</strong> döngüsünü taşımalı. Zorluk, oyuncunun okuyabildiği kuralları birlikte kullanmasından doğmalı.</p>
+<h2 id="1-once-hangi-sorun-cozulmeli">1. Önce hangi sorun çözülmeli?</h2>
+<p>Oyunda içerik ve mekanik çeşitliliği zaten yüksek. Öncelik yeni bölüm eklemekten önce mevcut karşılaşmaların karar gerektirmesini sağlamak. Aynı davranışın farklı dekorlarla tekrarlandığı alanlar, daha çok düşmanla doldurulmak yerine farklı rota ve ritimlerle yeniden kurulmalı.</p>
+<table>
+<thead>
+<tr>
+<th>Kodda görülen durum</th>
+<th>Oyuncuya olası etkisi</th>
+<th>Tasarım kararı</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Sâye koşu 160 px/sn; Kandilci kovalamaca 130 px/sn</td>
+<td>Açık koridorda kaçmak baskın çözüm olabilir</td>
+<td>Kaçışı kısa hatlara böl; görüş kesme, köşe, hareketli siper ve arama davranışı ekle</td>
+</tr>
+<tr>
+<td>Kandilci ateşböceğine dönünce şüphe sıfırlanıyor, temasla da yakalamıyor</td>
+<td>Ateşböceği pek çok durumda genel kurtuluş düğmesine dönüşebilir</td>
+<td>Görüş, mesafe, dikkat süresi ve hangi bekçinin yemi sahiplendiği kurallı olsun</td>
+</tr>
+<tr>
+<td><code>_noticeLure</code> içinde mesafe/yükseklik kontrolü var, görüş hattı koşulu yok</td>
+<td>Duvar arkasındaki yem bekçiyi etkileyebilir</td>
+<td>Yem görülmeli veya açıkça duyulur bir etkisi olmalı; ikisini ayrı modelle</td>
+</tr>
+<tr>
+<td>Gözcü ışığı yaklaşık 0,74 sn, balon yaklaşık 0,56 sn maruziyette yakalıyor; Konya büyük feneri 0,1 sn üstünde öldürüyor</td>
+<td>Benzer görünen tehditler farklı tepki süreleri istiyor</td>
+<td>Tehdit sınıfları görsel biçim, ses ve öğretimle ayrılmalı; ortak maruziyet dili kurulmalı</td>
+</tr>
+<tr>
+<td>Hareketli kaya 2 kare genişlikte, 4 kare yol ve 5,5 sn dönemle çalışıyor</td>
+<td>Farklı yerlerde benzer bekleme ve atlama hissi</td>
+<td>Bölüm verisinden yol, durak, dönem, başlangıç evresi ve genişlik seçilebilsin</td>
+</tr>
+<tr>
+<td>Ergenekon'da <code>noWings: true</code> zaten var</td>
+<td>Önceki kanat önerisinin bir kısmı uygulanmış</td>
+<td>Burada yeni iş: ritim, kaynak taşıma ve zamanlı tırmanışı geliştirmek</td>
+</tr>
+<tr>
+<td>Kurt 0,32 sn hazırlanıp 0,45 sn, normal hızının 1,35 katıyla atılıyor</td>
+<td>Zaten zamanlamalı bir tehdit temeli var</td>
+<td>Yeni bir atılma sistemi yazmak yerine hazırlık okunurluğunu ve kaçış alanlarını iyileştir</td>
+</tr>
+<tr>
+<td>0,10 sn coyote time, 0,12 sn zıplama tamponu, değişken sıçrama mevcut</td>
+<td>Affedici hareket altyapısı hazır</td>
+<td>Bu yardımları koru; zorluğu rota seçiminden ve zamanlamadan üret</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Kaçınılacak ilk hamle:</strong> Bütün bekçileri hızlandırmak, bütün platformları küçültmek ve bütün ışıkları daha erken öldürücü yapmak. Bunlar kısa vadede ölüm sayısını artırır; her sahneyi daha ilginç yapmaz.</p>
+<h2 id="2-bekciden-kacs-zamanlama-ve-zeka-birlikte">2. Bekçiden kaçış: zamanlama ve zekâ birlikte</h2>
+<h3 id="21-oyuncunun-uc-ayr-isi-olsun">2.1 Oyuncunun üç ayrı işi olsun</h3>
+<ol>
+<li><strong>Okuma:</strong> Bekçi nerede duruyor, hangi sesle dönüyor, hangi yere bakıyor? Omuz, baş ve fener hareketi bunu önceden anlatmalı.</li>
+<li><strong>Plan:</strong> Hangi siper, ses kaynağı veya ateşböceği kullanılacak? Görülürsem hangi güvenli yere ulaşacağım?</li>
+<li><strong>Uygulama:</strong> Fırsat açıldığında koş, gerektiğinde sessizleş, görüşü kes ve arama alanından uzaklaş.</li>
+</ol>
+<p>Oyuncu başarısız olunca “hangi kuralı yanlış okuduğunu” anlayabilmeli. Başarılı olunca kendi kurduğu planı uyguladığını hissetmeli.</p>
+<h3 id="22-kandilci-icin-durum-aks">2.2 Kandilci için durum akışı</h3>
+<p><strong>Devriye → belirtiyi fark et → doğrula → takip et → son görülen yere git → yakın siperleri ara → devriyeye dön.</strong></p>
+<ul>
+<li>Fark etmede gövde durur, baş ve fener ipucuna döner. Başın dönüşü ile öldürücü görüşün başlaması aynı, anlık olay olmasın.</li>
+<li>Doğrulama şüphesi uzaklık, hareket ve örtü durumuna göre dolar. İlk prototipte normal uzaklıkta 0,8–1,2 sn, yakında 0,45–0,7 sn değerlendirilebilir.</li>
+<li>Takipte bekçi oyuncunun <strong>son gördüğü konumu</strong> bilir. Duvar ardında sürekli gerçek konuma kilitlenmez.</li>
+<li>Görüş kesilince 3–5 sn yerel arama denenebilir. Arama alanının sınırı vardır; ilk öğretimde bütün saklanma noktaları kontrol edilmez.</li>
+<li>Aynı direğin arkasına hemen çömelmek, oyuncu oraya girerken görülmüşse yeterli olmaz. Başka sipere geçmek veya bekçiyi başka belirtiye yönlendirmek gerekir.</li>
+<li>Bekçi dönüşünden önce kısa ayak hazırlığı yapar. Dönüş animi, gerçek görüş yönü ve ışık konisi aynı durumdan beslenir.</li>
+</ul>
+<p><strong>İlk prototipte hız:</strong> Mevcut 130 korunarak önce iyi bir karşılaşma kurulmalı. Yetmiyorsa seçili bir takipçi türünde 165–175 px/sn kısa atak, ardından yavaş toparlanma denenebilir. Yakalanan oyuncuyu kurtaracak bir köşe veya oyuk yoksa bu hız kullanılmamalı.</p>
+<h3 id="23-en-fazla-uc-temel-bekci-roluyle-basla">2.3 En fazla üç temel bekçi rolüyle başla</h3>
+<table>
+<thead>
+<tr>
+<th>Rol</th>
+<th>Okunabilir özelliği</th>
+<th>Oyuncudan istediği</th>
+<th>Zayıf yanı</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Devriyeci</td>
+<td>Uzun gövde, düzenli adım, sallanan asa</td>
+<td>Devriye dönüşünü okuyup arkasından geçmek</td>
+<td>Ses kaynağına gider, ağır döner</td>
+</tr>
+<tr>
+<td>Dinleyici</td>
+<td>Büyük kulak/başlık, alçak tutulan fener</td>
+<td>Tahta üstünde sessiz yürüme, gürültüyü başka yere taşıma</td>
+<td>Şelale, çan veya rüzgâr sırasında duyamaz</td>
+</tr>
+<tr>
+<td>Kapıcı</td>
+<td>Geniş gövde, kısa adımlar, yatay fener</td>
+<td>Yanından koşmak yerine kapıyı/ışığı/karşı ağırlığı yönetmek</td>
+<td>Bulunduğu alanı terk etmez; çevre düzeneğiyle aşılır</td>
+</tr>
+</tbody>
+</table>
+<p>İlk sürümde bunların hepsine farklı yol bulma sistemi yazmak gerekmez. Aynı durum akışı; hız, işitme, bekleme noktası ve dikkat profilinden farklılaşabilir. Biri görüldü diye haritanın tamamını alarm durumuna sokma. İlk alarm yalnızca yakın komşuya, görünen bir çağrı işaretiyle aktarılabilir.</p>
+<h3 id="24-atesbocegi-bir-plan-arac-olsun">2.4 Ateşböceği bir plan aracı olsun</h3>
+<ul>
+<li>Oyuncu, yemin hangi yönde ve ne kadar sürede bekçiyi çekeceğini okuyabilsin. Yeni nişan tuşu eklemeden mevcut salma yönü korunabilir; kısa yörünge izi erişilebilirlik seçeneği olabilir.</li>
+<li>Bir ateşböceğini normalde bir bekçi sahiplenir. İkinci bekçi duraklayıp merak edebilir; ikisinin de uzun süre tamamen etkisizleşmesi özel bir çevre çözümüne ait olsun.</li>
+<li>Başlangıçta dikkat süresi 1,6–2,2 sn gibi belirgin bir pencereyle denenebilir. Sonlara doğru süreyi körlemesine azaltmak yerine yemin doğru konuma atılmasını iste.</li>
+<li>Yem, bekçinin görüşünü bir yöne çevirir. Bekçinin içinden yürümek genel çözüm olmamalı. Dikkati dağılmışken dar bir yakınlık alanı korunacaksa görsel olarak açık olmalı ve ilk öğretim bu kurala göre yenilenmeli.</li>
+<li>Art arda yem atmaya bağışıklık eklemek ilk iş olmasın. Önce görüş hattı, hedef sahipliği ve doğru konumlandırma çözülmeli.</li>
+<li>Zorunlu bir yem bulmacasında kaynak yoksa oyuncu kilitlenmemeli: bulmaca girişinde yenilenen kaynak veya kontrol noktası sıfırlaması bulunmalı.</li>
+</ul>
+<h2 id="3-gozcu-ve-fener-beklemekten-plan-kurmaya">3. Gözcü ve fener: beklemekten plan kurmaya</h2>
+<h3 id="31-gozcu-kandilciden-farkl-bir-soru-sormal">3.1 Gözcü, Kandilci'den farklı bir soru sormalı</h3>
+<p>Kandilci “nerede olduğumu nasıl unuttururum?” sorusudur. Gözcü ise “bu ışık düzeninde <strong>ne zaman, nereden ve hangi siperle</strong> geçerim?” sorusudur.</p>
+<p>Önerilen tarama döngüsü: <strong>uyarı dönüşü → birinci hat → kısa durak → ikinci hat → geri dönüş</strong>. İlk sahnede yalnız tek hat; sonraki sahnede hareketli siper; daha sonra kısa süreli ayna saptırması eklenir. Konumdan türetilen evre yerine tasarımcının ayarladığı <code>phase</code> ve <code>sweepProfile</code> kullanılması, iki Gözcü'nün çözülebilir biçimde eşleşmesini kolaylaştırır.</p>
+<p>Güvenli geçiş penceresi yalnız taramanın boş kaldığı süre değildir:</p>
+<p><code>gerekli pencere = tehlikeli mesafe / oyuncunun kullanılacak hızı + hareket başlangıcı + pay</code></p>
+<p>Örneğin 96 px geçiş, 160 px/sn koşuda yalnız düz hareket için 0,60 sn ister. Başlama ve kenar payıyla 0,85–1,0 sn ilk deneme aralığı düşünülebilir. İki ışık birlikte kullanıldığında <strong>ikisi için de uygun tek bir geçiş dizisi</strong> bulunmalı. Bunu gerçek hareket testiyle doğrula; konilerin görsel olarak ayrılması yeterli kanıt değildir.</p>
+<h3 id="32-uc-fener-davrans">3.2 Üç fener davranışı</h3>
+<table>
+<thead>
+<tr>
+<th>Fener</th>
+<th>Bildirdiği kural</th>
+<th>Karşı hamle</th>
+<th>Uygulama notu</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Geniş tarayıcı</td>
+<td>Yavaş, geniş alanı tarar</td>
+<td>Siperden sipere zamanlı geçiş</td>
+<td>İlk öğretim için uygun</td>
+</tr>
+<tr>
+<td>Dar odaklayıcı</td>
+<td>Oyuncuyu sezdikten sonra ışığını daraltır</td>
+<td>Önce başka noktaya çek, sonra ışık yön değiştirirken geç</td>
+<td>Daralma sırasında ses ve lens pozu gerekir</td>
+</tr>
+<tr>
+<td>Sallanan/asılı fener</td>
+<td>Sarkaç hareketiyle örtü alanı değişir</td>
+<td>Hareketli kaya veya kapının gölgesinde ilerle</td>
+<td>Fiziksel sallanma ve gerçek tehlike aynı açıdan çıkmalı</td>
+</tr>
+</tbody>
+</table>
+<p>Benzer camgöbeği ışığın bazı yerlerde dekor, bazılarında ölüm olması karışabilir. Lens biçimi, koninin zemin izi, kısa ses motifi ve maruziyet işareti birlikte tehlikeyi anlatmalı. Güvenli ışık daima sarı olmak zorunda değildir: Göğün Katları ve Erlik gibi bölümlerin özel kuralları ilk güvenli örnekle yeniden öğretilmeli.</p>
+<h3 id="33-beceri-ile-zekay-birlestiren-alt-karslasma">3.3 Beceri ile zekâyı birleştiren altı karşılaşma</h3>
+<ol>
+<li><strong>Çanlı koridor:</strong> Çanı çal; devriyeci ses kaynağına gider. Gözcü hâlâ köprüyü tarar. Oyuncu çan sayesinde yaratılan bekçi boşluğunu, Gözcü'nün dönüşüyle eşleştirir. Çan otomatik zafer sağlamaz.</li>
+<li><strong>Yürüyen gölge:</strong> Yatay kaya, sabit Gözcü ile oyuncu arasında gider. Önce kayanın güvenli gölgesine gir; kısa bir hat boyunca gölgeyi takip et; kaya dönmeden sonraki oyuğa geç.</li>
+<li><strong>Ayna ve kapı:</strong> Aynayı çevirince Gözcü kısa süre şaşırır fakat aynı ışık yakındaki gölge köprüsünü siler. Önce köprüden geç, sonra arka taraftaki aynayla Gözcü'yü saptır. Sıra seçimi çözümün parçasıdır.</li>
+<li><strong>Gürültülü asansör:</strong> Sandıkla kefeyi indirirken zincir sesi bekçiyi çeker. Sandığı bırakıp kaçmak yerine bekçiyi yanlış kata çek, asansör geri yükselirken bin.</li>
+<li><strong>İki Gözcü, tek durak:</strong> Birinci ışık geçince orta oyukta dur; ikinci taramanın dönüşünde ilerle. Gizli, tek karelik ortak boşluk aramak yerine iki okunabilir eylemle çözülür.</li>
+<li><strong>Kısa takip, uzun çözüm:</strong> İlk koridorda fark edilme ihtimali var. Devriyeci son köşede oyuncuyu kaybeder; oyuncu bir üst kata çıkıp ilerideki kapıyı açar. Sadece ekrandan kaçmak takipten kurtulmaya yetmez.</li>
+</ol>
+<p><img alt="Bekçi, Gözcü ve hareketli siper karşılaşmasının şeması" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNTAwIiBoZWlnaHQ9Ijg1MCIgdmlld0JveD0iMCAwIDE1MDAgODUwIiByb2xlPSJpbWciIGFyaWEtbGFiZWxsZWRieT0idGl0bGUgZGVzYyI+PHRpdGxlIGlkPSJ0aXRsZSI+WmVrw6IgdmUgemFtYW5sYW1hIGlzdGV5ZW4ga2FyxZ/EsWxhxZ9tYTwvdGl0bGU+PGRlc2MgaWQ9ImRlc2MiPsOHYW5sYSBiZWvDp2l5aSB5w7ZubGVuZGlybWUsIMSxxZ/EscSfxLEgb2t1bWEsIGhhcmVrZXRsaSBzaXBlciBhcmthc8SxbmRhIGlsZXJsZW1lIHZlIGfDvHZlbmxpIGR1cmFrbGFyYSBha3RhcsSxbS48L2Rlc2M+PGRlZnM+PG1hcmtlciBpZD0iYXJyb3ciIHZpZXdCb3g9IjAgMCAxMCAxMCIgcmVmWD0iOSIgcmVmWT0iNSIgbWFya2VyV2lkdGg9IjciIG1hcmtlckhlaWdodD0iNyIgb3JpZW50PSJhdXRvLXN0YXJ0LXJldmVyc2UiPjxwYXRoIGQ9Ik0wIDBMMTAgNSAwIDEwWiIgZmlsbD0iI2U5YWQ2MCIvPjwvbWFya2VyPjwvZGVmcz48cmVjdCB3aWR0aD0iMTUwMCIgaGVpZ2h0PSI4NTAiIGZpbGw9IiMyMTFjMjgiLz48ZyBmb250LWZhbWlseT0iRGVqYVZ1IFNhbnMsIHNhbnMtc2VyaWYiPjx0ZXh0IHg9IjUwIiB5PSI2MCIgZm9udC1zaXplPSIzMCIgZmlsbD0iI2YxZThkNyIgZm9udC13ZWlnaHQ9IjcwMCI+w5ZOQ0UgUExBTkxBLCBTT05SQSBET8SeUlUgQU5EQSBHRcOHPC90ZXh0Pjx0ZXh0IHg9IjUwIiB5PSI5OSIgZm9udC1zaXplPSIxOCIgZmlsbD0iI2I5YWNiYiIgZm9udC13ZWlnaHQ9IjQwMCI+w5ZuZXJpbGVuIG9kYSDFn2VtYXPEsSDigKIgw5Zsw6dlayB2ZSBzw7xyZWxlciBnZXLDp2VrIGZpemlrIGlsZSBkb8SfcnVsYW5tYWzEsWTEsXIuPC90ZXh0PjxyZWN0IHg9IjQ1IiB5PSIxMzUiIHdpZHRoPSIxNDEwIiBoZWlnaHQ9IjQxMCIgcng9IjE4IiBmaWxsPSIjMzQyYjNjIi8+PHBhdGggZD0iTTExMTAgMjMwTDc2MCA0NzVIMTM2MFoiIGZpbGw9IiM3ZmU2ZDIiIG9wYWNpdHk9Ii4xNSIvPjxwYXRoIGQ9Ik0xMTEwIDIzMEw5MDAgNDc1SDEzNjAiIHN0cm9rZT0iIzdmZTZkMiIgc3Ryb2tlLXdpZHRoPSIyIiBmaWxsPSJub25lIiBzdHJva2UtZGFzaGFycmF5PSI3IDciLz48cGF0aCBkPSJNNzAgNDc1SDE0MjUiIHN0cm9rZT0iI2U5YWQ2MCIgc3Ryb2tlLXdpZHRoPSI1Ii8+PHJlY3QgeD0iMjgwIiB5PSIzMjUiIHdpZHRoPSI1OCIgaGVpZ2h0PSIxNTAiIHJ4PSI3IiBmaWxsPSIjMTcxNDFkIi8+PHJlY3QgeD0iOTQwIiB5PSIzNDUiIHdpZHRoPSI1OCIgaGVpZ2h0PSIxMzAiIHJ4PSI3IiBmaWxsPSIjMTcxNDFkIi8+PHJlY3QgeD0iNTM1IiB5PSIzNTYiIHdpZHRoPSI5MiIgaGVpZ2h0PSI5MCIgcng9IjEyIiBmaWxsPSIjNzY2Njc1IiBzdHJva2U9IiNiOGE2YjEiIHN0cm9rZS13aWR0aD0iMyIvPjxwYXRoIGQ9Ik00NzUgNDI1SDg0NSIgc3Ryb2tlPSIjYjhhNmIxIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1kYXNoYXJyYXk9IjggNyIvPjxwYXRoIGQ9Ik01ODAgMzMzSDgwMCIgc3Ryb2tlPSIjZTlhZDYwIiBzdHJva2Utd2lkdGg9IjQiIG1hcmtlci1lbmQ9InVybCgjYXJyb3cpIi8+PGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMzgwIDQ2MSkgc2NhbGUoMC44NSkiIGZpbGw9IiMyMTFiMjkiPjxlbGxpcHNlIGN4PSIwIiBjeT0iLTc3IiByeD0iMTkiIHJ5PSIyMSIvPjxwYXRoIGQ9Ik0tMTgtODZsLTE2LTggMTgtNCAxOS0xIDE1IDEyek0tMTMtNTZROS02NCAxNy00NUwyMi0xMy0xNy0xM1oiLz48cGF0aCBkPSJNLTEyLTEzbC04IDI1aDEzbDEyLTIzIDExIDIzaDE0TDE1LTE1WiIvPjxwYXRoIGQ9Ik0tMTQtNTBsLTI1IDE3IDQgOCAzMC0xNk0xMS00OGwyMSAyNCA2LTUtMTctMjVaIi8+PHBhdGggZD0iTS0xMS01NGwtMzEtNSA4IDEwIDI0IDR6Ii8+PHJlY3QgeD0iMjgiIHk9Ii0zMCIgd2lkdGg9IjE4IiBoZWlnaHQ9IjI1IiByeD0iNSIgZmlsbD0iI2YxYmY2NSIgc3Ryb2tlPSIjMjExYjI5IiBzdHJva2Utd2lkdGg9IjMiLz48Y2lyY2xlIGN4PSI3IiBjeT0iLTgwIiByPSIzIiBmaWxsPSIjZWZkNGEzIi8+PC9nPjxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDEzMDAgNDYxKSBzY2FsZSgxLjEpIiBmaWxsPSIjMjExYjI5Ij48ZWxsaXBzZSBjeD0iMCIgY3k9Ii0xMzAiIHJ4PSIyMCIgcnk9IjI1Ii8+PHBhdGggZD0iTS0yMC0xNDNsMTgtMjggMjEgMzBaIi8+PHBhdGggZD0iTTEwLTE0MGwyOCAxNS0yOSA0WiIvPjxwYXRoIGQ9Ik0tMTgtMTA3UTEwLTExOSAyNS05NEwzMS01LTMyLTVaIi8+PHBhdGggZD0iTS0xNy01bC01IDE4aDE4bDUtMThNMTItNWw3IDE4aDE5TDI5LTVaIi8+PHBhdGggZD0iTTIwLTk4bDMzIDMwIDctOC0zMC0zNVoiLz48cGF0aCBkPSJNLTI4LTEwMWwtMTcgNDAgOSA1IDIzLTQ1WiIvPjxwYXRoIGQ9Ik01NSA1Vi0xMzNxMC0yMCAxNi0xOCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMjExYjI5IiBzdHJva2Utd2lkdGg9IjYiLz48cGF0aCBkPSJNNzAtMTUxdjI5IiBzdHJva2U9IiMyMTFiMjkiIHN0cm9rZS13aWR0aD0iMyIvPjxyZWN0IHg9IjU5IiB5PSItMTIyIiB3aWR0aD0iMjUiIGhlaWdodD0iMzQiIHJ4PSI3IiBmaWxsPSIjN2ZlNmQyIiBzdHJva2U9IiMyMTFiMjkiIHN0cm9rZS13aWR0aD0iNCIvPjxjaXJjbGUgY3g9IjkiIGN5PSItMTM0IiByPSIzIiBmaWxsPSIjZWNkOWI3Ii8+PC9nPjxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDEwODggMjMwKSBzY2FsZSgwLjgpIiBzdHJva2U9IiMyMTFiMjkiIHN0cm9rZS13aWR0aD0iNSI+PHBhdGggZD0iTS0xMyAyaDU1bC03LTEySC01eiIgZmlsbD0iIzIxMWIyOSIvPjxwYXRoIGQ9Ik0xMC0xMHYtNDVxLTEwLTEwLTUtMzAiIGZpbGw9Im5vbmUiLz48cGF0aCBkPSJNLTE1LTc4cTAtMjggMjktMjhoMjd2NTRIMTRxLTI5IDAtMjktMjYiIGZpbGw9IiMyMTFiMjkiLz48ZWxsaXBzZSBjeD0iNDIiIGN5PSItNzkiIHJ4PSIxMiIgcnk9IjI3IiBmaWxsPSIjN2ZlNmQyIi8+PGVsbGlwc2UgY3g9IjQ0IiBjeT0iLTc5IiByeD0iNCIgcnk9IjE1IiBmaWxsPSIjMjExYjI5Ii8+PC9nPjxwYXRoIGQ9Ik0xNTUgMjYwdjM1bS0yNyAzNXEwLTMyIDI3LTMydDI3IDMyeiIgZmlsbD0iI2U5YWQ2MCIgc3Ryb2tlPSIjZTlhZDYwIiBzdHJva2Utd2lkdGg9IjQiLz48Y2lyY2xlIGN4PSIxNTUiIGN5PSIzMzkiIHI9IjUiIGZpbGw9IiNlOWFkNjAiLz48dGV4dCB4PSI5OCIgeT0iMzgwIiBmb250LXNpemU9IjE3IiBmaWxsPSIjZWZlM2NjIiBmb250LXdlaWdodD0iNDAwIj7Dh2FuIC8gc2VzPC90ZXh0Pjx0ZXh0IHg9IjI0NSIgeT0iNTE0IiBmb250LXNpemU9IjE3IiBmaWxsPSIjZWZlM2NjIiBmb250LXdlaWdodD0iNDAwIj5BOiBzYWJpdCDDtnJ0w7w8L3RleHQ+PHRleHQgeD0iNTM1IiB5PSI1MTQiIGZvbnQtc2l6ZT0iMTciIGZpbGw9IiNlZmUzY2MiIGZvbnQtd2VpZ2h0PSI0MDAiPkI6IGhhcmVrZXRsaSBzaXBlcjwvdGV4dD48dGV4dCB4PSI5MDAiIHk9IjUxNCIgZm9udC1zaXplPSIxNyIgZmlsbD0iI2VmZTNjYyIgZm9udC13ZWlnaHQ9IjQwMCI+QzogZ8O8dmVubGkgZHVyYWs8L3RleHQ+PHBhdGggZD0iTTM4NSA0NjVRNDYwIDQyMCA1NTUgNDYxVDk2MCA0NjFUMTE5MCA0NjEiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2U5YWQ2MCIgc3Ryb2tlLXdpZHRoPSIzIiBzdHJva2UtZGFzaGFycmF5PSIxMCA3IiBtYXJrZXItZW5kPSJ1cmwoI2Fycm93KSIvPjx0ZXh0IHg9IjExMjAiIHk9IjI5MSIgZm9udC1zaXplPSIxNiIgZmlsbD0iI2VmZTNjYyIgZm9udC13ZWlnaHQ9IjQwMCI+R8O2emPDvDogZGVzZW4gb2t1bnVyPC90ZXh0Pjx0ZXh0IHg9IjExNzUiIHk9IjUxNCIgZm9udC1zaXplPSIxNyIgZmlsbD0iI2VmZTNjYyIgZm9udC13ZWlnaHQ9IjQwMCI+QmVrw6dpOiBzZXNlIHnDtm5lbGlyPC90ZXh0PjxyZWN0IHg9IjQ1IiB5PSI1OTAiIHdpZHRoPSIzMzUiIGhlaWdodD0iMTU1IiByeD0iMTQiIGZpbGw9IiNmMWU4ZDciLz48dGV4dCB4PSI2MyIgeT0iNjI5IiBmb250LXNpemU9IjE3IiBmaWxsPSIjMzAyNzM1IiBmb250LXdlaWdodD0iNzAwIj4xIMK3IEZJUlNBVCBZQVJBVDwvdGV4dD48dGV4dCB4PSI2MyIgeT0iNjY5IiBmb250LXNpemU9IjE2IiBmaWxsPSIjNTE0NTUxIiBmb250LXdlaWdodD0iNDAwIj7Dh2FuxLEgw6dhbDsgYmVrw6dpeWk8L3RleHQ+PHRleHQgeD0iNjMiIHk9IjY5NSIgZm9udC1zaXplPSIxNiIgZmlsbD0iIzUxNDU1MSIgZm9udC13ZWlnaHQ9IjQwMCI+eWFubMSxxZ8gecO2bmUgw6dlay48L3RleHQ+PHJlY3QgeD0iNDAwIiB5PSI1OTAiIHdpZHRoPSIzMzUiIGhlaWdodD0iMTU1IiByeD0iMTQiIGZpbGw9IiNmMWU4ZDciLz48dGV4dCB4PSI0MTgiIHk9IjYyOSIgZm9udC1zaXplPSIxNyIgZmlsbD0iIzMwMjczNSIgZm9udC13ZWlnaHQ9IjcwMCI+MiDCtyBUQVJBTUFZSSBPS1U8L3RleHQ+PHRleHQgeD0iNDE4IiB5PSI2NjkiIGZvbnQtc2l6ZT0iMTYiIGZpbGw9IiM1MTQ1NTEiIGZvbnQtd2VpZ2h0PSI0MDAiPkEgw7ZydMO8c8O8bmRlPC90ZXh0Pjx0ZXh0IHg9IjQxOCIgeT0iNjk1IiBmb250LXNpemU9IjE2IiBmaWxsPSIjNTE0NTUxIiBmb250LXdlaWdodD0iNDAwIj7EscWfxLHEn8SxbiBkw7Zuw7zFn8O8bsO8IGl6bGUuPC90ZXh0PjxyZWN0IHg9Ijc1NSIgeT0iNTkwIiB3aWR0aD0iMzM1IiBoZWlnaHQ9IjE1NSIgcng9IjE0IiBmaWxsPSIjZjFlOGQ3Ii8+PHRleHQgeD0iNzczIiB5PSI2MjkiIGZvbnQtc2l6ZT0iMTciIGZpbGw9IiMzMDI3MzUiIGZvbnQtd2VpZ2h0PSI3MDAiPjMgwrcgUsSwVE3EsCBUVVQ8L3RleHQ+PHRleHQgeD0iNzczIiB5PSI2NjkiIGZvbnQtc2l6ZT0iMTYiIGZpbGw9IiM1MTQ1NTEiIGZvbnQtd2VpZ2h0PSI0MDAiPkIgdGHFn8SxeWxhIGfDtmxnZWRlPC90ZXh0Pjx0ZXh0IHg9Ijc3MyIgeT0iNjk1IiBmb250LXNpemU9IjE2IiBmaWxsPSIjNTE0NTUxIiBmb250LXdlaWdodD0iNDAwIj55w7xyw7w7IEPigJl5ZSBha3Rhci48L3RleHQ+PHJlY3QgeD0iMTExMCIgeT0iNTkwIiB3aWR0aD0iMzM1IiBoZWlnaHQ9IjE1NSIgcng9IjE0IiBmaWxsPSIjZjFlOGQ3Ii8+PHRleHQgeD0iMTEyOCIgeT0iNjI5IiBmb250LXNpemU9IjE3IiBmaWxsPSIjMzAyNzM1IiBmb250LXdlaWdodD0iNzAwIj40IMK3IMSwWiBLQVlCRVRUxLBSPC90ZXh0Pjx0ZXh0IHg9IjExMjgiIHk9IjY2OSIgZm9udC1zaXplPSIxNiIgZmlsbD0iIzUxNDU1MSIgZm9udC13ZWlnaHQ9IjQwMCI+R8O2csO8xZ/DvCBrZXM7PC90ZXh0Pjx0ZXh0IHg9IjExMjgiIHk9IjY5NSIgZm9udC1zaXplPSIxNiIgZmlsbD0iIzUxNDU1MSIgZm9udC13ZWlnaHQ9IjQwMCI+YXJhbWEgYmHFn2xhbWFkYW4gw6fEsWsuPC90ZXh0Pjx0ZXh0IHg9IjUwIiB5PSI3OTUiIGZvbnQtc2l6ZT0iMTkiIGZpbGw9IiNlOWFkNjAiIGZvbnQtd2VpZ2h0PSI0MDAiPkJhxZ9hcsSxOiB5YWxuxLF6IGjEsXpsxLEga2/Fn21hayB5ZXRtZXo7IG95dW5jdSBwZW5jZXJleWkga2VuZGlzaSBoYXrEsXJsYXIgdmUgaGFyZWtldGluaSBvbmEgdXlkdXJ1ci48L3RleHQ+PC9nPjwvc3ZnPg==" /></p>
+<p>Bu şema bir oyun ekranı değildir. Uygulanacak alanda tüm ışık ve siper mesafeleri gerçek fizik ile sınanmalıdır.</p>
+<h2 id="4-zplama-hareketli-kayalar-ve-keyif-alanlar">4. Zıplama, hareketli kayalar ve keyif alanları</h2>
+<h3 id="41-mevcut-fizigi-tasarm-cetveli-yap">4.1 Mevcut fiziği tasarım cetveli yap</h3>
+<p>Temel değerler: kare 32 px; oyuncu 14×28 px; koşu 160 px/sn; ilk zıplama hızı 580 px/sn; yerçekimi 1900 px/sn². Kanatsız, aynı yükseklikte başlayan/biten ideal tam sıçramanın sürekli fizik hesabı:</p>
+<ul>
+<li>Tepe yüksekliği <code>580² / (2×1900) ≈ 88,5 px</code>, yaklaşık 2,77 kare.</li>
+<li>Havada kalma <code>2×580/1900 ≈ 0,61 sn</code>.</li>
+<li>Sabit tam koşuda yatay yol yaklaşık 97,7 px, yani 3,05 kare.</li>
+</ul>
+<p>Gerçek erişim; hızlanma, erken bırakma, kenara tutunma, iniş yüksekliği ve platform hareketinden etkilenir. <strong>3,05 kareyi her koşulda atlanabilir boşluk sayma.</strong> Normal rotayı teorik sınırın içinde tut; sınırdaki atlayışları isteğe bağlı ustalık yoluna yerleştir. Kanatlı erişimi ayrı ölç. Yeni fizik değerlerini seçmeden önce bu hareketin kendisinden keyif alınıp alınmadığını sınamak gerekir.</p>
+<h3 id="42-hareketli-platform-dili">4.2 Hareketli platform dili</h3>
+<p>Şimdiki <code>MovingRock</code>, oyuncuyu üzerindeyken platformun <code>delta</code> hareketiyle taşıyan hazır bir temele sahip. Bunun üstüne dört tip yeterli:</p>
+<table>
+<thead>
+<tr>
+<th>Tip</th>
+<th>Hareketi</th>
+<th>Keyif kaynağı</th>
+<th>Güvenlik/okunurluk</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Nefes alan kaya</td>
+<td>Dikey yükselir, tepede kısa durur</td>
+<td>Tepe anında daha yüksek rafa sıçrama</td>
+<td>Altında ilk denemede kurtarma rafı</td>
+</tr>
+<tr>
+<td>Karşılaşan ikiz</td>
+<td>İki yatay kaya ortada yakınlaşır</td>
+<td>Ortak anı okuyup aktarma</td>
+<td>Varış kayası hareket etmeden önce görünür</td>
+</tr>
+<tr>
+<td>Basınca çalışan kaya</td>
+<td>Üstüne basınca yol alır, bırakınca döner</td>
+<td>Oyuncu kendi zamanlamasını başlatır</td>
+<td>Başlangıçta uzun bekleme yok</td>
+</tr>
+<tr>
+<td>Siper taşı</td>
+<td>Işıkla oyuncu arasında ilerler</td>
+<td>Hem yürüyüş hızı hem gölge konumu yönetilir</td>
+<td>Görsel gölge ile örtü hesabı aynı geometri</td>
+</tr>
+</tbody>
+</table>
+<p>Uygulama verileri: <code>path</code>, <code>period</code>, <code>phase</code>, <code>pauseAtEnds</code>, <code>width</code>, <code>activation</code>, <code>resetPolicy</code>. Hepsini ayrı sınıf yapmak gerekmez; ortak bir platform hareket profili yeterli olabilir. İlk etapta eğrisel yollar yerine yatay/dikey duraklı yolları kur.</p>
+<p>Platformdan ayrılırken yatay momentum aktarımı denenebilir. Bu, mevcut davranışta var sayılmamalıdır. Önce 0%, 50%, 100% aktarımın kontrol hissini karşılaştır; üst sınıra sınır koy; atlayış görselinden okunmuyorsa zorunlu yapma. Çarpışma ve tutunma testleri bu değişimden etkilenir.</p>
+<h3 id="43-tekrar-kullanlabilir-on-iki-keyif-alan">4.3 Tekrar kullanılabilir on iki keyif alanı</h3>
+<ol>
+<li><strong>Üç adımlı taş sekmesi:</strong> Geniş kaya → alçak küçük kaya → yeniden geniş iniş. İlkinde tehlikesiz öğret; ikincide aynı ritme hareket ekle.</li>
+<li><strong>Yakalama halkası:</strong> İpten bırak → yükselen kayaya in → üst rafa geç. Otomatik aynı ipe geri tutunma oyuncunun niyetini bozmamalı; mevcut ip bırakma koruması korunur.</li>
+<li><strong>Ters yön geçişi:</strong> Sağa giden kayanın tepesinden sola sıçra. İniş sahası önceden görünür; kamera sırf oyuncu yön değiştirdi diye hedefi gizlemez.</li>
+<li><strong>Çöken taş koşusu:</strong> Koşmak tek başına yetmez; bir taş alçak, biri yüksek olduğu için iki farklı zıplama gerekir. Süreyi çok kısaltmak yerine dizilimi değiştir.</li>
+<li><strong>Su kaldıracı:</strong> Vana suyu yükseltir; yüzen raftan hareketli kayaya geçilir. Oyuncu kendi başlattığı düzeneğin zamanını kullanır.</li>
+<li><strong>Gölgeyle sekme:</strong> İki sabit siper, arada hareketli bir taş. Önce taşı yakala, sonra fenerin dönüşünde sıçra. Öğretilmeden ışık + düşüş + dar inişi aynı yerde birleştirme.</li>
+<li><strong>Yokuştan akış:</strong> Küçük iniş, kısa uçuş, rahat bir rampa inişi; yeni tuş gerektirmeyen ve başarılı hareketi hissettiren bir kayak hattı.</li>
+<li><strong>Rüzgâr merdiveni:</strong> Akımdan yüksel → kanadı kapatıp alçak kapıdan geç → ikinci akıma açıl. Sürekli basılı tutmak bütün alanı çözmesin.</li>
+<li><strong>Dönen avize aktarması:</strong> Sadece zirvede atlamak yerine alçaktan gelen bir tablaya erken binme ve daha sonra yüksekten aktarma seçenekleri.</li>
+<li><strong>Taş devin bıraktığı yol:</strong> Dev saldırısı önceden işaretli bir taşı düşürür; taş geçici basamak olur. Kaçmak, sonra aynı saldırıyı ilerleme için kullanmak gerekir.</li>
+<li><strong>Hatıra yayı:</strong> Ana yol geniş; üstte kısa bir yay halinde hatıra parçaları/görsel iz bulunur. Hepsini almak ölümcül olmayan bir yan parkur ister. Yeni para birimi eklemek şart değil.</li>
+<li><strong>Zafer süzülüşü:</strong> Zor odadan sonra 15–25 sn boyunca geniş inişlere sahip, görsel açıdan zengin bir uçuş veya iniş. Burada ölüm tehdidi hafif, hareket ödülün kendisidir.</li>
+</ol>
+<h3 id="44-bir-parkurda-uc-katman-olsun">4.4 Bir parkurda üç katman olsun</h3>
+<ul>
+<li><strong>Ana yol:</strong> Yeni oyuncu okuyup birkaç denemede geçebilsin. İniş alanları geniş, kontrol noktası yakın.</li>
+<li><strong>Ustalık yolu:</strong> Daha kısa süre, daha zarif hareket veya bir hatıra sunar. Ana hikâyeyi kilitlemez.</li>
+<li><strong>Kurtarma yolu:</strong> Başarısız sıçramadan sonra aşağıdaki rafa düşülür, küçük bir dolaşmayla tekrar denenir. Her hatanın ölüm olması gerekmez.</li>
+</ul>
+<p>Örnek akış: <strong>20 sn güvenli hareket → 35 sn yeni ritim → 10 sn sakin bakış → 40 sn öğrendiğini birleştiren oda → 20 sn zafer hareketi.</strong> Bunlar bölümün sabit süresi değil; prototip parçalarının ölçeğini anlatır. Bütün bölümleri zorla 10–15 dakikaya uzatmak yerine tekrarları kesip karar yoğunluğunu artırmak daha doğru.</p>
+<p>Zorlu bir atlayışın öncesinde varış noktası görülmeli. Sabit kamerada görünmüyorsa kısa ön bakış, inişin işaretlenmesi veya odaya özgü kamera sınırı gerekir. Gölge, sis ve ön plan süsleri iniş kenarını saklamamalı.</p>
+<h2 id="5-butun-17-bolum-icin-tasarm-plan">5. Bütün 17 bölüm için tasarım planı</h2>
+<p>Tablodaki beceri seviyesi 1–5 arası <strong>önerilen hedef</strong>; mevcut oyuna verilmiş ölçülmüş puan değildir. “Koru” mevcut iyi fikri, “ekle” yeni tasarımı, “doğrula” prototipin kabul koşulunu anlatır.</p>
+<table>
+<thead>
+<tr>
+<th>Sıra</th>
+<th>Bölüm</th>
+<th>Baskın beceri</th>
+<th>Hedef</th>
+<th>İlk geliştirilecek alan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>I</td>
+<td>Yerebatan</td>
+<td>Gizlenme ve ışığı okuma</td>
+<td>1→2</td>
+<td>Sütun koridoru</td>
+</tr>
+<tr>
+<td>II</td>
+<td>Kule</td>
+<td>Dikey hareket ve sesle yönlendirme</td>
+<td>2→3</td>
+<td>Gürültülü terazi asansörü</td>
+</tr>
+<tr>
+<td>III</td>
+<td>Gökyolu</td>
+<td>Uçuş ve hareketli siper</td>
+<td>2→3</td>
+<td>Balon geçidi</td>
+</tr>
+<tr>
+<td>IV</td>
+<td>Kaf</td>
+<td>İki tehdit ve ayna sıralaması</td>
+<td>3</td>
+<td>Çift Gözcü köprüsü</td>
+</tr>
+<tr>
+<td>V</td>
+<td>Ağrı</td>
+<td>İp bırakma ve rüzgâr penceresi</td>
+<td>2→3</td>
+<td>İplerin geçidi</td>
+</tr>
+<tr>
+<td>VI</td>
+<td>Nuh'un Gemisi</td>
+<td>Ağırlık, rota ve yükselen su</td>
+<td>2→3</td>
+<td>Ambar kuyusu</td>
+</tr>
+<tr>
+<td>VII</td>
+<td>Nemrut</td>
+<td>Gözlem ve dikey sıçrama</td>
+<td>3</td>
+<td>Heykel omuzları</td>
+</tr>
+<tr>
+<td>VIII</td>
+<td>Gün Doğumu</td>
+<td>Saldırıyı okuma ve karşı hamle</td>
+<td>3→4</td>
+<td>Taş dev arenası</td>
+</tr>
+<tr>
+<td>IX</td>
+<td>Kar Yolu</td>
+<td>Kurt atılmasını yemleme</td>
+<td>3</td>
+<td>Donmuş göl</td>
+</tr>
+<tr>
+<td>X</td>
+<td>Palandöken</td>
+<td>Akış ve iniş seçimi</td>
+<td>2→3</td>
+<td>Kayak ustalık hattı</td>
+</tr>
+<tr>
+<td>XI</td>
+<td>Çığ</td>
+<td>Baskı altında rota seçimi</td>
+<td>3→4</td>
+<td>Kırık sırt</td>
+</tr>
+<tr>
+<td>XII</td>
+<td>Peri Bacaları</td>
+<td>Halka, ip ve kaya kombinasyonu</td>
+<td>3</td>
+<td>Üç farklı baca grubu</td>
+</tr>
+<tr>
+<td>XIII</td>
+<td>Derinkuyu</td>
+<td>Dar alan planlama ve takipten kaçış</td>
+<td>3→4</td>
+<td>Sürgü taşı ve şapel</td>
+</tr>
+<tr>
+<td>XIV</td>
+<td>Erlik'in Katı</td>
+<td>Işığı bir kaynak/tehdit olarak yönetme</td>
+<td>3→4</td>
+<td>Mürekkep köprüler</td>
+</tr>
+<tr>
+<td>XV</td>
+<td>Ergenekon</td>
+<td>Ritim ve zamanlı geçiş</td>
+<td>4</td>
+<td>İkinci damar ve tırmanış</td>
+</tr>
+<tr>
+<td>XVI</td>
+<td>Göğün Katları</td>
+<td>Ritim, gölge takibi, kontrollü uçuş</td>
+<td>3→4</td>
+<td>Ay katı ve Hüma yolu</td>
+</tr>
+<tr>
+<td>XVII</td>
+<td>Şeb-i Arûs</td>
+<td>Öğrenilenleri birleştirme</td>
+<td>4→5→rahatlama</td>
+<td>İnce Minare ve semâhane</td>
+</tr>
+</tbody>
+</table>
+<h3 id="i-yerebatan-golgenin-kurallarn-ogret">I · Yerebatan — gölgenin kurallarını öğret</h3>
+<p><strong>Mevcut temel:</strong> Sütunlar, 6 Kandilci işareti, su haznesi, Medusa, sandık, teraziler ve ışık/gölge yolları. Haritada 9 kontrol noktası var. İlk bölüm çok sayıda kural öğretiyor; her yeni kuralı aynı odada sunmak öğrenmeyi dağıtabilir.</p>
+<p><strong>Önerilen akış:</strong> İlk sütunda güvenli bekleyerek bekçinin baş/fener dönüşünü izle. İkinci sütuna yürüyerek geç. Üçüncü geçişte tahta gıcırtısı bekçiyi döndürsün. Ardından ateşböceğiyle onu çürük köprüye yöneltme gelsin. İlk üç denemede geri dönüş alanı olsun; suya düşmek zorunlu ceza olmasın.</p>
+<p><strong>Hareket keyfi:</strong> Su haznesinin çıkışına üç geniş yüzen taş ekle: biri yükselirken öbürü iner. İlk küçük “ritmi yakaladım” anı burada doğsun. Sal kanalında bir sarkık kirişin altından çömelerek geçme ve ileride saldan sabit rafa sıçrama kullanılabilir.</p>
+<p><strong>Zekâ + zamanlama:</strong> Dar geçitte bekçi yukarıdan kolay atlanamasın; ama bütün bölüme alçak tavan koyma. Oyuncu önce yemi doğru sütunun ardına salar, bekçi döndüğünde geçer. Diğer rota daha uzun ve sessiz olabilir.</p>
+<p><strong>Doğrula:</strong> Ateşböceği sıfırken güvenli geri dönüş var; ilk ışık örneği yakalamadan önce uyarı veriyor; oyuncu gizlendiğini karakterin pozu ve siluet değişiminden anlayabiliyor.</p>
+<h3 id="ii-kule-yukar-ckmak-bir-karar-zinciri-olsun">II · Kule — yukarı çıkmak bir karar zinciri olsun</h3>
+<p><strong>Mevcut temel:</strong> 30×170 karelik dikey harita, yanan mahzen, 3 bekçi, terazi asansörü, Gözcü katı, Hezarfen'in atölyesi ve çan. Uzun zincir çıkışı bu çeşitliliğin arasında düz bir beklemeye dönüşebilir.</p>
+<p><strong>Ekle:</strong> Tek uzun tırmanışı üç parçaya böl: kısa zincir → yükselen kaya → karşı ağırlık rafı. İlk parçada güvenli alt kat, ikinci parçada Gözcü taraması, üçüncüde çanla bekçiyi başka kata çekme olsun.</p>
+<p><strong>Zekâ + zamanlama:</strong> Çan bekçiyi üst kata çağırırken oyuncu aşağıdan asansöre biner. Asansörün sesi bekçinin yeni konuma bakmasına neden olur; oyuncu hareketli siperin arkasından üst rafa çıkar. Çanı çalınca bütün yol otomatik boşalmamalı.</p>
+<p><strong>Hareket keyfi:</strong> Kanatlar bulunduğunda önce tehlikesiz bir boşluğa bırakılma ve geniş bir çatıya iniş. Yeni yeteneğin sevincini hemen dar bir ölüm koridoruyla kesme. Ardından çan katındaki kısa, kontrollü süzülüşe geçir.</p>
+<p><strong>Doğrula:</strong> Her tırmanışta varış rafı görünür; kaçırılan aktarma oyuncuyu tüm kuleyi tekrar çıkmaya zorlamaz; kanatlar kritik önceki bulmacayı ters yönden atlatmıyor.</p>
+<h3 id="iii-gokyolu-surekli-basl-tutmak-butun-ucusu-cozmesin">III · Gökyolu — sürekli basılı tutmak bütün uçuşu çözmesin</h3>
+<p><strong>Mevcut temel:</strong> Kanatlar, rüzgâr, hareketli adalar, balonlar, Gözcüler ve ışıkta dağılan köprüler. Uçuşu serbest bırakmak ile her boşluğu süzülerek anlamsızlaştırmak arasında denge gerekiyor.</p>
+<p><strong>Ekle:</strong> Bir alçak bulut kemeri, bir yükselen akım ve iki yana kayan ada. Oyuncu önce yükselir, kemerin altında kanadı kapatıp düşer, varış adasına açılarak iner. Ana rotanın inişi geniş; üstteki hatıra yolu daha hassas olsun.</p>
+<p><strong>Zekâ + zamanlama:</strong> Balon geçidinde hareketli adanın gölgesini takip et. Oyuncu kanat açarsa yükselip koniye girer; belirli anda kanadı kapatırsa gölgede kalır. Bu kural önce güvenli bir balonla öğretilmeli.</p>
+<p><strong>Keyif:</strong> Fırtına adalarından sonra 20 saniyelik, bulutlar arasından kıvrılan rahat bir süzülüş. Hüdhüd yolu gösterir; tek çözümü otomatik uygulatmaz.</p>
+<p><strong>Doğrula:</strong> Normal rotayı kanadı hep açık tutarak geçen bir kontrol denemesi ana bulmacayı atlatamıyor; ışık sınırı sis içinden seçilebiliyor; beklenen rüzgâr yönü görsel parçacıklardan anlaşılıyor.</p>
+<h3 id="iv-kaf-ilk-buyuk-beceri-snav">IV · Kaf — ilk büyük beceri sınavı</h3>
+<p><strong>Mevcut temel:</strong> Simurg tüyleri, dört ayna işareti, gölge köprüleri ve birbirine bakan Gözcüler. Mevcut ayna ışığı ve Gözcü sersemletmesi iyi bir başlangıç.</p>
+<p><strong>Ekle:</strong> Aynalar tek tek doğru yöne çevrilince kalıcı zafer üretmesin. İlk ayna ikinciye erişimi açsın; ikinci ayna kısa bir körlük fırsatı yaratsın; üçüncüsü çıkış ışığını kursun. Yanlış çevirme oyuncuyu geri dönülemez bir yerde bırakmasın; ayna tekrar çevrilebilir veya başlangıç kolu olmalı.</p>
+<p><strong>Zekâ + zamanlama:</strong> Çift Gözcü köprüsünü iki aşamaya böl. Aradaki güvenli sütuna ilk taramada ulaş; ikinci ışık dönerken çık. İleri yan rota için ikisini tek pencerede geçmek isteğe bağlı ustalık olsun.</p>
+<p><strong>Hareket keyfi:</strong> Üç hareketli kayayı rastgele farklı evrelerde değil, görülebilir bir dalga düzeninde yükselt. Oyuncu dalgayı takip ederek yukarı çıkar. Sonunda aynaya yaklaşırken tehdit kesilsin; hikâye dönüşüne alan açılsın.</p>
+<p><strong>Doğrula:</strong> Çözüm yalnız rastgele ayna çevirmekten daha anlaşılır; “yanlış” durumda geri alma var; iki Gözcü için normal rotada güvenilir pencere test ediliyor.</p>
+<h3 id="v-agr-ipin-ruzgarn-ve-sessizligin-bolumu">V · Ağrı — ipin, rüzgârın ve sessizliğin bölümü</h3>
+<p><strong>Mevcut temel:</strong> Karşı rüzgâr 140, tipi, ipler, sarkıtlar ve manastır çanı. Buraya yeni bir genel düşman türü eklemekten önce mevcut hava ve ipin birlikte çalışması daha değerli.</p>
+<p><strong>Ekle:</strong> İp aralıkları ve bırakma yüksekliği üç aileye ayrılsın: alçak güvenli iniş, sarkıttan uzak yüksek bırakış, rüzgâr duraklamasında uzun aktarma. İlk iki örnekte yumuşak kar rafı kurtarma alanı olsun.</p>
+<p><strong>Zekâ + zamanlama:</strong> Tipi sesleri örttüğünde çanı geçmek daha kolaydır; sakin havada çanı kasıtlı çalıp bekçiyi girişe çekerek arka kapıdan dolaşılabilir. Hava penceresi oyuncunun önünde kar yönü ve bezlerin hareketiyle haber verilsin.</p>
+<p><strong>Keyif:</strong> Akori'de tehlikesiz, karın üstündeki ayak izlerini takip eden kısa bir mola; manastır sonrası iri taşlardan geniş, kontrollü inişler. Ağrı'nın yalnızlık hissini her metreye tehdit koyarak kaybetme.</p>
+<p><strong>Doğrula:</strong> Aynı ipten ayrıldıktan sonra anında geri yapışma yok; rüzgârın değişmesi atlayış başladıktan sonra habersiz gerçekleşmiyor; uzun hava döngüsü oyuncuyu gereksiz bekletmiyor.</p>
+<h3 id="vi-nuhun-gemisi-agrlg-hareketle-birlestir">VI · Nuh'un Gemisi — ağırlığı hareketle birleştir</h3>
+<p><strong>Mevcut temel:</strong> Eşleştirilen hayvanlar, sandık/kaide, ağırlık düzeni ve yükselen suyla ambar kuyusu. Görsel hayvan kimlikleri bölümün en değerli taraflarından.</p>
+<p><strong>Ekle:</strong> Bir eşleşme yalnız doğru hayvanı bulmak, ikincisi doğru ağırlığı taşımak, üçüncüsü su yükselirken kısa bir taşıma sırası kurmak olsun. Çözümü uzatmak için aynı sandığı uzun koridor boyunca itme.</p>
+<p><strong>Zekâ + zamanlama:</strong> Sandığı ilk kefede bırakınca karşıdaki raf yükselir; oyuncu sandıkla birlikte kalırsa kefenin konumu değişir. Bekçi kapalı ambar arasında sınırlı devriye gezer. Oyuncu hareketli örtüyle güvenli rafın yükselmesini aynı anda kullanır.</p>
+<p><strong>Hareket keyfi:</strong> Kuyudaki zikzak çıkışı koru. Buna bir geniş yüzen kalas ve iki farklı çıkış rafı ekle: güvenli dolambaç, daha kısa üst atlayış. Su hızını artırmadan önce inişlerin okunurluğunu iyileştir.</p>
+<p><strong>Doğrula:</strong> Yanlış kaide seçimiyle sandık kaybolmuyor; su başlamadan çıkışın yönü görülüyor; ölümde çözülen eşleştirmeler korunurken su döngüsü tutarlı başlıyor.</p>
+<h3 id="vii-nemrut-dev-olcegi-kucuk-oyuncu-becerisi">VII · Nemrut — dev ölçeği, küçük oyuncu becerisi</h3>
+<p><strong>Mevcut temel:</strong> Heykel gövdeleri/başları, horoskop, deprem, kayan ve düşen taşlar; 80 karşı rüzgâr. İri heykeller doğal platform geometrisine dönüşmeye çok uygun.</p>
+<p><strong>Ekle:</strong> Heykel omuzu → eğilen baş → yükselen taş parçası → kartalın kaidesi. Her görsel öğenin basılabilir kenarı aynı kalınlıkta bir yüzey dili taşısın. Heykelin bütün konturu basılabilir gibi görünmemeli.</p>
+<p><strong>Zekâ + zamanlama:</strong> Horoskop kabartması konumu ve sembol ilişkisini anlatsın. Doğru taşların tek tek açıkça parlaması deneme yanılmayı aşırı kolaylaştırıyorsa bütün düzen tamamlanınca tam tepki ver; tek taş değişimi yine işitilebilir/animasyonlu geri bildirim taşısın.</p>
+<p><strong>Hareket keyfi:</strong> Deprem öncesinde çatlaklar belirir; birkaç taşı sırayla düşürerek yeni basamak dizisi oluşur. Oyuncu depremi her zaman ceza değil, yeni yol açan olay olarak da kullansın.</p>
+<p><strong>Doğrula:</strong> Taş oyuncu daha görmeden düşüp kaybolmuyor; sembol çözümü renk ayırt etmeye bağlı değil; gerekli basamak depremden sonra kalıcı yok olmuyor.</p>
+<h3 id="viii-gun-dogumu-devin-saldrsn-cozume-cevir">VIII · Gün Doğumu — devin saldırısını çözüme çevir</h3>
+<p><strong>Mevcut temel:</strong> Taş dev yürüyor, ayak teması tehlikeli ve üç ateşböceğiyle düşüyor. Güncel kodda tam taş atma saldırı döngüsü bulunmuyor. En yüksek getirili yeni karşılaşmalardan biri burada.</p>
+<p><strong>Önerilen döngü:</strong> Oyuncuyu gözle → 0,9–1,2 sn hazırlan → taşın hedefini atıştan önce sabitle → taşı fırlat → 1,3–1,8 sn toparlan. Bunlar başlangıç test aralıkları. Hedef işareti bir kez sabitlenince oyuncuyu kovalamayı sürdürmesin. Üçüncü aşamada hazırlık işareti okunamayacak kadar kısalmasın.</p>
+<p><strong>Zekâ:</strong> Taşı yan raftaki çatlak bölgeye attır; düşen parça kulağa erişim sağlar. Sonraki saldırıda aynı rafın bir parçası kaybolur, başka rota gerekir. Her aşamada zorunlu iniş yolu korunmalı; arena tamamen parçalanamaz.</p>
+<p><strong>Zamanlama:</strong> Ateşböceğinin kulağa varış süresini, devin toparlanma penceresiyle eşleştir. İlk atış güvenli bir örnek olmalı. Başlangıç tasarımında her aşamaya aynı anda üç taş eklemektense <strong>tek taş + farklı kaçış yolu</strong> daha kolay okunur.</p>
+<p><strong>Keyif ve kaynak:</strong> Kaçırılan yemin yerine riskli ama erişilebilir bir kaynak doğsun. Düşen gövde uzun bir köprüye dönüştüğünde kısa bir zafer koşusu olsun. Temasla ezilme alanını görünür ayak basışına bağla; dekoratif dev koluna değmek gizli ölüm üretmesin.</p>
+<p><strong>Doğrula:</strong> Üç aşamanın her birinde kaynak olmadan kalıcı kilit yok; düşen taş gerekli çıkışı silemiyor; hedef sabitlendikten sonra saldırı oyuncunun yeni konumunu izlemiyor; ilk saldırının uyarısı telefonda da okunuyor.</p>
+<h3 id="ix-kar-yolu-kurdun-atlmasn-kendi-lehine-kullan">IX · Kar Yolu — kurdun atılmasını kendi lehine kullan</h3>
+<p><strong>Mevcut temel:</strong> Kurt kokuyla avlıyor, hazırlanıp atılıyor, ateşböceğinden korkuyor ve ince buzu kırabiliyor. Bu kombinasyon başlı başına iyi bir zeka/zamanlama sahnesi.</p>
+<p><strong>Ekle:</strong> İlk kurt geniş bir boşlukta atılmayı öğretsin. İkincide oyuncu ince buzun kenarında bekler; hazırlık başlayınca yana kaçıp kurdu buzun üstüne yönlendirir. Üçüncüde ağaç üstündeki kısa rota veya buz üstündeki hızlı rota seçilir.</p>
+<p><strong>Zekâ + zamanlama:</strong> Kervan çanını çalmak bekçiyi hana çekerken kurdu da yaklaştırabilir. Çözüm, herkesi tek yemle etkisizleştirmek değil; önce kurt için buz yolunu hazırlamak, sonra çanı kullanmaktır.</p>
+<p><strong>Hareket keyfi:</strong> Düşük kayma, küçük tümsek ve geniş kar inişiyle yaklaşan kayak bölümüne hazırlık yap. Gökbörü'nün kurtarması ilk örnekte öğretici, sonrakilerde oyuncunun kararını destekleyen sınırlı bir yardım olsun.</p>
+<p><strong>Doğrula:</strong> Kurdun 0,32 sn hazırlığı özellikle telefonda seçiliyor; atılma başladıktan sonra hedef yönü tutarlı; çukurla kurt arasında oyuncunun kaçabileceği mesafe var.</p>
+<h3 id="x-palandoken-saf-hareket-keyfinin-bolumu">X · Palandöken — saf hareket keyfinin bölümü</h3>
+<p><strong>Mevcut temel:</strong> Yamaç, atlama, takla, engeller, manyetik alan, kayan doğa ve genişleyen kayak kamerası. Bu bölümün her parçasına gizlilik eklemek özgün akışını bozar.</p>
+<p><strong>Ekle:</strong> Pistin yaklaşık üçte birini rahat, zincirlenebilir sıçramalar oluştursun. Önünde görünen rampa → kısa uçuş → geniş eğimli iniş → ikinci küçük sıçrama. Oyuncu hızını doğru koruduğunda akış kesilmesin.</p>
+<p><strong>Seçenek:</strong> Üst yol daha erken atlama ve bir takla ister, hatıraya götürür. Alt yol taklasız, daha geniş inişli olur. Normal bitiriş için zorunlu takla yerine taklayı ustalık ödülü olarak koru.</p>
+<p><strong>Fener alanı:</strong> Tek kısa balon geçişi; gölgesinden değil açık tarafındaki alçak atlayıştan geçmek gerekir. Ana sıçrama tuşunu basılı tutmak burada gereksiz yükseltip koniye sokabilir. Önce tehlikesiz kemer bu kısa basma becerisini öğretmeli.</p>
+<p><strong>Doğrula:</strong> İniş uçuş başlamadan görünür; ağaçların dekor/engel ayrımı net; maksimum hızda ekrana giren yeni engelin karar süresi ölçülüyor. Ustalık yolu kaçırıldığında pist devam ediyor.</p>
+<h3 id="xi-cg-gerginlik-adil-bir-yetisme-basksyla-gelsin">XI · Çığ — gerginlik, adil bir yetişme baskısıyla gelsin</h3>
+<p><strong>Mevcut temel:</strong> Çığ oyuncunun arkasında uyanıyor, hızı 440 px/sn'ye kadar çıkıyor; geride çok uzaklaşması sınırlandırılmış. Oyuncunun hatalarıyla çığın yaklaşması arasındaki ilişki daha iyi anlatılabilir.</p>
+<p><strong>Ekle:</strong> Üç parçalı rota: ilk bölüm geniş ve hızlı; ortada biri güvenli ama yavaş, öteki dar ama hızlı iki hat; sonunda görünür sığınağa son sıçrama. Oyuncu hangi hatayı yaptığı için mesafe kaybettiğini anlamalı.</p>
+<p><strong>Zamanlama:</strong> Çatlayan kar köprüsü üzerinden iki kısa sıçrama; ikincisi ancak ilk inişte hızı koruyunca rahatlaşır. İlk uçurumun inişinde ikinci sıçramanın hazırlığı için yeterli mesafe gerekir.</p>
+<p><strong>Keyif:</strong> Gökbörü hız ve rota için görsel bir arkadaş olsun. Çığ tüm süre boyunca görünmeyen bir ölüm duvarına dönüşmesin; gölge, ses ve kar tozu mesafeyi söylesin.</p>
+<p><strong>Doğrula:</strong> Çığ hızını oyuncuya gizlice, aniden eşitleme. Eğer yakınlık düzenlemesi kullanılırsa ölüm menzilinde ani sıçrama yapmamalı ve temiz oynayan yeterli payla bitirmeli. Bir küçük hatadan sonra kurtarılabilir, birkaç belirgin hatadan sonra yakalanabilir bir hedef seç.</p>
+<h3 id="xii-peri-bacalar-ayn-bacay-tekrar-etmek-yerine-uc-oyun">XII · Peri Bacaları — aynı bacayı tekrar etmek yerine üç oyun</h3>
+<p><strong>Mevcut temel:</strong> Uzun yatay harita, sarmaşıklar, ipler, peri halkaları, Albastı ve Uçhisar. Dikey formlar çok değerli; birbirine benzer tırmanışların sık tekrar etmesi çeşitliliği azaltabilir.</p>
+<p><strong>Üç aile:</strong> Birinci grup kısa sarmaşıkla güvenli yükselme; ikinci grup peri halkasından hareketli taşa nişanlı iniş; üçüncü grup ipten bırakıp ters taraftaki baca ağzına giriş. Her aile 2–3 gelişmiş varyasyonla yeterli olabilir.</p>
+<p><strong>Zekâ + zamanlama:</strong> Albastı yaklaşırken demir bir örtünün altında kısa süre güvendesin; ancak çıkış halkası periyodik açılıyor. Önce çıkış yönünü seç, sonra halka anında örtüden ayrıl. İki tehdidin ortak penceresi genişçe öğretildikten sonra daraltılabilir.</p>
+<p><strong>Keyif:</strong> Güvercinlik Vadisi'nde inişleri affedici, kemer çizer gibi bir halka zinciri. Halkaların yönü çevredeki kuş izleri veya bezlerle okunur; görünmez fırlatma yönü kullanılmaz.</p>
+<p><strong>Doğrula:</strong> Kanatla bütün ailelerin üstünden tek uçuşta geçilemiyor; alt kurtarma yolu başlangıca döndürüyor; uzun haritada aynı boşluk ölçüsü arka arkaya tekrarlanmıyor.</p>
+<h3 id="xiii-derinkuyu-dar-alan-zekas">XIII · Derinkuyu — dar alan zekâsı</h3>
+<p><strong>Mevcut temel:</strong> Şapel, sürgü taşı, havalandırma bacası, kuyu ve devden kaçış. Güncel tanımda kanatlar açık; mağaranın tasarım hedefiyle yeniden değerlendirmek gerekir.</p>
+<p><strong>Ekle:</strong> Kritik şapel ve baca odalarında önceden gösterilen rüzgârsız/ıslak dar tavan koşulu veya bölümün başında açıkça öğretilen kanatsızlık kullan. Yalnız görünmez bir yasak koyma. Sürgü taşını sandık gibi ilerideki basamağa dönüştürmek zorunlu bir yerel ilişki olsun.</p>
+<p><strong>Zekâ + zamanlama:</strong> Bekçi alçak kemerden geçemez. Oyuncu kemeri kullanarak görüşü keser; bekçi diğer girişe yönelince taşı kısa yoldan geçişe iter. Bekçinin alternatif yolu sahnede görülür; aniden ışınlanarak önüne çıkmaz.</p>
+<p><strong>Hareket keyfi:</strong> Kuyuda yükselen tahta → yana kayan taş → duvar oyuğu. Alt katta ilk iki denemeyi kurtaran raf, son kaçışta daha dar ama okunur rota.</p>
+<p><strong>Doğrula:</strong> Sürgü taşı yanlış yere itilince geri alınabiliyor veya yerel sıfırlama var; dev kovalamacasının ilk kararı oyuncu dev daha görünmeden verilmek zorunda kalmıyor.</p>
+<h3 id="xiv-erlikin-kat-sg-acmak-da-kapatmak-da-karar">XIV · Erlik'in Katı — ışığı açmak da kapatmak da karar</h3>
+<p><strong>Mevcut temel:</strong> Körmös ışığa geliyor, kavanoz örtülünce hedefi kaybediyor; kutlar kavanozu güçlendiriyor; gölge köprüleri ve Çalkuyruk farklı hareket sunuyor. Körmös doğrudan çömelmiş oyuncuyu hedeflemediği için sürekli çömelmek güçlü bir çözüm olabiliyor.</p>
+<p><strong>Ekle:</strong> Görüş kesilince anında eve dönmek yerine kısa süre son görülen ışık noktasına yaklaşsın. Bu, çömelmeyi değersizleştirmeden yer değiştirmeyi gerektirir. Sürekli kavanoz örtmenin bedeli belirli ışık tahtalarının görünmemesi olsun; genel bir dayanıklılık sayacı eklemek şart değil.</p>
+<p><strong>Zekâ + zamanlama:</strong> Bir yerde kavanozu açarak Körmösü sol tarafa çek; ört ve karanlık köprüden sağa ilerle; geçiş sonunda kavanozu kısa açıp ışık basamağını etkinleştir. Çömelmek, ışığı açmak ve yeri değiştirmek aynı çözümün parçaları olur.</p>
+<p><strong>Keyif:</strong> Çalkuyruk ilk alındığında daha geniş sıçramalarla 15–20 sn güçlenme hissi ver. Sonra atın boyuna uygun örtüler ve iki kademeli uçurum ekle. Dar yaya tünelini atla zorla geçirtme.</p>
+<p><strong>Doğrula:</strong> Kut toplamanın hem yararı hem tehlikesi anlaşılır; kaynaklar tükenince geçiş kilitlenmez; Körmösün ışık tepkisi bekçilerinkinden açıkça ayrılır.</p>
+<h3 id="xv-ergenekon-mevcut-iyi-sistemleri-birlestir">XV · Ergenekon — mevcut iyi sistemleri birleştir</h3>
+<p><strong>Mevcut temel:</strong> Kanatlar kapalı, ilk ocak kömür ve ritim istiyor, ikinci damar sıra gerektiriyor; eriyik-soğuma döngüsü, yanan sandık, sis ve katlı tırmanış var. Bu bölümde “yeni temel mekanik” ihtiyacı düşük.</p>
+<p><strong>Ekle:</strong> Önce küçük bir ocakta iki başarılı ritim vuruşunu güvenle öğret. Sonraki ocakta oyuncu ısınma/soğuma arasındaki görsel bağı anlayarak üç körüğün sırasını seçsin. Yanlış vuruş tüm süreci silmek yerine önce ısıdan düşürsün; mevcut ısı kaybı buna temel olabilir.</p>
+<p><strong>Hareket keyfi:</strong> Soğuyan demirin üstünden üç atlayışlık akış. Kırmızı kor → koyulaşan yüzey → yürünebilir kabuk → yeniden çatlayan yüzey dört ayrı biçim ve ses taşısın. Zamanlama yalnız rengi görmekle anlaşılmasın.</p>
+<p><strong>Zekâ + zamanlama:</strong> Tek sandık iki bacadan birini geçici tıkayabilir. Biri üst yolu açar, diğeri ritim odasını güvenli yapar. Yanlış seçim ölümcül kilit değil, yerel geri dönüş doğursun. Son tırmanışta sandığın yanması önceden haber verilsin.</p>
+<p><strong>Doğrula:</strong> Mevcut Nevruz örsünü bölüm denetleyicisi de tanıyor; eritilmiş damarlar kontrol noktasından tutarlı dönüyor; ritim görsel işaretle de okunuyor; tüm bölüm boyunca sürekli acele baskısı yok.</p>
+<h3 id="xvi-gogun-katlar-yere-basmay-ve-ucmay-yeniden-dusun">XVI · Göğün Katları — yere basmayı ve uçmayı yeniden düşün</h3>
+<p><strong>Mevcut temel:</strong> Kam davulu ve ritimle görünen bulutlar, ayın ışık/gölge yolları, Hüma'nın güneşte koruyan gölgesi, Tulpar ve fırtına. Burada yeni bir Kandilci yerleştirmekten önce bu özgün sistemler derinleşmeli.</p>
+<p><strong>Ekle:</strong> Davul yolu üç vuruşluk bir cümle olsun: geniş bulut → kısa bekleme → hareketli bulut → güvenli ada. Bazı bulutlar bir vuruş gecikmeli açılarak oyuncunun ritmi anlamasını ister. Her sıçramada gözünü davulcuya çevirmesi gerekmemeli; bulutların üstünde de işaret olsun.</p>
+<p><strong>Zekâ + zamanlama:</strong> Ay katında ışık açılınca üst yol görünür, alt gölge yol kaybolur. Oyuncu çıkışın hangi yükseklikte olduğunu okuyup ışık düzenini seçer. Hüma bölümünde kuşun gölgesinden bir taş gölgesine aktarım ekle; kesintisiz kuş takip etmekten farklı karar doğar.</p>
+<p><strong>Keyif:</strong> Tulpar uçuşunda üç geniş kapı, aşağı-yukarı rota ve bir isteğe bağlı halka. Sonsuz düz uçuş yerine kanat çırpışını bırakma anıyla yükseklik kontrolü gerekir.</p>
+<p><strong>Doğrula:</strong> Normal rota ritim vuruşunu milisaniyelik hassasiyetle tutturmayı istemiyor; kuşun başlama anı oyuncuya bağlı; fırtına ilk uçuş dersini kesmiyor.</p>
+<h3 id="xvii-seb-i-arus-final-butun-mekanikleri-ayn-anda-ygmasn">XVII · Şeb-i Arûs — final, bütün mekanikleri aynı anda yığmasın</h3>
+<p><strong>Mevcut temel:</strong> İkonion, kalkan/Medusa, Karatay aynaları, İnce Minare büyük fenerleri, semâzen gölgesi, dönen avizeler ve ışık seli. Harita 468×48 kareyle ana yatay bölümlerin en genişlerinden; 10 kontrol noktası var.</p>
+<p><strong>Dört cümle:</strong> İkonion'da kısa zeka bulmacası → İnce Minare'de bekçi ve fener planı → avluda hareketli gölge takibi → semâhanede hareket ustalığı ve ışık seli. Her cümlenin arasında kısa güvenli geçiş olsun.</p>
+<p><strong>Zekâ + zamanlama:</strong> İnce Minare'de çanla bekçiyi bir revaka çek; aynı revak fenerden siper olduğu için oyuncu başka bir siper seçer. İkinci geçişte küçük hareketli siper taşı kullanılır. Büyük fenerin mevcut 0,1 sn eşiği, önceden çok açık işaretlenmiş özel bir tehlike olarak kalmalı veya ilk prototipte 0,35–0,5 sn denenmeli.</p>
+<p><strong>Hareket keyfi:</strong> Semâzenin öne geçişinde eteğe yaklaş → dönüşte sabit sütuna aktar → avize tablasına bin → ikinci avizeye yukarı geç. Üç farklı hareket ayrı öğretilmiş olmalı. Avizeyi kaçıran ilk etapta bir alt tablaya düşebilsin; final ışık seli bu kurtarmayı aşamalı kaldırabilir.</p>
+<p><strong>Final duygusu:</strong> Son zor tırmanış bittiğinde son 30–45 sn sakin olsun. Kontrol zorluğu yerini görüntü, ses ve hikâyeye bıraksın. Ustanın sahnesinin önüne yeni bir düşman koymak finalin duygusunu zayıflatır.</p>
+<p><strong>Doğrula:</strong> Panel açıkken simülasyon duruyor; oyunu bitirme bilgisi son bölüme ulaşmaktan ayrı tutuluyor; bitiş sahnesi tiyatroda erken açılmıyor; kontrol noktasından ışık seline geri dönüş adil başlangıç veriyor.</p>
+<h2 id="6-daha-karikaturize-gorunum-render-m-degismeli">6. Daha karikatürize görünüm: render mı değişmeli?</h2>
+<p><strong>Çizim dili değişmeli; ilk aşamada oyun motorunu değiştirmek gerekmiyor.</strong> Mevcut sistem zaten Canvas üzerinde şekiller, parça bazlı vektörler, kayıtlı <code>ui.Picture</code>, yaylar ve iki kemikli uzuvlarla çizim yapıyor. Bunlar daha güçlü karikatürize siluet ve pozlar üretmek için uygun bir temel. Skia/Impeller seçimini değiştirmek veya sahneye daha fazla filtre koymak karakterlere tek başına kişilik kazandırmaz.</p>
+<p>Flame'in konumlu bileşenleri şekil, sprite, animasyon ve özel çizimleri aynı dönüşüm yapısı içinde barındırır. Bu, vektör karakterleri koruyup gerektiğinde sprite efektleri eklemeye izin veren bir temeldir. <a href="https://docs.flame-engine.org/latest/flame/components/position_component.html">Flame PositionComponent belgeleri</a>.</p>
+<h3 id="61-uc-sanat-yonu-ve-tercih">6.1 Üç sanat yönü ve tercih</h3>
+<table>
+<thead>
+<tr>
+<th>Yön</th>
+<th>Görünüm</th>
+<th>Avantaj</th>
+<th>Maliyet / risk</th>
+<th>Öneri</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Karikatürize hayal perdesi</td>
+<td>İri okunur biçimler, kesilmiş deri/kâğıt hissi, az renk, eklemli hareket</td>
+<td>Mevcut kimliği güçlendirir; oyun ve perde aynı aile olur</td>
+<td>Karakter oranları ve poz kütüphanesi yeniden tasarlanmalı</td>
+<td><strong>Ana yön</strong></td>
+</tr>
+<tr>
+<td>Renkli çizgi film</td>
+<td>Daha açık renkler, belirgin kontur, geniş yüz ifadeleri</td>
+<td>Küçük ekranda okumak kolaylaşabilir</td>
+<td>Karanlık-gölge kuralları ve mevcut sahnelerin çoğu yeniden uyarlanır</td>
+<td>Küçük bir konsept karşılaştırması olarak dene</td>
+</tr>
+<tr>
+<td>Boyanmış hikâye kitabı</td>
+<td>Zengin arka plan, dokulu karakter/efekt</td>
+<td>Tek karede güçlü atmosfer</td>
+<td>Çok sayıda yüksek nitelikli varlık ve animasyon ister; oyun öğeleri dekorla karışabilir</td>
+<td>Daha sonraki üretim kararı</td>
+</tr>
+</tbody>
+</table>
+<p>Benim tercihim <strong>hayal perdesi + karikatürize hareket + sınırlı bölgesel renk</strong>. Ruhu mistik kalır; komedi, karakterlerin niyetini abartan hareketlerinden doğar. Herkesin iri başlı ve sevimli olması gerekmez. Bekçi ürkütücü ama hantal, Gözcü meraklı ama mekanik, Sâye çevik ama kırılgan okunabilir.</p>
+<h3 id="62-saye-icin-somut-degisiklikler">6.2 Sâye için somut değişiklikler</h3>
+<ul>
+<li>Baş, saç ve atkı dış hattı küçük ölçekte tek bakışta tanınmalı. İlk çizim deneyinde baş/gövde oranı yaklaşık %15–25 daha abartılabilir; bu bir çizim deneyi, fizik değişikliği değildir.</li>
+<li>Ayakkabı ve kavanoz boyu okunurluk için artırılabilir. Ellerde minik parmak ayrıntısı yerine ana poz netleşsin.</li>
+<li>Koşuda yalnız bacak döngüsü değil; kararlı öne eğilme, kavanozun geride kalması ve atkının takip hareketi birlikte çalışsın.</li>
+<li>Zıplarken bir hazırlık/uzama, tepede kısa açık poz, inişte sıkışma olsun. Hazırlık görüntüsü, tuşa basılan gerçek sıçramayı geciktirmemeli.</li>
+<li>Başlangıç deneyi olarak 80–120 ms'lik görsel iniş sıkışması ve küçük gövde esnemesi kullanılabilir. Çarpışma kutusu bu esnemeyle daralıp büyümesin.</li>
+<li>Gizlenirken kavanozu bedene çeker, omuzlar kapanır; görünürken duruş açılır. Durum yalnız ekranın kararmasından anlaşılmasın.</li>
+<li>Büyük bir sıçramanın başarılı inişinde ufak bir denge alma pozu; yakalanınca saldırgan şiddet yerine gölgenin bez gibi sönmesi/katlanması düşünülebilir.</li>
+</ul>
+<h3 id="63-bekci-ve-gozcu-icin-somut-degisiklikler">6.3 Bekçi ve Gözcü için somut değişiklikler</h3>
+<p><strong>Bekçi:</strong> Uzun burun veya eğik başlık; küçük ayaklar; ağır pelerin; büyük, sarkık fener. Önce göz/baş döner, sonra omuz, sonra gövde; son olarak fener yetişir. Bir şeyi anlamaya çalışırken gövdesi uzayıp burnunu öne çıkarabilir. Koşuda daha büyük adım atar ama dönüşte ağırlığını toparlar. Bu abartı, oyuncuya dönüş penceresini okutur.</p>
+<p><strong>Gözcü:</strong> Tek iri lens, ağır bir boyun ve mekanik başlık. Tarama öncesinde lens daralır ve baş birkaç derece hedefin tersine hazırlanır. Dönüş noktasında küçük bir mekanik tık; kör edilince lens kapağı kapanıp yalpalama. Koni tehlikeye dönüştüğünde lens biçimi ve ses birlikte değişir.</p>
+<p><strong>Önemli sınır:</strong> Görsel fener salınımı gerçek ışık yönünden ayrılmamalı. Şu an bekçi çizimindeki fener konumu oyun ışığına bağlı; bu iyi ilişki korunmalı. Yeni abartılı görsel hareket, tehlikenin başlangıcını belirsiz yapmamalı.</p>
+<h3 id="64-zemin-arka-plan-ve-sk-dili">6.4 Zemin, arka plan ve ışık dili</h3>
+<ol>
+<li><strong>Yürünebilir yüzey:</strong> Üstte tutarlı, biraz daha açık bir dudak; altta kesilmiş kâğıt/deri hissi. Her taş ayrı küçük ayrıntılarla dolmasın.</li>
+<li><strong>Dekoratif arka plan:</strong> Daha düşük kontrast ve daha yumuşak kontur. Uzak dağların kenarı, ön plandaki küçük iniş rafından daha baskın olmamalı.</li>
+<li><strong>Etkileşimli nesne:</strong> Bir belirgin biçim + hareket işareti. Ayna başka bir taş gibi, kol sıradan dal gibi görünmemeli.</li>
+<li><strong>Işık:</strong> Yumuşak atmosfer halesi ile gerçek tehlike alanını ayır. Tehlikenin sınırı ince bir zemin yansıması/lens iziyle okunabilir; halo ölüm alanı sayılmayabilir ama bunun dili tutarlı olmalı.</li>
+<li><strong>Doku:</strong> Büyük yüzeyde hafif malzeme hissi; küçük karakterin çevresinde sade alan. Filtre/gren miktarını artırmak yerine şekilleri sadeleştir.</li>
+<li><strong>Hareketli kaya:</strong> Oyma çizgiler ve uçlarda toz hareket yönünü anlatabilir. Sadece zeminden ayrı durduğu için hareketli sayılması beklenmesin.</li>
+</ol>
+<p><strong>Kamera:</strong> Karakteri büyütmek her sahnede kamerayı yaklaştırmak demek değildir. İlk denemede görsel oranları değiştir; sonra cep telefonu, masaüstü ve dikey parkur için ayrı kompozisyon dene. Zıplama hedefini görebilmek, yüz ayrıntısını görmekten daha öncelikli olabilir.</p>
+<p><img alt="Önerilen görsel dilin şematik karşılaştırması" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNTAwIiBoZWlnaHQ9IjkwMCIgdmlld0JveD0iMCAwIDE1MDAgOTAwIiByb2xlPSJpbWciIGFyaWEtbGFiZWxsZWRieT0idGl0bGUgZGVzYyI+PHRpdGxlIGlkPSJ0aXRsZSI+S2FyaWthdMO8cml6ZSBoYXlhbCBwZXJkZXNpIGnDp2luIGfDtnJzZWwgecO2bjwvdGl0bGU+PGRlc2MgaWQ9ImRlc2MiPlNpbHVldCwgcG96IHZlIHRlaGRpdCBva3VudXJsdcSfdSDDtm5lcmlsZXJpbmkgZ8O2c3RlcmVuIMWfZW1hdGlrIMOnaXppbWxlci48L2Rlc2M+PHJlY3Qgd2lkdGg9IjE1MDAiIGhlaWdodD0iOTAwIiBmaWxsPSIjZjFlOGQ3Ii8+PGcgZm9udC1mYW1pbHk9IkRlamFWdSBTYW5zLCBzYW5zLXNlcmlmIj48dGV4dCB4PSI1NSIgeT0iNjMiIGZvbnQtc2l6ZT0iMzIiIGZpbGw9IiMzMDI3MzUiIGZvbnQtd2VpZ2h0PSI3MDAiPktBUsSwS0FUw5xSxLBaRSBIQVlBTCBQRVJERVPEsDwvdGV4dD48dGV4dCB4PSI1NSIgeT0iMTAxIiBmb250LXNpemU9IjE4IiBmaWxsPSIjNjY1NzY1IiBmb250LXdlaWdodD0iNDAwIj5UYXNhcsSxbSDFn2VtYXPEsSDigKIgT3l1biBpw6dpIHJlbmRlciB2ZXlhIMO2bmNlL3NvbnJhIGthcsWfxLFsYcWfdMSxcm1hc8SxIGRlxJ9pbGRpci48L3RleHQ+PHJlY3QgeD0iNDUiIHk9IjE0MCIgd2lkdGg9IjQ0MCIgaGVpZ2h0PSI0NDUiIHJ4PSIxOCIgZmlsbD0iI2U5YWQ2MCIvPjx0ZXh0IHg9IjcwIiB5PSIxODAiIGZvbnQtc2l6ZT0iMjEiIGZpbGw9IiMzMDI3MzUiIGZvbnQtd2VpZ2h0PSI3MDAiPlPEsExVRVQ8L3RleHQ+PHRleHQgeD0iNzAiIHk9IjIwOSIgZm9udC1zaXplPSIxNiIgZmlsbD0iIzViM2QzNiIgZm9udC13ZWlnaHQ9IjQwMCI+xLByaSBiacOnaW1sZXIsIHPEsW7EsXJsxLEgcmVuazwvdGV4dD48cmVjdCB4PSI1MzAiIHk9IjE0MCIgd2lkdGg9IjQ0MCIgaGVpZ2h0PSI0NDUiIHJ4PSIxOCIgZmlsbD0iI2U5YWQ2MCIvPjx0ZXh0IHg9IjU1NSIgeT0iMTgwIiBmb250LXNpemU9IjIxIiBmaWxsPSIjMzAyNzM1IiBmb250LXdlaWdodD0iNzAwIj5QT1o8L3RleHQ+PHRleHQgeD0iNTU1IiB5PSIyMDkiIGZvbnQtc2l6ZT0iMTYiIGZpbGw9IiM1YjNkMzYiIGZvbnQtd2VpZ2h0PSI0MDAiPk5peWV0LCBoYXJla2V0dGVuIMO2bmNlIG9rdW51cjwvdGV4dD48cmVjdCB4PSIxMDE1IiB5PSIxNDAiIHdpZHRoPSI0NDAiIGhlaWdodD0iNDQ1IiByeD0iMTgiIGZpbGw9IiNlOWFkNjAiLz48dGV4dCB4PSIxMDQwIiB5PSIxODAiIGZvbnQtc2l6ZT0iMjEiIGZpbGw9IiMzMDI3MzUiIGZvbnQtd2VpZ2h0PSI3MDAiPk9LVU5VUkxVSzwvdGV4dD48dGV4dCB4PSIxMDQwIiB5PSIyMDkiIGZvbnQtc2l6ZT0iMTYiIGZpbGw9IiM1YjNkMzYiIGZvbnQtd2VpZ2h0PSI0MDAiPlRlaGRpdCB2ZSBzaXBlciBiaXJsaWt0ZSBhbmxhxZ/EsWzEsXI8L3RleHQ+PGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMTQ1IDUxMCkgc2NhbGUoMS43NSkiIGZpbGw9IiMyMTFiMjkiPjxlbGxpcHNlIGN4PSIwIiBjeT0iLTc3IiByeD0iMTkiIHJ5PSIyMSIvPjxwYXRoIGQ9Ik0tMTgtODZsLTE2LTggMTgtNCAxOS0xIDE1IDEyek0tMTMtNTZROS02NCAxNy00NUwyMi0xMy0xNy0xM1oiLz48cGF0aCBkPSJNLTEyLTEzbC04IDI1aDEzbDEyLTIzIDExIDIzaDE0TDE1LTE1WiIvPjxwYXRoIGQ9Ik0tMTQtNTBsLTI1IDE3IDQgOCAzMC0xNk0xMS00OGwyMSAyNCA2LTUtMTctMjVaIi8+PHBhdGggZD0iTS0xMS01NGwtMzEtNSA4IDEwIDI0IDR6Ii8+PHJlY3QgeD0iMjgiIHk9Ii0zMCIgd2lkdGg9IjE4IiBoZWlnaHQ9IjI1IiByeD0iNSIgZmlsbD0iI2YxYmY2NSIgc3Ryb2tlPSIjMjExYjI5IiBzdHJva2Utd2lkdGg9IjMiLz48Y2lyY2xlIGN4PSI3IiBjeT0iLTgwIiByPSIzIiBmaWxsPSIjZWZkNGEzIi8+PC9nPjxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDMyMCA1MTApIHNjYWxlKDEuNjUpIiBmaWxsPSIjMjExYjI5Ij48ZWxsaXBzZSBjeD0iMCIgY3k9Ii0xMzAiIHJ4PSIyMCIgcnk9IjI1Ii8+PHBhdGggZD0iTS0yMC0xNDNsMTgtMjggMjEgMzBaIi8+PHBhdGggZD0iTTEwLTE0MGwyOCAxNS0yOSA0WiIvPjxwYXRoIGQ9Ik0tMTgtMTA3UTEwLTExOSAyNS05NEwzMS01LTMyLTVaIi8+PHBhdGggZD0iTS0xNy01bC01IDE4aDE4bDUtMThNMTItNWw3IDE4aDE5TDI5LTVaIi8+PHBhdGggZD0iTTIwLTk4bDMzIDMwIDctOC0zMC0zNVoiLz48cGF0aCBkPSJNLTI4LTEwMWwtMTcgNDAgOSA1IDIzLTQ1WiIvPjxwYXRoIGQ9Ik01NSA1Vi0xMzNxMC0yMCAxNi0xOCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMjExYjI5IiBzdHJva2Utd2lkdGg9IjYiLz48cGF0aCBkPSJNNzAtMTUxdjI5IiBzdHJva2U9IiMyMTFiMjkiIHN0cm9rZS13aWR0aD0iMyIvPjxyZWN0IHg9IjU5IiB5PSItMTIyIiB3aWR0aD0iMjUiIGhlaWdodD0iMzQiIHJ4PSI3IiBmaWxsPSIjN2ZlNmQyIiBzdHJva2U9IiMyMTFiMjkiIHN0cm9rZS13aWR0aD0iNCIvPjxjaXJjbGUgY3g9IjkiIGN5PSItMTM0IiByPSIzIiBmaWxsPSIjZWNkOWI3Ii8+PC9nPjxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDYzOCA1MTApIHNjYWxlKDEuNSkiIGZpbGw9IiMyMTFiMjkiPjxlbGxpcHNlIGN4PSIwIiBjeT0iLTEzMCIgcng9IjIwIiByeT0iMjUiLz48cGF0aCBkPSJNLTIwLTE0M2wxOC0yOCAyMSAzMFoiLz48cGF0aCBkPSJNMTAtMTQwbDI4IDE1LTI5IDRaIi8+PHBhdGggZD0iTS0xOC0xMDdRMTAtMTE5IDI1LTk0TDMxLTUtMzItNVoiLz48cGF0aCBkPSJNLTE3LTVsLTUgMThoMThsNS0xOE0xMi01bDcgMThoMTlMMjktNVoiLz48cGF0aCBkPSJNMjAtOThsMzMgMzAgNy04LTMwLTM1WiIvPjxwYXRoIGQ9Ik0tMjgtMTAxbC0xNyA0MCA5IDUgMjMtNDVaIi8+PHBhdGggZD0iTTU1IDVWLTEzM3EwLTIwIDE2LTE4IiBmaWxsPSJub25lIiBzdHJva2U9IiMyMTFiMjkiIHN0cm9rZS13aWR0aD0iNiIvPjxwYXRoIGQ9Ik03MC0xNTF2MjkiIHN0cm9rZT0iIzIxMWIyOSIgc3Ryb2tlLXdpZHRoPSIzIi8+PHJlY3QgeD0iNTkiIHk9Ii0xMjIiIHdpZHRoPSIyNSIgaGVpZ2h0PSIzNCIgcng9IjciIGZpbGw9IiM3ZmU2ZDIiIHN0cm9rZT0iIzIxMWIyOSIgc3Ryb2tlLXdpZHRoPSI0Ii8+PGNpcmNsZSBjeD0iOSIgY3k9Ii0xMzQiIHI9IjMiIGZpbGw9IiNlY2Q5YjciLz48L2c+PGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoODUwIDUxMCkgc2NhbGUoMS40NSkiIHN0cm9rZT0iIzIxMWIyOSIgc3Ryb2tlLXdpZHRoPSI1Ij48cGF0aCBkPSJNLTEzIDJoNTVsLTctMTJILTV6IiBmaWxsPSIjMjExYjI5Ii8+PHBhdGggZD0iTTEwLTEwdi00NXEtMTAtMTAtNS0zMCIgZmlsbD0ibm9uZSIvPjxwYXRoIGQ9Ik0tMTUtNzhxMC0yOCAyOS0yOGgyN3Y1NEgxNHEtMjkgMC0yOS0yNiIgZmlsbD0iIzIxMWIyOSIvPjxlbGxpcHNlIGN4PSI0MiIgY3k9Ii03OSIgcng9IjEyIiByeT0iMjciIGZpbGw9IiM3ZmU2ZDIiLz48ZWxsaXBzZSBjeD0iNDQiIGN5PSItNzkiIHJ4PSI0IiByeT0iMTUiIGZpbGw9IiMyMTFiMjkiLz48L2c+PHBhdGggZD0iTTc1MSAyODdxNTUtNDUgMTAwIDAiIHN0cm9rZT0iIzcxNDYzOCIgc3Ryb2tlLXdpZHRoPSI0IiBmaWxsPSJub25lIiBzdHJva2UtZGFzaGFycmF5PSI5IDciLz48dGV4dCB4PSI2NjMiIHk9IjI4MCIgZm9udC1zaXplPSIxNyIgZmlsbD0iIzUxM2QzYyIgZm9udC13ZWlnaHQ9IjQwMCI+MS4gQmHFnyBkw7ZuZXI8L3RleHQ+PHRleHQgeD0iNjYwIiB5PSI1NTAiIGZvbnQtc2l6ZT0iMTciIGZpbGw9IiM1MTNkM2MiIGZvbnQtd2VpZ2h0PSI0MDAiPjIuIE9tdXogdmUgZmVuZXIgeWV0acWfaXI8L3RleHQ+PHBhdGggZD0iTTExMzUgMzk1TDE0MzAgMjk1VjUwNVoiIGZpbGw9IiM3ZmU2ZDIiIG9wYWNpdHk9Ii41NSIvPjxyZWN0IHg9IjEyNjAiIHk9IjMzNSIgd2lkdGg9IjU3IiBoZWlnaHQ9IjIxMCIgcng9IjgiIGZpbGw9IiMzYjMwNDAiLz48cGF0aCBkPSJNMTMxNyAzOTJMMTQzMCA0NzBWNTQ1SDEzMTdaIiBmaWxsPSIjM2IzMDQwIiBvcGFjaXR5PSIuNTUiLz48ZyB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxMDgwIDUzMCkgc2NhbGUoMS4xKSIgc3Ryb2tlPSIjMjExYjI5IiBzdHJva2Utd2lkdGg9IjUiPjxwYXRoIGQ9Ik0tMTMgMmg1NWwtNy0xMkgtNXoiIGZpbGw9IiMyMTFiMjkiLz48cGF0aCBkPSJNMTAtMTB2LTQ1cS0xMC0xMC01LTMwIiBmaWxsPSJub25lIi8+PHBhdGggZD0iTS0xNS03OHEwLTI4IDI5LTI4aDI3djU0SDE0cS0yOSAwLTI5LTI2IiBmaWxsPSIjMjExYjI5Ii8+PGVsbGlwc2UgY3g9IjQyIiBjeT0iLTc5IiByeD0iMTIiIHJ5PSIyNyIgZmlsbD0iIzdmZTZkMiIvPjxlbGxpcHNlIGN4PSI0NCIgY3k9Ii03OSIgcng9IjQiIHJ5PSIxNSIgZmlsbD0iIzIxMWIyOSIvPjwvZz48ZyB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxMzYwIDUzMCkgc2NhbGUoMC45NSkiIGZpbGw9IiMyMTFiMjkiPjxlbGxpcHNlIGN4PSIwIiBjeT0iLTc3IiByeD0iMTkiIHJ5PSIyMSIvPjxwYXRoIGQ9Ik0tMTgtODZsLTE2LTggMTgtNCAxOS0xIDE1IDEyek0tMTMtNTZROS02NCAxNy00NUwyMi0xMy0xNy0xM1oiLz48cGF0aCBkPSJNLTEyLTEzbC04IDI1aDEzbDEyLTIzIDExIDIzaDE0TDE1LTE1WiIvPjxwYXRoIGQ9Ik0tMTQtNTBsLTI1IDE3IDQgOCAzMC0xNk0xMS00OGwyMSAyNCA2LTUtMTctMjVaIi8+PHBhdGggZD0iTS0xMS01NGwtMzEtNSA4IDEwIDI0IDR6Ii8+PHJlY3QgeD0iMjgiIHk9Ii0zMCIgd2lkdGg9IjE4IiBoZWlnaHQ9IjI1IiByeD0iNSIgZmlsbD0iI2YxYmY2NSIgc3Ryb2tlPSIjMjExYjI5IiBzdHJva2Utd2lkdGg9IjMiLz48Y2lyY2xlIGN4PSI3IiBjeT0iLTgwIiByPSIzIiBmaWxsPSIjZWZkNGEzIi8+PC9nPjx0ZXh0IHg9IjEwNDAiIHk9IjU1MCIgZm9udC1zaXplPSIxNyIgZmlsbD0iIzUxM2QzYyIgZm9udC13ZWlnaHQ9IjQwMCI+TmV0IGtlbmFyICsgZ8O2csO8bsO8ciDDtnJ0w7w8L3RleHQ+PHJlY3QgeD0iNDUiIHk9IjYyMCIgd2lkdGg9IjE0MTAiIGhlaWdodD0iMjIwIiByeD0iMTgiIGZpbGw9IiMzMDI3MzUiLz48dGV4dCB4PSI3NSIgeT0iNjY1IiBmb250LXNpemU9IjE5IiBmaWxsPSIjZTlhZDYwIiBmb250LXdlaWdodD0iNzAwIj5VWUdVTEFNQSBExLBMxLA8L3RleHQ+PHRleHQgeD0iNzUiIHk9IjcwOSIgZm9udC1zaXplPSIyMiIgZmlsbD0iI2VmZTNjYyIgZm9udC13ZWlnaHQ9IjQwMCI+U8OieWU6IMOnZXZpaywgaXJpIGthdmFub3osIGfDvMOnbMO8IGluacWfIHBvenUuPC90ZXh0Pjx0ZXh0IHg9Ijc1IiB5PSI3NTEiIGZvbnQtc2l6ZT0iMjIiIGZpbGw9IiNlZmUzY2MiIGZvbnQtd2VpZ2h0PSI0MDAiPkJla8OnaTogYcSfxLFyIGfDtnZkZSwgbWVyYWtsxLEgYmHFnywgZ2VjaWttZWxpIGZlbmVyLjwvdGV4dD48dGV4dCB4PSI3NSIgeT0iNzkzIiBmb250LXNpemU9IjIyIiBmaWxsPSIjZWZlM2NjIiBmb250LXdlaWdodD0iNDAwIj5Hw7Z6Y8O8OiB0ZWsgYsO8ecO8ayBsZW5zLCDDtm5jZWRlbiBva3VuYW4gZMO2bsO8xZ8uPC90ZXh0PjxjaXJjbGUgY3g9Ijk3MCIgY3k9IjcxNSIgcj0iMzAiIGZpbGw9IiMyMTFiMjkiLz48dGV4dCB4PSI5MzMiIHk9Ijc3NyIgZm9udC1zaXplPSIxNSIgZmlsbD0iI2VmZTNjYyIgZm9udC13ZWlnaHQ9IjQwMCI+S8O2bcO8cjwvdGV4dD48Y2lyY2xlIGN4PSIxMDgzIiBjeT0iNzE1IiByPSIzMCIgZmlsbD0iI2U5YWQ2MCIvPjx0ZXh0IHg9IjEwNDYiIHk9Ijc3NyIgZm9udC1zaXplPSIxNSIgZmlsbD0iI2VmZTNjYyIgZm9udC13ZWlnaHQ9IjQwMCI+S2FuZGlsPC90ZXh0PjxjaXJjbGUgY3g9IjExOTYiIGN5PSI3MTUiIHI9IjMwIiBmaWxsPSIjN2ZlNmQyIi8+PHRleHQgeD0iMTE1OSIgeT0iNzc3IiBmb250LXNpemU9IjE1IiBmaWxsPSIjZWZlM2NjIiBmb250LXdlaWdodD0iNDAwIj5UZWhkaXQ8L3RleHQ+PGNpcmNsZSBjeD0iMTMwOSIgY3k9IjcxNSIgcj0iMzAiIGZpbGw9IiNlZWUyYzgiLz48dGV4dCB4PSIxMjcyIiB5PSI3NzciIGZvbnQtc2l6ZT0iMTUiIGZpbGw9IiNlZmUzY2MiIGZvbnQtd2VpZ2h0PSI0MDAiPlnDvHpleTwvdGV4dD48L2c+PC9zdmc+" /></p>
+<p>Bu pano orijinal vektör tasarım şemasıdır; mevcut oyundan alınmış “önce/sonra” render karşılaştırması değildir. Karakter tasarımını tartışmak için hazırlanmıştır.</p>
+<h3 id="65-mevcut-kodda-degisim-nerede-yaplr">6.5 Mevcut kodda değişim nerede yapılır?</h3>
+<table>
+<thead>
+<tr>
+<th>Katman</th>
+<th>Mevcut dosyalar</th>
+<th>Önerilen iş</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Karakter çizimi</td>
+<td><code>player.dart</code>, <code>entities.dart</code>, <code>shadow_art.dart</code>, <code>rig.dart</code></td>
+<td>Çizim oranları, pozlar, ortak animasyon parametreleri, sabit ayak referansı</td>
+</tr>
+<tr>
+<td>Perde karakterleri</td>
+<td><code>perde_kisi.dart</code>, <code>perde_tasvir.dart</code>, <code>perde_kopru.dart</code></td>
+<td>Aynı kişinin başlık, burun, saç ve kıyafet imzasını oyuna taşımak</td>
+</tr>
+<tr>
+<td>Oynanış ışığı</td>
+<td><code>lighting.dart</code>, <code>entities.dart</code>, <code>creatures.dart</code>, <code>konya.dart</code>, <code>legends.dart</code></td>
+<td>Ortak ışık/görüş tanımı, belirgin tehlike sınırı</td>
+</tr>
+<tr>
+<td>Sahne biçimi</td>
+<td><code>terrain.dart</code>, <code>backdrops_east.dart</code>, <code>atmosphere.dart</code></td>
+<td>Basılabilir kenar dili; dekor/oynanış kontrast ayrımı</td>
+</tr>
+<tr>
+<td>Bölüm ayarı</td>
+<td><code>levels.dart</code>, <code>maps.dart</code>, <code>tools/sections.py</code>, <code>tools/generate_maps.py</code></td>
+<td>Tekrar kullanılabilir karşılaşma ve parkur parçaları</td>
+</tr>
+</tbody>
+</table>
+<p>Çizim ve oyun mantığı büyük dosyalarda iç içe. Bütün kodu aynı anda yeniden düzenlemek yerine önce <strong>bir karakter ve bir oda</strong> için görünümü ayrı bir çizim nesnesine ayır. Dosya adından bağımsız örnek ayrım: <code>PlayerMotion</code> hareket durumunu üretir, <code>CharacterPose</code> bunu görsel poza çevirir, <code>CharacterArt</code> çizer. Mevcut kayıt, fizik ve kontroller bu sırada korunabilir.</p>
+<h3 id="66-motor-degisimi-ne-zaman-yeniden-tartslr">6.6 Motor değişimi ne zaman yeniden tartışılır?</h3>
+<p>Sanat ekibi mevcut vektör/parça üretimini sürdüremiyorsa, hedef animasyon araç zinciri bağlanamıyorsa veya hedef cihazda ölçülmüş performans problemi çözülmüyorsa yeniden değerlendirilir. Önce 30–60 saniyelik temsilî oda hazırlanmalı; sanat kalitesi, varlık üretim süresi ve cihaz ölçümleri görülmeli. Bu prototip olmadan motor taşıması, tasarım kararını teknik projeye dönüştürür.</p>
+<p><code>saveLayer</code>, saydamlık ve kırpma işlemlerinin maliyeti ölçülmeli. Flutter belgeleri de bu işlemlerin düşünülerek kullanılmasını önerir. Projede karanlık örtüsü zaten bu tip bir katman kullanıyor; her karikatür konturuna ayrı tam ekran filtre eklemek yerine çizim önbelleği, ekran dışı eleme ve basit gölgeleme tercih edilmeli. <a href="https://docs.flutter.dev/perf/best-practices">Flutter performans rehberi</a>.</p>
+<h2 id="7-teknik-cozum-plan">7. Teknik çözüm planı</h2>
+<h3 id="71-gorus-ile-cizim-tek-bilgiye-dayansn">7.1 Görüş ile çizim tek bilgiye dayansın</h3>
+<p>Önerilen veri örneği <code>LightField</code>: kaynak konumu, yönü, menzili, koni açısı, duvarlarla kesilmiş bölge ve oynanış rolü. Hem ışığın çizimi hem algılama bu bilgiyi kullanır. Bu bir <strong>önerilen soyutlama</strong>, mevcut sınıf adı değildir.</p>
+<p>Baş/gövde/ayak örneklerinden görünürlük ölçmek denenebilir. Bir tek merkez noktasıyla algılama bazen karakterin yarısı açıkken görünmez kalmasına yol açabilir. Örneklerin örtülme oranı şüphe artışını besler. Mevcut <code>hidden</code>, <code>inShadow</code>, çömelme, kapı, sütun ve duvar davranışları önce açık bir sözleşmeye dökülmeli. Her dekoru otomatik siper saymak doğru değildir.</p>
+<p><strong>Düşük grafikte kural aynı kalır:</strong> Işığın görüntüsü basitleştirilebilir; görüş açısı, şüphe süresi ve güvenli alan değiştirilmez. Çizilen tehlike sınırı normal kaliteyle aynı konumu anlatmalı.</p>
+<h3 id="72-bekci-verisini-bolumden-ayarla">7.2 Bekçi verisini bölümden ayarla</h3>
+<p>Önerilen <code>GuardProfile</code>: rol, devriye durakları, durak süreleri, dönüş hazırlığı, işitme profili, arama süresi, yem merakı. Önerilen <code>WatcherProfile</code>: tarama açıları, duraklar, dönem, evre, körlük süresi. İlk uygulama, harita işaretlerinin davranışını değiştirmeden isteğe bağlı profil bağlama olabilir.</p>
+<p>Sabit bir bekçinin uzak, ulaşılamayan sese takılıp sonsuza kadar orada yürümesi engellenmeli. Ulaşamadığı hedef için süre sınırı ve yerel araştırma düğümleri yeterli olabilir. İlk prototipte tam harita üzerinde genel yol bulma yerine tasarlanmış odalardaki az sayıda düğüm daha denetlenebilir bir çözüm sunar.</p>
+<h3 id="73-bolum-parcalarn-yaplandr">7.3 Bölüm parçalarını yapılandır</h3>
+<p>Yeni ASCII işaretleriyle haritayı hızla karmaşıklaştırmak yerine mevcut işaretlere koordinatla ek veri bağlanabilir. Örneğin bir “hareketli siper odası” şu verileri kapsar:</p>
+<ul>
+<li>Giriş/çıkış ve güvenli durak koordinatları.</li>
+<li>Bir veya iki ışığın ortak tarama profili.</li>
+<li>Kayanın hareket profili ve hangi duvarların siper olduğu.</li>
+<li>Ana, ustalık ve kurtarma rotası.</li>
+<li>Kontrol noktası ve kaynak sıfırlama politikası.</li>
+</ul>
+<p>Üretici araçların ürettiği harita ile elle düzenlenen harita arasında tek bir kaynak belirlenmeli. Aksi hâlde sonraki <code>generate_maps.py</code> çalışması elle ayarlanmış güvenli pencereyi bozabilir. Her parçanın giriş/çıkış yükseklik sözleşmesi yazılmalı.</p>
+<h3 id="74-kontrol-noktas-ve-yeniden-deneme">7.4 Kontrol noktası ve yeniden deneme</h3>
+<ul>
+<li>Yeni mekanik öncesi güvenli kontrol noktası; anlaşılan bulmaca tekrar çözdürülmesin.</li>
+<li>Zor karşılaşmada girişe dönüş için ilk hedef 5–10 sn'den kısa tekrar süresi. Ölüm animasyonu dâhil ölçülmeli.</li>
+<li>Kapı, sandık, ayna, hareketli platform ve düşman evreleri hangi noktadan dönüyor açıkça tanımlanmalı. Rastgele başlayan ışık düzeni her yeniden denemede başka zorluk yaratmasın.</li>
+<li>Aynı anda iki panelin simülasyonu yanlış başlatması önce düzeltilmeli. Duraklama, açık panel sayısından veya tek bir arayüz durumundan türemeli.</li>
+<li>Tiyatronun finali için <code>completed</code> benzeri kayıt bilgisi gerekli. <code>unlocked</code> yalnız ulaşılan bölümü anlatmalı; göç/migrasyon eski kayıtlarla uyumlu olmalı.</li>
+</ul>
+<h2 id="8-zorluk-erisilebilirlik-ve-olcum">8. Zorluk, erişilebilirlik ve ölçüm</h2>
+<p>Üç başlangıç profili düşünülebilir: <strong>Hikâye</strong>, <strong>Yolculuk</strong>, <strong>Ustalık</strong>. İsimler oyuncuyu yargılamamalı. Hikâye profilinde daha uzun görüş toleransı ve daha geniş hareket penceresi; Ustalık'ta aynı kurallarla ek yan rota veya daha sıkı zamanlama sunulabilir.</p>
+<p>Oyuncuya ayrıca bağımsız seçenekler ver: fener uyarısının belirginliği, bulmaca ipucu düzeyi, zamanlama payı, basılı tutma/aç-kapat kontrolleri ve sakin efektler. Refleks zorluğunu azaltmak, bulmacanın cevabını otomatik söylemek zorunda değildir. Microsoft'un XAG 108 rehberi de farklı zorluk bileşenlerinin ayrı ayarlanmasını ele alır. <a href="https://learn.microsoft.com/en-us/xbox/accessibility/xbox-accessibility-guidelines/108">Xbox erişilebilirlik: zorluk seçenekleri</a>.</p>
+<p>İpuçlarını üç basamağa ayır: ilkinde nesnenin davranışı; takılınca ilişki; istenince somut çözüm. Örneğin: “Fener çana döndü” → “Sesi kullanarak arkasında boşluk bırakabilirsin” → “Çanı çal; soldaki sütunda bekle; dönüşünde sağdan geç.”</p>
+<p><strong>Şiirsel ipucu dili:</strong> İlk satır kısa, mekânın sesine uygun ve bir oynanış ilişkisini sezdiren biçimde olmalı. Bekçi için “Kandil sese döner; gölge doğru anı bekler.”; hareketli kayalar için “Taş da nefes alır; yükselirken yol verir.”; Gözcü için “Göz döner, gölge kalır; yol arada açılır.” kullanılabilir. Şiirsellik bilgi eksikliğini örtmemeli: her satır oyuncunun gözleyebileceği bir davranışa karşılık gelmeli. İlk satır olayın sakin bir anında görünür, “Az önce” panelinde saklanır; tekrar takılınca daha somut ikinci ipucu sunulur. Bütün çözüm ilk karşılaşmada söylenmez. Karikatürize görünüm ve ilk şiirsel ipucunun birlikte örneği: <a href="konsept/karikaturize-yerebatan-v1.png">Yerebatan konsepti</a>. Bu görsel üretim aracından alınmış sanat yönü çalışmasıdır; gerçek oyun renderı değildir.</p>
+<p><strong>İlk oyuncu testleri:</strong> Oyunu bilmeyen birkaç kişiye aynı iki odayı oynat. Örneğin 5–8 kişi ilk niteliksel tur için kullanılabilir; bu sayının sonuçları bütün oyuncu kitlesi için istatistiksel kanıt değildir.</p>
+<table>
+<thead>
+<tr>
+<th>Ölçüm</th>
+<th>Neyi anlamak için?</th>
+<th>İlk kabul hedefi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Ölüm sebebini anlatabilme</td>
+<td>Tehdit okunuyor mu?</td>
+<td>Oyuncuların çoğu “ne oldu?” sorusuna doğru kuralı söyleyebilmeli</td>
+</tr>
+<tr>
+<td>İkinci/üçüncü denemede gelişme</td>
+<td>Beceri öğreniliyor mu?</td>
+<td>Aynı rastgele hatanın tekrarı yerine farklı kararlar görülmeli</td>
+</tr>
+<tr>
+<td>Birden çok rota kullanımı</td>
+<td>Seçim gerçek mi?</td>
+<td>Yan rota sadece görünürde kalmamalı; en az iki yöntem işe yaramalı</td>
+</tr>
+<tr>
+<td>Tek tuş çözümü</td>
+<td>Tek davranış baskın mı?</td>
+<td>Sürekli koşma, sürekli çömelme ve sürekli süzülme bütün oda dizisini çözememeli</td>
+</tr>
+<tr>
+<td>Boş bekleme</td>
+<td>Ritim sıkılıyor mu?</td>
+<td>Oyuncu çoğu döngüyü yalnız bekleyerek geçirmemeli; 5 sn üstü beklemeler incelenmeli</td>
+</tr>
+<tr>
+<td>Yeniden deneme süresi</td>
+<td>Başarısızlık yoruyor mu?</td>
+<td>Zor karşılaşmanın asıl kararına kısa dönüş</td>
+</tr>
+<tr>
+<td>Rota keyfi</td>
+<td>Başarılı hareket ödül mü?</td>
+<td>Oyuncu güvenli alanda da bir atlayışı tekrar yapmak isteyebilmeli</td>
+</tr>
+</tbody>
+</table>
+<p>Ölçümler ilk etapta yerel geliştirme kaydı olarak tutulabilir; dış analitik servis gerekmiyor. <code>ölüm nedeni</code>, <code>ışıkta kalma</code>, <code>seçilen rota</code>, <code>yem kullanımı</code>, <code>atlayış başlangıç/iniş konumu</code> ve <code>bekleme süresi</code> yeterli başlangıçtır.</p>
+<h2 id="9-uygulama-sras-ve-kabul-kaplar">9. Uygulama sırası ve kabul kapıları</h2>
+<p>İşleri gün sayısıyla kesinleştirmek için hedef cihaz ve varlık üretim hızı bilinmiyor. Aşağıdaki sıra, bağımlılık ve beklenen faydaya göre öneridir.</p>
+<table>
+<thead>
+<tr>
+<th>Aşama</th>
+<th>Somut çıktı</th>
+<th>Bitti sayılması için</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>P0 · Sağlam temel</td>
+<td>Panel duraklatması, final kayıt bilgisi, bölüm denetleyicisinin yeni mekanikleri tanıması</td>
+<td>Önceki hatalar tekrarlanmıyor; CI denetimi açıklamasız başarısız olmuyor</td>
+</tr>
+<tr>
+<td>P1 · İki prototip oda</td>
+<td>45–75 sn'lik bekçi/Gözcü odası ve 30–60 sn'lik hareketli kaya parkuru</td>
+<td>Her iki oda aynı fizik ve hedef cihazda anlaşılır ve tekrarlanabilir</td>
+</tr>
+<tr>
+<td>P2 · Sanat örneği</td>
+<td>Sâye, bir Kandilci, bir Gözcü, bir zemin, iki fener durumu</td>
+<td>Normal oyun kamerasında siluet ve davranış okunuyor; yalnız yakın planda güzel değil</td>
+</tr>
+<tr>
+<td>P3 · Ortak araçlar</td>
+<td>Işık profili, bekçi arama profili, veriyle platform yolu, yerel ölçüm</td>
+<td>Eski bölümlerin davranışı varsayılan ayarlarla korunuyor</td>
+</tr>
+<tr>
+<td>P4 · İlk bölüm grubu</td>
+<td>Yerebatan → Kule → Gökyolu → Kaf</td>
+<td>Öğret → geliştir → birleştir akışı oyuncu denemesinde çalışıyor</td>
+</tr>
+<tr>
+<td>P5 · Orta bölüm grubu</td>
+<td>Ağrı → Gemi → Nemrut → Gün Doğumu → Kar Yolu</td>
+<td>İp, ağırlık, taş dev ve kurt karşılaşmaları farklı beceri istiyor</td>
+</tr>
+<tr>
+<td>P6 · Akış ve ileri bölüm grubu</td>
+<td>Palandöken → Çığ → Peri → Derinkuyu → Erlik</td>
+<td>Ana rota ve ustalık rotası ayrılmış; rahatlama alanları var</td>
+</tr>
+<tr>
+<td>P7 · Zirve ve kapanış</td>
+<td>Ergenekon → Göğün Katları → Şeb-i Arûs</td>
+<td>Son sınav öğrenilenleri kullanıyor, final duygusal alan buluyor</td>
+</tr>
+</tbody>
+</table>
+<p><strong>İlk iki prototipin ayrıntılı iş listesi:</strong></p>
+<ol>
+<li>Yerebatan'dan bir sütun odasını kopya/deneme haritasına ayır. Bir devriyeci, bir tarayıcı, bir çan ve bir hareketli siper kullan; başta hepsini aynı anda çalıştırma.</li>
+<li>Önce tek bekçiyi sesle yönlendir. Sonra tek Gözcü'yü dönüş penceresinde geç. İkisi ayrı okunuyorsa birleştir.</li>
+<li>Ana çözüm: çanı çal → sütuna dön → Gözcü geri dönerken kayanın arkasına gir → sonraki oyuğa aktar → bekçi aramaya başlamadan çık.</li>
+<li>Alternatif çözüm: üst rafa iki atlayışla ulaş; daha uzun ama kaynak gerektirmeyen yol. Üst yol bütün odadaki diğer düzenekleri anlamsızlaştırıyorsa hedefini yalnız yan ödüle çevir.</li>
+<li>Hareket parkurunda üç kaya kullan: basınca başlayan geniş kaya, karşıdan gelen aktarma kayası, yükselen son kaya. İlk denemede altta kurtarma rafı bulunsun.</li>
+<li>Oyuncuların durakladığı, hedefi göremediği ve yanlış okuduğu anları kaydet. Hız artırmadan önce kompozisyonu düzelt.</li>
+<li>Sanat örneğini bu çalışan odalara uygula. Fizik ile görünümü aynı gün kökten değiştirme; hangi değişikliğin hissi iyileştirdiğini ayırt etmek zorlaşır.</li>
+</ol>
+<h2 id="10-hangi-testler-gerekli">10. Hangi testler gerekli?</h2>
+<p>Yeni davranışlar oyun kurallarını değiştirdiği için aşağıdaki kontroller anlamlıdır:</p>
+<ul>
+<li>Duvar arkasındaki ateşböceği, görünür bir ses etkisi tanımlı değilse bekçiyi görsel hedefe çevirmiyor.</li>
+<li>Aynı yem bekçileri tanımlanan sahiplik kuralıyla etkiliyor; kovalamacanın belleği kurala uygun korunuyor.</li>
+<li>Bekçi oyuncuyu son gördüğü yere gidiyor, gizli konumu kendiliğinden öğrenmiyor.</li>
+<li>İki Gözcü ve hareketli siperin ortak döngüsünde ana rota için kesintisiz bir geçiş dizisi var.</li>
+<li>Normal ve düşük grafik, aynı oyuncu konumunda aynı tehlike sonucunu veriyor.</li>
+<li>Platform aktarması 30, 60, 120 ve 144 Hz'de yeterince aynı yörünge ve taşıma davranışı veriyor. Gerçek cihazda dokunma gecikmesi ayrıca deneniyor.</li>
+<li>Hareketli kayadan ayrılınca oyuncu sonradan taşınmaya devam etmiyor; alttan/taraflardan çarpışma bozulmuyor.</li>
+<li>Yeniden doğma sonrası ışık evresi, ayna durumu, sandık konumu ve kaynak sayısı çözülebilir bir oda kuruyor.</li>
+<li>Hiç ateşböceği yokken ana hikâye kalıcı kilitlenmiyor.</li>
+<li>Bilinen üç kestirme denemesi her kritik odada yapılıyor: sadece sağa koş, zıplamayı sürekli basılı tut, sürekli çömel.</li>
+</ul>
+<p>Kayıt/kapı bulmacalarında test kullanmak gerekir. Tek tek dekor çizgileri için test yazmak yerine normal kamera, cep telefonu ölçeği ve farklı kalite ayarlarında görsel kontrol daha yararlı.</p>
+<h2 id="11-oncelikle-eklenmemesi-gerekenler">11. Öncelikle eklenmemesi gerekenler</h2>
+<ul>
+<li>Her bölüme yeni bir özel tuş, dayanıklılık çubuğu veya para birimi.</li>
+<li>Öğretilmemiş duvar zıplaması, ani atılma ve dövüşü aynı yenilemede eklemek.</li>
+<li>Bütün koridorları alçak tavanla kapatmak; bu, keyifli sıçramayı da yok eder.</li>
+<li>Bekçileri oyuncunun gerçek yerini sürekli bilen düşmanlara dönüştürmek.</li>
+<li>Düşman taramalarına habersiz rastlantı eklemek; önce sabit desenleri öğrenmek mümkün olmalı.</li>
+<li>Zorluk için ipucunu gizlemek, zemini daha karanlık yapmak veya kamera dışında tehlike üretmek.</li>
+<li>Her kaçırılan atlayışı uzun ölüm/yükleme döngüsüyle cezalandırmak.</li>
+<li>Yeni sanat yönü kabul edilmeden 17 bölümün bütün varlıklarını yeniden çizmek.</li>
+<li>Performans ölçülmeden motor taşımak veya çok sayıda tam ekran efekt eklemek.</li>
+</ul>
+<h2 id="12-inceleme-kaynaklar-ve-kapsam-snr">12. İnceleme kaynakları ve kapsam sınırı</h2>
+<p><strong>Proje içi dayanaklar:</strong> <code>levels.dart</code> ve <code>maps.dart</code> bölüm kimliği, alan ve geometri; <code>player.dart</code> hareket; <code>entities.dart</code> Kandilci; <code>creatures.dart</code> Gözcü; <code>legends.dart</code> balon ve diğer efsane düzenekleri; <code>konya.dart</code> büyük fener/semâzen/avize; <code>winter.dart</code> kurt/buz; <code>mechanics.dart</code> hareketli kayalar; <code>erlik.dart</code>, <code>ergenekon.dart</code>, <code>heavens.dart</code>, <code>nemrut.dart</code> bölüm kuralları; <code>lighting.dart</code>, <code>shadow_art.dart</code>, <code>rig.dart</code>, <code>perde*.dart</code> görsel yapı. <code>docs/ZORLUK.md</code> ve <code>docs/KURGU.md</code> yön belgesi olarak karşılaştırılmış, güncel davranış için kod esas alınmıştır.</p>
+<p><strong>Görsel inceleme:</strong> Mevcut oyun/menü renderları; arka planlar, kayak doğası, Ergenekon, Göğün Katları ve perde kadrosu önizlemeleri. Bunların bir kısmı eski üretimlerdir; önerilen sanat yönü canlı oyuna uygulanmış sayılmaz.</p>
+<p><strong>Önceki doğrulama:</strong> Ana test koşusu 191 başarılı test; devamında güncel hikâye tiyatrosu ve panel hatası doğrulaması 5 başarılı kontrol. Bölüm denetleyicisi Konya ve Ergenekon için başarısız çıktı vermiştir. Bu nedenle “tüm haritalar hatasız/bitirilebilir” sonucu çıkarılmamıştır. Yeni tasarımlar henüz uygulanmadığı için yeni zorluk ve performans sonuçları yoktur.</p>
+<p><strong>Dış teknik dayanak:</strong> Flame'in çizim bileşenleri, Flutter'ın katman/efekt maliyeti rehberi ve Microsoft XAG 108. Yukarıdaki bölüm kurguları, düşman rolleri, sayısal prototip aralıkları ve sanat yönü bu projeye özel tasarım önerileridir; dış kaynaklardan alınmış kanıtlanmış ayarlar değildir.</p>
+<p><strong>Önerilen ilk karar:</strong> İki küçük prototipi kur: birinde bekçi + Gözcü karşısında <strong>plan kurup doğru anda kaç</strong>, diğerinde hareketli kayalar arasında <strong>ritim yakalayıp ak</strong>. Sanat örneğini bu iki parçaya uygula. Oyuncu bunları yeniden oynamak istiyorsa, aynı tasarım dilini 17 bölüme yay.</p><footer>Bu dosya tasarım raporudur. Oyun davranışını veya görsellerini değiştirmez.</footer></main></body></html>

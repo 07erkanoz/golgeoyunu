@@ -1605,6 +1605,27 @@ const levels = <LevelDef>[
       (180, 17, 2),
     ],
     birdBridges: [(273, 325, 16)],
+    // Gölge köprüsünün iki Gözcü'sü: projektör köprüye iner, değdiği
+    // tahtayı siler. Sırayla tararlar: biri köprüye bakarken öbürü başını
+    // kaldırır; ortada ikisinin de yetişmediği kör nokta.
+    watchers: [
+      (
+        211,
+        9,
+        WatcherProfile(facing: 1, center: 0.725, sweep: 0.725, speed: 0.45),
+      ),
+      (
+        229,
+        9,
+        WatcherProfile(
+          facing: -1,
+          center: 0.725,
+          sweep: 0.725,
+          speed: 0.45,
+          phase: 0.5,
+        ),
+      ),
+    ],
   ),
   LevelDef(
     title: 'V · AĞRI',

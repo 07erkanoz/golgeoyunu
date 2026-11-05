@@ -240,8 +240,10 @@ class RealismLayer extends Component with HasGameReference<GolgeGame> {
         canvas.drawLine(Offset(x, col.top), Offset(x, col.bottom), colWide);
         canvas.drawLine(Offset(x, col.top), Offset(x, col.bottom), colNarrow);
       }
-      final lipWide = edge(0.42, 8.5);
-      final lipNarrow = edge(0.82, 2.8);
+      // Zeminin kenarında yalnız geniş ve soluk bir yalama: dar parlak
+      // çizgi uzun adalarda zemine çekilmiş bir ışık şeridi gibi duruyordu.
+      final lipWide = edge(0.34, 10);
+      final lipNarrow = edge(0.22, 2.2);
       for (final (x0, x1, y) in _lips) {
         if (x1 < area.left || x0 > area.right) continue;
         if (y < area.top || y > area.bottom) continue;

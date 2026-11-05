@@ -184,10 +184,9 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
   /// yavaşça gevşer.
   double _wary = 0;
 
-  /// Çizgi film esnekliği: zıplarken dikey uzama (_stretchT) ve yön
-  /// değiştirirken yumuşak dönüş (_turnT); kavanozun hareket izi (_jarTrail).
+  /// Zıplarken hafif dikey uzama (_stretchT); kavanozun hareket izi
+  /// (_jarTrail).
   double _stretchT = 0;
-  double _turnT = 0;
   double _trailCd = 0;
   final _jarTrail = <(Vector2, double)>[];
   bool _jumpCut = true;
@@ -218,7 +217,6 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     _shieldS = approach(_shieldS, hidden || crouching ? 1 : 0, dt, 0.06);
     _landDip = math.max(0, _landDip - dt);
     _stretchT = math.max(0, _stretchT - dt);
-    _turnT = math.max(0, _turnT - dt);
     _updateJarTrail(dt);
     _updateShadow(dt);
     _updateMotion(dt);
@@ -389,11 +387,9 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     if (onGround && _onIce) accel *= 0.18;
     velocity.x = _approach(velocity.x, target, accel * dt);
     if (dir != 0 && dir != facing) {
-      // Dönerken gövde bir an eski yöne yaslı kalır (ağırlık hissi) ve
-      // yumuşak dönüş geçişi (_turnT) başlar.
+      // Dönerken gövde bir an eski yöne yaslı kalır (ağırlık hissi).
       _leanS = -_leanS;
       _jarSwing.kick(2.5);
-      _turnT = 0.085;
       if (onGround && velocity.x.abs() > 95 && !sneaking && !crouching) {
         final theme = game.level.def.theme;
         game.dust(
@@ -2303,9 +2299,17 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
   final _kukla = SayeKukla();
   final _kuklaIn = KuklaInput();
 
+  /// Duvardaki gölgenin kendi kuklası: Sâye'nin kuklasını ödünç alınca
+  /// gölge geride kaldığında ya da ayrıldığında Sâye'nin o anki pozuyla
+  /// kayıyordu (Sâye durunca gölge ayakta süzülür, Sâye zıplayınca geride
+  /// yerinde zıplar). Kendi pozunu kendi yerine göre alır.
+  final _shadowKukla = SayeKukla();
+
+  /// Son 1,2 sn'nin kukla girişleri: geride kalan gölge onları tekrar eder.
+  final _kuklaPast = <(double, KuklaInput)>[];
+
   bool get _useKukla =>
-      SayeKukla.ready &&
-      (kuklaLevels?.contains(game.levelIndex) ?? true);
+      SayeKukla.ready && (kuklaLevels?.contains(game.levelIndex) ?? true);
 
   void _stepKukla(double dt) {
     if (!_useKukla) return;
@@ -2319,9 +2323,11 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
         _ when skiing || game.onHorse => KuklaMode.ground,
         _ => onGround ? KuklaMode.ground : KuklaMode.air,
       }
-      ..forward = swimming
-          ? velocity.length
-          : (isDead || skiing || game.onHorse ? 0 : velocity.x * facing)
+      ..forward =
+          (swimming
+              ? velocity.length
+              : (isDead || skiing || game.onHorse ? 0 : velocity.x * facing)) /
+          _kuklaVisScale
       ..vy = isDead || skiing ? 0 : velocity.y
       // Kayakta dizler kırık, at sırtında oturur.
       ..crouching = crouching || game.onHorse
@@ -2331,8 +2337,9 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       ..shield = _shieldS
       ..landDip = _landDip
       ..climb = (_stateTime / 0.42).clamp(0.0, 1.0)
+      // Kenarı yakalayınca kollar bir an bükülür, sonra dimdik asılır.
       ..pull = state == PlayerState.hang
-          ? (_stateTime / 0.22).clamp(0.0, 0.35)
+          ? 0.25 * math.sin(math.pi * (_stateTime / 0.3).clamp(0.0, 1.0))
           : (state == PlayerState.climbUp ? 0.65 : 0.0)
       ..stroke = swimming
           ? (_stroke < 1 ? _stroke : (_kick * 0.18) % 1.0)
@@ -2342,14 +2349,61 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       final cx = _hangDir > 0 ? _hangCol * kTile : (_hangCol + 1) * kTile;
       final cy = _hangRow * kTile.toDouble();
       i.grip = Offset(
-        (cx - (position.x + w / 2)) * facing,
-        cy - (position.y + h),
+        (cx - (position.x + w / 2)) * facing / _kuklaVisScale,
+        (cy - (position.y + h)) / _kuklaVisScale,
       );
     } else if (state == PlayerState.swing) {
       // İpte: eller başın üstünde, ipi tutar.
-      i.grip = const Offset(-0.2, -h - 0.4);
+      i.grip = const Offset(-0.2, -h - 0.4) / _kuklaVisScale;
     }
     _kukla.step(dt, i);
+    _stepShadowKukla(dt, i);
+  }
+
+  /// Gölgenin geride kaldığı an (lag): kısa bir an önce, sona doğru
+  /// yetişir.
+  double get _lagWhen =>
+      _anim - 0.3 * (1 - ((_moodT - 1.8) / 0.8).clamp(0.0, 1.0));
+
+  /// Gölge kendi başına mı yürüyor (Sâye'den ayrılmış): yürüyor mu.
+  bool? get _shadowWalking => switch (_mood) {
+    _ShadowMood.astray => (_moodT > 0.6 && _moodT < 2.6) || _moodT >= 4.0,
+    _ShadowMood.shy => _moodT < 0.6 || _moodT >= 1.7,
+    _ShadowMood.sent => _sentPhase != 1,
+    _ShadowMood.guide => _guidePhase != 1,
+    _ => null,
+  };
+
+  void _stepShadowKukla(double dt, KuklaInput i) {
+    _kuklaPast.add((_anim, i.copy()));
+    while (_kuklaPast.length > 2 && _anim - _kuklaPast.first.$1 > 1.2) {
+      _kuklaPast.removeAt(0);
+    }
+    if (!jarStyle || !level.def.theme.indoor && _shadowWalking == null) {
+      return;
+    }
+    // Gölge Sâye'den biraz büyük çizilir: adımı o ölçeğe göre.
+    const k = _kuklaVisScale / 1.04;
+    final walking = _shadowWalking;
+    final KuklaInput s;
+    if (walking != null) {
+      s = KuklaInput()
+        ..mode = KuklaMode.ground
+        ..forward = walking ? 60 / 1.04 : 0
+        ..light = 0;
+    } else {
+      var past = i;
+      if (_mood == _ShadowMood.lag) {
+        final when = _lagWhen;
+        for (final (t, p) in _kuklaPast) {
+          if (t <= when) past = p;
+        }
+      }
+      s = past.copy()
+        ..forward = past.forward * k
+        ..grip = past.grip * k;
+    }
+    _shadowKukla.step(dt, s);
   }
 
   void _updateJarTrail(double dt) {
@@ -2405,20 +2459,37 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
   }
 
   /// Kukla, çarpışma kutusunun yerel uzayında (ayaklar kutunun dibinde).
-  static const double _kuklaVisScale = 1.06;
+  /// Kukla bu ölçekle çizilir; ona verilen hız ve tutunma yeri de bu ölçeğe
+  /// bölünür (yoksa basan ayak yerde kayar, eller kenarı ıskalar).
+  static const double _kuklaVisScale = 0.88;
 
-  void _paintKukla(Canvas canvas, {Color? solid, double rim = 0}) {
-    canvas.save();
-    canvas.translate(w / 2, h);
+  /// Kuklanın çizim ölçeği (yatay, dikey): sıçrarken hafif uzar, inişte
+  /// hafif basılır (kâğıt kukla lastik gibi esnemez).
+  (double, double) get _kuklaScale {
     final squash = (_landDip / 0.22).clamp(0.0, 1.0);
     final stretch = (_stretchT / 0.14).clamp(0.0, 1.0);
-    final vis = solid == null ? _kuklaVisScale : 1.0;
-    final sy = (1.0 + 0.13 * stretch - 0.14 * squash) * vis;
-    final sx = (1.0 - 0.08 * stretch + 0.11 * squash) * vis;
-    final turnK = _turnT > 0
-        ? 0.45 + 0.55 * (1 - math.sin((_turnT / 0.085).clamp(0.0, 1.0) * math.pi))
-        : 1.0;
-    canvas.scale((facing < 0 ? -1.0 : 1.0) * sx * turnK, sy);
+    return (
+      (1.0 - 0.03 * stretch + 0.04 * squash) * _kuklaVisScale,
+      (1.0 + 0.05 * stretch - 0.06 * squash) * _kuklaVisScale,
+    );
+  }
+
+  /// [kukla] verilirse o çizilir (gölgenin kendi kuklası); [own]: gölge
+  /// Sâye'den ayrılmış, Sâye'nin dönüşleri (yüzüş, takla, süzülüş) ona
+  /// uygulanmaz.
+  void _paintKukla(
+    Canvas canvas, {
+    Color? solid,
+    double rim = 0,
+    SayeKukla? kukla,
+    bool own = false,
+  }) {
+    final kk = kukla ?? _kukla;
+    canvas.save();
+    canvas.translate(w / 2, h);
+    // Duvardaki gölge ([solid]) kendi ölçeğiyle büyür.
+    final (sx, sy) = solid == null ? _kuklaScale : (1.0, 1.0);
+    canvas.scale((facing < 0 ? -1.0 : 1.0) * sx, sy);
     void turn(Offset pivot, double a) {
       canvas.translate(pivot.dx, pivot.dy);
       canvas.rotate(a);
@@ -2427,40 +2498,41 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
 
     // Eski çizimdeki gibi: ipte beden ellerin altında asılı, suda gidiş
     // yönüne yatar, taklada döner, ölünce yana yıkılır.
-    if (state == PlayerState.swing) {
-      turn(const Offset(0, -h + 1.4), -_swingBody.value * facing);
+    // Ayrılmış gölge ([own]) kendi ayağıyla yürür: Sâye'nin dönüşleri yok.
+    if (!own) {
+      if (state == PlayerState.swing) {
+        turn(const Offset(0, -h + 1.4), -_swingBody.value * facing);
+      }
+      if (swimming && !isDead) {
+        turn(const Offset(0, -14), _swimPitch);
+      } else if (_flip != 0) {
+        turn(const Offset(0, -14), _flip);
+      } else if (gliding && !isDead) {
+        final glideLean =
+            (velocity.x * facing / 205.0).clamp(-0.3, 0.45) * 0.36;
+        turn(const Offset(0, -14), glideLean);
+      }
+      if (isDead && !_fell) {
+        turn(Offset.zero, math.min(_stateTime * 5, 1) * math.pi / 2);
+      }
     }
-    if (swimming && !isDead) {
-      turn(const Offset(0, -14), _swimPitch);
-    } else if (_flip != 0) {
-      turn(const Offset(0, -14), _flip);
-    } else if (gliding && !isDead) {
-      final glideLean = (velocity.x * facing / 205.0).clamp(-0.3, 0.45) * 0.36;
-      turn(const Offset(0, -14), glideLean);
-    }
-    if (isDead && !_fell) {
-      turn(Offset.zero, math.min(_stateTime * 5, 1) * math.pi / 2);
-    }
-    if (hasWings && solid == null) {
-      // Kanatlar omuzda, sırtın ardında.
-      final s = _kukla.shoulder;
-      canvas.save();
-      canvas.translate(s.dx - 0.6, s.dy + 0.4);
-      canvas.scale(_artScale);
-      _drawWings(canvas, Offset.zero);
-      canvas.restore();
-    }
+    // Kanatlar sırtta, kürek kemiğinin hizasında: ikisi de bedenin ardında
+    // arkaya ve yukarı açılır (yandan bakışta öne, yüzün önüne uzanmaz).
+    final wings = hasWings && solid == null;
+    final back = kk.shoulder + const Offset(-3.4, 1.2);
+    if (wings) _drawKuklaWing(canvas, back, near: false);
     if (solid != null) {
-      _kukla.paintSolid(canvas, solid);
+      kk.paintSolid(canvas, solid);
     } else {
-      _kukla.paint(canvas, rim: rim);
+      kk.paint(canvas, rim: rim);
     }
+    if (wings) _drawKuklaWing(canvas, back, near: true);
     canvas.restore();
   }
 
-  /// Hayal perdesine düşen yansıma: Sâye'nin o anki gerçek duruşuyla (dururken
+  /// Hayal perdesine düşen gölge: Sâye'nin o anki gerçek duruşuyla (dururken
   /// durur, yürürken yürür, çömelirken çömelir) ayak noktası orijinde, sağa
-  /// bakar biçimde boyu ~84 birim olarak çizilir.
+  /// bakar biçimde boyu ~84 birim, [color] renginde düz siluet.
   bool paintScreenShadow(Canvas canvas, Color color) {
     if (!_useKukla) return false;
     canvas.save();
@@ -2468,12 +2540,10 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     canvas.scale(s, s);
     final a = color.a.clamp(0.0, 1.0);
     if (a < 1) {
-      canvas.saveLayer(
-        null,
-        Paint()..color = Color.fromRGBO(255, 255, 255, a),
-      );
+      canvas.saveLayer(null, Paint()..color = Color.fromRGBO(255, 255, 255, a));
     }
-    _kukla.paint(canvas, rim: 0.35, jar: false);
+    // Perdedeki gölge düz siluettir: işleme, kenar ışığı, göz görünmez.
+    _kukla.paintSolid(canvas, color.withValues(alpha: 1));
     if (a < 1) canvas.restore();
     canvas.restore();
     return true;
@@ -2510,7 +2580,7 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       case _ShadowMood.follow:
         break;
       case _ShadowMood.lag:
-        if (_moodT > 4.5) _mood = _ShadowMood.follow;
+        if (_moodT > 2.6) _mood = _ShadowMood.follow;
       case _ShadowMood.sent:
         _updateSent(dt);
       case _ShadowMood.guide:
@@ -2565,7 +2635,7 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
         break;
       case _ShadowMood.lag:
         // Yarım saniye önceki yerinde: Sâye'nin peşinden geç gelir.
-        final when = _anim - 0.5 * (1 - (_moodT - 3.5).clamp(0.0, 1.0));
+        final when = _lagWhen;
         var past = _trail.first;
         for (final t in _trail) {
           if (t.$1 <= when) past = t;
@@ -2641,12 +2711,17 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       // Işık yakında ve aşağıda: gölge ayaklardan büyüyerek yukarı uzanır.
       canvas.translate(foot.dx, foot.dy);
       canvas.scale(
-        (sent ? 1.08 : 1.18) * (1 + grow),
-        (sent ? 1.18 : 1.30) * (1 + grow * 0.6),
+        (sent ? 0.96 : 1.04) * (1 + grow),
+        (sent ? 1.05 : 1.14) * (1 + grow * 0.6),
       );
       canvas.translate(-w / 2, -h);
       if (_useKukla) {
-        _paintKukla(canvas, solid: _fill.color);
+        _paintKukla(
+          canvas,
+          solid: _fill.color,
+          kukla: _shadowKukla,
+          own: _shadowWalking != null,
+        );
         canvas.restore();
         return;
       }
@@ -2784,15 +2859,19 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
         rim: Settings.lowGraphics ? 0 : 0.62 * flicker * (1 - _shieldS),
       );
       final j = _kukla.jar;
+      final (ksx, ksy) = _kuklaScale;
       _jarWorld = Vector2(
-        position.x + w / 2 + j.dx * _kuklaVisScale * facing,
-        position.y + h + j.dy * _kuklaVisScale,
+        position.x + w / 2 + j.dx * ksx * facing,
+        position.y + h + j.dy * ksy,
       );
       debugFeet
         ..clear()
         ..addAll([
           for (final s in _kukla.soles)
-            Vector2(position.x + w / 2 + s.dx * facing, position.y + h + s.dy),
+            Vector2(
+              position.x + w / 2 + s.dx * ksx * facing,
+              position.y + h + s.dy * ksy,
+            ),
         ]);
       if (ski) {
         drawSkis(canvas, Offset(w / 2, h), 34);
@@ -3816,6 +3895,52 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
   }
 
   /// Hezarfen'in kanatları: süzülürken açılır, yoksa sırtta katlıdır.
+  /// Kuklanın bir kanadı, sırttaki [root]tan (kukla birimi, yüz +x yönünde).
+  /// Süzülürken açık, arkaya ve yukarı uzanır, ağır ağır çırpar; yerde sırta
+  /// katlıdır. Uzaktaki kanat bedenin ardında, daha dik ve koyu; yakın kanat
+  /// sırtın üstünden görünür, daha yatık.
+  void _drawKuklaWing(Canvas canvas, Offset root, {required bool near}) {
+    final open = gliding ? 1.0 : 0.0;
+    final flap = gliding ? math.sin(_anim * 6 + (near ? 0 : 0.5)) * 0.14 : 0.0;
+    // Kanadın açısı (0: tam arkaya yatık; eksi: yukarı kalkık).
+    final a = open > 0 ? (near ? -0.38 : -0.72) + flap : (near ? 1.15 : 0.95);
+    final len = open > 0 ? (near ? 17.0 : 15.0) : 11.0;
+    final wide = open > 0 ? 6.5 : 3.2;
+    canvas.save();
+    canvas.translate(root.dx, root.dy);
+    // Kanat arkaya (-x) uzanır, [a] kadar döner.
+    canvas.rotate(-a);
+    final wing = Path()
+      ..moveTo(0, 0)
+      ..quadraticBezierTo(-len * 0.45, -wide * 1.1, -len, -wide * 0.35)
+      ..quadraticBezierTo(-len * 0.92, wide * 0.25, -len * 0.78, wide * 0.5)
+      ..quadraticBezierTo(-len * 0.6, wide * 0.25, -len * 0.5, wide * 0.7)
+      ..quadraticBezierTo(-len * 0.3, wide * 0.45, -len * 0.18, wide * 0.6)
+      ..quadraticBezierTo(-len * 0.08, wide * 0.3, 0, 0)
+      ..close();
+    final cloth = Paint()
+      ..color = (near ? const Color(0xFFE8D8BC) : const Color(0xFFB8A488))
+          .withValues(alpha: near ? 0.9 : 0.85);
+    final frame = Paint()
+      ..color = kInk
+      ..strokeWidth = 0.55
+      ..style = PaintingStyle.stroke;
+    canvas.drawPath(wing, cloth);
+    // Kâğıt kanadın kamış iskeleti: kökten uca üç ince çubuk.
+    final rib = Paint()
+      ..color = kInk.withValues(alpha: 0.55)
+      ..strokeWidth = 0.4;
+    for (final (x, y) in const [(1.0, -0.35), (0.78, 0.5), (0.5, 0.7)]) {
+      canvas.drawLine(
+        Offset.zero,
+        Offset(-len * x * 0.96, wide * y * 0.9),
+        rib,
+      );
+    }
+    canvas.drawPath(wing, frame);
+    canvas.restore();
+  }
+
   void _drawWings(Canvas canvas, Offset shoulder) {
     final cloth = Paint()
       ..color = const Color(0xFFE2D2B6).withValues(alpha: 0.88);

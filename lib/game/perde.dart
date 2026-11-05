@@ -756,7 +756,7 @@ class PerdePainter {
     double jar = 1,
   }) {
     _c = canvas;
-    _saye(ink, hole, time, jar: jar);
+    _saye(ink, hole, time, jar: jar, inGame: true);
   }
 
   /// Hayali Usta tasviri (ayak noktası orijinde).
@@ -1000,19 +1000,27 @@ class PerdePainter {
     );
   }
 
-  /// Sâye (ayak noktası orijinde, sağa bakar, boyu ~84): oyundaki Sâye'nin
+  /// Sâye (ayak noktası orijinde, sağa bakar, perdede boyu ~62): oyundaki Sâye'nin
   /// kendi karesi (TasvirImages.frames); [jar] 0 ise kavanozsuz. Perdenin
   /// koyu mürekkebiyle çağrılırsa oyundaki renkleriyle, başka bir renkle
   /// (ışıyan gölge, soluk anı) çağrılırsa o renge boyanmış çizilir.
   /// Kareler yüklenmemişse eski kod çizimi ([_sayeCode]).
-  static void _saye(Paint ink, Paint hole, double time, {double jar = 1}) {
+  static void _saye(
+    Paint ink,
+    Paint hole,
+    double time, {
+    double jar = 1,
+    bool inGame = false,
+  }) {
     if (PerdeSaye.ready) {
-      // Yeni Sâye (A1) kuklası, boyu ~84.
+      // Yeni Sâye (A1) kuklası. Perdede bir tasvir, boyu ~62
+      // (eski Sâye'nin 84'lük boyunda dolgun yeni kukla dev gibi duruyordu);
+      // oyundaki gölge perdesinde gerçek gölge, boyu ~84.
       final own = _isInk(ink.color);
       PerdeSaye.draw(
         _c,
         Offset.zero,
-        84 / 36,
+        (inGame ? 84 : 62) / 36,
         time,
         jar: jar,
         rot: math.sin(time * 0.9 + 0.4) * 0.02,
@@ -2423,7 +2431,12 @@ class PerdePainter {
     _menuHeading(canvas, flicker, title, tagline);
     // Sâye ve Hüdhüd.
     _puppet(canvas, const Offset(200, 470), time, 0.7, 1, (ink, hole) {
-      _saye(ink, hole, time);
+      if (PerdeSaye.ready) {
+        // Kendi kuklasıyla: Hikâye perdesinin kuklasını sıfırlamasın.
+        PerdeSaye.drawMenu(_c, 62 / 36, time);
+      } else {
+        _saye(ink, hole, time);
+      }
     }, scale: 1.25);
     canvas.save();
     canvas.translate(

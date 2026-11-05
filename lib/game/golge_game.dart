@@ -1414,6 +1414,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
             (c) =>
                 c is FireflyLure ||
                 c is Guard ||
+                c is Watcher ||
                 c is SunBeam ||
                 c is LanternBalloon ||
                 c is FireVent,
@@ -1441,6 +1442,9 @@ class GolgeGame extends FlameGame with KeyboardEvents {
               level.lineOfSight(lantern, at)) {
             return true;
           }
+        // Gözcü'nün projektörü de gölge köprüsünü siler (Kaf).
+        case Watcher w:
+          if (w.lights(at)) return true;
         case SunBeam b:
           if (b.lights(Offset(at.x, at.y))) return true;
         case LanternBalloon b:

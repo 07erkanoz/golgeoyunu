@@ -1433,7 +1433,8 @@ void main() {
 
   group('Kaf uzantısı', () {
     testWithGame<GolgeGame>(
-      'gölge köprüsü: çömelerek geçilir, tüy alınır, gözcünün altından çıkılır',
+      'gölge köprüsü: Gözcüleri kollayıp çömelerek geçilir, tüy alınır, '
+      'gözcünün altından çıkılır',
       GolgeGame.new,
       (game) async {
         final p = await place(game, 3, 206, 17);
@@ -1444,14 +1445,62 @@ void main() {
               ? a
               : b,
         );
+        final left = nearest<Watcher>(game, 211 * kTile);
+        final right = nearest<Watcher>(game, 229 * kTile);
+        // Gözcünün ışığı kendi yarısında köprüye ya da Sâye'nin boyuna
+        // değiyor mu?
+        bool sweeping(Watcher w, int from, int to) {
+          for (var c = from; c <= to; c++) {
+            final x = c * kTile + kTile / 2;
+            if (w.lights(Vector2(x, 18 * kTile + 4)) ||
+                w.lights(Vector2(x, 18 * kTile - 12))) {
+              return true;
+            }
+          }
+          return false;
+        }
+
+        // Işık köprüye iner: bir tarama boyunca her iki yarıda da tahta
+        // silinir.
+        final seen = <int>{};
+        for (var i = 0; i < _hz * 14; i++) {
+          game.update(_dt);
+          for (var c = 211; c <= 229; c++) {
+            if (game.litAt(Vector2(c * kTile + kTile / 2, 18 * kTile + 4))) {
+              seen.add(c);
+            }
+          }
+        }
+        expect(seen.any((c) => c < 219), isTrue, reason: 'sol Gözcü');
+        expect(seen.any((c) => c > 221), isTrue, reason: 'sağ Gözcü');
+        // Sol Gözcü'nün altı ışığın yetişmediği yer: oraya kadar çömelerek.
         keys(game)
           ..down = true
           ..right = true;
+        while (p.center.x < 211 * kTile && !p.isDead) {
+          game.update(_dt);
+        }
+        keys(game).right = false;
+        // Önce sol Gözcü başını kaldırınca orta kör noktaya, sonra sağdaki
+        // kaldırınca geçide.
+        var stage = 0;
+        var wasLit = false;
         for (
           var i = 0;
-          i < _hz * 30 && !p.isDead && p.position.x < 233 * kTile;
+          i < _hz * 60 && !p.isDead && p.position.x < 233 * kTile;
           i++
         ) {
+          final w = stage < 2 ? left : right;
+          final lit = stage == 0 || stage == 2
+              ? sweeping(w, stage == 0 ? 211 : 222, stage == 0 ? 219 : 229)
+              : false;
+          if ((stage == 0 || stage == 2) && wasLit && !lit) stage++;
+          wasLit = lit;
+          if (stage == 1 && p.center.x > 220 * kTile) {
+            stage = 2;
+            wasLit = false;
+          }
+          keys(game).right = stage == 1 || stage == 3;
           game.update(_dt);
         }
         keys(game)

@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 
 import 'package:flame/components.dart';
 
+import 'doku_kule.dart';
 import 'golge_game.dart';
 import 'level.dart';
 import 'levels.dart';
@@ -246,12 +247,24 @@ Picture _buildTerrain(Level lv, int c0, int c1, int r0, int r1) {
   final theme = lv.def.theme;
   final cartoon = Cartoon.on && theme == LevelTheme.cistern;
   if (cartoon) ink.color = Cartoon.stone;
+  // Renk ve doku: Kule ve Gökyolu'nun kendi taşı, kirişi, bulutu.
+  final doku = !Cartoon.on
+      ? null
+      : switch (theme) {
+          LevelTheme.cliffs => paintKuleTile,
+          _ => null,
+        };
 
   for (var r = r0; r <= r1; r++) {
     for (var c = c0; c <= c1; c++) {
       final x = c * kTile;
       final y = r * kTile;
       final rnd = _rng(c, r);
+      if (doku != null &&
+          !lv.isIce(c, r) &&
+          doku(canvas, lv, c, r, x, y, rnd)) {
+        continue;
+      }
       switch (lv.cell(c, r)) {
         case '#' when lv.isIce(c, r):
           _iceBlock(canvas, lv, c, r, x, y, rnd);
@@ -552,6 +565,34 @@ Picture _buildTerrain(Level lv, int c0, int c1, int r0, int r1) {
 
 const _snowCap = Color(0xFFC8D2E2);
 
+/// Otun öbeklenmesi (0-1): dünyada kesintisiz, birkaç dalganın toplamı;
+/// yer yer gür ve uzun, yer yer kısa ve seyrek.
+double _clump(double wx) {
+  final v =
+      0.5 * math.sin(wx * 0.021 + 1.3) +
+      0.3 * math.sin(wx * 0.057 + 4.1) +
+      0.2 * math.sin(wx * 0.131 + 2.2);
+  return (0.5 + 0.6 * v).clamp(0.0, 1.0);
+}
+
+/// Toprağın üst kenarı: ot diplerinde alçak, dalgalı kabarıklar (zemin
+/// cetvelle çizilmiş gibi dümdüz durmasın). Dünyada kesintisiz.
+void _sod(Canvas canvas, double x, double y, Paint ink) {
+  double bump(double wx) {
+    final v = 0.6 * math.sin(wx * 0.09 + 0.7) + 0.4 * math.sin(wx * 0.23 + 2.9);
+    return math.max(0, v) * (1 + 2.5 * _clump(wx));
+  }
+
+  final p = Path()..moveTo(x - 0.5, y + 1);
+  for (var dx = 0.0; dx <= kTile; dx += 4) {
+    p.lineTo(x + dx, y + 0.5 - bump(x + dx));
+  }
+  p
+    ..lineTo(x + kTile + 0.5, y + 1)
+    ..close();
+  canvas.drawPath(p, ink);
+}
+
 /// Kayanın üst yüzü: çimen, kar, zümrüt kristal, tüf ya da tahta.
 void _topDressing(
   Canvas canvas,
@@ -586,9 +627,11 @@ void _topDressing(
       ..color = const Color(0xFF4E8030)
       ..strokeWidth = 1.4
       ..strokeCap = StrokeCap.round;
-    for (var i = 0; i < 7; i++) {
+    _sod(canvas, x, y, moss);
+    final blades = 4 + (_clump(x + kTile / 2) * 6).round();
+    for (var i = 0; i < blades; i++) {
       final gx = x + rnd.nextDouble() * kTile;
-      final gh = 4 + rnd.nextDouble() * 8;
+      final gh = (3 + rnd.nextDouble() * 6) * (0.5 + 1.5 * _clump(gx));
       canvas.drawLine(
         Offset(gx, y + 1),
         Offset(gx + (rnd.nextDouble() - 0.5) * 5, y - gh),
@@ -662,19 +705,22 @@ void _topDressing(
       );
     }
   }
-  // Çimen.
+  // Çimen: öbek öbek; boyu ve sıklığı dünyada süren bir desenle değişir
+  // (her karoda aynı dağılım cetvelle çizilmiş bir şerit gibi duruyordu).
+  _sod(canvas, x, y, ink);
   for (var i = 0; i < 3; i++) {
     canvas.drawCircle(
-      Offset(x + rnd.nextDouble() * kTile, y + 2),
-      2 + rnd.nextDouble() * 3,
+      Offset(x + rnd.nextDouble() * kTile, y + 1 + rnd.nextDouble() * 4),
+      1.5 + rnd.nextDouble() * 3.5,
       ink,
     );
   }
   line.strokeWidth = 1.4;
-  for (var i = 0; i < 7; i++) {
+  final blades = 4 + (_clump(x + kTile / 2) * 6).round();
+  for (var i = 0; i < blades; i++) {
     final bx = x + rnd.nextDouble() * kTile;
-    final h = 3 + rnd.nextDouble() * 8;
-    final lean = (rnd.nextDouble() - 0.5) * 7;
+    final h = (3 + rnd.nextDouble() * 6) * (0.6 + 1.5 * _clump(bx));
+    final lean = (rnd.nextDouble() - 0.5) * (5 + h * 0.4);
     canvas.drawPath(
       Path()
         ..moveTo(bx, y + 1)
@@ -1006,11 +1052,16 @@ void _cisternVaults(Canvas canvas, Level lv, int c0, int c1) {
       for (var k = 1; k < 8; k++) {
         final t = k / 8.0;
         final ax = x + span * t;
-        final ay = (1 - t) * (1 - t) * (ceiling + 64) +
+        final ay =
+            (1 - t) * (1 - t) * (ceiling + 64) +
             2 * (1 - t) * t * (ceiling - 24) +
             t * t * (ceiling + 64);
         final nx = (t - 0.5) * 10;
-        canvas.drawLine(Offset(ax, ay + 2), Offset(ax + nx, ay - 9), jointPaint);
+        canvas.drawLine(
+          Offset(ax, ay + 2),
+          Offset(ax + nx, ay - 9),
+          jointPaint,
+        );
       }
     }
     final c = (x / kTile).floor();
@@ -1501,10 +1552,10 @@ class WaterComponent extends Component with HasGameReference<GolgeGame> {
           for (var r = 0; r < 6; r++) {
             final ry = top + 3.0 + r * 6.5;
             final wave = math.sin(_t * 4.2 + r * 1.4) * (2.5 + r * 0.6);
-            final halfW = (14.0 - r * 1.8) * (0.75 + 0.25 * math.cos(_t * 3 + r));
-            jarRef.color = const Color(0xFFFFC868).withValues(
-              alpha: (0.32 - r * 0.045) * k,
-            );
+            final halfW =
+                (14.0 - r * 1.8) * (0.75 + 0.25 * math.cos(_t * 3 + r));
+            jarRef.color = const Color(0xFFFFC868)
+                .withValues(alpha: (0.32 - r * 0.045) * k);
             canvas.drawLine(
               Offset((rx + wave - halfW).clamp(x0, x1), ry),
               Offset((rx + wave + halfW).clamp(x0, x1), ry),
@@ -1803,7 +1854,8 @@ void _cartoonStone(
   // Taş derzinde minik sarnıç yosunu veya çakıl detayı.
   if (rnd.nextDouble() < 0.58) {
     final mx = x + splitX;
-    final moss = Paint()..color = const Color(0xFF7CA850).withValues(alpha: 0.78);
+    final moss = Paint()
+      ..color = const Color(0xFF7CA850).withValues(alpha: 0.78);
     canvas.drawCircle(Offset(mx, y + 1.2), 1.7, moss);
     canvas.drawCircle(Offset(mx - 1.4, y + 2.0), 1.2, moss);
     canvas.drawCircle(Offset(mx + 1.3, y + 1.9), 1.1, moss);
@@ -1886,7 +1938,11 @@ void _cartoonColumn(
     ..strokeWidth = 1.0;
   for (var y = top + 66; y < bottom - 28; y += 80) {
     canvas.drawLine(Offset(cx - hw, y), Offset(cx + hw, y), drumSeam);
-    canvas.drawLine(Offset(cx - hw + 1, y + 1.4), Offset(cx + hw - 1, y + 1.4), drumLit);
+    canvas.drawLine(
+      Offset(cx - hw + 1, y + 1.4),
+      Offset(cx + hw - 1, y + 1.4),
+      drumLit,
+    );
   }
   // Yerebatan tavus gözü (gözyaşı) madalyonları: iç dolgulu ve sıcak parıltılı.
   final eyeFill = Paint()..color = Cartoon.seam.withValues(alpha: 0.45);

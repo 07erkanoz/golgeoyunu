@@ -71,9 +71,32 @@ abstract final class _Acilis {
   /// 6. sahnede sudaki bölümün (dalış, yüzüş, çıkış) setin üstündeki
   /// olayları ne kadar geciktirdiği (sn).
   static double get _wetShift {
-    const gravity = 1100.0, top = -24.0, t0 = 0.08;
+    const gravity = 1100.0, top = _fallTop, t0 = 0.08;
     final hit = t0 + math.sqrt(2 * (_water + 4 - top) / gravity);
     return hit + 0.45 + 1.7 + 0.3 + 1.1 - 3.35;
+  }
+
+  /// 6. ve 7. sahne uzak plan: sarnıç suyun hizasında küçülür, Sâye
+  /// sütunların, kemerlerin arasında küçük kalır (yakın plan değil).
+  static const _wide = 0.72;
+
+  /// Uzak planda perdenin kenarları (sahnenin kendi biriminde): sütunlar,
+  /// su ve kırpmalar buraya dek uzanır.
+  static const _wideL = -420.0, _wideR = 1200.0, _wideT = -220.0;
+  static const _wideB = 620.0;
+
+  /// Sâye'nin düşmeye başladığı yükseklik: uzak planda perdenin üstünün
+  /// dışında (havada birden belirmez).
+  static const _fallTop = -130.0;
+
+  /// [draw]'ı uzak planda çizer (suyun hizası yerinde kalır).
+  static void _wideShot(Canvas canvas, void Function() draw) {
+    canvas.save();
+    canvas.translate(390, _water);
+    canvas.scale(_wide);
+    canvas.translate(-390, -_water);
+    draw();
+    canvas.restore();
   }
 
   /// 7. sahnenin saniyesi: 7. satırla başlar, ama 6. sahne (sudan çıkış,
@@ -112,7 +135,15 @@ abstract final class _Acilis {
     final d = _d3(u);
     if (u >= 2.0 && u < 3.0) scene3(canvas, time, d);
     if (u >= 5.0) {
-      _cistern(canvas, time, ((_secs(u, 5) - 0.96) / 0.64).clamp(0.0, 1.0), u);
+      _wideShot(
+        canvas,
+        () => _cistern(
+          canvas,
+          time,
+          ((_secs(u, 5) - 0.96) / 0.64).clamp(0.0, 1.0),
+          u,
+        ),
+      );
     }
     final fear = u < 2 ? 0.0 : PerdePainter._span(d, 2.14, 2.4);
     if (u < 3) {
@@ -769,7 +800,7 @@ abstract final class _Acilis {
     }
     if (u >= 3 && u < 4.1) scene4(canvas, time, u);
     if (u >= 4 && u < 5.05) scene5(canvas, time, u);
-    if (u >= 5) scene6(canvas, time, u);
+    if (u >= 5) _wideShot(canvas, () => scene6(canvas, time, u));
   }
 
   /// Oyunun adı (anlatım, dile göre atar).
@@ -1145,16 +1176,21 @@ abstract final class _Acilis {
       if (!back) {
         // Arka sıranın dibinde uzak bir taş yol: Kandilci oradan geçer.
         canvas.drawRect(
-          const Rect.fromLTWH(0, _water - 30, 780, 4),
+          const Rect.fromLTRB(_wideL, _water - 30, _wideR, _water - 26),
           PerdePainter._inkPaint(a * 0.4),
         );
         _farGuard(canvas, time, u, glow: false);
       }
       final spacing = back ? 74.0 : 150.0;
       final colW = back ? 14.0 : 26.0;
-      final top = back ? 70.0 : 14.0;
+      // Uzak planda kemerler perdenin üst kenarının biraz altında kalır.
+      final top = back ? -40.0 : -100.0;
       final ink = PerdePainter._inkPaint(a * (back ? 0.4 : 0.95));
-      for (var x = back ? 20.0 : 30.0; x < 820; x += spacing) {
+      for (
+        var x = back ? 20.0 - 74 * 6 : 30.0 - 150 * 3;
+        x < _wideR;
+        x += spacing
+      ) {
         // Ön sırada Sâye'nin düştüğü yer ve set açık kalır.
         if (!back && x > 300 && x < 520) continue;
         canvas.drawRect(
@@ -1192,7 +1228,7 @@ abstract final class _Acilis {
       }
     }
     canvas.drawRect(
-      const Rect.fromLTWH(0, 0, 780, 10),
+      const Rect.fromLTRB(_wideL, _wideT, _wideR, -100),
       PerdePainter._inkPaint(a),
     );
     // Ağlayan Sütun: gövdesinde gözyaşı oymaları; bir damla hep süzülür.
@@ -1224,8 +1260,8 @@ abstract final class _Acilis {
     );
     // Su yüzü: ince ışık çizgileri.
     final glint = PerdePainter._holePaint(0.3 * a)..strokeWidth = 1.4;
-    for (var i = 0; i < 16; i++) {
-      final x = (i * 53.0 + time * 10) % 800 - 10;
+    for (var i = 0; i < 30; i++) {
+      final x = (i * 53.0 + time * 10) % 1590 + _wideL;
       if (x > _ledge.left - 10 && x < _ledge.right) continue;
       final y = _water + 3 + (i % 3) * 6;
       canvas.drawLine(Offset(x, y), Offset(x + 18, y), glint);
@@ -1270,7 +1306,7 @@ abstract final class _Acilis {
   }) {
     final k = (_secs7(u) - 0.1) / 4.2;
     if (k <= 0 || k >= 1) return null;
-    final x = -60 + k * 900;
+    final x = -180 + k * 1140;
     // Uzakta: arka sıradaki yolda, küçük ve soluk.
     const y = _water - 30;
     const sc = 1.15;
@@ -1324,11 +1360,15 @@ abstract final class _Acilis {
     for (final reflect in [false, true]) {
       canvas.save();
       if (reflect) {
-        canvas.clipRect(const Rect.fromLTRB(0, _water + 3, 780, _water + 40));
+        canvas.clipRect(
+          const Rect.fromLTRB(_wideL, _water + 3, _wideR, _water + 40),
+        );
         canvas.translate(0, 2 * _water + 6);
         canvas.scale(1, -1);
       } else {
-        canvas.clipRect(const Rect.fromLTRB(0, 0, 780, _water + 3));
+        canvas.clipRect(
+          const Rect.fromLTRB(_wideL, _wideT, _wideR, _water + 3),
+        );
       }
       TasvirImages.draw(
         canvas,
@@ -1408,7 +1448,7 @@ abstract final class _Acilis {
     // fidanına ve ateşböceklerine) dönük kalır.
     const fallX = 200.0;
     const jarX = 415.0;
-    const top = -24.0;
+    const top = _fallTop;
     const t0 = 0.08;
     final tHit = math.sqrt(2 * (_water + 4 - top) / gravity);
     final hit = t0 + tHit;
@@ -1482,7 +1522,8 @@ abstract final class _Acilis {
       const n = 3.0;
       final p = k - math.sin(2 * math.pi * n * k) / (2 * math.pi * n);
       feet =
-          Offset.lerp(swimFrom, swimTo, p)! + Offset(0, math.sin(w * 4.5) * 1.6);
+          Offset.lerp(swimFrom, swimTo, p)! +
+          Offset(0, math.sin(w * 4.5) * 1.6);
       rot = 1.02 + 0.06 * math.sin(2 * math.pi * n * k);
       mode = KuklaMode.swim;
       stroke = n * k;
@@ -1544,11 +1585,7 @@ abstract final class _Acilis {
         ? PerdeSaye.jarAt(feet, kuklaScale, faceLeft: faceLeft, rot: rot)
         : feet + Offset(faceLeft ? -14 : 14, -19);
     final crouchReachHand = feet + const Offset(22, -16);
-    final hand = Offset.lerp(
-      crouchReachHand,
-      standJar,
-      ease(sp(4.90, 5.25)),
-    )!;
+    final hand = Offset.lerp(crouchReachHand, standJar, ease(sp(4.90, 5.25)))!;
 
     // Kavanoz: sığ suya düşer, dalgayla taş setin üstüne (Sâye'nin önüne,
     // x≈504) sürüklenip yan yatar; Sâye eğilip yerden alır ve kaldırır.
@@ -1564,7 +1601,8 @@ abstract final class _Acilis {
       const ledgeJar = Offset(504, _water - 12);
       jarAt = Offset(
         jarX + 14 + (ledgeJar.dx - jarX - 14) * wash,
-        (_water - 2) + (ledgeJar.dy - (_water - 2)) * ease(spw(jarHit, jarHit + 0.75)),
+        (_water - 2) +
+            (ledgeJar.dy - (_water - 2)) * ease(spw(jarHit, jarHit + 0.75)),
       );
       jarRot = 0.6 + 0.72 * wash + math.sin(time * 2.5) * 0.12 * (1 - wash);
       jarAt = Offset.lerp(jarAt, hand, ease(math.max(reach, hold)))!;
@@ -1650,7 +1688,9 @@ abstract final class _Acilis {
       if (s >= jarHit && hold <= 0) {
         // Suda: altı suyun içinde.
         canvas.save();
-        canvas.clipRect(const Rect.fromLTRB(0, 0, 780, _water + 2));
+        canvas.clipRect(
+          const Rect.fromLTRB(_wideL, _wideT, _wideR, _water + 2),
+        );
         _jar(canvas, jarAt, jarRot, 0.1 + 0.9 * full, time, 1);
         canvas.restore();
       } else if (s >= t0 + jarDelay) {
@@ -1688,7 +1728,7 @@ abstract final class _Acilis {
       // Yüzeyde yüzer veya suya dalar: suyun üstü tam, altı soluk.
       final underAlpha = w < sw0 ? 0.58 : 0.38;
       canvas.save();
-      canvas.clipRect(const Rect.fromLTRB(0, _water + 2, 780, 400));
+      canvas.clipRect(const Rect.fromLTRB(_wideL, _water + 2, _wideR, _wideB));
       _P._sayeFrame(
         canvas,
         frame,
@@ -1722,7 +1762,7 @@ abstract final class _Acilis {
         }
       }
       canvas.save();
-      canvas.clipRect(const Rect.fromLTRB(0, 0, 780, _water + 2));
+      canvas.clipRect(const Rect.fromLTRB(_wideL, _wideT, _wideR, _water + 2));
       _P._sayeFrame(
         canvas,
         frame,
@@ -1744,7 +1784,7 @@ abstract final class _Acilis {
     if (clip == 1) {
       // Suyun altında: soluk bir gölge, kabarcıklar yükselir.
       canvas.save();
-      canvas.clipRect(const Rect.fromLTRB(0, _water + 3, 780, 400));
+      canvas.clipRect(const Rect.fromLTRB(_wideL, _water + 3, _wideR, _wideB));
       _P._sayeFrame(
         canvas,
         frame,
@@ -1774,7 +1814,7 @@ abstract final class _Acilis {
     }
     if (clip == 2) {
       canvas.save();
-      canvas.clipRect(const Rect.fromLTRB(0, 0, 780, _water + 2));
+      canvas.clipRect(const Rect.fromLTRB(_wideL, _wideT, _wideR, _water + 2));
     }
     _P._sayeFrame(
       canvas,

@@ -6,6 +6,9 @@ import 'dart:ui' as ui;
 import 'package:flame/components.dart';
 
 import 'ark_animals.dart';
+import 'doku_gok.dart';
+import 'doku_kaf.dart';
+import 'doku_kule.dart';
 import 'audio.dart';
 import 'fairy_chimney.dart';
 import 'golge_game.dart';
@@ -245,6 +248,16 @@ class Backdrop extends Component with HasGameReference<GolgeGame> {
           color: const Color(0xFF0E0914),
           fromTop: true,
         );
+      case LevelTheme.cliffs when Cartoon.on:
+        paintKuleBackdrop(
+          canvas,
+          w,
+          h,
+          Offset(cam.x, cam.y),
+          height,
+          _t,
+          lv.pixelHeight,
+        );
       case LevelTheme.cliffs:
         // Kayalıklar: tırmandıkça açılan pas rengi alacakaranlık.
         _gradient(canvas, rect, [
@@ -310,6 +323,10 @@ class Backdrop extends Component with HasGameReference<GolgeGame> {
           Color(0xFFE39B62),
         ]);
         _brokenSun(canvas, Offset(w * 0.72, h * 0.24), h * 0.11);
+        if (Cartoon.on) {
+          paintGokBackdrop(canvas, w, h, Offset(cam.x, cam.y), _t);
+          break;
+        }
         _islands(canvas, w, h, offset: cam.x * 0.18);
         _ridge(
           canvas,
@@ -420,7 +437,12 @@ class Backdrop extends Component with HasGameReference<GolgeGame> {
           paint,
         );
         canvas.drawRect(
-          Rect.fromLTRB(x - width / 2, top, x - width / 2 + 2.0 + layer * 0.8, bottom),
+          Rect.fromLTRB(
+            x - width / 2,
+            top,
+            x - width / 2 + 2.0 + layer * 0.8,
+            bottom,
+          ),
           Paint()..color = colEdge.withValues(alpha: 0.55),
         );
         // Sütun halkaları (taş tambur birleşimleri).
@@ -437,7 +459,12 @@ class Backdrop extends Component with HasGameReference<GolgeGame> {
         // Kademeli başlık ve kaide.
         canvas.drawRRect(
           RRect.fromRectAndRadius(
-            Rect.fromLTRB(x - width * 1.05, top, x + width * 1.05, top + width * 0.72),
+            Rect.fromLTRB(
+              x - width * 1.05,
+              top,
+              x + width * 1.05,
+              top + width * 0.72,
+            ),
             const Radius.circular(2.5),
           ),
           paint,
@@ -448,7 +475,12 @@ class Backdrop extends Component with HasGameReference<GolgeGame> {
         );
         canvas.drawRRect(
           RRect.fromRectAndRadius(
-            Rect.fromLTRB(x - width * 0.85, bottom - width * 0.55, x + width * 0.85, bottom),
+            Rect.fromLTRB(
+              x - width * 0.85,
+              bottom - width * 0.55,
+              x + width * 0.85,
+              bottom,
+            ),
             const Radius.circular(2),
           ),
           paint,

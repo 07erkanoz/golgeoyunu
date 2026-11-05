@@ -120,3 +120,29 @@ Arka plandaki 3 paralaks kemer katmanı düz mor-kahve dikdörtgenlerden zengin 
 - `lib/game/lighting.dart` — Sâye ve kavanoz çevresinde merkez karanlık örtüsünün tamamen açılması.
 - `lib/game/golge_game.dart` — Hıza duyarlı dinamik kamera zoom ve bakış yönü öngörüsü.
 - `lib/settings.dart` — Varsayılan doku/derinlik ayarları ve eski kayıt taşıması (`_version = 4`).
+
+---
+
+## 7. Kule (II) ve Gökyolu (III) Dokuları (`lib/game/doku_kule_gok.dart`)
+
+Taslaklar: `docs/konsept/doku_kule_onizleme.png`, `docs/konsept/doku_gokyolu_onizleme.png`. Yalnız `Cartoon.on` (Renk ve doku) açıkken çizilir; kapalıyken eski görünüm.
+
+### 7.1. Kule: kulenin içi
+- **Duvar (`paintKuleBackdrop`):** Tuğla örgüsü, her tuğla kendi tonunda, üst kenarı ışıklı; kemer taşlı, eşikli, dörtlü kemerli pencereler. Duvar parçası bir kez resme çevrilir (`toImageSync`), her karede yalnız kopyalanır.
+- **Pencerelerin ardı:** Yukarıda soğuk mavi, aşağıda akşam kehribarı gök; her pencere sırasının ardında kubbe, minare ve dam silüeti; üst pencerelerde kuşlar. Kulede yükseldikçe ışık soğur (bölümün alt yazısı).
+- **Işık:** Duvarın üstü mavi-griye çalar, alt pencerelerden içeri ılık ışık huzmeleri vurur, yerde ılık toz pusu.
+- **Tavandan sarkanlar:** Demir halkalı zincirler, düğümlü ipler (parallaks).
+- **Zemin (`paintKuleChunk`):** İri, bombeli, düzensiz kaldırım taşları (dünyaya bağlı ~52 birimde bir sınır, hücreden taşar), derzlerde yosun; altında koyulaşan yontma bloklar.
+- **Kiriş (`=`):** Üstü ışık alan kalın tahta, çiviler, uçlarında duvara giren takoz. **Tutunulan yer (`|`):** demir zincir.
+- **Haritanın dışı:** Kulenin iki yanında gölgede kalan kalın taş ayaklar. Kayan/çöken taşlar yontma blok.
+
+### 7.2. Gökyolu: bulut yolu
+- **Gök (`paintGokBackdrop`):** Yukarıda koyu mor, ufukta kehribar alacakaranlık; kırık güneş (soluk disk, kalın çatlak, hâle); rüzgâr kurdeleleri, süzülen tüyler, uzak uçurtmalar.
+- **Bulutlar:** Tek parça konturlu (önce konturlu büyük daireler, üstüne dolgular), düz tabanlı, ortası yüksek kümülüs; topların sol üstünde ışık hilali, uçlarında kıvrık kuyruk.
+- **Bulut denizi:** Üç kat; ufuktaki kat güneşi alır (kehribar), alttakiler mor; kenarları ışıklı.
+- **Ada (`#`):** İçi iri kaya yumruları; açık kenarlarında bulut yakası (üstte krem, altta ve yanlarda mor). **Basamak (`=`):** kabarık bulut, uçlarında kıvrık kuyruk. Uçan/çöken kayalar bulutlu kaya.
+
+### 7.3. Işık ve parlaklık
+- Karanlık örtüsü renk ve dokuda Kule'de 0.08, Gökyolu'nda 0.07.
+- Renkler oyunun varsayılan parlaklığında (85) taslaktaki gibi görünecek kadar açık seçildi.
+- Önizleme: `BOLUM=1,2 flutter test tools/preview/bolum_goruntu_test.dart --dart-define=CARTOON=true` (`YER=sütun,satır` ile bölümün başka bir yeri).
