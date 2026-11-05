@@ -1572,23 +1572,6 @@ abstract final class PerdeSaye {
 
   static bool get ready => SayeKukla.ready;
 
-  // Perdede Sâye ilk eski tasvir gibi tek parça bir duruştur ([still]):
-  // perde onu götürür, kendisi adım atmaz. Ayakta ve çömelmiş iki donuk
-  // duruş; yüzüş, tutunma, düşüş gibi hâller ([mode]) yine kuklayla.
-  static SayeKukla? _standK;
-  static SayeKukla? _crouchK;
-
-  static SayeKukla _pose(bool crouch) {
-    final k = SayeKukla();
-    final i = KuklaInput()
-      ..crouching = crouch
-      ..shield = crouch ? 1 : 0;
-    for (var n = 0; n < 90; n++) {
-      k.step(1 / 60, i);
-    }
-    return k;
-  }
-
   // Menünün perdesindeki Sâye'nin kendi kuklası: menü, üstünde açılan
   // Hikâye perdesiyle aynı karede kendi saatiyle çizilir. Ortak kukla her
   // karede iki ayrı zaman görüp baştan kuruluyordu; Hikâye'de Sâye hiç
@@ -1655,35 +1638,8 @@ abstract final class PerdeSaye {
     double rot = 0,
     double a = 1,
     ui.Color? tint,
-    bool still = false,
   }) {
     if (!ready || a <= 0) return;
-    if (still && mode == null && !swim && !riding && !flying) {
-      final k = crouch
-          ? (_crouchK ??= _pose(true))
-          : (_standK ??= _pose(false));
-      _k = k;
-      _last = null;
-      c.save();
-      c.translate(feet.dx, feet.dy);
-      if (rot != 0) c.rotate(rot);
-      c.scale(faceLeft ? -scale : scale, scale);
-      final layer = a < 1;
-      if (layer) {
-        c.saveLayer(
-          null,
-          ui.Paint()..color = ui.Color.fromRGBO(255, 255, 255, a.clamp(0, 1)),
-        );
-      }
-      if (tint != null) {
-        k.paintSolid(c, tint);
-      } else {
-        k.paint(c, rim: 0.35, jar: jar > 0.05);
-      }
-      if (layer) c.restore();
-      c.restore();
-      return;
-    }
     final last = _last;
     final m = c.getTransform();
     final sx = math.sqrt(m[0] * m[0] + m[1] * m[1]);

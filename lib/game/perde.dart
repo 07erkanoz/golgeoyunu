@@ -1,5 +1,4 @@
 import 'dart:math' as math;
-import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/painting.dart';
@@ -356,28 +355,10 @@ class PerdePainter {
         ]),
     );
 
-    // Üç boyut: perde karanlık bir odada duran gerçek bir bez; bakış açısı
-    // çok ağır, hafifçe döner (kamera onu izliyormuş gibi), çerçevesiyle
-    // birlikte derinlik kazanır.
-    canvas.save();
-    canvas.transform(
-      _tilt(
-        r.center,
-        0.06 * math.sin(time * 0.11),
-        0.03 * math.sin(time * 0.09 + 1.1),
-        r.width * 1.6,
-      ),
-    );
-
     // Bez.
     canvas.save();
     canvas.clipRect(r);
-    // Kandil perdenin ardında durmaz: alevi ağır ağır kayar, ışığın ortası
-    // onunla gezinir (gölgeler canlı bir ışığın önünde durur).
-    final c = Offset(
-      r.left + r.width * (0.52 + 0.018 * math.sin(time * 0.21)),
-      r.top + r.height * (0.62 + 0.014 * math.sin(time * 0.17 + 1.3)),
-    );
+    final c = Offset(r.left + r.width * 0.52, r.top + r.height * 0.62);
     canvas.drawRect(
       r,
       Paint()
@@ -462,11 +443,6 @@ class PerdePainter {
     }
     canvas.restore();
 
-    // Derinlik: kandilin önünde süzülen toz. Perdeye yakın zerreler küçük
-    // ve keskin, kandile yakın olanlar iri ve yumuşak; ışığın ortasında
-    // parlar, kenarlarda söner.
-    _dust(canvas, r, c, time, lamp);
-
     // Kandil kısıldıkça perde kararır; kenarlar hep biraz gölgede.
     canvas.drawRect(
       r,
@@ -497,90 +473,7 @@ class PerdePainter {
     canvas.restore();
 
     _frame(canvas, r, lamp);
-    canvas.restore();
     if (layered) canvas.restore();
-  }
-
-  /// [c] çevresinde Y ekseninde [ay], X ekseninde [ax] radyan dönen ve
-  /// [d] uzaklıktan bakılan perdenin dönüşümü (sütun öncelikli 4×4).
-  static Float64List _tilt(Offset c, double ay, double ax, double d) {
-    List<double> mul(List<double> a, List<double> b) => [
-      for (var i = 0; i < 4; i++)
-        for (var j = 0; j < 4; j++)
-          a[i * 4] * b[j] +
-              a[i * 4 + 1] * b[4 + j] +
-              a[i * 4 + 2] * b[8 + j] +
-              a[i * 4 + 3] * b[12 + j],
-    ];
-    final cy = math.cos(ay), sy = math.sin(ay);
-    final cx = math.cos(ax), sx = math.sin(ax);
-    // Satır öncelikli: önce merkeze taşı, döndür, perspektif, geri taşı.
-    final toC = <double>[1, 0, 0, c.dx, 0, 1, 0, c.dy, 0, 0, 1, 0, 0, 0, 0, 1];
-    final pers = <double>[1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, -1 / d, 1];
-    final rotY = <double>[cy, 0, sy, 0, 0, 1, 0, 0, -sy, 0, cy, 0, 0, 0, 0, 1];
-    final rotX = <double>[1, 0, 0, 0, 0, cx, -sx, 0, 0, sx, cx, 0, 0, 0, 0, 1];
-    final fromC = <double>[
-      1,
-      0,
-      0,
-      -c.dx,
-      0,
-      1,
-      0,
-      -c.dy,
-      0,
-      0,
-      1,
-      0,
-      0,
-      0,
-      0,
-      1,
-    ];
-    final m = mul(mul(mul(mul(toC, pers), rotY), rotX), fromC);
-    // Sütun önceliğe çevir.
-    return Float64List.fromList([
-      for (var j = 0; j < 4; j++)
-        for (var i = 0; i < 4; i++) m[i * 4 + j],
-    ]);
-  }
-
-  static void _dust(
-    Canvas canvas,
-    Rect r,
-    Offset light,
-    double time,
-    double lamp,
-  ) {
-    for (var i = 0; i < 34; i++) {
-      final h1 = (math.sin(i * 12.9898) * 43758.5453) % 1.0;
-      final h2 = (math.sin(i * 78.233) * 12345.6789) % 1.0;
-      final d = (math.sin(i * 39.425) * 9876.54321) % 1.0; // derinlik 0-1
-      final fx = h1.abs(), fy = h2.abs(), depth = d.abs();
-      // Yakındakiler (kandile yakın) daha hızlı ve iri.
-      final rise = (fy + time * (0.006 + 0.014 * depth)) % 1.0;
-      final x =
-          r.left + r.width * ((fx + 0.03 * math.sin(time * 0.4 + i)) % 1.0);
-      final y = r.bottom - r.height * rise;
-      final p = Offset(x, y);
-      final near = 1 - ((p - light).distance / (r.width * 0.6)).clamp(0.0, 1.0);
-      final rad = r.width * (0.0012 + 0.006 * depth * depth);
-      final al =
-          lamp *
-          near *
-          (0.55 - 0.35 * depth) *
-          math.sin(math.pi * rise).clamp(0.0, 1.0);
-      if (al < 0.01) continue;
-      canvas.drawCircle(
-        p,
-        rad,
-        Paint()
-          ..shader = ui.Gradient.radial(p, rad, [
-            const Color(0xFFFFE8B8).withValues(alpha: al),
-            const Color(0x00FFE8B8),
-          ]),
-      );
-    }
   }
 
   static double _lampFor(PerdeScene scene, double u) {
@@ -1120,22 +1013,19 @@ class PerdePainter {
     bool inGame = false,
   }) {
     if (PerdeSaye.ready) {
-      // Yeni Sâye (A1) kuklası. Perdede bir tasvir, boyu ~52
+      // Yeni Sâye (A1) kuklası. Perdede bir tasvir, boyu ~62
       // (eski Sâye'nin 84'lük boyunda dolgun yeni kukla dev gibi duruyordu);
       // oyundaki gölge perdesinde gerçek gölge, boyu ~84.
       final own = _isInk(ink.color);
       PerdeSaye.draw(
         _c,
         Offset.zero,
-        (inGame ? 84 : 52) / 36,
+        (inGame ? 84 : 62) / 36,
         time,
         jar: jar,
         rot: math.sin(time * 0.9 + 0.4) * 0.02,
-        // Perdede canlı renkler yerine öteki tasvirler gibi perdenin
-        // mürekkebinde, biraz saydam bir gölge; eski tasvir gibi yürümez.
-        a: own ? ink.color.a * (inGame ? 1 : 0.88) : 1,
-        tint: own ? (inGame ? null : _ink) : ink.color,
-        still: !inGame,
+        a: own ? ink.color.a : 1,
+        tint: own ? null : ink.color,
       );
       return;
     }
@@ -1202,9 +1092,7 @@ class PerdePainter {
       jar: frame.contains('kavanoz') ? 1 : 0,
       faceLeft: faceLeft,
       rot: rot,
-      a: a * 0.88,
-      tint: _ink,
-      still: true,
+      a: a,
     );
   }
 
