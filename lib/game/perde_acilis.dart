@@ -1544,7 +1544,10 @@ abstract final class _Acilis {
       // Çıkış (oyundaki gibi): kollarla bastırıp çekinir, ön dizini sete atar,
       // ağırlığını öne aktarıp doğrulur.
       final t = spw(g1, c1);
-      final v = ease((t / 0.64).clamp(0.0, 1.0));
+      // Ayak noktası kuklanın gövde geçişiyle (climb 0.14-0.70) birlikte
+      // yükselir: önden yükselince omuzlar ellerden uzaklaşıyor, eller
+      // kenardan kopup sıçrıyordu.
+      final v = ease(((t - 0.14) / 0.56).clamp(0.0, 1.0));
       final hx = ease(((t - 0.22) / 0.68).clamp(0.0, 1.0));
       feet = Offset(
         hangFeet.dx + (edge.dx - hangFeet.dx) * hx,
@@ -1560,12 +1563,11 @@ abstract final class _Acilis {
       feet = edge;
       frame = s < 3.15 ? 'comel' : 'dur';
       // Sudan çıkınca dizlerinin üstünde soluklanır, doğrulur; fidan
-      // filizlenince hayretle bir adım geriler.
+      // filizlenince hayretle geriye irkilir (ayakları yerinde, gövdesiyle:
+      // ayak kaydırmadan).
       rot = math.sin(s * 7) * 0.04 * (1 - sp(3.35, 3.9));
       final startle = sp(3.9, 4.08) * (1 - sp(4.28, 4.52));
-      if (startle > 0) {
-        feet += Offset(-6 * startle, 0);
-      }
+      rot -= 0.13 * startle;
     }
     // Kavanozu almak: Sâye hep sağa (Umay fidanına) dönüktür; önünde taş
     // setin üstünde duran kavanoza doğru iki adım atar, eğilip kavanozu
@@ -1576,9 +1578,11 @@ abstract final class _Acilis {
     final reachPose = sp(4.52, 4.86) * (1 - sp(5.88, 6.15));
     if (s >= 4.45) {
       faceLeft = false;
-      frame = (s >= 4.52 && s < 5.05) ? 'comel' : 'dur';
-      final stepFwd = ease(sp(4.45, 4.82));
-      feet += Offset(22 * stepFwd, 0);
+      // Önce ayakta bir adım atar, sonra çömelir (çömelik yürümez: ayak
+      // kayardı).
+      frame = (s >= 4.6 && s < 5.05) ? 'comel' : 'dur';
+      final stepFwd = ease(sp(4.25, 4.6));
+      feet += Offset(12 * stepFwd, 0);
     }
     final kuklaScale = _sayeK * TasvirImages.frameBody / 28;
     final standJar = PerdeSaye.ready
@@ -1710,8 +1714,15 @@ abstract final class _Acilis {
     if (walk > 0) {
       // Fenerin gittiği yöne, setin ucuna dek yürür (oyundaki gibi gerçek
       // adımlarla; kukla adımını ilerleyişe göre atar). Eski karede sekme.
+      // Yumuşak kalkış ve yumuşak duruş: gövde bir anda tam hıza geçmez,
+      // bir anda durmaz (bacaklar adımı açarken ayak kayardı).
+      final room = _ledge.right - 22 - feet.dx;
+      var go = 62 * (walk > 0.4 ? walk - 0.2 : walk * walk / 0.8);
+      if (go > room - 12) {
+        go = room - 12 * math.exp(-(go - (room - 12)) / 12);
+      }
       feet += Offset(
-        math.min(_ledge.right - 22 - feet.dx, walk * 62),
+        go,
         PerdeSaye.ready ? 0 : -(math.sin(time * 12)).abs() * 1.5,
       );
       frame = 'yuru${(time * 16).floor() % TasvirImages.walkFrames}';

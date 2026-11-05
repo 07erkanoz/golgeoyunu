@@ -243,6 +243,10 @@ class KuklaInput {
   /// dirsekler bükük, göğsü kenarda; alçak kenarlarda başı yukarıda kalsın).
   double pull = 0;
 
+  /// Perde (yönetilen sahne): tırmanışta eller sete tam oturur, dirsek yön
+  /// değiştirmez (oyunda kapalı; oyundaki tırmanış değişmez).
+  bool exactArms = false;
+
   /// Ayak merkezinin dünyadaki yüksekliği (zincirde el el üstüne tırmanış).
   double worldY = 0;
 
@@ -950,7 +954,7 @@ class SayeKukla {
 
     // Dirsek yönü keskin sıçrama yapmaz (-0.85'ten +0.75'e yumuşak geçiş);
     // gövde dizin üstüne çıkınca eller seti bırakıp doğal duruşa geçer.
-    final elbowDir = -0.85 + 1.60 * sm((c - 0.16) / 0.32);
+    final elbowDir = i.exactArms ? -1.0 : -0.85 + 1.60 * sm((c - 0.16) / 0.32);
     final (sf, ef) = _armTo(
       _shoulder(pose.hip, pose.lean, V.zero),
       handGrip,
@@ -1221,6 +1225,10 @@ class SayeKukla {
 
   /// Elin ayak merkezine göre yeri (bakış yönünde +x).
   V get hand => _hand;
+
+  /// Gözün ayak merkezine göre yeri (bakış yönünde +x): başın suyun
+  /// üstünde kaldığını denetlemek için.
+  V get eye => _bones.isEmpty ? V.zero : _bones[_head](const V(940, 465));
 
   /// Ayak merkezinde, sağa bakan kukla: kenar ışığı, gövde, göz, kavanoz.
   /// [rim] kavanozun ılık ışığının siluetin kenarını yalaması.
@@ -1572,6 +1580,37 @@ abstract final class PerdeSaye {
 
   static bool get ready => SayeKukla.ready;
 
+  // Ayak sabitleme (yönetilen perde): yere basan ayağın ekrandaki yeri
+  // kilitlenir; hız değişirken adım boyu değişse de ayak kaymaz, gövde
+  // ayağa göre konumlanır. [_off] perdenin istediği yerden farkı tutar
+  // (birkaç pikselle sınırlı).
+  static int _lockIdx = -1;
+  static double _lockX = 0;
+
+  static void _lockFoot(double screenX, double facing, double unit) {
+    final s = _k.soles;
+    if (s.isEmpty) return;
+    var lo = 0;
+    for (var j = 1; j < s.length; j++) {
+      if (s[j].dy > s[lo].dy) lo = j;
+    }
+    final grounded = s[lo].dy > -0.6;
+    double wx() => screenX + _off + facing * s[lo].dx * unit;
+    if (grounded && lo == _lockIdx) {
+      _off -= wx() - _lockX;
+      final cap = 6 * unit;
+      _off = _off.clamp(-cap, cap);
+    }
+    _lockIdx = grounded ? lo : -1;
+    _lockX = wx();
+  }
+
+  static ui.Offset _unrotate(ui.Offset g, double rot, bool faceLeft) {
+    final c = math.cos(rot), s = math.sin(rot);
+    final x = g.dx * c + g.dy * s, y = -g.dx * s + g.dy * c;
+    return ui.Offset(faceLeft ? -x : x, y);
+  }
+
   // Menünün perdesindeki Sâye'nin kendi kuklası: menü, üstünde açılan
   // Hikâye perdesiyle aynı karede kendi saatiyle çizilir. Ortak kukla her
   // karede iki ayrı zaman görüp baştan kuruluyordu; Hikâye'de Sâye hiç
@@ -1638,6 +1677,7 @@ abstract final class PerdeSaye {
     double rot = 0,
     double a = 1,
     ui.Color? tint,
+    bool driven = false,
   }) {
     if (!ready || a <= 0) return;
     final last = _last;
@@ -1659,6 +1699,7 @@ abstract final class PerdeSaye {
       _off = 0;
       _gx = 0;
       _going = false;
+      _lockIdx = -1;
       _in
         ..mode = KuklaMode.ground
         ..forward = 0
@@ -1706,6 +1747,13 @@ abstract final class PerdeSaye {
         _off = 0;
         _gx = 0;
         _going = false;
+      } else if (driven && free && !airborne) {
+        // Yönetilen perde (açılış): perde Sâye'yi nereye götürürse kukla o
+        // karede tam o hızla adım atar ve tam orada çizilir; basan ayak yerde
+        // kalır (tahmin, gecikme, yetişme yok).
+        final v = movedX / dt0;
+        _gx = v.abs() < 0.4 ? 0 : v;
+        _going = false;
       } else if (free && !airborne && !crouch) {
         // Yavaşsa ardında kalır, birkaç gerçek adımla yetişir, durur;
         // hızlıysa onunla yürür. Çizildiği yer adımın hızıyla ilerler
@@ -1749,7 +1797,10 @@ abstract final class PerdeSaye {
         _going = false;
       }
       final ahead =
-          facing * (free && !airborne && !crouch ? _gx : (riding ? 0.0 : _vx));
+          facing *
+          (driven && free && !airborne
+              ? _gx
+              : (free && !airborne && !crouch ? _gx : (riding ? 0.0 : _vx)));
       _in
         ..mode =
             mode ??
@@ -1760,19 +1811,27 @@ abstract final class PerdeSaye {
             ? 70
             : (walk != 0 ? walk / scale : ahead)
         ..vy = airborne ? (flying ? math.max(_vy, 160.0) : _vy) : vy / scale
-        ..grip = ui.Offset(faceLeft ? -grip.dx : grip.dx, grip.dy) / scale
+        // Tutunma noktası perdede eğimsiz verilir; kukla [rot] kadar yatık
+        // çizildiğinden kendi eksenine çevrilir (yoksa eller kenara oturmaz).
+        ..grip = _unrotate(grip, rot, faceLeft) / scale
         ..climb = climb
         ..pull = pull
         ..reach = reach
         ..stroke = stroke
         ..crouching = crouch
         ..shield = crouch && reach < 0.05 ? 1 : 0
+        ..exactArms = driven
         ..light = jar.clamp(0.0, 1.0);
       final dtTotal = (time - last).clamp(0.0, 0.25);
       final steps = (dtTotal / (1 / 60)).ceil().clamp(1, 15);
       final subDt = dtTotal / steps;
       for (var s = 0; s < steps; s++) {
         _k.step(subDt, _in);
+      }
+      if (driven && free && !airborne && !jumped) {
+        _lockFoot(screenX, facing, unit);
+      } else {
+        _lockIdx = -1;
       }
       _last = time;
     }

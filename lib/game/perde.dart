@@ -1093,6 +1093,7 @@ class PerdePainter {
       faceLeft: faceLeft,
       rot: rot,
       a: a,
+      driven: true,
     );
   }
 
