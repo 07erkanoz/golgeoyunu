@@ -1130,14 +1130,16 @@ abstract final class _Acilis {
       PerdeSaye.draw(
         canvas,
         feet,
-        100 / 36,
+        86 / 36,
         time,
         mode: mode,
         vy: vy,
         jar: 0,
         faceLeft: true,
         rot: rot,
-        a: a,
+        a: a * 0.88,
+        tint: PerdePainter._ink,
+        still: true,
       );
       return true;
     }
@@ -1163,7 +1165,7 @@ abstract final class _Acilis {
   static const _ledge = Rect.fromLTRB(440, _water - 8, 660, _water + 14);
 
   /// Perdedeki Sâye karelerinin ölçeği (oyundaki Sâye'yle aynı boy).
-  static const _sayeK = 0.36;
+  static const _sayeK = 0.31;
 
   /// Yerebatan: sudan yükselen sütun ormanı ve kemerler (arka sıra soluk,
   /// ön sıra koyu); gövdesi gözyaşı oymalı, hep ıslak Ağlayan Sütun. Tavandan
@@ -1706,16 +1708,8 @@ abstract final class _Acilis {
     _farGuard(canvas, time, u, glow: true);
     final s7 = _secs7(u);
     if (s7 >= 0.6 && s7 < 4.1) frame = 'comel';
-    final walk = s7 - 4.7;
-    if (walk > 0) {
-      // Fenerin gittiği yöne, setin ucuna dek yürür (oyundaki gibi gerçek
-      // adımlarla; kukla adımını ilerleyişe göre atar). Eski karede sekme.
-      feet += Offset(
-        math.min(_ledge.right - 22 - feet.dx, walk * 62),
-        PerdeSaye.ready ? 0 : -(math.sin(time * 12)).abs() * 1.5,
-      );
-      frame = 'yuru${(time * 16).floor() % TasvirImages.walkFrames}';
-    }
+    // Sudan çıkıp kavanozunu aldıktan sonra yürümez: fenerin gittiği yöne
+    // bakarak yerinde kalır (perdede tasvir yürütülmez).
 
     if (hidden) return;
     if (!ownJar) {
