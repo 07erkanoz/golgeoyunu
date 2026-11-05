@@ -1026,6 +1026,8 @@ class PerdePainter {
         rot: math.sin(time * 0.9 + 0.4) * 0.02,
         a: own ? ink.color.a : 1,
         tint: own ? null : ink.color,
+        // Perdede yönetilen yürüyüş; oyundaki gölge perdesi eskisi gibi.
+        driven: !inGame,
       );
       return;
     }

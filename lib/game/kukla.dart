@@ -11,6 +11,8 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/services.dart' show rootBundle;
 
+import 'palette.dart' show kInk;
+
 typedef V = ui.Offset;
 
 /// 2B dönüşüm: x' = a·x + c·y + tx, y' = b·x + d·y + ty.
@@ -1578,6 +1580,70 @@ abstract final class PerdeSaye {
   /// Kanatla uçarken: havada süzülür (bacaklar yürümez).
   static bool flying = false;
 
+  /// Sırtındaki kâğıt kanatlar (oyundaki gibi omza takılı): null ise yok,
+  /// 0 katlı, 1 açık. [wingFlap]: çırpışın genliği.
+  static double? wings;
+  static double wingFlap = 0.14;
+
+  // Oyundaki kâğıt kanadın aynısı (player.dart), kukla biriminde.
+  static void _wing(
+    ui.Canvas c,
+    V root,
+    double open,
+    double time, {
+    required bool near,
+    ui.Color? tint,
+  }) {
+    final flap = math.sin(time * 6 + (near ? 0 : 0.5)) * wingFlap * open;
+    final a =
+        (near ? 1.15 : 0.95) +
+        ((near ? -0.38 : -0.72) - (near ? 1.15 : 0.95)) * open +
+        flap;
+    final len = 11.0 + ((near ? 17.0 : 15.0) - 11.0) * open;
+    final wide = 3.2 + (6.5 - 3.2) * open;
+    c.save();
+    c.translate(root.dx, root.dy);
+    c.rotate(-a);
+    final wing = ui.Path()
+      ..moveTo(0, 0)
+      ..quadraticBezierTo(-len * 0.45, -wide * 1.1, -len, -wide * 0.35)
+      ..quadraticBezierTo(-len * 0.92, wide * 0.25, -len * 0.78, wide * 0.5)
+      ..quadraticBezierTo(-len * 0.6, wide * 0.25, -len * 0.5, wide * 0.7)
+      ..quadraticBezierTo(-len * 0.3, wide * 0.45, -len * 0.18, wide * 0.6)
+      ..quadraticBezierTo(-len * 0.08, wide * 0.3, 0, 0)
+      ..close();
+    if (tint != null) {
+      c.drawPath(wing, ui.Paint()..color = tint);
+      c.restore();
+      return;
+    }
+    c.drawPath(
+      wing,
+      ui.Paint()
+        ..color =
+            (near ? const ui.Color(0xFFE8D8BC) : const ui.Color(0xFFB8A488))
+                .withValues(alpha: near ? 0.9 : 0.85),
+    );
+    final rib = ui.Paint()
+      ..color = kInk.withValues(alpha: 0.55)
+      ..strokeWidth = 0.4;
+    for (final (x, y) in const [(1.0, -0.35), (0.78, 0.5), (0.5, 0.7)]) {
+      c.drawLine(
+        ui.Offset.zero,
+        ui.Offset(-len * x * 0.96, wide * y * 0.9),
+        rib,
+      );
+    }
+    c.drawPath(
+      wing,
+      ui.Paint()
+        ..color = kInk
+        ..strokeWidth = 0.55
+        ..style = ui.PaintingStyle.stroke,
+    );
+    c.restore();
+  }
+
   static bool get ready => SayeKukla.ready;
 
   // Ayak sabitleme (yönetilen perde): yere basan ayağın ekrandaki yeri
@@ -1586,6 +1652,11 @@ abstract final class PerdeSaye {
   // (birkaç pikselle sınırlı).
   static int _lockIdx = -1;
   static double _lockX = 0;
+
+  // Yönetilen perdede yürüyüş süzgeci: perde Sâye'yi titretir, sallarsa
+  // adım atmaz; ancak bir yöne en az 2,5 birim taşınınca yürür, yön dönünce
+  // hemen durur (geri geri adım yok).
+  static double _dirSign = 0, _dirNet = 0, _runSign = 0;
 
   static void _lockFoot(double screenX, double facing, double unit) {
     final s = _k.soles;
@@ -1700,6 +1771,8 @@ abstract final class PerdeSaye {
       _gx = 0;
       _going = false;
       _lockIdx = -1;
+      _dirSign = 0;
+      _runSign = 0;
       _in
         ..mode = KuklaMode.ground
         ..forward = 0
@@ -1747,12 +1820,28 @@ abstract final class PerdeSaye {
         _off = 0;
         _gx = 0;
         _going = false;
+        _dirSign = 0;
+        _runSign = 0;
       } else if (driven && free && !airborne) {
         // Yönetilen perde (açılış): perde Sâye'yi nereye götürürse kukla o
         // karede tam o hızla adım atar ve tam orada çizilir; basan ayak yerde
         // kalır (tahmin, gecikme, yetişme yok).
         final v = movedX / dt0;
-        _gx = v.abs() < 0.4 ? 0 : v;
+        if (v.abs() < 0.4) {
+          _dirSign = 0;
+          _runSign = 0;
+        } else {
+          if (v.sign != _dirSign) {
+            _dirSign = v.sign;
+            _dirNet = 0;
+            if (_runSign != _dirSign) _runSign = 0;
+          }
+          _dirNet += movedX;
+          if (_runSign == 0 && _dirNet.abs() > 2.5) {
+            _runSign = _dirSign;
+          }
+        }
+        _gx = _runSign != 0 && v.sign == _runSign ? v : 0;
         _going = false;
       } else if (free && !airborne && !crouch) {
         // Yavaşsa ardında kalır, birkaç gerçek adımla yetişir, durur;
@@ -1809,8 +1898,11 @@ abstract final class PerdeSaye {
                 : (airborne ? KuklaMode.air : KuklaMode.ground))
         ..forward = swim || mode == KuklaMode.swim
             ? 70
-            : (walk != 0 ? walk / scale : ahead)
-        ..vy = airborne ? (flying ? math.max(_vy, 160.0) : _vy) : vy / scale
+            : (flying && mode == null
+                  ? 233
+                  : (walk != 0 ? walk / scale : ahead))
+        // Kanatla uçuş oyundaki süzülme gibi: ağır iniş, tam ileri.
+        ..vy = airborne ? (flying ? 75 : _vy) : vy / scale
         // Tutunma noktası perdede eğimsiz verilir; kukla [rot] kadar yatık
         // çizildiğinden kendi eksenine çevrilir (yoksa eller kenara oturmaz).
         ..grip = _unrotate(grip, rot, faceLeft) / scale
@@ -1840,6 +1932,12 @@ abstract final class PerdeSaye {
     c.translate(feet.dx + (m[0].abs() > 1e-6 ? _off / m[0] : 0), feet.dy);
     if (rot != 0) c.rotate(rot);
     c.scale(faceLeft ? -scale : scale, scale);
+    if (flying && mode == null) {
+      // Süzülürken gövde gidiş yönüne yatar (oyundaki gibi, kalçadan).
+      c.translate(0, -14);
+      c.rotate(0.16);
+      c.translate(0, 14);
+    }
     final layer = a < 1;
     if (layer) {
       c.saveLayer(
@@ -1847,11 +1945,16 @@ abstract final class PerdeSaye {
         ui.Paint()..color = ui.Color.fromRGBO(255, 255, 255, a.clamp(0, 1)),
       );
     }
+    final w = wings;
+    // Kanatlar sırtta, kürek kemiğinin hizasında (oyundaki yer).
+    final back = _k.shoulder + const V(-3.4, 1.2);
+    if (w != null) _wing(c, back, w, time, near: false, tint: tint);
     if (tint != null) {
       _k.paintSolid(c, tint);
     } else {
       _k.paint(c, rim: 0.35, jar: jar > 0.05);
     }
+    if (w != null) _wing(c, back, w, time, near: true, tint: tint);
     if (layer) c.restore();
     c.restore();
   }

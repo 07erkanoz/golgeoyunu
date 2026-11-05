@@ -420,8 +420,7 @@ void _bCistern(Canvas c, double time, double u, double n) {
   }
   final turned = u > 2.08 && u < 2.33;
   // İskeleden (deck) salın tahtasına (water - 4) atlar.
-  final y =
-      deck + 6 * _span(u, 2.4, 2.47) - math.sin(hop * math.pi) * 30;
+  final y = deck + 6 * _span(u, 2.4, 2.47) - math.sin(hop * math.pi) * 30;
   PerdeSaye.riding = ride > 0;
   _sayeFacing(c, Offset(x, y), time, left: turned);
   PerdeSaye.riding = false;
@@ -592,17 +591,26 @@ void _wingedSaye(
   c.save();
   c.translate(feet.dx, feet.dy);
   c.rotate(rot);
-  _wings(
-    c,
-    Offset(-3 * s, -46 * s),
-    56 * s * size,
-    spread + math.sin(time * 4) * flap,
-    a,
-  );
   // Yerin (ya da bulutun) epey üstündeyse uçuyordur: yürümez, süzülür.
-  PerdeSaye.flying = fly ?? feet.dy < _gb - 60;
+  final flying = fly ?? feet.dy < _gb - 60;
+  if (PerdeSaye.ready) {
+    // Oyundaki kâğıt kanatlar, omzuna takılı ve boyuna göre; katlıyken
+    // ([size] < 0,9) sırtında toplu.
+    PerdeSaye.wings = size < 0.9 ? 0 : 1;
+    PerdeSaye.wingFlap = flap;
+  } else {
+    _wings(
+      c,
+      Offset(-3 * s, -46 * s),
+      56 * s * size,
+      spread + math.sin(time * 4) * flap,
+      a,
+    );
+  }
+  PerdeSaye.flying = flying;
   _tasvirSaye(c, Offset.zero, s, time, a);
   PerdeSaye.flying = false;
+  PerdeSaye.wings = null;
   c.restore();
 }
 
@@ -905,9 +913,19 @@ void _bTower(Canvas c, double time, double u, double n) {
     )!;
     final y = feet.dy + math.sin(fly * math.pi) * -30;
     final at = Offset(feet.dx, y);
-    final spread = 0.0 + 0.55 * fly + (fly > 0 ? math.sin(time * 4) * 0.12 : 0);
-    _wings(c, at + const Offset(-4, -62), 74, spread, a2);
-    _sayeAt(c, at, time, s: 1.3, a: a2, rot: 0.35 * fly);
+    // Kulenin tepesinde kanatları sırtında toplu; atlayınca açılır, süzülür.
+    _wingedSaye(
+      c,
+      at,
+      1.3,
+      time,
+      a2,
+      spread: 0.55 * fly,
+      flap: 0.12,
+      size: fly > 0 ? 1 : 0.72,
+      rot: 0.1 * fly,
+      fly: fly > 0,
+    );
   }
 }
 
