@@ -740,7 +740,11 @@ extension _EastBackdrops on Backdrop {
 
     // İç gövde: yatay bindirme kalaslar. Her kalas kendi tonunda; altında
     // bindirmenin gölgesi, üstünde ince ışık; lifler ve ağaç çiviler.
-    const plank = 22.0;
+    // Kalas boyu dünya biriminde (bir karo): kamera koşarken hafif açılıp
+    // zıplayınca geri kapanınca kalaslar duvarla birlikte ölçeklenir. Ekran
+    // pikseliyle sabit boy, açılıp kapanışta tavandan uzaklaştıkça sıraları
+    // yukarı aşağı kaydırıyordu (zıplarken kalaslar kayıyordu).
+    final plank = 32.0 * h / game.camera.visibleWorldRect.height;
     // Ambarın iç gövdesi tek bir yüzey: kalaslar, postalar, lombozlar,
     // kandiller, sızan ışık, yük ve duvara düşen gölgeler aynı hızda kayar.
     // (Eskiden 0,25 / 0,5 / 0,62 gibi ayrı hızlardaydı; yürürken direkler,
