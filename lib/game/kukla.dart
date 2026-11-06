@@ -254,6 +254,13 @@ class KuklaInput {
   /// değiştirmez (oyunda kapalı; oyundaki tırmanış değişmez).
   bool exactArms = false;
 
+  /// Perde: her adım tam boyunda, adım sayısı gidilen yola göre. Yavaş
+  /// giderken adım sıklaşmaz, yavaşlar (oyunda kapalı: oyundaki yürüyüş
+  /// değişmez). Kapalıyken yavaş yürüyüşte adım kısalır, saniyede bir
+  /// buçuğun altına inmez; perdede yavaş kayan Sâye kısacık, sık adımlar
+  /// atıyordu.
+  bool longStride = false;
+
   /// Ayak merkezinin dünyadaki yüksekliği (zincirde el el üstüne tırmanış).
   double worldY = 0;
 
@@ -666,7 +673,7 @@ class SayeKukla {
     // adımlar yerine akıcı, okunaklı adım ritmi.
     final gBase = _legLen * (1.14 + 0.32 * run - 0.32 * kk - 0.12 * _push);
     final st0 = 0.58 - 0.28 * run;
-    final g = math.min(gBase, v * st0 / 0.85) * e;
+    final g = i.longStride ? gBase * e : math.min(gBase, v * st0 / 0.85) * e;
     // Kısa adımda ayak da az kalkar.
     final size = gBase > 0 ? (g / gBase).clamp(0.0, 1.0) : 0.0;
     var cad = 0.0;
@@ -1953,6 +1960,7 @@ abstract final class PerdeSaye {
         ..crouching = crouch
         ..shield = crouch && reach < 0.05 ? 1 : 0
         ..exactArms = driven
+        ..longStride = driven
         ..light = jar.clamp(0.0, 1.0);
       final dtTotal = (time - last).clamp(0.0, 0.25);
       final steps = (dtTotal / (1 / 60)).ceil().clamp(1, 15);
