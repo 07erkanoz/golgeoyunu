@@ -1489,19 +1489,36 @@ extension _EastBackdrops on Backdrop {
     ]) {
       // Tüf tepeleri: tabanları birbirine bağlayan alçak, yuvarlak sırt.
       final hill = Path()..moveTo(0, h);
+      final ridge = Path();
       for (var x = 0.0; x <= w + 20; x += 20) {
         final u = x + cam.x * depth;
-        hill.lineTo(
-          x,
-          h * base -
-              (10 + 8 * math.sin(u * 0.013) + 6 * math.sin(u * 0.031 + 1)) *
-                  scale,
-        );
+        final y =
+            h * base -
+            (10 + 8 * math.sin(u * 0.013) + 6 * math.sin(u * 0.031 + 1)) *
+                scale;
+        hill.lineTo(x, y);
+        x == 0 ? ridge.moveTo(x, y) : ridge.lineTo(x, y);
       }
       hill
         ..lineTo(w, h)
         ..close();
+      if (Cartoon.on) {
+        canvas.save();
+        canvas.translate(3, 4);
+        canvas.drawPath(hill, Paint()..color = const Color(0x40000000));
+        canvas.restore();
+      }
       canvas.drawPath(hill, Paint()..color = tones.body);
+      if (Cartoon.on) {
+        // Sırtın üstü batan güneşi yakalar.
+        canvas.drawPath(
+          ridge,
+          Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1.2
+            ..color = const Color(0xFFFFC890).withValues(alpha: 0.3),
+        );
+      }
       final lit = const Color(0xFFFFC27A).withValues(alpha: 0.85);
       _repeat(w, cam.x * depth, 320 * scale, (x, rnd) {
         if (rnd.nextDouble() < 0.3 + (0.38 - depth) * 0.6) return;
@@ -1514,6 +1531,8 @@ extension _EastBackdrops on Backdrop {
           peaks: 1 + rnd.nextInt(3),
           openings: depth > 0.1 ? 0.3 : 0,
           lit: lit,
+          doku: Cartoon.on,
+          rimAlpha: 0.25 + depth,
         );
       }, salt: (depth * 1000).round());
     }
