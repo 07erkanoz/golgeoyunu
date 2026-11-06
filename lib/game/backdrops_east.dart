@@ -553,6 +553,17 @@ extension _EastBackdrops on Backdrop {
       );
       canvas.restore();
     }
+    // Yamaçların dibi gövdeye yumuşakça karışır: tabanda keskin bir çizgi
+    // kalınca dağlar havada asılı görünüyordu.
+    canvas.drawRect(
+      Rect.fromLTRB(-20, base - height * 0.35, w + 20, base + 6),
+      Paint()
+        ..shader = ui.Gradient.linear(
+          Offset(0, base - height * 0.35),
+          Offset(0, base + 4),
+          [body.withValues(alpha: 0), body],
+        ),
+    );
     canvas.restore();
   }
 

@@ -2035,10 +2035,53 @@ class SwingRope extends Component with HasGameReference<GolgeGame> {
       _renderVine(canvas, path);
       return;
     }
-    canvas.drawPath(path, rope);
+    // Halat koyu gökte de açık karda da seçilsin: mürekkep kontur, kenevir
+    // renkli gövde, üstünde bükülme izleri.
+    canvas.drawPath(
+      path,
+      Paint()
+        ..color = kInk
+        ..strokeWidth = 4.6
+        ..strokeCap = StrokeCap.round
+        ..style = PaintingStyle.stroke,
+    );
+    canvas.drawPath(
+      path,
+      rope
+        ..color = const Color(0xFF7A5A3A)
+        ..strokeWidth = 2.6,
+    );
+    final twist = Paint()
+      ..color = const Color(0xFFC8A070)
+      ..strokeWidth = 1.1
+      ..strokeCap = StrokeCap.round;
+    for (final m in path.computeMetrics()) {
+      for (var d = 3.0; d < m.length; d += 5) {
+        final tg = m.getTangentForOffset(d);
+        if (tg == null) continue;
+        final n = Offset(-tg.vector.dy, tg.vector.dx);
+        final a = tg.position + n * 1.1 - tg.vector * 1.2;
+        final b = tg.position - n * 1.1 + tg.vector * 1.2;
+        canvas.drawLine(a, b, twist);
+      }
+    }
     // Bağlantı halkası ve uçtaki düğüm.
-    canvas.drawCircle(anchor.toOffset(), 3.5, Paint()..color = kInk);
-    canvas.drawCircle(_pts.last, 3, Paint()..color = const Color(0xFF2A1C14));
+    canvas.drawCircle(anchor.toOffset(), 4.5, Paint()..color = kInk);
+    canvas.drawCircle(
+      anchor.toOffset(),
+      2.6,
+      Paint()
+        ..color = const Color(0xFF8A8A90)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.4,
+    );
+    canvas.drawCircle(_pts.last, 4.6, Paint()..color = kInk);
+    canvas.drawCircle(_pts.last, 3.2, Paint()..color = const Color(0xFF7A5A3A));
+    canvas.drawCircle(
+      _pts.last + const Offset(-0.8, -0.8),
+      1.2,
+      Paint()..color = const Color(0xFFC8A070),
+    );
   }
 
   /// Ötüken'de ip bir sarmaşıktır: bir dala sarılı, yer yer yapraklı.
