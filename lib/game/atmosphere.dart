@@ -6,6 +6,7 @@ import 'dart:ui' as ui;
 import 'package:flame/components.dart';
 
 import 'ark_animals.dart';
+import 'doku_derinkuyu.dart';
 import 'doku_gok.dart';
 import 'doku_kaf.dart';
 import 'doku_kar.dart';
@@ -128,6 +129,17 @@ class Backdrop extends Component with HasGameReference<GolgeGame> {
           Color(0xFF6A2A15),
         ]);
         _lightLeak(canvas, Offset(w * 0.55, h * 1.05), h * 0.95, 0.20, kEmber);
+        if (Cartoon.on) {
+          paintDerinkuyuBackdrop(canvas, w, h, cam.x, cam.y, _t);
+          _lightLeak(
+            canvas,
+            Offset(w * 0.55, h * 1.05),
+            h * 0.95,
+            0.14,
+            kEmber,
+          );
+          break;
+        }
         final dy = -cam.y * 0.05;
         _ridge(
           canvas,
