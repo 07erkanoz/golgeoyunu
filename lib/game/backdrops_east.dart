@@ -1174,35 +1174,41 @@ extension _EastBackdrops on Backdrop {
         Paint()..color = const Color(0xFFFFE6B8),
       );
     }
-    canvas.drawPath(
-      Path()
-        ..moveTo(tx - w * 0.5, h * 0.7)
-        ..quadraticBezierTo(tx - w * 0.1, h * 0.36, tx, h * 0.34)
-        ..quadraticBezierTo(tx + w * 0.1, h * 0.36, tx + w * 0.5, h * 0.7)
-        ..close(),
-      Paint()
-        ..color = Color.lerp(
-          const Color(0xFF2A2234),
-          const Color(0xFF6A4040),
+    if (Cartoon.on) {
+      // Doku: çakıl taşından oyma tümülüs, katman katman karlı teraslar.
+      paintNemrutTumulus(canvas, w, h, tx, dawn);
+      paintNemrutTerraces(canvas, w, h, offset: cam.x * 0.08, dawn: dawn);
+    } else {
+      canvas.drawPath(
+        Path()
+          ..moveTo(tx - w * 0.5, h * 0.7)
+          ..quadraticBezierTo(tx - w * 0.1, h * 0.36, tx, h * 0.34)
+          ..quadraticBezierTo(tx + w * 0.1, h * 0.36, tx + w * 0.5, h * 0.7)
+          ..close(),
+        Paint()
+          ..color = Color.lerp(
+            const Color(0xFF2A2234),
+            const Color(0xFF6A4040),
+            dawn,
+          )!,
+      );
+      // Karla örtülü teras.
+      _ridge(
+        canvas,
+        w,
+        h,
+        offset: cam.x * 0.08,
+        base: h * 0.74,
+        amp: 14,
+        freq: 0.008,
+        seed: 31,
+        color: Color.lerp(
+          const Color(0xFF8A90A8),
+          const Color(0xFFE8D0C0),
           dawn,
         )!,
-    );
-    // Karla örtülü teras.
-    _ridge(
-      canvas,
-      w,
-      h,
-      offset: cam.x * 0.08,
-      base: h * 0.74,
-      amp: 14,
-      freq: 0.008,
-      seed: 31,
-      color: Color.lerp(
-        const Color(0xFF8A90A8),
-        const Color(0xFFE8D0C0),
-        dawn,
-      )!,
-    );
+      );
+    }
     // Oturan dev tanrılar ve önlerine düşmüş başları.
     final stone = Color.lerp(
       const Color(0xFF1A1622),
@@ -1218,7 +1224,22 @@ extension _EastBackdrops on Backdrop {
       for (var i = 0; i < 5; i++) {
         // Bir kısmının başı yerinde, ötekilerin başı ayaklarının dibinde.
         final headOn = i.isOdd || (i == 2 && variant == 1);
-        _seatedGod(canvas, gx, base, s, stone, headOn: headOn, tiara: i != 3);
+        if (Cartoon.on) {
+          paintSeatedGod(
+            canvas,
+            gx,
+            base,
+            s,
+            stone,
+            headOn: headOn,
+            tiara: i != 3,
+            dawn: dawn,
+            seed: i,
+          );
+          paintRubble(canvas, gx, base + 2 * s, s, stone, i);
+        } else {
+          _seatedGod(canvas, gx, base, s, stone, headOn: headOn, tiara: i != 3);
+        }
         if (!headOn) {
           _fallenHead(
             canvas,

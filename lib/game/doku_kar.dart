@@ -484,7 +484,6 @@ void paintKarTile(Canvas c, Level lv, int col, int row, double x, double y) {
   }
   final top = row > 0 && !lv.solid(col, row - 1);
   final left = !lv.solid(col - 1, row);
-  final right = !lv.solid(col + 1, row);
   if (left) {
     c.drawLine(
       Offset(x + 0.6, y + (top ? 6 : 0)),
@@ -495,6 +494,22 @@ void paintKarTile(Canvas c, Level lv, int col, int row, double x, double y) {
     );
   }
   if (!top) return;
+  paintSnowBlanket(c, lv, col, row, x, y);
+}
+
+/// Üstü açık karonun kalın kar örtüsü: alt kenarı dünyada kesintisiz
+/// tırtıllı, üst kenarı ay ışığında, kenarlardan saçak gibi taşar.
+void paintSnowBlanket(
+  Canvas c,
+  Level lv,
+  int col,
+  int row,
+  double x,
+  double y,
+) {
+  const t = kTile;
+  final left = !lv.solid(col - 1, row);
+  final right = !lv.solid(col + 1, row);
   // Kar örtüsü: alt kenarı dünyada kesintisiz tırtıllı.
   double lower(double wx) =>
       y + 5 + math.sin(wx * 0.31) * 1.4 + math.sin(wx * 0.13 + 1) * 1.2;

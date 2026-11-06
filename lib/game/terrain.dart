@@ -6,6 +6,7 @@ import 'package:flame/components.dart';
 
 import 'doku_kar.dart';
 import 'doku_kule.dart';
+import 'doku_nemrut.dart';
 import 'golge_game.dart';
 import 'level.dart';
 import 'levels.dart';
@@ -354,6 +355,10 @@ Picture _buildTerrain(Level lv, int c0, int c1, int r0, int r1) {
               lv.def.skiSurface == null) {
             // Doku: oyma kaya katmanları, kalın kar örtüsü, saçak.
             paintKarTile(canvas, lv, c, r, x, y);
+          }
+          if (Cartoon.on && theme == LevelTheme.nemrut) {
+            // Doku: iri kesme taş bloklar, kırık köşeler, kar örtüsü.
+            paintNemrutTile(canvas, lv, c, r, x, y);
           }
           for (final side in [-1, 1]) {
             // Ahşap gövdenin kenarında kaya tümsekleri olmaz.
