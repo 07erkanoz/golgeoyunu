@@ -1605,25 +1605,29 @@ void _agGiantWalk(Canvas c, double time, double u, double a) {
     );
   }
   c.restore();
-  // Sâye: gölgelerin arasında zikzak.
-  final t = _span(u, 0.05, 0.95);
-  final x = _agLerp(80, 720, t);
-  final hop = (math.sin(t * math.pi * 6)).abs() * 70;
-  final prev = <Offset>[];
-  for (var i = 1; i < 8; i++) {
-    final tt = (t - i * 0.012).clamp(0.0, 1.0);
-    prev.add(
-      Offset(
-        _agLerp(80, 720, tt) + 8,
-        g - 40 - (math.sin(tt * math.pi * 6)).abs() * 70,
-      ),
-    );
+  // Sâye: gölgeden gölgeye gerçek sıçrayışlarla (her gölgede bir soluk).
+  (double, double) at(double uu) {
+    var x = 80.0, h = 0.0;
+    for (var i = 0; i < 6; i++) {
+      final (dx, dy) = _P._hop(uu, 0.06 + i * 0.15, 640 / 6, 70, s: 1.0);
+      x += dx;
+      h += dy;
+    }
+    return (x, h);
   }
+
+  final (x, hop) = at(u);
   final trail = _ink(0.4 * a);
-  for (final p in prev) {
-    c.drawCircle(p, 1.6, trail);
+  if (hop > 1) {
+    for (var i = 1; i < 8; i++) {
+      final (px, ph) = at(u - i * 0.008);
+      c.drawCircle(Offset(px + 8, g - 40 - ph), 1.6, trail);
+    }
   }
-  _agSaye(c, Offset(x, g + 6 - hop), 1.0, time, a, rot: 0.25, seed: 12);
+  // İzler sıçrayış hızını bozmasın: Sâye'ninki yeniden kurulur.
+  PerdeSaye.leapVy = null;
+  at(u);
+  _agSaye(c, Offset(x, g + 6 - hop), 1.0, time, a, seed: 12);
 }
 
 /// Köprü 7, satır 1: güneşin ilk ışığı taş yüzlere vurur; Sâye
@@ -1685,7 +1689,7 @@ void _agFirstLight(Canvas c, double time, double u, double a) {
   _agKandilci(c, const Offset(735, g + 4), 0.8, time, a, flip: true, seed: 4);
   // Sâye uzanıp dokunur.
   final reach = _span(u, 1.35, 1.7);
-  final sx = _agLerp(470, 545, _span(u, 1.05, 1.35));
+  final sx = 470 + 75 * _P._pace(u, 1.05, 1.35, 75, s: 1.8);
   _agSaye(c, Offset(sx, g + 6), 1.8, time, a, raise: 0.5 * reach, seed: 13);
   if (reach > 0.9) {
     c.drawCircle(orb, 24 + 10 * math.sin(time * 9).abs(), _stroke(_hole(a), 2));
@@ -2226,7 +2230,7 @@ void _agKafMirror(Canvas c, double time, double u, double a) {
   // Satır 0: Sâye aynaya yaklaşır. 1: el kaldırır, aynadaki gölge de.
   // 2: aynanın derininde zincirli el, titreyen kandil; Hüdhüd yolu gösterir
   // ve kendi yoluna uçar.
-  final sx = _agLerp(120, 262, _span(u, 0.05, 0.75));
+  final sx = 120 + 142 * _P._pace(u, 0.05, 0.75, 142, s: 1.9);
   final raise = _span(u, 1.2, 1.4) * (1 - _span(u, 1.8, 1.95));
   final simurg = _span(u, 0.3, 0.75) * (1 - _span(u, 0.92, 1.15));
   final mirrorSelf = _span(u, 1.0, 1.2) * (1 - _span(u, 2.0, 2.2));
@@ -2551,7 +2555,7 @@ void _agShepherdCamp(Canvas c, double time, double u, double a) {
     arm: -0.8 * talk2 + 0.2 * talk2 * math.sin(time * 6) - 1.4 * pointUp,
   );
   // Sâye varır, ateşin ışığında dinler.
-  final sx = _agLerp(40, 300, _span(u, 3.02, 3.4));
+  final sx = 40 + 260 * _P._pace(u, 3.02, 3.4, 260, s: 1.8);
   _agSaye(c, Offset(sx, g + 6), 1.8, time, a);
 }
 
@@ -2952,16 +2956,9 @@ void _krSayeRun(
   double a, {
   bool flip = false,
 }) {
-  final hop = math.sin(time * 9).abs();
-  _krSaye(
-    c,
-    feet + Offset(0, -hop * 5 * s),
-    s,
-    time,
-    a,
-    flip: flip,
-    rot: (flip ? -1 : 1) * (0.14 + 0.04 * hop),
-  );
+  // Koşunun sekişi ve öne eğilişi kuklanın kendi adımından gelir (eskiden
+  // gövde elle zıplatılıp eğiliyordu, ayaklar yerde kayıyordu).
+  _krSaye(c, feet, s, time, a, flip: flip);
 }
 
 /// Bağırış: ağzın önünde üç kısa çizgi.
@@ -3420,7 +3417,7 @@ void _krCaravan(Canvas c, double time, double u) {
     );
     _krMaster(c, Offset(cx + 30, f), s, time, a3, lamp: 0.4);
     _krKandilci(c, Offset(cx - 40, f), s, time, a3);
-    final run = _span(u, 3.15, 4.05);
+    final run = _P._pace(u, 3.15, 4.05, 170, pace: 70);
     _krSayeRun(c, Offset(70 + run * 170, f), 1.5, time, a3);
     _krSnow(c, time, a3, wind: 110, n: 90);
   }
@@ -3924,7 +3921,7 @@ void _krDragons(Canvas c, double time, double u) {
         const Offset(140, 280),
         _krLine(_ink(first * turn), 3),
       );
-      final come = _span(u, 0.0, 0.32);
+      final come = _P._pace(u, 0.0, 0.32, 80, s: 1.35);
       _krSaye(c, Offset(430 - come * 80, f), 1.35, time, first, flip: true);
     }
     if (talk > 0) {
@@ -3945,7 +3942,7 @@ void _krDragons(Canvas c, double time, double u) {
         _krLine(_ink(talk), 3),
       );
       // Sâye pencereye dönmüş, dinler.
-      final sit = first > 0 ? _span(u, 0.85, 1.05) : 1.0;
+      final sit = first > 0 ? _P._pace(u, 0.85, 1.05, 70, s: 1.3) : 1.0;
       _krSaye(c, Offset(350 - sit * 70, f), 1.3, time, talk * sit);
     }
   }
@@ -4003,8 +4000,8 @@ void _krDragons(Canvas c, double time, double u) {
         _ink(a4),
       );
     }
-    final look = _span(u, 4.1, 4.4);
-    _krSaye(c, Offset(150 + look * 20, 199), 1.5, time, a4, rot: 0.05 * look);
+    final look = _P._pace(u, 4.1, 4.4, 20);
+    _krSaye(c, Offset(150 + look * 20, 199), 1.5, time, a4);
     _krSnow(c, time, a4, wind: 30, n: 60);
   }
 }
@@ -4191,7 +4188,7 @@ void _krAvalanche(Canvas c, double time, double u) {
     final big = 1 - _span(u, 1.85, 2.15);
     final s = 1.5 + 0.8 * big;
     // 3: çığ inince kaçar.
-    final flee = _span(u, 3.0, 3.32);
+    final flee = _P._pace(u, 3.0, 3.32, 230, s: 1.5, pace: 70);
     final at = Offset(90 + 20 * big + flee * 230, f);
     if (flee > 0) {
       _krSayeRun(c, at, s, time, sA);
@@ -4232,7 +4229,7 @@ void _krAvalanche(Canvas c, double time, double u) {
     if (look > 0.5) {
       _krShout(c, Offset(wx - 52, f - 128), (look - 0.5) * 2 * a4, flip: true);
     }
-    final sx = 200 + 160 * _span(u, 4.0, 4.95);
+    final sx = 200 + 160 * _P._pace(u, 4.0, 4.95, 160, s: 1.6, pace: 70);
     _krSayeRun(c, Offset(sx, f), 1.6, time, a4);
   }
 }
@@ -4546,10 +4543,12 @@ void _fairiesScene(
         ..close(),
       _ink(a0),
     );
-    final w = _span(u, 0.05, 1.0);
+    final w = _P._pace(u, 0.05, 1.0, 280, s: 1.4);
     final x = 70 + w * 280;
     final y = x < 380 ? 300 + (x / 380) * (x / 380) * 52 * 0.98 + 10 : f;
-    _krSaye(c, Offset(x, y), 1.4, time, a0, rot: 0.06);
+    // Yokuşu doğal adımla iner.
+    PerdeSaye.grounded = true;
+    _krSaye(c, Offset(x, y), 1.4, time, a0);
     // Kar geride: arkasında son kar taneleri.
     _krSnow(
       c,
@@ -4600,7 +4599,7 @@ void _fairiesScene(
   }
   // Sâye: 2-4 boyunca bacaların önünde.
   final sA = _krL(u, 2, 3);
-  final hide = _span(u, 4.5, 4.85);
+  final hide = _P._pace(u, 4.5, 4.85, 70, s: 1.6);
   final sx = 200 - hide * 70;
   _krSaye(c, Offset(sx, f), 1.6, time, sA, shake: 0.5 * _span(u, 4.2, 4.4));
   // 2: bir bacanın tepesinde ışık yanar, kanatlanır, Sâye'nin önüne süzülür.
@@ -5004,7 +5003,7 @@ void _undergroundScene(Canvas canvas, double time, double u) {
     }
     c.restore();
     _krMillDoor(c, mouth - Offset(roll * 100, 0), 86, -roll * 2.2, a3);
-    final go = _span(u, 3.6, 3.95);
+    final go = _P._pace(u, 3.6, 3.95, 150, s: 1.4);
     _krSaye(c, Offset(610 - go * 150, f - 10), 1.4, time, a3, flip: true);
     _krFairy(c, Offset(680 - go * 60, 270), 70, time, a3, flip: true);
   }
@@ -5050,8 +5049,10 @@ void _undergroundScene(Canvas canvas, double time, double u) {
       time: time,
     );
     c.restore();
-    final down = _span(u, 4.05, 4.5);
+    final down = _P._climbPace(u, 4.05, 4.5, 140, s: 1.25);
     final sp = Offset(385, 110 + down * 140);
+    // Kuyuya el el üstüne iner.
+    if (down > 0 && down < 1) PerdeSaye.climbing = true;
     final chill = _span(u, 4.42, 4.55) * (1 - _span(u, 4.85, 5.0));
     _krSaye(c, sp, 1.25, time, a4, shake: chill);
     // Ensesinde kara bir nefes kıvrılır.

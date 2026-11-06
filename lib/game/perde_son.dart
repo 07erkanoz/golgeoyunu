@@ -1502,8 +1502,6 @@ void _bSkyLayers(Canvas c, double time, double u, double n) {
   final a0 = _heroA(u, 0);
   final a1 = _heroA(u, 1);
   final r = _span(u, 0.1, 0.92);
-  // Davul vuruşlarıyla basamak basamak.
-  final beat = math.pow(math.max(0, math.sin(time * 5)), 8).toDouble();
   c.save();
   c.translate(0, r * 260);
   // Bulut kapısı: iki bulut kümesinin arası.
@@ -1604,10 +1602,16 @@ void _bSkyLayers(Canvas c, double time, double u, double n) {
     }
   }
   // Sâye: basamak basamak yükselir, sonra atın sırtına tutunur.
-  final start = Offset(300 + r * 90, _sg + 10 - r * 216 - beat * 6 * a0);
+  // Basamakları doğal adımla çıkar, sonra atın sırtına sıçrar.
+  final rr = _P._pace(u, 0.1, 0.92, 234, s: 1.0);
+  final start = Offset(300 + rr * 90, _sg + 10 - rr * 216);
   final onHorse = _span(u, 1.05, 1.35);
   final p = Offset.lerp(start, const Offset(512, 178), onHorse)!;
+  if (onHorse <= 0) PerdeSaye.grounded = true;
+  if (onHorse > 0 && onHorse < 1) PerdeSaye.leapVy = -80;
+  PerdeSaye.riding = onHorse >= 1;
   _sayeAt(c, p, time, s: 1.0);
+  PerdeSaye.riding = false;
   final stone = _span(u, 1.55, 1.75) * a1;
   if (stone > 0) {
     _lampGlow(c, p + const Offset(26, -46), 4, stone);
@@ -1644,8 +1648,8 @@ void _bUlgen(Canvas c, double time, double u, double n) {
   final hk = _span(u, 0.04, 0.5);
   final hx = 40 + hk * 420;
   _humaFig(c, Offset(hx, 92), 1.6, time, a0);
-  final run = _span(u, 0.35, 0.78);
-  final sx = 160 + run * 270 - _span(u, 1.05, 1.4) * 20;
+  final run = _P._pace(u, 0.35, 0.78, 270, s: 1.4);
+  final sx = 160 + run * 270 - _P._pace(u, 1.05, 1.4, 20, s: 1.4) * 20;
   final head = Offset(sx, _sg + 8 - 84 * 1.4 - 8);
   final over = (1 - (hx - sx).abs() / 70).clamp(0.0, 1.0) * a0;
   c.drawOval(
@@ -1824,7 +1828,7 @@ void _bKubbe(Canvas c, double time, double u, double n) {
         _lampGlow(c, Offset(lx, 120), 3, 0.6 * k);
       }
     }
-    final sx = 150 + _span(u, 1.05, 1.9) * 60;
+    final sx = 150 + _P._pace(u, 1.05, 1.9, 60, s: 1.4) * 60;
     final jar = _sayeHand(Offset(sx, _sg + 8), 1.4);
     for (var i = 0; i < 3; i++) {
       final cx = 360 + i * 140.0;
@@ -1893,8 +1897,11 @@ void _bKubbe(Canvas c, double time, double u, double n) {
       );
     }
     const rib0 = Offset(284, 400);
-    final t = 0.12 + 0.58 * _span(u, 2.05, 2.92);
+    // Kaburgaya el el üstüne tırmanır.
+    final climb = _P._climbPace(u, 2.05, 2.92, 0.58 * (apex - rib0).distance);
+    final t = 0.12 + 0.58 * climb;
     final p = Offset.lerp(rib0, apex, t)!;
+    if (climb > 0 && climb < 1) PerdeSaye.climbing = true;
     _sayeAt(c, p, time, s: 1.2, a: k, rot: 0.3);
   }
   // 3: Tepede üç ayna; Kandilci Başı yüzyıllar sonra ilk kez kendi

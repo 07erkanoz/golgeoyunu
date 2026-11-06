@@ -286,6 +286,7 @@ class _TheaterPainter extends CustomPainter {
       return;
     }
     final progress = s._card > 0 ? 0.0 : s._line + (s._lineT / s._lineLen);
+    PerdePainter.lineSecs = s._lineLen;
     // Açılışta oyunun adını ateşböcekleri yazar (levha asılmaz).
     final opening = scene == PerdeScene.prologue && bridge == null;
     if (opening) PerdePainter.openingTitle = S.of('gameTitle');

@@ -809,6 +809,8 @@ class Narration extends Component with HasGameReference<GolgeGame> {
         // Perde: satırlar altında, son satır (başlık) perdenin üstüne düşen
         // bir gölge yazı olarak.
         final progress = _lineIndex + (_lineT / (_lineIn + _hold + _lineOut));
+        // Sâye'nin adımı satırın gerçek süresine göre atılır.
+        PerdePainter.lineSecs = _lineIn + _hold + _lineOut;
         // Açılışta oyunun adını ateşböcekleri yazar (levha asılmaz).
         final opening = scene == PerdeScene.prologue;
         if (opening) PerdePainter.openingTitle = S.of('gameTitle');

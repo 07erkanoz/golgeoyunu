@@ -920,9 +920,13 @@ void _otukenScene(Canvas canvas, double time, double u) {
   // geri çekilir; 6-7'de ışık huzmesinde yürür.
   final sa = _span(u, 1.0, 1.15);
   if (sa > 0) {
-    final rise = _span(u, 1.02, 1.3);
-    final shrink = _span(u, 5.05, 5.5) * (1 - _span(u, 6.0, 6.3));
-    final walk = _span(u, 6.3, 7.9);
+    // Aşağıdan el el üstüne tırmanıp çıkar; geri çekilir, sonra yürür.
+    final rise = _P._climbPace(u, 1.02, 1.3, 160, s: 1.7);
+    final shrink =
+        _P._pace(u, 5.05, 5.5, 30, s: 1.7) *
+        (1 - _P._pace(u, 6.0, 6.3, 30, s: 1.7));
+    final walk = _P._pace(u, 6.3, 7.9, 25, s: 1.7);
+    if (rise > 0 && rise < 1) PerdeSaye.climbing = true;
     final x = 345 - 30 * shrink + 25 * walk;
     final flip = u >= 2.1 && u < 3.0;
     c.save();
@@ -1465,9 +1469,9 @@ void _erlikScene(Canvas canvas, double time, double u) {
         _hole(a1 * warm),
       );
     }
-    final reach = _span(u, 1.1, 1.35);
+    final reach = _P._pace(u, 1.1, 1.35, 40, s: 1.8);
     final feet = Offset(300 + 40 * reach, g + 12);
-    _sayeJ(c, feet, 1.8, time, a1, rot: 0.1 * reach);
+    _sayeJ(c, feet, 1.8, time, a1);
     _tears(c, feet + const Offset(4, 0), 1.8, time, a1 * _span(u, 1.5, 1.7));
   }
   // 2-3: Çalkuyruk. Karanlıkta kişner, başını kaldırır, konuşur.
