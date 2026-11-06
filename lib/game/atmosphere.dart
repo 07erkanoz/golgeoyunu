@@ -8,6 +8,7 @@ import 'package:flame/components.dart';
 import 'ark_animals.dart';
 import 'doku_gok.dart';
 import 'doku_kaf.dart';
+import 'doku_kar.dart';
 import 'doku_kule.dart';
 import 'audio.dart';
 import 'fairy_chimney.dart';

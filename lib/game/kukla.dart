@@ -229,6 +229,11 @@ class KuklaInput {
   /// Dizlerin kırılması (0..1; kayakta), çömelmeden ayrı: kavanoz saklanmaz.
   double bend = 0;
 
+  /// Kayakta: gövde öne eğik, kollar dengede; [skiAir] 1 iken havada
+  /// (dizler karna toplanır, kayaklar ayakla birlikte kalkar, kollar açılır).
+  bool ski = false;
+  double skiAir = 0;
+
   /// Kavanozun örtülmesi (0..1): çömelince, saklanınca.
   double shield = 0;
 
@@ -270,6 +275,8 @@ class KuklaInput {
     ..sneaking = sneaking
     ..pushing = pushing
     ..bend = bend
+    ..ski = ski
+    ..skiAir = skiAir
     ..shield = shield
     ..landDip = landDip
     ..grip = grip
@@ -540,6 +547,14 @@ class SayeKukla {
   double _hideArm = 0;
   double _reach = 0;
   double _push = 0;
+  double _skiS = 0, _skiAirS = 0, _skiLift = 0;
+
+  /// Kayakta havadayken ayakların kalkışı (kukla birimi): kayaklar da bu
+  /// kadar yukarıda çizilir.
+  double get skiLift => _skiLift;
+
+  /// Kayakta havada olma (0..1, yumuşak geçişli).
+  double get skiAir => _skiAirS;
   double _climbed = 0;
   double? _prevWorldY;
 
@@ -795,6 +810,31 @@ class SayeKukla {
         ..ef += (0.55 - pose.ef) * p
         ..sb += (-0.25 - pose.sb) * p
         ..eb += (0.5 - pose.eb) * p;
+    }
+    // Kayak: dizler bükük, gövde öne eğik, baş ileri bakar; kavanozlu kol
+    // önde alçakta, öteki kol dengede. Havada dizler karna toplanır
+    // (kayaklarla ayaklar kalkar), kollar iki yana açılır.
+    _skiS = _approach(_skiS, i.ski ? 1 : 0, dt, 0.1);
+    _skiAirS = _approach(_skiAirS, i.ski ? i.skiAir : 0, dt, 0.07);
+    _skiLift = 0;
+    if (_skiS > 0.001) {
+      final sk = _skiS, a = _skiAirS;
+      final lift = _legLen * 0.45 * a * sk;
+      _skiLift = lift;
+      double to(double from, double g, double air) =>
+          from + (g + (air - g) * a - from) * sk;
+      pose
+        ..lean += (0.28 - 0.18 * a) * sk
+        ..headA = to(pose.headA, -0.26, -0.18)
+        ..fF = pose.fF + V(2 * _px * sk, -lift)
+        ..fB = pose.fB + V(-2 * _px * sk, -lift)
+        ..hip = pose.hip + V(0, -lift * 0.3)
+        ..pF = pose.pF * (1 - sk)
+        ..pB = pose.pB * (1 - sk)
+        ..sf = to(pose.sf, hasJar ? 0.12 : 0.3, -0.7)
+        ..ef = to(pose.ef, hasJar ? 0.1 : 0.25, 0.2)
+        ..sb = to(pose.sb, 1.35, -1.3)
+        ..eb = to(pose.eb, 0.4, 0.3);
     }
     return pose;
   }

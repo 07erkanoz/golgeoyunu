@@ -105,51 +105,107 @@ class SkiDecor extends Component with HasGameReference<GolgeGame> {
   // ----------------------------------------------------------- kulübe
 
   void _hut(Canvas canvas, double x, double y, SkiLight lt) {
-    final wall = Paint()
-      ..color = Color.lerp(lt.deep, const Color(0xFF3A2414), 0.5)!;
-    final roof = Paint()..color = lt.snowLit;
+    // Çoban kulübesi: üst üste kütükler (köşelerde yuvarlak başları),
+    // kalın karlı beşik çatı, saçakta buzlar; kapının yanında fener, duvar
+    // dibinde odun yığını, taş bacadan duman.
+    final wood = Color.lerp(lt.deep, const Color(0xFF3A2414), 0.5)!;
+    final dark = Color.lerp(wood, const Color(0xFF000000), 0.35)!;
     final bx = x - 10;
-    canvas.drawRect(Rect.fromLTWH(bx - 34, y - 38, 68, 40), wall);
-    // Kütük çizgileri.
-    final log = Paint()
-      ..color = const Color(0xFF000000).withValues(alpha: 0.25)
-      ..strokeWidth = 1;
-    for (var k = 1; k < 5; k++) {
-      canvas.drawLine(
-        Offset(bx - 34, y - 38 + k * 8),
-        Offset(bx + 34, y - 38 + k * 8),
-        log,
+    const hw = 34.0, wallH = 34.0;
+    final top = y - wallH;
+    // Kütükler: her biri hafif yuvarlak, aralarında koyu derz.
+    for (var k = 0; k < 6; k++) {
+      final ly = top + k * wallH / 6;
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromLTWH(bx - hw, ly, hw * 2, wallH / 6 - 0.6),
+          const Radius.circular(2.5),
+        ),
+        Paint()..color = k.isEven ? wood : Color.lerp(wood, dark, 0.25)!,
       );
+      // Köşelerde kütük başları.
+      for (final ex in [bx - hw - 2, bx + hw + 2]) {
+        canvas.drawCircle(
+          Offset(ex, ly + wallH / 12),
+          wallH / 12 + 0.6,
+          Paint()..color = Color.lerp(wood, lt.snowShade, 0.15)!,
+        );
+      }
     }
-    canvas.drawPath(
-      Path()
-        ..moveTo(bx - 44, y - 36)
-        ..lineTo(bx, y - 66)
-        ..lineTo(bx + 44, y - 36)
-        ..lineTo(bx + 40, y - 30)
-        ..lineTo(bx, y - 58)
-        ..lineTo(bx - 40, y - 30)
-        ..close(),
-      roof,
+    // Gölgede kalan yan: duvarın sağ üçte biri koyu.
+    canvas.drawRect(
+      Rect.fromLTWH(bx + hw * 0.35, top, hw * 0.65, wallH),
+      Paint()..color = const Color(0xFF000000).withValues(alpha: 0.18),
     );
-    // Sıcak pencere ve kapı.
-    final win = Rect.fromLTWH(bx + 10, y - 26, 12, 10);
+    // Kapı: ahşap, çerçeveli.
+    final door = Rect.fromLTWH(bx - 22, y - 25, 12, 25);
+    canvas.drawRect(door.inflate(1.5), Paint()..color = dark);
+    canvas.drawRect(door, Paint()..color = const Color(0xFF1A100A));
+    // Pencere: içeride ocak; çevresine ılık ışık.
+    final win = Rect.fromLTWH(bx + 8, y - 25, 12, 10);
+    final flick = 0.85 + 0.15 * math.sin(_t * 5.1);
     canvas.drawCircle(
       win.center,
       26,
       Paint()
         ..shader = Gradient.radial(win.center, 26, [
-          const Color(0xFFFFC27A).withValues(alpha: 0.35),
+          const Color(0xFFFFC27A).withValues(alpha: 0.3 * flick),
           const Color(0x00FFC27A),
         ]),
     );
-    canvas.drawRect(win, Paint()..color = const Color(0xFFFFC27A));
+    canvas.drawRect(win.inflate(1.5), Paint()..color = dark);
     canvas.drawRect(
-      Rect.fromLTWH(bx - 22, y - 24, 12, 26),
-      Paint()..color = const Color(0xFF1A100A),
+      win,
+      Paint()..color = const Color(0xFFFFC27A).withValues(alpha: flick),
     );
-    // Bacadan tüten duman.
-    canvas.drawRect(Rect.fromLTWH(bx + 18, y - 66, 8, 16), wall);
+    canvas.drawLine(win.topCenter, win.bottomCenter, Paint()..color = dark);
+    canvas.drawRect(
+      Rect.fromLTWH(win.left - 2, win.bottom + 1, win.width + 4, 2.5),
+      Paint()..color = lt.snowLit,
+    );
+    // Kapının yanında fener.
+    final lamp = Offset(bx - 6, y - 26);
+    canvas.drawCircle(
+      lamp,
+      14,
+      Paint()
+        ..shader = Gradient.radial(lamp, 14, [
+          const Color(0xFFFFC27A).withValues(alpha: 0.35 * flick),
+          const Color(0x00FFC27A),
+        ]),
+    );
+    canvas.drawCircle(lamp, 2, Paint()..color = const Color(0xFFFFD9A0));
+    // Odun yığını: duvarın sağ dibinde yuvarlak kesitler, üstünde kar.
+    for (var k = 0; k < 7; k++) {
+      final row = k < 4 ? 0 : 1;
+      final col = row == 0 ? k : k - 4;
+      final c = Offset(bx + hw + 8 + col * 5.5 + row * 2.7, y - 3 - row * 5);
+      canvas.drawCircle(c, 2.8, Paint()..color = wood);
+      canvas.drawCircle(
+        c,
+        1.2,
+        Paint()..color = Color.lerp(wood, const Color(0xFFC89A60), 0.5)!,
+      );
+    }
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(bx + hw + 4, y - 13, 20, 3.5),
+        const Radius.circular(2),
+      ),
+      Paint()..color = lt.snowLit,
+    );
+    // Taş baca ve duman.
+    canvas.drawRect(
+      Rect.fromLTWH(bx + 16, y - 70, 9, 22),
+      Paint()..color = Color.lerp(lt.deep, lt.ridge, 0.3)!,
+    );
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(bx + 14.5, y - 73, 12, 4),
+        const Radius.circular(2),
+      ),
+      Paint()..color = lt.snowLit,
+    );
     final smoke = Paint();
     for (var i = 0; i < 9; i++) {
       final u = ((_t * 0.18 + i / 9) % 1.0);
@@ -157,11 +213,52 @@ class SkiDecor extends Component with HasGameReference<GolgeGame> {
         lt.snowShade,
         lt.skyLow,
         0.5,
-      )!.withValues(alpha: 0.35 * (1 - u));
+      )!.withValues(alpha: 0.3 * (1 - u));
       canvas.drawCircle(
-        Offset(bx + 22 + u * 40 + math.sin(_t + i) * 4, y - 70 - u * 90),
-        5 + u * 14,
+        Offset(bx + 20 + u * 40 + math.sin(_t + i) * 4, y - 76 - u * 90),
+        4 + u * 13,
         smoke,
+      );
+    }
+    // Beşik çatı: koyu ahşap saçak, üstünde kalın kar, saçakta buzlar.
+    final eave = Path()
+      ..moveTo(bx - hw - 12, top + 3)
+      ..lineTo(bx, top - 26)
+      ..lineTo(bx + hw + 12, top + 3)
+      ..lineTo(bx + hw + 10, top + 7)
+      ..lineTo(bx, top - 20)
+      ..lineTo(bx - hw - 10, top + 7)
+      ..close();
+    canvas.drawPath(eave, Paint()..color = dark);
+    final snow = Path()
+      ..moveTo(bx - hw - 15, top + 4)
+      ..quadraticBezierTo(bx - hw - 16, top - 2, bx - hw - 8, top - 3)
+      ..lineTo(bx - 3, top - 33)
+      ..quadraticBezierTo(bx, top - 35, bx + 3, top - 33)
+      ..lineTo(bx + hw + 8, top - 3)
+      ..quadraticBezierTo(bx + hw + 16, top - 2, bx + hw + 15, top + 4)
+      ..lineTo(bx + hw + 9, top + 1)
+      ..lineTo(bx, top - 24)
+      ..lineTo(bx - hw - 9, top + 1)
+      ..close();
+    canvas.drawPath(snow, Paint()..color = lt.snowLit);
+    final ice = Paint()..color = lt.snowShade;
+    for (final (ix, len) in const [
+      (-40.0, 6.0),
+      (-31.0, 9.0),
+      (-24.0, 4.0),
+      (26.0, 7.0),
+      (35.0, 5.0),
+      (41.0, 8.0),
+    ]) {
+      final ey = top + 6;
+      canvas.drawPath(
+        Path()
+          ..moveTo(bx + ix - 1.3, ey)
+          ..lineTo(bx + ix + 1.3, ey)
+          ..lineTo(bx + ix, ey + len)
+          ..close(),
+        ice,
       );
     }
   }
@@ -487,41 +584,281 @@ class SkiDecor extends Component with HasGameReference<GolgeGame> {
   /// Erzurum köyü: yamacın aşağısında düz damlı evler, ışıklı pencereler,
   /// bir minare, tüten bacalar.
   void _village(Canvas canvas, double x, double y, SkiLight lt) {
-    final house = Paint()..color = Color.lerp(lt.deep, lt.ridge, 0.3)!;
-    final roof = Paint()..color = lt.snowLit;
-    final win = Paint()
-      ..color = const Color(0xFFFFC27A).withValues(alpha: 0.85);
-    for (var i = 0; i < 9; i++) {
-      final hx = x + i * 70.0 + (i * 23 % 17);
-      final hy = (surface.at(hx) ?? y) + 6;
-      final w = 40.0 + (i * 13 % 20);
-      final h = 26.0 + (i * 7 % 14);
-      canvas.drawRect(Rect.fromLTWH(hx - w / 2, hy - h, w, h + 20), house);
-      canvas.drawRRect(
-        RRect.fromRectAndRadius(
-          Rect.fromLTWH(hx - w / 2 - 3, hy - h - 5, w + 6, 7),
-          const Radius.circular(3),
-        ),
-        roof,
-      );
-      canvas.drawRect(Rect.fromLTWH(hx - 6, hy - h + 9, 6, 6), win);
-      if (i == 4) {
-        // Minare.
-        canvas.drawRect(
-          Rect.fromLTWH(hx + w / 2 + 8, hy - 110, 10, 112),
-          house,
+    // Erzurum köyü yamaçta: arka sırada sise karışan, önde iri taş evler;
+    // toprak damlarda kalın kar ve buzlar, kimi iki katlı, kimi ahşap
+    // çıkmalı, bacalardan duman. Ortada kubbeli cami ve şerefeli minare.
+    double r(int i, int k) {
+      final v = math.sin(i * 91.7 + k * 17.3) * 43758.5453;
+      return v - v.floorToDouble();
+    }
+
+    for (final back in [true, false]) {
+      for (var i = 0; i < 9; i++) {
+        final hx =
+            x + i * 70.0 + (back ? 35 : 0) + (r(i, back ? 1 : 2) - 0.5) * 20;
+        final gy = surface.at(hx);
+        if (gy == null) continue;
+        final hy = gy + (back ? -6 : 6);
+        final w = (back ? 30.0 : 40.0) + r(i, 3) * 18;
+        final h = (back ? 20.0 : 24.0) + r(i, 4) * (back ? 10 : 18);
+        if (!back && i == 4) {
+          _mosque(canvas, hx, hy, lt);
+          continue;
+        }
+        _villageHouse(
+          canvas,
+          hx,
+          hy,
+          w,
+          h,
+          i + (back ? 20 : 0),
+          lt,
+          back: back,
         );
-        canvas.drawPath(
-          Path()
-            ..moveTo(hx + w / 2 + 6, hy - 110)
-            ..lineTo(hx + w / 2 + 13, hy - 134)
-            ..lineTo(hx + w / 2 + 20, hy - 110)
-            ..close(),
-          roof,
-        );
-        canvas.drawRect(Rect.fromLTWH(hx + w / 2 + 4, hy - 82, 18, 3), roof);
       }
     }
+  }
+
+  void _villageHouse(
+    Canvas canvas,
+    double hx,
+    double hy,
+    double w,
+    double h,
+    int i,
+    SkiLight lt, {
+    required bool back,
+  }) {
+    double r(int k) {
+      final v = math.sin(i * 53.1 + k * 29.7) * 43758.5453;
+      return v - v.floorToDouble();
+    }
+
+    // Arka sıra sise karışır (gökle karışık, daha açık ve soluk).
+    final stone = Color.lerp(
+      Color.lerp(lt.deep, lt.ridge, 0.3)!,
+      lt.skyLow,
+      back ? 0.35 : 0,
+    )!;
+    final shade = Color.lerp(stone, lt.deep, 0.45)!;
+    final wood = Color.lerp(stone, const Color(0xFF3A2414), back ? 0.3 : 0.55)!;
+    final left = hx - w / 2;
+    final top = hy - h;
+    canvas.drawRect(
+      Rect.fromLTWH(left, top, w, h + 20),
+      Paint()..color = stone,
+    );
+    // Gölgedeki yan (güneş/ay soldan).
+    canvas.drawRect(
+      Rect.fromLTWH(left + w * 0.62, top, w * 0.38, h + 20),
+      Paint()..color = shade.withValues(alpha: 0.5),
+    );
+    final twoStory = h > 32;
+    if (twoStory) {
+      canvas.drawRect(
+        Rect.fromLTWH(left - 1, top + h * 0.48, w + 2, 2),
+        Paint()..color = wood,
+      );
+    }
+    // Ahşap çıkma: üst katın bir yanı dışa taşar, altında eğik payandalar.
+    if (!back && twoStory && r(1) < 0.5) {
+      final cx = r(2) < 0.5 ? left - 5 : left + w - 13;
+      final cr = Rect.fromLTWH(cx, top + 4, 18, h * 0.44 - 4);
+      canvas.drawRect(cr, Paint()..color = wood);
+      final brace = Paint()
+        ..color = Color.lerp(wood, lt.deep, 0.4)!
+        ..strokeWidth = 1.4;
+      canvas.drawLine(cr.bottomLeft, Offset(cr.left + 6, cr.bottom + 6), brace);
+      canvas.drawLine(
+        cr.bottomRight,
+        Offset(cr.right - 6, cr.bottom + 6),
+        brace,
+      );
+      final cw = Rect.fromLTWH(cr.left + 5, cr.top + 4, 8, 6);
+      canvas.drawRect(
+        cw,
+        Paint()..color = const Color(0xFFFFC27A).withValues(alpha: 0.85),
+      );
+    }
+    // Pencereler: gömme, kimi yanık; eşikte kar.
+    final rows = twoStory ? 2 : 1;
+    for (var row = 0; row < rows; row++) {
+      final n = w > 46 ? 2 : 1;
+      for (var k = 0; k < n; k++) {
+        final wx =
+            left + w * (n == 1 ? 0.3 + r(10 + k) * 0.3 : (k + 0.5) / n) - 3;
+        final wy = top + 7 + row * h * 0.48 + r(20 + row) * 2;
+        final lit = r(30 + row * 3 + k) < 0.55;
+        final win = Rect.fromLTWH(wx, wy, back ? 4 : 6, back ? 5 : 7);
+        canvas.drawRect(
+          win,
+          Paint()
+            ..color = lit
+                ? const Color(0xFFFFC27A).withValues(alpha: back ? 0.55 : 0.85)
+                : Color.lerp(lt.deep, const Color(0xFF000000), 0.4)!,
+        );
+        if (!back) {
+          canvas.drawRect(
+            Rect.fromLTWH(win.left - 1.5, win.bottom, win.width + 3, 1.8),
+            Paint()..color = lt.snowLit,
+          );
+        }
+      }
+    }
+    // Kapı: alt katta, kemerli.
+    if (!back && r(5) < 0.7) {
+      final dx = left + w * (0.15 + r(6) * 0.5);
+      canvas.drawPath(
+        Path()
+          ..moveTo(dx, hy + 2)
+          ..lineTo(dx, hy - 9)
+          ..quadraticBezierTo(dx + 4, hy - 14, dx + 8, hy - 9)
+          ..lineTo(dx + 8, hy + 2)
+          ..close(),
+        Paint()..color = Color.lerp(wood, const Color(0xFF000000), 0.4)!,
+      );
+    }
+    // Toprak dam: kiriş, ardıç direklerinin uçları, kalın kar, buzlar.
+    canvas.drawRect(
+      Rect.fromLTWH(left - 3, top - 2, w + 6, 3),
+      Paint()..color = wood,
+    );
+    if (!back) {
+      final pole = Paint()
+        ..color = Color.lerp(wood, const Color(0xFFC89A60), 0.25)!;
+      for (var px = left; px < left + w; px += 6) {
+        canvas.drawCircle(Offset(px + 1, top - 0.5), 1.1, pole);
+      }
+    }
+    final cap = Path()
+      ..moveTo(left - 5, top - 1)
+      ..quadraticBezierTo(left - 6, top - 6, left, top - 6 - r(7) * 2)
+      ..quadraticBezierTo(hx, top - 9 - r(8) * 3, left + w, top - 6 - r(9) * 2)
+      ..quadraticBezierTo(left + w + 6, top - 6, left + w + 5, top - 1)
+      ..close();
+    canvas.drawPath(cap, Paint()..color = lt.snowLit);
+    if (!back) {
+      final ice = Paint()..color = lt.snowShade;
+      for (var ix = left + 2; ix < left + w - 1; ix += 5 + r(ix.toInt()) * 6) {
+        final len = 2 + r(ix.toInt() + 1) * 5;
+        canvas.drawPath(
+          Path()
+            ..moveTo(ix - 0.9, top + 1)
+            ..lineTo(ix + 0.9, top + 1)
+            ..lineTo(ix, top + 1 + len)
+            ..close(),
+          ice,
+        );
+      }
+    }
+    // Baca ve ince duman.
+    if (r(11) < 0.6) {
+      final cx = left + w * (0.2 + r(12) * 0.6);
+      canvas.drawRect(
+        Rect.fromLTWH(cx, top - 13, 5, 8),
+        Paint()..color = stone,
+      );
+      canvas.drawRect(
+        Rect.fromLTWH(cx - 1, top - 15, 7, 2.5),
+        Paint()..color = lt.snowLit,
+      );
+      final smoke = Paint();
+      for (var k = 0; k < 5; k++) {
+        final u = ((_t * 0.14 + k / 5 + r(13)) % 1.0);
+        smoke.color = Color.lerp(
+          lt.snowShade,
+          lt.skyLow,
+          0.5,
+        )!.withValues(alpha: (back ? 0.15 : 0.25) * (1 - u));
+        canvas.drawCircle(
+          Offset(cx + 2.5 + u * 22 + math.sin(_t + k) * 2, top - 18 - u * 50),
+          2.5 + u * 8,
+          smoke,
+        );
+      }
+    }
+  }
+
+  /// Köyün camisi: sekizgen kasnak üstünde kubbe, yanında şerefeli minare;
+  /// kubbede, şerefede ve külahta kar.
+  void _mosque(Canvas canvas, double hx, double hy, SkiLight lt) {
+    final stone = Color.lerp(lt.deep, lt.ridge, 0.3)!;
+    final snow = Paint()..color = lt.snowLit;
+    final body = Rect.fromLTWH(hx - 28, hy - 28, 56, 48);
+    canvas.drawRect(body, Paint()..color = stone);
+    canvas.drawRect(
+      Rect.fromLTWH(hx + 6, hy - 28, 22, 48),
+      Paint()..color = Color.lerp(stone, lt.deep, 0.45)!.withValues(alpha: 0.5),
+    );
+    // Kasnak ve kubbe.
+    canvas.drawRect(
+      Rect.fromLTWH(hx - 18, hy - 36, 36, 9),
+      Paint()..color = stone,
+    );
+    final dome = Rect.fromCircle(center: Offset(hx, hy - 36), radius: 18);
+    canvas.drawArc(dome, math.pi, math.pi, true, Paint()..color = stone);
+    canvas.drawArc(
+      dome.inflate(0.5),
+      math.pi * 1.08,
+      math.pi * 0.84,
+      false,
+      Paint()
+        ..color = lt.snowLit
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 3.5,
+    );
+    canvas.drawLine(
+      Offset(hx, hy - 54),
+      Offset(hx, hy - 60),
+      Paint()
+        ..color = const Color(0xFFD8B060)
+        ..strokeWidth = 1.4,
+    );
+    // Kemerli pencereler.
+    for (final wx in [hx - 18.0, hx - 4.0, hx + 10.0]) {
+      canvas.drawPath(
+        Path()
+          ..moveTo(wx, hy - 6)
+          ..lineTo(wx, hy - 16)
+          ..quadraticBezierTo(wx + 4, hy - 21, wx + 8, hy - 16)
+          ..lineTo(wx + 8, hy - 6)
+          ..close(),
+        Paint()..color = const Color(0xFFFFC27A).withValues(alpha: 0.75),
+      );
+    }
+    canvas.drawRect(Rect.fromLTWH(hx - 30, hy - 31, 60, 3.5), snow);
+    // Minare: yukarı incelen gövde, şerefe, külah.
+    final mx = hx + 38;
+    canvas.drawPath(
+      Path()
+        ..moveTo(mx - 6, hy + 4)
+        ..lineTo(mx - 4.5, hy - 100)
+        ..lineTo(mx + 4.5, hy - 100)
+        ..lineTo(mx + 6, hy + 4)
+        ..close(),
+      Paint()..color = stone,
+    );
+    canvas.drawRect(
+      Rect.fromLTWH(mx - 8, hy - 84, 16, 3),
+      Paint()..color = stone,
+    );
+    canvas.drawRect(Rect.fromLTWH(mx - 8.5, hy - 86, 17, 2.2), snow);
+    canvas.drawPath(
+      Path()
+        ..moveTo(mx - 5.5, hy - 100)
+        ..lineTo(mx, hy - 124)
+        ..lineTo(mx + 5.5, hy - 100)
+        ..close(),
+      Paint()..color = Color.lerp(stone, lt.deep, 0.3)!,
+    );
+    canvas.drawPath(
+      Path()
+        ..moveTo(mx - 5.5, hy - 100)
+        ..lineTo(mx, hy - 124)
+        ..lineTo(mx - 1.5, hy - 104)
+        ..close(),
+      snow,
+    );
   }
 
   // ------------------------------------------------------------- kervan

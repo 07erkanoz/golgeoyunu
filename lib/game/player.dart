@@ -2332,7 +2332,10 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       // Kayakta dizler kırık, at sırtında oturur.
       ..crouching = crouching || game.onHorse
       ..sneaking = sneaking
-      ..bend = skiing ? 0.55 : 0
+      ..bend = skiing ? 0.9 : 0
+      ..ski = skiing && !isDead
+      // Tümsekte bir anlık havalanış dizleri toplatmaz.
+      ..skiAir = skiing && _skiAir && _airTime > 0.1 ? 1 : 0
       ..pushing = pushing
       ..shield = _shieldS
       ..landDip = _landDip
@@ -2500,6 +2503,11 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     // yönüne yatar, taklada döner, ölünce yana yıkılır.
     // Ayrılmış gölge ([own]) kendi ayağıyla yürür: Sâye'nin dönüşleri yok.
     if (!own) {
+      if (skiing && kk.skiAir > 0.01) {
+        // Havada kayaklar eğilir, beden dengede dik kalır (kayakla birlikte
+        // sırtüstü yatmaz).
+        turn(Offset(0, -kk.skiLift), -skiAngle * 0.65 * kk.skiAir);
+      }
       if (state == PlayerState.swing) {
         turn(const Offset(0, -h + 1.4), -_swingBody.value * facing);
       }
@@ -2874,7 +2882,8 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
             ),
         ]);
       if (ski) {
-        drawSkis(canvas, Offset(w / 2, h), 34);
+        // Havada kayaklar ayaklarla birlikte kalkar (dizler karna toplanır).
+        drawSkis(canvas, Offset(w / 2, h - _kukla.skiLift * ksy), 34);
         canvas.restore();
       }
       return;

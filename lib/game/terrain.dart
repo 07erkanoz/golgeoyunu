@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 
 import 'package:flame/components.dart';
 
+import 'doku_kar.dart';
 import 'doku_kule.dart';
 import 'golge_game.dart';
 import 'level.dart';
@@ -347,6 +348,12 @@ Picture _buildTerrain(Level lv, int c0, int c1, int r0, int r1) {
                 );
               }
             }
+          }
+          if (Cartoon.on &&
+              theme == LevelTheme.snow &&
+              lv.def.skiSurface == null) {
+            // Doku: oyma kaya katmanları, kalın kar örtüsü, saçak.
+            paintKarTile(canvas, lv, c, r, x, y);
           }
           for (final side in [-1, 1]) {
             // Ahşap gövdenin kenarında kaya tümsekleri olmaz.

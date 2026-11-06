@@ -290,6 +290,26 @@ extension _EastBackdrops on Backdrop {
       const Color(0xFFDCE6FF),
     );
     final rise = (game.level.pixelHeight - cam.y) * 0.05;
+    if (Cartoon.on) {
+      // Doku: kâğıt oyma dağ katmanları, oyma buzul, karlı çamlar.
+      paintKarBackdrop(
+        canvas,
+        w,
+        h,
+        Offset(cam.x, cam.y),
+        rise: rise,
+        variant: variant,
+      );
+      if (storm) {
+        canvas.drawRect(
+          Rect.fromLTWH(0, 0, w, h),
+          Paint()
+            ..color = const Color(0xFFDDE6F0)
+                .withValues(alpha: 0.12 + 0.06 * math.sin(_t * 0.7)),
+        );
+      }
+      return;
+    }
     // Uzak sıradağlar (pusa karışan).
     _rockyRange(
       canvas,
