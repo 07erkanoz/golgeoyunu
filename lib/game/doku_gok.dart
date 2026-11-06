@@ -57,6 +57,62 @@ void paintGokBackdrop(Canvas canvas, double w, double h, Offset cam, double t) {
   );
 }
 
+/// Göğün Katları: Gökyolu'nun kâğıt oyma bulut kuşakları, bulanıklık
+/// olmadan, katın renkleriyle ([body] gövde, [lit] kenar ışığı). Uzaktaki
+/// kuşak açık, yakındaki koyu; [drift] rüzgârın hızı.
+void paintHeavenBands(
+  Canvas canvas,
+  double w,
+  double h,
+  double camX,
+  double t, {
+  required Color body,
+  required Color lit,
+  double drift = 1,
+}) {
+  final far = Color.lerp(body, lit, 0.22)!;
+  final near = Color.lerp(body, const Color(0xFF000000), 0.28)!;
+  _band(
+    canvas,
+    w,
+    h,
+    offset: camX * 0.08 + t * 3 * drift,
+    base: h * 0.62,
+    r: 34,
+    seed: 31,
+    fill: far,
+    rim: 0.6,
+    holes: lit,
+    rimColor: lit,
+  );
+  _band(
+    canvas,
+    w,
+    h,
+    offset: camX * 0.18 + t * 6 * drift,
+    base: h * 0.76,
+    r: 46,
+    seed: 32,
+    fill: body,
+    rim: 0.5,
+    holes: far,
+    rimColor: lit,
+  );
+  _band(
+    canvas,
+    w,
+    h,
+    offset: camX * 0.28 + t * 9 * drift,
+    base: h * 0.9,
+    r: 58,
+    seed: 33,
+    fill: near,
+    rim: 0.38,
+    holes: body,
+    rimColor: lit,
+  );
+}
+
 /// Kâğıt oyma bulut kuşağı: üstü yarım daire tepecikler, her tepecikte
 /// oyulmuş kıvrım (çin bulutu), üst kenarda ılık ışık, altında bir sıra
 /// ışık deliği (ardındaki kuşağın rengi sızar).
@@ -71,6 +127,7 @@ void _band(
   required Color fill,
   required double rim,
   required Color holes,
+  Color rimColor = _rimWarm,
 }) {
   // Tepecikler: iri ve küçük karışık, aralarında düzensiz boşluk.
   final bumps = <(Offset, double, int)>[];
@@ -92,7 +149,7 @@ void _band(
   // Üst kenar ışığı: yalnız tepeciklerin üst yarısı (başka tepeciğin
   // içinde kalan yayı çizme).
   final rimPaint = Paint()
-    ..color = _rimWarm.withValues(alpha: rim)
+    ..color = rimColor.withValues(alpha: rim)
     ..style = PaintingStyle.stroke
     ..strokeWidth = 1.6;
   final carve = Paint()

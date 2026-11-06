@@ -2251,7 +2251,19 @@ extension _EastBackdrops on Backdrop {
       }
     }
     final windy = wt[2];
-    for (var k = 0; k < 3; k++) {
+    if (Cartoon.on) {
+      paintHeavenBands(
+        canvas,
+        w,
+        h,
+        cam.x,
+        _t,
+        body: mix(3),
+        lit: mix(4),
+        drift: 1 + 6 * windy,
+      );
+    }
+    for (var k = 0; k < (Cartoon.on ? 0 : 3); k++) {
       _cloudBank(
         canvas,
         w,
@@ -2337,7 +2349,26 @@ extension _EastBackdrops on Backdrop {
     }
     // Bulut katları: üst üste, ağır ağır kayan, tepeleri ışığı yakalayan
     // yumuşak kümeler.
-    for (var k = 0; k < 3; k++) {
+    if (Cartoon.on) {
+      paintHeavenBands(
+        canvas,
+        w,
+        h,
+        cam.x,
+        _t,
+        body: Color.lerp(
+          Color.lerp(const Color(0xFF2A3460), const Color(0xFFE8D8C8), day)!,
+          const Color(0xFF2A1C34),
+          storm,
+        )!,
+        lit: Color.lerp(
+          Color.lerp(const Color(0xFFB8C8F0), const Color(0xFFFFF8EC), day)!,
+          const Color(0xFF6A4A80),
+          storm,
+        )!,
+      );
+    }
+    for (var k = 0; k < (Cartoon.on ? 0 : 3); k++) {
       final body = Color.lerp(
         Color.lerp(const Color(0xFF2A3460), const Color(0xFFE8D8C8), day)!,
         const Color(0xFF2A1C34),
