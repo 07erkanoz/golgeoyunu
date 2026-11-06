@@ -5,6 +5,7 @@ import 'dart:ui' as ui;
 import 'package:flame/components.dart';
 
 import 'audio.dart';
+import 'doku_akana.dart';
 import 'entities.dart';
 import 'erlik.dart';
 import 'golge_game.dart';
@@ -93,6 +94,22 @@ class SeaWater extends Component with HasGameReference<GolgeGame> {
             seaColor(v.bottom - surface),
           ]),
       );
+      if (Cartoon.on) {
+        // Doku: suyun içinde kâğıt oyma kayalar, yosunlar, mercanlar.
+        canvas.save();
+        canvas.clipRect(Rect.fromLTRB(v.left, top, v.right, v.bottom));
+        canvas.translate(v.left, v.top);
+        paintAkAnaBackdrop(
+          canvas,
+          v.width,
+          v.height,
+          v.left,
+          v.top,
+          _t,
+          water: seaColor((top + v.bottom) / 2 - surface),
+        );
+        canvas.restore();
+      }
     }
     // Hava cepleri: kayanın içinde loş hava, dibinde suyun yüzü.
     for (final a in game.level.airRects) {

@@ -6,6 +6,7 @@ import 'package:flame/components.dart';
 
 import 'doku_kar.dart';
 import 'doku_kule.dart';
+import 'doku_akana.dart';
 import 'doku_derinkuyu.dart';
 import 'doku_ergenekon.dart';
 import 'doku_erlik.dart';
@@ -361,6 +362,10 @@ Picture _buildTerrain(Level lv, int c0, int c1, int r0, int r1) {
               lv.def.skiSurface == null) {
             // Doku: oyma kaya katmanları, kalın kar örtüsü, saçak.
             paintKarTile(canvas, lv, c, r, x, y);
+          }
+          if (Cartoon.on && theme == LevelTheme.sea) {
+            // Doku: denizin aşındırdığı kaya, su oyukları, midyeler.
+            paintAkAnaTile(canvas, lv, c, r, x, y);
           }
           if (Cartoon.on && theme == LevelTheme.forest) {
             // Doku: kök sarmış toprak, yosunlu çim örtüsü.
