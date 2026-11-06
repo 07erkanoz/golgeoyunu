@@ -1848,18 +1848,26 @@ extension _EastBackdrops on Backdrop {
       fromTop: true,
     );
     final leaf = Paint()..color = const Color(0xFF1C3A28);
+    final lobes = <(Offset, double)>[];
     _repeat(w, cam.x * 0.5, 70, (x, rnd) {
       for (var k = 0; k < 3; k++) {
-        canvas.drawCircle(
-          Offset(
-            x + rnd.nextDouble() * 50,
-            h * (0.08 + rnd.nextDouble() * 0.1),
-          ),
-          18 + rnd.nextDouble() * 22,
-          leaf,
+        final o = Offset(
+          x + rnd.nextDouble() * 50,
+          h * (0.08 + rnd.nextDouble() * 0.1),
         );
+        final r = 18 + rnd.nextDouble() * 22;
+        if (Cartoon.on) {
+          canvas.drawCircle(
+            o + const Offset(3, 4),
+            r,
+            Paint()..color = const Color(0x33000000),
+          );
+        }
+        canvas.drawCircle(o, r, leaf);
+        lobes.add((o, r));
       }
     }, salt: 21);
+    if (Cartoon.on) paintCanopyDetail(canvas, lobes, leaf.color);
   }
 
   /// Ağaç gövdeleri: koyu ağaçlar ve ak kayınlar (kara benekli ak gövde,
@@ -1893,7 +1901,21 @@ extension _EastBackdrops on Backdrop {
         ..lineTo(bx + tw * 0.6 + lean, 0)
         ..lineTo(bx + tw, base)
         ..close();
+      if (Cartoon.on) paintTrunkShadow(canvas, trunk);
       canvas.drawPath(trunk, isBirch ? birch : darkP);
+      if (Cartoon.on) {
+        paintTrunkBark(
+          canvas,
+          Offset(bx - tw, base),
+          Offset(bx + tw, base),
+          Offset(bx - tw * 0.6 + lean, 0),
+          Offset(bx + tw * 0.6 + lean, 0),
+          isBirch ? birch.color : dark,
+          scale,
+          (x * 7).round() ^ salt,
+          birch: isBirch,
+        );
+      }
       if (isBirch) {
         // Kayının kara benekleri.
         for (var k = 0; k < 9; k++) {

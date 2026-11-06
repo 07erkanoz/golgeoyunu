@@ -14,6 +14,7 @@ import 'doku_kaf.dart';
 import 'doku_konya.dart';
 import 'doku_kar.dart';
 import 'doku_nemrut.dart';
+import 'doku_otuken.dart';
 import 'doku_kule.dart';
 import 'audio.dart';
 import 'fairy_chimney.dart';
