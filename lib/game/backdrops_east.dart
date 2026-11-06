@@ -1576,83 +1576,87 @@ extension _EastBackdrops on Backdrop {
       ..color = const Color(0xFF8A9CC0).withValues(alpha: 0.55);
     final window = Paint()
       ..color = const Color(0xFFFFC27A).withValues(alpha: 0.7);
-    // Uzakta şehir: kubbeli camiler, şerefeli minareler, düz damlı evler;
-    // kubbelerin üstü ay ışığını yakalar, pencerelerde kandil.
-    _repeat(w, cam.x * 0.06, 140, (x, rnd) {
-      final hh = 18 + rnd.nextDouble() * 22;
-      final ww = 50 + rnd.nextDouble() * 50;
-      canvas.drawRect(Rect.fromLTWH(x, base - hh, ww, hh + 20), dark);
-      for (var k = 0; k < 3; k++) {
-        if (rnd.nextDouble() < 0.5) {
-          canvas.drawRect(
-            Rect.fromLTWH(x + 6 + k * ww / 3, base - hh + 6, 3, 4),
+    if (Cartoon.on) {
+      paintKonyaCity(canvas, w, h, base, cam.x);
+    } else {
+      // Uzakta şehir: kubbeli camiler, şerefeli minareler, düz damlı evler;
+      // kubbelerin üstü ay ışığını yakalar, pencerelerde kandil.
+      _repeat(w, cam.x * 0.06, 140, (x, rnd) {
+        final hh = 18 + rnd.nextDouble() * 22;
+        final ww = 50 + rnd.nextDouble() * 50;
+        canvas.drawRect(Rect.fromLTWH(x, base - hh, ww, hh + 20), dark);
+        for (var k = 0; k < 3; k++) {
+          if (rnd.nextDouble() < 0.5) {
+            canvas.drawRect(
+              Rect.fromLTWH(x + 6 + k * ww / 3, base - hh + 6, 3, 4),
+              window,
+            );
+          }
+        }
+      }, salt: 7);
+      _repeat(w, cam.x * 0.1, 360, (x, rnd) {
+        final r = 40 + rnd.nextDouble() * 30;
+        canvas.drawRect(
+          Rect.fromLTWH(x - r, base - r * 0.8, r * 2, r * 0.8 + 10),
+          dark,
+        );
+        final dome = Rect.fromCircle(
+          center: Offset(x, base - r * 0.8),
+          radius: r,
+        );
+        canvas.drawArc(dome, math.pi, math.pi, true, dark);
+        canvas.drawArc(dome, math.pi * 1.1, math.pi * 0.45, false, moonRim);
+        // Kubbe alemi.
+        canvas.drawLine(
+          Offset(x, base - r * 1.8),
+          Offset(x, base - r * 1.8 - 12),
+          Paint()
+            ..color = const Color(0xFFB8A060)
+            ..strokeWidth = 1.6,
+        );
+        // Yan kubbecikler ve pencere sırası.
+        for (final side in [-1.0, 1.0]) {
+          final sc = Offset(x + side * r * 0.75, base - r * 0.8);
+          canvas.drawArc(
+            Rect.fromCircle(center: sc, radius: r * 0.32),
+            math.pi,
+            math.pi,
+            true,
+            dark,
+          );
+        }
+        for (var k = -2; k <= 2; k++) {
+          canvas.drawRRect(
+            RRect.fromRectAndRadius(
+              Rect.fromLTWH(x + k * r * 0.32 - 2.5, base - r * 0.55, 5, 9),
+              const Radius.circular(2.5),
+            ),
             window,
           );
         }
-      }
-    }, salt: 7);
-    _repeat(w, cam.x * 0.1, 360, (x, rnd) {
-      final r = 40 + rnd.nextDouble() * 30;
-      canvas.drawRect(
-        Rect.fromLTWH(x - r, base - r * 0.8, r * 2, r * 0.8 + 10),
-        dark,
-      );
-      final dome = Rect.fromCircle(
-        center: Offset(x, base - r * 0.8),
-        radius: r,
-      );
-      canvas.drawArc(dome, math.pi, math.pi, true, dark);
-      canvas.drawArc(dome, math.pi * 1.1, math.pi * 0.45, false, moonRim);
-      // Kubbe alemi.
-      canvas.drawLine(
-        Offset(x, base - r * 1.8),
-        Offset(x, base - r * 1.8 - 12),
-        Paint()
-          ..color = const Color(0xFFB8A060)
-          ..strokeWidth = 1.6,
-      );
-      // Yan kubbecikler ve pencere sırası.
-      for (final side in [-1.0, 1.0]) {
-        final sc = Offset(x + side * r * 0.75, base - r * 0.8);
-        canvas.drawArc(
-          Rect.fromCircle(center: sc, radius: r * 0.32),
-          math.pi,
-          math.pi,
-          true,
-          dark,
-        );
-      }
-      for (var k = -2; k <= 2; k++) {
-        canvas.drawRRect(
-          RRect.fromRectAndRadius(
-            Rect.fromLTWH(x + k * r * 0.32 - 2.5, base - r * 0.55, 5, 9),
-            const Radius.circular(2.5),
-          ),
-          window,
-        );
-      }
-      for (final side in [-1.0, 1.0]) {
-        final mx = x + side * (r + 24);
-        final mh = r * 3.2;
-        canvas.drawRect(Rect.fromLTWH(mx - 5, base - mh, 10, mh), dark);
-        // Şerefe.
-        canvas.drawRect(Rect.fromLTWH(mx - 8, base - mh * 0.72, 16, 3), dark);
-        canvas.drawPath(
-          Path()
-            ..moveTo(mx - 6, base - mh)
-            ..lineTo(mx, base - mh - r * 0.7)
-            ..lineTo(mx + 6, base - mh)
-            ..close(),
-          dark,
-        );
-        canvas.drawLine(
-          Offset(mx - 5, base - mh),
-          Offset(mx - 5, base - mh * 0.3),
-          moonRim,
-        );
-        canvas.drawCircle(Offset(mx, base - mh * 0.72 - 3), 1.6, window);
-      }
-    }, salt: 2);
+        for (final side in [-1.0, 1.0]) {
+          final mx = x + side * (r + 24);
+          final mh = r * 3.2;
+          canvas.drawRect(Rect.fromLTWH(mx - 5, base - mh, 10, mh), dark);
+          // Şerefe.
+          canvas.drawRect(Rect.fromLTWH(mx - 8, base - mh * 0.72, 16, 3), dark);
+          canvas.drawPath(
+            Path()
+              ..moveTo(mx - 6, base - mh)
+              ..lineTo(mx, base - mh - r * 0.7)
+              ..lineTo(mx + 6, base - mh)
+              ..close(),
+            dark,
+          );
+          canvas.drawLine(
+            Offset(mx - 5, base - mh),
+            Offset(mx - 5, base - mh * 0.3),
+            moonRim,
+          );
+          canvas.drawCircle(Offset(mx, base - mh * 0.72 - 3), 1.6, window);
+        }
+      }, salt: 2);
+    }
     // Şehrin üstünde ince bir ışık pusu.
     canvas.drawRect(
       Rect.fromLTWH(0, base - 60, w, 80),

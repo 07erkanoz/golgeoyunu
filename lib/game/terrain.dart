@@ -7,6 +7,7 @@ import 'package:flame/components.dart';
 import 'doku_kar.dart';
 import 'doku_kule.dart';
 import 'doku_derinkuyu.dart';
+import 'doku_konya.dart';
 import 'doku_nemrut.dart';
 import 'doku_peri.dart';
 import 'golge_game.dart';
@@ -357,6 +358,10 @@ Picture _buildTerrain(Level lv, int c0, int c1, int r0, int r1) {
               lv.def.skiSurface == null) {
             // Doku: oyma kaya katmanları, kalın kar örtüsü, saçak.
             paintKarTile(canvas, lv, c, r, x, y);
+          }
+          if (Cartoon.on && theme == LevelTheme.konya) {
+            // Doku: Selçuklu kesme taşı, kalın kar örtüsü.
+            paintKonyaTile(canvas, lv, c, r, x, y);
           }
           if (Cartoon.on && theme == LevelTheme.cave) {
             // Doku: keski izleri, oyma tavan, aşınmış taban dudağı.
