@@ -7,6 +7,7 @@ import 'package:flame/components.dart';
 
 import 'ark_animals.dart';
 import 'doku_derinkuyu.dart';
+import 'doku_ergenekon.dart';
 import 'doku_erlik.dart';
 import 'doku_gok.dart';
 import 'doku_kaf.dart';

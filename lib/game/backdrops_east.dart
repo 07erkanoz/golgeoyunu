@@ -1951,6 +1951,21 @@ extension _EastBackdrops on Backdrop {
         Paint()..color = const Color(0xFFFFF0D0).withValues(alpha: sun),
       );
     }
+    if (Cartoon.on) {
+      paintErgenekonBackdrop(
+        canvas,
+        w,
+        h,
+        cam.x,
+        cam.y,
+        dawn,
+        sun,
+        _t,
+        ironX: w * 0.55 - cam.x * 0.12 % (w * 2.2),
+      );
+      _ergenekonHerd(canvas, w, h, cam, -cam.y * 0.04);
+      return;
+    }
     final dy = -cam.y * 0.04;
     // Aşılmaz dağlar: dört yanı çeviren dik, kayalık, karlı sıradağlar.
     _rockyRange(
@@ -2055,17 +2070,7 @@ extension _EastBackdrops on Backdrop {
         }
       }
     }, salt: 5);
-    final herd = Paint()..color = const Color(0xFF162418);
-    _repeat(w, cam.x * 0.36, 420, (x, rnd) {
-      if (rnd.nextDouble() < 0.5) return;
-      for (var k = 0; k < 3; k++) {
-        canvas.save();
-        canvas.translate(x + k * 26, h * 0.82 + dy + (k % 2) * 3);
-        canvas.scale((rnd.nextBool() ? 1 : -1) * 0.16, 0.16);
-        canvas.drawPath(MythShapes.horse, herd);
-        canvas.restore();
-      }
-    }, salt: 9);
+    _ergenekonHerd(canvas, w, h, cam, dy);
     _ridge(
       canvas,
       w,
@@ -2077,6 +2082,27 @@ extension _EastBackdrops on Backdrop {
       seed: 23,
       color: const Color(0xFF16261A),
     );
+  }
+
+  /// Vadide otlayan atlar.
+  void _ergenekonHerd(
+    Canvas canvas,
+    double w,
+    double h,
+    Vector2 cam,
+    double dy,
+  ) {
+    final herd = Paint()..color = const Color(0xFF162418);
+    _repeat(w, cam.x * 0.36, 420, (x, rnd) {
+      if (rnd.nextDouble() < 0.5) return;
+      for (var k = 0; k < 3; k++) {
+        canvas.save();
+        canvas.translate(x + k * 26, h * 0.82 + dy + (k % 2) * 3);
+        canvas.scale((rnd.nextBool() ? 1 : -1) * 0.16, 0.16);
+        canvas.drawPath(MythShapes.horse, herd);
+        canvas.restore();
+      }
+    }, salt: 9);
   }
 
   /// Yumuşak bulut kümesi: tepesi ışık alan, altı gölgeli yuvarlak öbekler.
