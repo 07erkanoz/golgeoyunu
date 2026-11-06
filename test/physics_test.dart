@@ -1588,7 +1588,30 @@ void main() {
 
   group('Aziz Hakob Manastırı', () {
     testWithGame<GolgeGame>(
-      'revakta koşan sarkıtlardan kurtulur',
+      'revakta koşan, çatırtıda durursa sarkıtlardan kurtulur',
+      GolgeGame.new,
+      (game) async {
+        final p = await place(game, 4, 265, 16);
+        for (final g in game.world.children.whereType<Guard>().toList()) {
+          g.removeFromParent();
+        }
+        // Çatırdayan (düşmekte olan) bir sarkıt varken durur, sonra sürer.
+        for (var i = 0; i < _hz * 12 && p.position.x < 292 * kTile; i++) {
+          final creaking = game.world.children
+              .whereType<FallingIcicle>()
+              .any((c) => c.debugShaking && !c.debugFallen);
+          keys(game).right = !creaking;
+          game.update(_dt);
+        }
+        keys(game).right = false;
+        run(game, 1);
+        expect(p.isDead, isFalse);
+        expect(p.position.x, greaterThanOrEqualTo(292 * kTile));
+      },
+    );
+
+    testWithGame<GolgeGame>(
+      'revakta durmadan koşanı sarkıt bulur',
       GolgeGame.new,
       (game) async {
         final p = await place(game, 4, 265, 16);
@@ -1596,11 +1619,10 @@ void main() {
           g.removeFromParent();
         }
         keys(game).right = true;
-        for (var i = 0; i < _hz * 4 && p.position.x < 292 * kTile; i++) {
+        for (var i = 0; i < _hz * 6 && !p.isDead; i++) {
           game.update(_dt);
         }
-        run(game, 1);
-        expect(p.isDead, isFalse);
+        expect(p.isDead, isTrue);
       },
     );
 

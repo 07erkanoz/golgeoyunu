@@ -43,6 +43,10 @@ class SkiFx extends Component with HasGameReference<GolgeGame> {
       // Bir takla, rampadan takla uçurumunun kenarına dek yeter.
       kut = math.min(5, kut + 2.6 * weight);
       p.skiKick(40.0 * weight);
+      // Her düzgün inen takla bir ateşböceği (sonraki bölüme taşınır).
+      for (var i = 0; i < weight; i++) {
+        game.gainFirefly();
+      }
     }
     GameAudio.instance.play('firefly', volume: 0.5);
   }

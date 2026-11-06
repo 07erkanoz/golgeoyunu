@@ -669,6 +669,9 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     }
     _respawn = Level.standOn(cell, Player.w, Player.h);
     _puzzle = capturePuzzle(world.children);
+    // Kavanozu boş gelene ağaç bir ateşböceği verir: öbekler seyrek, ama
+    // hiçbir yerde ateşböceksiz kalınıp takılınmasın.
+    if (fireflies == 0) gainFirefly();
     _checkpointFireflies = fireflies;
     _saveProgress();
   }
@@ -1064,7 +1067,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         for (final l in level.leverCells) Lever(l),
         for (final (col, top, bottom) in level.gates) Gate(col, top, bottom),
         ?_guideBird(),
-        for (final f in level.fireflyCells)
+        for (final f in keptFireflies(level))
           FireflySwarm(
             f,
             regrow: level.def.theme == LevelTheme.forest ? 9 : null,
@@ -2154,6 +2157,9 @@ class GolgeGame extends FlameGame with KeyboardEvents {
 
   /// Sürpriz oldu: bu oyunda bir daha olmaz, sır sayacına eklenir.
   void foundSecret(String name) {
+    // İlk bulunuşta bir ateşböceği ödül (sürpriz alanların bir anlamı olsun).
+    // Kendiliğinden gelen gölge oyunu (boş durunca) ödül vermez.
+    if (!secretSeen(name) && name != 'golgeOyunu') gainFirefly();
     markEvent('sir:$levelIndex:$name');
     if (Settings.secrets.add('$levelIndex:$name')) Settings.save();
   }
@@ -3376,4 +3382,44 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     }
     return KeyEventResult.handled;
   }
+}
+
+/// Bölümde gerçekten konan ateşböceği öbekleri: haritadakilerin yaklaşık
+/// yarısı. Kavanoz hep dolu olunca saklanmaya gerek kalmıyordu. Gerekli
+/// yerlerdekiler hep kalır: karanlık bölgelerin yakını, devin çevresi,
+/// ışık alanları; ateşböceğiyle kurulan bölümlerde (Ötüken, Erlik, Ak Ana)
+/// hepsi. Geri kalanlardan, ilerleyiş sırasıyla, biri kalır biri kalkar.
+List<Vector2> keptFireflies(Level lv) {
+  final all = lv.fireflyCells;
+  final theme = lv.def.theme;
+  if (theme == LevelTheme.forest ||
+      theme == LevelTheme.underworld ||
+      theme == LevelTheme.sea) {
+    return all;
+  }
+  bool needed(Vector2 f) {
+    final o = Offset(f.x + kTile / 2, f.y + kTile / 2);
+    if (lv.darkZones.any((z) => z.inflate(10 * kTile).contains(o))) {
+      return true;
+    }
+    if (lv.giantCells.any((g) => (g.x - f.x).abs() < 30 * kTile)) return true;
+    return lv.def.glades.any(
+      (z) => Rect.fromLTRB(
+        (z.$1 - 8) * kTile.toDouble(),
+        (z.$2 - 8) * kTile.toDouble(),
+        (z.$3 + 9) * kTile.toDouble(),
+        (z.$4 + 9) * kTile.toDouble(),
+      ).contains(o),
+    );
+  }
+
+  final rest = [
+    for (final f in all)
+      if (!needed(f)) f,
+  ]..sort((a, b) => lv.progressOf(a).compareTo(lv.progressOf(b)));
+  final drop = <Vector2>{for (var i = 1; i < rest.length; i += 2) rest[i]};
+  return [
+    for (final f in all)
+      if (!drop.contains(f)) f,
+  ];
 }

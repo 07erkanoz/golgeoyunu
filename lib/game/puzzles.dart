@@ -2598,22 +2598,29 @@ class ScaleCrank extends PositionComponent
 
 /// Saçaktan sarkan buz sarkıtı: altından geçilince titrer, sonra düşer.
 /// Düşen bir şey (buz sarkıtı, gevşek kaya) şimdi çatırdamaya başlarsa
-/// Sâye'nin önüne mi düşer: koşarak gelen Sâye'nin oraya varmasına,
-/// çatırdama ve düşüş süresinden biraz fazlası kalmışsa (önüne düşer, aynı
-/// hızla süren kırık parçalarına varır; duran ya da altında bekleyen
-/// vurulur). Yavaş yürüyende ya da tam altında durandaysa yakından.
-bool fallsAhead(Player p, Vector2 at, double shake) {
+/// Sâye'nin üstüne mi düşer: aynı hızla sürdürürse oraya vardığı anda
+/// ucu başına iner. Çatırtıyı duyup duran (ya da geri dönen) kurtulur, önüne
+/// düşer; koşmayı sürdüren vurulur. Altında duran da vurulur. (Eskiden
+/// koşanın biraz önüne düşüyordu: koşan hepsinden rahatça geçiyordu.)
+///
+/// [reach]: düşenin tepesinden çarpan ucuna dek boy.
+bool fallsAhead(Player p, Vector2 at, double shake, {double reach = 24}) {
   final dx = at.x - p.center.x;
   if (dx.abs() < 12) return true;
   final v = p.velocity.x;
   if (v.abs() < 30 || dx.sign != v.sign) return false;
-  // Parmak ucunda (ya da iterek) yavaş gelen çatırtıyı yakından duyar:
-  // üstüne düşer (Aziz Hakob'un açmazı: koşan çanı çalar, sinsice yürüyeni
-  // sarkıt bulur).
-  if (v.abs() < Player.runSpeed * 0.6) return dx.abs() < 40;
-  final drop = math.max(0.0, p.position.y - at.y);
-  final fall = math.sqrt(2 * drop / Player.gravity);
-  return dx.abs() < v.abs() * (shake + fall + 0.12);
+  final drop = math.max(0.0, p.position.y - at.y - reach);
+  return dx.abs() <= v.abs() * (shake + fallTime(drop));
+}
+
+/// Düşen şeyin [drop] kadar inme süresi (ivme 1900, en çok 900 hız).
+double fallTime(double drop) {
+  const g = 1900.0;
+  const vmax = 900.0;
+  const tMax = vmax / g;
+  const dMax = 0.5 * g * tMax * tMax;
+  if (drop <= dMax) return math.sqrt(2 * drop / g);
+  return tMax + (drop - dMax) / vmax;
 }
 
 class FallingIcicle extends PositionComponent with HasGameReference<GolgeGame> {
@@ -2625,6 +2632,9 @@ class FallingIcicle extends PositionComponent with HasGameReference<GolgeGame> {
 
   /// Testler için: düşüp kırıldı mı.
   bool get debugFallen => _fallen;
+
+  /// Testler için: çatırdamaya başladı mı.
+  bool get debugShaking => _shake >= 0;
 
   double _shake = -1;
   double _vy = 0;
@@ -2642,9 +2652,7 @@ class FallingIcicle extends PositionComponent with HasGameReference<GolgeGame> {
     }
     if (_shake < 0) {
       // Yaklaşan ayak sesiyle çatırdar. Sâye'nin hızına göre zamanlanır:
-      // koşarak gelenin hemen önüne düşer (eskiden 40 piksel kala
-      // çatırdıyordu; çatırdama ve düşüş sürerken koşan Sâye çoktan
-      // geçmiş oluyordu, buz hep arkasına düşüyordu).
+      // koşmayı sürdürürse tam başına iner; çatırtıyı duyup duran kurtulur.
       if (p != null &&
           !p.isDead &&
           p.center.y > position.y &&
@@ -2661,7 +2669,9 @@ class FallingIcicle extends PositionComponent with HasGameReference<GolgeGame> {
     position.y += _vy * dt;
     if (p != null &&
         !p.isDead &&
-        p.toRect().contains(Offset(position.x, position.y + 18))) {
+        p.toRect().overlaps(
+          Rect.fromLTWH(position.x - 4, position.y + 6, 8, 18),
+        )) {
       p.die();
     }
     if (game.level.cellAt(position.x, position.y + 22) == '#' ||

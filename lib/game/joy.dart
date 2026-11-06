@@ -583,6 +583,8 @@ class JoyLights extends PositionComponent with HasGameReference<GolgeGame> {
     if (taken.every((t) => t)) {
       done = true;
       _run = null;
+      // Dizinin ödülü iki ateşböceği: biri sırdan (foundSecret), biri burada.
+      if (!game.secretSeen(secret)) game.gainFirefly();
       game.foundSecret(secret);
       GameAudio.instance.play('clap', volume: 0.7);
       GameAudio.instance.play('bell', volume: 0.35);
