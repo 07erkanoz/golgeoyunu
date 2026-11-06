@@ -7,6 +7,7 @@ import 'package:flame/components.dart';
 
 import 'ark_animals.dart';
 import 'doku_derinkuyu.dart';
+import 'doku_erlik.dart';
 import 'doku_gok.dart';
 import 'doku_kaf.dart';
 import 'doku_konya.dart';
@@ -217,6 +218,18 @@ class Backdrop extends Component with HasGameReference<GolgeGame> {
           0.16,
           const Color(0xFF6A8AE0),
         );
+        if (Cartoon.on) {
+          paintErlikBackdrop(
+            canvas,
+            w,
+            h,
+            cam.x,
+            cam.y,
+            _t,
+            lights: !Settings.lowGraphics,
+          );
+          break;
+        }
         final dy = -cam.y * 0.05;
         _ridge(
           canvas,
