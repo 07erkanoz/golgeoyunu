@@ -1620,30 +1620,6 @@ abstract final class PerdeSaye {
   /// Kanatla uçarken: havada süzülür (bacaklar yürümez).
   static bool flying = false;
 
-  /// Perde bir sıçrayış oynatırken: havada (kukla birimi/sn, aşağı artı).
-  /// Verilince hız tahmin edilmez, sıçrayış pozu bu hızla kurulur.
-  static double? leapVy;
-
-  /// Perde tırmandırırken (ip, sarmaşık, duvar, gövde): el el üstüne;
-  /// ellerin tuttuğu yer perdedeki gerçek yükselişe göre ilerler.
-  static bool climbing = false;
-
-  /// Basamak, yokuş: dikey kayma sıçrayış sayılmaz, yerde yürür.
-  static bool grounded = false;
-
-  /// Perde yüzdürürken (gövdeyi perde yatırır): yüzüş pozu.
-  static bool swimming = false;
-
-  /// Kamera izleyen perde iki kez çizer: önce görünmez bir tuvale
-  /// ([measuring]; Sâye'nin yeri ve adımı kurulur, [stageFeet]'e yazılır),
-  /// sonra perde kaydırılıp asıl çizim ([replay]; kukla yeniden adım atmaz,
-  /// kurulan poz çizilir).
-  static bool replay = false;
-  static bool measuring = false;
-  static ui.Offset? stageFeet;
-  static double _stageA = 0;
-  static double _offLocal = 0;
-
   /// Sırtındaki kâğıt kanatlar (oyundaki gibi omza takılı): null ise yok,
   /// 0 katlı, 1 açık. [wingFlap]: çırpışın genliği.
   static double? wings;
@@ -1815,8 +1791,7 @@ abstract final class PerdeSaye {
     bool driven = false,
   }) {
     if (!ready || a <= 0) return;
-    swim = swim || swimming;
-    final last = replay ? null : _last;
+    final last = _last;
     final m = c.getTransform();
     final sx = math.sqrt(m[0] * m[0] + m[1] * m[1]);
     final screenX = m[0] * feet.dx + m[4] * feet.dy + m[12];
@@ -1824,14 +1799,7 @@ abstract final class PerdeSaye {
     final unit = scale * (sx > 0 ? sx : 1); // ekran pikseli / oyun birimi
     // Ekranda yüzü hangi yana: perdenin aynalaması ile [faceLeft].
     final facing = (m[0] < 0 ? -1.0 : 1.0) * (faceLeft ? -1 : 1);
-    if (measuring && tint == null && a >= _stageA - 0.001) {
-      // Kameranın izleyeceği Sâye: en belirgin (asıl) olanı.
-      stageFeet = ui.Offset(screenX, screenY);
-      _stageA = a;
-    }
-    if (replay) {
-      // Asıl çizim: adım ölçüm geçişinde atıldı.
-    } else if (last == null || time < last - 0.001 || time - last > 2) {
+    if (last == null || time < last - 0.001 || time - last > 2) {
       // Yeni perde: kukla baştan (yaylı parçalar yerine otursun).
       _k = SayeKukla();
       _last = time;
@@ -1886,12 +1854,7 @@ abstract final class PerdeSaye {
       // biçimde yatay hızdan büyükse havada sayılır (yokuşta/merdivende
       // yürürken yanlışlıkla zıplama pozuna girmesin).
       final airborne =
-          (leapVy != null && mode == null) ||
-          (free &&
-              !grounded &&
-              !climbing &&
-              _vy.abs() > 42 &&
-              _vy.abs() > _vx.abs() * 1.35) ||
+          (free && _vy.abs() > 42 && _vy.abs() > _vx.abs() * 1.35) ||
           (flying && mode == null);
       if (jumped) {
         _off = 0;
@@ -1972,18 +1935,14 @@ abstract final class PerdeSaye {
             mode ??
             (swim
                 ? KuklaMode.swim
-                : (climbing
-                      ? KuklaMode.vine
-                      : (airborne ? KuklaMode.air : KuklaMode.ground)))
-        // Tırmanırken ellerin ilerleyişi: ayak noktasının gerçek yükselişi.
-        ..worldY = screenY / unit
+                : (airborne ? KuklaMode.air : KuklaMode.ground))
         ..forward = swim || mode == KuklaMode.swim
             ? 70
             : (flying && mode == null
                   ? 233
                   : (walk != 0 ? walk / scale : ahead))
         // Kanatla uçuş oyundaki süzülme gibi: ağır iniş, tam ileri.
-        ..vy = airborne ? (flying ? 75 : (leapVy ?? _vy)) : vy / scale
+        ..vy = airborne ? (flying ? 75 : _vy) : vy / scale
         // Tutunma noktası perdede eğimsiz verilir; kukla [rot] kadar yatık
         // çizildiğinden kendi eksenine çevrilir (yoksa eller kenara oturmaz).
         ..grip = _unrotate(grip, rot, faceLeft) / scale
@@ -2001,7 +1960,7 @@ abstract final class PerdeSaye {
       for (var s = 0; s < steps; s++) {
         _k.step(subDt, _in);
       }
-      if (driven && free && !airborne && !jumped && !climbing) {
+      if (driven && free && !airborne && !jumped) {
         _lockFoot(screenX, facing, unit);
       } else {
         _lockIdx = -1;
@@ -2010,8 +1969,7 @@ abstract final class PerdeSaye {
     }
     c.save();
     // Yürüyerek yetişirken istenen yerin biraz ardında çizilir.
-    if (!replay) _offLocal = m[0].abs() > 1e-6 ? _off / m[0] : 0;
-    c.translate(feet.dx + _offLocal, feet.dy);
+    c.translate(feet.dx + (m[0].abs() > 1e-6 ? _off / m[0] : 0), feet.dy);
     if (rot != 0) c.rotate(rot);
     c.scale(faceLeft ? -scale : scale, scale);
     if (flying && mode == null) {
@@ -2019,11 +1977,6 @@ abstract final class PerdeSaye {
       c.translate(0, -14);
       c.rotate(0.16);
       c.translate(0, 14);
-    }
-    if (measuring) {
-      c.restore();
-      resetStage();
-      return;
     }
     final layer = a < 1;
     if (layer) {
@@ -2044,20 +1997,5 @@ abstract final class PerdeSaye {
     if (w != null) _wing(c, back, w, time, near: true, tint: tint);
     if (layer) c.restore();
     c.restore();
-    resetStage();
-  }
-
-  /// Perdenin bir çizim için kurduğu hâller (tırmanış, basamak, sıçrayış)
-  /// sıfırlanır: çizimden sonra ve her perde karesinin başında.
-  static void beginMeasure() {
-    measuring = true;
-    stageFeet = null;
-    _stageA = 0;
-  }
-
-  static void resetStage() {
-    climbing = false;
-    grounded = false;
-    leapVy = null;
   }
 }

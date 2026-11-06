@@ -326,7 +326,6 @@ class PerdePainter {
   }) {
     if (alpha <= 0) return;
     _time = time;
-    PerdeSaye.resetStage();
     final r = screenRect(size);
     final layered = alpha < 0.999;
     if (layered) {
@@ -389,100 +388,6 @@ class PerdePainter {
     final k = r.width / _vw;
     canvas.scale(k, r.height / _vh);
     _lastScene = bridge == null ? scene : null;
-    // Kamera Sâye'yi izler: Sâye perdede yerinde kalır, yol aldıkça dekor ve
-    // öbür tasvirler kayarak ona gelir. Önce sahne görünmez bir tuvale
-    // çizilir (Sâye'nin bu karedeki yeri ve adımı orada kurulur), sonra
-    // perde o kadar kaydırılıp asıl çizim yapılır.
-    final cam = _follow(scene, bridge, time, progress, bridgeLines);
-    canvas.translate(cam, 0);
-    PerdeSaye.replay = true;
-    _stage(canvas, scene, bridge, time, progress, bridgeLines);
-    if (cam.abs() > 0.5) {
-      // Kayan perdenin açılan kenarında zemin biter görünmesin: sahnenin
-      // alt şeridi (zemin) kenardan aynalanıp uzatılır; üstü boş gök kalır.
-      final edge = cam < 0 ? _vw : 0.0;
-      final w = cam.abs() + 2;
-      canvas.save();
-      canvas.clipRect(
-        Rect.fromLTWH(cam < 0 ? _vw : -w, _ground - 22, w, _vh),
-      );
-      canvas.translate(2 * edge, 0);
-      canvas.scale(-1, 1);
-      _stage(canvas, scene, bridge, time, progress, bridgeLines);
-      canvas.restore();
-    }
-    PerdeSaye.replay = false;
-    canvas.restore();
-    _afterStage(canvas, r, c, lamp, scene, bridge, time, progress, k);
-    if (layered) canvas.restore();
-  }
-
-  // ---------------------------------------------------------------- kamera
-
-  static double _cam = 0, _camRest = 0, _camAnchor = 0;
-  static double? _camTime;
-  static int _camLine = -1;
-  static double? _camLastX;
-
-  /// Kameranın en çok kayması (sahne pikseli): perdenin kenarında boş bez
-  /// çok açılmasın.
-  static const double _camMax = 300;
-
-  /// Bu karede perdenin ne kadar kayacağı (sahne pikseli, yatay).
-  static double _follow(
-    PerdeScene scene,
-    int? bridge,
-    double time,
-    double progress,
-    int bridgeLines,
-  ) {
-    final rec = ui.PictureRecorder();
-    PerdeSaye.beginMeasure();
-    _stage(Canvas(rec), scene, bridge, time, progress, bridgeLines);
-    PerdeSaye.measuring = false;
-    rec.endRecording().dispose();
-    final feet = PerdeSaye.stageFeet;
-    final last = _camTime;
-    final dt = last == null ? 0.0 : time - last;
-    _camTime = time;
-    final line = progress.floor();
-    if (last == null || dt < -0.001 || dt > 2) {
-      // Yeni perde.
-      _cam = 0;
-      _camRest = 0;
-      _camLine = line;
-      _camLastX = feet?.dx;
-      _camAnchor = feet?.dx ?? 0;
-      return 0;
-    }
-    if (feet == null) {
-      _camLastX = null;
-      _camRest = _cam;
-      _cam = _camRest *= math.exp(-dt / 0.6);
-      return _cam;
-    }
-    final jumped = _camLastX == null || (feet.dx - _camLastX!).abs() > 60;
-    _camLastX = feet.dx;
-    if (line != _camLine || jumped) {
-      // Yeni satır ya da Sâye yeni yerinde: o yer onun perdedeki yeri olur;
-      // perde eski kaymasından yavaşça döner.
-      _camLine = line;
-      _camAnchor = feet.dx;
-      _camRest = _cam;
-    }
-    _camRest *= math.exp(-dt / 0.8);
-    _cam = (_camAnchor - feet.dx + _camRest).clamp(-_camMax, _camMax);
-    return _cam;
-  }
-
-  static void _stage(
-    Canvas canvas,
-    PerdeScene scene,
-    int? bridge,
-    double time,
-    double progress,
-    int bridgeLines,
-  ) {
     if (bridge != null) {
       // Köprü: Sâye'nin bölümde yürüdüğü yol (Hikâye tiyatrosu).
       _bridgeStage(canvas, bridge, time, progress, bridgeLines);
@@ -536,19 +441,8 @@ class PerdePainter {
       _heroOverlay(canvas, scene, time, progress);
       _heroExtra(canvas, scene, time, progress);
     }
-  }
+    canvas.restore();
 
-  static void _afterStage(
-    Canvas canvas,
-    Rect r,
-    Offset c,
-    double lamp,
-    PerdeScene scene,
-    int? bridge,
-    double time,
-    double progress,
-    double k,
-  ) {
     // Kandil kısıldıkça perde kararır; kenarlar hep biraz gölgede.
     canvas.drawRect(
       r,
@@ -579,6 +473,7 @@ class PerdePainter {
     canvas.restore();
 
     _frame(canvas, r, lamp);
+    if (layered) canvas.restore();
   }
 
   static double _lampFor(PerdeScene scene, double u) {
@@ -729,145 +624,6 @@ class PerdePainter {
 
   /// [a, b] aralığında 0→1 yumuşak geçiş.
   static double _span(double u, double a, double b) => _ease((u - a) / (b - a));
-
-  /// Bir satırın saniyesi: Hikâye tiyatrosu her karede verir (seslendirilmiş
-  /// satır sesin süresince uzar). Sâye'nin adımı ve sıçrayışı satırın
-  /// ilerleyişine değil gerçek zamana göre atılır.
-  static double lineSecs = 8;
-
-  /// Sâye'nin perdede doğal yürüyüşü (kukla birimi/sn): adımı tam açık,
-  /// ne sürünür ne koşar.
-  static const double walkPace = 34;
-
-  /// Sıçrayışın süresi (sn): oyundaki yerçekimine yakın bir yay.
-  static const double leapSecs = 0.55;
-
-  /// Doğal adımla yürüyüş (0→1): [u0]'dan [u1]'e [dist] perde pikseli.
-  /// Sâye hep doğal hızıyla yürür (yumuşak kalkış ve duruş). Yol uzun ve
-  /// zaman boldaysa birkaç ayağa bölünür: yürür, durur, soluklanır, yine
-  /// yürür (her ayak kendi payının başında kalkar); zaman darsa ancak o kadar
-  /// hızlanır. Eskiden yürüyüş satırın ilerleyişine yayılıyordu: uzun satırda
-  /// Sâye adım atamayacak kadar yavaş kayıyordu. [s]: perdedeki ölçeği.
-  static double _pace(
-    double u,
-    double u0,
-    double u1,
-    double dist, {
-    double s = 1.5,
-    double pace = walkPace,
-  }) {
-    final d = dist.abs();
-    if (d < 0.01) return u >= u0 ? 1 : 0;
-    final e = (u - u0) * lineSecs;
-    if (e <= 0) return 0;
-    final avail = math.max(0.2, (u1 - u0) * lineSecs);
-    final v = pace * 62 / 36 * s; // perde pikseli/sn
-    const ramp = 0.35, rest = 1.4;
-    var k = 1;
-    while (k < 6 &&
-        d / (k + 1) >= 45 &&
-        (k + 1) * (d / (k + 1) / v + ramp + rest) <= avail) {
-      k++;
-    }
-    final slot = avail / k;
-    final j = math.min(k - 1, (e / slot).floor());
-    final f = _leg(e - j * slot, d / k, v, slot);
-    return ((j + f) / k).clamp(0.0, 1.0);
-  }
-
-  /// Bir ayak: [d] pikseli [v] hızıyla (yumuşak kalkış/duruş), [avail]
-  /// saniyeye sığmazsa hızlanarak; [e] kalkıştan beri geçen süre. 0→1.
-  static double _leg(double e, double d, double v, double avail) {
-    const ramp = 0.35;
-    var w = d / v + ramp;
-    if (w > avail && avail > ramp * 2) w = avail;
-    final r = math.min(ramp, w / 2);
-    final vv = d / (w - r);
-    if (e >= w) return 1;
-    final double x;
-    if (e < r) {
-      x = vv * e * e / (2 * r);
-    } else if (e > w - r) {
-      x = d - vv * (w - e) * (w - e) / (2 * r);
-    } else {
-      x = vv * (e - r / 2);
-    }
-    return (x / d).clamp(0.0, 1.0);
-  }
-
-  /// Tırmanış (0→1): [dist] perde pikselini el el üstüne, tırmanışın doğal
-  /// hızıyla; yürüyüş gibi ayaklara bölünür (çıkar, tutunup soluklanır).
-  static double _climbPace(
-    double u,
-    double u0,
-    double u1,
-    double dist, {
-    double s = 1.5,
-  }) => _pace(u, u0, u1, dist, s: s, pace: 22);
-
-  /// Sâye'nin yolu: ([u], ayak noktası) durakları. İki durak arası yataysa
-  /// doğal adımla yürür, dik ise el el üstüne tırmanır, eğikse basamak
-  /// basamak yürüyerek çıkar (ya da iner); erken varırsa bekler. Gittiği
-  /// yöne döner (geri geri yürümez), durunca o yöne bakar kalır.
-  /// [PerdeSaye.climbing] / [PerdeSaye.grounded] burada kurulur, çizimden
-  /// sonra kendiliğinden sıfırlanır. Döner: (ayak noktası, sola bakıyor mu).
-  static (Offset, bool) _route(
-    double u,
-    List<(double, Offset)> keys, {
-    double s = 1.5,
-    bool startLeft = false,
-  }) {
-    var left = startLeft;
-    for (var i = 0; i < keys.length - 1; i++) {
-      final (t0, p0) = keys[i];
-      final (t1, p1) = keys[i + 1];
-      final d = p1 - p0;
-      if (u < t0) return (p0, left);
-      if (d.distance < 0.5) {
-        if (u < t1) return (p0, left);
-        continue;
-      }
-      if (d.dx.abs() > 2) left = d.dx < 0;
-      final climb = d.dx.abs() < 0.35 * d.dy.abs();
-      final stairs = !climb && d.dy.abs() >= 4;
-      final f = climb
-          ? _climbPace(u, t0, t1, d.distance, s: s)
-          : _pace(u, t0, t1, d.distance, s: s);
-      if (u < t1 || f < 1) {
-        PerdeSaye.climbing = climb && f < 1;
-        PerdeSaye.grounded = stairs;
-        return (Offset.lerp(p0, p1, f)!, left);
-      }
-    }
-    return (keys.last.$2, left);
-  }
-
-  /// Yatay sıçrayış: [u0]'da kalkar, [dx] öteye, [height] yükseklikte bir
-  /// yayla konar; havadayken kuklaya sıçrayışın gerçek dikey hızı verilir.
-  /// Döner: (yatay ilerleyiş pikseli, yerden yükseklik pikseli).
-  static (double, double) _hop(
-    double u,
-    double u0,
-    double dx,
-    double height, {
-    double s = 1.5,
-    double secs = leapSecs,
-    double drop = 0,
-  }) {
-    final (f, arc) = _leap(u, u0, secs: secs);
-    if (f > 0 && f < 1) {
-      PerdeSaye.leapVy =
-          (drop - 4 * height * (1 - 2 * f)) / secs / (62 / 36 * s);
-    }
-    return (dx * f, arc * height - drop * f);
-  }
-
-  /// Sıçrayış: [u0]'da kalkar, [leapSecs] saniyede konar. (ilerleyiş 0→1,
-  /// yayın yüksekliği 0→1→0).
-  static (double, double) _leap(double u, double u0, {double secs = leapSecs}) {
-    final f = ((u - u0) * lineSecs / secs).clamp(0.0, 1.0);
-    return (f, 4 * f * (1 - f));
-  }
 
   /// Görünürlük: [a]'da belirir, [b]'de kaybolur.
   static double _shown(double u, double a, double b, [double fade = 0.25]) =>
@@ -1525,18 +1281,10 @@ class PerdePainter {
           ..close(),
         _inkPaint(a0),
       );
-      // Merdivenden basamak basamak yürüyerek çıkar.
-      final up = _pace(u, 0.08, 0.6, 104, s: 1.3);
-      PerdeSaye.grounded = true;
+      final up = _span(u, 0.08, 0.6);
       c.save();
       c.clipRect(const Rect.fromLTWH(0, 0, 780, g - 8));
-      _tasvirSaye(
-        c,
-        Offset(236 + 26 * up, g - 8 + 100 * (1 - up)),
-        1.3,
-        time,
-        a0,
-      );
+      _tasvirSaye(c, Offset(262, g - 8 + 100 * (1 - up)), 1.3, time, a0);
       c.restore();
     }
 
