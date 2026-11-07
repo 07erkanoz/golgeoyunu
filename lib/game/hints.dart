@@ -219,6 +219,8 @@ class Hints {
     'golgehane': '{up} Tasvire dokun · perdede canlanır · kandili iterek gölgeni büyüt, küçült',
     'shadowStone': '{up} Gölgeni önden gönder · Kandilciler ona bakarken geç',
     'shadowCharge': 'Gölgen güçlendi · {shadow} ile taşsız da gönderebilirsin',
+    'shadowCrack':
+        'Yarıktan yalnız gölge geçer · gölgeni gönder, ardındaki kolu çeksin',
     'shadowLever':
         '{up} Gölgeni önden gönder · gölge parmaklıktan geçer, kolu çeker',
     'coldBridge': '{firefly} Kandilci yolu yalnız onların feneriyle belirir · ateşböceği at, Kandilci ona dalınca ışığında geç',
@@ -355,6 +357,7 @@ class Hints {
     'shadowStone': '{up} Send your shadow ahead · slip past while the Lamplighters watch it',
     'shadowCharge':
         'Your shadow grew stronger · send it anywhere with {shadow}',
+    'shadowCrack': 'Only a shadow fits through the crack · send yours to pull the lever beyond',
     'shadowLever': '{up} Send your shadow ahead · it slips through the bars and pulls the lever',
     'coldBridge': '{firefly} The Lamplighters\' path shows only in their lanterns · throw a firefly, cross in the light while one stares at it',
     'eyeStone': 'The giant shadow\'s head on the eye in the screen · your jar\'s light on the eye in the stone · both at once: the gate opens',

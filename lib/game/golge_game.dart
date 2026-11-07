@@ -1196,6 +1196,8 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         if (level.def.lessons.isNotEmpty) LessonSigns(level.def.lessons),
         for (final (c, r) in level.def.shadowStones)
           ShadowStone(Vector2(c * kTile.toDouble(), r * kTile.toDouble())),
+        for (final (c, r0, r1) in level.def.shadowCracks)
+          ShadowCrack(c, r0, r1),
         for (final (c, r, side) in level.def.rollingDoors)
           RollingDoor(c, r, inside: side),
         for (final (c0, c1, r) in level.def.hairBridges) HairBridge(c0, c1, r),
@@ -2592,6 +2594,12 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         TulparMount t when near(t, 5, 4) && !onHorse => 'tulpar',
         Valve v when near(v, 4, 3) => 'valve',
         PerdeCord k when near(k, 4, 3) => 'cord',
+        ShadowStone k
+            when near(k, 4, 3) &&
+                world.children.whereType<ShadowCrack>().any(
+                  (c) => (c.position.x - k.position.x).abs() < 8 * kTile,
+                ) =>
+          'shadowCrack',
         ShadowStone k when near(k, 4, 3) =>
           world.children.whereType<Lever>().any(
                 (l) =>

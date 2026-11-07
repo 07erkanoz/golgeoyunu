@@ -169,6 +169,7 @@ class LevelDef {
     this.legends = const [],
     this.gokboruRun = false,
     this.shadowStones = const [],
+    this.shadowCracks = const [],
     this.lessons = const [],
     this.rollingDoors = const [],
     this.hairBridges = const [],
@@ -296,6 +297,10 @@ class LevelDef {
 
   /// Gölge taşları (sütun, satır): üstünde ↑ ile gölge önden gönderilir.
   final List<(int, int)> shadowStones;
+
+  /// Gölge yarıkları (sütun, üst satır, alt satır): duvardaki ince çatlak;
+  /// Sâye geçemez, gönderilen gölgesi geçer (ardındaki kolu çeker).
+  final List<(int, int, int)> shadowCracks;
 
   /// Öğretim levhaları (lesson.dart): sırası gelince kendiliğinden belirir.
   final List<Lesson> lessons;
@@ -1975,6 +1980,10 @@ const levels = <LevelDef>[
       'Memory · "An inn is the traveler\'s heart. No one enters an inn whose hearth is cold, even if the door is open."',
     ],
     map: kMapKarYolu,
+    // Kapının kolu kapalı bir odada: yarıktan yalnız gölge girer. Setin
+    // üstünde gölge taşı (hakkı olmayan da çözer); kapıya setin altından.
+    shadowStones: [(320, 15)],
+    shadowCracks: [(323, 13, 15)],
   ),
   LevelDef(
     title: 'X · PALANDÖKEN',

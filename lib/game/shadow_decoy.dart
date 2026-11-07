@@ -58,10 +58,7 @@ class ShadowDecoy extends PositionComponent
 class ShadowStone extends PositionComponent
     with HasGameReference<GolgeGame>, Usable {
   ShadowStone(Vector2 cell)
-    : super(
-        position: Vector2(cell.x + kTile / 2, cell.y + kTile),
-        priority: 6,
-      );
+    : super(position: Vector2(cell.x + kTile / 2, cell.y + kTile), priority: 6);
 
   double _t = 0;
   double _glow = 0;
@@ -115,7 +112,11 @@ class ShadowStone extends PositionComponent
     final g = _glow * pulse;
     if (g > 0.02) glowDot(canvas, const Offset(0, -5), 22, kWarmLight, 0.5 * g);
     final carve = Paint()
-      ..color = Color.lerp(const Color(0xFF120A06), const Color(0xFFFFD9A0), g)!;
+      ..color = Color.lerp(
+        const Color(0xFF120A06),
+        const Color(0xFFFFD9A0),
+        g,
+      )!;
     canvas.drawCircle(const Offset(0, -6.2), 1.5, carve);
     canvas.drawPath(
       Path()
@@ -130,6 +131,69 @@ class ShadowStone extends PositionComponent
       const Offset(1.4, -4.2),
       const Offset(4.6, -6.6),
       carve..strokeWidth = 0.9,
+    );
+  }
+}
+
+/// Gölge yarığı: duvarda ince, kıvrık bir çatlak. Sâye geçemez; gönderilen
+/// gölge süzülüp geçer (ardındaki odada kol varsa çeker). Çatlağın içi
+/// soluk mor ışır, gölge geçerken parlar.
+class ShadowCrack extends PositionComponent with HasGameReference<GolgeGame> {
+  ShadowCrack(this.col, this.top, this.bottom)
+    : super(
+        position: Vector2((col + 0.5) * kTile, top * kTile.toDouble()),
+        priority: 7,
+      );
+
+  final int col, top, bottom;
+  double _t = 0;
+  double _lit = 0;
+
+  double get _h => (bottom - top + 1) * kTile.toDouble();
+
+  @override
+  void update(double dt) {
+    super.update(dt);
+    _t += dt;
+    final p = game.player;
+    if (p == null) return;
+    final passing =
+        p.shadowSent && (p.shadowFeet.x - position.x).abs() < kTile * 0.8;
+    _lit = approach(_lit, passing ? 1 : 0, dt, 0.15);
+  }
+
+  @override
+  void render(Canvas canvas) {
+    final h = _h;
+    final crack = Path()..moveTo(0, 2);
+    for (var i = 1; i <= 8; i++) {
+      final y = 2 + (h - 4) * i / 8;
+      crack.lineTo((i.isEven ? -2.6 : 2.8) + math.sin(i * 2.3) * 1.6, y);
+    }
+    final pulse = 0.6 + 0.4 * math.sin(_t * 1.8);
+    final glow = 0.45 * pulse + 0.55 * _lit;
+    glowDot(
+      canvas,
+      Offset(0, h / 2),
+      h * 0.6,
+      const Color(0xFFB8A0E0),
+      0.4 * glow,
+    );
+    canvas.drawPath(
+      crack,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 6
+        ..strokeJoin = StrokeJoin.round
+        ..color = const Color(0xFF050307),
+    );
+    canvas.drawPath(
+      crack,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2
+        ..strokeJoin = StrokeJoin.round
+        ..color = const Color(0xFFE2D6FA).withValues(alpha: 0.5 + 0.5 * glow),
     );
   }
 }

@@ -1917,10 +1917,11 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
         final f = _shadowFacing.toDouble();
         final step = _sentSpeed * dt;
         final nx = _shadowX + f * (step + 8);
-        // Duvar (gövde boyunda), uçurum ya da su: durur. Parmaklık durdurmaz.
-        final wall =
-            level.cellAt(nx, _shadowY - 12) == '#' ||
-            level.cellAt(nx, _shadowY - 40) == '#';
+        // Duvar (gövde boyunda), uçurum ya da su: durur. Parmaklık ve
+        // gölge yarığı durdurmaz.
+        bool solid(double y) =>
+            level.cellAt(nx, y) == '#' && !level.shadowCrackAt(nx, y);
+        final wall = solid(_shadowY - 12) || solid(_shadowY - 40);
         final below = level.cellAt(nx, _shadowY + 4);
         final floor = below == '#' || below == '=' || below == '-';
         for (final lv in game.world.children.whereType<Lever>()) {
