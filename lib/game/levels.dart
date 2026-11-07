@@ -171,6 +171,7 @@ class LevelDef {
     this.shadowStones = const [],
     this.shadowCracks = const [],
     this.shadowPlates = const [],
+    this.shadowBridges = const [],
     this.lessons = const [],
     this.rollingDoors = const [],
     this.hairBridges = const [],
@@ -306,6 +307,11 @@ class LevelDef {
   /// Gölge eşikleri (sütun, satır): yalnız gölgenin ağırlığını tanır;
   /// gönderilen gölge üstünde durdukça en yakın kapı kalkar, ayrılınca iner.
   final List<(int, int)> shadowPlates;
+
+  /// Gölge köprüleri (ilk sütun, son sütun, zemin satırı): uçurumun üstünde
+  /// gönderilen gölge boşlukta da yürür, ardında mürekkep tahtalar kalır;
+  /// gölge Sâye'ye dönünce tahtalar az sonra dağılır.
+  final List<(int, int, int)> shadowBridges;
 
   /// Öğretim levhaları (lesson.dart): sırası gelince kendiliğinden belirir.
   final List<Lesson> lessons;
@@ -2115,6 +2121,10 @@ const levels = <LevelDef>[
     cameos: [('albasti', 277, 25)],
     // Kızıl Vadi: Albastı ışığa gelir, demir nalların çevresine giremez.
     irons: [(207, 25), (222, 25), (237, 25), (252, 25), (262, 25)],
+    // Çıkış zincirinin önünde uçurum: gölge taşından gönderilen gölge
+    // boşlukta yürür, ardında mürekkep köprü bırakır.
+    shadowStones: [(395, 25)],
+    shadowBridges: [(401, 409, 26)],
     albastis: [(231, 19), (247, 17)],
     subtitle: 'İnsanlar aşağıda, periler yukarıda yaşardı.',
     theme: LevelTheme.peri,

@@ -9,6 +9,7 @@ import 'entities.dart';
 import 'feedback.dart' show LinkPulse;
 import 'golge_game.dart';
 import 'level.dart';
+import 'mechanics.dart' show Deck;
 import 'palette.dart';
 import 'player.dart' show Player;
 import 'puzzles.dart' show Usable;
@@ -300,5 +301,101 @@ class ShadowPlate extends PositionComponent with HasGameReference<GolgeGame> {
       vein,
     );
     canvas.drawCircle(Offset(-9.5, -2.2 + sink), 1.4, vein);
+  }
+}
+
+/// Mürekkep tahta: gölge köprüsünün bir karesi. Gönderilen gölge uçurumun
+/// üstünde yürürken ayağının altında mürekkep katılaşır; gölge Sâye'ye
+/// dönünce tahtalar az bekler, titrer ve dağılır.
+class InkPlank extends Deck {
+  InkPlank(int col, int row)
+    : super(
+        position: Vector2(col * kTile.toDouble(), row * kTile.toDouble()),
+        size: Vector2(kTile.toDouble(), 10),
+      );
+
+  /// Gölge döndükten sonra tahtanın dayandığı süre.
+  static const linger = 2.2;
+
+  bool laid = false;
+  double _after = 0;
+  double _show = 0;
+  double _t = math.Random().nextDouble() * 5;
+
+  @override
+  bool get active => laid;
+
+  @override
+  void step(double dt) {
+    _t += dt;
+    final p = game.player;
+    if (p != null && p.shadowSent) {
+      final f = p.shadowFeet;
+      if (!laid &&
+          f.x >= position.x - 2 &&
+          f.x <= position.x + size.x + 2 &&
+          (f.y - position.y).abs() < 8) {
+        laid = true;
+        GameAudio.instance.play('glide', volume: 0.18, minGapMs: 250);
+      }
+      _after = 0;
+    } else if (laid) {
+      _after += dt;
+      if (_after > linger) {
+        laid = false;
+        GameAudio.instance.play('fizzle', volume: 0.2, minGapMs: 400);
+      }
+    }
+    _show = approach(_show, laid ? 1 : 0, dt, laid ? 0.12 : 0.3);
+  }
+
+  @override
+  void render(Canvas canvas) {
+    var a = _show;
+    if (a < 0.01) {
+      // Uçurumun üstünde belli belirsiz bir iz: köprünün yeri.
+      final dot = Paint()
+        ..color = const Color(0xFFB8A0E0).withValues(
+          alpha: 0.12 + 0.08 * math.sin(_t * 1.7),
+        );
+      for (var x = 4.0; x < size.x; x += 8) {
+        canvas.drawCircle(Offset(x, 2), 1, dot);
+      }
+      return;
+    }
+    // Sönmeden önce titrer: üstündeki kaçabilsin.
+    if (laid && _after > linger - 1.0) {
+      a *= 0.45 + 0.55 * (0.5 + 0.5 * math.sin(_t * 26));
+    }
+    final w = size.x;
+    final ink = Paint()..color = kInk.withValues(alpha: 0.9 * a);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(-1, 0, w + 2, 8),
+        const Radius.circular(3),
+      ),
+      ink,
+    );
+    // Alttan sarkan mürekkep damlaları.
+    for (var i = 0; i < 3; i++) {
+      final x = 5.0 + i * 11 + math.sin(i * 2.1) * 2;
+      final len = 4 + 4 * (0.5 + 0.5 * math.sin(_t * 1.3 + i * 1.9));
+      canvas.drawLine(
+        Offset(x, 7),
+        Offset(x, 7 + len * a),
+        Paint()
+          ..color = kInk.withValues(alpha: 0.7 * a)
+          ..strokeWidth = 2
+          ..strokeCap = StrokeCap.round,
+      );
+    }
+    // Üst kenarda soğuk mor ışık: gölgenin izi.
+    canvas.drawLine(
+      const Offset(1, 0.8),
+      Offset(w - 1, 0.8),
+      Paint()
+        ..color = const Color(0xFFE2D6FA).withValues(alpha: 0.45 * a)
+        ..strokeWidth = 1.2,
+    );
   }
 }

@@ -1924,7 +1924,11 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
             level.cellAt(nx, y) == '#' && !level.shadowCrackAt(nx, y);
         final wall = solid(_shadowY - 12) || solid(_shadowY - 40);
         final below = level.cellAt(nx, _shadowY + 4);
-        final floor = below == '#' || below == '=' || below == '-';
+        final floor =
+            below == '#' ||
+            below == '=' ||
+            below == '-' ||
+            level.shadowBridgeAt(nx, _shadowY + 4);
         for (final lv in game.world.children.whereType<Lever>()) {
           if (!lv.pulled &&
               (lv.position.x - nx).abs() < 6 &&

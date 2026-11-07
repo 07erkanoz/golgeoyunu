@@ -225,6 +225,8 @@ class Hints {
         '{up} Gölgeni önden gönder · gölge parmaklıktan geçer, kolu çeker',
     'shadowPlate':
         'Eşik yalnız gölgeyi tanır · gölgen üstünde durdukça kapı açık, koş',
+    'shadowBridge':
+        'Gölge boşlukta da yürür · ardında mürekkep köprü kalır, peşinden geç',
     'coldBridge': '{firefly} Kandilci yolu yalnız onların feneriyle belirir · ateşböceği at, Kandilci ona dalınca ışığında geç',
     'eyeStone': 'Dev gölgenin başı perdedeki göze · kavanozunun ışığı taştaki göze · ikisi birden: kapı açılır',
     'lift': 'Bir kefeye sandık koy · öteki yükselir',
@@ -362,6 +364,7 @@ class Hints {
     'shadowCrack': 'Only a shadow fits through the crack · send yours to pull the lever beyond',
     'shadowLever': '{up} Send your shadow ahead · it slips through the bars and pulls the lever',
     'shadowPlate': 'The threshold knows only shadows · while yours stands on it the gate is open: run',
+    'shadowBridge': 'Your shadow walks on empty air · it leaves an ink bridge behind: follow it',
     'coldBridge': '{firefly} The Lamplighters\' path shows only in their lanterns · throw a firefly, cross in the light while one stares at it',
     'eyeStone': 'The giant shadow\'s head on the eye in the screen · your jar\'s light on the eye in the stone · both at once: the gate opens',
     'lift': 'Put a crate on one pan · the other rises',

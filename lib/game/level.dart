@@ -479,6 +479,13 @@ class Level {
     return def.shadowCracks.any((k) => k.$1 == c && r >= k.$2 && r <= k.$3);
   }
 
+  /// Bu nokta bir gölge köprüsünün zemin satırında mı (gölge boşlukta
+  /// yürür).
+  bool shadowBridgeAt(double x, double y) {
+    final c = (x / kTile).floor(), r = (y / kTile).floor();
+    return def.shadowBridges.any((k) => r == k.$3 && c >= k.$1 && c <= k.$2);
+  }
+
   /// Nokta bir karanlık bölgenin içinde mi?
   bool inDarkZone(Vector2 p) =>
       darkZones.any((z) => z.contains(Offset(p.x, p.y)));
