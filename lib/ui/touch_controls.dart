@@ -419,9 +419,11 @@ class _GestureControlsState extends State<_GestureControls> {
                 onTap: widget.controls.queueLure,
               ),
             ),
+            // Gölge: ateşböceğinin altında (üst sıra ipucu, "i" ve ayar
+            // simgeleriyle dolu; oraya konan düğmeye dokunuş "i"ye gidiyordu).
             Positioned(
-              right: 118,
-              top: 10,
+              right: 64,
+              top: 62,
               child: _CornerButton(
                 icon: Icons.accessibility_new,
                 alpha: alpha,
