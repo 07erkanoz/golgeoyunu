@@ -6,9 +6,11 @@ import 'package:flutter/painting.dart';
 
 import 'audio.dart';
 import 'entities.dart';
+import 'feedback.dart' show LinkPulse;
 import 'golge_game.dart';
 import 'level.dart';
 import 'palette.dart';
+import 'player.dart' show Player;
 import 'puzzles.dart' show Usable;
 import 'rig.dart' show approach;
 
@@ -195,5 +197,108 @@ class ShadowCrack extends PositionComponent with HasGameReference<GolgeGame> {
         ..strokeJoin = StrokeJoin.round
         ..color = const Color(0xFFE2D6FA).withValues(alpha: 0.5 + 0.5 * glow),
     );
+  }
+}
+
+/// Gölge eşiği: yere gömülü, kenarı mor damarlı kara taş. Işığı da Sâye'nin
+/// ayağını da tanımaz; yalnız gölgenin ağırlığını. Gönderilen gölge üstünde
+/// durdukça bağlı kapı kalkar, gölge ayrılınca iner (Sâye kapıdan geçince
+/// kapı açık kalır). Sâye aynı anda iki yerde olur: gölgesi eşikte, kendisi
+/// kapıda.
+class ShadowPlate extends PositionComponent with HasGameReference<GolgeGame> {
+  ShadowPlate(Vector2 cell)
+    : super(
+        position: Vector2(cell.x + kTile / 2, cell.y + kTile),
+        priority: 20,
+      );
+
+  /// Gölgenin eşikte durduğu süre (sonra Sâye'ye döner).
+  static const hold = 4.0;
+
+  Gate? gate;
+  bool pressed = false;
+  double _t = 0;
+  double _press = 0;
+
+  /// Kapı açık kaldı (Sâye geçti): eşiğin işi bitti.
+  bool get done => gate?.opening ?? false;
+
+  bool _shadowOn(Player p) =>
+      p.shadowSent &&
+      (p.shadowFeet.x - position.x).abs() < 14 &&
+      (p.shadowFeet.y - position.y).abs() < 12;
+
+  @override
+  void update(double dt) {
+    super.update(dt);
+    _t += dt;
+    if (gate == null) {
+      var bestD = double.infinity;
+      for (final g in game.world.children.whereType<Gate>()) {
+        final d = (g.position - position).length;
+        if (d < bestD) {
+          bestD = d;
+          gate = g;
+        }
+      }
+      gate?.tied = true;
+    }
+    final p = game.player;
+    final on = p != null && !done && _shadowOn(p);
+    if (on && !pressed) {
+      GameAudio.instance.play('grind', volume: 0.45);
+      final g = gate;
+      if (g != null) {
+        game.world.add(
+          LinkPulse(position - Vector2(0, 14), g.position + g.size / 2),
+        );
+      }
+    }
+    pressed = on;
+    gate?.held = on;
+    _press = approach(_press, on || done ? 1 : 0, dt, 0.12);
+  }
+
+  @override
+  void render(Canvas canvas) {
+    final sink = 2 * _press;
+    final slab = RRect.fromRectAndRadius(
+      Rect.fromLTWH(-17, -5 + sink, 34, 6 - sink),
+      const Radius.circular(2),
+    );
+    canvas.drawRRect(
+      slab,
+      Paint()
+        ..shader = ui.Gradient.linear(
+          Offset(0, -5 + sink),
+          const Offset(0, 1),
+          const [Color(0xFF2A2230), Color(0xFF0C080E)],
+        ),
+    );
+    final pulse = 0.6 + 0.4 * math.sin(_t * 1.6);
+    final glow = done ? 0.5 : 0.4 * pulse + 0.6 * _press;
+    glowDot(
+      canvas,
+      Offset(0, -3 + sink),
+      34,
+      const Color(0xFFB8A0E0),
+      0.6 * glow,
+    );
+    // Mor damar: taşın üst kenarı boyunca, ortada yatan bir gölge oyması.
+    final vein = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.6
+      ..strokeCap = StrokeCap.round
+      ..color = const Color(0xFFE2D6FA).withValues(alpha: 0.45 + 0.55 * glow);
+    canvas.drawLine(Offset(-14, -4.4 + sink), Offset(14, -4.4 + sink), vein);
+    canvas.drawPath(
+      Path()
+        ..moveTo(-8, -2 + sink)
+        ..quadraticBezierTo(-2, -3.6 + sink, 6, -2.2 + sink)
+        ..moveTo(6, -2.2 + sink)
+        ..lineTo(9, -2.4 + sink),
+      vein,
+    );
+    canvas.drawCircle(Offset(-9.5, -2.2 + sink), 1.4, vein);
   }
 }

@@ -22,6 +22,7 @@ import 'ski.dart';
 import 'strings.dart';
 import 'puzzles.dart';
 import 'rig.dart';
+import 'shadow_decoy.dart' show ShadowPlate;
 import '../settings.dart';
 
 enum PlayerState { normal, hang, climbUp, vine, swing, dead }
@@ -1932,8 +1933,22 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
             break;
           }
         }
+        ShadowPlate? plate;
+        for (final k in game.world.children.whereType<ShadowPlate>()) {
+          if (!k.done &&
+              (k.position.x - nx).abs() < 6 &&
+              (k.position.y - _shadowY).abs() < 20) {
+            plate = k;
+            break;
+          }
+        }
         final lever = _sentLever;
-        if (lever != null) {
+        if (lever == null && plate != null) {
+          // Gölge eşiğine vardı: üstünde durur; kapı o durdukça açık.
+          _shadowX = plate.position.x;
+          _sentPhase = 1;
+          _sentHold = _moodT + ShadowPlate.hold;
+        } else if (lever != null) {
           // Kola vardı: durur, uzanıp çeker; kamera kola bakar.
           _shadowX = lever.position.x - f * 10;
           _sentPhase = 1;

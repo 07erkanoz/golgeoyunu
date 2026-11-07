@@ -170,6 +170,7 @@ class LevelDef {
     this.gokboruRun = false,
     this.shadowStones = const [],
     this.shadowCracks = const [],
+    this.shadowPlates = const [],
     this.lessons = const [],
     this.rollingDoors = const [],
     this.hairBridges = const [],
@@ -301,6 +302,10 @@ class LevelDef {
   /// Gölge yarıkları (sütun, üst satır, alt satır): duvardaki ince çatlak;
   /// Sâye geçemez, gönderilen gölgesi geçer (ardındaki kolu çeker).
   final List<(int, int, int)> shadowCracks;
+
+  /// Gölge eşikleri (sütun, satır): yalnız gölgenin ağırlığını tanır;
+  /// gönderilen gölge üstünde durdukça en yakın kapı kalkar, ayrılınca iner.
+  final List<(int, int)> shadowPlates;
 
   /// Öğretim levhaları (lesson.dart): sırası gelince kendiliğinden belirir.
   final List<Lesson> lessons;
@@ -2411,6 +2416,9 @@ const levels = <LevelDef>[
     pawTrails: [(152, 213, 34)],
     mists: [(152, 26, 213, 37)],
     cameos: [('asena', 227, 34)],
+    // Salonun çıkışında gölge eşiği: gölge eşikte durdukça kapı açık.
+    shadowStones: [(225, 34)],
+    shadowPlates: [(216, 34)],
     // İlk ocak ritimli (Demirci'nin çekicine uy) ve iki kömür sandığı ister;
     // ikinci ocak çentik sırasıyla.
     forges: [(true, 2), (false, 0)],

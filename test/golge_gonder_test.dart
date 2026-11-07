@@ -15,11 +15,15 @@ void main() {
     for (var i = 0; i < levels.length; i++)
       if (levels[i].shadowStones.isNotEmpty) i,
   ];
-  test('gölge taşı olan bölümler', () => expect(withStones, hasLength(5)));
+  test('gölge taşı olan bölümler', () => expect(withStones, hasLength(6)));
   // Yerebatan'ın taşı Kandilci için değil, kol için (aşağıda); gölge yarığı
-  // olan bölümün taşı yarığın ardındaki kol için (golge_yarigi_test).
+  // olan bölümün taşı yarığın ardındaki kol için (golge_yarigi_test); gölge
+  // eşikli bölümün taşı eşik için (golge_esigi_test).
   for (final li in withStones.where(
-    (i) => i != 0 && levels[i].shadowCracks.isEmpty,
+    (i) =>
+        i != 0 &&
+        levels[i].shadowCracks.isEmpty &&
+        levels[i].shadowPlates.isEmpty,
   )) {
     testWithGame<GolgeGame>('gölge Kandilciyi oyalar ($li)', GolgeGame.new, (
       game,

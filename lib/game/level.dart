@@ -473,13 +473,13 @@ class Level {
     _cells[r][c] = '.';
   }
 
-  /// Nokta bir karanlık bölgenin içinde mi?
   /// Bu nokta bir gölge yarığında mı (gölge geçer, Sâye geçemez).
   bool shadowCrackAt(double x, double y) {
     final c = (x / kTile).floor(), r = (y / kTile).floor();
     return def.shadowCracks.any((k) => k.$1 == c && r >= k.$2 && r <= k.$3);
   }
 
+  /// Nokta bir karanlık bölgenin içinde mi?
   bool inDarkZone(Vector2 p) =>
       darkZones.any((z) => z.contains(Offset(p.x, p.y)));
 

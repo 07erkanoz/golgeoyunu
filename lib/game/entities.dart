@@ -1742,6 +1742,12 @@ class Gate extends PositionComponent
 
   bool get solid => _lift < _height * 0.75;
 
+  /// Gölge eşiğine bağlı kapı (shadow_decoy.dart): eşik basılıyken
+  /// ([held]) kalkar, bırakılınca iner; Sâye altından geçip öbür yana
+  /// varınca açık kalır ([opening]).
+  bool tied = false;
+  bool held = false;
+
   @override
   String get persistKind => 'gate';
 
@@ -1824,6 +1830,10 @@ class Gate extends PositionComponent
         }
       }
     }
+    if (tied && !opening) {
+      _heldUpdate(dt);
+      return;
+    }
     if (opening && _lift == 0 && _strain < strainTime) {
       if (_strain == 0) {
         // Kamera kapıya odaklanır; açılış bitip yolda ışık akana dek kalır.
@@ -1857,6 +1867,31 @@ class Gate extends PositionComponent
     }
   }
 
+  void _heldUpdate(double dt) {
+    final p = game.player;
+    if (held) {
+      if (_lift == 0) GameAudio.instance.play('chain', volume: 0.5);
+      _lift = math.min(_height, _lift + dt * 110);
+    } else if (_lift > 0) {
+      // Altında Sâye varken inmez.
+      final under =
+          p != null &&
+          !p.isDead &&
+          p.toRect().overlaps(
+            Rect.fromLTWH(position.x, position.y, size.x, size.y),
+          );
+      if (!under) _lift = math.max(0, _lift - dt * 80);
+    }
+    // Sâye açıkken öbür yana geçti: kapı artık açık kalır (çözüldü).
+    if (p != null &&
+        !p.isDead &&
+        !solid &&
+        p.position.x > position.x + size.x + 4) {
+      opening = true;
+      _strain = strainTime;
+    }
+  }
+
   /// Lentodan makaraya çıkan zincir. Boşken hafif salınır; gerilince
   /// dümdüz olur ve titrer; kapı kalkarken halkalar yukarı akar.
   void _chain(Canvas canvas) {
@@ -1864,7 +1899,7 @@ class Gate extends PositionComponent
     const bottom = -11.0;
     final top = bottom - _chainLen;
     final straining = opening && _lift == 0 && _strain < strainTime;
-    final taut = opening ? 1.0 : 0.0;
+    final taut = opening || held || _lift > 0 ? 1.0 : 0.0;
     final shake = straining ? math.sin(_t * 70) * 0.7 : 0.0;
     final link = Paint()
       ..style = PaintingStyle.stroke
