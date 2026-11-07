@@ -1,6 +1,6 @@
 // Gölge hakkı: Sâye gölgesini gölge taşı olmadan da gönderebilir; elde en
-// çok iki; bölümün gölge oyunu ilk görüldüğünde bir tane verir; kayıtta
-// saklanır.
+// çok iki; bölümde gölgenin sırları (gölge oyunu, utangaç gölge, Karagöz)
+// ilk görüldüğünde birer tane verir; kayıtta saklanır.
 import 'package:flame/components.dart';
 import 'package:flame_test/flame_test.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -33,6 +33,33 @@ void main() {
       game.gainShadowCharge();
       game.gainShadowCharge();
       expect(game.shadowCharges, GolgeGame.maxShadowCharges);
+    },
+  );
+
+  testWithGame<GolgeGame>(
+    'Karagöz ve utangaç gölge hak verir; eller doluysa ateşböceği',
+    GolgeGame.new,
+    (game) async {
+      await _kur(game);
+      game.shadowCharges = 0;
+      final f0 = game.fireflies;
+      game.foundSecret('karagoz');
+      expect(game.shadowCharges, 1);
+      expect(game.fireflies, f0, reason: 'hak verdi, ateşböceği değil');
+      game.foundSecret('utangac');
+      expect(game.shadowCharges, 2);
+      // Eller dolu: Karagöz yine ödülsüz kalmaz.
+      game.debugLoadLevel(1);
+      await game.ready();
+      game.shadowCharges = GolgeGame.maxShadowCharges;
+      final f1 = game.fireflies;
+      game.foundSecret('karagoz');
+      expect(game.shadowCharges, GolgeGame.maxShadowCharges);
+      expect(game.fireflies, f1 + 1);
+      // Gölge oyunu eller doluyken bir şey vermez (boş durmak ödüllenmez).
+      final f2 = game.fireflies;
+      game.foundSecret('golgeOyunu');
+      expect(game.fireflies, f2);
     },
   );
 

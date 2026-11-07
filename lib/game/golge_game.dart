@@ -2002,10 +2002,13 @@ class GolgeGame extends FlameGame with KeyboardEvents {
   }
 
   /// Gölge hakkı: Sâye gölgesini gölge taşı olmadan da önden gönderebilir.
-  /// Elde en çok iki tane; görevlerle kazanılır (bölümün gölge oyunu ilk
-  /// görüldüğünde bir tane), bölümden bölüme taşınır.
+  /// Elde en çok iki tane; görevlerle kazanılır (bölümde gölgenin sırları
+  /// ilk görüldüğünde birer tane: gölge oyunu, utangaç gölge, Karagöz).
   static const maxShadowCharges = 2;
   int shadowCharges = 0;
+
+  /// Gölge hakkı veren sırlar.
+  static const shadowSecrets = {'golgeOyunu', 'utangac', 'karagoz'};
 
   void gainShadowCharge() {
     if (shadowCharges >= maxShadowCharges) return;
@@ -2225,10 +2228,17 @@ class GolgeGame extends FlameGame with KeyboardEvents {
   /// Sürpriz oldu: bu oyunda bir daha olmaz, sır sayacına eklenir.
   void foundSecret(String name) {
     // İlk bulunuşta bir ateşböceği ödül (sürpriz alanların bir anlamı olsun).
-    // Kendiliğinden gelen gölge oyunu (boş durunca) ateşböceği değil, bir
-    // gölge hakkı verir: gölge güçlenir.
+    // Gölgenin sırları (gölge oyunu, utangaç gölge, sonuna dek izlenen
+    // Karagöz perdesi) ateşböceği değil gölge hakkı verir: gölge güçlenir.
+    // Eller doluysa Karagöz ile utangaç gölge yine ateşböceği verir;
+    // kendiliğinden gelen gölge oyunu (boş durunca) vermez.
     if (!secretSeen(name)) {
-      name == 'golgeOyunu' ? gainShadowCharge() : gainFirefly();
+      if (shadowSecrets.contains(name) &&
+          shadowCharges < maxShadowCharges) {
+        gainShadowCharge();
+      } else if (name != 'golgeOyunu') {
+        gainFirefly();
+      }
     }
     markEvent('sir:$levelIndex:$name');
     if (Settings.secrets.add('$levelIndex:$name')) Settings.save();
