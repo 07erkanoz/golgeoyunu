@@ -48,22 +48,23 @@ FOREST = {'kMapOtuken'}
 # Yeşil Kubbe: kafesler (levels.dart cages) kol gibi en yakın kapıyı açar;
 # finalin üç aynasına varılınca Kandilci Başı çıkış kapısını açar; avlunun
 # ay kilidi havadadır (aynalara varmak yeter).
-# Gölge taşları (levels.dart shadowStones): gönderilen gölge sağa yürür,
-# parmaklıktan geçer (duvarda, boşlukta durur), 16 kare içindeki kolu çeker.
+# Gölge taşları (levels.dart shadowStones): oyuncu gölgeyi yürütür (zıplar,
+# parmaklıktan ve gölge yarığından geçer; ipi 12 kare). Taşa varılınca 12
+# kare içindeki kol çekilmiş, gölge eşiğinin (shadowPlates) kapısı açılmış
+# sayılır; gölgenin yolu oyun içi sınamalarla doğrulanır (golge_*_test).
 SHADOW_STONES = {
     'kMapYerebatan': [(380, 13)],
+    'kMapKarYolu': [(320, 15)],
+    'kMapErgenekon': [(225, 34)],
 }
+SHADOW_PLATES = {'kMapErgenekon': [(216, 34)]}
+SHADOW_TETHER = 12
 
 
 def shadow_levers(rows, stone):
     c, r = stone
-    for d in range(1, 17):
-        x = c + d
-        if rows[r][x] == '#' or rows[r - 1][x] == '#' or rows[r + 1][x] not in '#=-':
-            return []
-        if rows[r][x] == 'L':
-            return [(x, r)]
-    return []
+    return [x for x in cells(rows, 'L')
+            if abs(x[0] - c) <= SHADOW_TETHER and abs(x[1] - r) <= 4]
 
 
 CAGES = {'kMapYesilKubbe': [(92, 51), (132, 51), (182, 51)]}
@@ -607,6 +608,8 @@ def audit(idx):
     stage_traps = set()
     under = name in UNDERWORLD
     horse = False
+    # Gölgenin çektiği kol / bastığı eşik: Sâye'nin hedefi gölge taşıdır.
+    shadow_goal = {}
     while True:
         opened = {(g[0], r) for g in opened_gates for r in range(g[1], g[2] + 1)}
         m = Map(rows, wings and name not in FLYING, hw, opened,
@@ -636,8 +639,13 @@ def audit(idx):
                     new.append((('s', c), nearest_gate(gs, opened_gates, c)))
         for st in SHADOW_STONES.get(name, []):
             for c in shadow_levers(rows, st) if st in reach else []:
+                shadow_goal[c] = st
                 if ('L', c) not in used:
                     new.append((('L', c), nearest_gate(gs, opened_gates, c)))
+            for c in SHADOW_PLATES.get(name, []) if st in reach else []:
+                shadow_goal[c] = st
+                if abs(c[0] - st[0]) <= SHADOW_TETHER and ('P', c) not in used:
+                    new.append((('P', c), nearest_gate(gs, opened_gates, c)))
         for c in CAGES.get(name, []):
             if c in reach and ('L', c) not in used:
                 new.append((('L', c), nearest_gate(gs, opened_gates, c)))
@@ -680,7 +688,7 @@ def audit(idx):
         # Aşama tuzağı: kapılar henüz kapalıyken girilip ne kapıyı açan
         # düzeneğe, ne çıkışa, ne bir ölüme (yeniden doğuş) varılabilen yer.
         if new:
-            stage_goals = {k[1] for k, _ in new}
+            stage_goals = {shadow_goal.get(k[1], k[1]) for k, _ in new}
             stage_goals |= set(cells(rows, 'E'))
             if name in LOCK_ANY:
                 stage_goals |= set(cells(rows, 'm') + cells(rows, 'h'))
@@ -736,6 +744,7 @@ def audit(idx):
     missing = [(ch, c, r) for r, row in enumerate(rows) for c, ch in enumerate(row)
                if ch in TARGETS and (c, r) not in reach
                and not (ch == 't' and name in LOCK_ANY)
+               and not (ch == 'L' and (c, r) in shadow_goal)
                and not (ch in airborne and (c, r) in AIR)]
     if name in FLYING:
         ws = cells(rows, 'W')

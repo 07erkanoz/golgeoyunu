@@ -83,8 +83,8 @@ void main() {
       }
       p.position.setFrom(
         Level.standOn(
-          // Setin altındaki geçitte (basamağın ardında).
-        Vector2((c - 4) * kTile.toDouble(), 19 * kTile.toDouble()),
+          // Setin solundaki zeminde: çıkıntının altından geçide yürür.
+          Vector2((c - 10) * kTile.toDouble(), 19 * kTile.toDouble()),
           Player.w,
           Player.h,
         ),
@@ -97,6 +97,52 @@ void main() {
       game.controls.keyboard.right = false;
       expect(p.isDead, isFalse);
       expect(p.position.x, greaterThan(333 * kTile), reason: 'kapıdan geçti');
+    },
+  );
+
+  testWithGame<GolgeGame>(
+    'zeminden çıkıntıya, oradan setin üstündeki gölge taşına çıkılır',
+    GolgeGame.new,
+    (game) async {
+      game.onGameResize(Vector2(1280, 720));
+      game.debugLoadLevel(levels.indexWhere((d) => d.shadowCracks.isNotEmpty));
+      await game.ready();
+      game.cinematic = false;
+      for (final g in game.world.children.whereType<Guard>().toList()) {
+        g.removeFromParent();
+      }
+      final (c, _, _) = game.level.def.shadowCracks.first;
+      final stone = game.world.children.whereType<ShadowStone>().firstWhere(
+        (s) => (s.position.x / kTile).floor() == c - 3,
+      );
+      final p = game.player!;
+      p.position.setFrom(
+        Level.standOn(
+          Vector2((c - 10) * kTile.toDouble(), 19 * kTile.toDouble()),
+          Player.w,
+          Player.h,
+        ),
+      );
+      p.velocity.setZero();
+      for (var i = 0; i < 20; i++) {
+        game.update(1 / 60);
+      }
+      // Sağa koşar; çıkıntının dibinde zıplar (çıkıntıya), oradan sete.
+      final k = game.controls.keyboard;
+      k.right = true;
+      var jumps = 0;
+      for (var i = 0; i < 60 * 5 && !stone.canUse(p.center); i++) {
+        final ledge = (c - 7) * kTile.toDouble();
+        final wantJump =
+            p.onGround &&
+            ((jumps == 0 && p.center.x > ledge - 20) ||
+                (jumps == 1 && p.center.x > ledge + kTile * 1.3));
+        if (wantJump) jumps++;
+        k.jump = wantJump || (!p.onGround && p.velocity.y < 0);
+        game.update(1 / 60);
+      }
+      k.right = k.jump = false;
+      expect(stone.canUse(p.center), isTrue, reason: 'taşa varıldı');
     },
   );
 
