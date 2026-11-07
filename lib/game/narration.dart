@@ -429,6 +429,41 @@ class Narration extends Component with HasGameReference<GolgeGame> {
 
   void pulseFireflies() => _fireflyT = 0;
 
+  /// Gölge hakları değişti: göstergeleri bir an parlar.
+  void pulseShadow() => _shadowT = 0;
+  double _shadowT = 99;
+
+  /// Küçük gölge tasviri (baş, gövde; ayak noktası [feet]): hak varsa
+  /// açık renkli ve ışıltılı, yoksa soluk bir çizgi.
+  void _shadowIcon(Canvas c, Offset feet, double a, {bool glow = false}) {
+    if (glow) {
+      glowDot(
+        c,
+        feet - const Offset(0, 8),
+        13,
+        const Color(0xFFB8A0E0),
+        0.35 * a,
+      );
+    }
+    final p = Paint()
+      ..color = (glow ? const Color(0xFFE6DCF8) : kText).withValues(alpha: a);
+    if (!glow) {
+      p
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 0.9;
+    }
+    c.drawCircle(feet - const Offset(0, 13), 3.2, p);
+    c.drawPath(
+      Path()
+        ..moveTo(feet.dx - 2.6, feet.dy - 9.6)
+        ..lineTo(feet.dx + 2.6, feet.dy - 9.6)
+        ..lineTo(feet.dx + 4.4, feet.dy)
+        ..lineTo(feet.dx - 4.4, feet.dy)
+        ..close(),
+      p,
+    );
+  }
+
   double _whisperDuration(String s) => 3.5 + s.length * 0.06;
 
   /// Sırada bekleyen varken: okunacak kadar.
@@ -495,6 +530,7 @@ class Narration extends Component with HasGameReference<GolgeGame> {
     }
     _counterT += dt;
     _fireflyT += dt;
+    _shadowT += dt;
   }
 
   void _updateWhispers(double dt) {
@@ -1128,6 +1164,17 @@ class Narration extends Component with HasGameReference<GolgeGame> {
             alpha: lit ? hudAlpha : 0.18,
           ),
       );
+    }
+
+    // Gölge hakları: ateşböceklerinin yanında küçük gölge tasvirleri (yalnız
+    // en az bir hak kazanıldıysa ya da az önce değiştiyse).
+    if (game.shadowCharges > 0 || _shadowT < 2.5) {
+      final sa = 0.35 + 0.65 * (1 - (_shadowT / 2.5).clamp(0.0, 1.0));
+      for (var i = 0; i < GolgeGame.maxShadowCharges; i++) {
+        final has = i < game.shadowCharges;
+        final base = Offset(34 + GolgeGame.maxFireflies * 18 + 10 + i * 16, 42);
+        _shadowIcon(canvas, base, has ? sa : 0.18, glow: has);
+      }
     }
 
     if (_counterT < 4.5 && game.memoryCount > 0) {

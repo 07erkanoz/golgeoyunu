@@ -306,6 +306,7 @@ class SaveData {
     required this.whispers,
     required this.fireflies,
     required this.wings,
+    this.shadows = 0,
     this.puzzle = const {},
     this.layout = '',
     int? time,
@@ -318,6 +319,9 @@ class SaveData {
   final List<String> whispers;
   final int fireflies;
   final bool wings;
+
+  /// Gölge hakları: Sâye gölgesini taşsız da gönderebilir (en çok iki).
+  final int shadows;
 
   /// Kontrol noktasındaki bulmaca durumu (açılan kapılar, çekilen kollar,
   /// alınan tüyler, sürülen sandıklar...): devam edince dünya böyle kurulur.
@@ -355,6 +359,7 @@ class SaveData {
     'whispers': whispers,
     'fireflies': fireflies,
     'wings': wings,
+    'shadows': shadows,
     'puzzle': puzzle,
     'layout': layout,
   });
@@ -371,6 +376,8 @@ class SaveData {
         whispers: [...(m['whispers'] as List).cast<String>()],
         fireflies: m['fireflies'] as int,
         wings: m['wings'] as bool,
+        // Eski kayıtlarda yok.
+        shadows: (m['shadows'] as num?)?.toInt().clamp(0, 9) ?? 0,
         // Eski kayıtlarda yok; bozuksa bulmacalar baştan kurulur.
         puzzle: m['puzzle'] is Map
             ? Map<String, Object?>.from(m['puzzle'] as Map)

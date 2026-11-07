@@ -118,6 +118,16 @@ class Controls {
   bool _lureQueued = false;
   void queueLure() => _lureQueued = true;
 
+  /// Gölge göndermek (gölge hakkıyla, taşsız): tek seferlik eylem.
+  bool _shadowQueued = false;
+  void queueShadow() => _shadowQueued = true;
+
+  bool takeShadow() {
+    final queued = _shadowQueued;
+    _shadowQueued = false;
+    return queued;
+  }
+
   /// Bütün girdi kaynakları birlikte temizlenir: menü/ayar açılışı, odak
   /// kaybı, uygulamanın arka plana alınması, kontrol modunun değişmesi.
   /// Klavyede parmak ucu basılı tutulur, o da bırakılır; dokunmatikte bir
@@ -128,6 +138,7 @@ class Controls {
       ..sneak = false;
     touch.release();
     _lureQueued = false;
+    _shadowQueued = false;
   }
 
   bool takeLure() {
@@ -504,6 +515,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     _memories.clear();
     _whispersShown.clear();
     fireflies = startFireflies;
+    shadowCharges = 0;
     wingsCollected = false;
     _respawn = null;
     _puzzle = null;
@@ -537,6 +549,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         ),
       );
     fireflies = startFireflies;
+    shadowCharges = 0;
     // Kanatlar Kule'de (2. bölüm) bulunur: ondan önceki bölümler kanatsız,
     // sonrakiler kanatla oynanır (öğretim dengesi bozulmasın).
     wingsCollected = orderOf(index) >= 2;
@@ -574,10 +587,12 @@ class GolgeGame extends FlameGame with KeyboardEvents {
       ..clear()
       ..addAll(save.whispers);
     fireflies = save.fireflies;
+    shadowCharges = save.shadows.clamp(0, maxShadowCharges);
     wingsCollected = save.wings;
     _respawn = Vector2(save.x, save.y);
     _puzzle = save.puzzle.isEmpty ? null : save.puzzle;
     _checkpointFireflies = save.fireflies;
+    _checkpointShadows = shadowCharges;
     final index = save.level.clamp(0, levels.length - 1);
     final def = (debugLevels ?? levels)[index];
     if (save.layout != layoutKey(def.map)) {
@@ -638,6 +653,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         whispers: _whispersShown.toList(),
         fireflies: fireflies,
         wings: wingsCollected,
+        shadows: shadowCharges,
         puzzle: _puzzle ?? const {},
         layout: layoutKey(level.def.map),
       ),
@@ -650,6 +666,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
   /// Kontrol noktasına dokunulduğunda elde olan ateşböceği: ölünce bundan
   /// azıyla dönülmez (karanlık geçiş kaynaksız kalmasın).
   int _checkpointFireflies = 0;
+  int _checkpointShadows = 0;
 
   /// Şu an üstünde durulan kontrol noktası (yanından geçerken her kare
   /// yeniden kaydetmesin).
@@ -673,6 +690,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     // hiçbir yerde ateşböceksiz kalınıp takılınmasın.
     if (fireflies == 0) gainFirefly();
     _checkpointFireflies = fireflies;
+    _checkpointShadows = shadowCharges;
     _saveProgress();
   }
 
@@ -720,6 +738,8 @@ class GolgeGame extends FlameGame with KeyboardEvents {
   /// içinde ya da kıyısında doğuluyorsa en az iki (yolu görecek kadar).
   void _ensureFireflies() {
     fireflies = math.max(fireflies, _checkpointFireflies);
+    // Harcanan gölge hakkı ölünce kontrol noktasındaki kadarına döner.
+    shadowCharges = math.max(shadowCharges, _checkpointShadows);
     final r = _respawn;
     if (r == null) return;
     final near = level.darkZones.any(
@@ -1010,6 +1030,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
       _swallowed = false;
       akNefes = false;
       _checkpointFireflies = fireflies;
+      _checkpointShadows = shadowCharges;
     }
     if (respawn) _ensureFireflies();
     breath = 1;
@@ -1974,6 +1995,46 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     narration.pulseFireflies();
   }
 
+  /// Gölge hakkı: Sâye gölgesini gölge taşı olmadan da önden gönderebilir.
+  /// Elde en çok iki tane; görevlerle kazanılır (bölümün gölge oyunu ilk
+  /// görüldüğünde bir tane), bölümden bölüme taşınır.
+  static const maxShadowCharges = 2;
+  int shadowCharges = 0;
+
+  void gainShadowCharge() {
+    if (shadowCharges >= maxShadowCharges) return;
+    shadowCharges++;
+    GameAudio.instance.play('murmur', volume: 0.5);
+    narration.pulseShadow();
+    _queueHint('shadowCharge');
+  }
+
+  /// Gölge hakkıyla gölgeyi gönderir; olmuyorsa (hak yok, gölge zaten
+  /// gitmiş, Sâye yerde değil) false.
+  bool sendShadowCharge() {
+    final p = player;
+    if (p == null ||
+        cinematic ||
+        p.isDead ||
+        p.shadowSent ||
+        !p.onGround ||
+        p.skiing) {
+      return false;
+    }
+    if (shadowCharges <= 0) {
+      GameAudio.instance.play('fizzle', volume: 0.3, minGapMs: 600);
+      narration.pulseShadow();
+      return false;
+    }
+    shadowCharges--;
+    p.sendShadow();
+    world.add(ShadowDecoy());
+    GameAudio.instance.play('glide', volume: 0.55);
+    GameAudio.instance.play('murmur', volume: 0.25, minGapMs: 2000);
+    narration.pulseShadow();
+    return true;
+  }
+
   void gainFirefly() {
     fireflies = math.min(maxFireflies, fireflies + 1);
     GameAudio.instance.play('pickup');
@@ -2158,8 +2219,11 @@ class GolgeGame extends FlameGame with KeyboardEvents {
   /// Sürpriz oldu: bu oyunda bir daha olmaz, sır sayacına eklenir.
   void foundSecret(String name) {
     // İlk bulunuşta bir ateşböceği ödül (sürpriz alanların bir anlamı olsun).
-    // Kendiliğinden gelen gölge oyunu (boş durunca) ödül vermez.
-    if (!secretSeen(name) && name != 'golgeOyunu') gainFirefly();
+    // Kendiliğinden gelen gölge oyunu (boş durunca) ateşböceği değil, bir
+    // gölge hakkı verir: gölge güçlenir.
+    if (!secretSeen(name)) {
+      name == 'golgeOyunu' ? gainShadowCharge() : gainFirefly();
+    }
     markEvent('sir:$levelIndex:$name');
     if (Settings.secrets.add('$levelIndex:$name')) Settings.save();
   }
@@ -3301,6 +3365,9 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         return KeyEventResult.handled;
       }
       if (held) return KeyEventResult.handled;
+      if (event.logicalKey == LogicalKeyboardKey.keyG) {
+        controls.queueShadow();
+      }
       if (event.logicalKey == LogicalKeyboardKey.keyF ||
           event.logicalKey == LogicalKeyboardKey.keyX ||
           event.logicalKey == LogicalKeyboardKey.gameButtonX) {

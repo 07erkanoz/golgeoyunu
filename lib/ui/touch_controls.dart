@@ -161,6 +161,19 @@ class _TouchControlsState extends State<TouchControls> {
                         },
                       ),
                     ),
+                    at(
+                      start: false,
+                      side: 112,
+                      bottom: 192,
+                      child: _Pad(
+                        icon: Icons.accessibility_new,
+                        label: tr ? 'gölge' : 'shadow',
+                        size: 56 * k,
+                        onChanged: (v) {
+                          if (v) widget.controls.queueShadow();
+                        },
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -404,6 +417,15 @@ class _GestureControlsState extends State<_GestureControls> {
                 icon: Icons.auto_awesome,
                 alpha: alpha,
                 onTap: widget.controls.queueLure,
+              ),
+            ),
+            Positioned(
+              right: 118,
+              top: 10,
+              child: _CornerButton(
+                icon: Icons.accessibility_new,
+                alpha: alpha,
+                onTap: widget.controls.queueShadow,
               ),
             ),
           ],

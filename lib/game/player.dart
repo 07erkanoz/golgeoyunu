@@ -230,6 +230,7 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     final down = active && c.down;
     final jump = active && c.jump;
     final lurePressed = c.takeLure() && active;
+    if (c.takeShadow() && active) game.sendShadowCharge();
     sneaking = active && c.sneak && state == PlayerState.normal;
     final dir = (right ? 1 : 0) - (left ? 1 : 0);
     final jumpPressed = jump && !_prevJump;
