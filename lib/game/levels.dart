@@ -1991,8 +1991,10 @@ const levels = <LevelDef>[
       'Memory · "An inn is the traveler\'s heart. No one enters an inn whose hearth is cold, even if the door is open."',
     ],
     map: kMapKarYolu,
-    // Kapının kolu kapalı bir odada: yarıktan yalnız gölge girer. Setin
-    // üstünde gölge taşı (hakkı olmayan da çözer); kapıya setin altından.
+    // Kapının kolu kapalı bir odada, basamağın üstünde: yarıktan yalnız
+    // gölge girer; oyuncu gölgeyi dikenli çukurun üstünden atlatıp basamağa
+    // çıkarır. Setin üstünde gölge taşı (hakkı olmayan da çözer); kapıya
+    // setin altından.
     shadowStones: [(320, 15)],
     shadowCracks: [(323, 13, 15)],
   ),
@@ -2123,7 +2125,7 @@ const levels = <LevelDef>[
     irons: [(207, 25), (222, 25), (237, 25), (252, 25), (262, 25)],
     // Çıkış zincirinin önünde uçurum: gölge taşından gönderilen gölge
     // boşlukta yürür, ardında mürekkep köprü bırakır.
-    shadowStones: [(395, 25)],
+    shadowStones: [(399, 25)],
     shadowBridges: [(401, 409, 26)],
     albastis: [(231, 19), (247, 17)],
     subtitle: 'İnsanlar aşağıda, periler yukarıda yaşardı.',
@@ -2790,7 +2792,7 @@ const levels = <LevelDef>[
       'Memory · "The screen comes to an end, Saye. The shadow does not. It is born again by another lamp."',
       'Memory · One night I asked: "Master, does a shadow have a shadow too?" He laughed: "A praying shadow does."',
     ],
-    shadowStones: [(101, 51), (145, 51)],
+    shadowStones: [(98, 51), (145, 51)],
     cages: [(92, 51), (132, 51), (182, 51)],
     finale: (284, 9),
     finaleLocks: [(281, 9), (290, 7), (287, 9)],

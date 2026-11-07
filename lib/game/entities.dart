@@ -324,6 +324,10 @@ class Guard extends PositionComponent
       _lure!.isMounted &&
       _lure!.glowing;
 
+  /// Gönderilen gölgeye dalmış (ona bakıyor): feneri gölgeyi silmez.
+  bool get staringAtShadow =>
+      state == GuardState.investigate && _lure is ShadowDecoy;
+
   void _noticeLure() {
     final range = state == GuardState.chase ? 260.0 : 380.0;
     for (final lure in game.world.children.whereType<FireflyLure>()) {

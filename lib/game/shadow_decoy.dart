@@ -80,6 +80,7 @@ class ShadowStone extends PositionComponent
     final p = game.player;
     if (p == null) return;
     p.sendShadow();
+    game.hint('shadowSteer');
     game.world.add(ShadowDecoy());
     GameAudio.instance.play('glide', volume: 0.55);
     GameAudio.instance.play('murmur', volume: 0.25, minGapMs: 2000);

@@ -1,5 +1,6 @@
-// Gölgeyi önden göndermek (Derinkuyu): gölge koridora yürür, Kandilci onu
-// görüp ona dalar, Sâye onun yanından yakalanmadan geçer; gölge sonra döner.
+// Gölgeyi önden göndermek (Derinkuyu): oyuncu gölgeyi koridora yürütür,
+// Kandilci onu görüp ona dalar; gölge bırakılır, Sâye Kandilci'nin yanından
+// yakalanmadan geçer; gölge sonra döner.
 import 'package:flame/components.dart';
 import 'package:flame_test/flame_test.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -55,12 +56,20 @@ void main() {
           ),
         );
       final g = guards.first;
+      // Oyuncu gölgeyi Kandilci'ye doğru yürütür ama fenerine değdirmez:
+      // biraz önünde bekletir; Kandilci dönüp görünce ona dalar.
+      final k = game.controls.keyboard;
       var t = 0.0;
-      while (!g.distracted && t < 12) {
+      while (!g.distracted && t < 12 && p.steeringShadow) {
+        k.right = g.center.x - p.shadowFeet.x > 4.5 * kTile;
         game.update(1 / 60);
         t += 1 / 60;
       }
+      k.right = false;
       expect(g.distracted, isTrue, reason: 'Kandilci gölgeye dalar');
+      game.controls.queueShadow();
+      game.update(1 / 60);
+      expect(p.steeringShadow, isFalse);
       // Sâye Kandilcinin önünden koşarak geçer: yakalanmaz.
       game.controls.keyboard.right = true;
       var passed = false;
@@ -134,12 +143,16 @@ void main() {
       expect(stone.canUse(p.center), isTrue);
       stone.use();
       await game.ready();
+      // Gölgeyi parmaklıktan geçirip kola yürüt, sonra bırak.
+      game.controls.keyboard.right = true;
       var t = 0.0;
       while (!lever.pulled && t < 10) {
         game.update(1 / 60);
         t += 1 / 60;
       }
+      game.controls.keyboard.right = false;
       expect(lever.pulled, isTrue, reason: 'gölge kolu çeker');
+      game.controls.queueShadow();
       expect(gate.opening, isTrue, reason: 'parmaklıklı kapı açılır');
       // Kapı kalkınca Sâye geçer; gölge de döner.
       for (var i = 0; i < 120; i++) {

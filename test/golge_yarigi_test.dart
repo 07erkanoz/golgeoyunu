@@ -48,6 +48,7 @@ void main() {
       game.controls.keyboard.right = false;
       p.position.x = stone.position.x - Player.w / 2;
       stone.use();
+      expect(p.steeringShadow, isTrue, reason: 'oyuncu gölgeyi yürütür');
       final lever = game.world.children.whereType<Lever>().reduce(
         (a, b) =>
             (a.position.x - stone.position.x).abs() <
@@ -55,10 +56,27 @@ void main() {
             ? a
             : b,
       );
-      for (var i = 0; i < 60 * 6 && !lever.pulled; i++) {
+      // Gölgeyi sağa yürüt: yarıktan geçince dikenli çukurun üstünden atla,
+      // sonra basamağa zıpla. Sâye yerinden kıpırdamaz.
+      final saye = p.position.x;
+      final k = game.controls.keyboard;
+      k.right = true;
+      var lastX = p.shadowFeet.x;
+      for (var i = 0; i < 60 * 8 && !lever.pulled; i++) {
+        final x = p.shadowFeet.x;
+        final atPit = x > (c + 1) * kTile - 10 && x < (c + 1) * kTile;
+        final stuck = i > 5 && (x - lastX).abs() < 0.01;
+        k.jump = atPit || stuck;
+        lastX = x;
         game.update(1 / 60);
       }
+      k.right = k.jump = false;
+      expect(p.position.x, closeTo(saye, 1), reason: 'Sâye donuk kaldı');
       expect(lever.pulled, isTrue, reason: 'gölge yarıktan geçip kolu çekti');
+      // Gölgeyi bırak: denetim Sâye'ye döner.
+      game.controls.queueShadow();
+      game.update(1 / 60);
+      expect(p.steeringShadow, isFalse);
       // Kapı açılsın; Sâye setin altından kapıya yürüyüp geçer.
       for (var i = 0; i < 60 * 3; i++) {
         game.update(1 / 60);
@@ -79,6 +97,45 @@ void main() {
       game.controls.keyboard.right = false;
       expect(p.isDead, isFalse);
       expect(p.position.x, greaterThan(333 * kTile), reason: 'kapıdan geçti');
+    },
+  );
+
+  testWithGame<GolgeGame>(
+    'zıplamadan yürüyen gölge dikenli çukurda dağılır',
+    GolgeGame.new,
+    (game) async {
+      game.onGameResize(Vector2(1280, 720));
+      game.debugLoadLevel(levels.indexWhere((d) => d.shadowCracks.isNotEmpty));
+      await game.ready();
+      game.cinematic = false;
+      final (c, _, _) = game.level.def.shadowCracks.first;
+      final stone = game.world.children.whereType<ShadowStone>().firstWhere(
+        (s) => (s.position.x / kTile).floor() == c - 3,
+      );
+      final p = game.player!;
+      p.position.setValues(
+        stone.position.x - Player.w / 2,
+        stone.position.y - Player.h,
+      );
+      p.velocity.setZero();
+      for (var i = 0; i < 20; i++) {
+        game.update(1 / 60);
+      }
+      game.controls.keyboard.right = true;
+      game.update(1 / 60);
+      p.position.x = stone.position.x - Player.w / 2;
+      stone.use();
+      var shattered = false;
+      for (var i = 0; i < 60 * 4 && !shattered; i++) {
+        game.update(1 / 60);
+        if (p.shadowSent && !p.steeringShadow) shattered = true;
+      }
+      game.controls.keyboard.right = false;
+      expect(shattered, isTrue, reason: 'dikene düşen gölge dağıldı');
+      final lever = game.world.children.whereType<Lever>().firstWhere(
+        (l) => (l.position.x / kTile).floor() == c + 3,
+      );
+      expect(lever.pulled, isFalse);
     },
   );
 }

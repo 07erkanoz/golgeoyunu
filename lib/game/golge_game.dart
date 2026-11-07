@@ -1428,6 +1428,20 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     return false;
   }
 
+  /// Habersiz bir Kandilci'nin feneri bu noktaya değiyor mu (yakın ışık):
+  /// gönderilen gölgeyi siler. Gölgeye dalmış, ona bakan Kandilci silmez
+  /// (gölge onu oyalar).
+  bool lanternTouches(Vector2 at) {
+    for (final g in world.children.whereType<Guard>()) {
+      if (g.falling || g.staringAtShadow) continue;
+      final lantern = g.lanternWorld;
+      if ((at - lantern).length2 < 70 * 70 && level.lineOfSight(lantern, at)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   bool litAt(Vector2 at) {
     bool reaches(Vector2 from, double radius) {
       final dx = from.x - at.x;
@@ -2037,6 +2051,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     }
     shadowCharges--;
     p.sendShadow();
+    _queueHint('shadowSteer');
     world.add(ShadowDecoy());
     GameAudio.instance.play('glide', volume: 0.55);
     GameAudio.instance.play('murmur', volume: 0.25, minGapMs: 2000);
@@ -3184,7 +3199,12 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     final halfH = view.y / baseZoom / 2;
     // Dikey: basılan zemine göre; zıplama, ip ve kenara tutunma kamerayı
     // oynatmaz. Bandın dışına çıkınca (ya da düşerken) izler.
-    final y = p.center.y;
+    // Gölge yürütülürken kamera Sâye ile gölgenin ortasına bakar: ikisi de
+    // görünsün (Sâye donuk ve savunmasız).
+    final steer = p.steeringShadow;
+    final y = steer
+        ? (p.center.y + p.shadowFeet.y - Player.h / 2) / 2
+        : p.center.y;
     if (_snapCamera || _camFloor.isNaN) _camFloor = y;
     final band = halfH * 0.32;
     if (p.swimming) {
@@ -3199,7 +3219,10 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     } else if (y > _camFloor + band * 0.5) {
       _camFloor = y - band * 0.5;
     }
-    final target = Vector2(p.center.x + _lookAhead, _camFloor - 20);
+    final target = Vector2(
+      (steer ? (p.center.x + p.shadowFeet.x) / 2 : p.center.x + _lookAhead),
+      _camFloor - 20,
+    );
     // Altta su varsa (sarnıç, bataklık, tufan) yüzeyi ekranın altında
     // görünsün: alçak ekranlarda (telefon) yolun kenarı boşluğa değil suya
     // açılır. Sâye ekranın üst yarısından çıkmaz.

@@ -42,6 +42,21 @@ void _standAt(GolgeGame game, double x) {
   expect(p.onGround, isTrue);
 }
 
+/// Gölgeyi [x]'e yürütür (oyuncunun eli: yön tuşu).
+void _steerTo(GolgeGame game, double x) {
+  final p = game.player!;
+  final k = game.controls.keyboard;
+  for (var i = 0; i < 60 * 6; i++) {
+    final dx = x - p.shadowFeet.x;
+    if (dx.abs() < 3) break;
+    k.left = dx < 0;
+    k.right = dx > 0;
+    game.update(1 / 60);
+  }
+  k.left = k.right = false;
+  game.update(1 / 60);
+}
+
 void _face(GolgeGame game, {required bool left}) {
   final k = game.controls.keyboard;
   if (left) {
@@ -82,10 +97,11 @@ void main() {
       _face(game, left: true);
       game.player!.position.x = stone.position.x - Player.w / 2;
       stone.use();
-      for (var i = 0; i < 60 * 6 && !plate.pressed; i++) {
-        game.update(1 / 60);
-      }
+      _steerTo(game, plate.position.x);
       expect(plate.pressed, isTrue, reason: 'gölge eşiğe vardı');
+      // Gölgeyi eşikte bırak, Sâye'yle kapıya koş.
+      game.controls.queueShadow();
+      game.update(1 / 60);
       final p = game.player!;
       game.controls.keyboard.right = true;
       for (var i = 0; i < 60 * 4; i++) {
@@ -115,6 +131,8 @@ void main() {
     _face(game, left: true);
     game.player!.position.x = stone.position.x - Player.w / 2;
     stone.use();
+    _steerTo(game, plate.position.x);
+    game.controls.queueShadow();
     var opened = false;
     for (var i = 0; i < 60 * 14; i++) {
       game.update(1 / 60);

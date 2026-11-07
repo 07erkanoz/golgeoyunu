@@ -68,10 +68,16 @@ void main() {
       game.controls.keyboard.right = false;
       p.position.x = stone.position.x - Player.w / 2;
       stone.use();
+      // Gölgeyi uçurumun üstünden yürüt: ardında mürekkep köprü kalır.
+      game.controls.keyboard.right = true;
       for (var i = 0; i < 60 * 8 && !planks.last.laid; i++) {
         game.update(1 / 60);
       }
+      game.controls.keyboard.right = false;
       expect(planks.every((k) => k.laid), isTrue, reason: 'köprü tamam');
+      // Gölgeyi bırak, Sâye köprüden geçsin.
+      game.controls.queueShadow();
+      game.update(1 / 60);
       game.controls.keyboard.right = true;
       for (var i = 0; i < 60 * 3; i++) {
         game.update(1 / 60);

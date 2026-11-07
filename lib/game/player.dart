@@ -231,21 +231,38 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     final down = active && c.down;
     final jump = active && c.jump;
     final lurePressed = c.takeLure() && active;
-    if (c.takeShadow() && active) game.sendShadowCharge();
+    if (c.takeShadow() && active) {
+      if (steeringShadow) {
+        releaseShadow();
+      } else if (shadowSent) {
+        recallShadow();
+      } else {
+        game.sendShadowCharge();
+      }
+    }
     sneaking = active && c.sneak && state == PlayerState.normal;
     final dir = (right ? 1 : 0) - (left ? 1 : 0);
     final jumpPressed = jump && !_prevJump;
     final upPressed = up && !_prevUp;
     _prevJump = jump;
     _prevUp = up;
-    _jumpBuffer = jumpPressed ? 0.12 : _jumpBuffer - dt;
+    // Gölge yürütülürken girdi gölgeye gider, Sâye donar; ↑ gölgeyi bırakır.
+    final steer = steeringShadow && state == PlayerState.normal;
+    if (steer) {
+      if (upPressed) {
+        releaseShadow();
+      } else {
+        _steerShadow(dt, dir, jumpPressed);
+      }
+    }
+    _jumpBuffer = jumpPressed && !steer ? 0.12 : _jumpBuffer - dt;
     _grabCooldown -= dt;
     _lastRopeT -= dt;
     if (_lastRope != null && (onGround || _lastRopeT <= 0)) _lastRope = null;
     _dropThrough -= dt;
 
     // Kol çekmek ↑ ile: zincire/sarmaşığa tutunmadan önce bakılır.
-    if (upPressed && state == PlayerState.normal && onGround) {
+    if (upPressed && !steer && state == PlayerState.normal && onGround) {
       for (final lever in game.world.children.whereType<Lever>()) {
         if (!lever.pulled && lever.near(center)) {
           lever.pull();
@@ -284,6 +301,8 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
         );
       case PlayerState.normal when game.skiSurface != null:
         _updateSki(dt, dir, jump, jumpPressed);
+      case PlayerState.normal when steer:
+        _updateNormal(dt, 0, false, false, false);
       case PlayerState.normal:
         _updateNormal(dt, dir, up, down, jump);
       case PlayerState.hang:
@@ -1775,23 +1794,31 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
   final _trail = <(double, double, double)>[];
 
   // ------------------------------------------------- gönderilen gölge
-  // Gölge taşında ↑: gölge Sâye'den ayrılıp baktığı yöne yürür, durduğu
-  // yerde oyalanır (Kandilci görürse daha uzun), sonra geri döner. Yolunda
-  // çekilmemiş bir kol varsa (parmaklıklı kapının ardında bile) orada durup
-  // onu çeker.
+  // Gölge taşında ↑ ya da gölge hakkıyla: gölge Sâye'den ayrılır ve oyuncu
+  // onu yürütür; Sâye olduğu yerde donar, savunmasızdır. Gölge yürür,
+  // zıplar; duvarda durur, parmaklıktan ve gölge yarığından geçer; Sâye'den
+  // en çok [_tether] uzaklaşır (ip gerildikçe solar). Kandilci feneri
+  // değerse ya da uçuruma, dikene düşerse dağılıp döner. Değdiği kolu çeker.
+  // ↑ ya da gölge düğmesi gölgeyi olduğu yerde bırakır: birkaç saniye
+  // oyalanır (Kandilciyi oyalar, eşiği basılı tutar), denetim Sâye'ye döner.
 
-  static const double _sentSpeed = 95;
-  static const double _sentReach = 16 * kTile;
+  static const double _steerSpeed = 130;
+  static const double _steerJump = 500;
+  static const double _tether = 12 * kTile;
+  static const double _steerMax = 16;
   static const double _sentLinger = 5.5;
-  int _sentPhase = 0; // 0 yürür, 1 oyalanır, 2 döner
-  double _sentDist = 0;
+  int _sentPhase = 0; // 0 oyuncu yürütür, 1 bırakıldı (oyalanır), 2 döner
   double _sentHold = 0;
   double _sentLook = 0;
-  Lever? _sentLever;
-  double _sentPullAt = 0;
+  double _shVy = 0;
+  bool _shGround = true;
+  bool _steerMoving = false;
 
   /// Gölge gönderildi (dönene dek).
   bool get shadowSent => _mood == _ShadowMood.sent;
+
+  /// Oyuncu gölgeyi yürütüyor (Sâye donuk).
+  bool get steeringShadow => shadowSent && _sentPhase == 0;
 
   /// Gölge Kandilciyi oyalayabilir mi (yürürken ve dururken; dönerken değil).
   bool get shadowLures => shadowSent && _sentPhase < 2;
@@ -1804,14 +1831,130 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     _mood = _ShadowMood.sent;
     _moodT = 0;
     _sentPhase = 0;
-    _sentDist = 0;
     _sentSeen = false;
-    _sentHold = _sentLinger;
-    _sentLever = null;
+    _sentHold = 0;
+    _shVy = 0;
+    _shGround = true;
+    _steerMoving = false;
     _shadowX = center.x + facing * 12;
     _shadowY = position.y + h;
     _shadowFacing = facing;
     _shadowFade = 1;
+  }
+
+  /// Yürütülen gölgeyi olduğu yerde bırakır: oyalanır, sonra döner.
+  void releaseShadow() {
+    if (!steeringShadow) return;
+    _sentPhase = 1;
+    _sentLook = 0;
+    final onPlate = game.world.children.whereType<ShadowPlate>().any(
+      (k) => k.pressed,
+    );
+    _sentHold =
+        _moodT +
+        (onPlate ? ShadowPlate.hold : _sentLinger) +
+        (_sentSeen ? 1.5 : 0);
+    GameAudio.instance.play('glide', volume: 0.3);
+  }
+
+  /// Bırakılan gölgeyi hemen geri çağırır (gölge düğmesi).
+  void recallShadow() {
+    if (!shadowSent || _sentPhase != 1) return;
+    _sentPhase = 2;
+    _sentHold = _moodT;
+  }
+
+  /// Gölge dağılır (ışık değdi, düştü): hemen Sâye'ye akar.
+  void _shatterShadow() {
+    _sentPhase = 2;
+    _sentHold = _moodT;
+    GameAudio.instance.play('fizzle', volume: 0.5);
+    game.dust(
+      Vector2(_shadowX, _shadowY - 24),
+      color: const Color(0xFF1A1420),
+      count: 8,
+    );
+  }
+
+  bool _shadowSolid(double x, double y) =>
+      level.cellAt(x, y) == '#' && !level.shadowCrackAt(x, y);
+
+  bool _shadowFloor(double x, double y) {
+    final c = level.cellAt(x, y);
+    return c == '#' ||
+        c == '=' ||
+        c == '-' ||
+        level.shadowBridgeAt(x, y);
+  }
+
+  /// Oyuncunun girdisiyle gölgeyi yürütür.
+  void _steerShadow(double dt, int dir, bool jumpPressed) {
+    _steerMoving = false;
+    if (dir != 0) {
+      _shadowFacing = dir;
+      final step = dir * _steerSpeed * dt;
+      final nx = _shadowX + step + dir * 7;
+      if (!_shadowSolid(nx, _shadowY - 12) &&
+          !_shadowSolid(nx, _shadowY - 40)) {
+        final want = _shadowX + step;
+        // İp: Sâye'den en çok [_tether]; geri gelmek her zaman serbest.
+        if ((want - center.x).abs() <= _tether ||
+            (want - center.x).abs() < (_shadowX - center.x).abs()) {
+          _shadowX = want;
+          _steerMoving = true;
+          if (_shGround) _shadowGait += step.abs() / 30;
+        }
+      }
+    }
+    if (jumpPressed && _shGround) {
+      _shVy = -_steerJump;
+      _shGround = false;
+      GameAudio.instance.play('glide', volume: 0.22, minGapMs: 200);
+    }
+    if (_shGround && !_shadowFloor(_shadowX, _shadowY + 4)) _shGround = false;
+    if (!_shGround) {
+      _shVy = math.min(900, _shVy + 1900 * dt);
+      final ny = _shadowY + _shVy * dt;
+      if (_shVy < 0) {
+        if (_shadowSolid(_shadowX, ny - 44)) {
+          _shVy = 0;
+        } else {
+          _shadowY = ny;
+        }
+      } else {
+        final top = (ny / kTile).floor() * kTile.toDouble();
+        if (_shadowY <= top + 0.5 &&
+            ny >= top &&
+            _shadowFloor(_shadowX, top + 4)) {
+          _shadowY = top;
+          _shVy = 0;
+          _shGround = true;
+        } else {
+          _shadowY = ny;
+        }
+      }
+    }
+    // Işık siler; uçurum ve diken dağıtır.
+    if (game.lanternTouches(Vector2(_shadowX, _shadowY - 30)) ||
+        _shadowY > level.pixelHeight ||
+        level.cellAt(_shadowX, _shadowY - 4) == '^') {
+      _shatterShadow();
+      return;
+    }
+    // Değdiği kolu çeker.
+    for (final lv in game.world.children.whereType<Lever>()) {
+      if (!lv.pulled &&
+          (lv.position.x - _shadowX).abs() < 12 &&
+          (lv.position.y - _shadowY).abs() < 24) {
+        lv.pull();
+        game.guide.markUsed(lv);
+      }
+    }
+    // Çok uzun yürütülen gölge yorulur, kendiliğinden döner.
+    if (_moodT > _steerMax) {
+      _sentPhase = 2;
+      _sentHold = _moodT;
+    }
   }
 
   // ------------------------------------------------- yol gösteren gölge
@@ -1915,66 +2058,11 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
   void _updateSent(double dt) {
     switch (_sentPhase) {
       case 0:
-        final f = _shadowFacing.toDouble();
-        final step = _sentSpeed * dt;
-        final nx = _shadowX + f * (step + 8);
-        // Duvar (gövde boyunda), uçurum ya da su: durur. Parmaklık ve
-        // gölge yarığı durdurmaz.
-        bool solid(double y) =>
-            level.cellAt(nx, y) == '#' && !level.shadowCrackAt(nx, y);
-        final wall = solid(_shadowY - 12) || solid(_shadowY - 40);
-        final below = level.cellAt(nx, _shadowY + 4);
-        final floor =
-            below == '#' ||
-            below == '=' ||
-            below == '-' ||
-            level.shadowBridgeAt(nx, _shadowY + 4);
-        for (final lv in game.world.children.whereType<Lever>()) {
-          if (!lv.pulled &&
-              (lv.position.x - nx).abs() < 6 &&
-              (lv.position.y - _shadowY).abs() < 20) {
-            _sentLever = lv;
-            break;
-          }
-        }
-        ShadowPlate? plate;
-        for (final k in game.world.children.whereType<ShadowPlate>()) {
-          if (!k.done &&
-              (k.position.x - nx).abs() < 6 &&
-              (k.position.y - _shadowY).abs() < 20) {
-            plate = k;
-            break;
-          }
-        }
-        final lever = _sentLever;
-        if (lever == null && plate != null) {
-          // Gölge eşiğine vardı: üstünde durur; kapı o durdukça açık.
-          _shadowX = plate.position.x;
-          _sentPhase = 1;
-          _sentHold = _moodT + ShadowPlate.hold;
-        } else if (lever != null) {
-          // Kola vardı: durur, uzanıp çeker; kamera kola bakar.
-          _shadowX = lever.position.x - f * 10;
-          _sentPhase = 1;
-          _sentPullAt = _moodT + 0.5;
-          _sentHold = _moodT + 2.2;
-          game.focus(lever.position - Vector2(0, 24), hold: 1.8);
-        } else if (wall || !floor || _sentDist >= _sentReach) {
-          _sentPhase = 1;
-          _sentHold = _moodT + _sentLinger + (_sentSeen ? 1.5 : 0);
-        } else {
-          _shadowX += f * step;
-          _sentDist += step;
-          _shadowGait += step / 30;
-        }
-      case 1 when _sentLever != null:
-        // Kolu çeker, sonra döner.
-        final lever = _sentLever!;
-        _shadowFacing = lever.position.x >= _shadowX ? 1 : -1;
-        if (!lever.pulled && _moodT >= _sentPullAt) lever.pull();
-        if (_moodT > _sentHold) _sentPhase = 2;
+        // Oyuncu yürütür (update içinde, girdiyle). İp gerildikçe solar.
+        final k = ((_shadowX - center.x).abs() / _tether).clamp(0.0, 1.0);
+        _shadowFade = 1 - 0.45 * k * k;
       case 1:
-        // Oyalanır: arada bir döner, bakınır.
+        // Bırakıldı: oyalanır, arada bir döner, bakınır.
         _sentLook += dt;
         if (_sentLook > 1.7) {
           _sentLook = 0;
@@ -1983,6 +2071,7 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
         if (_moodT > _sentHold) _sentPhase = 2;
       default:
         // Döner: hızla Sâye'ye akar, yaklaşınca birleşir.
+        _shadowFade = math.min(1, _shadowFade + dt);
         final dx = center.x - facing * 20 - _shadowX;
         final step = 300 * dt;
         _shadowFacing = dx >= 0 ? 1 : -1;
@@ -2393,7 +2482,7 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
   bool? get _shadowWalking => switch (_mood) {
     _ShadowMood.astray => (_moodT > 0.6 && _moodT < 2.6) || _moodT >= 4.0,
     _ShadowMood.shy => _moodT < 0.6 || _moodT >= 1.7,
-    _ShadowMood.sent => _sentPhase != 1,
+    _ShadowMood.sent => _sentPhase == 0 ? _steerMoving : _sentPhase == 2,
     _ShadowMood.guide => _guidePhase != 1,
     _ => null,
   };
@@ -2685,7 +2774,7 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
         // Gönderilen gölge: koyu ve seçik (Kandilci onu görecek).
         foot = Offset(_shadowX - position.x, _shadowY - position.y);
         dirFacing = _shadowFacing;
-        walking = _sentPhase != 1;
+        walking = _sentPhase == 0 ? _steerMoving : _sentPhase == 2;
         alpha *= 1.7;
       case _ShadowMood.guide:
         // Yol gösteren gölge: seçik; gösterirken zıplar.
