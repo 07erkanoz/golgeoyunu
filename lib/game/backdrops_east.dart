@@ -437,7 +437,71 @@ extension _EastBackdrops on Backdrop {
 
   /// Kayalık sıradağ: sivri, kırıklı tepeler; ay soldan vurduğu için her
   /// tepenin sol yamacı açık, sağı koyu; zirvelerde kar, yarıklardan iner.
+  /// Kayalık sıradağ. Tepe dizisi dünyaya bağlıdır, kamera kayınca yalnız
+  /// yer değiştirir; bu yüzden parça parça bir kez resme çevrilir, her
+  /// karede yalnız kopyalanır (her tepede ayrı kırpmayla her karede
+  /// yeniden çizmek Skia'da Kaf'ı ve Ağrı'yı takıltıyordu).
   void _rockyRange(
+    Canvas canvas,
+    double w,
+    double h, {
+    required double offset,
+    required double base,
+    required double height,
+    required int seed,
+    required Color body,
+    required Color snow,
+    required double snowline,
+  }) {
+    const tileW = 512.0;
+    final top = (height * 1.2 + 8).ceilToDouble();
+    final below = (h * 0.4).ceilToDouble();
+    final dpr = _rangeDpr();
+    final key = Object.hash(
+      seed,
+      height.round(),
+      body.toARGB32(),
+      snow.toARGB32(),
+      snowline,
+      below,
+      dpr,
+    );
+    final paint = Paint()..filterQuality = FilterQuality.low;
+    final y = (base * dpr).roundToDouble() / dpr - top;
+    final first = (offset / tileW).floor();
+    for (var k = first; k * tileW - offset < w; k++) {
+      final img = _rangeTile(key, k, tileW, top, below, dpr, () {
+        return (Canvas c) => _rockyRangeDraw(
+          c,
+          tileW + 2,
+          top + below,
+          offset: k * tileW - 1,
+          base: top,
+          height: height,
+          seed: seed,
+          body: body,
+          snow: snow,
+          snowline: snowline,
+        );
+      });
+      final x = ((k * tileW - offset) * dpr).roundToDouble() / dpr;
+      canvas.drawImageRect(
+        img,
+        Rect.fromLTWH(dpr, 0, tileW * dpr, (top + below) * dpr),
+        Rect.fromLTWH(x, y, tileW, top + below),
+        paint,
+      );
+    }
+    // Resmin altından ekranın dibine düz gövde.
+    if (y + top + below < h) {
+      canvas.drawRect(
+        Rect.fromLTRB(0, y + top + below - 1, w, h),
+        Paint()..color = body,
+      );
+    }
+  }
+
+  void _rockyRangeDraw(
     Canvas canvas,
     double w,
     double h, {
@@ -569,6 +633,8 @@ extension _EastBackdrops on Backdrop {
 
   /// Kayalık volkan koni (Ağrı): pürüzlü dış hat, sol yamaç ay ışığında,
   /// zirvede buzul ve aşağı inen kar dilleri, eteğinde kaya şeritleri.
+  /// Volkan koni: biçimi kameradan bağımsızdır, bir kez resme çevrilir ve
+  /// her karede kopyalanır (her karede kırparak çizmek Skia'yı yoruyordu).
   void _volcano(
     Canvas canvas,
     double cx,
@@ -587,6 +653,72 @@ extension _EastBackdrops on Backdrop {
       Color(0xFFD0DAEA),
       Color(0xFF7E8EAC),
     ],
+  }) {
+    final dpr = _rangeDpr();
+    final above = (tall + tall * 0.05 + 24).ceilToDouble();
+    final below = (h * 0.5).ceilToDouble();
+    final wid = (half * 2 + 8).ceilToDouble();
+    final key = Object.hash(
+      'volkan',
+      seed,
+      tall.round(),
+      half.round(),
+      Object.hashAll(body.map((c) => c.toARGB32())),
+      Object.hashAll(snowCols.map((c) => c.toARGB32())),
+      below,
+      dpr,
+    );
+    final img = _rangeTile(key, 0, wid - 2, above, below, dpr, () {
+      return (Canvas c) => _volcanoDraw(
+        c,
+        wid / 2,
+        above,
+        tall,
+        half,
+        seed,
+        above + below,
+        body: body,
+        snowCols: snowCols,
+      );
+    });
+    final x = ((cx - wid / 2) * dpr).roundToDouble() / dpr;
+    final y = ((base - above) * dpr).roundToDouble() / dpr;
+    canvas.drawImageRect(
+      img,
+      Rect.fromLTWH(0, 0, wid * dpr, (above + below) * dpr),
+      Rect.fromLTWH(x, y, wid, above + below),
+      Paint()..filterQuality = FilterQuality.low,
+    );
+    // Resmin altından ekranın dibine eteğin gövdesi.
+    if (y + above + below < h) {
+      canvas.drawRect(
+        Rect.fromLTRB(
+          x + wid / 2 - half,
+          y + above + below - 1,
+          x + wid / 2 + half,
+          h,
+        ),
+        Paint()
+          ..shader = ui.Gradient.linear(
+            Offset(x + wid / 2 - half, 0),
+            Offset(x + wid / 2 + half, 0),
+            body,
+            const [0, 0.48, 1],
+          ),
+      );
+    }
+  }
+
+  void _volcanoDraw(
+    Canvas canvas,
+    double cx,
+    double base,
+    double tall,
+    double half,
+    int seed,
+    double h, {
+    required List<Color> body,
+    required List<Color> snowCols,
   }) {
     final top = base - tall;
     final r = math.Random(seed);
@@ -1158,6 +1290,36 @@ extension _EastBackdrops on Backdrop {
 
   /// Nemrut: kışın taş tanrılar; başları ayaklarının dibine düşmüş.
   /// variant 1: gün doğumu, güneş tümülüsün ardından yükselir.
+  /// Tümülüs bir kez resme çevrilir, kamerayla yalnız kayar (yüzlerce çakıl
+  /// taşını her karede kırparak çizmek Skia'da Nemrut'u yavaşlatıyordu).
+  /// Gün doğumunda şafak ilerledikçe renk değişir: otuz ikide bir adımda
+  /// yeniden çizilir.
+  void _tumulusCached(
+    Canvas canvas,
+    double w,
+    double h,
+    double tx,
+    double dawn,
+  ) {
+    final dpr = _rangeDpr();
+    final step = (dawn * 32).round();
+    final d = step / 32;
+    final wid = (w + 16).ceilToDouble();
+    final above = (h * 0.72).ceilToDouble();
+    const below = 8.0;
+    final key = Object.hash('tumulus', w.round(), h.round(), dpr);
+    final img = _rangeTile(key, step, wid - 2, above, below, dpr, () {
+      return (Canvas c) => paintNemrutTumulus(c, w, h, wid / 2, d);
+    });
+    final x = ((tx - wid / 2) * dpr).roundToDouble() / dpr;
+    canvas.drawImageRect(
+      img,
+      Rect.fromLTWH(0, 0, wid * dpr, (above + below) * dpr),
+      Rect.fromLTWH(x, 0, wid, above + below),
+      Paint()..filterQuality = FilterQuality.low,
+    );
+  }
+
   void _nemrut(Canvas canvas, double w, double h, Vector2 cam, int variant) {
     final dawn = variant == 1
         ? (0.4 + 0.6 * (cam.x / game.level.pixelWidth)).clamp(0.0, 1.0)
@@ -1187,7 +1349,7 @@ extension _EastBackdrops on Backdrop {
     }
     if (Cartoon.on) {
       // Doku: çakıl taşından oyma tümülüs, katman katman karlı teraslar.
-      paintNemrutTumulus(canvas, w, h, tx, dawn);
+      _tumulusCached(canvas, w, h, tx, dawn);
       paintNemrutTerraces(canvas, w, h, offset: cam.x * 0.08, dawn: dawn);
     } else {
       canvas.drawPath(
@@ -1530,23 +1692,84 @@ extension _EastBackdrops on Backdrop {
             ..color = const Color(0xFFFFC890).withValues(alpha: 0.3),
         );
       }
-      final lit = const Color(0xFFFFC27A).withValues(alpha: 0.85);
-      _repeat(w, cam.x * depth, 320 * scale, (x, rnd) {
-        if (rnd.nextDouble() < 0.3 + (0.38 - depth) * 0.6) return;
-        drawFairyCluster(
-          canvas,
-          Offset(x + rnd.nextDouble() * 60 * scale, h * base + 8 * scale),
-          (170 + rnd.nextDouble() * 130) * scale,
-          tones,
-          rnd,
-          peaks: 1 + rnd.nextInt(3),
-          openings: depth > 0.1 ? 0.3 : 0,
-          lit: lit,
-          doku: Cartoon.on,
-          rimAlpha: 0.25 + depth,
-        );
-      }, salt: (depth * 1000).round());
+      // Bacalar her karede yeniden çizilmez: kat parça parça bir kez resme
+      // çevrilir, kamera kaydıkça yalnız kopyalanır (her bacada kırpma,
+      // tüf kuşakları ve oyuklarla Skia'da Ürgüp'ü takıltıyordu).
+      _chimneyRowCached(canvas, w, h, cam.x * depth, depth, tones, scale, base);
     }
+  }
+
+  void _chimneyRowCached(
+    Canvas canvas,
+    double w,
+    double h,
+    double offset,
+    double depth,
+    ChimneyTones tones,
+    double scale,
+    double base,
+  ) {
+    const tileW = 512.0;
+    final margin = (420 * scale).ceilToDouble();
+    final baseY = h * base + 8 * scale;
+    final above = (330 * scale * 1.15 + 24).ceilToDouble();
+    const below = 40.0;
+    final dpr = _rangeDpr();
+    final key = Object.hash('peri', depth, h.round(), Cartoon.on, dpr);
+    final paint = Paint()..filterQuality = FilterQuality.low;
+    final y = (baseY * dpr).roundToDouble() / dpr - above;
+    final first = (offset / tileW).floor();
+    for (var k = first; k * tileW - offset < w; k++) {
+      final img = _rangeTile(key, k, tileW, above, below, dpr, () {
+        return (Canvas c) {
+          c.translate(1 - margin, 0);
+          _chimneyRow(
+            c,
+            tileW + 2 * margin,
+            k * tileW - margin,
+            depth,
+            tones,
+            scale,
+            above,
+          );
+        };
+      });
+      final x = ((k * tileW - offset) * dpr).roundToDouble() / dpr;
+      canvas.drawImageRect(
+        img,
+        Rect.fromLTWH(dpr, 0, tileW * dpr, (above + below) * dpr),
+        Rect.fromLTWH(x, y, tileW, above + below),
+        paint,
+      );
+    }
+  }
+
+  /// Bir kat peri bacası; [baseY] bacaların dibi (çizildiği tuvalde).
+  void _chimneyRow(
+    Canvas canvas,
+    double w,
+    double offset,
+    double depth,
+    ChimneyTones tones,
+    double scale,
+    double baseY,
+  ) {
+    final lit = const Color(0xFFFFC27A).withValues(alpha: 0.85);
+    _repeat(w, offset, 320 * scale, (x, rnd) {
+      if (rnd.nextDouble() < 0.3 + (0.38 - depth) * 0.6) return;
+      drawFairyCluster(
+        canvas,
+        Offset(x + rnd.nextDouble() * 60 * scale, baseY),
+        (170 + rnd.nextDouble() * 130) * scale,
+        tones,
+        rnd,
+        peaks: 1 + rnd.nextInt(3),
+        openings: depth > 0.1 ? 0.3 : 0,
+        lit: lit,
+        doku: Cartoon.on,
+        rimAlpha: 0.25 + depth,
+      );
+    }, salt: (depth * 1000).round());
   }
 
   // -------------------------------------------------------------- Konya
@@ -2433,4 +2656,46 @@ extension _EastBackdrops on Backdrop {
       );
     }
   }
+}
+
+/// Sıradağ parçalarının resimleri (anahtar, parça sırası); sınırlı sayıda
+/// tutulur, en eskisi atılır.
+final _rangeTiles = <(int, int), ui.Image>{};
+
+double _rangeDpr() {
+  final views = ui.PlatformDispatcher.instance.views;
+  final d = views.isEmpty ? 1.0 : views.first.devicePixelRatio;
+  return d.clamp(1.0, 2.0);
+}
+
+ui.Image _rangeTile(
+  int key,
+  int k,
+  double tileW,
+  double top,
+  double below,
+  double dpr,
+  void Function(Canvas) Function() painter,
+) {
+  final id = (key, k);
+  final hit = _rangeTiles.remove(id);
+  if (hit != null) {
+    _rangeTiles[id] = hit; // en son kullanılan sona
+    return hit;
+  }
+  final rec = ui.PictureRecorder();
+  final c = Canvas(rec);
+  c.scale(dpr);
+  c.clipRect(Rect.fromLTWH(0, 0, tileW + 2, top + below));
+  painter()(c);
+  final img = rec.endRecording().toImageSync(
+    ((tileW + 2) * dpr).ceil(),
+    ((top + below) * dpr).ceil(),
+  );
+  _rangeTiles[id] = img;
+  while (_rangeTiles.length > 40) {
+    final old = _rangeTiles.keys.first;
+    _rangeTiles.remove(old)!.dispose();
+  }
+  return img;
 }

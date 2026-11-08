@@ -245,11 +245,15 @@ class GladeZone extends PositionComponent with HasGameReference<GolgeGame> {
         ],
         const [0, 0.22, 0.78, 1],
       );
+      // Huzme zeminde bitmez: çukura ve bataklığa da iner (yoksa zemin
+      // hizasının altında kökleri örten koyu bir şerit kalıyordu).
       canvas.drawPath(
         Path()
           ..moveTo(x - w * 1.3 - skew, layer.top)
           ..lineTo(x + w * 1.3 - skew, layer.top)
           ..lineTo(x + w * 1.3, ground + 8)
+          ..lineTo(x + w * 1.3, layer.bottom)
+          ..lineTo(x - w * 1.3, layer.bottom)
           ..lineTo(x - w * 1.3, ground + 8)
           ..close(),
         cut,
@@ -325,6 +329,7 @@ class GladeZone extends PositionComponent with HasGameReference<GolgeGame> {
       ground + 8 + 5 * kTile,
     );
     if (!_groundBelow) {
+      canvas.saveLayer(below, Paint());
       canvas.drawRect(
         below,
         Paint()
@@ -333,6 +338,30 @@ class GladeZone extends PositionComponent with HasGameReference<GolgeGame> {
             const Color(0x00040A0C),
           ]),
       );
+      // Huzmeler buradan da geçer.
+      for (var i = 0; i < beams.length; i++) {
+        final on = beamOn(i);
+        if (on <= 0.01) continue;
+        final x = beamX(i);
+        final w = half * (0.6 + 0.4 * on);
+        canvas.drawRect(
+          Rect.fromLTRB(x - w * 1.3, below.top, x + w * 1.3, below.bottom),
+          Paint()
+            ..blendMode = BlendMode.dstOut
+            ..shader = ui.Gradient.linear(
+              Offset(x - w * 1.3, 0),
+              Offset(x + w * 1.3, 0),
+              [
+                const Color(0x00000000),
+                Color.fromRGBO(0, 0, 0, on),
+                Color.fromRGBO(0, 0, 0, on),
+                const Color(0x00000000),
+              ],
+              const [0, 0.22, 0.78, 1],
+            ),
+        );
+      }
+      canvas.restore();
     }
 
     // Basılacak kökler karanlıkta da seçilsin: üstlerinde soluk yosun.

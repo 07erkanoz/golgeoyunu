@@ -180,6 +180,7 @@ class LightingLayer extends Component with HasGameReference<GolgeGame> {
 
   @override
   void render(Canvas canvas) {
+    if (Realism.debugNoShade) return;
     final rect = game.camera.visibleWorldRect.inflate(80);
     _view = rect;
     SoftEdge.on = SoftEdge.force ?? !Settings.lowGraphics;

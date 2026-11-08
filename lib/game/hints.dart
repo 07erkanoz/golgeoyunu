@@ -219,7 +219,7 @@ class Hints {
     'golgehane': '{up} Tasvire dokun · perdede canlanır · kandili iterek gölgeni büyüt, küçült',
     'shadowStone': '{up} Gölgeni gönder, Kandilci\'yi ona çek · bırak, o bakarken geç',
     'shadowSteer': 'Gölgeni sen yürütürsün · fener değerse dağılır · {up} ile bırak',
-    'shadowCharge': 'Gölgen güçlendi · {shadow} ile taşsız da gönderebilirsin',
+    'shadowCharge': 'Gölgen güçlendi · taşsız göndermek için: {shadow}',
     'shadowCrack':
         'Yarıktan yalnız gölge geçer · gölgeni geçir, kola değsin',
     'shadowLever':
@@ -362,7 +362,7 @@ class Hints {
     'shadowStone': '{up} Send your shadow, draw a Lamplighter to it · leave it there and slip past',
     'shadowSteer': 'You steer your shadow · a lantern\'s touch scatters it · {up} to leave it',
     'shadowCharge':
-        'Your shadow grew stronger · send it anywhere with {shadow}',
+        'Your shadow grew stronger · to send it without a stone: {shadow}',
     'shadowCrack': 'Only a shadow fits through the crack · walk yours to the lever',
     'shadowLever': '{up} Send your shadow · walk it through the bars to the lever',
     'shadowPlate': 'The threshold knows only shadows · leave yours on it, run before the gate drops',

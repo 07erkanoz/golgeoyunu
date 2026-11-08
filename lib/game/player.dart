@@ -1805,7 +1805,7 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
   static const double _steerSpeed = 130;
   static const double _steerJump = 500;
   static const double _tether = 12 * kTile;
-  static const double _steerMax = 16;
+  static const double _steerMax = 12;
   static const double _sentLinger = 5.5;
   int _sentPhase = 0; // 0 oyuncu yürütür, 1 bırakıldı (oyalanır), 2 döner
   double _sentHold = 0;
@@ -1813,6 +1813,7 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
   double _shVy = 0;
   bool _shGround = true;
   bool _steerMoving = false;
+  double _returnAt = -1;
 
   /// Gölge gönderildi (dönene dek).
   bool get shadowSent => _mood == _ShadowMood.sent;
@@ -1836,6 +1837,7 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     _shVy = 0;
     _shGround = true;
     _steerMoving = false;
+    _returnAt = -1;
     _shadowX = center.x + facing * 12;
     _shadowY = position.y + h;
     _shadowFacing = facing;
@@ -1948,10 +1950,13 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
           (lv.position.y - _shadowY).abs() < 24) {
         lv.pull();
         game.guide.markUsed(lv);
+        // İşi bitti: kolu çekince kısa bir an bekler, kendiliğinden döner
+        // (oyuncu bırakmayı bilmese de Sâye'nin denetimi geri gelir).
+        _returnAt = _moodT + 0.8;
       }
     }
     // Çok uzun yürütülen gölge yorulur, kendiliğinden döner.
-    if (_moodT > _steerMax) {
+    if (_moodT > _steerMax || (_returnAt >= 0 && _moodT > _returnAt)) {
       _sentPhase = 2;
       _sentHold = _moodT;
     }

@@ -69,6 +69,7 @@ class Backdrop extends Component with HasGameReference<GolgeGame> {
 
   @override
   void render(Canvas canvas) {
+    if (Realism.debugNoBack) return;
     _renderTheme(canvas);
     // Manzara anı: temanın üstünde, dünyanın arkasında.
     final kind = game.vistaKind;

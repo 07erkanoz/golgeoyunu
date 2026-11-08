@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'dart:ui' as ui;
 
 import 'package:flame/components.dart';
+import 'package:flutter/foundation.dart';
 
 import 'doku_kar.dart';
 import 'doku_kule.dart';
@@ -87,6 +88,7 @@ class _ChunkCache {
   static void _release(Map<String, List<_Chunk>> lists) {
     for (final list in lists.values) {
       for (final c in list) {
+        _Raster.forget(c);
         c.picture.dispose();
       }
     }
@@ -135,8 +137,133 @@ void warmTerrain(Level lv) {
 }
 
 void _drawVisible(Canvas canvas, List<_Chunk> chunks, Rect view) {
+  if (Realism.debugNoTerrain) return;
+  if (_Raster.on) {
+    final m = canvas.getTransform();
+    // Döndürülmemiş, ölçekli görünüm: dilimler resim olarak basılır.
+    if (m[1].abs() < 1e-6 && m[4].abs() < 1e-6 && m[0] > 0) {
+      _Raster.draw(canvas, chunks, view, m);
+      return;
+    }
+  }
   for (final c in chunks) {
     if (c.bounds.overlaps(view)) canvas.drawPicture(c.picture);
+  }
+}
+
+/// Masaüstünde (Skia) arazi dilimleri bir kez ekran çözünürlüğünde resme
+/// çevrilir, her karede yalnız kopyalanır. Dilimin çizim kaydını her karede
+/// yeniden oynatmak dokulu bölümlerde (Ürgüp, Ağrı) kareyi 70 ms'ye
+/// çıkarıyordu. Dilim yatay şeritlere bölünür; yalnız görünen şeritler
+/// resme çevrilir, en son kullanılanlar tutulur. Telefonda (Impeller)
+/// eskisi gibi çizim kaydı oynatılır.
+abstract final class _Raster {
+  static final bool _desktop =
+      !kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.linux ||
+          defaultTargetPlatform == TargetPlatform.windows ||
+          defaultTargetPlatform == TargetPlatform.macOS);
+  static bool get on => Realism.debugTerrainRaster ?? _desktop;
+
+  static const double band = 512;
+  static const int keep = 64;
+  static final _imgs = <(_Chunk, int, int), Image>{};
+
+  static void forget(_Chunk c) {
+    _imgs.removeWhere((k, v) {
+      if (!identical(k.$1, c)) return false;
+      v.dispose();
+      return true;
+    });
+  }
+
+  static double get _dpr {
+    final views = PlatformDispatcher.instance.views;
+    return views.isEmpty ? 1.0 : views.first.devicePixelRatio;
+  }
+
+  static void draw(
+    Canvas canvas,
+    List<_Chunk> chunks,
+    Rect view,
+    Float64List m,
+  ) {
+    final dpr = _dpr;
+    final s = m[0] * dpr; // dünya pikseli başına ekran pikseli
+    final tx = m[12] * dpr;
+    final ty = m[13] * dpr;
+    // Kamera yakınlaşıp uzaklaştıkça (koşu, eğilme, tehlike) ölçek kare
+    // kare değişir: resim sabit basamaklarda (altıda bir oktav) üretilip
+    // ekrana ölçeklenir, her değişimde yeniden üretilmez.
+    final sk = (math.log(s) / math.ln2 * 6).ceil();
+    final rs = math.pow(2, sk / 6).toDouble();
+    final paint = Paint()..filterQuality = FilterQuality.low;
+    canvas.save();
+    // Ekran pikseli uzayına geç.
+    canvas.scale(1 / m[0], 1 / m[5]);
+    canvas.translate(-m[12], -m[13]);
+    canvas.scale(1 / dpr);
+    for (final c in chunks) {
+      final b = c.bounds;
+      if (!b.overlaps(view)) continue;
+      // Dilim iki yönde de [band] boyunda karelere bölünür (dikey bölümde
+      // dilim bölümün bütün genişliğini kaplar).
+      final cols = ((b.width) / band).ceil();
+      final i0 = math.max(0, ((view.left - b.left) / band).floor());
+      final i1 = math.min(cols - 1, ((view.right - b.left) / band).floor());
+      final k0 = math.max(0, ((view.top - b.top) / band).floor());
+      final k1 = ((math.min(b.bottom, view.bottom) - b.top) / band).floor();
+      for (var k = k0; k <= k1; k++) {
+        final top = b.top + k * band;
+        if (top >= b.bottom) break;
+        for (var i = i0; i <= i1; i++) {
+          final left = b.left + i * band;
+          final wr = Rect.fromLTRB(
+            left,
+            top,
+            math.min(left + band, b.right),
+            math.min(top + band, b.bottom),
+          );
+          final img = _image(c, k * 4096 + i, sk, wr, rs);
+          canvas.drawImageRect(
+            img,
+            Rect.fromLTWH(1, 1, wr.width * rs, wr.height * rs),
+            Rect.fromLTRB(
+              wr.left * s + tx,
+              wr.top * s + ty,
+              wr.right * s + tx,
+              wr.bottom * s + ty,
+            ),
+            paint,
+          );
+        }
+      }
+    }
+    canvas.restore();
+  }
+
+  static Image _image(_Chunk c, int k, int sk, Rect wr, double s) {
+    final id = (c, k, sk);
+    final hit = _imgs.remove(id);
+    if (hit != null) {
+      _imgs[id] = hit; // en son kullanılan sona
+      return hit;
+    }
+    final rec = PictureRecorder();
+    final cv = Canvas(rec);
+    cv.scale(s);
+    cv.translate(-wr.left + 1 / s, -wr.top + 1 / s);
+    cv.clipRect(wr.inflate(2 / s));
+    cv.drawPicture(c.picture);
+    final img = rec.endRecording().toImageSync(
+      (wr.width * s).ceil() + 3,
+      (wr.height * s).ceil() + 3,
+    );
+    _imgs[id] = img;
+    while (_imgs.length > keep) {
+      _imgs.remove(_imgs.keys.first)!.dispose();
+    }
+    return img;
   }
 }
 

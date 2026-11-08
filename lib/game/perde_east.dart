@@ -1195,7 +1195,11 @@ void _agDawnFront(
   const g = PerdePainter._ground;
   final sx = _agLerp(92, 400, run);
   final tremble = _shown(u, 5.0, 5.45, 0.05) * math.sin(time * 30) * 1.6;
-  // Sinmişken taşın ardında yalnız başı, omzu ve kavanozu görünür.
+  // Sinmişken taşın ardında yalnız başı, omzu ve kavanozu görünür. Zeminin
+  // altına inen gövde kırpılır (yarı saydam mürekkebin içinden bacakları
+  // görünüyordu).
+  c.save();
+  c.clipRect(const Rect.fromLTWH(-40, -40, 860, g + 47));
   _agSaye(
     c,
     Offset(sx + tremble, g + 6 + 26 * (1 - stand) * (1 - run)),
@@ -1206,6 +1210,7 @@ void _agDawnFront(
     rot: run > 0 && run < 1 ? 0.12 : 0,
     seed: 11,
   );
+  c.restore();
   _agStoneHead(
     c,
     const Offset(250, g + 2),
@@ -1229,10 +1234,6 @@ void _agDawnFront(
     ink,
   );
   c.drawRect(const Rect.fromLTWH(0, g, 780, 60), ink);
-  c.drawRect(
-    const Rect.fromLTWH(0, g - 4, 780, 7),
-    Paint()..color = const Color(0xFFFFF4E2).withValues(alpha: 0.6 * a),
-  );
 }
 
 /// Perde 7: Antiochos'un anlattıkları (Nemrud, İbrahim, sivrisinek), taş
@@ -1734,11 +1735,14 @@ void _agSaye(
   c.translate(feet.dx, feet.dy + math.sin(time * 1.7 + seed) * 1.2);
   c.rotate(rot + math.sin(time * 1.1 + seed * 2) * 0.02);
   c.scale(flip ? -s : s, s);
-  if (raise > 0 || fist > 0) {
+  // Yeni kuklada el kaldırma kuklanın kendi koluyla: öne uzanır (ayrı
+  // çizilmiş çubuk kol ve yuvarlak el gövdeye yapışık, çirkin duruyordu).
+  final ownArm = PerdeSaye.ready;
+  if ((raise > 0 && !ownArm) || fist > 0) {
     // Arkadaki kol: omuzdan kalkar (açık el) ya da öne yumruk olur.
     c.save();
     c.translate(-1, -50);
-    c.rotate(-0.25 - 2.2 * raise - 1.35 * fist);
+    c.rotate(-0.25 - (ownArm ? 0 : 2.2 * raise) - 1.35 * fist);
     final arm = Path()
       ..moveTo(-3, 0)
       ..lineTo(3, 0)
@@ -1747,7 +1751,7 @@ void _agSaye(
       ..close();
     c.drawPath(arm, ink);
     c.drawCircle(const Offset(0, 24), fist > 0 ? 4.2 : 3.4, ink);
-    if (raise > 0.5) {
+    if (raise > 0.5 && !ownArm) {
       // Açık el: parmaklar.
       for (var i = 0; i < 4; i++) {
         c.drawLine(
@@ -1759,7 +1763,7 @@ void _agSaye(
     }
     c.restore();
   }
-  _P._saye(ink, hole, time, jar: jar);
+  _P._saye(ink, hole, time, jar: jar, reach: ownArm ? raise : 0);
   if (smile > 0) {
     final cut = Paint()
       ..style = PaintingStyle.stroke
@@ -2235,9 +2239,11 @@ void _agKafMirror(Canvas c, double time, double u, double a) {
     _agSimurgInMirror(c, mc, time, a * simurg);
     if (mirrorSelf > 0) {
       // Aynadaki: bir çocuk değil, bir gölge (kavanozunda ışık yok).
+      // Ayakları camın dibinde, çerçevenin kenarına basar (havada asılı
+      // durmasın).
       _agSaye(
         c,
-        mc + const Offset(18, 108),
+        mc + const Offset(4, 118),
         1.55,
         time,
         a * mirrorSelf,
@@ -2952,6 +2958,13 @@ void _krSayeRun(
   double a, {
   bool flip = false,
 }) {
+  // Yeni kukla koşuyu kendi canlandırır: üstüne sekme ve eğilme eklenince
+  // kukla dikey kıpırtıyı zıplama sanıp her karede zıplama pozuyla koşma
+  // pozu arasında gidip geliyordu (deli gibi titriyordu).
+  if (PerdeSaye.ready) {
+    _krSaye(c, feet, s, time, a, flip: flip);
+    return;
+  }
   final hop = math.sin(time * 9).abs();
   _krSaye(
     c,

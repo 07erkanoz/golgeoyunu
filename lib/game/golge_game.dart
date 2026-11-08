@@ -385,6 +385,14 @@ class GolgeGame extends FlameGame with KeyboardEvents {
       if (const bool.fromEnvironment('NOFAR')) Realism.debugNoFar = true;
       if (const bool.fromEnvironment('NORIM')) Realism.debugNoLight = true;
       if (const bool.fromEnvironment('NONEAR')) Realism.debugNoNear = true;
+      if (const bool.fromEnvironment('NOBACK')) Realism.debugNoBack = true;
+      if (const bool.fromEnvironment('NOSHADE')) Realism.debugNoShade = true;
+      if (const bool.fromEnvironment('NORASTER')) {
+        Realism.debugTerrainRaster = false;
+      }
+      if (const bool.fromEnvironment('NOTERRAIN')) {
+        Realism.debugNoTerrain = true;
+      }
       if (const bool.fromEnvironment('NOREFLECT')) {
         Realism.debugNoReflect = true;
       }
@@ -2029,7 +2037,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     shadowCharges++;
     GameAudio.instance.play('murmur', volume: 0.5);
     narration.pulseShadow();
-    _queueHint('shadowCharge');
+    introduce('shadowCharge');
   }
 
   /// Gölge hakkıyla gölgeyi gönderir; olmuyorsa (hak yok, gölge zaten
@@ -2051,7 +2059,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     }
     shadowCharges--;
     p.sendShadow();
-    _queueHint('shadowSteer');
+    introduce('shadowSteer');
     world.add(ShadowDecoy());
     GameAudio.instance.play('glide', volume: 0.55);
     GameAudio.instance.play('murmur', volume: 0.25, minGapMs: 2000);
@@ -2805,6 +2813,16 @@ class GolgeGame extends FlameGame with KeyboardEvents {
 
   /// Bir düzeneğin ilk karşılaşma ipucu.
   void hint(String key) => _queueHint(key);
+
+  /// Yeni yetenek: ilk kez ipucu simgesini beklemeden ekrana yazılır
+  /// (oyuncu H'ye, simgeye dokunmayı bilmese de görür); sonra yalnız simge.
+  void introduce(String key) {
+    if (!_whispersShown.contains('once:intro:$key')) {
+      once('intro:$key', Hints.text(key), story: false);
+      return;
+    }
+    _queueHint(key);
+  }
 
   /// Suyun altında saklayan: öndeki yosun ya da mürekkep.
   bool seaCover(Vector2 at) {

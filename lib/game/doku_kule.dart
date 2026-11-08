@@ -463,64 +463,207 @@ void paintKuleBackdrop(
       canvas.restore();
     }
   }
-  // Tavandan sarkan zincirler ve düğümlü ipler (parallaks 0.45).
+  // Tavandan iplerle asılı, Hezarfen'in yarım kalmış kanat denemeleri
+  // (çıta iskelet, yırtık bez; kimi tek kanat, kimi boyunduruklu çift) ve
+  // arada bir kapısı açık boş kuş kafesi (parallaks 0.45). Işık almazlar:
+  // yalnız ince bir kenar ışığı, fenerler seçik kalsın.
   const near = 0.45;
-  final iron = Paint()
-    ..color = const Color(0xFF241C1C)
-    ..style = PaintingStyle.stroke
-    ..strokeWidth = 2.4;
-  final ironLit = Paint()
-    ..color = const Color(0x557A6A60)
-    ..style = PaintingStyle.stroke
-    ..strokeWidth = 1;
   final rope = Paint()
     ..color = const Color(0xFF2A1A12)
     ..style = PaintingStyle.stroke
-    ..strokeCap = StrokeCap.round
-    ..strokeWidth = 3;
+    ..strokeWidth = 1.4;
   const spacing = 380.0;
   final first = (cam.dx * near / spacing).floor() - 1;
   for (var i = first; i * spacing - cam.dx * near < w + spacing; i++) {
     final x = i * spacing - cam.dx * near + _hash(i, 11) * 160;
-    final len = h * (0.25 + 0.3 * _hash(i, 12));
-    final sway = math.sin(t * 0.7 + i) * 3;
-    if (_hash(i, 13) < 0.5) {
-      final links = (len / 11).floor();
-      for (var k = 0; k < links; k++) {
-        final y = k * 11.0;
-        final xx = x + sway * y / len;
-        final r = k.isEven
-            ? Rect.fromCenter(center: Offset(xx, y), width: 6, height: 12)
-            : Rect.fromCenter(center: Offset(xx, y), width: 2.4, height: 12);
-        canvas.drawOval(r, iron);
-        if (k.isEven) canvas.drawOval(r.deflate(1.2), ironLit);
-      }
-      canvas.drawCircle(Offset(x + sway, len + 9), 9, iron..strokeWidth = 3);
-      canvas.drawCircle(Offset(x + sway, len + 9), 9, ironLit);
-      iron.strokeWidth = 2.4;
+    final len = h * (0.16 + 0.24 * _hash(i, 12));
+    final sway = math.sin(t * 0.6 + i) * 0.035;
+    final s = 0.85 + 0.35 * _hash(i, 14);
+    final kind = _hash(i, 13);
+    canvas.save();
+    canvas.translate(x, 0);
+    canvas.rotate(sway);
+    canvas.drawLine(Offset.zero, Offset(0, len), rope);
+    canvas.translate(0, len);
+    if (kind < 0.22) {
+      _cage(canvas, s, i);
+    } else if (kind < 0.6) {
+      // Çift kanat: iki ip bir boyunduruğa iner.
+      canvas.drawLine(Offset.zero, Offset(-12 * s, 9 * s), rope);
+      canvas.drawLine(Offset.zero, Offset(12 * s, 9 * s), rope);
+      canvas.translate(0, 9 * s);
+      _wing(canvas, Offset(-12 * s, 0), -1, s, i * 2);
+      _wing(canvas, Offset(12 * s, 0), 1, s, i * 2 + 1);
+      canvas.drawLine(
+        Offset(-14 * s, 0),
+        Offset(14 * s, 0),
+        Paint()
+          ..color = const Color(0xFF241A16)
+          ..strokeWidth = 3.2 * s
+          ..strokeCap = StrokeCap.round,
+      );
     } else {
-      final p = Path()..moveTo(x, 0);
-      for (var k = 1; k <= 10; k++) {
-        final y = len * k / 10;
-        p.lineTo(x + sway * k / 10 + math.sin(k * 1.3 + i) * 2, y);
-      }
-      canvas.drawPath(p, rope);
-      canvas.drawCircle(
-        Offset(x + sway * 0.5, len * 0.5),
-        3.4,
-        Paint()..color = const Color(0xFF1E120C),
-      );
-      canvas.drawOval(
-        Rect.fromCenter(
-          center: Offset(x + sway, len + 7),
-          width: 10,
-          height: 14,
-        ),
-        rope..strokeWidth = 2.4,
-      );
-      rope.strokeWidth = 3;
+      // Tek kanat: omuzdan asılı, ucu aşağı sarkık.
+      canvas.rotate(_hash(i, 15) < 0.5 ? 0.35 : -0.35);
+      _wing(canvas, Offset.zero, _hash(i, 16) < 0.5 ? -1 : 1, s, i * 2);
     }
+    canvas.restore();
   }
+}
+
+/// Hezarfen'in kanat denemesi: kavisli ön çıta, ondan aşağı yelpazelenen
+/// kaburgalar, aralarında gerili bez (kimi gözü yırtık, kimi yarım),
+/// uçta birkaç tüy. [dir] kanadın açıldığı yön; omuz [at].
+void _wing(Canvas canvas, Offset at, int dir, double s, int id) {
+  final l = 62 * s;
+  Offset spar(double u) =>
+      at + Offset(dir * l * u, -7 * s * math.sin(math.pi * u) + 16 * s * u * u);
+  const ribs = 6;
+  final tops = [for (var k = 0; k < ribs; k++) spar(k / (ribs - 1))];
+  final ends = [
+    for (var k = 0; k < ribs; k++)
+      tops[k] +
+          Offset(dir * 9 * s * k / (ribs - 1), (44 - 28 * k / (ribs - 1)) * s),
+  ];
+  final cloth = Paint()..color = const Color(0xD81E1412);
+  for (var k = 0; k < ribs - 1; k++) {
+    final r = _hash(id * 17 + k, 31);
+    if (r < 0.22) continue; // bu göz yırtılmış, bez yok
+    // Bezin alt kenarı yırtık: kaburgaların ortasında içe kıvrılan diş.
+    final tear = r < 0.45 ? 0.45 + 0.3 * _hash(id * 17 + k, 32) : 1.0;
+    final a = Offset.lerp(tops[k], ends[k], tear)!;
+    final b = Offset.lerp(tops[k + 1], ends[k + 1], tear)!;
+    final mid =
+        Offset.lerp(a, b, 0.5)! + Offset(0, -6 * s * _hash(id * 17 + k, 33));
+    canvas.drawPath(
+      Path()
+        ..moveTo(tops[k].dx, tops[k].dy)
+        ..lineTo(tops[k + 1].dx, tops[k + 1].dy)
+        ..lineTo(b.dx, b.dy)
+        ..lineTo(mid.dx, mid.dy)
+        ..lineTo(a.dx, a.dy)
+        ..close(),
+      cloth,
+    );
+  }
+  final wood = Paint()
+    ..color = const Color(0xFF241A16)
+    ..style = PaintingStyle.stroke
+    ..strokeCap = StrokeCap.round
+    ..strokeWidth = 1.3 * s;
+  for (var k = 0; k < ribs; k++) {
+    // Kırık kaburga: yarıda biter.
+    final broken = _hash(id * 17 + k, 34) < 0.15;
+    canvas.drawLine(
+      tops[k],
+      broken ? Offset.lerp(tops[k], ends[k], 0.5)! : ends[k],
+      wood,
+    );
+  }
+  // Uçta tüyler: sivri yapraklar.
+  final feather = Paint()..color = const Color(0xFF1E1412);
+  for (var f = 0; f < 3; f++) {
+    final base = Offset.lerp(tops[ribs - 1], ends[ribs - 1], 0.3 + f * 0.3)!;
+    final tip = base + Offset(dir * (14 - f * 2) * s, (4 + f * 5) * s);
+    final n = Offset(-(tip - base).dy, (tip - base).dx) * 0.18;
+    canvas.drawPath(
+      Path()
+        ..moveTo(base.dx, base.dy)
+        ..quadraticBezierTo(
+          (base + tip).dx / 2 + n.dx,
+          (base + tip).dy / 2 + n.dy,
+          tip.dx,
+          tip.dy,
+        )
+        ..quadraticBezierTo(
+          (base + tip).dx / 2 - n.dx,
+          (base + tip).dy / 2 - n.dy,
+          base.dx,
+          base.dy,
+        ),
+      feather,
+    );
+  }
+  // Ön çıta: kalın, üstünde ince kenar ışığı.
+  final sp = Path()..moveTo(tops[0].dx, tops[0].dy);
+  for (var a = 1; a <= 12; a++) {
+    final p = spar(a / 12);
+    sp.lineTo(p.dx, p.dy);
+  }
+  canvas.drawPath(sp, wood..strokeWidth = 2.6 * s);
+  canvas.drawPath(
+    sp.shift(Offset(0, -1.2 * s)),
+    Paint()
+      ..color = const Color(0x557A6A60)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.9,
+  );
+}
+
+/// Boş kuş kafesi: kubbe parmaklıklar, taban halkası, içinde tünek; kapısı
+/// açık, menteşesinden sarkar (kuş uçmuş).
+void _cage(Canvas canvas, double s, int id) {
+  final wdt = 36 * s;
+  final hgt = 44 * s;
+  final top = 7 * s;
+  final bot = top + hgt;
+  final iron = Paint()
+    ..color = const Color(0xFF241C1C)
+    ..style = PaintingStyle.stroke
+    ..strokeCap = StrokeCap.round
+    ..strokeWidth = 1.3 * s;
+  final lit = Paint()
+    ..color = const Color(0x557A6A60)
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 0.9;
+  canvas.drawCircle(Offset(0, top / 2), 3.2 * s, iron);
+  for (var k = -3; k <= 3; k++) {
+    final bx = wdt / 2 * k / 3;
+    final bar = Path()
+      ..moveTo(0, top)
+      ..quadraticBezierTo(bx * 1.25, top + hgt * 0.18, bx, top + hgt * 0.45)
+      ..lineTo(bx, bot);
+    canvas.drawPath(bar, iron);
+    if (k.abs() == 3) canvas.drawPath(bar, lit);
+  }
+  // Ara halka ve taban.
+  canvas.drawLine(
+    Offset(-wdt / 2, top + hgt * 0.45),
+    Offset(wdt / 2, top + hgt * 0.45),
+    iron,
+  );
+  canvas.drawRRect(
+    RRect.fromLTRBR(
+      -wdt / 2 - 2 * s,
+      bot - 2 * s,
+      wdt / 2 + 2 * s,
+      bot + 3 * s,
+      Radius.circular(1.5 * s),
+    ),
+    Paint()..color = const Color(0xFF241C1C),
+  );
+  // Tünek.
+  canvas.drawLine(
+    Offset(-wdt * 0.32, top + hgt * 0.7),
+    Offset(wdt * 0.32, top + hgt * 0.7),
+    iron,
+  );
+  // Açık kapı: menteşesi sağ alt köşede, dışarı sarkar.
+  final side = _hash(id, 41) < 0.5 ? 1.0 : -1.0;
+  canvas.save();
+  canvas.translate(side * wdt / 2, bot - 2 * s);
+  canvas.rotate(side * (1.9 + 0.2 * _hash(id, 42)));
+  final dw = 12 * s;
+  final dh = 16 * s;
+  canvas.drawRect(Rect.fromLTWH(0, -dh, side * dw, dh), iron);
+  for (var k = 1; k < 3; k++) {
+    canvas.drawLine(
+      Offset(side * dw * k / 3, -dh),
+      Offset(side * dw * k / 3, 0),
+      iron,
+    );
+  }
+  canvas.restore();
 }
 
 /// Kule'nin bir arazi hücresi; çizdiyse true.

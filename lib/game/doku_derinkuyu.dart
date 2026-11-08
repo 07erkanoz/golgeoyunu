@@ -5,6 +5,7 @@
 // yakında oyma tavan. Işık aşağıdan, közden gelir; karanlık korunur,
 // bulanıklık yok.
 import 'dart:math' as math;
+import 'dart:typed_data';
 import 'dart:ui';
 
 import 'level.dart';
@@ -161,29 +162,47 @@ void _arcade(Canvas c, double w, double h, double off, double dy, double t) {
   c.drawPath(mass, _drop);
   c.restore();
   c.drawPath(mass, Paint()..color = body);
-  // Ayakların keski izleri (kemer boşluğuna taşmasın).
-  c.save();
-  c.clipPath(mass);
-  final chisel = Paint()
-    ..color = const Color(0xFF331A11)
-    ..strokeWidth = 1
-    ..strokeCap = StrokeCap.round;
-  for (var y = top + 10; y < h; y += 11) {
-    final k = ((y - top) / 11).round();
-    for (var x = -((off + k * 4) % 9); x < w; x += 9) {
-      c.drawLine(Offset(x, y), Offset(x + 3, y + 4), chisel);
-    }
-  }
+  // Ayakların keski izleri (kemer boşluğuna taşmasın): küçük bir desen
+  // resmi duvar şekline boyanır. Eskiden binlerce çizgi her karede kemerli
+  // şekille kırpılarak çiziliyordu; Skia'da kare bir buçuk saniyeye
+  // çıkıyordu.
+  c.drawPath(
+    mass,
+    Paint()
+      ..filterQuality = FilterQuality.low
+      ..shader = ImageShader(
+        _chiselTile(),
+        TileMode.repeated,
+        TileMode.repeated,
+        Float64List.fromList([
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          -off,
+          top - 1,
+          0,
+          1,
+        ]),
+      ),
+  );
   // Közün ışığı ayakların dibine vurur.
-  c.drawRect(
-    Rect.fromLTWH(0, h * 0.6, w, h * 0.4),
+  c.drawPath(
+    mass,
     Paint()
       ..shader = Gradient.linear(Offset(0, h * 0.6), Offset(0, h), [
         const Color(0x00000000),
         _ember.withValues(alpha: 0.12),
       ]),
   );
-  c.restore();
   c.drawPath(
     rims,
     Paint()
@@ -430,3 +449,23 @@ void paintDerinkuyuTile(
       ..style = PaintingStyle.stroke,
   );
 }
+
+/// Keski izi deseni: 11 piksel aralıklı dokuz sıra, her sıra bir öncekinden
+/// 4 piksel kaymış kısa eğik çizgiler (eski çizimin aynısı).
+Image? _chisel;
+Image _chiselTile() => _chisel ??= () {
+  final rec = PictureRecorder();
+  final c = Canvas(rec);
+  final p = Paint()
+    ..color = const Color(0xFF331A11)
+    ..strokeWidth = 1
+    ..strokeCap = StrokeCap.round;
+  for (var r = 0; r < 9; r++) {
+    final y = r * 11.0;
+    final x0 = -((r * 4) % 9).toDouble();
+    for (var x = x0 - 9; x < 18; x += 9) {
+      c.drawLine(Offset(x, y), Offset(x + 3, y + 4), p);
+    }
+  }
+  return rec.endRecording().toImageSync(9, 99);
+}();

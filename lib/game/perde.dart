@@ -1011,6 +1011,7 @@ class PerdePainter {
     double time, {
     double jar = 1,
     bool inGame = false,
+    double reach = 0,
   }) {
     if (PerdeSaye.ready) {
       // Yeni Sâye (A1) kuklası. Perdede bir tasvir, boyu ~62
@@ -1023,6 +1024,7 @@ class PerdePainter {
         (inGame ? 84 : 62) / 36,
         time,
         jar: jar,
+        reach: reach,
         rot: math.sin(time * 0.9 + 0.4) * 0.02,
         a: own ? ink.color.a : 1,
         tint: own ? null : ink.color,

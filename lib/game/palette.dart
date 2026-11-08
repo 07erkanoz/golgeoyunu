@@ -190,4 +190,11 @@ class Realism {
   static bool debugNoLight = false;
   static bool debugNoNear = false;
   static bool debugNoReflect = false;
+  static bool debugNoBack = false;
+  static bool debugNoShade = false;
+  static bool debugNoTerrain = false;
+
+  /// Araziyi resme çevirerek basma: null ise yalnız masaüstünde (önizleme
+  /// araçları zorlayabilir).
+  static bool? debugTerrainRaster;
 }

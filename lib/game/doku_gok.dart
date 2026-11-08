@@ -113,6 +113,30 @@ void paintHeavenBands(
   );
 }
 
+/// Bir kuşağın tepecik dizilimi (kuşak boyunca tekrar eden bir dönem):
+/// her tepeciğin dönem içindeki merkezi, yarıçapı, tabana göre yüksekliği
+/// ve kimliği (oyma, ışık deliği seçimi için).
+typedef _BandRow = ({
+  double period,
+  List<(double, double, double, int)> bumps,
+});
+
+final _bandRows = <(double, int), _BandRow>{};
+
+_BandRow _bandRow(double r, int seed) => _bandRows.putIfAbsent((r, seed), () {
+  const n = 64;
+  final bumps = <(double, double, double, int)>[];
+  var x = 0.0;
+  for (var i = 0; i < n; i++) {
+    final u = _hash(i, seed);
+    final rr = r * (0.5 + 1.1 * u * u);
+    final dy = -r * 0.3 * _hash(i, seed + 1) + rr * 0.15;
+    bumps.add((x + rr, rr, dy, i));
+    x += rr * (1.1 + 0.6 * _hash(i, seed + 2));
+  }
+  return (period: x, bumps: bumps);
+});
+
 /// Kâğıt oyma bulut kuşağı: üstü yarım daire tepecikler, her tepecikte
 /// oyulmuş kıvrım (çin bulutu), üst kenarda ılık ışık, altında bir sıra
 /// ışık deliği (ardındaki kuşağın rengi sızar).
@@ -129,17 +153,21 @@ void _band(
   required Color holes,
   Color rimColor = _rimWarm,
 }) {
-  // Tepecikler: iri ve küçük karışık, aralarında düzensiz boşluk.
+  // Tepecikler: iri ve küçük karışık, aralarında düzensiz boşluk. Dizilim
+  // kuşağa sabittir (bir kez kurulur, tekrar eder); kamera kayınca
+  // tepecikler yerinden oynamaz, yalnız kayar.
+  final row = _bandRow(r, seed);
+  final period = row.period;
   final bumps = <(Offset, double, int)>[];
-  var i = (offset / r).floor() - 3;
-  var x = i * r - offset;
-  while (x < w + r * 2) {
-    final u = _hash(i, seed);
-    final rr = r * (0.5 + 1.1 * u * u);
-    final cy = base - r * 0.3 * _hash(i, seed + 1) + rr * 0.15;
-    bumps.add((Offset(x + rr, cy), rr, i));
-    x += rr * (1.1 + 0.6 * _hash(i, seed + 2));
-    i++;
+  final from = offset - r * 4;
+  var rep = (from / period).floor();
+  while (rep * period - offset < w + r * 4) {
+    for (final (bx, rr, dy, id) in row.bumps) {
+      final x = rep * period + bx - offset;
+      if (x + rr < -r * 2 || x - rr > w + r * 2) continue;
+      bumps.add((Offset(x, base + dy), rr, id));
+    }
+    rep++;
   }
   final body = Path()..addRect(Rect.fromLTRB(-r * 2, base, w + r * 2, h));
   for (final (c, rr, _) in bumps) {

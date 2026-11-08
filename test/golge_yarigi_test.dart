@@ -73,10 +73,12 @@ void main() {
       k.right = k.jump = false;
       expect(p.position.x, closeTo(saye, 1), reason: 'Sâye donuk kaldı');
       expect(lever.pulled, isTrue, reason: 'gölge yarıktan geçip kolu çekti');
-      // Gölgeyi bırak: denetim Sâye'ye döner.
-      game.controls.queueShadow();
-      game.update(1 / 60);
-      expect(p.steeringShadow, isFalse);
+      // Kolu çeken gölge kendiliğinden döner: denetim Sâye'ye geçer.
+      expect(p.steeringShadow, isTrue);
+      for (var i = 0; i < 60; i++) {
+        game.update(1 / 60);
+      }
+      expect(p.steeringShadow, isFalse, reason: 'kolu çeken gölge döndü');
       // Kapı açılsın; Sâye setin altından kapıya yürüyüp geçer.
       for (var i = 0; i < 60 * 3; i++) {
         game.update(1 / 60);
