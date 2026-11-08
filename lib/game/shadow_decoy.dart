@@ -264,6 +264,7 @@ class ShadowPlate extends PositionComponent with HasGameReference<GolgeGame> {
   @override
   void render(Canvas canvas) {
     final sink = 2 * _press;
+    if (!done) _beacon(canvas);
     final slab = RRect.fromRectAndRadius(
       Rect.fromLTWH(-17, -5 + sink, 34, 6 - sink),
       const Radius.circular(2),
@@ -302,6 +303,51 @@ class ShadowPlate extends PositionComponent with HasGameReference<GolgeGame> {
       vein,
     );
     canvas.drawCircle(Offset(-9.5, -2.2 + sink), 1.4, vein);
+  }
+}
+
+/// Eşik görünsün: kapı açılana dek üstünde soluk mor bir ışık sütunu
+/// yükselir (gölgenin duracağı yer), yerde eşikten kapıya akan noktalar
+/// bağı gösterir. Eskiden yalnız ince bir damar vardı; oyuncu eşiği
+/// görmeyip kapının kolunu arıyordu.
+extension on ShadowPlate {
+  void _beacon(Canvas canvas) {
+    final pulse = 0.55 + 0.45 * math.sin(_t * 1.6);
+    final a = 0.45 * pulse + 0.3 * _press;
+    const tall = 3.2 * kTile;
+    canvas.drawRect(
+      const Rect.fromLTWH(-13, -tall, 26, tall),
+      Paint()
+        ..shader = ui.Gradient.linear(
+          const Offset(0, -tall),
+          Offset.zero,
+          [
+            const Color(0x00B8A0E0),
+            const Color(0xFFB8A0E0).withValues(alpha: a),
+          ],
+        )
+        ..blendMode = BlendMode.plus,
+    );
+    final g = gate;
+    if (g == null) return;
+    // Kapıya akan noktalar (yerde, eşikten kapının dibine).
+    final to = Offset(
+      g.position.x + g.size.x / 2 - position.x,
+      g.position.y + g.size.y - position.y - 2,
+    );
+    final len = to.distance;
+    if (len < 20) return;
+    final dot = Paint();
+    const gap = 14.0;
+    final flow = (_t * 22) % gap;
+    for (var d = 22.0 + flow; d < len - 10; d += gap) {
+      final p = Offset.lerp(const Offset(0, -2), to, d / len)!;
+      final fade = math.min(1.0, math.min(d - 18, len - 10 - d) / 30);
+      dot.color = const Color(0xFFD8C8F4).withValues(
+        alpha: (0.6 + 0.3 * _press) * fade.clamp(0.0, 1.0),
+      );
+      canvas.drawCircle(p, 2.1, dot);
+    }
   }
 }
 

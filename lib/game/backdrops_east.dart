@@ -2524,7 +2524,7 @@ extension _EastBackdrops on Backdrop {
         _t,
         body: mix(3),
         lit: mix(4),
-        drift: 1 + 6 * windy,
+        drift: 1 + 2 * windy,
       );
     }
     for (var k = 0; k < (Cartoon.on ? 0 : 3); k++) {

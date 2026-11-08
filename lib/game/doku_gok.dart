@@ -59,7 +59,9 @@ void paintGokBackdrop(Canvas canvas, double w, double h, Offset cam, double t) {
 
 /// Göğün Katları: Gökyolu'nun kâğıt oyma bulut kuşakları, bulanıklık
 /// olmadan, katın renkleriyle ([body] gövde, [lit] kenar ışığı). Uzaktaki
-/// kuşak açık, yakındaki koyu; [drift] rüzgârın hızı.
+/// kuşak açık, yakındaki koyu; [drift] rüzgârın hızı. Üç kuşak aynı hızla
+/// kayar (ayrı hızlarda birbirinin içinden geçip karışıyordu); derinliği
+/// yalnız kameranın kayması verir.
 void paintHeavenBands(
   Canvas canvas,
   double w,
@@ -89,7 +91,7 @@ void paintHeavenBands(
     canvas,
     w,
     h,
-    offset: camX * 0.18 + t * 6 * drift,
+    offset: camX * 0.18 + t * 3 * drift,
     base: h * 0.76,
     r: 46,
     seed: 32,
@@ -102,7 +104,7 @@ void paintHeavenBands(
     canvas,
     w,
     h,
-    offset: camX * 0.28 + t * 9 * drift,
+    offset: camX * 0.28 + t * 3 * drift,
     base: h * 0.9,
     r: 58,
     seed: 33,
