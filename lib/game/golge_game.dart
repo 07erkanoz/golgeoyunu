@@ -2851,6 +2851,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     return [
       SeaWater(top),
       SeaTint(top),
+      SeaCaustics(top),
       SeaShafts(top),
       SeaMotes(),
       for (final (c0, c1) in d.kelpBeds) ...kelpBed(level, c0, c1, seed: c0),

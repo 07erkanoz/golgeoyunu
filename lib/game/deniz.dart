@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:math' as math;
+import 'dart:typed_data';
 import 'dart:ui';
 import 'dart:ui' as ui;
 
@@ -28,11 +30,12 @@ import 'player.dart';
 /// mürekkep.
 Color seaColor(double depth) {
   const stops = [
+    // Derin su da su olarak okunsun: kara değil, koyu camgöbeği.
     (0.0, Color(0xFF4E9696)),
-    (300.0, Color(0xFF235A63)),
-    (800.0, Color(0xFF103540)),
-    (1400.0, Color(0xFF07161D)),
-    (2000.0, Color(0xFF030709)),
+    (300.0, Color(0xFF26616A)),
+    (800.0, Color(0xFF144450)),
+    (1400.0, Color(0xFF0C2A35)),
+    (2000.0, Color(0xFF071A22)),
   ];
   if (depth <= 0) return stops.first.$2;
   for (var i = 0; i < stops.length - 1; i++) {
@@ -200,7 +203,7 @@ class SeaShafts extends Component with HasGameReference<GolgeGame> {
   final double surface;
 
   /// Işığın indiği en derin yer (px).
-  static const double reach = 900;
+  static const double reach = 1400;
   double _t = 0;
 
   @override
@@ -248,6 +251,146 @@ class SeaShafts extends Component with HasGameReference<GolgeGame> {
         canvas.drawPath(path, paint);
       }
     }
+  }
+}
+
+/// Su altı ışık ağı (kostik): su yüzünden süzülen ışık kayaların ve suyun
+/// üstünde dalgalanan ince bir ağ çizer; iki kat ayrı yönlere ağır ağır
+/// kayar. Yüzeye yakın en belirgin, derine indikçe söner. Desen bir kez
+/// küçük bir resme çizilir, her karede yalnız kaydırılarak boyanır.
+class SeaCaustics extends Component with HasGameReference<GolgeGame> {
+  SeaCaustics(this.surface) : super(priority: 11);
+
+  final double surface;
+  static const double reach = 1100;
+  double _t = 0;
+
+  @override
+  void update(double dt) => _t += dt;
+
+  static ui.Image? _tile;
+  static const int _size = 256;
+
+  @override
+  Future<void> onLoad() async {
+    _tile ??= await _pattern();
+  }
+
+  /// Döşenebilir hücreli ışık ağı: rastgele noktaların hücre sınırları
+  /// (en yakın iki noktaya uzaklıklar birbirine yakınsa) parlak ince
+  /// çizgi olur; su altında güneşin kırılarak düştüğü ağ böyledir.
+  static Future<ui.Image> _pattern() {
+    final r = math.Random(11);
+    final pts = <Offset>[
+      for (var i = 0; i < 22; i++)
+        Offset(r.nextDouble() * _size, r.nextDouble() * _size),
+    ];
+    final px = Uint8List(_size * _size * 4);
+    for (var y = 0; y < _size; y++) {
+      for (var x = 0; x < _size; x++) {
+        var f1 = double.infinity, f2 = double.infinity;
+        for (final p in pts) {
+          // Döşenebilsin: noktanın en yakın kopyası.
+          var dx = (x - p.dx).abs();
+          var dy = (y - p.dy).abs();
+          if (dx > _size / 2) dx = _size - dx;
+          if (dy > _size / 2) dy = _size - dy;
+          final d = math.sqrt(dx * dx + dy * dy);
+          if (d < f1) {
+            f2 = f1;
+            f1 = d;
+          } else if (d < f2) {
+            f2 = d;
+          }
+        }
+        final e = f2 - f1;
+        final k = (1 - (e / 9).clamp(0.0, 1.0));
+        final a = (math.pow(k, 3) * 255).round();
+        final i = (y * _size + x) * 4;
+        px[i] = a;
+        px[i + 1] = a;
+        px[i + 2] = a;
+        px[i + 3] = a;
+      }
+    }
+    final done = Completer<ui.Image>();
+    ui.decodeImageFromPixels(
+      px,
+      _size,
+      _size,
+      ui.PixelFormat.rgba8888,
+      done.complete,
+    );
+    return done.future;
+  }
+
+  @override
+  void render(Canvas canvas) {
+    final v = game.camera.visibleWorldRect;
+    final top = math.max(v.top, surface);
+    final bottom = math.min(v.bottom, surface + reach);
+    if (top >= bottom) return;
+    final img = _tile;
+    if (img == null) return;
+    canvas.save();
+    // Hava ceplerinde ışık ağı yok.
+    for (final a in game.level.airRects) {
+      if (a.overlaps(v)) canvas.clipRect(a, clipOp: ClipOp.difference);
+    }
+    // Derinliğe göre sönme: birkaç yatay kuşakta azalan saydamlık.
+    const bands = 6;
+    final band = reach / bands;
+    for (final (sx, sy, sc, a) in [
+      (9.0, 4.0, 1.0, 0.13),
+      (-6.0, 7.0, 1.37, 0.09),
+    ]) {
+      final m = Float64List.fromList([
+        sc,
+        0,
+        0,
+        0,
+        0,
+        sc,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        _t * sx + math.sin(_t * 0.3) * 18,
+        _t * sy,
+        0,
+        1,
+      ]);
+      for (var k = 0; k < bands; k++) {
+        final y0 = surface + k * band;
+        final y1 = y0 + band;
+        if (y1 <= top || y0 >= bottom) continue;
+        final fade = 1 - (k + 0.5) / bands;
+        canvas.drawRect(
+          Rect.fromLTRB(
+            v.left,
+            math.max(y0, top),
+            v.right,
+            math.min(y1, bottom),
+          ),
+          Paint()
+            ..blendMode = BlendMode.plus
+            ..filterQuality = FilterQuality.low
+            ..colorFilter = ColorFilter.mode(
+              const Color(0xFFBFF0E4).withValues(alpha: a * fade * fade),
+              BlendMode.modulate,
+            )
+            ..shader = ImageShader(
+              img,
+              TileMode.repeated,
+              TileMode.repeated,
+              m,
+            ),
+        );
+      }
+    }
+    canvas.restore();
   }
 }
 
@@ -446,8 +589,8 @@ class SeaMotes extends Component with HasGameReference<GolgeGame> {
         // Ağır ağır yükselir; hücresinin içinde döner.
         final yy = (gy + (fy - _t * (0.08 + fx * 0.1)) % 1.0) * cell;
         paint.color = const Color(0xFFDDEFEA)
-            .withValues(alpha: 0.12 + 0.18 * fy);
-        canvas.drawCircle(Offset(x, yy), 0.6 + fx * 0.9, paint);
+            .withValues(alpha: 0.18 + 0.24 * fy);
+        canvas.drawCircle(Offset(x, yy), 0.8 + fx * 1.1, paint);
       }
     }
   }

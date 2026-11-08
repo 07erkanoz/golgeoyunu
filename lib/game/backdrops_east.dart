@@ -466,7 +466,9 @@ extension _EastBackdrops on Backdrop {
       below,
       dpr,
     );
-    final paint = Paint()..filterQuality = FilterQuality.low;
+    final paint = Paint()
+      ..filterQuality = FilterQuality.low
+      ..isAntiAlias = false;
     final y = (base * dpr).roundToDouble() / dpr - top;
     final first = (offset / tileW).floor();
     for (var k = first; k * tileW - offset < w; k++) {
@@ -687,7 +689,9 @@ extension _EastBackdrops on Backdrop {
       img,
       Rect.fromLTWH(0, 0, wid * dpr, (above + below) * dpr),
       Rect.fromLTWH(x, y, wid, above + below),
-      Paint()..filterQuality = FilterQuality.low,
+      Paint()
+        ..filterQuality = FilterQuality.low
+        ..isAntiAlias = false,
     );
     // Resmin altından ekranın dibine eteğin gövdesi.
     if (y + above + below < h) {
@@ -1316,7 +1320,9 @@ extension _EastBackdrops on Backdrop {
       img,
       Rect.fromLTWH(0, 0, wid * dpr, (above + below) * dpr),
       Rect.fromLTWH(x, 0, wid, above + below),
-      Paint()..filterQuality = FilterQuality.low,
+      Paint()
+        ..filterQuality = FilterQuality.low
+        ..isAntiAlias = false,
     );
   }
 
@@ -1716,7 +1722,9 @@ extension _EastBackdrops on Backdrop {
     const below = 40.0;
     final dpr = _rangeDpr();
     final key = Object.hash('peri', depth, h.round(), Cartoon.on, dpr);
-    final paint = Paint()..filterQuality = FilterQuality.low;
+    final paint = Paint()
+      ..filterQuality = FilterQuality.low
+      ..isAntiAlias = false;
     final y = (baseY * dpr).roundToDouble() / dpr - above;
     final first = (offset / tileW).floor();
     for (var k = first; k * tileW - offset < w; k++) {

@@ -197,7 +197,9 @@ abstract final class _Raster {
     // ekrana ölçeklenir, her değişimde yeniden üretilmez.
     final sk = (math.log(s) / math.ln2 * 6).ceil();
     final rs = math.pow(2, sk / 6).toDouble();
-    final paint = Paint()..filterQuality = FilterQuality.low;
+    final paint = Paint()
+      ..filterQuality = FilterQuality.low
+      ..isAntiAlias = false;
     canvas.save();
     // Ekran pikseli uzayına geç.
     canvas.scale(1 / m[0], 1 / m[5]);
@@ -228,11 +230,15 @@ abstract final class _Raster {
           canvas.drawImageRect(
             img,
             Rect.fromLTWH(1, 1, wr.width * rs, wr.height * rs),
+            // Kenarlar tam piksele oturur: komşu parçalar aynı sınırı aynı
+            // piksele yuvarlar, sınır pikseli iki kez yarım boyanmaz (yarı
+            // saydam katmanlarda ekranı boydan boya geçen ince bir çizgi
+            // kalıyordu).
             Rect.fromLTRB(
-              wr.left * s + tx,
-              wr.top * s + ty,
-              wr.right * s + tx,
-              wr.bottom * s + ty,
+              (wr.left * s + tx).roundToDouble(),
+              (wr.top * s + ty).roundToDouble(),
+              (wr.right * s + tx).roundToDouble(),
+              (wr.bottom * s + ty).roundToDouble(),
             ),
             paint,
           );
