@@ -8,20 +8,25 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:golge/game/kandilci_art.dart';
 import 'package:golge/game/kukla.dart';
 import 'package:golge/game/perde.dart';
 import 'package:golge/game/shadow_art.dart';
 import 'package:golge/game/tasvir_images.dart';
+import 'package:golge/game/yerebatan_perde_art.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   test('açılış videosu', () async {
     await TasvirImages.load();
     await ShadowArt.load();
+    await YerebatanPerdeArt.load();
     await SayeKukla.load();
     await (FontLoader(
       'Rakkas',
     )..addFont(rootBundle.load('assets/fonts/Rakkas-Regular.ttf'))).load();
+    expect(YerebatanPerdeArt.ready, isTrue);
+    expect(KandilciArt.ready, isTrue);
     final dir = Directory('build/preview/acilis_video')
       ..createSync(recursive: true);
     for (final f in dir.listSync()) {
@@ -64,13 +69,13 @@ void main() {
         progress,
         1,
       );
-      final img = await rec
-          .endRecording()
-          .toImage((960 * k).round(), (540 * k).round());
+      final picture = rec.endRecording();
+      final img = await picture.toImage((960 * k).round(), (540 * k).round());
       final png = await img.toByteData(format: ui.ImageByteFormat.png);
-      File(
-        '${dir.path}/${(shot++).toString().padLeft(4, '0')}.png',
-      ).writeAsBytesSync(png!.buffer.asUint8List());
+      File('${dir.path}/${(shot++).toString().padLeft(4, '0')}.png')
+          .writeAsBytesSync(png!.buffer.asUint8List());
+      img.dispose();
+      picture.dispose();
     }
   }, timeout: const Timeout(Duration(minutes: 20)));
 }

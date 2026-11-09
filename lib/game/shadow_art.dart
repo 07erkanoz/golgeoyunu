@@ -1,11 +1,13 @@
 import 'dart:convert';
 import 'dart:math' as math;
+import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'dart:ui';
 
 import 'package:flutter/services.dart' show rootBundle;
 
 import 'rig.dart';
+import 'kandilci_art.dart';
 
 /// Bekçi ve Medusa çizimleri (kullanıcının verdiği paketteki vektörler,
 /// assets/art/bekci_medusa.json). Her parça yüklemede bir kez `Picture`
@@ -26,6 +28,7 @@ abstract final class ShadowArt {
       _record(data['guard'] as Map<String, dynamic>, _guard);
       _record(data['medusa'] as Map<String, dynamic>, _medusa);
       _data = data;
+      await KandilciArt.load();
     } catch (_) {
       // Çizim yoksa kod çizimine düşülür.
     }
@@ -259,6 +262,9 @@ void drawShadowGuard(
   required double lean,
   required double lampAngle,
   required double doubt,
+  double staffAngle = 0,
+  double? flameTime,
+  bool silhouette = false,
   required Color ink,
   required Color rim,
   required Color eye,
@@ -268,8 +274,66 @@ void drawShadowGuard(
   c.translate(feet.dx, feet.dy);
   c.scale(guardArtScale);
   c.translate(-guardArtFeet.dx, -guardArtFeet.dy);
+  if (KandilciArt.ready) {
+    final layer = ink.a < 1 || silhouette;
+    if (layer) {
+      c.saveLayer(
+        null,
+        Paint()
+          ..color = ink
+          ..colorFilter = silhouette
+              ? ColorFilter.mode(ink.withValues(alpha: 1), BlendMode.srcIn)
+              : null,
+      );
+    }
+    _paintIllustratedGuard(
+      c,
+      phase,
+      weight,
+      run,
+      lean,
+      lampAngle,
+      flameTime ?? 0,
+      silhouette ? const Color(0) : lampGlass,
+    );
+    if (layer) c.restore();
+    if (silhouette && lampGlass.a > 0) {
+      final center = guardLampArt(
+        phase,
+        weight,
+        run,
+        lean,
+        lampAngle,
+        illustrated: true,
+      );
+      c.save();
+      c.translate(center.dx, center.dy);
+      c.rotate(lampAngle);
+      c.drawPath(
+        Path()
+          ..moveTo(-21, -35)
+          ..lineTo(21, -35)
+          ..lineTo(16, 23)
+          ..lineTo(-16, 23)
+          ..close(),
+        Paint()..color = lampGlass.withValues(alpha: lampGlass.a * 0.68),
+      );
+      c.restore();
+    }
+    c.restore();
+    return;
+  }
   const bounds = Rect.fromLTRB(60, 80, 760, 820);
-  void body() => _guardBody(c, phase, weight, run, lean, lampAngle, doubt);
+  void body() => _guardBody(
+    c,
+    phase,
+    weight,
+    run,
+    lean,
+    lampAngle,
+    doubt,
+    staffAngle: staffAngle,
+  );
   // Kenar ışığı: gövdenin biraz kaydırılmış kopyası, ışık renginde.
   c.saveLayer(
     bounds,
@@ -282,7 +346,17 @@ void drawShadowGuard(
   // Gövde: koyu renk opak, ara katmansız aynı sonuç (Skia'da her karede
   // renk filtreli ara katman telefonda pahalıydı). Opak değilse eski yol.
   if (ink.a >= 1) {
-    _guardBody(c, phase, weight, run, lean, lampAngle, doubt, tint: ink);
+    _guardBody(
+      c,
+      phase,
+      weight,
+      run,
+      lean,
+      lampAngle,
+      doubt,
+      tint: ink,
+      staffAngle: staffAngle,
+    );
   } else {
     c.saveLayer(
       bounds,
@@ -304,15 +378,303 @@ void drawShadowGuard(
     e,
   );
   c.restore();
-  // Fenerin camı: ışıklı.
-  final lamp = guardLampArt(phase, weight, run, lean, lampAngle);
-  c.drawRRect(
-    RRect.fromRectAndRadius(
-      Rect.fromCenter(center: lamp, width: 70, height: 96),
-      const Radius.circular(18),
-    ),
-    Paint()..color = lampGlass,
+  // Cam, gövdeyle ve fenerin kancasındaki dönüşle aynı dönüşümü taşır.
+  final lamp = guardLampArt(
+    phase,
+    weight,
+    run,
+    lean,
+    lampAngle,
+    staffAngle: staffAngle,
   );
+  c.save();
+  c.translate(lamp.dx, lamp.dy);
+  c.rotate(lean + staffAngle + lampAngle);
+  final glass = RRect.fromRectAndRadius(
+    const Rect.fromLTWH(-35, -48, 70, 96),
+    const Radius.circular(18),
+  );
+  if (flameTime == null) {
+    c.drawRRect(glass, Paint()..color = lampGlass);
+  } else {
+    c.clipRRect(glass);
+    c.drawRRect(
+      glass,
+      Paint()..color = lampGlass.withValues(alpha: lampGlass.a * 0.42),
+    );
+    final flicker =
+        math.sin(flameTime * 8.2) * 0.65 + math.sin(flameTime * 17.3) * 0.35;
+    final tip = Offset(
+      flicker * 11 - lampAngle * 14,
+      -22 - 7 * flicker - doubt * 7,
+    );
+    final flame = Path()
+      ..moveTo(-19, 30)
+      ..cubicTo(-29, 8, tip.dx - 3, 1, tip.dx, tip.dy)
+      ..cubicTo(tip.dx + 5, tip.dy + 9, 28, 8, 19, 30)
+      ..quadraticBezierTo(0, 44, -19, 30)
+      ..close();
+    c.drawPath(flame, Paint()..color = lampGlass);
+    c.drawOval(
+      Rect.fromCenter(center: Offset(tip.dx * .3, 19), width: 16, height: 27),
+      Paint()
+        ..color = const Color(0xFFF3FFF8).withValues(alpha: lampGlass.a * 0.86),
+    );
+    c.drawLine(
+      const Offset(-26, -31),
+      const Offset(-26, 21),
+      Paint()
+        ..color = const Color(0xFFF3FFF8).withValues(alpha: lampGlass.a * 0.55)
+        ..strokeWidth = 4
+        ..strokeCap = StrokeCap.round,
+    );
+  }
+  c.restore();
+  c.restore();
+}
+
+const _guardStaffGrip = Offset(440, 350);
+
+const _illustratedHip = Offset(275, 602);
+const _illustratedScale = 1.4908256880733946;
+const _illustratedOrigin = Offset(
+  275 - 114 * _illustratedScale,
+  777 - 433 * _illustratedScale,
+);
+final _illustratedPivot =
+    _illustratedOrigin +
+    Offset(274 * _illustratedScale, 37 * _illustratedScale);
+
+double _illustratedRun(double run) => ((run * 130 - 45) / 85).clamp(0.0, 1.0);
+
+double illustratedGuardStride(double run) => 33 + 17 * _illustratedRun(run);
+
+double _easeFoot(double t) {
+  final u = t.clamp(0.0, 1.0);
+  return u * u * (3 - 2 * u);
+}
+
+double _illustratedTilt(double phase, double weight, double lean) =>
+    lean * .42 + math.sin(phase * 2 * math.pi) * .018 * weight;
+
+Offset _illustratedBob(double phase, double weight) => Offset(
+  math.sin(phase * 4 * math.pi) * 1.6 * weight,
+  -math.cos(phase * 4 * math.pi) * 3.1 * weight,
+);
+
+Offset _illustratedHook(double phase, double weight, double lean) =>
+    _rot(
+      _illustratedPivot,
+      _illustratedHip,
+      _illustratedTilt(phase, weight, lean),
+    ) +
+    _illustratedBob(phase, weight);
+
+final _legPaints = <String, Paint>{};
+
+void _illustratedLeg(
+  Canvas c,
+  String key,
+  double x,
+  double phase,
+  double weight,
+  double run,
+) {
+  final img = KandilciArt.image(key);
+  final w = img.width.toDouble(), h = img.height.toDouble();
+  const bootWidth = .66, bootHeight = .59;
+  const calfWidth = 1.36;
+  Offset bootVector(Offset v) => Offset(v.dx * bootWidth, v.dy * bootHeight);
+  final hipSource = Offset(w * .47, h * .025);
+  final kneeSource = Offset(w * .35, h * .395);
+  final ankleSource = Offset(w * .32, h * .773);
+
+  // Ayak basarken hızla aynı miktarda geriye gider; yalnız havadayken öne döner.
+  final phaseInStep = phase % 1.0;
+  final sprint = _illustratedRun(run);
+  final stance = .61 - .16 * sprint;
+  final span = illustratedGuardStride(run) * stance / guardArtScale * weight;
+  final double walk, lift, roll, support;
+  if (phaseInStep < stance) {
+    final t = phaseInStep / stance;
+    walk = span * (.5 - t);
+    lift = 0;
+    roll =
+        (-.14 * (1 - _easeFoot(t / .19)) + .32 * _easeFoot((t - .63) / .37)) *
+        weight;
+    support = .16 + .63 * _easeFoot((t - .44) / .30);
+  } else {
+    final t = (phaseInStep - stance) / (1 - stance);
+    final wave = math.sin(t * math.pi);
+    walk = span * (_easeFoot(t) - .5);
+    lift = wave * wave * (24 + 22 * sprint) * weight;
+    roll =
+        (.32 * (1 - _easeFoot(t / .61)) - .14 * _easeFoot((t - .46) / .54)) *
+        weight;
+    support = .79 - .63 * _easeFoot(t);
+  }
+  final touch = Offset(w * support, h * .982);
+  final floorPoint = Offset(
+    x + walk + (touch.dx - w * .42) * bootWidth,
+    777 - lift,
+  );
+  final ankle = floorPoint + _rotV(bootVector(ankleSource - touch), roll);
+  final hip = Offset(x - 7 * weight, 574 + _illustratedBob(phase, weight).dy);
+  final leg = ankle - hip;
+  final forward = Offset(leg.dy, -leg.dx) / leg.distance;
+  // Keep the supporting leg nearly straight and let the swing leg flex.
+  final knee = Offset.lerp(hip, ankle, .49)! + forward * (8 + lift * .65);
+
+  double angle(Offset v) => math.atan2(v.dy, v.dx);
+  final thighAngle = angle(knee - hip) - angle(kneeSource - hipSource);
+  final shinAngle = angle(ankle - knee) - angle(ankleSource - kneeSource);
+  final thighScale = (knee - hip).distance / (kneeSource - hipSource).distance;
+  final shinScale =
+      (ankle - knee).distance / (ankleSource - kneeSource).distance;
+  Offset skin(Offset p) {
+    final y = p.dy / h;
+    final upper = hip + _rotV((p - hipSource) * thighScale, thighAngle);
+    final shinPoint = p - kneeSource;
+    final lower =
+        knee +
+        _rotV(
+          Offset(shinPoint.dx * calfWidth, shinPoint.dy) * shinScale,
+          shinAngle,
+        );
+    final boot = ankle + _rotV(bootVector(p - ankleSource), roll);
+    return Offset.lerp(
+      Offset.lerp(upper, lower, _easeFoot((y - .31) / .17)),
+      boot,
+      _easeFoot((y - .66) / .10),
+    )!;
+  }
+
+  const cols = 5, rows = 13;
+  final points = <Offset>[], uv = <Offset>[];
+  final indices = <int>[];
+  for (var row = 0; row <= rows; row++) {
+    for (var col = 0; col <= cols; col++) {
+      final tex = Offset(w * col / cols, h * row / rows);
+      points.add(skin(tex));
+      uv.add(tex);
+      if (row == rows || col == cols) continue;
+      final n = row * (cols + 1) + col;
+      final below = n + cols + 1;
+      indices.addAll([n, n + 1, below, n + 1, below + 1, below]);
+    }
+  }
+  final mesh = ui.Vertices(
+    ui.VertexMode.triangles,
+    points,
+    textureCoordinates: uv,
+    indices: indices,
+  );
+  final paint = _legPaints.putIfAbsent(
+    key,
+    () => Paint()
+      ..filterQuality = FilterQuality.low
+      // The source has cyan edge lighting painted into the leather.
+      ..colorFilter = const ColorFilter.matrix([
+        .52,
+        .11,
+        0,
+        0,
+        0,
+        .43,
+        .12,
+        0,
+        0,
+        0,
+        .36,
+        0,
+        .13,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+      ])
+      ..shader = ui.ImageShader(
+        img,
+        TileMode.clamp,
+        TileMode.clamp,
+        Float64List.fromList([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]),
+      ),
+  );
+  c.drawVertices(mesh, BlendMode.srcOver, paint);
+  mesh.dispose();
+}
+
+void _paintIllustratedGuard(
+  Canvas c,
+  double phase,
+  double weight,
+  double run,
+  double lean,
+  double lampAngle,
+  double time,
+  Color lampGlass,
+) {
+  _illustratedLeg(c, 'leg_far', 249, phase + .5, weight, run);
+  _illustratedLeg(c, 'leg_near', 294, phase, weight, run);
+  final bob = _illustratedBob(phase, weight);
+  c.save();
+  c.translate(_illustratedHip.dx + bob.dx, _illustratedHip.dy + bob.dy);
+  c.rotate(_illustratedTilt(phase, weight, lean));
+  c.translate(-_illustratedHip.dx, -_illustratedHip.dy);
+  final sprite = KandilciArt.image('guard_body');
+  final bounds = Rect.fromLTWH(
+    _illustratedOrigin.dx,
+    _illustratedOrigin.dy,
+    sprite.width * _illustratedScale,
+    sprite.height * _illustratedScale,
+  );
+  // Palto, el ve asa tek özgün çizim. Alttaki eski adım pikselleri
+  // gizlenir; asanın alt bölümü ise aynı çizimde korunur.
+  c.clipPath(
+    Path()
+      ..addRect(
+        Rect.fromLTRB(
+          bounds.left,
+          bounds.top,
+          bounds.right,
+          bounds.top + 331 * _illustratedScale,
+        ),
+      )
+      ..addRect(
+        Rect.fromLTRB(
+          bounds.left + 206 * _illustratedScale,
+          bounds.top + 331 * _illustratedScale,
+          bounds.right,
+          bounds.bottom,
+        ),
+      ),
+  );
+  KandilciArt.draw(c, 'guard_body', bounds);
+  c.restore();
+
+  final hook = _illustratedHook(phase, weight, lean);
+  final lamp = guardLampCenter - guardLampPivot;
+  c.save();
+  c.translate(hook.dx, hook.dy);
+  c.rotate(lampAngle);
+  KandilciArt.draw(c, 'lantern', Rect.fromLTWH(lamp.dx - 41, -6, 82, 177));
+  if (lampGlass.a > 0) {
+    final glow = lamp + Offset(math.sin(time * 8.3) * 2, 0);
+    c.drawCircle(
+      glow,
+      38,
+      Paint()
+        ..shader = ui.Gradient.radial(glow, 38, [
+          lampGlass.withValues(
+            alpha: (0.22 + 0.10 * math.sin(time * 11)) * lampGlass.a,
+          ),
+          lampGlass.withValues(alpha: 0),
+        ]),
+    );
+  }
   c.restore();
 }
 
@@ -322,14 +684,23 @@ Offset guardLampArt(
   double weight,
   double run,
   double lean,
-  double lampAngle,
-) {
+  double lampAngle, {
+  double staffAngle = 0,
+  bool illustrated = false,
+}) {
+  if (illustrated && KandilciArt.ready) {
+    return _illustratedHook(phase, weight, lean) +
+        _rotV(guardLampCenter - guardLampPivot, lampAngle);
+  }
   final shift = _shift(phase, weight);
   final bob = _bob(phase, weight);
   final hip = Offset(276, 588 + bob);
-  final hook = _rot(guardLampPivot + shift + Offset(0, bob), hip, lean);
-  final d = guardLampCenter - guardLampPivot;
-  return hook + _rotV(d, lampAngle);
+  final hook = _rot(guardLampPivot, _guardStaffGrip, staffAngle);
+  final offset = _rotV(
+    guardLampCenter - guardLampPivot,
+    staffAngle + lampAngle,
+  );
+  return _rot(hook + offset + shift + Offset(0, bob), hip, lean);
 }
 
 double _bob(double phase, double weight) =>
@@ -409,6 +780,7 @@ void _guardBody(
   double lampAngle,
   double doubt, {
   Color? tint,
+  double staffAngle = 0,
 }) {
   // [tint]: parçalar doğrudan bu renkte çizilir (ara katman yok).
   void part(String id) => tint == null
@@ -466,12 +838,15 @@ void _guardBody(
   c.restore();
   final shift = _shift(phase, weight);
   const shoulder = Offset(301, 341);
-  final wrist = const Offset(440, 350) + shift;
+  final wrist = _guardStaffGrip + shift;
   final (elbow, end) = solveLimb(shoulder, wrist, 90, 87, bend: -1);
   bone(shoulder, elbow, 17, 15);
   bone(elbow, end, 14, 11);
   c.save();
   c.translate(shift.dx, shift.dy);
+  c.translate(_guardStaffGrip.dx, _guardStaffGrip.dy);
+  c.rotate(staffAngle);
+  c.translate(-_guardStaffGrip.dx, -_guardStaffGrip.dy);
   part('staff');
   part('hand-front');
   c.translate(guardLampPivot.dx, guardLampPivot.dy);
@@ -509,6 +884,7 @@ void drawStoneMedusa(
   required Offset eyesAt,
   required double eyes,
   required bool sealed,
+  double lidStrain = 0,
 }) {
   c.save();
   c.translate(eyesAt.dx, eyesAt.dy);
@@ -547,6 +923,34 @@ void drawStoneMedusa(
     );
     ShadowArt.medusa(c, 'eyes-closed');
     c.restore();
+  }
+  if (lidStrain > 0 && !sealed) {
+    final growth = lidStrain.clamp(0.0, 1.0);
+    final seam = Paint()
+      ..color = const Color(0xFF100E0C).withValues(alpha: 0.90 * growth)
+      ..strokeWidth = 5
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..style = PaintingStyle.stroke;
+    for (final (x, side) in [(322.0, -1.0), (407.0, 1.0)]) {
+      c.drawPath(
+        Path()
+          ..moveTo(x, 391)
+          ..lineTo(x + side * 9 * growth, 392 + 3 * growth)
+          ..lineTo(x + side * 17 * growth, 391 - 4 * growth)
+          ..lineTo(x + side * 28 * growth, 392 + 2 * growth),
+        seam,
+      );
+      if (growth > .45) {
+        c.drawPath(
+          Path()
+            ..moveTo(x + side * 14 * growth, 391)
+            ..lineTo(x + side * 19 * growth, 391 + 10 * growth)
+            ..lineTo(x + side * 15 * growth, 391 + 15 * growth),
+          seam,
+        );
+      }
+    }
   }
   if (e > 0) {
     c.save();

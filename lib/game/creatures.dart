@@ -738,6 +738,34 @@ class Karabasan extends PositionComponent with HasGameReference<GolgeGame> {
   void render(Canvas canvas) {
     if (!_awake) return;
     final a = _fade;
+    final form = a * a * (3 - 2 * a);
+    if (a < 1) {
+      final dust = Paint()..strokeCap = StrokeCap.round;
+      for (var i = 0; i < 11; i++) {
+        final angle = 2 * math.pi * i / 11 + _t * 0.34;
+        final ring = (1 - form) * (94 + (i % 4) * 18);
+        final drift = math.sin(_t * 5 + i * 2.12) * 14 * (1 - form);
+        final begin = Offset(
+          -54 + math.cos(angle) * (ring + 40),
+          math.sin(angle) * (ring * 0.65 + 22),
+        );
+        final end = Offset(
+          -27 + math.cos(angle) * (ring * 0.29 + 32),
+          math.sin(angle) * (ring * 0.22 + 16),
+        );
+        dust
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = (4.5 + i % 3 * 2) * (0.55 + 0.45 * form)
+          ..color = const Color(0xFF020101)
+              .withValues(alpha: (1 - a) * a * 2.3);
+        canvas.drawPath(
+          Path()
+            ..moveTo(begin.dx, begin.dy)
+            ..quadraticBezierTo(begin.dx + 16, end.dy + drift, end.dx, end.dy),
+          dust,
+        );
+      }
+    }
     // Çevredeki ışık zerreleri ona doğru dönerek çekilir.
     for (var i = 0; i < 16; i++) {
       final k = ((_t * 0.45 + i / 16) % 1.0);
@@ -752,7 +780,7 @@ class Karabasan extends PositionComponent with HasGameReference<GolgeGame> {
       );
     }
     final ink = Paint()
-      ..color = const Color(0xFF020101).withValues(alpha: 0.96 * a);
+      ..color = const Color(0xFF020101).withValues(alpha: 0.96 * form);
     // Kaynayan gövde: tek parça, kenarları nefes alan bir karanlık. Sırtı
     // kambur, önü sarkık; kenar noktaları ayrı ritimlerle kabarır.
     const n = 18;
@@ -767,8 +795,11 @@ class Karabasan extends PositionComponent with HasGameReference<GolgeGame> {
           front * 14;
       pts.add(
         Offset(
-          math.cos(ang) * r * 0.85 - 36,
-          math.sin(ang) * r * (ang > math.pi ? 0.95 : 0.78),
+          math.cos(ang) * r * (0.63 + 0.22 * form) - 36,
+          math.sin(ang) *
+              r *
+              (0.35 + 0.65 * form) *
+              (ang > math.pi ? 0.95 : 0.78),
         ),
       );
     }
@@ -785,7 +816,7 @@ class Karabasan extends PositionComponent with HasGameReference<GolgeGame> {
     canvas.drawPath(body..close(), ink);
     // Öne uzanan pençe gibi dokunaçlar.
     final arm = Paint()
-      ..color = const Color(0xFF020101).withValues(alpha: 0.96 * a)
+      ..color = const Color(0xFF020101).withValues(alpha: 0.96 * form)
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
     final drag = _drag.value;
@@ -809,7 +840,7 @@ class Karabasan extends PositionComponent with HasGameReference<GolgeGame> {
     }
     // Soluk, bakan iki göz.
     final eye = Paint()
-      ..color = const Color(0xFFE8DCC8).withValues(alpha: 0.8 * a);
+      ..color = const Color(0xFFE8DCC8).withValues(alpha: 0.8 * form * form);
     canvas.drawOval(
       Rect.fromCenter(center: const Offset(-6, -18), width: 9, height: 4),
       eye,

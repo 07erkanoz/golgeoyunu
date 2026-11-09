@@ -73,6 +73,49 @@ class DustPuff extends Component {
   }
 }
 
+/// Yüzeyden savrulan su damlaları, suya geri dönünce söner.
+class WaterSplash extends Component {
+  WaterSplash(this.at, double speed, {required bool entering})
+    : _strength = (speed / 520).clamp(0.28, 1.0),
+      _entering = entering,
+      super(priority: 24);
+
+  final Offset at;
+  final double _strength;
+  final bool _entering;
+  double _age = 0;
+
+  @override
+  void update(double dt) {
+    _age += dt;
+    if (_age > 0.55) removeFromParent();
+  }
+
+  @override
+  void render(Canvas canvas) {
+    final paint = Paint()..strokeCap = StrokeCap.round;
+    for (var n = 0; n < 8; n++) {
+      final t = _age - (n % 4) * 0.012;
+      if (t < 0) continue;
+      final vy = -(44 + (n % 4) * 13.0) * (0.55 + _strength * 0.65);
+      final vx =
+          (n.isEven ? -1 : 1) * (25 + n * 4.5) * (_entering ? 1.05 : 0.79);
+      final y = vy * t + 190 * t * t;
+      if (y > 0) continue;
+      final alpha = (0.8 * (1 - t / 0.5)).clamp(0.0, 0.8);
+      final drop = at + Offset(vx * t, y);
+      paint
+        ..strokeWidth = 0.78 + (n % 3) * 0.19
+        ..color = const Color(0xFFC7EBE9).withValues(alpha: alpha);
+      canvas.drawLine(
+        drop,
+        drop + Offset(-vx * 0.025, -(vy + 380 * t) * 0.025),
+        paint,
+      );
+    }
+  }
+}
+
 /// Koldan kapıya akan ışık: kol çekilince bir ışık topu kavisle kapıya
 /// gider, vardığında kapıda bir an parlar (hangi kolun hangi kapıyı
 /// açtığı görülür).

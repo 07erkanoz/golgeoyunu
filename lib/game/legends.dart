@@ -227,9 +227,11 @@ class MedusaHead extends PositionComponent
     }
     // Gözler açılmadan önce taş bir an titrer (uyarı).
     final k = _t % period;
-    final tremble = !sealed && k > closed - 0.55 && k < closed
-        ? math.sin(_t * 58) * 0.7 * ((k - closed + 0.55) / 0.55)
-        : 0.0;
+    final warning = sealed
+        ? 0.0
+        : ((k - closed + 0.55) / 0.55).clamp(0.0, 1.0) *
+              (1 - ((k - closed) / 0.35).clamp(0.0, 1.0));
+    final tremble = math.sin(_t * 58) * 0.7 * warning * (1 - e);
     canvas.save();
     canvas.translate(tremble, 0);
     if (ShadowArt.ready) {
@@ -240,6 +242,7 @@ class MedusaHead extends PositionComponent
         eyesAt: const Offset(0, -1.6),
         eyes: e,
         sealed: sealed,
+        lidStrain: warning,
       );
       if (e > 0.2) {
         glowDot(

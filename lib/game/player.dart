@@ -81,12 +81,14 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
 
   /// Bir sandığı itiyor.
   bool pushing = false;
+  Crate? _pushCrate;
 
   /// Üstünde durduğu hareketli zemin (kaya, asansör kefesi).
   Deck? riding;
 
   /// Kanatlarla süzülüyor.
   bool gliding = false;
+  double _wingOpen = 0;
   bool _inWind = false;
 
   bool get hasWings =>
@@ -153,10 +155,13 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
   /// Sudan hızla çıkınca havada atılan takla (çizim; radyan ve hız).
   double _flip = 0;
   double _flipRate = 0;
+  double _waterExitT = 0;
+  double _iceGlide = 0;
 
   /// Sudan sıçrayış: hıza göre takla başlar.
-  void breach(double speed) {
-    if (speed < 210 || _flipRate != 0) return;
+  void breach(double speed, {bool roll = true}) {
+    _waterExitT = 0.34;
+    if (!roll || speed < 210 || _flipRate != 0) return;
     _flip = 0;
     _flipRate = facing * (speed > 300 ? 9.0 : 7.0);
   }
@@ -217,11 +222,11 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     _stateTime += dt;
     _shieldS = approach(_shieldS, hidden || crouching ? 1 : 0, dt, 0.06);
     _landDip = math.max(0, _landDip - dt);
+    _waterExitT = math.max(0, _waterExitT - dt);
     _stretchT = math.max(0, _stretchT - dt);
     _updateJarTrail(dt);
     _updateShadow(dt);
     _updateMotion(dt);
-    _stepKukla(dt);
 
     final c = game.controls;
     final active = !game.cinematic && !isDead;
@@ -316,6 +321,8 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       case PlayerState.dead:
         _updateDead(dt);
     }
+
+    _stepKukla(dt);
 
     if (state != PlayerState.normal) riding = null;
     switch (riding) {
@@ -508,12 +515,21 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
           ? math.max(velocity.y - 2600 * dt, -260)
           : velocity.y - 1100 * dt;
     }
+    final wasPushing = pushing;
     pushing = false;
+    _pushCrate = null;
     final wind = windX == 0
         ? 0.0
         : (crouching ? 0.0 : windX * (gliding ? 1.5 : (onGround ? 0.85 : 1.0)));
     windX = 0;
     _moveX((velocity.x + wind) * dt, dir);
+    if (!wasPushing && pushing && _pushCrate != null) {
+      final crate = _pushCrate!;
+      final edge = facing > 0
+          ? crate.position.x
+          : crate.position.x + Crate.side;
+      game.dust(Vector2(edge, crate.position.y + Crate.side), count: 4);
+    }
     // Kare hızından bağımsız yörünge: yerçekimi/süzülme/rüzgâr ivmesi için
     // küçük bir düzeltme, her kare hızında 60 FPS'teki eğrinin aynısını
     // çizdirir (30 FPS'te zıplayış alçalmaz, 144'te yükselmez).
@@ -851,6 +867,7 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       final r = o.toRect();
       if (!r.overlaps(me)) continue;
       if (o is Crate && onGround && dir == dx.sign.toInt()) {
+        _pushCrate ??= o;
         final overlap = dx > 0 ? me.right - r.left : me.left - r.right;
         if (o.push(overlap) != 0) {
           pushing = true;
@@ -963,6 +980,41 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       if (rr == r && (c == rc || c == rc + 1)) return true;
     }
     return false;
+  }
+
+  // Görsel uzanış için kısa bir ileri bakış. Fizik, kenarı kendi
+  // mevcut yakınlık kontrolüyle yakalamaya devam eder.
+  Offset? _ledgeAhead() {
+    if (state != PlayerState.normal ||
+        onGround ||
+        swimming ||
+        skiing ||
+        game.onHorse ||
+        _grabCooldown > 0 ||
+        velocity.x * facing < 25 ||
+        velocity.y < -180 ||
+        game.controls.down ||
+        !(facing > 0 ? game.controls.right : game.controls.left)) {
+      return null;
+    }
+    final edge = position.x + (facing > 0 ? w : 0);
+    final probe = edge + facing * 18;
+    final col = (probe / kTile).floor();
+    final cx = (facing > 0 ? col : col + 1) * kTile;
+    final dx = (cx - edge) * facing;
+    if (dx < -0.1 || dx > 18) return null;
+    final row = (position.y / kTile).round();
+    final cy = row * kTile;
+    if ((cy - position.y).abs() > 14 ||
+        _free(col, row) ||
+        !_free(col, row - 1) ||
+        !_free(col, row - 2) ||
+        !_free(col - facing, row))
+      return null;
+    return Offset(
+      (cx - (position.x + w / 2)) * facing / _kuklaVisScale,
+      (cy - (position.y + h)) / _kuklaVisScale,
+    );
   }
 
   void _tryLedgeGrab() {
@@ -1883,10 +1935,7 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
 
   bool _shadowFloor(double x, double y) {
     final c = level.cellAt(x, y);
-    return c == '#' ||
-        c == '=' ||
-        c == '-' ||
-        level.shadowBridgeAt(x, y);
+    return c == '#' || c == '=' || c == '-' || level.shadowBridgeAt(x, y);
   }
 
   /// Oyuncunun girdisiyle gölgeyi yürütür.
@@ -2386,6 +2435,12 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     final run = onGround ? (velocity.x.abs() / runSpeed).clamp(0.0, 1.0) : 0.0;
     _leanS = approach(_leanS, run * 0.2, dt, 0.12);
     if (state == PlayerState.swing) _swingBody.update(ropeAngle, dt);
+    final openWing = gliding && !swimming && !isDead;
+    _wingOpen = _approach(
+      _wingOpen,
+      openWing ? 1 : 0,
+      (openWing ? 4.5 : 5.5) * dt,
+    );
     if (state == PlayerState.hang) _hangSway.update(0, dt);
     // İleri doğru ivme (+ hızlanma, - frenleme).
     final ax = (velocity.x - _prevVx) / dt * facing;
@@ -2428,13 +2483,29 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
 
   void _stepKukla(double dt) {
     if (!_useKukla) return;
+    final pushRect = state == PlayerState.normal && onGround && !swimming
+        ? _pushCrate?.toRect()
+        : null;
+    final pushTarget = pushRect == null
+        ? null
+        : Offset(
+            ((facing > 0 ? pushRect.left : pushRect.right) - center.x) *
+                    facing /
+                    _kuklaVisScale +
+                0.78,
+            (pushRect.top + (crouching ? 16 : 11) - (position.y + h)) /
+                _kuklaVisScale,
+          );
+    final theme = level.def.theme;
     final i = _kuklaIn
       ..mode = switch (state) {
         _ when swimming && !isDead => KuklaMode.swim,
-        PlayerState.hang || PlayerState.swing => KuklaMode.hang,
+        PlayerState.hang => KuklaMode.hang,
+        PlayerState.swing => KuklaMode.swing,
         PlayerState.climbUp => KuklaMode.climbUp,
         PlayerState.vine => KuklaMode.vine,
         PlayerState.dead => KuklaMode.ground,
+        _ when gliding => KuklaMode.glide,
         _ when skiing || game.onHorse => KuklaMode.ground,
         _ => onGround ? KuklaMode.ground : KuklaMode.air,
       }
@@ -2451,7 +2522,8 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       ..ski = skiing && !isDead
       // Tümsekte bir anlık havalanış dizleri toplatmaz.
       ..skiAir = skiing && _skiAir && _airTime > 0.1 ? 1 : 0
-      ..pushing = pushing
+      ..pushing = pushTarget != null
+      ..pushTarget = pushTarget
       ..shield = _shieldS
       ..landDip = _landDip
       ..climb = (_stateTime / 0.42).clamp(0.0, 1.0)
@@ -2462,7 +2534,47 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       ..stroke = swimming
           ? (_stroke < 1 ? _stroke : (_kick * 0.18) % 1.0)
           : null
-      ..worldY = position.y + h;
+      ..worldY = position.y + h
+      ..naturalMotion = true
+      ..ledgeContact = state == PlayerState.hang || state == PlayerState.climbUp
+      ..ledgeSway = state == PlayerState.hang ? _hangSway.value : 0
+      ..ledgeAhead = _ledgeAhead()
+      ..chainScale = _kuklaVisScale
+      ..chainRail = theme == LevelTheme.konya ? -8 : 0
+      ..chainWave =
+          theme == LevelTheme.konya ||
+              (theme == LevelTheme.cliffs && Cartoon.on)
+          ? 0
+          : 3.0 * facing
+      ..ropeTilt = (-ropeAngle + _swingBody.value) * facing
+      ..ropePump = (_ropeOmega * facing * 0.35).clamp(-1.0, 1.0)
+      ..jarOnBelt =
+          state == PlayerState.hang ||
+          state == PlayerState.climbUp ||
+          state == PlayerState.swing ||
+          state == PlayerState.vine ||
+          pushTarget != null;
+    final coasting =
+        state == PlayerState.normal &&
+        onGround &&
+        !skiing &&
+        !swimming &&
+        pushTarget == null &&
+        _onIce &&
+        (!game.controls.left && !game.controls.right ||
+            velocity.x * facing < 0);
+    final coast = coasting ? (velocity.x.abs() / 94).clamp(0.0, 1.0) : 0.0;
+    _iceGlide = _approach(_iceGlide, coast, dt * 6.5);
+    i
+      ..iceGlide = _iceGlide
+      ..skiLoad = skiing ? (_skiSpeed.abs() / 580).clamp(0.0, 1.0) : 0
+      ..waterExit = i.mode == KuklaMode.air ? _waterExitT / 0.34 : 0
+      ..surfaceBreath =
+          swimming && !isDead && !level.inWater(center.x, center.y - 9)
+      ..breathEffort = !isDead && (!swimming || game.breath > 0.02)
+          ? (1 - game.breath).clamp(0.0, 1.0)
+          : 0;
+    if (i.ledgeAhead != null) i.jarOnBelt = true;
     if (state == PlayerState.hang || state == PlayerState.climbUp) {
       final cx = _hangDir > 0 ? _hangCol * kTile : (_hangCol + 1) * kTile;
       final cy = _hangRow * kTile.toDouble();
@@ -2472,7 +2584,7 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       );
     } else if (state == PlayerState.swing) {
       // İpte: eller başın üstünde, ipi tutar.
-      i.grip = const Offset(-0.2, -h - 0.4) / _kuklaVisScale;
+      i.grip = _ropeGrip;
     }
     _kukla.step(dt, i);
     _stepShadowKukla(dt, i);
@@ -2518,6 +2630,7 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
         }
       }
       s = past.copy()
+        ..pushTarget = null
         ..forward = past.forward * k
         ..grip = past.grip * k;
     }
@@ -2580,10 +2693,17 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
   /// Kukla bu ölçekle çizilir; ona verilen hız ve tutunma yeri de bu ölçeğe
   /// bölünür (yoksa basan ayak yerde kayar, eller kenarı ıskalar).
   static const double _kuklaVisScale = 0.88;
+  static const Offset _ropeGrip = Offset(0, (6 - h) / _kuklaVisScale);
 
   /// Kuklanın çizim ölçeği (yatay, dikey): sıçrarken hafif uzar, inişte
   /// hafif basılır (kâğıt kukla lastik gibi esnemez).
   (double, double) get _kuklaScale {
+    if (state == PlayerState.hang ||
+        state == PlayerState.climbUp ||
+        state == PlayerState.swing ||
+        _kuklaIn.pushTarget != null) {
+      return (_kuklaVisScale, _kuklaVisScale);
+    }
     final squash = (_landDip / 0.22).clamp(0.0, 1.0);
     final stretch = (_stretchT / 0.14).clamp(0.0, 1.0);
     return (
@@ -2614,29 +2734,9 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
       canvas.translate(-pivot.dx, -pivot.dy);
     }
 
-    // Eski çizimdeki gibi: ipte beden ellerin altında asılı, suda gidiş
-    // yönüne yatar, taklada döner, ölünce yana yıkılır.
-    // Ayrılmış gölge ([own]) kendi ayağıyla yürür: Sâye'nin dönüşleri yok.
     if (!own) {
-      if (skiing && kk.skiAir > 0.01) {
-        // Havada kayaklar eğilir, beden dengede dik kalır (kayakla birlikte
-        // sırtüstü yatmaz).
-        turn(Offset(0, -kk.skiLift), -skiAngle * 0.65 * kk.skiAir);
-      }
-      if (state == PlayerState.swing) {
-        turn(const Offset(0, -h + 1.4), -_swingBody.value * facing);
-      }
-      if (swimming && !isDead) {
-        turn(const Offset(0, -14), _swimPitch);
-      } else if (_flip != 0) {
-        turn(const Offset(0, -14), _flip);
-      } else if (gliding && !isDead) {
-        final glideLean =
-            (velocity.x * facing / 205.0).clamp(-0.3, 0.45) * 0.36;
-        turn(const Offset(0, -14), glideLean);
-      }
-      if (isDead && !_fell) {
-        turn(Offset.zero, math.min(_stateTime * 5, 1) * math.pi / 2);
+      for (final (pivot, angle) in _kuklaTurns(kk)) {
+        turn(pivot, angle);
       }
     }
     // Kanatlar sırtta, kürek kemiğinin hizasında: ikisi de bedenin ardında
@@ -2651,6 +2751,26 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
     }
     if (wings) _drawKuklaWing(canvas, back, near: true);
     canvas.restore();
+  }
+
+  Iterable<(Offset, double)> _kuklaTurns(SayeKukla kk) sync* {
+    if (skiing && kk.skiAir > 0.01) {
+      yield (Offset(0, -kk.skiLift), -skiAngle * 0.65 * kk.skiAir);
+    }
+    if (state == PlayerState.swing) {
+      yield (_ropeGrip, -_swingBody.value * facing);
+    }
+    if (swimming && !isDead) {
+      yield (const Offset(0, -14), _swimPitch);
+    } else if (_flip != 0) {
+      yield (const Offset(0, -14), _flip);
+    } else if (_wingOpen > 0.01 && !isDead && !onGround) {
+      final forward = (velocity.x * facing / 205.0).clamp(0.0, 1.0);
+      yield (const Offset(0, -14), (0.13 + 0.23 * forward) * _wingOpen);
+    }
+    if (isDead && !_fell) {
+      yield (Offset.zero, math.min(_stateTime * 5, 1) * math.pi / 2);
+    }
   }
 
   /// Hayal perdesine düşen gölge: Sâye'nin o anki gerçek duruşuyla (dururken
@@ -2981,7 +3101,10 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
         canvas,
         rim: Settings.lowGraphics ? 0 : 0.62 * flicker * (1 - _shieldS),
       );
-      final j = _kukla.jar;
+      var j = _kukla.jar;
+      for (final (pivot, angle) in _kuklaTurns(_kukla).toList().reversed) {
+        j = pivot + rot(j - pivot, angle);
+      }
       final (ksx, ksy) = _kuklaScale;
       _jarWorld = Vector2(
         position.x + w / 2 + j.dx * ksx * facing,
@@ -4024,12 +4147,12 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
   /// katlıdır. Uzaktaki kanat bedenin ardında, daha dik ve koyu; yakın kanat
   /// sırtın üstünden görünür, daha yatık.
   void _drawKuklaWing(Canvas canvas, Offset root, {required bool near}) {
-    final open = gliding ? 1.0 : 0.0;
-    final flap = gliding ? math.sin(_anim * 6 + (near ? 0 : 0.5)) * 0.14 : 0.0;
-    // Kanadın açısı (0: tam arkaya yatık; eksi: yukarı kalkık).
-    final a = open > 0 ? (near ? -0.38 : -0.72) + flap : (near ? 1.15 : 0.95);
-    final len = open > 0 ? (near ? 17.0 : 15.0) : 11.0;
-    final wide = open > 0 ? 6.5 : 3.2;
+    final open = _wingOpen;
+    final flap = math.sin(_anim * 4.5 + (near ? 0 : 0.62)) * 0.10 * open;
+    // Katlı kanat açılırken kamış uçları da arkaya doğru kademeli uzanır.
+    final a = (near ? 1.15 - 1.53 * open : 0.95 - 1.67 * open) + flap;
+    final len = 11.0 + (near ? 6.0 : 4.0) * open;
+    final wide = 3.2 + 3.3 * open;
     canvas.save();
     canvas.translate(root.dx, root.dy);
     // Kanat arkaya (-x) uzanır, [a] kadar döner.

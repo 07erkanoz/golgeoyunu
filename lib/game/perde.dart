@@ -10,6 +10,7 @@ import 'myth_shapes.dart';
 import 'palette.dart';
 import 'shadow_art.dart';
 import 'tasvir_images.dart';
+import 'yerebatan_perde_art.dart';
 
 part 'perde_acilis.dart';
 part 'perde_east.dart';
@@ -806,13 +807,13 @@ class PerdePainter {
     }
     final c = _c;
     final a = ink.color.a;
-    final lit = hole.color != ink.color;
+    final lit = hole.color.a > 0 && hole.color != ink.color;
     const s = 4.4;
     final swing = math.sin(_time * 1.1) * 0.1 - lanternLift * 0.004;
     final cold = Cartoon.danger;
     if (lit) {
       final lantern =
-          (guardLampArt(0, 1, 0, 0, swing) - guardArtFeet) *
+          (guardLampArt(0, 0, 0, 0, swing, illustrated: true) - guardArtFeet) *
           (guardArtScale * s);
       c.drawCircle(
         lantern,
@@ -830,7 +831,9 @@ class PerdePainter {
       c,
       feet: Offset.zero,
       phase: 0,
-      weight: 1,
+      weight: 0,
+      flameTime: _time,
+      silhouette: true,
       run: 0,
       lean: 0,
       lampAngle: swing,
@@ -838,9 +841,7 @@ class PerdePainter {
       ink: _isInk(ink.color) ? _ink.withValues(alpha: a) : ink.color,
       rim: cold.withValues(alpha: 0.45 * a),
       eye: cold.withValues(alpha: 0.9 * a),
-      lampGlass: lit
-          ? cold.withValues(alpha: 0.95 * a)
-          : _ink.withValues(alpha: a),
+      lampGlass: lit ? cold.withValues(alpha: 0.95 * a) : const Color(0),
     );
     c.restore();
   }
@@ -1070,6 +1071,8 @@ class PerdePainter {
     double pull = 0,
     double reach = 0,
     double? stroke,
+    bool naturalMotion = false,
+    double? swimSpeed,
     bool faceLeft = false,
     double rot = 0,
     double a = 1,
@@ -1093,6 +1096,8 @@ class PerdePainter {
       pull: pull,
       reach: reach,
       stroke: stroke,
+      naturalMotion: naturalMotion,
+      swimSpeed: swimSpeed,
       jar: frame.contains('kavanoz') ? 1 : 0,
       faceLeft: faceLeft,
       rot: rot,

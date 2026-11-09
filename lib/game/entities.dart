@@ -17,6 +17,7 @@ import 'persist.dart';
 import 'player.dart';
 import 'rig.dart';
 import 'shadow_art.dart';
+import 'kandilci_art.dart';
 
 // ================================================================ Fenerci
 
@@ -118,6 +119,7 @@ class Guard extends PositionComponent
   // Bedenin çizimi için: yürünen yol, yumuşatılmış hız, gecikmeli fener,
   // palto eteği, eğilme ve dönüş.
   double _gaitDist = 0;
+  double _illustratedPhase = 0;
   double _prevX = double.nan;
   double _speedS = 0;
   double _prevSpeed = 0;
@@ -160,8 +162,10 @@ class Guard extends PositionComponent
     _life += dt;
     _probe = approach(
       _probe,
-      state == GuardState.pause ||
-              state == GuardState.investigate && !distracted
+      state == GuardState.alert ||
+              state == GuardState.pause ||
+              (state == GuardState.investigate && !distracted) ||
+              (_calm && suspicion > .22)
           ? 1
           : 0,
       dt,
@@ -395,6 +399,10 @@ class Guard extends PositionComponent
     if (below != '#' && below != '=' && !rotten) return false;
     position.x += facing * dist;
     _gaitDist += dist;
+    if (KandilciArt.ready) {
+      _illustratedPhase =
+          (_illustratedPhase + dist / illustratedGuardStride(_run)) % 1;
+    }
     return true;
   }
 
@@ -415,22 +423,37 @@ class Guard extends PositionComponent
   /// Fenerin yeri (yöne çevrilmiş yerel çizimde, ayaklar (gw/2, gh)):
   /// çizilen bedenin pozundan, asanın kancasında sallanarak.
   Offset get _lanternLocal {
-    final a = guardLampArt(_phase, _amt, _run, _leanS, -_lanternSway / 9.5);
+    final a = guardLampArt(
+      _phase,
+      _amt,
+      _run,
+      _leanS,
+      _lampAngle,
+      staffAngle: _staffAngle,
+      illustrated: ShadowArt.ready,
+    );
+    final (sx, sy) = ShadowArt.ready ? _turnScale : (1.0, 1.0);
     return Offset(
-      gw / 2 + (a.dx - guardArtFeet.dx) * guardArtScale,
-      gh + (a.dy - guardArtFeet.dy) * guardArtScale,
+      gw / 2 + (a.dx - guardArtFeet.dx) * guardArtScale * sx,
+      gh + (a.dy - guardArtFeet.dy) * guardArtScale * sy,
     );
   }
 
   double get _run => (_speedS / chaseSpeed).clamp(0.0, 1.0);
   double get _amt => (_speedS / patrolSpeed).clamp(0.0, 1.0);
-  double get _phase => (_gaitDist / (25 + 21 * _run)) % 1.0;
+  double get _phase => KandilciArt.ready
+      ? _illustratedPhase
+      : (_gaitDist / (25 + 21 * _run)) % 1.0;
 
   double get _lanternSway => _swingS.value + math.sin(_life * 1.9 + 1) * 0.6;
 
   /// Durunca fenerini kaldırıp karanlığı yoklar (yalnız çizim; görüş aynı).
   double _probe = 0;
-  double get _probeAngle => _probe * math.sin(_life * 1.3) * 0.32;
+  double get _staffAngle => -_probe * (0.14 + 0.065 * math.sin(_life * 2.1));
+  double get _lampAngle =>
+      -_lanternSway / 9.5 -
+      _staffAngle * 0.70 +
+      _probe * 0.07 * math.sin(_life * 2.1 - 0.48);
 
   /// Fener konisinin kayada kesilmiş görünür bölgesi (dünya koordinatı);
   /// koni hiçbir kayaya değmiyorsa null. [litBeams] ile birlikte kurulur.
@@ -641,7 +664,9 @@ class Guard extends PositionComponent
         weight: _amt,
         run: _run,
         lean: _leanS,
-        lampAngle: -_lanternSway / 9.5 + _probeAngle,
+        lampAngle: _lampAngle,
+        staffAngle: _staffAngle,
+        flameTime: _life,
         doubt: doubt,
         ink: toon ? Cartoon.char : kInk,
         rim: beam.withValues(alpha: (toon ? 0.6 : 0.35) + 0.25 * doubt),

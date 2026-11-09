@@ -70,10 +70,22 @@ abstract final class _Acilis {
 
   /// 6. sahnede sudaki bölümün (dalış, yüzüş, çıkış) setin üstündeki
   /// olayları ne kadar geciktirdiği (sn).
+  static const _diveTime = 0.52;
+  static const _swimTime = 69 / 24;
+  static const _reachTime = 0.68;
+  static const _hangTime = 0.25;
+  static const _climbTime = 34 / 24;
+
   static double get _wetShift {
     const gravity = 1100.0, top = _fallTop, t0 = 0.08;
     final hit = t0 + math.sqrt(2 * (_water + 4 - top) / gravity);
-    return hit + 0.45 + 1.7 + 0.3 + 1.1 - 3.35;
+    return hit +
+        _diveTime +
+        _swimTime +
+        _reachTime +
+        _hangTime +
+        _climbTime -
+        3.15;
   }
 
   /// 6. ve 7. sahne uzak plan: sarnıç suyun hizasında küçülür, Sâye
@@ -316,10 +328,16 @@ abstract final class _Acilis {
     const s = 4.3;
     final k1 = -120 + 700 * PerdePainter._span(u, 1.3, 1.98);
     final k2 = k1 - 190;
-    final walkers = [k1, k2];
-    Offset lampOf(double x) {
-      final phase = (x / s / 26) % 1.0;
-      final art = guardLampArt(phase, 1, 0, 0, math.sin(time * 2 + x) * 0.15);
+    final walkers = [
+      for (final (i, x) in [k1, k2].indexed)
+        (
+          x,
+          (x / s / illustratedGuardStride(0)) % 1.0,
+          math.sin(time * 1.6 + i * 0.9) * 0.055,
+        ),
+    ];
+    Offset lampOf(double x, double phase, double swing) {
+      final art = guardLampArt(phase, 1, 0, 0, swing, illustrated: true);
       return Offset(x, 330) + (art - guardArtFeet) * (guardArtScale * s);
     }
 
@@ -331,7 +349,9 @@ abstract final class _Acilis {
     );
     // Şehir: kubbeler, minareler, cumbalı ahşap evler.
     _istanbul(canvas, cityA);
-    final lamps = [for (final x in walkers) lampOf(x)];
+    final lamps = [
+      for (final (x, phase, swing) in walkers) lampOf(x, phase, swing),
+    ];
     var gathered = 0.0;
     final threads = <(Offset, Offset, double)>[];
     for (final w in _windows) {
@@ -379,7 +399,7 @@ abstract final class _Acilis {
     // Kandilciler oyundaki gibi: koyu siluet, nane renkli fener ve gözler.
     final cold = Cartoon.danger;
     for (var i = 0; i < walkers.length; i++) {
-      final x = walkers[i];
+      final (x, phase, swing) = walkers[i];
       final l = lamps[i];
       final glow = 0.35 + 0.45 * (gathered / _windows.length);
       canvas.drawCircle(
@@ -398,11 +418,13 @@ abstract final class _Acilis {
         drawShadowGuard(
           canvas,
           feet: Offset.zero,
-          phase: (x / s / 26) % 1.0,
+          phase: phase,
+          flameTime: time,
+          silhouette: true,
           weight: 1,
           run: 0,
           lean: 0,
-          lampAngle: math.sin(time * 2 + x) * 0.15,
+          lampAngle: swing,
           doubt: 0,
           ink: PerdePainter._ink.withValues(alpha: cityA),
           rim: cold.withValues(alpha: 0.5 * cityA),
@@ -636,27 +658,6 @@ abstract final class _Acilis {
     final a1 = 0.35 + 0.65 * in1;
     final a2 = 0.35 + 0.65 * in2;
     final glow = 0.3 + 0.6 * take;
-    final lantern1 = _guardShadow(
-      canvas,
-      time,
-      k1,
-      440,
-      s1,
-      faceLeft: true,
-      a: a1,
-      glow: glow,
-    );
-    _guardShadow(
-      canvas,
-      time,
-      k2,
-      440,
-      s2,
-      faceLeft: u > 2.6,
-      a: a2,
-      glow: 0.3,
-    );
-
     // Usta perdenin ardında ayağa kalkar, soldaki Kandilciye döner.
     // Zincirle sola sürüklenirken geriye yaslanır, başını çevirip son kez
     // perdesine, çubuğundaki Sâye'ye bakar: "Sâye… Işığı bul, kızım."
@@ -762,6 +763,28 @@ abstract final class _Acilis {
         back,
       );
     }
+    // Kandilci gölgeleri tasvirlerin ve onların çubuklarının önüne düşer.
+    final lantern1 = _guardShadow(
+      canvas,
+      time,
+      k1,
+      440,
+      s1,
+      faceLeft: true,
+      a: a1,
+      glow: glow,
+    );
+    _guardShadow(
+      canvas,
+      time,
+      k2,
+      440,
+      s2,
+      faceLeft: u > 2.6,
+      a: a2,
+      glow: 0.3,
+    );
+
     // Kandilin ışığı bir iplik gibi Kandilcinin fenerine akar (tasvirlerin
     // önünden, görünsün).
     if (take > 0 && take < 1) {
@@ -1170,7 +1193,12 @@ abstract final class _Acilis {
   /// su damlar. Medusa başı ışık katmanında ([_medusa]).
   static void _cistern(Canvas canvas, double time, double a, double u) {
     if (a <= 0) return;
-    for (var row = 0; row < 2; row++) {
+    final staged = YerebatanPerdeArt.stage(
+      canvas,
+      const Rect.fromLTRB(_wideL, _wideT, _wideR, _wideB),
+      a,
+    );
+    for (var row = staged ? 1 : 0; row < 2; row++) {
       final back = row == 0;
       // Uzaktaki Kandilci iki sıranın arasından geçer.
       if (!back) {
@@ -1310,9 +1338,9 @@ abstract final class _Acilis {
     // Uzakta: arka sıradaki yolda, küçük ve soluk.
     const y = _water - 30;
     const sc = 1.15;
-    final phase = (x / sc / 26) % 1.0;
+    final phase = (x / sc / illustratedGuardStride(0)) % 1.0;
     final swing = math.sin(time * 2) * 0.15;
-    final art = guardLampArt(phase, 1, 0, 0, swing);
+    final art = guardLampArt(phase, 1, 0, 0, swing, illustrated: true);
     final lantern = Offset(x, y) + (art - guardArtFeet) * (guardArtScale * sc);
     final cold = Cartoon.danger;
     if (glow) {
@@ -1336,6 +1364,8 @@ abstract final class _Acilis {
         canvas,
         feet: Offset.zero,
         phase: phase,
+        flameTime: time,
+        silhouette: true,
         weight: 1,
         run: 0,
         lean: 0,
@@ -1344,7 +1374,7 @@ abstract final class _Acilis {
         ink: PerdePainter._ink.withValues(alpha: 0.55),
         rim: cold.withValues(alpha: 0.3),
         eye: cold.withValues(alpha: 0.9),
-        lampGlass: cold,
+        lampGlass: const Color(0),
       );
     }
     canvas.restore();
@@ -1387,6 +1417,10 @@ abstract final class _Acilis {
   /// Suya düşen bir şeyin sıçraması: halkalar ve havaya savrulup geri düşen
   /// damlalar (ateşböceklerinin ışığını yakalar). [since] saniye.
   static void _splash(Canvas canvas, Offset at, double since, double size) {
+    if (YerebatanPerdeArt.ready) {
+      YerebatanPerdeArt.splash(canvas, at, since, size);
+      return;
+    }
     if (since < 0 || since > 1.8) return;
     final fade = 1 - since / 1.8;
     for (var k = 0; k < 3; k++) {
@@ -1457,10 +1491,11 @@ abstract final class _Acilis {
         t0 + jarDelay + math.sqrt(2 * (_water - 4 - top - 20) / gravity);
     const tree = Offset(624, _water - 8);
     // Sudaki bölüm: suyun altı, yüzüş (üç kulaç), kenara uzanış, çıkış.
-    final sw0 = hit + 0.45;
-    final sw1 = sw0 + 1.7;
-    final g1 = sw1 + 0.3;
-    final c1 = g1 + 1.1;
+    final sw0 = hit + _diveTime;
+    final sw1 = sw0 + _swimTime;
+    final gripAt = sw1 + _reachTime;
+    final g1 = gripAt + _hangTime;
+    final c1 = g1 + _climbTime;
     // Sonraki her şey (sendeleme, fidan, kavanoz) setin üstünde başlar:
     // eski zamanlamayla aynı sırada, sudaki bölüm kadar sonra.
     final d = _wetShift;
@@ -1488,17 +1523,24 @@ abstract final class _Acilis {
     final edge = Offset(_ledge.left + 22, _ledge.top);
     final corner = Offset(_ledge.left, _ledge.top);
     // Kenara asılıyken ayak noktası: eller köşede, göğüs su yüzünde.
-    final hangFeet = corner + const Offset(-6, 26);
-    final fallEnd = Offset(fallX + tHit * 22, _water + 10);
+    final hangFeet = corner + const Offset(-9, 65);
+    final fallEnd = Offset(fallX + tHit * 22, _water + 4);
+    final (_, _, fallLean) = YerebatanPerdeArt.sample('fall', 1);
     const swimY = _water + 30.0;
     final swimFrom = Offset(fallEnd.dx + 16, swimY);
-    final swimTo = Offset(_ledge.left - 24, swimY);
-    var pull = 0.45;
+    // Yatay pozda ayak noktasından ileride kalan başa da yer bırak.
+    final swimTo = Offset(_ledge.left - 92, swimY);
+    var swimSpeed = 0.0;
+    var ledgeReach = 0.0;
     if (w < hit) {
       // Düşüş: kollar yukarıda, atkı ve örgüler savrulur, yavaşça döner.
       final tf = math.max(0.0, w - t0);
-      feet = Offset(fallX + tf * 22, top + 0.5 * gravity * tf * tf);
-      rot = tf * 0.95;
+      final (x, y, lean) = YerebatanPerdeArt.sample('fall', tf / tHit);
+      feet = Offset(
+        fallX + x * (fallEnd.dx - fallX),
+        top + y * (fallEnd.dy - top),
+      );
+      rot = lean;
       mode = KuklaMode.air;
       vy = gravity * tf;
       frame = 'dur';
@@ -1510,58 +1552,54 @@ abstract final class _Acilis {
       feet =
           Offset.lerp(fallEnd, swimFrom, k)! +
           Offset(0, 28 * math.sin(k * math.pi));
-      rot = tHit * 0.95 + (1.02 - tHit * 0.95) * k;
+      rot = fallLean + (1.10 - fallLean) * k;
       mode = KuklaMode.swim;
-      stroke = 0.35 * k;
+      stroke = 0;
+      swimSpeed = 90 * k;
       frame = 'dur';
       clip = 3;
     } else if (w < sw1) {
-      // Yüzüş: başı suyun üstünde, gövde yatay, üç kurbağalama kulaç; her
-      // kulaçta öne süzülür.
+      // Kulaç, ayak vuruşu ve kısa süzülüş aynı evreyi paylaşır.
       final k = spw(sw0, sw1);
-      const n = 3.0;
-      final p = k - math.sin(2 * math.pi * n * k) / (2 * math.pi * n);
-      feet =
-          Offset.lerp(swimFrom, swimTo, p)! +
-          Offset(0, math.sin(w * 4.5) * 1.6);
-      rot = 1.02 + 0.06 * math.sin(2 * math.pi * n * k);
+      final (travel, depth, tilt) = YerebatanPerdeArt.sample('swim', k);
+      feet = Offset.lerp(swimFrom, swimTo, travel)! + Offset(0, depth * 4);
+      rot = 1.10 + tilt;
       mode = KuklaMode.swim;
-      stroke = n * k;
+      stroke = 3 * k;
+      swimSpeed = 90;
+      frame = 'dur';
+      clip = 3;
+    } else if (w < gripAt) {
+      final k = ease(spw(sw1, gripAt));
+      final approach = ease((k - 0.16) / 0.84);
+      feet = Offset.lerp(swimTo, hangFeet, approach)!;
+      rot = 1.10 * (1 - ease(k / 0.88));
+      mode = KuklaMode.swim;
+      grip = corner - feet;
+      ledgeReach = ease((k - 0.28) / 0.72);
+      stroke = 0;
+      swimSpeed = 90 * (1 - k);
       frame = 'dur';
       clip = 3;
     } else if (w < g1) {
-      // Kenara uzanır: gövde doğrulurken elleri taş setin üst kenarını kavrar.
-      final k = ease(spw(sw1, g1));
-      feet = Offset.lerp(swimTo, hangFeet, k)!;
-      rot = 1.02 * (1 - k);
-      mode = k < 0.45 ? KuklaMode.swim : KuklaMode.hang;
+      // Eller kenarı bulur, Sâye çekilmeden önce ağırlığını onlara verir.
+      feet = hangFeet;
+      mode = KuklaMode.hang;
       grip = corner - feet;
-      pull = ((k - 0.45) / 0.55).clamp(0.0, 1.0) * 0.45;
-      stroke = 3 + 0.25 * k;
       frame = 'dur';
       clip = 3;
     } else if (w < c1) {
-      // Çıkış (oyundaki gibi): kollarla bastırıp çekinir, ön dizini sete atar,
-      // ağırlığını öne aktarıp doğrulur.
-      final t = spw(g1, c1);
-      // Ayak noktası kuklanın gövde geçişiyle (climb 0.14-0.70) birlikte
-      // yükselir: önden yükselince omuzlar ellerden uzaklaşıyor, eller
-      // kenardan kopup sıçrıyordu.
-      final v = ease(((t - 0.14) / 0.56).clamp(0.0, 1.0));
-      final hx = ease(((t - 0.22) / 0.68).clamp(0.0, 1.0));
-      feet = Offset(
-        hangFeet.dx + (edge.dx - hangFeet.dx) * hx,
-        hangFeet.dy + (edge.dy - hangFeet.dy) * v,
-      );
+      final (x, y, phase) = YerebatanPerdeArt.sample('climb', spw(g1, c1));
+      feet = Offset.lerp(hangFeet, edge, x)!;
+      feet = Offset(feet.dx, hangFeet.dy + (edge.dy - hangFeet.dy) * y);
       mode = KuklaMode.climbUp;
-      climb = t;
-      pull = 0.45 + 0.55 * ease((t / 0.35).clamp(0.0, 1.0));
+      climb = phase;
       grip = corner - feet;
       frame = 'dur';
-      clip = t < 0.35 ? 3 : 0;
+      clip = 3;
     } else {
       feet = edge;
-      frame = s < 3.15 ? 'comel' : 'dur';
+      frame = 'dur';
       // Sudan çıkınca dizlerinin üstünde soluklanır, doğrulur; fidan
       // filizlenince hayretle geriye irkilir (ayakları yerinde, gövdesiyle:
       // ayak kaydırmadan).
@@ -1576,12 +1614,12 @@ abstract final class _Acilis {
     final reach = sp(4.6, 4.92);
     final hold = sp(4.92, 5.15);
     final reachPose = sp(4.52, 4.86) * (1 - sp(5.88, 6.15));
-    if (s >= 4.45) {
+    if (s >= 4.12) {
       faceLeft = false;
       // Önce ayakta bir adım atar, sonra çömelir (çömelik yürümez: ayak
       // kayardı).
       frame = (s >= 4.6 && s < 5.05) ? 'comel' : 'dur';
-      final stepFwd = ease(sp(4.25, 4.6));
+      final stepFwd = ease(sp(4.12, 4.65));
       feet += Offset(12 * stepFwd, 0);
     }
     final kuklaScale = _sayeK * TasvirImages.frameBody / 28;
@@ -1712,19 +1750,8 @@ abstract final class _Acilis {
     if (s7 >= 0.6 && s7 < 4.1) frame = 'comel';
     final walk = s7 - 4.7;
     if (walk > 0) {
-      // Fenerin gittiği yöne, setin ucuna dek yürür (oyundaki gibi gerçek
-      // adımlarla; kukla adımını ilerleyişe göre atar). Eski karede sekme.
-      // Yumuşak kalkış ve yumuşak duruş: gövde bir anda tam hıza geçmez,
-      // bir anda durmaz (bacaklar adımı açarken ayak kayardı).
-      final room = _ledge.right - 22 - feet.dx;
-      var go = 62 * (walk > 0.4 ? walk - 0.2 : walk * walk / 0.8);
-      if (go > room - 12) {
-        go = room - 12 * math.exp(-(go - (room - 12)) / 12);
-      }
-      feet += Offset(
-        go,
-        PerdeSaye.ready ? 0 : -(math.sin(time * 12)).abs() * 1.5,
-      );
+      final (travel, _, _) = YerebatanPerdeArt.sample('walk', walk / (81 / 24));
+      feet += Offset((_ledge.right - 22 - feet.dx) * travel, 0);
       frame = 'yuru${(time * 16).floor() % TasvirImages.walkFrames}';
     }
 
@@ -1739,6 +1766,12 @@ abstract final class _Acilis {
       // Yüzeyde yüzer veya suya dalar: suyun üstü tam, altı soluk.
       final underAlpha = w < sw0 ? 0.58 : 0.38;
       canvas.save();
+      if (w < sw1) {
+        canvas.clipRect(Rect.fromLTRB(_wideL, _wideT, _ledge.left, _wideB));
+      } else {
+        canvas.clipRect(_ledge, clipOp: ui.ClipOp.difference);
+      }
+      canvas.save();
       canvas.clipRect(const Rect.fromLTRB(_wideL, _water + 2, _wideR, _wideB));
       _P._sayeFrame(
         canvas,
@@ -1750,8 +1783,9 @@ abstract final class _Acilis {
         vy: vy,
         grip: grip,
         climb: climb,
-        pull: pull,
-        reach: reachPose,
+        naturalMotion: true,
+        swimSpeed: swimSpeed,
+        reach: math.max(reachPose, ledgeReach),
         stroke: stroke,
         rot: rot,
         a: underAlpha,
@@ -1784,11 +1818,13 @@ abstract final class _Acilis {
         vy: vy,
         grip: grip,
         climb: climb,
-        pull: pull,
-        reach: reachPose,
+        naturalMotion: true,
+        swimSpeed: swimSpeed,
+        reach: math.max(reachPose, ledgeReach),
         stroke: stroke,
         rot: rot,
       );
+      canvas.restore();
       canvas.restore();
       return;
     }
@@ -1838,7 +1874,8 @@ abstract final class _Acilis {
       vy: vy,
       grip: grip,
       climb: climb,
-      pull: pull,
+      naturalMotion: true,
+      swimSpeed: swimSpeed,
       reach: reachPose,
       stroke: stroke,
       faceLeft: faceLeft,
@@ -1874,9 +1911,9 @@ abstract final class _Acilis {
     double glow = 0.4,
   }) {
     final dir = faceLeft ? -1.0 : 1.0;
-    final phase = (x / s / 26) % 1.0;
-    final swing = math.sin(time * 2 + x * 0.01) * 0.15;
-    final art = guardLampArt(phase, 1, 0, 0, swing);
+    final phase = (dir * x / s / illustratedGuardStride(0)) % 1.0;
+    final swing = math.sin(time * 1.6 + x * 0.002) * 0.065;
+    final art = guardLampArt(phase, 1, 0, 0, swing, illustrated: true);
     final k = guardArtScale * s;
     final lantern = Offset(
       x + dir * (art.dx - guardArtFeet.dx) * k,
@@ -1900,6 +1937,8 @@ abstract final class _Acilis {
         canvas,
         feet: Offset.zero,
         phase: phase,
+        flameTime: time,
+        silhouette: true,
         weight: 1,
         run: 0,
         lean: 0,

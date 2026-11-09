@@ -76,6 +76,7 @@ import 'rig.dart';
 import '../settings.dart';
 import 'strings.dart';
 import 'terrain.dart';
+import 'yerebatan_perde_art.dart';
 
 class Buttons {
   bool left = false;
@@ -354,6 +355,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
     NemrutImages.load();
     GiantPuppet.load();
     ShadowArt.load();
+    YerebatanPerdeArt.load();
     TasvirImages.load();
     SayeKukla.load();
     camera.viewfinder.anchor = Anchor.center;
@@ -2917,9 +2919,29 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         p.velocity.y,
         open ? -math.min(880.0, math.max(470.0, sp * 2.8)) : -470.0,
       );
-      if (open) p.breach(sp);
+      p.breach(sp, roll: open);
+      world.add(
+        WaterSplash(
+          Offset(
+            p.center.x,
+            level.surfaceAbove(p.center.x, p.center.y + kTile) ?? level.seaTop!,
+          ),
+          sp,
+          entering: false,
+        ),
+      );
       GameAudio.instance.play('splash', volume: 0.3, minGapMs: 400);
     } else if (!_wasSwimming && now) {
+      world.add(
+        WaterSplash(
+          Offset(
+            p.center.x,
+            level.surfaceAbove(p.center.x, p.center.y) ?? p.center.y,
+          ),
+          p.velocity.length,
+          entering: true,
+        ),
+      );
       p.velocity.y *= 0.35;
       GameAudio.instance.play('splash', volume: 0.45, minGapMs: 400);
       _queueHint('swim');
