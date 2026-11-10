@@ -6,6 +6,7 @@ import 'dart:ui' as ui;
 import 'package:flame/components.dart';
 
 import 'ark_animals.dart';
+import 'cistern_water.dart';
 import 'feedback.dart';
 import 'audio.dart';
 import 'creatures.dart';
@@ -498,35 +499,53 @@ class WaterBasin extends Component
   void render(Canvas canvas) {
     final body = Rect.fromLTRB(area.left, surface, area.right, area.bottom);
     if (body.height <= 0) return;
-    // Sarnıcın suyu gibi serin bir ton: taştan ayrılır.
+    final cistern = game.level.def.theme == LevelTheme.cistern;
     canvas.drawRect(
       body,
       Paint()
-        ..shader = ui.Gradient.linear(body.topLeft, body.bottomLeft, [
-          const Color(0xFF1A3034).withValues(alpha: 0.9),
-          const Color(0xFF0C0605).withValues(alpha: 0.95),
-        ]),
+        ..shader = cistern
+            ? ui.Gradient.linear(
+                body.topLeft,
+                body.topLeft + const Offset(0, 90),
+                CisternWater.palette,
+              )
+            : ui.Gradient.linear(body.topLeft, body.bottomLeft, [
+                const Color(0xFF1A3034).withValues(alpha: 0.9),
+                const Color(0xFF0C0605).withValues(alpha: 0.95),
+              ]),
     );
     // Yüzey: dalgalı, parlak bir kenar; su hareket ederken çalkalanır,
     // durduğu an bir kez parlar.
     final glow = _settle;
-    final edge = Paint()
-      ..style = PaintingStyle.stroke
-      ..color = const Color(0xFFE6A066)
-          .withValues(alpha: (moving ? 0.75 : 0.6) + 0.25 * glow)
-      ..strokeWidth = 2 + glow;
-    final wave = Path()..moveTo(area.left, surface + 1);
-    for (var x = area.left + 4; x <= area.right; x += 4) {
-      final wob =
-          math.sin(_t * (moving ? 6 : 2) + x * 0.13) * (moving ? 2.2 : 1.2);
-      wave.lineTo(x, surface + 1 + wob);
+    if (cistern) {
+      CisternWater.edge(
+        canvas,
+        area.left,
+        area.right,
+        surface,
+        _t,
+        agitation: moving ? 0.65 : glow,
+      );
+    } else {
+      final edge = Paint()
+        ..style = PaintingStyle.stroke
+        ..color = const Color(0xFFE6A066)
+            .withValues(alpha: (moving ? 0.75 : 0.6) + 0.25 * glow)
+        ..strokeWidth = 2 + glow;
+      final wave = Path()..moveTo(area.left, surface + 1);
+      for (var x = area.left + 4; x <= area.right; x += 4) {
+        final wob =
+            math.sin(_t * (moving ? 6 : 2) + x * 0.13) * (moving ? 2.2 : 1.2);
+        wave.lineTo(x, surface + 1 + wob);
+      }
+      canvas.drawPath(wave, edge);
+      canvas.drawRect(
+        Rect.fromLTRB(area.left, surface, area.right, surface + 6),
+        Paint()
+          ..color = const Color(0xFFE6A066)
+              .withValues(alpha: 0.16 + 0.2 * glow),
+      );
     }
-    canvas.drawPath(wave, edge);
-    canvas.drawRect(
-      Rect.fromLTRB(area.left, surface, area.right, surface + 6),
-      Paint()
-        ..color = const Color(0xFFE6A066).withValues(alpha: 0.16 + 0.2 * glow),
-    );
     // Durunca yüzeyde ortadan yayılan halkalar.
     if (glow > 0) {
       final k = 1 - glow;

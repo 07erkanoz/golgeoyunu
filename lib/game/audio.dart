@@ -62,6 +62,9 @@ class GameAudio {
     'crumble',
     'death',
     'splash',
+    // tools/import_nature.py kaynaklı amb_cave kaydından tek damlalar.
+    'drip_1',
+    'drip_2',
     'throw',
     'glide',
     'creak',
@@ -121,6 +124,7 @@ class GameAudio {
     'step_wood': 3,
     'step_snow': 4,
     'bird': 4,
+    'drip': 2,
   };
   final _rnd = math.Random();
   final _lastVariant = <String, int>{};
@@ -322,7 +326,12 @@ class GameAudio {
   // ------------------------------------------------------------ efektler
 
   /// Bir efekt çalar; aynı efekt [minGapMs] içinde tekrar çalınmaz.
-  void play(String name, {double volume = 1, int minGapMs = 60}) {
+  void play(
+    String name, {
+    double volume = 1,
+    double pan = 0,
+    int minGapMs = 60,
+  }) {
     if (!_ready || Settings.effects <= 0) return;
     final count = _variants[name];
     if (count != null) {
@@ -339,7 +348,11 @@ class GameAudio {
     if (src == null) return;
     _log('çal $name');
     _safe(
-      () => _s.play(src, volume: (volume * Settings.effects).clamp(0.0, 1.0)),
+      () => _s.play(
+        src,
+        volume: (volume * Settings.effects).clamp(0.0, 1.0),
+        pan: pan.clamp(-1.0, 1.0),
+      ),
       null,
     );
   }

@@ -74,22 +74,19 @@ abstract final class _Acilis {
   static const _swimTime = 69 / 24;
   static const _reachTime = 0.68;
   static const _hangTime = 0.25;
-  static const _climbTime = 34 / 24;
+  static const _climbMoveTime = 34 / 24;
+  static const _climbPauseAt = 1.10, _climbPause = 0.34;
+  static const _climbTime = _climbMoveTime + _climbPause;
 
-  static double get _wetShift {
-    const gravity = 1100.0, top = _fallTop, t0 = 0.08;
-    final hit = t0 + math.sqrt(2 * (_water + 4 - top) / gravity);
-    return hit +
-        _diveTime +
-        _swimTime +
-        _reachTime +
-        _hangTime +
-        _climbTime -
-        3.15;
-  }
+  static const _fallGravity = 1100.0, _fallStart = 0.08;
+  static final _fallDuration = math.sqrt(
+    2 * (_water + 4 - _fallTop) / _fallGravity,
+  );
+  static final _waterHit = _fallStart + _fallDuration;
+  static final _gripAt = _waterHit + _diveTime + _swimTime + _reachTime;
+  static final _wetShift = _gripAt + _hangTime + _climbTime - 3.15;
 
-  /// 6. ve 7. sahne uzak plan: sarnıç suyun hizasında küçülür, Sâye
-  /// sütunların, kemerlerin arasında küçük kalır (yakın plan değil).
+  /// Geniş planda suyun hizası sabit kalır, sarnıcın ölçeği görünür.
   static const _wide = 0.72;
 
   /// Uzak planda perdenin kenarları (sahnenin kendi biriminde): sütunlar,
@@ -101,12 +98,21 @@ abstract final class _Acilis {
   /// dışında (havada birden belirmez).
   static const _fallTop = -130.0;
 
-  /// [draw]'ı uzak planda çizer (suyun hizası yerinde kalır).
-  static void _wideShot(Canvas canvas, void Function() draw) {
+  /// Düşüş ve yüzüş geniş planda; el kenarı bulduğunda yakın kesme.
+  /// Kandilci geldiğinde tekrar aynı geniş kadraj. Kuklanın hareket takibi
+  /// kadrajlar arasındaki büyük konum sıçramasını yürüyüşe katmaz.
+  static void _cisternShot(Canvas canvas, double u, void Function() draw) {
+    final close = _secs(u, 5) >= _gripAt && _secs7(u) < 0;
     canvas.save();
-    canvas.translate(390, _water);
-    canvas.scale(_wide);
-    canvas.translate(-390, -_water);
+    if (close) {
+      canvas.translate(390, _water - 32);
+      canvas.scale(0.99);
+      canvas.translate(-510, -_water);
+    } else {
+      canvas.translate(390, _water);
+      canvas.scale(_wide);
+      canvas.translate(-390, -_water);
+    }
     draw();
     canvas.restore();
   }
@@ -147,8 +153,9 @@ abstract final class _Acilis {
     final d = _d3(u);
     if (u >= 2.0 && u < 3.0) scene3(canvas, time, d);
     if (u >= 5.0) {
-      _wideShot(
+      _cisternShot(
         canvas,
+        u,
         () => _cistern(
           canvas,
           time,
@@ -823,7 +830,7 @@ abstract final class _Acilis {
     }
     if (u >= 3 && u < 4.1) scene4(canvas, time, u);
     if (u >= 4 && u < 5.05) scene5(canvas, time, u);
-    if (u >= 5) _wideShot(canvas, () => scene6(canvas, time, u));
+    if (u >= 5) _cisternShot(canvas, u, () => scene6(canvas, time, u));
   }
 
   /// Oyunun adı (anlatım, dile göre atar).
@@ -1182,8 +1189,30 @@ abstract final class _Acilis {
   /// Sarnıcın suyu.
   static const _water = 330.0;
 
+  static const _frontColumnTop = -100.0;
+  static const _frontColumnWidth = 26.0;
+
+  static Iterable<double> _columns(bool back, double spacing) sync* {
+    for (
+      var x = back ? 20.0 - spacing * 6 : 30.0 - spacing * 3;
+      x < _wideR;
+      x += spacing
+    ) {
+      // Ön sırada düşüşün ve taş sete tutunmanın önü açık kalır.
+      if (back || x <= 300 || x >= 520) yield x;
+    }
+  }
+
   /// Sâye'nin sudan çıktığı taş set.
   static const _ledge = Rect.fromLTRB(440, _water - 8, 660, _water + 14);
+  static final _ledgeShape = RRect.fromRectAndRadius(
+    _ledge,
+    const Radius.circular(4),
+  );
+  static final _aroundLedge = Path()
+    ..fillType = ui.PathFillType.evenOdd
+    ..addRect(const Rect.fromLTRB(_wideL, _wideT, _wideR, _wideB))
+    ..addRRect(_ledgeShape);
 
   /// Perdedeki Sâye karelerinin ölçeği (oyundaki Sâye'yle aynı boy).
   static const _sayeK = 0.36;
@@ -1210,17 +1239,11 @@ abstract final class _Acilis {
         _farGuard(canvas, time, u, glow: false);
       }
       final spacing = back ? 74.0 : 150.0;
-      final colW = back ? 14.0 : 26.0;
+      final colW = back ? 14.0 : _frontColumnWidth;
       // Uzak planda kemerler perdenin üst kenarının biraz altında kalır.
-      final top = back ? -40.0 : -100.0;
+      final top = back ? -40.0 : _frontColumnTop;
       final ink = PerdePainter._inkPaint(a * (back ? 0.4 : 0.95));
-      for (
-        var x = back ? 20.0 - 74 * 6 : 30.0 - 150 * 3;
-        x < _wideR;
-        x += spacing
-      ) {
-        // Ön sırada Sâye'nin düştüğü yer ve set açık kalır.
-        if (!back && x > 300 && x < 520) continue;
+      for (final x in _columns(back, spacing)) {
         canvas.drawRect(
           Rect.fromLTWH(x - colW / 2, top, colW, _water - top),
           ink,
@@ -1282,17 +1305,21 @@ abstract final class _Acilis {
       PerdePainter._holePaint(0.55 * a),
     );
     // Taş set.
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(_ledge, const Radius.circular(4)),
-      PerdePainter._inkPaint(a),
+    canvas.drawRRect(_ledgeShape, PerdePainter._inkPaint(a));
+    canvas.drawLine(
+      _ledge.topLeft + const Offset(4, 0.7),
+      _ledge.topRight + const Offset(-4, 0.7),
+      PerdePainter._holePaint(a * 0.36)..strokeWidth = 1.4,
     );
-    // Su yüzü: ince ışık çizgileri.
-    final glint = PerdePainter._holePaint(0.3 * a)..strokeWidth = 1.4;
-    for (var i = 0; i < 30; i++) {
-      final x = (i * 53.0 + time * 10) % 1590 + _wideL;
-      if (x > _ledge.left - 10 && x < _ledge.right) continue;
-      final y = _water + 3 + (i % 3) * 6;
-      canvas.drawLine(Offset(x, y), Offset(x + 18, y), glint);
+    if (!staged) {
+      // Blender dekoru yüklenemezse yüzeyi birkaç ışık çizgisi tarif eder.
+      final glint = PerdePainter._holePaint(0.3 * a)..strokeWidth = 1.4;
+      for (var i = 0; i < 30; i++) {
+        final x = (i * 53.0 + time * 10) % 1590 + _wideL;
+        if (x > _ledge.left - 10 && x < _ledge.right) continue;
+        final y = _water + 3 + (i % 3) * 6;
+        canvas.drawLine(Offset(x, y), Offset(x + 18, y), glint);
+      }
     }
     // Damla: tavandan düşer, suda halka açar.
     for (var i = 0; i < 2; i++) {
@@ -1344,6 +1371,20 @@ abstract final class _Acilis {
     final lantern = Offset(x, y) + (art - guardArtFeet) * (guardArtScale * sc);
     final cold = Cartoon.danger;
     if (glow) {
+      canvas.save();
+      // Fener arka yolda yürür. Ön sıranın silueti, ışığın çizildiği bu
+      // ikinci katmanda da feneri ve parıltıyı örtmeli.
+      for (final column in _columns(false, 150.0)) {
+        canvas.clipRect(
+          Rect.fromLTWH(
+            column - _frontColumnWidth / 2,
+            _frontColumnTop,
+            _frontColumnWidth,
+            _water - _frontColumnTop,
+          ),
+          clipOp: ui.ClipOp.difference,
+        );
+      }
       canvas.drawCircle(
         lantern,
         44,
@@ -1354,6 +1395,7 @@ abstract final class _Acilis {
           ]),
       );
       canvas.drawCircle(lantern, 2.4, Paint()..color = cold);
+      canvas.restore();
       return lantern;
     }
     canvas.save();
@@ -1464,6 +1506,47 @@ abstract final class _Acilis {
     }
   }
 
+  /// Geçilen yerde kalan iz. Önceki konumlar hareket eğrisinden okunur,
+  /// böylece dalgalar Sâye ile sürüklenmez ve kare hızına bağlı değildir.
+  static void _swimWake(
+    Canvas canvas,
+    double elapsed,
+    double fromX,
+    double toX,
+  ) {
+    const interval = 0.24, lifetime = 1.05;
+    if (elapsed < 0 || elapsed >= _swimTime + lifetime) return;
+    final last = (math.min(elapsed, _swimTime) / interval).floor();
+    final paint = Paint()..style = PaintingStyle.stroke;
+    for (var i = last; i >= 0; i--) {
+      final born = i * interval;
+      final age = (elapsed - born) / lifetime;
+      if (age >= 1) break;
+      final (travel, _, _) = YerebatanPerdeArt.sample('swim', born / _swimTime);
+      final x = fromX + (toX - fromX) * travel + 42;
+      final width = 19 + 66 * age;
+      final depth = 3 + 13 * age;
+      final y = _water + 8 + (i.isOdd ? 2 : 0);
+      final fade = math.min(1.0, age * 9) * (1 - age);
+      final crest = Path()
+        ..moveTo(x - width * 0.78, y - depth * 0.38)
+        ..quadraticBezierTo(x + width * 0.4, y - depth, x + width * 0.25, y)
+        ..quadraticBezierTo(x + width * 0.13, y + depth, x - width, y + depth);
+      canvas.drawPath(
+        crest,
+        paint
+          ..color = const Color(0xFF101A1B).withValues(alpha: 0.64 * fade)
+          ..strokeWidth = 2.8,
+      );
+      canvas.drawPath(
+        crest,
+        paint
+          ..color = const Color(0xFFE4C28B).withValues(alpha: 0.68 * fade)
+          ..strokeWidth = 1.6,
+      );
+    }
+  }
+
   /// 6 · Yerebatan: karanlıkta Sâye ile kavanoz yukarıdan düşer, ateşböcekleri
   /// peşlerinde. Su sıçrar; sütunlar, Medusa başı ve Ağlayan Sütun bir an
   /// seçilir. Sâye suyun altında kaybolur, ateşböcekleri halkaların üstünde
@@ -1475,7 +1558,7 @@ abstract final class _Acilis {
     final ease = PerdePainter._ease;
     final w = _secs(u, 5); // sahnenin saniyesi
     double spw(double a, double b) => ((w - a) / (b - a)).clamp(0.0, 1.0);
-    const gravity = 1100.0;
+    const gravity = _fallGravity;
     // Sâye sola, suya düşer ve sağdaki taş sete yüzer; boş kavanoz ise
     // sığ suya düşüp dalgayla taş setin üstüne (Sâye ile Umay fidanının
     // arasına) sürüklenir: böylece Sâye sudan çıkınca hep sağa (Umay
@@ -1483,17 +1566,17 @@ abstract final class _Acilis {
     const fallX = 200.0;
     const jarX = 415.0;
     const top = _fallTop;
-    const t0 = 0.08;
-    final tHit = math.sqrt(2 * (_water + 4 - top) / gravity);
-    final hit = t0 + tHit;
+    const t0 = _fallStart;
+    final tHit = _fallDuration;
+    final hit = _waterHit;
     const jarDelay = -0.05;
     final jarHit =
         t0 + jarDelay + math.sqrt(2 * (_water - 4 - top - 20) / gravity);
     const tree = Offset(624, _water - 8);
-    // Sudaki bölüm: suyun altı, yüzüş (üç kulaç), kenara uzanış, çıkış.
+    // Sudaki bölüm: dalış, yüzüş, kenara uzanış ve çıkış.
     final sw0 = hit + _diveTime;
     final sw1 = sw0 + _swimTime;
-    final gripAt = sw1 + _reachTime;
+    final gripAt = _gripAt;
     final g1 = gripAt + _hangTime;
     final c1 = g1 + _climbTime;
     // Sonraki her şey (sendeleme, fidan, kavanoz) setin üstünde başlar:
@@ -1503,7 +1586,8 @@ abstract final class _Acilis {
     double sp(double a, double b) => ((s - a) / (b - a)).clamp(0.0, 1.0);
 
     _medusa(canvas, spw(1.1, 1.5));
-    _splash(canvas, Offset(fallX + 18, _water + 2), w - hit, 1.2);
+    final fallEnd = Offset(fallX + tHit * 22, _water + 4);
+    _splash(canvas, Offset(fallEnd.dx, _water + 2), w - hit, 1.2);
     _splash(canvas, const Offset(jarX + 8, _water + 2), w - jarHit, 0.65);
 
     // Sâye: düşüş, suyun altı, yüzüş, kenara tutunup çıkış (kuklanın oyundaki
@@ -1522,14 +1606,12 @@ abstract final class _Acilis {
     double? stroke;
     final edge = Offset(_ledge.left + 22, _ledge.top);
     final corner = Offset(_ledge.left, _ledge.top);
-    // Kenara asılıyken ayak noktası: eller köşede, göğüs su yüzünde.
-    final hangFeet = corner + const Offset(-9, 65);
-    final fallEnd = Offset(fallX + tHit * 22, _water + 4);
+    const swimTilt = 1.31;
     final (_, _, fallLean) = YerebatanPerdeArt.sample('fall', 1);
-    const swimY = _water + 30.0;
+    const swimY = _water + 22.0;
     final swimFrom = Offset(fallEnd.dx + 16, swimY);
     // Yatay pozda ayak noktasından ileride kalan başa da yer bırak.
-    final swimTo = Offset(_ledge.left - 92, swimY);
+    final swimTo = Offset(_ledge.left - 106, swimY);
     var swimSpeed = 0.0;
     var ledgeReach = 0.0;
     if (w < hit) {
@@ -1552,46 +1634,61 @@ abstract final class _Acilis {
       feet =
           Offset.lerp(fallEnd, swimFrom, k)! +
           Offset(0, 28 * math.sin(k * math.pi));
-      rot = fallLean + (1.10 - fallLean) * k;
+      rot = fallLean + (swimTilt - fallLean) * k;
       mode = KuklaMode.swim;
       stroke = 0;
       swimSpeed = 90 * k;
       frame = 'dur';
       clip = 3;
     } else if (w < sw1) {
-      // Kulaç, ayak vuruşu ve kısa süzülüş aynı evreyi paylaşır.
+      // İki tam çevrim: her çevrimde sağ ve sol kol sırayla çeker.
       final k = spw(sw0, sw1);
       final (travel, depth, tilt) = YerebatanPerdeArt.sample('swim', k);
-      feet = Offset.lerp(swimFrom, swimTo, travel)! + Offset(0, depth * 4);
-      rot = 1.10 + tilt;
+      feet = Offset.lerp(swimFrom, swimTo, travel)! + Offset(0, depth * 1.3);
+      rot = swimTilt + tilt * 0.30;
       mode = KuklaMode.swim;
-      stroke = 3 * k;
+      stroke = 2 * k;
       swimSpeed = 90;
       frame = 'dur';
       clip = 3;
     } else if (w < gripAt) {
-      final k = ease(spw(sw1, gripAt));
-      final approach = ease((k - 0.16) / 0.84);
-      feet = Offset.lerp(swimTo, hangFeet, approach)!;
-      rot = 1.10 * (1 - ease(k / 0.88));
+      final k = spw(sw1, gripAt);
+      // Son kulaçtan sonra hız düşerken eller taşın köşesine uzanır.
+      // Çıkışın referans noktası en baştan sabit: taşın üstündeki basış yeri.
+      rot = swimTilt * (1 - ease(k));
+      // Ayak referansı dönme sırasında omzun arkasından gelir. Böylece
+      // baş taşın üstüne fırlayıp tutunurken yeniden geriye düşmez.
+      final turn = 1 - math.sin(rot) / math.sin(swimTilt);
+      final lift =
+          70 *
+          (math.cos(rot) - math.cos(swimTilt)) *
+          (1 - ease(((k - 0.68) / 0.32).clamp(0.0, 1.0)));
+      feet = Offset.lerp(swimTo, edge, turn)! + Offset(0, lift);
       mode = KuklaMode.swim;
       grip = corner - feet;
-      ledgeReach = ease((k - 0.28) / 0.72);
+      ledgeReach = ease(k);
       stroke = 0;
-      swimSpeed = 90 * (1 - k);
+      swimSpeed = 90 * (1 - 0.25 * k);
       frame = 'dur';
       clip = 3;
     } else if (w < g1) {
       // Eller kenarı bulur, Sâye çekilmeden önce ağırlığını onlara verir.
-      feet = hangFeet;
+      feet = edge;
       mode = KuklaMode.hang;
       grip = corner - feet;
       frame = 'dur';
       clip = 3;
     } else if (w < c1) {
-      final (x, y, phase) = YerebatanPerdeArt.sample('climb', spw(g1, c1));
-      feet = Offset.lerp(hangFeet, edge, x)!;
-      feet = Offset(feet.dx, hangFeet.dy + (edge.dy - hangFeet.dy) * y);
+      // İki ayak da bastığında dizler kısa bir an bükülü kalır.
+      final elapsed = w - g1;
+      final moving = elapsed <= _climbPauseAt
+          ? elapsed
+          : math.max(_climbPauseAt, elapsed - _climbPause);
+      final (_, _, phase) = YerebatanPerdeArt.sample(
+        'climb',
+        moving / _climbMoveTime,
+      );
+      feet = edge;
       mode = KuklaMode.climbUp;
       climb = phase;
       grip = corner - feet;
@@ -1600,12 +1697,8 @@ abstract final class _Acilis {
     } else {
       feet = edge;
       frame = 'dur';
-      // Sudan çıkınca dizlerinin üstünde soluklanır, doğrulur; fidan
-      // filizlenince hayretle geriye irkilir (ayakları yerinde, gövdesiyle:
-      // ayak kaydırmadan).
-      rot = math.sin(s * 7) * 0.04 * (1 - sp(3.35, 3.9));
-      final startle = sp(3.9, 4.08) * (1 - sp(4.28, 4.52));
-      rot -= 0.13 * startle;
+      // Çıkışın son pozu ayakta biter. Fidan belirirken de taban ve gövde
+      // aynı eksende kalır; bütün kukla ayaklarından geriye dönmez.
     }
     // Kavanozu almak: Sâye hep sağa (Umay fidanına) dönüktür; önünde taş
     // setin üstünde duran kavanoza doğru iki adım atar, eğilip kavanozu
@@ -1739,6 +1832,30 @@ abstract final class _Acilis {
         _jar(canvas, jarAt, jarRot, 0.1 + 0.9 * full, time, 1);
       }
     }
+    canvas.save();
+    canvas.clipPath(_aroundLedge);
+    final reflectedLight = Paint()
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1.4);
+    for (var i = 0; i < flies.length; i++) {
+      final fly = flies[i];
+      final height = _water - fly.dy;
+      if (height <= 0 || height >= 92) continue;
+      final strength = (1 - height / 92) * 0.18;
+      for (var band = 0; band < 3; band++) {
+        final x = fly.dx + 3.2 * math.sin(time * 2.8 + band * 1.6 + i);
+        canvas.drawOval(
+          Rect.fromCenter(
+            center: Offset(x, _water + height * 0.49 + band * 5 + 3),
+            width: 9 + band * 5,
+            height: 2.4,
+          ),
+          reflectedLight
+            ..color = const Color(0xFFFFC878)
+                .withValues(alpha: strength * (1 - band * 0.23)),
+        );
+      }
+    }
+    canvas.restore();
     for (var i = 0; i < flies.length; i++) {
       _firefly(canvas, flies[i], 1, time, i);
     }
@@ -1766,11 +1883,9 @@ abstract final class _Acilis {
       // Yüzeyde yüzer veya suya dalar: suyun üstü tam, altı soluk.
       final underAlpha = w < sw0 ? 0.58 : 0.38;
       canvas.save();
-      if (w < sw1) {
-        canvas.clipRect(Rect.fromLTRB(_wideL, _wideT, _ledge.left, _wideB));
-      } else {
-        canvas.clipRect(_ledge, clipOp: ui.ClipOp.difference);
-      }
+      // Yalnız taşın görünen gövdesi Sâye'yi örter. Kenardan tavana kadar
+      // uzanan görünmez bir duvar, başı ve ileri uzanan kolu kesmemeli.
+      canvas.clipPath(_aroundLedge);
       canvas.save();
       canvas.clipRect(const Rect.fromLTRB(_wideL, _water + 2, _wideR, _wideB));
       _P._sayeFrame(
@@ -1791,6 +1906,7 @@ abstract final class _Acilis {
         a: underAlpha,
       );
       canvas.restore();
+      _swimWake(canvas, w - sw0, swimFrom.dx, swimTo.dx);
       if (w >= hit && w < sw1) {
         final bubbleA = w < sw0 ? 0.65 : 0.35;
         final bubble = Paint()

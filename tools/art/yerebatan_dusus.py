@@ -207,10 +207,59 @@ dark, _ = ink("Bakır mürekkep · tonoz", (.027, .017, .010), .54)
 far, _ = ink("Arkadaki tonoz", (.035, .024, .016), .36)
 edge, _ = ink("Oyma kenar", (.32, .18, .075), .24)
 stone, _ = ink("Taşın sol kenarı", (.20, .115, .058), .19)
-water, _ = ink("Sarnıç suyu", (.018, .052, .051), .30)
-reflection, _ = ink("Kesik su yansımaları", (.20, .31, .25), .25)
+water, _ = ink("Sarnıç suyu", (.018, .052, .051), .92)
 shaft, _ = ink("Kandil perdesinden süzülen ışık", (.63, .33, .10), .12)
-deep, _ = ink("Dipteki akis", (.022, .040, .045), .30)
+mirror_ink = [
+    ink(f"Sütun aksi {i}", (.012, .009, .013), alpha)[0]
+    for i, alpha in enumerate((.48, .29, .14))
+]
+amber = [
+    ink(f"Kandil aksi {i}", (.44, .21, .073), alpha)[0]
+    for i, alpha in enumerate((.24, .15, .07))
+]
+
+# Open areas of water are smooth. Only the reflections break into bands.
+nodes = water.node_tree.nodes
+links = water.node_tree.links
+coords = nodes.new("ShaderNodeTexCoord")
+split = nodes.new("ShaderNodeSeparateXYZ")
+links.new(coords.outputs["Object"], split.inputs[0])
+depth = nodes.new("ShaderNodeMapRange")
+depth.inputs["From Min"].default_value = -330
+depth.inputs["From Max"].default_value = -470
+links.new(split.outputs["Y"], depth.inputs["Value"])
+palette = nodes.new("ShaderNodeValToRGB")
+palette.color_ramp.elements[0].color = (.055, .044, .038, 1)
+palette.color_ramp.elements[1].color = (.011, .013, .020, 1)
+links.new(depth.outputs["Result"], palette.inputs[0])
+emission = next(node for node in nodes if node.type == "EMISSION")
+links.new(palette.outputs["Color"], emission.inputs["Color"])
+
+
+def reflection_bands(label, x, width, length, materials, phase, level):
+    # Close to the far bank the ripples are thin and close together.
+    # Toward the viewer they widen, break apart and lose contrast.
+    for index, (distance, height) in enumerate((
+        (0, 4), (6, 3), (11, 5), (19, 4), (27, 6), (39, 5),
+        (51, 7), (66, 6), (82, 8), (100, 8), (120, 10),
+    )):
+        if distance >= length:
+            break
+        offset = math.sin(distance * .23 + phase) * (2 + distance * .12)
+        spread = width * (.68 + distance * .009) * (.78 + .22 * math.sin(index * 1.79 + phase))
+        y = 330 + distance + min(distance * .22, 2) * math.sin(index * 2.3 + phase)
+        left = x + offset - spread / 2
+        band = []
+        for side in (1, -1):
+            steps = range(9) if side == 1 else range(8, -1, -1)
+            for step in steps:
+                u = step / 8
+                taper = math.sin(math.pi * u) ** .58
+                curve = math.sin(u * math.tau + phase + index * .8)
+                band.append((left + spread * u, y + height * (.5 + .15 * curve + .47 * taper * side)))
+        screen(label, band,
+               materials[min(2, int(distance / length * 3))], level)
+
 
 # Cut the arches like a Karagöz backdrop, with narrow translucent scoring.
 for row, (spacing, spring, height, first, material) in enumerate([
@@ -224,6 +273,8 @@ for row, (spacing, spring, height, first, material) in enumerate([
         rectangle("Başlık", x - width * .74, spring - 5, width * 1.48, 12, material, z + .01)
         rectangle("Kaide", x - width * .7, 309, width * 1.4, 20, material, z + .01)
         rectangle("Kenar ışığı", x - width / 2 + 2, spring + 9, 2, 169, stone, z + .02)
+        reflection_bands("Sütunun sudaki aksi", x, width, 84 + 42 * row,
+                         mirror_ink, x * .02, .18 + row * .01)
         for side in (0, 1):
             points = [(x + spacing * (1 - math.cos(i * math.pi / 36)) / 2,
                        spring - height * math.sin(i * math.pi / 36)) for i in range(37)]
@@ -235,19 +286,10 @@ for x, w, alpha_shift in [(175, 186, 1), (595, 158, -1), (945, 110, 1)]:
     screen("Süzülen altın ışık", [(x - 13, -135), (x + 14, -135),
            (x + w / 2 + 56 * alpha_shift, 327), (x - w / 2 + 56 * alpha_shift, 327)],
            shaft, .05)
+    reflection_bands("Kandil ışığının sudaki aksi", x + 56 * alpha_shift,
+                     w * .35, 120, amber, x * .04, .22)
 
 screen("Su yüzeyi", [(-420, 330), (1200, 330), (1200, 620), (-420, 620)], water, .15)
-stage_rng = random.Random(38)
-for i in range(180):
-    x = stage_rng.uniform(-450, 1190)
-    y = stage_rng.uniform(332, 566)
-    length = stage_rng.uniform(8, 95)
-    h = stage_rng.uniform(.55, 2.8)
-    if 435 < x < 660 and y < 347:
-        continue
-    screen("Yansıma · kırık çizgi", [(x, y), (x + length * .84, y),
-           (x + length, y + h * .38), (x + length * .19, y + h)],
-           reflection if i % 4 == 0 else deep, .29)
 
 scene.render.filepath = str(out / "zemin.png")
 bpy.ops.render.render(write_still=True)

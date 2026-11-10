@@ -763,7 +763,7 @@ class SayeKukla {
     // uzanırken ve iterken doğal öne eğiliş.
     final lean =
         (0.05 + (i.naturalMotion ? 0.14 : 0.22) * run + 0.016 * two) * e +
-        (i.naturalMotion ? -0.023 : 0.02) +
+        (i.naturalMotion ? (i.exactArms ? 0.075 : -0.023) : 0.02) +
         (i.naturalMotion ? 0.25 : 0.38) * kk +
         0.22 * _reach +
         (i.naturalMotion ? 0.39 : 0.30) * _push +
@@ -788,9 +788,13 @@ class SayeKukla {
               0.56 * weight * e * (1 - run)
         : _hipX - 16 * _px * kk;
     final pushBack = i.naturalMotion ? 2.8 * _push : 0.0;
+    final restingStance = i.naturalMotion && i.exactArms ? 0.72 * (1 - e) : 0.0;
     final front =
-        fF.$1 + V((i.naturalMotion ? 8 : 16) * _px * kk - pushBack, 0);
-    final rear = fB.$1 - V((i.naturalMotion ? 7 : 12) * _px * kk + pushBack, 0);
+        fF.$1 +
+        V((i.naturalMotion ? 8 : 16) * _px * kk - pushBack + restingStance, 0);
+    final rear =
+        fB.$1 -
+        V((i.naturalMotion ? 7 : 12) * _px * kk + pushBack + restingStance, 0);
     var y = hipY;
     for (final (f, shift) in [(front, _nearLeg), (rear, _backLeg)]) {
       final h0 = V(hipX, 0) + rot(_legH + shift - _hip0, lean) * k;
@@ -1054,7 +1058,8 @@ class SayeKukla {
     final sway = i.ledgeSway.clamp(-3.0, 2.5);
     final lean = -0.10 + sway * 0.020;
     final reach = (_upper + _fore) * k;
-    final shoulder = i.grip + V(-3.3 + sway * 0.34, reach * 0.94);
+    final shoulder =
+        i.grip + V(-3.3 + sway * 0.34, reach * (i.exactArms ? 0.78 : 0.94));
     final hip = shoulder - rot(_sF - _hip0, lean) * k;
     return _Pose(
       hip: hip,
@@ -1070,67 +1075,84 @@ class SayeKukla {
   _Pose _ledgeClimb(KuklaInput i, double dt) {
     final phase = i.climb.clamp(0.0, 1.0);
     final hang = _ledgeHang(i);
+    if (i.exactArms) return _stagedLedgeClimb(i, dt, phase, hang);
     final stand = _ground(KuklaInput()..light = i.light, dt);
     final load = sm((phase - 0.06) / 0.52);
-    final rise = i.exactArms
-        ? sm((phase - 0.44) / 0.56)
-        : sm((phase - 0.37) / 0.63);
+    final rise = sm((phase - 0.37) / 0.63);
     final pose = hang.lerp(stand, rise);
     final brace = i.grip + const V(0.5, 0);
     pose
       ..hip = V.lerp(hang.hip, V(brace.dx - 4, brace.dy + 1.6), load)!
       ..lean = -0.10 + 0.40 * math.sin(math.pi * phase)
       ..headA = -0.20 * (1 - rise);
-    if (i.exactArms) {
-      // Önce taban taş hizasının üstüne kalkar, sonra kenarı aşar.
-      (V, double) plant(V start, double angle, double t, double x) {
-        final toe = start + rot(_toe - _legA, angle) * k;
-        final lift = sm(t / 0.46);
-        final across = sm((t - 0.42) / 0.36);
-        final land = sm((t - 0.78) / 0.22);
-        final raised = i.grip.dy - 2.1;
-        final pitch = angle * (1 - lift);
-        return (
-          _onToe(
-            toe.dx + (i.grip.dx + x - toe.dx) * across,
-            toe.dy + (raised - toe.dy) * lift + 2.1 * land,
-            pitch,
-          ),
-          pitch,
-        );
-      }
-
-      final (front, frontPitch) = plant(
-        hang.fF,
-        hang.pF,
-        (phase - .11) / .46,
-        6.6,
-      );
-      final (back, backPitch) = plant(
-        hang.fB,
-        hang.pB,
-        (phase - .39) / .44,
-        3.2,
-      );
-      pose
-        ..fF = front
-        ..pF = frontPitch
-        ..fB = back
-        ..pB = backPitch;
-    } else {
-      pose
-        ..fF = V.lerp(hang.fF, brace, sm((phase - 0.12) / 0.42))!
-        ..fB = V.lerp(
-          hang.fB,
-          i.grip + const V(3, 0),
-          sm((phase - 0.42) / 0.41),
-        )!;
-    }
     pose
+      ..fF = V.lerp(hang.fF, brace, sm((phase - 0.12) / 0.42))!
+      ..fB = V.lerp(hang.fB, i.grip + const V(3, 0), sm((phase - 0.42) / 0.41))!
       ..hip = V.lerp(pose.hip, stand.hip, rise)!
       ..fF = V.lerp(pose.fF, stand.fF, sm((phase - 0.77) / 0.23))!
       ..fB = V.lerp(pose.fB, stand.fB, sm((phase - 0.84) / 0.16))!;
     return pose;
+  }
+
+  _Pose _stagedLedgeClimb(KuklaInput i, double dt, double phase, _Pose hang) {
+    final stand = _ground(
+      KuklaInput()
+        ..naturalMotion = true
+        ..exactArms = true
+        ..light = i.light,
+      dt,
+    );
+    final pull = sm(phase / 0.43);
+    final transfer = sm((phase - 0.46) / 0.28);
+    final lift = sm((phase - 0.55) / 0.19);
+    final rise = sm((phase - 0.83) / 0.17);
+    final pulled = V.lerp(hang.hip, i.grip + const V(-3, -1.35), pull)!;
+    final crouched = stand.hip + V(0.35, _legLen * 0.38);
+    final hip = V(
+      pulled.dx + (crouched.dx - pulled.dx) * transfer,
+      pulled.dy + (crouched.dy - pulled.dy) * lift,
+    );
+    final lean = hang.lean + (0.47 - hang.lean) * pull - 0.24 * transfer;
+    final pose = hang.lerp(stand, sm((phase - 0.49) / 0.37));
+
+    // Taban önce taşın üstüne yükselir, kenarı aşar ve aynı noktaya basar.
+    (V, double) plant(V start, double angle, V end, double t) {
+      final toe = start + rot(_toe - _legA, angle) * k;
+      final target = end + (_toe - _legA) * k;
+      final lift = sm(t / 0.50);
+      final across = sm((t - 0.50) / 0.35);
+      final land = sm((t - 0.85) / 0.15);
+      const clearance = 1.5;
+      final pitch = angle * (1 - lift);
+      return (
+        _onToe(
+          toe.dx + (target.dx - toe.dx) * across,
+          toe.dy + (target.dy - clearance - toe.dy) * lift + clearance * land,
+          pitch,
+        ),
+        pitch,
+      );
+    }
+
+    final (front, frontPitch) = plant(
+      hang.fF,
+      hang.pF,
+      stand.fF,
+      (phase - 0.13) / 0.43,
+    );
+    final (back, backPitch) = plant(
+      hang.fB,
+      hang.pB,
+      stand.fB,
+      (phase - 0.38) / 0.39,
+    );
+    return pose
+      ..hip = V.lerp(hip, stand.hip, rise)!
+      ..lean = lean + (stand.lean - lean) * rise
+      ..fF = front
+      ..pF = frontPitch
+      ..fB = back
+      ..pB = backPitch;
   }
 
   _Pose _hang(KuklaInput i) {
@@ -1369,6 +1391,7 @@ class SayeKukla {
   }
 
   _Pose _strokePose(KuklaInput i) {
+    if (i.exactArms) return _perdeSwim(i);
     final pace = (i.forward.abs() / 130).clamp(0.0, 1.0);
     final swim = sm(pace * 1.7);
     final phase = (i.stroke ?? (_time * (0.75 + 0.55 * pace))) % 1.0;
@@ -1416,6 +1439,41 @@ class SayeKukla {
     return i.ledgeAhead == null || i.reach <= 0
         ? pose
         : pose.lerp(_ledgeHang(i), sm((i.reach - 0.18) / 0.82));
+  }
+
+  _Pose _perdeSwim(KuklaInput i) {
+    final phase = (i.stroke ?? 0) * 2 * math.pi;
+    final effort = (i.forward.abs() / 85).clamp(0.0, 1.0);
+    final hip = V(_hipX, _standY);
+    final lean = 0.04 + 0.035 * math.sin(phase);
+    final armLen = (_upper + _fore) * k;
+
+    // Poz, yana yatmış gövdenin kendi eksenlerinde. -y ileri, +x suyun dibi.
+    // Biri suyu geriye iterken öteki suyun üstünden ileri gelir.
+    (double, double) arm(double angle, V offset) {
+      final shoulder = _shoulder(hip, lean, offset);
+      final depth = 1.25 + 6.6 * math.sin(angle) * effort;
+      final hand = shoulder + V(depth, -armLen * 0.88 * math.cos(angle));
+      return _armTo(shoulder, hand, lean, 1);
+    }
+
+    final (sf, ef) = arm(phase, V.zero);
+    final (sb, eb) = arm(phase + math.pi, _backArm);
+    final kick = math.sin(phase * 3) * effort;
+    final pose = _Pose(
+      hip: hip,
+      lean: lean,
+      headA: -1.0,
+      fF: hip + V(0.9 + 1.05 * kick, _legLen * (0.975 - 0.016 * kick)),
+      pF: 0.22 + 0.14 * kick,
+      fB: hip + V(-0.8 - 1.05 * kick, _legLen * (0.976 + 0.014 * kick)),
+      pB: 0.24 - 0.14 * kick,
+      sf: sf,
+      ef: ef,
+      sb: sb,
+      eb: eb,
+    );
+    return i.ledgeAhead == null ? pose : pose.lerp(_ledgeHang(i), sm(i.reach));
   }
 
   _Pose _swim(KuklaInput i) {
@@ -1516,7 +1574,11 @@ class SayeKukla {
       KuklaMode.glide => _glide(i),
     };
     if (i.mode != _mode) {
-      if (_shown != null) {
+      if (i.exactArms && i.ledgeContact) {
+        // Perdedeki uzanış ve tırmanış temas pozlarına zaten bağlanır.
+        // Önceki kareyi tekrar karıştırmak elleri taştan ayırır.
+        _from = null;
+      } else if (_shown != null) {
         _from = _shown;
         _blendT = 0;
         _blendDur = switch (i.mode) {
@@ -1558,8 +1620,11 @@ class SayeKukla {
         ..eb = eb;
     } else if (i.ledgeContact) {
       final phase = i.mode == KuklaMode.climbUp ? i.climb : 0.0;
-      final hold = 1 - sm((phase - 0.62) / 0.24);
-      _ledgeArms(pose, i.grip, hold, -1 + 2 * sm((phase - 0.20) / 0.45));
+      final hold = i.exactArms
+          ? 1 - sm((phase - 0.55) / 0.19)
+          : 1 - sm((phase - 0.62) / 0.24);
+      final elbow = i.exactArms ? -1.0 : -1 + 2 * sm((phase - 0.20) / 0.45);
+      _ledgeArms(pose, i.grip, hold, elbow);
     } else if (i.mode == KuklaMode.swing) {
       final (sf, ef) = _armTo(
         _shoulder(pose.hip, pose.lean, V.zero),
@@ -1595,17 +1660,20 @@ class SayeKukla {
     _breathEffort = _approach(_breathEffort, i.breathEffort, dt, 0.15);
     _breathPhase =
         (_breathPhase + dt * (2.6 + 3.0 * _breathEffort)) % (2 * math.pi);
-    final breathing =
-        i.naturalMotion &&
-        !i.ski &&
-        pushTarget == null &&
-        (i.mode == KuklaMode.ground || i.surfaceBreath);
+    final breathWeight = switch (i.mode) {
+      KuklaMode.ground => 1.0,
+      KuklaMode.climbUp when i.exactArms && i.ledgeContact => sm(
+        (i.climb - 0.74) / 0.26,
+      ),
+      _ => i.surfaceBreath ? 1.0 : 0.0,
+    };
     final quiet = i.surfaceBreath ? 1 - sm(i.forward.abs() / 110) : 1 - _amp;
-    final breath = breathing
+    final breath = i.naturalMotion && !i.ski && pushTarget == null
         ? (0.024 + 0.024 * _breathEffort) *
               math.sin(_breathPhase) *
               quiet *
-              (1 - 0.7 * _crouch)
+              (1 - 0.7 * _crouch) *
+              breathWeight
         : 0.0;
     final upperM =
         torsoM * Af.t(_hip0) * Af(1, 0, 0, 1 + breath, 0, 0) * Af.t(-_hip0);
