@@ -123,8 +123,10 @@ jobs:
           APT="-o Acquire::Retries=3 -o Acquire::http::Timeout=30"
           # GitHub makinelerinin Azure aynası kimi gün erişilemez (2026-11-11):
           # paketler Ubuntu'nun ana sunucusundan alınır.
-          sudo sed -i 's|http://azure.archive.ubuntu.com/ubuntu|http://archive.ubuntu.com/ubuntu|g' \
-            /etc/apt/sources.list /etc/apt/sources.list.d/*.sources 2>/dev/null || true
+          # Adresler ayrı bir ayna listesinde (apt-mirrors.txt) de durur.
+          echo "http://archive.ubuntu.com/ubuntu/" | sudo tee /etc/apt/apt-mirrors.txt >/dev/null
+          sudo grep -rl "azure.archive.ubuntu.com" /etc/apt 2>/dev/null |
+            xargs -r sudo sed -i 's|http://azure.archive.ubuntu.com/ubuntu|http://archive.ubuntu.com/ubuntu|g'
           for i in 1 2 3; do
             sudo timeout 240 apt-get $APT update &&
               sudo timeout 420 apt-get $APT install -y clang cmake ninja-build pkg-config \
