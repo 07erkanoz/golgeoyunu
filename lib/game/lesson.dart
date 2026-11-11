@@ -67,7 +67,6 @@ class LessonSigns extends Component with HasGameReference<GolgeGame> {
   final List<Lesson> lessons;
   Lesson? _shown;
   double _alpha = 0;
-  double _t = 0;
   final _cache = <String, ui.Picture>{};
   final _sizes = <String, Size>{};
 
@@ -93,7 +92,6 @@ class LessonSigns extends Component with HasGameReference<GolgeGame> {
   @override
   void update(double dt) {
     super.update(dt);
-    _t += dt;
     final want = _want();
     if (want != _shown) {
       // Önce eskisi söner, sonra yenisi belirir.
@@ -117,9 +115,9 @@ class LessonSigns extends Component with HasGameReference<GolgeGame> {
     final hit = _cache[id];
     if (hit != null) return hit;
     final template = (S.en ? _lessonEn : _lessonTr)[key] ?? key;
-    const font = 16.0;
-    const ink = Color(0xFFF4E2C2);
-    const capInk = Color(0xFF2A1810);
+    const font = 17.0;
+    const ink = Color(0xFFFFE9C4);
+    const capInk = Color(0xFFFFE9C4);
     final parts = <(String, bool)>[];
     final re = RegExp(r'\{(\w+)\}');
     var at = 0;
@@ -136,9 +134,13 @@ class LessonSigns extends Component with HasGameReference<GolgeGame> {
             text: s,
             style: TextStyle(
               fontFamily: 'Roboto',
-              fontSize: cap ? font - 1 : font,
-              fontWeight: cap ? FontWeight.w700 : FontWeight.w500,
+              fontSize: cap ? font - 2 : font,
+              fontWeight: cap ? FontWeight.w500 : FontWeight.w300,
+              letterSpacing: cap ? 0.2 : 0.6,
               color: cap ? capInk : ink,
+              shadows: const [
+                Shadow(color: Color(0xD9000000), offset: Offset(1, 1.4)),
+              ],
             ),
           ),
           textDirection: TextDirection.ltr,
@@ -170,26 +172,41 @@ class LessonSigns extends Component with HasGameReference<GolgeGame> {
     final size = Size(w + padX * 2, h);
     final rec = ui.PictureRecorder();
     final c = Canvas(rec);
-    final plate = RRect.fromRectAndRadius(
-      Rect.fromLTWH(-size.width / 2, -h, size.width, h),
-      const Radius.circular(8),
+    // Kutu yok: oyunun fısıltı yazıları gibi, perdenin üstünde süzülen
+    // ince açık yazı. Okunsun diye ardında kenarlara doğru eriyen koyu bir
+    // bant; altında ince bir çizgi.
+    final band = Rect.fromLTWH(
+      -size.width / 2 - 60,
+      -h - 3,
+      size.width + 120,
+      h + 6,
     );
-    c.drawRRect(plate, Paint()..color = const Color(0xE01A100A));
-    c.drawRRect(
-      plate,
+    c.drawRect(
+      band,
       Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.2
-        ..color = const Color(0xCCD9A866),
+        ..shader = ui.Gradient.linear(
+          band.centerLeft,
+          band.centerRight,
+          const [
+            Color(0x00000000),
+            Color(0x8C0A0604),
+            Color(0x8C0A0604),
+            Color(0x00000000),
+          ],
+          const [0, 0.22, 0.78, 1],
+        ),
     );
-    // Levhanın altında durağı gösteren küçük bir uç.
-    c.drawPath(
-      Path()
-        ..moveTo(-6, 0)
-        ..lineTo(0, 7)
-        ..lineTo(6, 0)
-        ..close(),
-      Paint()..color = const Color(0xE01A100A),
+    c.drawLine(
+      Offset(-size.width * 0.3, 4),
+      Offset(size.width * 0.3, 4),
+      Paint()
+        ..strokeWidth = 0.8
+        ..shader = ui.Gradient.linear(
+          Offset(-size.width * 0.3, 0),
+          Offset(size.width * 0.3, 0),
+          const [Color(0x00E0A15F), Color(0x99E0A15F), Color(0x00E0A15F)],
+          const [0, 0.5, 1],
+        ),
     );
     var x = -size.width / 2 + padX;
     for (var i = 0; i < parts.length; i++) {
@@ -198,14 +215,18 @@ class LessonSigns extends Component with HasGameReference<GolgeGame> {
         x += gap;
         final pw = partW(i);
         final cap = RRect.fromRectAndRadius(
-          Rect.fromLTWH(x, -h + 5, pw + capPadX * 2, h - 10),
-          const Radius.circular(4),
+          Rect.fromLTWH(x, -h + 6, pw + capPadX * 2, h - 12),
+          const Radius.circular(5),
         );
+        // Tuş: dolu kapak değil, ince çerçeve.
+        c.drawRRect(cap, Paint()..color = const Color(0x33FFE9C4));
         c.drawRRect(
-          cap.shift(const Offset(0, 1.5)),
-          Paint()..color = const Color(0xFF8A6440),
+          cap,
+          Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1
+            ..color = const Color(0xCCFFE9C4),
         );
-        c.drawRRect(cap, Paint()..color = const Color(0xFFF2DDB4));
         final a = arrow(parts[i].$1);
         if (a != null) {
           c.save();
@@ -243,19 +264,23 @@ class LessonSigns extends Component with HasGameReference<GolgeGame> {
     if (l == null || _alpha < 0.02) return;
     final pic = _picture(l.key);
     final size = _sizes[_id(l.key)]!;
-    // Levha durağın üstünde hafifçe süzülür; ekranın kenarından taşmaz
-    // (bölümün başında kamera duvara dayalıyken).
-    final bob = math.sin(_t * 2.2) * 2;
+    // Ekrana sabit: üstte ortada (eskiden Sâye'nin başının hemen üstünde,
+    // dünyaya bağlıydı; oyun alanının ortasında duruyordu). Kamera
+    // yakınlaşsa da aynı boyda kalır.
     final view = game.camera.visibleWorldRect;
-    final half = size.width / 2 + 8;
-    var x = (l.col + 0.5) * kTile;
-    if (view.width > half * 2) {
-      x = x.clamp(view.left + half, view.right - half);
-    }
+    final zoom = game.camera.viewfinder.zoom;
+    final vh = game.camera.viewport.size.y;
+    final k = (vh / 720).clamp(0.8, 1.6) * Settings.textScale / zoom;
     canvas.save();
-    canvas.translate(x, l.row * kTile + bob);
+    canvas.translate(view.center.dx, view.top + view.height * 0.2);
+    canvas.scale(k);
     canvas.saveLayer(
-      null,
+      Rect.fromLTWH(
+        -size.width / 2 - 64,
+        -size.height - 8,
+        size.width + 128,
+        size.height + 20,
+      ),
       Paint()..color = Color.fromRGBO(0, 0, 0, _alpha.clamp(0.0, 1.0)),
     );
     canvas.drawPicture(pic);

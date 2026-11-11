@@ -69,7 +69,12 @@ void _bridgeStage(Canvas c, int level, double time, double u, int n) {
   final nn = n.toDouble();
   switch (level) {
     case 0:
-      _bCistern(c, time, u, nn);
+      // Yeni Yerebatan köprüsü (görseller yüklüyse); yoksa eski çizim.
+      if (_ybReady) {
+        _ybCistern(c, time, u);
+      } else {
+        _bCistern(c, time, u, nn);
+      }
     case 1:
       _bTower(c, time, u, nn);
     case 2:

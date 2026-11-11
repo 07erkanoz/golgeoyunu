@@ -22,6 +22,11 @@ abstract final class TasvirImages {
   /// Yerebatan'ın Medusa başı (oyundaki çizim, gözleri kapalı).
   static Image? medusa;
 
+  /// Yerebatan köprüsü: perdeye boyanmış sarnıç ve su iyesi tasviri
+  /// (docs/oneri/YEREBATAN_KOPRUSU.md).
+  static Image? kopru0Sarnic;
+  static Image? suIyesi;
+
   static const _frameFeet = Offset(126.75, 284.25);
 
   /// Karelerde gövdenin (oyundaki çarpışma kutusunun) boyu, piksel.
@@ -44,9 +49,13 @@ abstract final class TasvirImages {
   static bool get ready => hacivat != null && karagoz != null;
 
   static Future<void> load() async {
-    Future<Image?> one(String name, {String dir = 'karagoz'}) async {
+    Future<Image?> one(
+      String name, {
+      String dir = 'karagoz',
+      String ext = 'png',
+    }) async {
       try {
-        final data = await rootBundle.load('assets/images/$dir/$name.png');
+        final data = await rootBundle.load('assets/images/$dir/$name.$ext');
         final codec = await instantiateImageCodec(data.buffer.asUint8List());
         return (await codec.getNextFrame()).image;
       } catch (e) {
@@ -59,6 +68,8 @@ abstract final class TasvirImages {
     karagoz ??= await one('karagoz');
     saye ??= await one('saye');
     medusa ??= await one('medusa', dir: 'perde');
+    suIyesi ??= await one('su_iyesi', dir: 'perde');
+    kopru0Sarnic ??= await one('kopru0_sarnic', dir: 'perde', ext: 'jpg');
     for (final n in _frameNames) {
       if (frames.containsKey(n)) continue;
       final img = await one('saye_$n', dir: 'perde');

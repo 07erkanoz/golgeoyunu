@@ -181,6 +181,9 @@ class LightShafts extends Component with HasGameReference<GolgeGame> {
     canvas.drawCircle(pool, w1 * 0.9, add);
     canvas.restore();
     add.shader = null;
+    if (game.level.def.theme == LevelTheme.cistern) {
+      _waterReflection(canvas, bottom, w1, color, k, t);
+    }
     // Işığın içinde ağır ağır dönen toz zerreleri.
     final len = (s.bottom.dy - s.top.dy);
     final count = (len / 14).clamp(10, 40).toInt();
@@ -204,6 +207,49 @@ class LightShafts extends Component with HasGameReference<GolgeGame> {
         add,
       );
     }
+  }
+
+  void _waterReflection(
+    Canvas canvas,
+    Offset hit,
+    double width,
+    Color color,
+    double brightness,
+    double phase,
+  ) {
+    final level = game.level;
+    final row = (hit.dy / kTile).round();
+    final clip = Path();
+    var hasWater = false;
+    for (
+      var c = ((hit.dx - width) / kTile).floor();
+      c <= ((hit.dx + width) / kTile).floor();
+      c++
+    ) {
+      if (level.cell(c, row) != 'w') continue;
+      hasWater = true;
+      final depth = level.cell(c, row + 1) == 'w' ? kTile * 2 : kTile;
+      clip.addRect(Rect.fromLTWH(c * kTile, hit.dy, kTile, depth));
+    }
+    if (!hasWater) return;
+    canvas.save();
+    canvas.clipPath(clip);
+    final paint = Paint()..blendMode = BlendMode.plus;
+    for (var band = 0; band < 6; band++) {
+      final y = hit.dy + 3 + band * (4.5 + band * 0.6);
+      final wave = math.sin(phase * 1.65 + band * 1.9);
+      final center = Offset(hit.dx + wave * (3 + band * 1.3), y);
+      paint.color = color.withValues(alpha: brightness * (0.19 - band * 0.023));
+      canvas.drawOval(
+        Rect.fromCenter(
+          center: center,
+          width: width * (0.32 + 0.10 * wave) + band * 3,
+          height: 1.6 + band * 0.27,
+        ),
+        paint,
+      );
+    }
+    canvas.restore();
   }
 }
 

@@ -11,6 +11,7 @@ import 'package:flutter/widgets.dart' show KeyEventResult;
 
 import 'atmosphere.dart';
 import 'audio.dart';
+import 'cistern_water.dart';
 import 'frame_meter.dart';
 import 'anlatim_plani.dart';
 import 'entrance.dart';
@@ -1059,6 +1060,7 @@ class GolgeGame extends FlameGame with KeyboardEvents {
         ForegroundComponent(level),
         WindCurrents(),
         WaterComponent(level),
+        if (level.def.theme == LevelTheme.cistern) CisternDrips(level),
         ExitPortal(level.exitCell),
         for (final k in level.checkpointCells)
           UmayTree(

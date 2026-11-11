@@ -48,7 +48,7 @@ class FrameMeter {
     if (_fpsLog) {
       _logFrames += timings.length;
       final s = _logClock.elapsedMilliseconds / 1000;
-      if (s >= 5) {
+      if (s >= const int.fromEnvironment('FPSLOG_S', defaultValue: 5)) {
         // ignore: avoid_print
         print(
           '[kare] çizilen ${(_logFrames / s).toStringAsFixed(1)}/sn, '

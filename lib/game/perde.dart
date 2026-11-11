@@ -19,6 +19,7 @@ part 'perde_kisi.dart';
 part 'perde_kopru.dart';
 part 'perde_son.dart';
 part 'perde_yeralti.dart';
+part 'perde_yerebatan.dart';
 
 /// Perde sahneleri: prologda, bölüm aralarında ve finalde oynanan gölge oyunu.
 enum PerdeScene {

@@ -5,6 +5,7 @@ import 'dart:ui' as ui;
 import 'package:flame/components.dart';
 import 'package:flutter/foundation.dart';
 
+import 'cistern_water.dart';
 import 'doku_kar.dart';
 import 'doku_kule.dart';
 import 'doku_akana.dart';
@@ -132,8 +133,16 @@ Object? debugTerrainChunks(LevelDef def) =>
 /// Bölümün arazi ve ön plan dilimlerini önceden çizer (perde öncesi, ekran
 /// kapalıyken): bölüm kurulurken çizmek geçişi takıltıyordu.
 void warmTerrain(Level lv) {
-  _ChunkCache.of('terrain', lv, _buildTerrain);
-  _ChunkCache.of('fore', lv, _buildForeground);
+  final terrain = _ChunkCache.of('terrain', lv, _buildTerrain);
+  final fore = _ChunkCache.of('fore', lv, _buildForeground);
+  final at = lv.playerStart;
+  final around = Rect.fromCenter(
+    center: Offset(at.x, at.y),
+    width: 2400,
+    height: 1500,
+  );
+  _Raster.warm(terrain, around);
+  _Raster.warm(fore, around);
 }
 
 void _drawVisible(Canvas canvas, List<_Chunk> chunks, Rect view) {
@@ -197,6 +206,9 @@ abstract final class _Raster {
     // ekrana ölçeklenir, her değişimde yeniden üretilmez.
     final sk = (math.log(s) / math.ln2 * 6).ceil();
     final rs = math.pow(2, sk / 6).toDouble();
+    _lastSk = sk;
+    _lastRs = rs;
+    _drainWarm(canvas);
     final paint = Paint()
       ..filterQuality = FilterQuality.low
       ..isAntiAlias = false;
@@ -246,6 +258,60 @@ abstract final class _Raster {
       }
     }
     canvas.restore();
+  }
+
+  // Bölüm açılışındaki takılmaya karşı ön hazırlık: sıradaki bölümün
+  // başlangıç çevresindeki parçalar perde oynarken, kare başına bir tane
+  // resme çevrilir (resim ilk çizildiği karede üretilir; hepsi bölümün ilk
+  // karesine kalınca o kare 180 ms sürüyordu).
+  static int? _lastSk;
+  static double _lastRs = 1;
+  static final _warm = <(_Chunk, int, Rect)>[];
+
+  static void warm(List<_Chunk> chunks, Rect around) {
+    if (!on || _lastSk == null) return;
+    for (final c in chunks) {
+      final b = c.bounds;
+      if (!b.overlaps(around)) continue;
+      final cols = (b.width / band).ceil();
+      final i0 = math.max(0, ((around.left - b.left) / band).floor());
+      final i1 = math.min(cols - 1, ((around.right - b.left) / band).floor());
+      final k0 = math.max(0, ((around.top - b.top) / band).floor());
+      final k1 = ((math.min(b.bottom, around.bottom) - b.top) / band).floor();
+      for (var k = k0; k <= k1; k++) {
+        final top = b.top + k * band;
+        if (top >= b.bottom) break;
+        for (var i = i0; i <= i1; i++) {
+          final left = b.left + i * band;
+          _warm.add((
+            c,
+            k * 4096 + i,
+            Rect.fromLTRB(
+              left,
+              top,
+              math.min(left + band, b.right),
+              math.min(top + band, b.bottom),
+            ),
+          ));
+        }
+      }
+    }
+    // Önbellek sınırını aşmasın.
+    if (_warm.length > keep ~/ 2) _warm.removeRange(keep ~/ 2, _warm.length);
+  }
+
+  static void _drainWarm(Canvas canvas) {
+    if (_warm.isEmpty) return;
+    final (c, id, wr) = _warm.removeAt(0);
+    final img = _image(c, id, _lastSk!, wr, _lastRs);
+    // Ekranda görünmeyecek kadar küçük ve saydam bir çizim: resmin
+    // üretilmesi için bir kez çizilmesi yeter.
+    canvas.drawImageRect(
+      img,
+      const Rect.fromLTWH(1, 1, 2, 2),
+      const Rect.fromLTWH(0, 0, 1, 1),
+      Paint()..color = const Color(0x01FFFFFF),
+    );
   }
 
   static Image _image(_Chunk c, int k, int sk, Rect wr, double s) {
@@ -1609,7 +1675,7 @@ Picture _buildForeground(Level lv, int c0, int c1, int r0, int r1) {
 
 /// Sarnıcın suyu: oyuncunun önünde çizilir, düşen her şeyi yutar.
 class WaterComponent extends Component with HasGameReference<GolgeGame> {
-  bool get _cartoon => Cartoon.on && level.def.theme == LevelTheme.cistern;
+  bool get _cistern => level.def.theme == LevelTheme.cistern;
 
   /// Ötüken'in bataklığı: koyu yeşil su, yosun yeşili parıltı.
   bool get _bog => level.def.theme == LevelTheme.forest;
@@ -1648,14 +1714,7 @@ class WaterComponent extends Component with HasGameReference<GolgeGame> {
   @override
   void update(double dt) => _t += dt;
 
-  /// Işık ve derinlik denemesi: su üstündeki sahne aynalanır, hafifçe
-  /// salınır, derinde kararır; yüzeyde kayan parıltılar ve ince bir sis.
-  /// Aynalanan arazi ve ön sütunlar önceden çizilmiş dilimlerdir (ucuz).
-  void _reflect(Canvas canvas, List<MapEntry<int, double>> visible) {
-    if (visible.isEmpty) return;
-    final terrain = _ChunkCache.of('terrain', level, _buildTerrain);
-    final fore = _ChunkCache.of('fore', level, _buildForeground);
-    // Aynı yükseklikteki komşu su sütunları tek şerit.
+  List<(double, double, double)> _runs(List<MapEntry<int, double>> visible) {
     final runs = <(double, double, double)>[];
     for (final MapEntry(key: c, value: top) in visible) {
       final x0 = c * kTile.toDouble();
@@ -1665,58 +1724,48 @@ class WaterComponent extends Component with HasGameReference<GolgeGame> {
         runs.add((x0, x0 + kTile, top));
       }
     }
+    return runs;
+  }
+
+  /// Arazi ve sütunların yansıması, tek ayna geçişinden kırık bantlara ayrılır.
+  void _reflect(Canvas canvas, List<(double, double, double)> runs) {
+    if (runs.isEmpty) return;
+    final terrain = _ChunkCache.of('terrain', level, _buildTerrain);
+    final fore = _ChunkCache.of('fore', level, _buildForeground);
     const depth = 72.0;
     for (final (x0, x1, top) in runs) {
       final area = Rect.fromLTRB(x0, top, x1, top + depth);
       final mirror = Rect.fromLTRB(x0 - 40, top - depth - 12, x1 + 40, top);
-      // Tek ayna geçişi (eskiden sekiz şerit ayrı ayrı çiziliyordu: her
-      // karede sahnenin sekiz kopyası). Hafif yatay salınım dalgayı verir.
-      canvas.saveLayer(area, Paint()..color = const Color(0x70000000));
-      canvas.translate(math.sin(_t * 1.6) * 1.2, 2 * top);
+      final bands = Path();
+      var y = 0.0;
+      for (var i = 0; y < depth; i++) {
+        final height = 2.7 + y * 0.055;
+        final ripple = math.sin(_t * 1.7 + i * 1.8 + x0 * 0.012) * 1.2;
+        bands.addRect(Rect.fromLTWH(x0, top + y + ripple, x1 - x0, height));
+        y += height + 2.3 + y * 0.09;
+      }
+      canvas.save();
+      canvas.clipRect(area);
+      canvas.saveLayer(area, Paint()..color = const Color(0xA0000000));
+      canvas.save();
+      canvas.clipPath(bands, doAntiAlias: false);
+      canvas.translate(math.sin(_t * 1.6) * 2.4, 2 * top);
       canvas.scale(1, -1);
       _drawVisible(canvas, terrain, mirror);
       _drawVisible(canvas, fore, mirror);
       canvas.restore();
-      // Yüzeyde kayan ince parıltılar: dalga.
-      final glint = Paint()
-        ..color = const Color(0x30E8B888)
-        ..strokeWidth = 1;
-      for (var k = 0; k < 4; k++) {
-        final gy = top + 6 + k * 13.0;
-        final len = 26.0 + k * 8;
-        final period = (x1 - x0) + len;
-        final gx = x0 + ((_t * (14 + k * 5) + k * 53) % period) - len;
-        canvas.drawLine(
-          Offset(math.max(x0, gx), gy),
-          Offset(math.min(x1, gx + len), gy),
-          glint,
-        );
-      }
-      // Derinde aynanın üstüne suyun koyuluğu iner.
       canvas.drawRect(
         area,
         Paint()
+          ..blendMode = BlendMode.dstIn
           ..shader = ui.Gradient.linear(
             Offset(0, top),
             Offset(0, top + depth),
-            [const Color(0x00000000), const Color(0xC00A0504)],
+            const [Color(0xFF000000), Color(0x00000000)],
           ),
       );
-      // Yüzeyde ince sis.
-      canvas.drawRect(
-        Rect.fromLTRB(x0, top - 26, x1, top + 16),
-        Paint()
-          ..shader = ui.Gradient.linear(
-            Offset(0, top - 26),
-            Offset(0, top + 16),
-            [
-              const Color(0x00D8A07A),
-              const Color(0x22D8A07A),
-              const Color(0x00D8A07A),
-            ],
-            const [0, 0.6, 1],
-          ),
-      );
+      canvas.restore();
+      canvas.restore();
       // Sâye'nin kavanoz ışığının su yüzeyindeki dalgalı altın yansıması.
       final p = game.player;
       if (p != null && !p.isDead) {
@@ -1724,7 +1773,7 @@ class WaterComponent extends Component with HasGameReference<GolgeGame> {
         final dy = (top - lv.y).abs();
         if (lv.x >= x0 - 36 && lv.x <= x1 + 36 && dy < 130) {
           final k = (1 - dy / 130).clamp(0.0, 1.0) * (p.crouching ? 0.35 : 1.0);
-          final rx = lv.x.clamp(x0 + 6, x1 - 6);
+          final rx = lv.x.clamp(x0, x1);
           final jarRef = Paint()
             ..blendMode = BlendMode.plus
             ..strokeCap = StrokeCap.round
@@ -1757,6 +1806,7 @@ class WaterComponent extends Component with HasGameReference<GolgeGame> {
       for (var c = cMin; c <= cMax; c++)
         if (_surface[c] case final top?) MapEntry(c, top),
     ];
+    final waterMask = Path();
     for (final MapEntry(key: c, value: top) in visible) {
       final bottom = _floor[c] ?? level.pixelHeight + 400;
       final rect = Rect.fromLTRB(
@@ -1766,32 +1816,36 @@ class WaterComponent extends Component with HasGameReference<GolgeGame> {
         bottom,
       );
       final body = _bodies.putIfAbsent(
-        top + (_cartoon ? 0.25 + Cartoon.toneStep * 0.1 : 0),
+        top,
         () => Paint()
-          ..shader = ui.Gradient.linear(Offset(0, top), Offset(0, top + 90), [
-            // Sarnıcın suyu taşın sıcak renginden serin bir tonla ayrılır:
-            // küçük ekranda da zeminle karışmaz.
-            if (_cartoon)
-              Color.lerp(Cartoon.water, _cool, 0.6)!
-            else if (_bog)
-              const Color(0xF0263A22)
-            else
-              Color.lerp(const Color(0xF0381A10), _cool, 0.55)!,
-            if (_cartoon)
-              Cartoon.waterDeep
-            else if (_bog)
-              const Color(0xFF060C06)
-            else
-              const Color(0xFF0A0504),
-          ]),
+          ..shader = ui.Gradient.linear(
+            Offset(0, top),
+            Offset(0, top + 90),
+            _cistern
+                ? CisternWater.palette
+                : [
+                    _bog
+                        ? const Color(0xF0263A22)
+                        : Color.lerp(const Color(0xF0381A10), _cool, 0.55)!,
+                    _bog ? const Color(0xFF060C06) : const Color(0xFF0A0504),
+                  ],
+          ),
       );
       canvas.drawRect(rect, body);
+      if (_cistern) waterMask.addRect(rect);
     }
-    if (Realism.on &&
-        !Realism.debugNoReflect &&
-        !Settings.lowGraphics &&
-        level.def.theme == LevelTheme.cistern) {
-      _reflect(canvas, visible);
+    final runs = _runs(visible);
+    if (_cistern) {
+      if (Realism.on && !Realism.debugNoReflect && !Settings.lowGraphics) {
+        canvas.save();
+        canvas.clipPath(waterMask, doAntiAlias: false);
+        _reflect(canvas, runs);
+        canvas.restore();
+      }
+      for (final (x0, x1, top) in runs) {
+        CisternWater.edge(canvas, x0, x1, top, _t);
+      }
+      return;
     }
     final glint = Paint()..strokeWidth = 1.3;
     for (final MapEntry(key: c, value: top) in visible) {
@@ -1801,23 +1855,16 @@ class WaterComponent extends Component with HasGameReference<GolgeGame> {
         final y = top + 3 + i * 9 + math.sin(phase) * 1.5;
         final len = 6 + 6 * (0.5 + 0.5 * math.sin(phase * 1.3));
         final gx = x + ((c * 13 + i * 11) % 24) + math.sin(_t * 0.5 + c) * 3;
-        glint.color =
-            (_cartoon
-                    ? Cartoon.glint
-                    : _bog
-                    ? const Color(0xFFD8E8A0)
-                    : const Color(0xFFE8915A))
-                .withValues(
-                  alpha: (0.35 - i * 0.1) * (0.6 + 0.4 * math.sin(phase * 2)),
-                );
+        glint.color = (_bog ? const Color(0xFFD8E8A0) : const Color(0xFFE8915A))
+            .withValues(
+              alpha: (0.35 - i * 0.1) * (0.6 + 0.4 * math.sin(phase * 2)),
+            );
         canvas.drawLine(Offset(gx, y), Offset(gx + len, y), glint);
       }
     }
     // Sütunların su üstündeki dalgalı yansımaları.
     final reflection = Paint()
-      ..color = (_cartoon ? Cartoon.stone : const Color(0xFF050302)).withValues(
-        alpha: 0.55,
-      );
+      ..color = const Color(0xFF050302).withValues(alpha: 0.55);
     for (final cx in _columns) {
       if (cx < view.left - kTile || cx > view.right + kTile) continue;
       final top = _surface[(cx / kTile).floor()];
@@ -1830,28 +1877,16 @@ class WaterComponent extends Component with HasGameReference<GolgeGame> {
     // Su yüzünün ince ışığı: yalnız suyun olduğu sütunlarda (önceden bütün
     // bölüm boyunca, kayaların üstünden de geçen bir çizgiydi).
     final edge = Paint()
-      ..color =
-          (_cartoon
-                  ? Cartoon.lip
-                  : _bog
-                  ? const Color(0xFF9AB870)
-                  : const Color(0xFFC0703A))
-              .withValues(alpha: _cartoon ? 0.8 : 0.55)
+      ..color = (_bog ? const Color(0xFF9AB870) : const Color(0xFFC0703A))
+          .withValues(alpha: 0.55)
       ..strokeWidth = 2;
     // Kenarın altında ince bir ışık ve dalgalanan yüzey: telefonda da
     // suyun nerede başladığı seçilir, taş zeminle karışmaz.
-    final sheen = Paint()
-      ..color = edge.color.withValues(alpha: _cartoon ? 0.22 : 0.16);
+    final sheen = Paint()..color = edge.color.withValues(alpha: 0.16);
     edge.style = PaintingStyle.stroke;
-    final runs = <(double, double, double)>[];
     for (final MapEntry(key: c, value: top) in visible) {
       final x0 = c * kTile.toDouble();
       canvas.drawRect(Rect.fromLTWH(x0, top, kTile.toDouble(), 6), sheen);
-      if (runs.isNotEmpty && runs.last.$3 == top && runs.last.$2 == x0) {
-        runs[runs.length - 1] = (runs.last.$1, x0 + kTile, top);
-      } else {
-        runs.add((x0, x0 + kTile, top));
-      }
     }
     for (final (x0, x1, top) in runs) {
       final wave = Path()..moveTo(x0, top + 1);
