@@ -124,9 +124,14 @@ jobs:
           # GitHub makinelerinin Azure aynası kimi gün erişilemez (2026-11-11):
           # paketler Ubuntu'nun ana sunucusundan alınır.
           # Adresler ayrı bir ayna listesinde (apt-mirrors.txt) de durur.
-          echo "http://archive.ubuntu.com/ubuntu/" | sudo tee /etc/apt/apt-mirrors.txt >/dev/null
-          sudo grep -rl "azure.archive.ubuntu.com" /etc/apt 2>/dev/null |
-            xargs -r sudo sed -i 's|http://azure.archive.ubuntu.com/ubuntu|http://archive.ubuntu.com/ubuntu|g'
+          # 2026-11-11: makineden düz HTTP geçmiyor, HTTPS geçiyor; ayna
+          # listesi HTTPS destekleyen Ubuntu aynalarına çevrilir.
+          printf '%s\n' "https://mirrors.edge.kernel.org/ubuntu/" \
+            "https://mirror.us.leaseweb.net/ubuntu/" \
+            "https://azure.archive.ubuntu.com/ubuntu/" |
+            sudo tee /etc/apt/apt-mirrors.txt >/dev/null
+          sudo grep -rl "http://azure.archive.ubuntu.com" /etc/apt 2>/dev/null |
+            xargs -r sudo sed -i 's|http://azure.archive.ubuntu.com/ubuntu|https://mirrors.edge.kernel.org/ubuntu|g'
           for i in 1 2 3; do
             sudo timeout 240 apt-get $APT update &&
               sudo timeout 420 apt-get $APT install -y clang cmake ninja-build pkg-config \
