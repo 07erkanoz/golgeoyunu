@@ -110,7 +110,9 @@ jobs:
 
   linux:
     if: ${{ inputs.masaustu }}
-    runs-on: ubuntu-latest
+    # ubuntu-latest 26.04'e geçti; paket sunucusuna ulaşılamıyor (2026-11-11).
+    # Derleme bağımlılıkları 24.04'te sorunsuz.
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       # Ubuntu paket sunucusu kimi zaman takılır: her deneme süreyle kesilir,
