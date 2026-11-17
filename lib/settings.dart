@@ -239,7 +239,7 @@ class Settings {
     if (Cartoon.trialBuild) {
       Cartoon.on = texture;
       Realism.on = realism;
-      Cartoon.tone = tone;
+      Cartoon.tone = Konsept.on ? Konsept.tone : tone;
     }
     if ((version ?? 0) < _version) await save();
   }

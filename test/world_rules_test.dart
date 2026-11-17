@@ -2,6 +2,7 @@ import 'package:flame/components.dart';
 import 'package:flame_test/flame_test.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:golge/game/palette.dart';
 import 'package:golge/game/creatures.dart';
 import 'package:golge/game/entities.dart';
 import 'package:golge/game/golge_game.dart';
@@ -174,6 +175,11 @@ void main() {
       }
       expect(drift, lessThan(6), reason: 'zıplarken kamera $drift px oynadı');
 
+      // Temel kamera kuralı; Yerebatan konsept denemesinin yakın kamerası
+      // bunun üstüne çarpan olarak gelir.
+      final konsept = Konsept.on;
+      Konsept.on = false;
+      addTearDown(() => Konsept.on = konsept);
       double tiles(double h) {
         game.onGameResize(Vector2(h * 16 / 9, h));
         return game.tilesTall;

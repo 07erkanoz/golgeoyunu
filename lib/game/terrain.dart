@@ -1505,6 +1505,10 @@ void _column(
 }
 
 void _walkway(Canvas canvas, Level lv, int c, int r, math.Random rnd) {
+  if (Konsept.on && Cartoon.on) {
+    _konseptWalkway(canvas, lv, c, r);
+    return;
+  }
   final x = c * kTile;
   final y = r * kTile;
   final wood = Paint()..color = const Color(0xFF120A07);
@@ -1526,6 +1530,122 @@ void _walkway(Canvas canvas, Level lv, int c, int r, math.Random rnd) {
     Paint()
       ..color = _rim.withValues(alpha: 0.25)
       ..strokeWidth = 0.8,
+  );
+}
+
+/// Konsept denemesi: ince tahta iskele yerine kalın taş köprü. Üstte ışık
+/// alan taş dudak, altında üç karelik kemer gözleri ve suya inen ayaklar.
+/// Gözler açık kalır: köprünün altındaki boşluk ve Sâye görünür.
+void _konseptWalkway(Canvas canvas, Level lv, int c, int r) {
+  const bay = 3;
+  const deck = 14.0;
+  const spring = 30.0;
+  final x = c * kTile;
+  final y = r * kTile;
+  final left = lv.cell(c - 1, r) != '=';
+  final right = lv.cell(c + 1, r) != '=';
+  final water = _floorTop(lv, c, r + 1);
+  final deckBottom = y + deck;
+
+  // Kemer gözü: köprü başından sayılır, böylece her köprü bir ayakla başlar.
+  var start = c;
+  while (lv.cell(start - 1, r) == '=') {
+    start--;
+  }
+  final p = (c - start) % bay;
+  final x0 = (c - p) * kTile;
+  final x1 = x0 + bay * kTile;
+  double archY(double ax) {
+    final u = ((ax - x0) / (x1 - x0)).clamp(0.0, 1.0);
+    return deckBottom + spring * (1 - math.sin(math.pi * u));
+  }
+
+  final stone = Paint()..color = Cartoon.stone;
+  // Kemer köşeliği (göğüs taşı): döşemenin altından kemer eğrisine.
+  final spandrel = Path()..moveTo(x - 0.5, deckBottom - 1);
+  for (var ax = x; ax <= x + kTile; ax += 4) {
+    spandrel.lineTo(ax, archY(ax));
+  }
+  spandrel
+    ..lineTo(x + kTile + 0.5, archY(x + kTile))
+    ..lineTo(x + kTile + 0.5, deckBottom - 1)
+    ..close();
+  canvas.drawPath(spandrel, stone);
+  // Kemerin içi: ışık alan ince kenar.
+  final rim = Path()..moveTo(x, archY(x) - 1);
+  for (var ax = x + 4; ax <= x + kTile; ax += 4) {
+    rim.lineTo(ax, archY(ax) - 1);
+  }
+  canvas.drawPath(
+    rim,
+    Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.2
+      ..color = Cartoon.lip.withValues(alpha: 0.55),
+  );
+
+  // Ayak: göz başında (ve köprünün sağ ucunda) suya iner.
+  void pier(double px) {
+    final bottom = water;
+    if (bottom <= deckBottom) return;
+    final body = Rect.fromLTRB(px - 7, deckBottom, px + 7, bottom);
+    canvas.drawRect(
+      body,
+      Paint()
+        ..shader = ui.Gradient.linear(
+          Offset(px - 7, 0),
+          Offset(px + 7, 0),
+          [Cartoon.colGrad[0], Cartoon.colGrad[1], Cartoon.colGrad[2]],
+          const [0.0, 0.35, 1.0],
+        ),
+    );
+    // Taş sıraları.
+    final seam = Paint()
+      ..color = Cartoon.seam.withValues(alpha: 0.6)
+      ..strokeWidth = 1.2;
+    for (var sy = deckBottom + 18; sy < bottom - 4; sy += 18) {
+      canvas.drawLine(Offset(px - 7, sy), Offset(px + 7, sy), seam);
+    }
+    // Ayak başlığı.
+    canvas.drawRect(
+      Rect.fromLTRB(px - 9, deckBottom, px + 9, deckBottom + 5),
+      stone,
+    );
+  }
+
+  if (p == 0) pier(x + (left ? 7 : 0));
+  if (right) pier(x + kTile - 7);
+
+  // Döşeme: kalın taş, üstte sıcak dudak, sıra derzleri.
+  final top = Rect.fromLTRB(
+    x - (left ? 3 : 0.5),
+    y,
+    x + kTile + (right ? 3 : 0.5),
+    deckBottom,
+  );
+  canvas.drawRect(
+    top,
+    Paint()
+      ..shader = ui.Gradient.linear(
+        Offset(0, y),
+        Offset(0, deckBottom),
+        [Cartoon.lip, Cartoon.stone, Cartoon.stoneDeep],
+        const [0.0, 0.3, 1.0],
+      ),
+  );
+  canvas.drawRect(
+    Rect.fromLTRB(top.left, y, top.right, y + 2.2),
+    Paint()..color = Cartoon.lipHot.withValues(alpha: 0.85),
+  );
+  final joint = Paint()
+    ..color = Cartoon.seam.withValues(alpha: 0.7)
+    ..strokeWidth = 1.3;
+  final jx = x + ((c * 11) % 2 == 0 ? kTile * 0.5 : kTile * 0.85);
+  canvas.drawLine(Offset(jx, y + 3), Offset(jx, deckBottom), joint);
+  canvas.drawLine(
+    Offset(top.left, deckBottom - 0.5),
+    Offset(top.right, deckBottom - 0.5),
+    joint,
   );
 }
 
@@ -1732,7 +1852,7 @@ class WaterComponent extends Component with HasGameReference<GolgeGame> {
     if (runs.isEmpty) return;
     final terrain = _ChunkCache.of('terrain', level, _buildTerrain);
     final fore = _ChunkCache.of('fore', level, _buildForeground);
-    const depth = 72.0;
+    final depth = Konsept.on && Cartoon.on ? 150.0 : 72.0;
     for (final (x0, x1, top) in runs) {
       final area = Rect.fromLTRB(x0, top, x1, top + depth);
       final mirror = Rect.fromLTRB(x0 - 40, top - depth - 12, x1 + 40, top);
@@ -1746,7 +1866,13 @@ class WaterComponent extends Component with HasGameReference<GolgeGame> {
       }
       canvas.save();
       canvas.clipRect(area);
-      canvas.saveLayer(area, Paint()..color = const Color(0xA0000000));
+      canvas.saveLayer(
+        area,
+        Paint()
+          ..color = Konsept.on && Cartoon.on
+              ? const Color(0xC8000000)
+              : const Color(0xA0000000),
+      );
       canvas.save();
       canvas.clipPath(bands, doAntiAlias: false);
       canvas.translate(math.sin(_t * 1.6) * 2.4, 2 * top);

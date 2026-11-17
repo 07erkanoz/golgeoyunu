@@ -205,8 +205,17 @@ class GolgeGame extends FlameGame with KeyboardEvents {
   /// kesintisiz değişir (önceden 520 pikselde 13'ten 20'ye sıçrıyordu:
   /// pencereyi boyutlandırırken ya da tablet döndürünce dünya birden
   /// küçülüyordu).
-  double get tilesTall =>
-      (13 + (camera.viewport.size.y - 380) * (7 / 340)).clamp(13.0, 20.0);
+  double get tilesTall {
+    final t = (13 + (camera.viewport.size.y - 380) * (7 / 340)).clamp(
+      13.0,
+      20.0,
+    );
+    // Konsept denemesi: sarnıçta kamera yakın, Sâye konseptteki kadar büyük.
+    if (Konsept.on && Cartoon.on && level.def.theme == LevelTheme.cistern) {
+      return math.max(11.0, t * Konsept.cisternTiles);
+    }
+    return t;
+  }
   double _lookAhead = 0;
 
   /// Yumuşatılmış yakınlık (boyut değişiminde kamera sıçramaz).
