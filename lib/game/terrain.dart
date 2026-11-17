@@ -16,6 +16,7 @@ import 'doku_konya.dart';
 import 'doku_nemrut.dart';
 import 'doku_otuken.dart';
 import 'doku_peri.dart';
+import 'entities.dart';
 import 'golge_game.dart';
 import 'level.dart';
 import 'levels.dart';
@@ -1922,6 +1923,58 @@ class WaterComponent extends Component with HasGameReference<GolgeGame> {
     }
   }
 
+  /// Konsept denemesi: suyun yüzünde uzak kandillerin sıcak, kesik
+  /// yansımaları ve Kandilci fenerinin altına dökülen camgöbeği sütun.
+  void _konseptGlints(Canvas canvas, List<(double, double, double)> runs) {
+    final paint = Paint()
+      ..strokeCap = StrokeCap.round
+      ..blendMode = BlendMode.plus;
+    final lanterns = [
+      for (final c in game.world.children)
+        if (c is Guard) c.lanternWorld.toOffset(),
+    ];
+    for (final (x0, x1, top) in runs) {
+      // Sıcak kesik çizgiler: derinleştikçe seyrek ve soluk.
+      for (var gx = (x0 / 23).floor() * 23.0; gx < x1; gx += 23) {
+        final seed = (gx * 0.137).floor();
+        for (var r = 0; r < 4; r++) {
+          final hash = ((seed * 31 + r * 17) % 13) / 13;
+          if (hash < 0.45) continue;
+          final y = top + 6 + r * 13 + hash * 6;
+          final wave = math.sin(_t * 1.9 + seed + r * 1.3) * 3;
+          final len = 5 + hash * 12;
+          final x = gx + hash * 14 + wave;
+          if (x < x0 || x + len > x1) continue;
+          paint
+            ..strokeWidth = 2.0 - r * 0.3
+            ..color = const Color(0xFFFFA650).withValues(
+              alpha: (0.32 - r * 0.06) * (0.7 + 0.3 * math.sin(_t * 3 + seed)),
+            );
+          canvas.drawLine(Offset(x, y), Offset(x + len, y), paint);
+        }
+      }
+      // Fener yansıması: fenerin hizasında aşağı inen dalgalı camgöbeği.
+      for (final l in lanterns) {
+        if (l.dx < x0 - 8 || l.dx > x1 + 8) continue;
+        final near = (1 - (top - l.dy).abs() / 360).clamp(0.0, 1.0);
+        if (near <= 0) continue;
+        for (var r = 0; r < 9; r++) {
+          final y = top + 4 + r * 9;
+          final wave = math.sin(_t * 3.4 + r * 1.2) * (2 + r * 0.7);
+          final half = (11 - r * 0.9) * (0.8 + 0.2 * math.cos(_t * 2 + r));
+          paint
+            ..strokeWidth = 2.4
+            ..color = Cartoon.danger.withValues(alpha: (0.5 - r * 0.05) * near);
+          canvas.drawLine(
+            Offset(l.dx + wave - half, y),
+            Offset(l.dx + wave + half, y),
+            paint,
+          );
+        }
+      }
+    }
+  }
+
   @override
   void render(Canvas canvas) {
     if (_surface.isEmpty) return;
@@ -1971,6 +2024,7 @@ class WaterComponent extends Component with HasGameReference<GolgeGame> {
       for (final (x0, x1, top) in runs) {
         CisternWater.edge(canvas, x0, x1, top, _t);
       }
+      if (Konsept.on && Cartoon.on) _konseptGlints(canvas, runs);
       return;
     }
     final glint = Paint()..strokeWidth = 1.3;
