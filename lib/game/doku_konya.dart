@@ -383,22 +383,17 @@ void paintKonyaTile(Canvas c, Level lv, int col, int row, double x, double y) {
   final top = row > 0 && !lv.solid(col, row - 1);
   final right = !lv.solid(col + 1, row);
   if (_kon) {
-    // Gece mavisi kesme taş: derine indikçe koyulaşır ama kara leke olmaz;
-    // derz çizgileri her derinlikte en az hafifçe seçilir.
-    var deep = depth;
-    while (deep < 8 && row - deep - 1 >= 0 && lv.solid(col, row - deep - 1)) {
-      deep++;
-    }
+    // Ön zemin siluet olarak kalır (ışık perdenin arkasından gelir): kara
+    // mavi, yalnız üst kenara yakın taşlarda derz seçilir.
     c.drawRect(
       Rect.fromLTWH(x - 0.5, y - 0.5, t + 1, t + 1),
       Paint()
         ..color = Color.lerp(
-          const Color(0xFF2C3654),
-          const Color(0xFF161C2E),
-          deep / 8,
+          const Color(0xFF151A2A),
+          const Color(0xFF080A12),
+          depth / 3,
         )!,
     );
-    if (depth >= 3) depth = 2;
   }
   if (depth < 3) {
     final a = 1 - depth / 3;
