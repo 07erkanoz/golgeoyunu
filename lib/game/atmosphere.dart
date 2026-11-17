@@ -610,8 +610,67 @@ class Backdrop extends Component with HasGameReference<GolgeGame> {
           ),
       );
     }
+    if (Konsept.on) _konseptDistance(canvas, rect, w, h, camX);
     if (!Settings.lowGraphics) {
       _lightShafts(canvas, w, h, offset: camX * 0.2);
+    }
+  }
+
+  /// Konsept denemesi: uzakta sıcak ışıklı kemer pencereleri ve ufukta
+  /// turuncu pus; sarnıç derin ve sıcak görünsün, ön plan siluet kalsın.
+  void _konseptDistance(
+    Canvas canvas,
+    Rect rect,
+    double w,
+    double h,
+    double camX,
+  ) {
+    // Ufuk pusu: sahnenin alt yarısında sıcak, geniş ışık kuşağı.
+    final hazeTop = h * 0.42;
+    final hazeBottom = h * 0.9;
+    canvas.drawRect(
+      Rect.fromLTRB(rect.left, hazeTop, rect.right, hazeBottom),
+      Paint()
+        ..shader = ui.Gradient.linear(
+          Offset(0, hazeTop),
+          Offset(0, hazeBottom),
+          const [Color(0x00000000), Color(0x30E8944A), Color(0x00000000)],
+          const [0.0, 0.62, 1.0],
+        ),
+    );
+    // İki sıra uzak pencere: kemerli, kehribar, hafifçe titreyen.
+    for (var row = 0; row < 2; row++) {
+      final spacing = 64.0 + row * 38;
+      final par = 0.1 + row * 0.12;
+      final winW = 9.0 + row * 5;
+      final winH = 16.0 + row * 9;
+      final baseY = h * (0.64 + row * 0.07);
+      final offset = camX * par + row * 23;
+      final first = (offset / spacing).floor() - 1;
+      for (var i = first; i * spacing - offset < w + spacing; i++) {
+        // Her pencere yanmaz: düzensiz, yaşayan bir şehir altı.
+        if ((i * 7 + row * 3) % 5 == 0) continue;
+        final x = i * spacing - offset + spacing / 2;
+        final flicker = 0.85 + 0.15 * math.sin(_t * 2.3 + i * 1.7 + row);
+        glowDot(
+          canvas,
+          Offset(x, baseY - winH / 2),
+          winW * 3.2,
+          const Color(0xFFFFA04A),
+          0.16 * flicker,
+        );
+        final win = RRect.fromRectAndCorners(
+          Rect.fromLTWH(x - winW / 2, baseY - winH, winW, winH),
+          topLeft: Radius.circular(winW / 2),
+          topRight: Radius.circular(winW / 2),
+        );
+        canvas.drawRRect(
+          win,
+          Paint()
+            ..color = const Color(0xFFFFB866)
+                .withValues(alpha: (0.34 + row * 0.12) * flicker),
+        );
+      }
     }
   }
 

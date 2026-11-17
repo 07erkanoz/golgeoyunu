@@ -175,6 +175,23 @@ class Cartoon {
   static Color get danger => _mix(0xFF7FE6D2, 0xFF6AEAD6);
 }
 
+/// Konsept denemesi (dal: deneme/cizgi-film-yerebatan): Yerebatan'ı
+/// docs/konsept/karikaturize-yerebatan-v1.png'ye yaklaştırır. Konseptin
+/// aydınlık tonu, daha yakın kamera (Sâye büyük görünür), kemerli kalın taş
+/// iskele, daha derin su yansıması. Yalnız [Cartoon.on] iken ve yalnız
+/// sarnıçta çalışır. Kapatmak için: --dart-define=KONSEPT=false.
+class Konsept {
+  Konsept._();
+
+  static bool on = const bool.fromEnvironment('KONSEPT', defaultValue: true);
+
+  /// Konseptteki ton (ayarlardaki "Renk tonu" yerine).
+  static const double tone = 1.0;
+
+  /// Sarnıçta ekranda görünen kare yüksekliği çarpanı (küçük = yakın).
+  static const double cisternTiles = 0.94;
+}
+
 /// Görsel deneme: ışık ve derinlik (Yerebatan). Işığa bakan taş kenarları
 /// parlar, ışıklar çevresine taşar, su sahneyi dalgalı yansıtır; arka plan
 /// pusla ve bulanıklıkla geriye çekilir, kameranın önünden koyu bir ön plan

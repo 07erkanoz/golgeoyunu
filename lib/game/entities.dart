@@ -18,6 +18,7 @@ import 'player.dart';
 import 'rig.dart';
 import 'shadow_art.dart';
 import 'kandilci_art.dart';
+import '../settings.dart';
 
 // ================================================================ Fenerci
 
@@ -674,6 +675,7 @@ class Guard extends PositionComponent
           alpha: alert ? flicker : (distracted ? 0.35 : 0.6 + doubt * 0.4),
         ),
         lampGlass: beam.withValues(alpha: 0.95 * flicker),
+        konsept: toon && Konsept.on && !Settings.lowGraphics,
       );
       canvas.restore();
       canvas.restore();

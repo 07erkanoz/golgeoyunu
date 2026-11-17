@@ -1730,10 +1730,15 @@ class SayeKukla {
   /// üstünde kaldığını denetlemek için.
   V get eye => _bones.isEmpty ? V.zero : _bones[_head](const V(940, 465));
 
+  /// Konsept denemesi (Yerebatan): bir ton açık, sıcak gövde, daha güçlü
+  /// kenar ışığı ve iri göz. Oyuncu çizmeden hemen önce açar.
+  static bool konseptLook = false;
+
   /// Ayak merkezinde, sağa bakan kukla: kenar ışığı, gövde, göz, kavanoz.
   /// [rim] kavanozun ılık ışığının siluetin kenarını yalaması.
   void paint(ui.Canvas c, {double rim = 0.4, bool jar = true}) {
     if (_bones.isEmpty) return;
+    final kon = konseptLook;
     final glow = _light * (1 - 0.85 * _hide);
     // 1) Kavanoz ve Sâye'nin arkasındaki sıcak altın arka-ışık (backlight):
     // Sâye'nin simsiyah siluetinden ÖNCE çizilir ki Sâye'nin siyah elbisesini
@@ -1803,19 +1808,21 @@ class SayeKukla {
       }
       final backRim = ui.Paint()
         ..color = const ui.Color(0xFFFFD280)
-            .withValues(alpha: (rim * 0.42).clamp(0.0, 0.32));
+            .withValues(alpha: (rim * (kon ? 0.6 : 0.42)).clamp(0.0, 0.32));
+      final rk = kon ? 1.7 : 1.0;
       for (final o in const [V(-0.32, -0.28), V(-0.28, 0.22)]) {
         c.save();
-        c.translate(o.dx, o.dy);
+        c.translate(o.dx * rk, o.dy * rk);
         c.drawPath(all, backRim);
         c.restore();
       }
       final frontRim = ui.Paint()
-        ..color = const ui.Color(0xFFFFE49C)
-            .withValues(alpha: (rim * 0.85).clamp(0.0, 0.62));
+        ..color = const ui.Color(0xFFFFE49C).withValues(
+          alpha: (rim * (kon ? 1.4 : 0.85)).clamp(0.0, kon ? 0.9 : 0.62),
+        );
       for (final o in const [V(0.42, -0.20), V(0.35, 0.20)]) {
         c.save();
-        c.translate(o.dx, o.dy);
+        c.translate(o.dx * rk, o.dy * rk);
         c.drawPath(all, frontRim);
         c.restore();
       }
@@ -1833,16 +1840,26 @@ class SayeKukla {
           n == 'orgu') {
         // Morumsu veya zifiri siyah yerine, duvardaki gölgeyle aynı büyüyü
         // koruyan doğal mat is-antrasit siyahı ve kavanozdan hafif sıcak yansıma.
-        final baseMatte = switch (n) {
+        var baseMatte = switch (n) {
           'govde' => const ui.Color(0xFF1A1715),
           'kolF' || 'bacakF' => const ui.Color(0xFF1D1917),
           _ => const ui.Color(0xFF171413),
         };
-        final litMatte = switch (n) {
+        var litMatte = switch (n) {
           'govde' => const ui.Color(0xFF26201C),
           'kolF' || 'bacakF' => const ui.Color(0xFF29231E),
           _ => const ui.Color(0xFF211C19),
         };
+        if (kon) {
+          // Konseptte gölge değil, ışık alan bir çizgi film figürü: koyu
+          // sıcak kahve gövde, kavanoza bakan yanda belirgin kızıl ton.
+          baseMatte = ui.Color.lerp(
+            baseMatte,
+            const ui.Color(0xFF2A1E1C),
+            0.8,
+          )!;
+          litMatte = ui.Color.lerp(litMatte, const ui.Color(0xFF6A4434), 0.8)!;
+        }
         c.drawPath(
           paths[n]!,
           ui.Paint()
@@ -1902,19 +1919,27 @@ class SayeKukla {
     }
     // Göz: ışıyan hilal ve parıltı beneği, çevresinde ılık odaklanmış parıltı.
     final eyeC = _bones[_head](const V(940, 465));
+    final eyeK = kon ? 1.45 : 1.0;
     c.drawCircle(
       eyeC,
-      15 * _px,
+      15 * _px * eyeK,
       ui.Paint()
-        ..shader = ui.Gradient.radial(eyeC, 15 * _px, [
+        ..shader = ui.Gradient.radial(eyeC, 15 * _px * eyeK, [
           ui.Color.fromRGBO(255, 224, 152, 0.42 * (1 - 0.6 * _hide)),
           const ui.Color(0x00FFD98A),
         ]),
     );
+    if (kon) {
+      c.save();
+      c.translate(eyeC.dx, eyeC.dy);
+      c.scale(eyeK);
+      c.translate(-eyeC.dx, -eyeC.dy);
+    }
     c.drawPath(
       _layers['goz']!.path(_bones),
       ui.Paint()..color = const ui.Color(0xFFFFF8E4),
     );
+    if (kon) c.restore();
     if (jar) _paintJar(c);
   }
 

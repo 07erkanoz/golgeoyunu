@@ -152,8 +152,7 @@ class RealismLayer extends Component with HasGameReference<GolgeGame> {
     for (var i = first; i <= last; i++) {
       final seed = (i * 73) & 0xFF;
       final pulse = 0.72 + 0.28 * math.sin(_t * 0.8 + i * 1.9);
-      final baseX =
-          i * spacing + (seed % 64) - (camX - i * spacing) * 0.08;
+      final baseX = i * spacing + (seed % 64) - (camX - i * spacing) * 0.08;
       final slant = 56.0 + (seed % 22);
       final topY = view.top - 16;
       final botY = view.bottom + 16;
@@ -190,9 +189,11 @@ class RealismLayer extends Component with HasGameReference<GolgeGame> {
         final u = ((_t * (0.04 + m * 0.012) + (seed + m * 29) * 0.07) % 1.0);
         final my = topY + (botY - topY) * (0.12 + 0.72 * u);
         final mx =
-            baseX + slant * (0.12 + 0.72 * u) +
+            baseX +
+            slant * (0.12 + 0.72 * u) +
             math.sin(_t * 1.3 + i * 2 + m * 1.7) * 12.0;
-        final twinkle = (0.5 + 0.5 * math.sin(_t * 3.4 + m * 2.1 + i)) *
+        final twinkle =
+            (0.5 + 0.5 * math.sin(_t * 3.4 + m * 2.1 + i)) *
             (1 - (u - 0.5).abs() * 1.6).clamp(0.0, 1.0);
         if (twinkle <= 0.05) continue;
         canvas.drawCircle(
@@ -259,11 +260,16 @@ class RealismLayer extends Component with HasGameReference<GolgeGame> {
         glowR,
         Paint()
           ..blendMode = BlendMode.screen
-          ..shader = ui.Gradient.radial(at, glowR, [
-            color.withValues(alpha: isPlayer ? 0.05 : 0.13),
-            color.withValues(alpha: isPlayer ? 0.02 : 0.04),
-            color.withValues(alpha: 0),
-          ], const [0, 0.5, 1]),
+          ..shader = ui.Gradient.radial(
+            at,
+            glowR,
+            [
+              color.withValues(alpha: isPlayer ? 0.05 : 0.13),
+              color.withValues(alpha: isPlayer ? 0.02 : 0.04),
+              color.withValues(alpha: 0),
+            ],
+            const [0, 0.5, 1],
+          ),
       );
       if (!isPlayer) {
         // Parlama: ışık kaynağın çevresine hafifçe taşar.
@@ -437,7 +443,8 @@ class NearLayer extends Component with HasGameReference<GolgeGame> {
   }
 
   static List<_Row> _buildRows(DepthKind kind) => switch (kind) {
-    DepthKind.cistern => _cistern(),
+    DepthKind.cistern =>
+      Konsept.on && Cartoon.on ? _cisternKonsept() : _cistern(),
     DepthKind.snow => _snow(),
     DepthKind.peri => _peri(),
     DepthKind.konya => _konya(),
@@ -512,6 +519,82 @@ class NearLayer extends Component with HasGameReference<GolgeGame> {
     return [
       _Row([arch], 21, 7),
       _Row(stumps, 19, 15, at: _Anchor.bottom),
+      _Row(chains, 17, 13),
+    ];
+  }
+
+  /// Konsept denemesi: önden geçen iri, oymalı taş sütunlar (bulanık değil,
+  /// net siluet; ışığa bakan yanında sıcak kenar) ve net zincirler.
+  static List<_Row> _cisternKonsept() {
+    const w = 62.0;
+    const tall = _refH * 1.25;
+    _Shape column(int variant) =>
+        _bake(const Rect.fromLTRB(-w / 2 - 14, -tall, w / 2 + 14, 4), (c) {
+          final shaft = Rect.fromLTRB(-w / 2, -tall, w / 2, 0);
+          c.drawRect(
+            shaft,
+            Paint()
+              ..shader = ui.Gradient.linear(
+                const Offset(-w / 2, 0),
+                const Offset(w / 2, 0),
+                const [Color(0xFF3A2418), Color(0xFF1A0F0B), Color(0xFF0C0706)],
+                const [0.0, 0.3, 1.0],
+              ),
+          );
+          // Işık alan sol kenar.
+          c.drawRect(
+            const Rect.fromLTRB(-w / 2, -tall, -w / 2 + 4, 0),
+            Paint()..color = const Color(0xB09A6038),
+          );
+          // Tambur derzleri ve oyma halkalar (konseptteki göz motifi).
+          final seam = Paint()
+            ..color = const Color(0xFF070403)
+            ..strokeWidth = 2.5;
+          final carve = Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 4
+            ..color = const Color(0xFF080504);
+          final carveLit = Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1.6
+            ..color = const Color(0x705A3622);
+          for (var y = -40.0 - variant * 25; y > -tall; y -= 118) {
+            c.drawLine(Offset(-w / 2, y), Offset(w / 2, y), seam);
+            final ring = Rect.fromCenter(
+              center: Offset(0, y - 58),
+              width: w * 0.5,
+              height: w * 0.62,
+            );
+            c.drawOval(ring, carve);
+            c.drawOval(ring.translate(-1.5, -1.5), carveLit);
+            c.drawOval(ring.deflate(w * 0.12), carve);
+          }
+          // Kaide.
+          c.drawRect(
+            const Rect.fromLTRB(-w / 2 - 12, -26, w / 2 + 12, 4),
+            Paint()..color = const Color(0xFF120A08),
+          );
+          c.drawRect(
+            const Rect.fromLTRB(-w / 2 - 12, -26, w / 2 + 12, -22),
+            Paint()..color = const Color(0x909A6038),
+          );
+        });
+    final chain = Paint()
+      ..color = const Color(0xFF0A0706)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 6
+      ..strokeCap = StrokeCap.round;
+    final chains = [
+      for (var i = 0; i < 3; i++)
+        () {
+          final len = _refH * (0.14 + i * 0.05);
+          return _bake(Rect.fromLTRB(-30, -20, 30, len + 40), (c) {
+            _chain(c, len, chain);
+          });
+        }(),
+    ];
+    return [
+      _Row([column(0), column(1)], 46, 9, at: _Anchor.bottom),
       _Row(chains, 17, 13),
     ];
   }
@@ -1417,7 +1500,12 @@ class NearLayer extends Component with HasGameReference<GolgeGame> {
           img.width * sk,
           img.height * sk,
         );
-        final see = _clearance(box, actors);
+        var see = _clearance(box, actors);
+        // Konsept sütunları hiçbir zaman tam örtmez: ardındaki yol, sandık ve
+        // çukur her zaman okunur.
+        if (kind == DepthKind.cistern && Konsept.on && Cartoon.on) {
+          see = math.min(see, 0.42);
+        }
         if (see <= 0.02) continue;
         if (see < 1) {
           _fadePaint.color = Color.fromRGBO(255, 255, 255, see);
