@@ -140,18 +140,19 @@ class Cartoon {
   static Color get archRim => _mix(0xFF5A3020, 0xFF7A4A40);
   static double get windowGlow => _num(0.09, 0.18);
 
-  // Taş: koyu gövde, ışık alan üst dudak.
-  static Color get stone => _mix(0xFF140B08, 0xFF34211E);
-  static Color get stoneDeep => _mix(0xFF0A0706, 0xFF221513);
-  static Color get stoneBottom => _mix(0xFF0A0706, 0xFF1A1016);
+  // Taş: koyu gövde, ışık alan üst dudak. Aydınlık uçta da gövde koyu
+  // kalır: önde oynanan zemin siluettir, ışık perdenin arkasından gelir.
+  static Color get stone => _mix(0xFF140B08, 0xFF1E1310);
+  static Color get stoneDeep => _mix(0xFF0A0706, 0xFF120B0A);
+  static Color get stoneBottom => _mix(0xFF0A0706, 0xFF0E080B);
   static Color get lip => _mix(0xFF925E35, 0xFFC08458);
   static Color get lipHot => _mix(0xFFC07A44, 0xFFF0B57A);
-  static Color get seam => _mix(0xFF050302, 0xFF1A100F);
+  static Color get seam => _mix(0xFF050302, 0xFF0C0706);
   static Color get backCol => _mix(0xFF1C100B, 0xFF2E1A22);
   static List<Color> get colGrad => [
-    _mix(0xFF3A2216, 0xFF6E4636),
-    _mix(0xFF1E110B, 0xFF4A2E26),
-    _mix(0xFF0C0605, 0xFF2A1A17),
+    _mix(0xFF3A2216, 0xFF4A2E22),
+    _mix(0xFF1E110B, 0xFF2C1A14),
+    _mix(0xFF0C0605, 0xFF160D0B),
   ];
 
   // Su.
