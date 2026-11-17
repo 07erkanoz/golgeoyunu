@@ -7,7 +7,7 @@ import 'dart:math' as math;
 import 'dart:ui';
 
 import 'level.dart';
-import 'palette.dart' show glowDot;
+import 'palette.dart' show glowDot, Cartoon, Konsept;
 
 double _hash(int i, [int salt = 0]) {
   final v = math.sin(i * 127.1 + salt * 311.7) * 43758.5453;
@@ -28,12 +28,52 @@ void paintErlikBackdrop(
   bool lights = true,
 }) {
   final dy = -camY * 0.05;
+  if (_kon) _riverHaze(c, w, h, dy, t);
   _palace(c, w, h, camX * 0.05, dy);
   _riverGlow(c, w, h, camX * 0.12, dy, t);
   _spires(c, w, h, camX * 0.2, dy, const Color(0xFF130D1E), 0.75, 3);
   if (lights) _cages(c, w, h, camX * 0.2, dy, t);
   _ceiling(c, w, h, camX * 0.3, dy);
   _spires(c, w, h, camX * 0.35, dy, const Color(0xFF0C0814), 1.0, 8);
+}
+
+/// Konsept denemesi (Yerebatan ve Konya'dan taşınan dil): sahne
+/// aydınlanmaz, ama ırmağın soğuk ışığı sarayın ve sivrilerin ardına pus
+/// olarak yayılır; kara siluetler ona karşı okunur. Kut ışıkları güçlenir.
+bool get _kon => Konsept.on && Cartoon.on;
+
+void _riverHaze(Canvas c, double w, double h, double dy, double t) {
+  final pulse = 0.9 + 0.1 * math.sin(t * 0.5);
+  // Irmaktan yükselen geniş, soğuk ışık kuşağı: sarayın ardında en güçlü.
+  c.drawRect(
+    Rect.fromLTRB(0, h * 0.38 + dy, w, h + 40),
+    Paint()
+      ..shader = Gradient.linear(
+        Offset(0, h * 0.38 + dy),
+        Offset(0, h * 0.86 + dy),
+        [
+          const Color(0x006A8AE0),
+          _river.withValues(alpha: 0.14 * pulse),
+          _river.withValues(alpha: 0.3 * pulse),
+        ],
+        const [0, 0.6, 1],
+      ),
+  );
+  // Ufukta ince, parlak ırmak çizgisi.
+  c.drawRect(
+    Rect.fromLTRB(0, h * 0.79 + dy, w, h * 0.83 + dy),
+    Paint()
+      ..shader = Gradient.linear(
+        Offset(0, h * 0.79 + dy),
+        Offset(0, h * 0.83 + dy),
+        [
+          const Color(0x008AAAF0),
+          const Color(0xFF8AAAF0).withValues(alpha: 0.28 * pulse),
+          const Color(0x008AAAF0),
+        ],
+        const [0, 0.5, 1],
+      ),
+  );
 }
 
 /// Erlik'in sarayı: kara taştan, sivri burçlu; kapısı kapalı, mazgallarında
@@ -260,9 +300,9 @@ void _cages(Canvas c, double w, double h, double off, double dy, double t) {
     if (_hash(i, 51) < 0.35) continue;
     final x = i * spacing - off + _hash(i, 52) * spacing * 0.6;
     final y = h * (0.26 + _hash(i, 53) * 0.2) + dy + math.sin(t * 0.4 + i) * 4;
-    final a = 0.25 + 0.2 * math.sin(t * 0.9 + i * 1.7);
+    final a = (0.25 + 0.2 * math.sin(t * 0.9 + i * 1.7)) * (_kon ? 1.7 : 1);
     c.drawLine(Offset(x, 0), Offset(x, y - 14), chain);
-    glowDot(c, Offset(x, y), 14, const Color(0xFFFFE8B0), a);
+    glowDot(c, Offset(x, y), _kon ? 24 : 14, const Color(0xFFFFE8B0), a);
     // Kafes: yuvarlak tepe, dikey çubuklar, taban.
     final r = Rect.fromCenter(center: Offset(x, y), width: 18, height: 26);
     c.drawArc(

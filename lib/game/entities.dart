@@ -677,13 +677,18 @@ class Guard extends PositionComponent
         lampGlass: beam.withValues(alpha: 0.95 * flicker),
         konsept:
             (toon ||
-                (Cartoon.on && game.level.def.theme == LevelTheme.konya)) &&
+                (Cartoon.on &&
+                    (game.level.def.theme == LevelTheme.konya ||
+                        game.level.def.theme == LevelTheme.underworld))) &&
             Konsept.on &&
             !Settings.lowGraphics,
         // Konya'da arkadan vuran ışık ay: soğuk mavi.
-        konseptBack: game.level.def.theme == LevelTheme.konya
-            ? const Color(0xFF9AB4E8)
-            : const Color(0xFFFFA65A),
+        konseptBack: switch (game.level.def.theme) {
+          LevelTheme.konya => const Color(0xFF9AB4E8),
+          // Erlik'te ışık ırmaktan: soğuk mor-mavi.
+          LevelTheme.underworld => const Color(0xFF8A8AE8),
+          _ => const Color(0xFFFFA65A),
+        },
       );
       canvas.restore();
       canvas.restore();
