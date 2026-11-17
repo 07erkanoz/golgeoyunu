@@ -189,7 +189,7 @@ class Konsept {
   static const double tone = 1.0;
 
   /// Sarnıçta ekranda görünen kare yüksekliği çarpanı (küçük = yakın).
-  static const double cisternTiles = 0.72;
+  static const double cisternTiles = 0.88;
 }
 
 /// Görsel deneme: ışık ve derinlik (Yerebatan). Işığa bakan taş kenarları
