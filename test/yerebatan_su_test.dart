@@ -7,9 +7,16 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:golge/game/cistern_water.dart';
 import 'package:golge/game/golge_game.dart';
 import 'package:golge/game/level.dart';
+import 'package:golge/game/palette.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  // Damla yalnız görünen yerde düşer: konsept denemesinin yakın kamerası
+  // ölçülen sütunu ekran dışında bırakmasın (oyun test gövdesinden önce
+  // yüklendiği için anahtar burada kapanır).
+  final konsept = Konsept.on;
+  setUp(() => Konsept.on = false);
+  tearDown(() => Konsept.on = konsept);
   testWithGame<GolgeGame>(
     'tavandan düşen damla havuzda halka bırakır',
     GolgeGame.new,
