@@ -269,6 +269,7 @@ void drawShadowGuard(
   required Color rim,
   required Color eye,
   required Color lampGlass,
+  bool konsept = false,
 }) {
   c.save();
   c.translate(feet.dx, feet.dy);
@@ -286,6 +287,37 @@ void drawShadowGuard(
               : null,
       );
     }
+    final kon = konsept && !silhouette && !layer;
+    if (kon) {
+      // Konsept denemesi: aynı çizim önce iki ışık renginde, biraz kaydırılarak
+      // çizilir; üstüne gelen asıl çizimden geriye ince kenarlar kalır
+      // (önde fenerin camgöbeği, arkada sarnıcın sıcak kehribarı).
+      for (final (color, shift, alpha) in [
+        (const Color(0xFFFFA65A), const Offset(-7, -5), 0.6),
+        (rim.withValues(alpha: 1), const Offset(7, -3), 0.75),
+      ]) {
+        c.save();
+        c.translate(shift.dx, shift.dy);
+        c.saveLayer(
+          null,
+          Paint()
+            ..color = Color.fromRGBO(255, 255, 255, alpha)
+            ..colorFilter = ColorFilter.mode(color, BlendMode.srcIn),
+        );
+        _paintIllustratedGuard(
+          c,
+          phase,
+          weight,
+          run,
+          lean,
+          lampAngle,
+          flameTime ?? 0,
+          const Color(0x00000000),
+        );
+        c.restore();
+        c.restore();
+      }
+    }
     _paintIllustratedGuard(
       c,
       phase,
@@ -295,6 +327,7 @@ void drawShadowGuard(
       lampAngle,
       flameTime ?? 0,
       silhouette ? const Color(0) : lampGlass,
+      eyes: kon ? eye : null,
     );
     if (layer) c.restore();
     if (silhouette && lampGlass.a > 0) {
@@ -615,8 +648,9 @@ void _paintIllustratedGuard(
   double lean,
   double lampAngle,
   double time,
-  Color lampGlass,
-) {
+  Color lampGlass, {
+  Color? eyes,
+}) {
   _illustratedLeg(c, 'leg_far', 249, phase + .5, weight, run);
   _illustratedLeg(c, 'leg_near', 294, phase, weight, run);
   final bob = _illustratedBob(phase, weight);
@@ -653,6 +687,28 @@ void _paintIllustratedGuard(
       ),
   );
   KandilciArt.draw(c, 'guard_body', bounds);
+  if (eyes != null && eyes.a > 0) {
+    // Kukuletanın karanlığında iki parlayan göz (konsept).
+    for (final (p, r) in const [
+      (Offset(186, 92), 5.5),
+      (Offset(170, 95), 4.5),
+    ]) {
+      final e = bounds.topLeft + p * _illustratedScale;
+      c.drawCircle(
+        e,
+        r * 4,
+        Paint()
+          ..shader = ui.Gradient.radial(e, r * 4, [
+            eyes.withValues(alpha: 0.45 * eyes.a),
+            eyes.withValues(alpha: 0),
+          ]),
+      );
+      c.drawOval(
+        Rect.fromCenter(center: e, width: r * 2.2, height: r * 1.5),
+        Paint()..color = Color.lerp(eyes, const Color(0xFFFFFFFF), 0.5)!,
+      );
+    }
+  }
   c.restore();
 
   final hook = _illustratedHook(phase, weight, lean);

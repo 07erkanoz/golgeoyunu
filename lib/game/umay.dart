@@ -4,8 +4,11 @@ import 'dart:ui';
 import 'package:flame/components.dart';
 
 import 'audio.dart';
+import 'golge_game.dart';
 import 'level.dart';
+import 'levels.dart';
 import 'myth_figures.dart';
+import 'palette.dart';
 import 'persist.dart';
 
 /// Umay ağacı: her kontrol noktasında duran, çaputlu ak kayın
@@ -108,14 +111,33 @@ class UmayTree extends PositionComponent with Persistent {
     canvas.clipRect(Rect.fromLTWH(-size.x, -size.y, size.x * 3, size.y * 2));
     canvas.translate(size.x / 2, size.y);
     canvas.scale(scaleK);
+    // Konsept denemesi: sarnıcın sıcak ışığında ak huş soğuk kalmasın; ağaç
+    // kehribar bir süzgeçle sahnenin tonuna çekilir.
+    final game = findGame();
+    final warm =
+        !cairn &&
+        Konsept.on &&
+        Cartoon.on &&
+        game is GolgeGame &&
+        game.level.def.theme == LevelTheme.cistern;
+    if (warm) canvas.saveLayer(null, _warmPaint);
     // Uyanırken ışık önce yükselir, ardından çaputlar kalkar.
     if (cairn) {
       _drawCairn(canvas, _t, _ease(_lit));
     } else {
       MythFigures.umayTree(canvas, _t, lit: _ease(_lit), bloom: bloom);
     }
+    if (warm) canvas.restore();
     canvas.restore();
   }
+
+  static final _warmPaint = Paint()
+    ..colorFilter = const ColorFilter.matrix([
+      0.86, 0.06, 0, 0, 6, //
+      0.04, 0.66, 0.02, 0, 0, //
+      0, 0.04, 0.46, 0, 0, //
+      0, 0, 0, 1, 0,
+    ]);
 
   /// Oba: üst üste yığılmış taşlar (üstleri karlı), ortasında ince bir
   /// direk, direğe bağlı ak, gök, kızıl ve sarı çaputlar. Uyanınca çaputlar
