@@ -675,7 +675,15 @@ class Guard extends PositionComponent
           alpha: alert ? flicker : (distracted ? 0.35 : 0.6 + doubt * 0.4),
         ),
         lampGlass: beam.withValues(alpha: 0.95 * flicker),
-        konsept: toon && Konsept.on && !Settings.lowGraphics,
+        konsept:
+            (toon ||
+                (Cartoon.on && game.level.def.theme == LevelTheme.konya)) &&
+            Konsept.on &&
+            !Settings.lowGraphics,
+        // Konya'da arkadan vuran ışık ay: soğuk mavi.
+        konseptBack: game.level.def.theme == LevelTheme.konya
+            ? const Color(0xFF9AB4E8)
+            : const Color(0xFFFFA65A),
       );
       canvas.restore();
       canvas.restore();

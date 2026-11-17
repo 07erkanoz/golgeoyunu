@@ -270,6 +270,7 @@ void drawShadowGuard(
   required Color eye,
   required Color lampGlass,
   bool konsept = false,
+  Color konseptBack = const Color(0xFFFFA65A),
 }) {
   c.save();
   c.translate(feet.dx, feet.dy);
@@ -293,7 +294,7 @@ void drawShadowGuard(
       // çizilir; üstüne gelen asıl çizimden geriye ince kenarlar kalır
       // (önde fenerin camgöbeği, arkada sarnıcın sıcak kehribarı).
       for (final (color, shift, alpha) in [
-        (const Color(0xFFFFA65A), const Offset(-7, -5), 0.6),
+        (konseptBack, const Offset(-7, -5), 0.6),
         (rim.withValues(alpha: 1), const Offset(7, -3), 0.75),
       ]) {
         c.save();
