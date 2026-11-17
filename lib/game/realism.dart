@@ -526,7 +526,7 @@ class NearLayer extends Component with HasGameReference<GolgeGame> {
   /// Konsept denemesi: önden geçen iri, oymalı taş sütunlar (bulanık değil,
   /// net siluet; ışığa bakan yanında sıcak kenar) ve net zincirler.
   static List<_Row> _cisternKonsept() {
-    const w = 84.0;
+    const w = 62.0;
     const tall = _refH * 1.25;
     _Shape column(int variant) =>
         _bake(const Rect.fromLTRB(-w / 2 - 14, -tall, w / 2 + 14, 4), (c) {
@@ -594,7 +594,7 @@ class NearLayer extends Component with HasGameReference<GolgeGame> {
         }(),
     ];
     return [
-      _Row([column(0), column(1)], 27, 9, at: _Anchor.bottom),
+      _Row([column(0), column(1)], 46, 9, at: _Anchor.bottom),
       _Row(chains, 17, 13),
     ];
   }
@@ -1500,7 +1500,12 @@ class NearLayer extends Component with HasGameReference<GolgeGame> {
           img.width * sk,
           img.height * sk,
         );
-        final see = _clearance(box, actors);
+        var see = _clearance(box, actors);
+        // Konsept sütunları hiçbir zaman tam örtmez: ardındaki yol, sandık ve
+        // çukur her zaman okunur.
+        if (kind == DepthKind.cistern && Konsept.on && Cartoon.on) {
+          see = math.min(see, 0.42);
+        }
         if (see <= 0.02) continue;
         if (see < 1) {
           _fadePaint.color = Color.fromRGBO(255, 255, 255, see);
