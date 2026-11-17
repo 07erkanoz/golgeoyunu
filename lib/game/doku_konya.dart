@@ -9,11 +9,17 @@ import 'dart:ui';
 
 import 'doku_kar.dart' show paintSnowBlanket;
 import 'level.dart';
+import 'palette.dart';
 
 const _moonRim = Color(0xFF9AACD0);
 const _snow = Color(0xFF6A7894);
 const _candle = Color(0xFFFFC27A);
 final _drop = Paint()..color = const Color(0x4D000000);
+
+/// Konsept denemesi (Yerebatan'dan taşınan dil): daha çok yanan pencere,
+/// pencerelerden taşan sıcak ışık, ufukta sıcak pus, aya hale, gece mavisi
+/// kesme taş. Yalnız [Cartoon.on] ve [Konsept.on] iken.
+bool get _kon => Konsept.on && Cartoon.on;
 
 void _repeat(
   double w,
@@ -33,6 +39,19 @@ void _repeat(
 
 /// [base]: ufuk çizgisi (ekranda); [camX]: kameranın dünya x'i.
 void paintKonyaCity(Canvas c, double w, double h, double base, double camX) {
+  if (_kon) {
+    // Şehrin üstünde sıcak pus: binlerce pencerenin göğe vuran ışığı.
+    c.drawRect(
+      Rect.fromLTWH(0, base - h * 0.3, w, h * 0.3 + 20),
+      Paint()
+        ..shader = Gradient.linear(
+          Offset(0, base - h * 0.3),
+          Offset(0, base + 20),
+          const [Color(0x00E8944A), Color(0x2AE8944A), Color(0x55E8944A)],
+          const [0, 0.65, 1],
+        ),
+    );
+  }
   // Uzak evler: alçak, sık, düz damlı; damlarında ince kar.
   _repeat(w, camX * 0.04, 70, 11, (x, r) {
     final hh = 10 + r.nextDouble() * 14;
@@ -91,7 +110,7 @@ void _house(
   // Pencereler: kemerli, bazılarında mum.
   final n = (ww / 16).floor();
   for (var k = 0; k < n; k++) {
-    final lit = r.nextDouble() < (far ? 0.25 : 0.35);
+    final lit = r.nextDouble() < (far ? 0.25 : 0.35) * (_kon ? 1.8 : 1);
     final wx = x + 6 + k * (ww - 10) / n;
     final wy = base - hh + (far ? 4 : 8);
     final wr = RRect.fromRectAndCorners(
@@ -99,11 +118,26 @@ void _house(
       topLeft: const Radius.circular(2),
       topRight: const Radius.circular(2),
     );
+    if (lit && _kon) {
+      final g = Offset(wx + (far ? 1.5 : 2), wy + (far ? 2 : 3.5));
+      final gr = far ? 9.0 : 16.0;
+      c.drawCircle(
+        g,
+        gr,
+        Paint()
+          ..shader = Gradient.radial(g, gr, [
+            _candle.withValues(alpha: far ? 0.22 : 0.32),
+            _candle.withValues(alpha: 0),
+          ]),
+      );
+    }
     c.drawRRect(
       wr,
       Paint()
         ..color = lit
-            ? _candle.withValues(alpha: far ? 0.5 : 0.75)
+            ? _candle.withValues(
+                alpha: _kon ? (far ? 0.8 : 1) : (far ? 0.5 : 0.75),
+              )
             : const Color(0xFF070A12),
     );
   }
@@ -348,6 +382,24 @@ void paintKonyaTile(Canvas c, Level lv, int col, int row, double x, double y) {
   }
   final top = row > 0 && !lv.solid(col, row - 1);
   final right = !lv.solid(col + 1, row);
+  if (_kon) {
+    // Gece mavisi kesme taş: derine indikçe koyulaşır ama kara leke olmaz;
+    // derz çizgileri her derinlikte en az hafifçe seçilir.
+    var deep = depth;
+    while (deep < 8 && row - deep - 1 >= 0 && lv.solid(col, row - deep - 1)) {
+      deep++;
+    }
+    c.drawRect(
+      Rect.fromLTWH(x - 0.5, y - 0.5, t + 1, t + 1),
+      Paint()
+        ..color = Color.lerp(
+          const Color(0xFF2C3654),
+          const Color(0xFF161C2E),
+          deep / 8,
+        )!,
+    );
+    if (depth >= 3) depth = 2;
+  }
   if (depth < 3) {
     final a = 1 - depth / 3;
     final tile = Rect.fromLTWH(x, y, t, t);

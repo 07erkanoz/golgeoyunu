@@ -2724,7 +2724,10 @@ class Player extends PositionComponent with HasGameReference<GolgeGame> {
   }) {
     final kk = kukla ?? _kukla;
     SayeKukla.konseptLook =
-        Konsept.on && Cartoon.on && game.level.def.theme == LevelTheme.cistern;
+        Konsept.on &&
+        Cartoon.on &&
+        (game.level.def.theme == LevelTheme.cistern ||
+            game.level.def.theme == LevelTheme.konya);
     canvas.save();
     canvas.translate(w / 2, h);
     // Duvardaki gölge ([solid]) kendi ölçeğiyle büyür.

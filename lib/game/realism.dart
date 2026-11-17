@@ -1503,7 +1503,9 @@ class NearLayer extends Component with HasGameReference<GolgeGame> {
         var see = _clearance(box, actors);
         // Konsept sütunları hiçbir zaman tam örtmez: ardındaki yol, sandık ve
         // çukur her zaman okunur.
-        if (kind == DepthKind.cistern && Konsept.on && Cartoon.on) {
+        if ((kind == DepthKind.cistern || kind == DepthKind.konya) &&
+            Konsept.on &&
+            Cartoon.on) {
           see = math.min(see, 0.42);
         }
         if (see <= 0.02) continue;
