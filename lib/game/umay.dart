@@ -113,14 +113,17 @@ class UmayTree extends PositionComponent with Persistent {
     canvas.scale(scaleK);
     // Konsept denemesi: sarnıcın sıcak ışığında ak huş soğuk kalmasın; ağaç
     // kehribar bir süzgeçle sahnenin tonuna çekilir.
+    // Erlik'in katında ise ırmağın soğuk mor ışığına çekilir.
     final game = findGame();
-    final warm =
-        !cairn &&
-        Konsept.on &&
-        Cartoon.on &&
-        game is GolgeGame &&
-        game.level.def.theme == LevelTheme.cistern;
-    if (warm) canvas.saveLayer(null, _warmPaint);
+    final tint = cairn || !Konsept.on || !Cartoon.on || game is! GolgeGame
+        ? null
+        : switch (game.level.def.theme) {
+            LevelTheme.cistern => _warmPaint,
+            LevelTheme.underworld => _coldPaint,
+            _ => null,
+          };
+    final warm = tint != null;
+    if (tint != null) canvas.saveLayer(null, tint);
     // Uyanırken ışık önce yükselir, ardından çaputlar kalkar.
     if (cairn) {
       _drawCairn(canvas, _t, _ease(_lit));
@@ -130,6 +133,14 @@ class UmayTree extends PositionComponent with Persistent {
     if (warm) canvas.restore();
     canvas.restore();
   }
+
+  static final _coldPaint = Paint()
+    ..colorFilter = const ColorFilter.matrix([
+      0.5, 0.06, 0.04, 0, 0, //
+      0.04, 0.46, 0.06, 0, 0, //
+      0.08, 0.1, 0.78, 0, 4, //
+      0, 0, 0, 1, 0,
+    ]);
 
   static final _warmPaint = Paint()
     ..colorFilter = const ColorFilter.matrix([
