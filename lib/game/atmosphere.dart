@@ -634,10 +634,23 @@ class Backdrop extends Component with HasGameReference<GolgeGame> {
         ..shader = ui.Gradient.linear(
           Offset(0, hazeTop),
           Offset(0, hazeBottom),
-          const [Color(0x00000000), Color(0x30E8944A), Color(0x00000000)],
+          const [Color(0x00000000), Color(0x2CE8944A), Color(0x00000000)],
           const [0.0, 0.62, 1.0],
         ),
     );
+    // Arkadan gelen sıcak ışık: sütunlar bunun önünde siluet kalır.
+    final glowY = h * 0.52;
+    final glowOff = camX * 0.08;
+    for (var i = (glowOff / 260).floor() - 1; i * 260 - glowOff < w + 260; i++) {
+      final gx = i * 260 - glowOff + 130;
+      glowDot(
+        canvas,
+        Offset(gx, glowY),
+        210 + 40 * ((i * 5) % 3),
+        const Color(0xFFFF9C48),
+        0.08 + 0.02 * math.sin(_t * 0.7 + i),
+      );
+    }
     // İki sıra uzak pencere: kemerli, kehribar, hafifçe titreyen.
     for (var row = 0; row < 2; row++) {
       final spacing = 64.0 + row * 38;
@@ -657,7 +670,7 @@ class Backdrop extends Component with HasGameReference<GolgeGame> {
           Offset(x, baseY - winH / 2),
           winW * 3.2,
           const Color(0xFFFFA04A),
-          0.16 * flicker,
+          0.18 * flicker,
         );
         final win = RRect.fromRectAndCorners(
           Rect.fromLTWH(x - winW / 2, baseY - winH, winW, winH),
@@ -668,7 +681,7 @@ class Backdrop extends Component with HasGameReference<GolgeGame> {
           win,
           Paint()
             ..color = const Color(0xFFFFB866)
-                .withValues(alpha: (0.34 + row * 0.12) * flicker),
+                .withValues(alpha: (0.38 + row * 0.12) * flicker),
         );
       }
     }

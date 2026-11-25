@@ -1934,6 +1934,38 @@ class WaterComponent extends Component with HasGameReference<GolgeGame> {
         if (c is Guard) c.lanternWorld.toOffset(),
     ];
     for (final (x0, x1, top) in runs) {
+      // Yüzeyde arkadaki sıcak ışığın parıltısı: su kara delik gibi durmasın.
+      canvas.drawRect(
+        Rect.fromLTRB(x0, top, x1, top + 130),
+        Paint()
+          ..blendMode = BlendMode.plus
+          ..shader = ui.Gradient.linear(
+            Offset(0, top),
+            Offset(0, top + 130),
+            const [Color(0x14804418), Color(0x00000000)],
+          ),
+      );
+      // Uzak ışıkların suya düşen uzun, kırık yansıma sütunları.
+      for (var sx = (x0 / 74).floor() * 74.0; sx < x1; sx += 74) {
+        final seed = (sx / 74).floor();
+        final hash = ((seed * 37) % 11) / 11;
+        if (hash < 0.3) continue;
+        final cx = sx + 20 + hash * 30;
+        for (var r = 0; r < 12; r++) {
+          final y = top + 3 + r * 8.5;
+          final wave = math.sin(_t * 1.6 + seed * 1.3 + r * 0.9) * (1.5 + r * 0.5);
+          final half = (4 + hash * 5) * (1 - r / 14) *
+              (0.75 + 0.25 * math.sin(_t * 2.6 + r + seed));
+          final x = cx + wave;
+          if (x - half < x0 || x + half > x1) continue;
+          paint
+            ..strokeWidth = 2.6
+            ..color = const Color(0xFFFFA24C).withValues(
+              alpha: (0.34 - r * 0.026) * (0.55 + hash * 0.45),
+            );
+          canvas.drawLine(Offset(x - half, y), Offset(x + half, y), paint);
+        }
+      }
       // Sıcak kesik çizgiler: derinleştikçe seyrek ve soluk.
       for (var gx = (x0 / 23).floor() * 23.0; gx < x1; gx += 23) {
         final seed = (gx * 0.137).floor();
